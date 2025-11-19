@@ -1,21 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   User,
   Settings,
-  Heart,
-  MapPin,
-  Layers,
-  Compass,
   LogOut,
-  Bookmark,
   ChevronRight,
   Loader2,
-  Trophy,
-  Folder,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
@@ -24,7 +18,6 @@ import { SavedPlacesDrawer } from "@/components/SavedPlacesDrawer";
 import { VisitedPlacesDrawer } from "@/components/VisitedPlacesDrawer";
 import { TripsDrawer } from "@/components/TripsDrawer";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
-import type { Trip } from "@/types/trip";
 
 interface AccountDrawerProps {
   isOpen: boolean;
@@ -59,8 +52,7 @@ export function AccountDrawer({
     explorationProgress: 0,
   });
   const [statsLoading, setStatsLoading] = useState(false);
-  const [recentTrips, setRecentTrips] = useState<Trip[]>([]);
-  const [recentVisits, setRecentVisits] = useState<Array<{ 
+  const [recentVisits, setRecentVisits] = useState<Array<{
     name: string; 
     visited_at: string;
     image: string | null;
@@ -171,16 +163,6 @@ export function AccountDrawer({
           explorationProgress,
         });
 
-        // Fetch recent trips
-        const { data: tripsData } = await supabaseClient
-          .from("trips")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(3);
-
-        setRecentTrips((tripsData as Trip[]) || []);
-
         // Set recent visits with thumbnails
         if (visitedPlacesResult.data) {
           const visits = visitedPlacesResult.data.map((item: any) => ({
@@ -224,154 +206,303 @@ export function AccountDrawer({
   };
 
   // Section Card Component
-  const SectionCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-    <div className={`px-5 py-4 bg-white dark:bg-gray-950 rounded-2xl ${className}`}>
+  const SectionCard = ({
+    children,
+    className = "",
+    title,
+    description,
+  }: {
+    children: ReactNode;
+    className?: string;
+    title?: string;
+    description?: string;
+  }) => (
+    <section
+      className={`px-5 py-4 bg-white dark:bg-gray-950 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.05)] ring-1 ring-black/5 dark:ring-white/5 ${className}`}
+    >
+      {(title || description) && (
+        <div className="mb-4 space-y-1">
+          {title && (
+            <p className="text-xs uppercase tracking-[0.3em] text-gray-400 dark:text-gray-500">{title}</p>
+          )}
+          {description && (
+            <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+          )}
+        </div>
+      )}
       {children}
-    </div>
+    </section>
   );
 
-  const shortcuts = [
-    { icon: MapPin, label: "Visited", action: () => runAfterClose(() => setIsVisitedPlacesOpen(true)) },
-    { icon: Bookmark, label: "Saved", action: () => runAfterClose(() => setIsSavedPlacesOpen(true)) },
-    { icon: Layers, label: "Lists", action: () => handleNavigate("/account?tab=collections") },
-    { icon: Compass, label: "Trips", action: () => runAfterClose(() => setIsTripsOpen(true)) },
-    { icon: Folder, label: "Collections", action: () => handleNavigate("/account?tab=collections") },
-    { icon: Trophy, label: "Achievements", action: () => handleNavigate("/account?tab=achievements") },
+  type OptionRowConfig = {
+    label: string;
+    description?: string;
+    value?: string;
+    action?: () => void;
+  };
+
+  const OptionRow = ({ label, description, value, action }: OptionRowConfig) => (
+    <button
+      type="button"
+      onClick={action}
+      className="w-full flex items-center justify-between gap-4 py-3 text-left transition-colors duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white rounded-2xl"
+    >
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{label}</p>
+        {description && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{description}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        {value && <span className="text-xs font-medium text-gray-500 dark:text-gray-300">{value}</span>}
+        <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
+      </div>
+    </button>
+  );
+
+  const accountOptions: OptionRowConfig[] = [
+    {
+      label: "Manage Profile",
+      description: "Update your details, avatar, and preferences.",
+      action: () => handleNavigate("/account?tab=profile"),
+    },
+    {
+      label: "Password & Security",
+      description: "Change password and review sign-in access.",
+      action: () => handleNavigate("/account?tab=settings"),
+    },
+    {
+      label: "Notifications",
+      description: "Delivery summary and concierge reminders.",
+      action: () => handleNavigate("/account?tab=settings#notifications"),
+    },
+  ];
+
+  const travelOptions: OptionRowConfig[] = [
+    {
+      label: "Visited Places",
+      description: `${stats.visited} check-ins across ${stats.cities} cities`,
+      action: () => runAfterClose(() => setIsVisitedPlacesOpen(true)),
+    },
+    {
+      label: "Saved Places",
+      description: `${stats.saved} inspirations ready to explore`,
+      action: () => runAfterClose(() => setIsSavedPlacesOpen(true)),
+    },
+    {
+      label: "Trips",
+      description: "Plan itineraries and appointments.",
+      action: () => runAfterClose(() => setIsTripsOpen(true)),
+    },
+    {
+      label: "Collections",
+      description: "Organize guides and lists.",
+      action: () => handleNavigate("/account?tab=collections"),
+    },
+    {
+      label: "Achievements",
+      description: "Track streaks and milestones.",
+      action: () => handleNavigate("/account?tab=achievements"),
+    },
+  ];
+
+  const preferencesOptions: OptionRowConfig[] = [
+    {
+      label: "Language",
+      description: "Used across recommendations and guides.",
+      value: "English",
+      action: () => handleNavigate("/account?tab=settings"),
+    },
+    {
+      label: "Timezone",
+      description: "Auto-detected for local suggestions.",
+      value: "Automatic",
+      action: () => handleNavigate("/account?tab=settings"),
+    },
+    {
+      label: "About Us",
+      description: "Meet the Urban Manual team.",
+      action: () => handleNavigate("/about"),
+    },
+  ];
+
+  const supportOptions: OptionRowConfig[] = [
+    {
+      label: "Help Center",
+      description: "Guides, privacy, and troubleshooting.",
+      action: () => handleNavigate("/contact"),
+    },
+    {
+      label: "Contact Concierge",
+      description: "Chat with our team for recommendations.",
+      action: () => {
+        if (onOpenChat) {
+          runAfterClose(() => onOpenChat());
+        }
+      },
+    },
+    {
+      label: "Data & Privacy",
+      description: "Manage requests and exports.",
+      action: () => handleNavigate("/privacy"),
+    },
+  ];
+
+  const highlightStats = [
+    { label: "Visited", value: stats.visited.toString() },
+    { label: "Saved", value: stats.saved.toString() },
+    { label: "Cities", value: stats.cities.toString() },
+    { label: "Countries", value: stats.countries.toString() },
   ];
 
   const accountContent = (
-    <div className="px-6 py-8 space-y-12">
+    <div className="px-6 py-8 space-y-8 bg-gradient-to-b from-gray-50/80 via-white to-white dark:from-gray-900 dark:via-gray-950 dark:to-gray-950 min-h-full">
       {user ? (
         <>
-          {/* Hero Card - Profile Header with Exploration Progress */}
-          <SectionCard>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700">
+          {/* Hero Card */}
+          <SectionCard className="relative overflow-hidden">
+            <div
+              className="absolute inset-0 bg-gradient-to-br from-gray-50/90 to-transparent dark:from-white/5 pointer-events-none"
+              aria-hidden
+            />
+            <div className="relative space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-900 flex items-center justify-center flex-shrink-0 border border-white/70 dark:border-gray-800 shadow-inner">
                   {avatarUrl ? (
                     <Image
                       src={avatarUrl}
                       alt="Profile"
                       fill
                       className="object-cover"
-                      sizes="48px"
+                      sizes="56px"
                     />
                   ) : (
                     <User className="w-6 h-6 text-gray-400 dark:text-gray-500" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
-                    {displayUsername}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {user.email}
-                  </p>
+                  <p className="text-base font-semibold text-gray-900 dark:text-white truncate">{displayUsername}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                 </div>
                 <button
                   onClick={() => handleNavigate("/account")}
-                  className="text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1"
+                  className="text-xs font-semibold text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1"
                 >
-                  View Full Profile
+                  View Profile
                   <ChevronRight className="w-3 h-3" strokeWidth={1.5} />
                 </button>
               </div>
-
-              {/* Exploration Progress */}
-              {statsLoading ? (
-                <div className="flex items-center justify-center py-2">
-                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-gray-600 dark:text-gray-400">Exploration Progress</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs uppercase tracking-[0.3em] text-gray-400">Exploration</p>
+                  {statsLoading ? (
+                    <div className="flex items-center gap-2 text-gray-400">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Syncing profile…</span>
+                    </div>
+                  ) : (
+                    <p className="text-3xl font-semibold text-gray-900 dark:text-white">
                       {stats.explorationProgress}%
-                    </span>
-                  </div>
-                  {/* Thin subtle progress bar */}
-                  <div className="w-full h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gray-900 dark:bg-white transition-all duration-500 ease-out"
-                      style={{ width: `${Math.min(stats.explorationProgress, 100)}%` }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>Visited: {stats.visited}</span>
-                    <span>Saved: {stats.saved}</span>
-                    <span>Cities: {stats.cities}</span>
-                    <span>Countries: {stats.countries}</span>
-                  </div>
+                    </p>
+                  )}
                 </div>
-              )}
+                <div className="text-right text-xs text-gray-500 dark:text-gray-400">
+                  <p>Your manual stays synced</p>
+                  <p>across every device.</p>
+                </div>
+              </div>
             </div>
           </SectionCard>
 
-          {/* Shortcuts - Your Spaces */}
-          <SectionCard>
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Your Spaces
-              </h3>
-              <div className="space-y-1">
-                {shortcuts.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={item.action}
-                      className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
-                    >
-                      <Icon className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-                      <span className="flex-1 text-left">{item.label}</span>
-                    </button>
-                  );
-                })}
+          {/* Highlights */}
+          <SectionCard title="Highlights" description="A snapshot of your travel life">
+            {statsLoading ? (
+              <div className="flex items-center justify-center py-6 text-gray-400">
+                <Loader2 className="w-5 h-5 animate-spin" />
               </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                {highlightStats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="px-4 py-3 rounded-2xl bg-gray-50/80 dark:bg-gray-900 text-gray-900 dark:text-white"
+                  >
+                    <p className="text-xs uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500">{stat.label}</p>
+                    <p className="text-2xl font-semibold mt-1">{stat.value}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+
+          {/* Travel spaces */}
+          <SectionCard title="Your Spaces" description="Quick links to the essentials">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              {travelOptions.map((item) => (
+                <OptionRow key={item.label} {...item} />
+              ))}
+            </div>
+          </SectionCard>
+
+          {/* Account */}
+          <SectionCard title="Account" description="Control access and privacy">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              {accountOptions.map((item) => (
+                <OptionRow key={item.label} {...item} />
+              ))}
+            </div>
+          </SectionCard>
+
+          {/* Preferences */}
+          <SectionCard title="Preferences" description="Language, info, and timezone">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              {preferencesOptions.map((item) => (
+                <OptionRow key={item.label} {...item} />
+              ))}
+            </div>
+          </SectionCard>
+
+          {/* Support */}
+          <SectionCard title="Support" description="We're here whenever you need">
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              {supportOptions.map((item) => (
+                <OptionRow key={item.label} {...item} />
+              ))}
             </div>
           </SectionCard>
 
           {/* Recent Activity - Recent Visits with Thumbnails */}
           {recentVisits.length > 0 && (
-            <SectionCard>
+            <SectionCard title="Recent Visits" description="Jump back into the last places you explored">
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Recent Visits
-                </h3>
-                <div className="space-y-2">
-                  {recentVisits.slice(0, 4).map((visit, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleNavigate(`/destination/${visit.slug}`)}
-                      className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity"
-                    >
-                      {visit.image && (
-                        <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                          <Image
-                            src={visit.image}
-                            alt={visit.name}
-                            fill
-                            className="object-cover"
-                            sizes="48px"
-                          />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0 text-left">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {visit.name}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(visit.visited_at).toLocaleDateString("en-US", { 
-                            month: "short", 
-                            day: "numeric" 
-                          })}
-                        </p>
+                {recentVisits.slice(0, 4).map((visit, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleNavigate(`/destination/${visit.slug}`)}
+                    className="w-full flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
+                  >
+                    {visit.image && (
+                      <div className="relative w-12 h-12 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                        <Image
+                          src={visit.image}
+                          alt={visit.name}
+                          fill
+                          className="object-cover"
+                          sizes="48px"
+                        />
                       </div>
-                    </button>
-                  ))}
-                </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{visit.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(visit.visited_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </button>
+                ))}
               </div>
             </SectionCard>
           )}
