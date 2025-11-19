@@ -3,7 +3,8 @@
  * Automatically groups, optimizes, schedules, and suggests meal breaks for destinations
  */
 
-import { BaseAgent, AgentResult, Tool } from './base-agent';
+import { generateJSON } from '../llm';
+import { BaseAgent, AgentResult } from './base-agent';
 import { getAllTools } from './tools';
 
 export interface ItineraryRequest {
@@ -22,6 +23,7 @@ export interface ItineraryRequest {
     endTime?: string; // e.g., "22:00"
     mealBreakTime?: string; // e.g., "12:00-14:00"
     optimizeRoute?: boolean;
+    vibe?: string; // e.g., "relaxed", "packed", "family"
   };
   userId?: string;
 }
@@ -33,6 +35,9 @@ export interface ItineraryDay {
     destination_id: number;
     destination_name: string;
     order: number;
+    latitude?: number;
+    longitude?: number;
+    category?: string;
     scheduled_time?: string;
     duration_minutes?: number;
     travel_time_minutes?: number;
@@ -59,7 +64,7 @@ export class ItineraryBuilderAgent extends BaseAgent {
       steps.push('Analyzing destinations...');
 
       // Step 1: Analyze destinations (autonomous)
-      const analysis = await this.analyzeDestinations(request.destinations);
+      const analysis = await this.analyzeDestinations(request.destinations, request.preferences?.vibe);
       steps.push(`Analyzed ${request.destinations.length} destinations`);
 
       // Step 2: Group by day (autonomous)
@@ -74,7 +79,7 @@ export class ItineraryBuilderAgent extends BaseAgent {
       }
 
       // Step 4: Schedule by time (autonomous)
-      const scheduled = await this.scheduleByTime(optimized, request.preferences);
+      const scheduled = await this.scheduleByTime(optimized, analysis, request.preferences);
       steps.push('Scheduled by time');
 
       // Step 5: Add travel time estimates (autonomous)
@@ -106,7 +111,8 @@ export class ItineraryBuilderAgent extends BaseAgent {
    * Analyze destinations to understand their characteristics
    */
   private async analyzeDestinations(
-    destinations: ItineraryRequest['destinations']
+    destinations: ItineraryRequest['destinations'],
+    vibe?: string
   ): Promise<Map<number, any>> {
     const analysis = new Map();
 
@@ -116,11 +122,7 @@ export class ItineraryBuilderAgent extends BaseAgent {
       const isCulture = ['culture', 'museum', 'gallery', 'theater'].some(c => category.includes(c));
       const isOutdoor = ['park', 'beach', 'outdoor'].some(c => category.includes(c));
 
-      // Estimate duration based on category
-      let estimatedDuration = 60; // Default 1 hour
-      if (isDining) estimatedDuration = 90; // 1.5 hours for meals
-      if (isCulture) estimatedDuration = 120; // 2 hours for museums
-      if (isOutdoor) estimatedDuration = 90; // 1.5 hours for outdoor activities
+      const estimatedDuration = await this.estimateDurationMinutes(dest.category, vibe);
 
       analysis.set(dest.id, {
         ...dest,
@@ -132,6 +134,36 @@ export class ItineraryBuilderAgent extends BaseAgent {
     }
 
     return analysis;
+  }
+
+  /**
+   * Estimate visit duration using an LLM
+   */
+  private async estimateDurationMinutes(category?: string, vibe?: string): Promise<number> {
+    const systemPrompt =
+      'You are a travel planner that estimates how long a traveler typically spends at a place. ' +
+      'Use the place category and traveler vibe (pace) to return a realistic visit duration in minutes. ' +
+      'Respond with JSON: {"duration_minutes": <integer between 15 and 240>}.';
+
+    const userPrompt = `Category: ${category || 'general attraction'}\nTraveler vibe: ${vibe || 'balanced pace'}\n` +
+      'Consider whether the category suggests a quick photo stop, a leisurely meal, or an in-depth experience.';
+
+    try {
+      const llmResponse = await generateJSON(systemPrompt, userPrompt);
+      const duration = Number(llmResponse?.duration_minutes);
+      if (Number.isFinite(duration) && duration > 0) {
+        return Math.min(Math.max(Math.round(duration), 15), 240);
+      }
+    } catch (error) {
+      console.error('Failed to estimate duration via LLM:', error);
+    }
+
+    // Fallback heuristic if LLM is unavailable
+    const normalizedCategory = category?.toLowerCase() || '';
+    if (/(museum|gallery|culture|theater)/.test(normalizedCategory)) return 120;
+    if (/(park|beach|outdoor)/.test(normalizedCategory)) return 90;
+    if (/(dining|restaurant|cafe|bar|food)/.test(normalizedCategory)) return 90;
+    return 60;
   }
 
   /**
@@ -156,6 +188,9 @@ export class ItineraryBuilderAgent extends BaseAgent {
           destination_id: dest.id,
           destination_name: dest.name,
           order: idx + 1,
+          latitude: dest.latitude,
+          longitude: dest.longitude,
+          category: dest.category,
         })),
       });
     }
@@ -170,16 +205,77 @@ export class ItineraryBuilderAgent extends BaseAgent {
     days: ItineraryDay[],
     preferences?: ItineraryRequest['preferences']
   ): Promise<ItineraryDay[]> {
-    // Use route optimization tool if destinations have coordinates
     const optimized = await Promise.all(
       days.map(async (day) => {
-        // For now, keep original order
-        // TODO: Implement actual route optimization using Google Maps
-        return day;
+        const withCoords = day.items.filter(
+          (item) => typeof item.latitude === 'number' && typeof item.longitude === 'number'
+        );
+        if (withCoords.length < 2) {
+          return day;
+        }
+
+        const withoutCoords = day.items.filter(
+          (item) => typeof item.latitude !== 'number' || typeof item.longitude !== 'number'
+        );
+
+        const remaining = [...withCoords];
+        const route: typeof withCoords = [];
+        let current = remaining.shift();
+        if (current) route.push(current);
+
+        while (remaining.length > 0 && current) {
+          let nearestIdx = 0;
+          let nearestDistance = this.calculateDistance(current, remaining[0]);
+
+          for (let i = 1; i < remaining.length; i++) {
+            const distance = this.calculateDistance(current, remaining[i]);
+            if (distance < nearestDistance) {
+              nearestDistance = distance;
+              nearestIdx = i;
+            }
+          }
+
+          current = remaining.splice(nearestIdx, 1)[0];
+          route.push(current);
+        }
+
+        const reorderedItems = [...route, ...withoutCoords].map((item, idx) => ({
+          ...item,
+          order: idx + 1,
+        }));
+
+        return {
+          ...day,
+          items: reorderedItems,
+        };
       })
     );
 
     return optimized;
+  }
+
+  private calculateDistance(a: { latitude?: number; longitude?: number }, b: { latitude?: number; longitude?: number }): number {
+    if (
+      typeof a.latitude !== 'number' ||
+      typeof a.longitude !== 'number' ||
+      typeof b.latitude !== 'number' ||
+      typeof b.longitude !== 'number'
+    ) {
+      return Number.POSITIVE_INFINITY;
+    }
+
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const R = 6371; // km
+    const dLat = toRad(b.latitude - a.latitude);
+    const dLon = toRad(b.longitude - a.longitude);
+    const lat1 = toRad(a.latitude);
+    const lat2 = toRad(b.latitude);
+
+    const h =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.sin(dLon / 2) * Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+    const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+    return R * c;
   }
 
   /**
@@ -187,6 +283,7 @@ export class ItineraryBuilderAgent extends BaseAgent {
    */
   private async scheduleByTime(
     days: ItineraryDay[],
+    analysis: Map<number, any>,
     preferences?: ItineraryRequest['preferences']
   ): Promise<ItineraryDay[]> {
     const startTime = preferences?.startTime || '09:00';
@@ -199,10 +296,13 @@ export class ItineraryBuilderAgent extends BaseAgent {
       const scheduledItems = day.items.map((item, idx) => {
         // Schedule item
         const scheduledTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
-        
-        // Estimate duration (default 60 minutes)
-        const duration = 60;
-        
+
+        // Estimate duration based on analysis
+        const duration = Math.max(
+          30,
+          Math.min(Number(analysis.get(item.destination_id)?.estimatedDuration) || 60, 240)
+        );
+
         // Move to next time slot
         currentMinute += duration;
         if (currentMinute >= 60) {
