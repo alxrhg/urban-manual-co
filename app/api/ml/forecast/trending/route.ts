@@ -9,12 +9,28 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
+/**
+ * Check if ML service URL is a localhost/development URL
+ * These won't work in production
+ */
+function isLocalhostUrl(url: string): boolean {
+  if (!url) return true;
+  const lowerUrl = url.toLowerCase();
+  return (
+    lowerUrl.includes('localhost') ||
+    lowerUrl.includes('127.0.0.1') ||
+    lowerUrl.includes('0.0.0.0') ||
+    lowerUrl.startsWith('http://localhost') ||
+    lowerUrl.startsWith('http://127.0.0.1')
+  );
+}
+
 export async function GET(request: NextRequest) {
   try {
-    // Check if ML service is configured
-    if (!ML_SERVICE_URL || ML_SERVICE_URL === 'http://localhost:8000') {
-      // ML service not configured - return empty results (expected behavior)
-      console.debug('[ML Forecast] ML service not configured, returning empty results');
+    // Check if ML service is configured and not localhost
+    if (!ML_SERVICE_URL || isLocalhostUrl(ML_SERVICE_URL)) {
+      // ML service not configured or using localhost - return empty results (expected behavior)
+      console.debug('[ML Forecast] ML service not configured or using localhost, returning empty results');
       return NextResponse.json(
         {
           trending: [],
@@ -61,8 +77,21 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(data);
 
-  } catch (error) {
-    console.warn('[ML Forecast] Error:', error instanceof Error ? error.message : 'Unknown error');
+  } catch (error: any) {
+    // Handle connection errors gracefully (especially localhost in production)
+    const isConnectionError = 
+      error?.message?.includes('fetch failed') ||
+      error?.message?.includes('ECONNREFUSED') ||
+      error?.code === 'ECONNREFUSED' ||
+      error?.code === 'ETIMEDOUT' ||
+      error?.cause?.code === 'ECONNREFUSED';
+    
+    if (isConnectionError) {
+      console.warn('[ML Forecast] Connection error (ML service unavailable):', error?.message || error?.cause?.message);
+    } else {
+      console.warn('[ML Forecast] Error:', error instanceof Error ? error.message : 'Unknown error');
+    }
+    
     // Return 200 with empty results instead of 500 to prevent breaking the UI
     return NextResponse.json(
       {

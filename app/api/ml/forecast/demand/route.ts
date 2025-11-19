@@ -8,8 +8,35 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
+/**
+ * Check if ML service URL is a localhost/development URL
+ * These won't work in production
+ */
+function isLocalhostUrl(url: string): boolean {
+  if (!url) return true;
+  const lowerUrl = url.toLowerCase();
+  return (
+    lowerUrl.includes('localhost') ||
+    lowerUrl.includes('127.0.0.1') ||
+    lowerUrl.includes('0.0.0.0') ||
+    lowerUrl.startsWith('http://localhost') ||
+    lowerUrl.startsWith('http://127.0.0.1')
+  );
+}
+
 export async function GET(request: NextRequest) {
   try {
+    // Check if ML service is configured and not localhost
+    if (!ML_SERVICE_URL || isLocalhostUrl(ML_SERVICE_URL)) {
+      console.debug('[ML Forecast Demand] ML service not configured or using localhost, returning empty results');
+      return NextResponse.json(
+        {
+          error: 'ML forecast service is not configured',
+          fallback: true,
+        },
+        { status: 200 }
+      );
+    }
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
     const destinationId = searchParams.get('destination_id');
