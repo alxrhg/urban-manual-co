@@ -29,12 +29,6 @@ import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
 import type { Trip } from "@/types/trip";
 
-interface AccountDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onOpenChat?: () => void;
-}
-
 interface UserStats {
   visited: number;
   saved: number;
@@ -54,14 +48,11 @@ type SubpageId =
   | 'achievements_subpage'
   | 'settings_subpage';
 
-export function AccountDrawer({
-  isOpen,
-  onClose,
-  onOpenChat,
-}: AccountDrawerProps) {
+export function AccountDrawer() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const isOpen = isDrawerOpen("account");
   const [currentSubpage, setCurrentSubpage] = useState<SubpageId>('main_drawer');
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -269,12 +260,12 @@ export function AccountDrawer({
 
   const handleSignOut = async () => {
     await signOut();
-    onClose();
+    closeDrawer();
     router.push("/");
   };
 
   const handleNavigateToFullPage = (path: string) => {
-    onClose();
+    closeDrawer();
     setTimeout(() => {
       router.push(path);
     }, 200);
@@ -813,7 +804,7 @@ export function AccountDrawer({
     <div className="px-6 py-6 space-y-4">
       <button
         onClick={() => {
-          onClose();
+          closeDrawer();
           setTimeout(() => {
             router.push('/trips');
           }, 200);
@@ -1052,9 +1043,9 @@ export function AccountDrawer({
   const isTier2 = currentSubpage !== 'main_drawer';
 
   return (
-    <Drawer 
-      isOpen={isOpen} 
-      onClose={onClose}
+    <Drawer
+      isOpen={isOpen}
+      onClose={closeDrawer}
       title={currentSubpage === 'main_drawer' ? undefined : getDrawerTitle()}
       headerContent={currentSubpage !== 'main_drawer' ? renderHeader() : undefined}
       mobileVariant="bottom"

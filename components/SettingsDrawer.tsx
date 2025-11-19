@@ -4,13 +4,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Drawer } from '@/components/ui/Drawer';
 import { ProfileEditor } from '@/components/ProfileEditor';
 import { AccountPrivacyManager } from '@/components/AccountPrivacyManager';
+import { useDrawer } from '@/contexts/DrawerContext';
 
-interface SettingsDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
+export function SettingsDrawer() {
+  const { isDrawerOpen, closeDrawer } = useDrawer();
+  const isOpen = isDrawerOpen('settings');
   const { user } = useAuth();
 
   const content = (
@@ -36,7 +34,7 @@ export function SettingsDrawer({ isOpen, onClose }: SettingsDrawerProps) {
   return (
     <Drawer
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={closeDrawer}
       title="Settings"
     >
       {content}

@@ -6,16 +6,14 @@ import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
 import { EnhancedSavedTab } from '@/components/EnhancedSavedTab';
 import { Loader2, AlertCircle } from 'lucide-react';
-
-interface SavedPlacesDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { useDrawer } from '@/contexts/DrawerContext';
 
 const LOADING_TIMEOUT = 10000; // 10 seconds
 
-export function SavedPlacesDrawer({ isOpen, onClose }: SavedPlacesDrawerProps) {
+export function SavedPlacesDrawer() {
   const { user } = useAuth();
+  const { isDrawerOpen, closeDrawer } = useDrawer();
+  const isOpen = isDrawerOpen('saved-places');
   const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -136,7 +134,7 @@ export function SavedPlacesDrawer({ isOpen, onClose }: SavedPlacesDrawerProps) {
   return (
     <Drawer
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={closeDrawer}
       title="Saved Places"
     >
       {content}
