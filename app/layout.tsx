@@ -20,8 +20,9 @@ import { SkipNavigation } from "@/components/SkipNavigation";
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 5,
-  userScalable: true,
+  maximumScale: 1,
+  minimumScale: 1,
+  userScalable: false,
   viewportFit: 'cover',
 };
 
