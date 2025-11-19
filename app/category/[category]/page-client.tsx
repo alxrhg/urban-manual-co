@@ -9,6 +9,7 @@ import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/Ca
 import Image from 'next/image';
 import { SearchFiltersComponent, SearchFilters } from '@/src/features/search/SearchFilters';
 import dynamic from 'next/dynamic';
+import { useDrawer } from '@/contexts/DrawerContext';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -25,10 +26,10 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
   const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({});
   const [cities, setCities] = useState<string[]>([]);
   const [categories] = useState<string[]>(['Hotels', 'Restaurants', 'Cafes', 'Bars', 'Shops', 'Museums']);
+  const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
 
   const categoryName = category.split('-').map(w => 
     w.charAt(0).toUpperCase() + w.slice(1)
@@ -138,10 +139,10 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
             {filteredDestinations.map((destination, index) => (
               <button
                 key={destination.slug}
-                onClick={() => {
-                  setSelectedDestination(destination);
-                  setIsDrawerOpen(true);
-                }}
+                  onClick={() => {
+                    setSelectedDestination(destination);
+                    openDrawer('destination');
+                  }}
                 className={`${CARD_WRAPPER} group text-left`}
               >
                 <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
@@ -180,12 +181,12 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
         )}
 
         {/* Destination Drawer - Only render when open */}
-        {isDrawerOpen && selectedDestination && (
+        {isDrawerTypeOpen('destination') && selectedDestination && (
           <DestinationDrawer
             destination={selectedDestination}
             isOpen={true}
             onClose={() => {
-              setIsDrawerOpen(false);
+              closeDrawer();
               setSelectedDestination(null);
             }}
           />

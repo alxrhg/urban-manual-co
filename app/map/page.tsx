@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDrawer } from '@/contexts/DrawerContext';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import dynamic from 'next/dynamic';
@@ -28,7 +29,6 @@ export default function MapPage() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterState>({
     categories: new Set(),
@@ -39,6 +39,7 @@ export default function MapPage() {
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 23.5, lng: 121.0 }); // Taiwan center
   const [mapZoom, setMapZoom] = useState(8);
   const [showFilters, setShowFilters] = useState(false);
+  const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
 
   // Fetch destinations and categories
   useEffect(() => {
@@ -137,13 +138,13 @@ export default function MapPage() {
 
   const handleMarkerClick = useCallback((dest: Destination) => {
     setSelectedDestination(dest);
-    setIsDrawerOpen(true);
-  }, []);
+    openDrawer('destination');
+  }, [openDrawer]);
 
   const handleListItemClick = useCallback((dest: Destination) => {
     setSelectedDestination(dest);
-    setIsDrawerOpen(true);
-  }, []);
+    openDrawer('destination');
+  }, [openDrawer]);
 
   // Calculate distance from map center (simplified)
   const getDistanceFromCenter = (dest: Destination): number => {
@@ -387,12 +388,12 @@ export default function MapPage() {
         </div>
 
       {/* Destination Drawer - Only render when open */}
-      {isDrawerOpen && selectedDestination && (
+      {isDrawerTypeOpen('destination') && selectedDestination && (
         <DestinationDrawer
           destination={selectedDestination}
           isOpen={true}
           onClose={() => {
-            setIsDrawerOpen(false);
+            closeDrawer();
             setTimeout(() => setSelectedDestination(null), 300);
           }}
         />

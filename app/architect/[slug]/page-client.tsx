@@ -8,6 +8,7 @@ import { ArrowLeft, Building2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDrawer } from '@/contexts/DrawerContext';
 import { DestinationCard } from '@/components/DestinationCard';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
@@ -45,11 +46,12 @@ export default function ArchitectPageClient() {
   }>({});
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
 
   const itemsPerPage = useItemsPerPage(4);
+
+  const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
 
   useEffect(() => {
     setLoading(true);
@@ -168,7 +170,7 @@ export default function ArchitectPageClient() {
 
   const handleDestinationClick = (destination: Destination) => {
     setSelectedDestination(destination);
-    setIsDrawerOpen(true);
+    openDrawer('destination');
   };
 
   const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
@@ -323,12 +325,12 @@ export default function ArchitectPageClient() {
       </main>
 
       {/* Destination Drawer */}
-      {selectedDestination && (
+      {isDrawerTypeOpen('destination') && selectedDestination && (
         <DestinationDrawer
           destination={selectedDestination}
-          isOpen={isDrawerOpen}
+          isOpen={true}
           onClose={() => {
-            setIsDrawerOpen(false);
+            closeDrawer();
             setSelectedDestination(null);
           }}
         />
