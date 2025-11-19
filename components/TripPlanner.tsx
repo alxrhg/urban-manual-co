@@ -636,70 +636,75 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       ) : step === 'create' ? (
         <div className="space-y-8">
           <div className="space-y-3">
-            <label htmlFor="trip-name" className="block text-sm text-gray-700 dark:text-gray-300">
+            <label htmlFor="trip-planner-name" className="block text-sm text-gray-700 dark:text-gray-300">
               Trip Name
             </label>
             <input
-              id="trip-name"
+              id="trip-planner-name"
               type="text"
               value={tripName}
               onChange={(e) => setTripName(e.target.value)}
               placeholder="Summer in Paris"
+              autoComplete="off"
               className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
             />
           </div>
 
           <div className="space-y-3">
-            <label htmlFor="destination" className="block text-sm text-gray-700 dark:text-gray-300">
+            <label htmlFor="trip-planner-destination" className="block text-sm text-gray-700 dark:text-gray-300">
               Destination
             </label>
             <input
-              id="destination"
+              id="trip-planner-destination"
               type="text"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
               placeholder="Paris, France"
+              autoComplete="off"
               className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
             />
           </div>
 
           <div className="space-y-3">
-            <label htmlFor="hotel" className="block text-sm text-gray-700 dark:text-gray-300">
+            <label htmlFor="trip-planner-hotel" className="block text-sm text-gray-700 dark:text-gray-300">
               Hotel / Base Location
             </label>
             <input
-              id="hotel"
+              id="trip-planner-hotel"
               type="text"
               value={hotelLocation}
               onChange={(e) => setHotelLocation(e.target.value)}
               placeholder="Hotel Le Marais"
+              autoComplete="off"
               className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-3">
-              <label htmlFor="start-date" className="block text-sm text-gray-700 dark:text-gray-300">
+              <label htmlFor="trip-planner-start-date" className="block text-sm text-gray-700 dark:text-gray-300">
                 Start Date
               </label>
               <input
-                id="start-date"
+                id="trip-planner-start-date"
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
+                autoComplete="off"
                 className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
               />
             </div>
 
             <div className="space-y-3">
-              <label htmlFor="end-date" className="block text-sm text-gray-700 dark:text-gray-300">
+              <label htmlFor="trip-planner-end-date" className="block text-sm text-gray-700 dark:text-gray-300">
                 End Date
               </label>
               <input
-                id="end-date"
+                id="trip-planner-end-date"
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
+                autoComplete="off"
                 className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
               />
             </div>

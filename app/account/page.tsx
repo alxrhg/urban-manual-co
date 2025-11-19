@@ -5,7 +5,6 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { MapPin, Plus, Calendar, Trash2, Edit2 } from "lucide-react";
-import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
 import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
@@ -19,6 +18,7 @@ import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
 import type { Collection, Trip, SavedPlace, VisitedPlace } from "@/types/common";
 import type { User } from "@supabase/supabase-js";
 import { getDestinationImageUrl } from '@/lib/destination-images';
+import { useUserStats } from '@/hooks/useUserStats';
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -29,6 +29,45 @@ function capitalizeCity(city: string): string {
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
+}
+
+/**
+ * Helper function to create a collection via API
+ * Uses API endpoint for RLS compliance and better error handling
+ */
+async function createCollection(data: {
+  name: string;
+  description?: string | null;
+  is_public?: boolean;
+  emoji?: string;
+  color?: string;
+}): Promise<Collection> {
+  const response = await fetch('/api/collections', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: data.name.trim(),
+      description: data.description?.trim() || null,
+      is_public: data.is_public ?? false,
+      emoji: data.emoji || '📚',
+      color: data.color || '#3B82F6',
+    }),
+  });
+
+  const responseData = await response.json();
+
+  if (!response.ok) {
+    const errorMessage = responseData.error || responseData.details || 'Failed to create collection';
+    throw new Error(errorMessage);
+  }
+
+  if (!responseData.collection) {
+    throw new Error('Invalid response from server');
+  }
+
+  return responseData.collection;
 }
 
 export default function Account() {
@@ -257,37 +296,17 @@ export default function Account() {
 
     setCreatingCollection(true);
     try {
-      // Use API endpoint for better error handling and RLS compliance
-      const response = await fetch('/api/collections', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newCollectionName.trim(),
-          description: newCollectionDescription.trim() || null,
-          is_public: newCollectionPublic,
-          emoji: '📚',
-          color: '#3B82F6',
-        }),
+      // Use helper function for cleaner code and better error handling
+      const newCollection = await createCollection({
+        name: newCollectionName,
+        description: newCollectionDescription,
+        is_public: newCollectionPublic,
+        emoji: '📚',
+        color: '#3B82F6',
       });
 
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        const errorMessage = responseData.error || responseData.details || 'Failed to create collection';
-        throw new Error(errorMessage);
-      }
-
-      // Response is ok, extract collection data
-      const data = responseData.collection;
-
-      if (!data) {
-        throw new Error('Invalid response from server');
-      }
-
       // Add new collection to list and reload to ensure consistency
-      setCollections([data, ...collections]);
+      setCollections([newCollection, ...collections]);
       setNewCollectionName('');
       setNewCollectionDescription('');
       setNewCollectionPublic(true);
@@ -304,95 +323,13 @@ export default function Account() {
     }
   };
 
-  // Calculate stats
-  const stats = useMemo((): {
-    uniqueCities: Set<string>;
-    uniqueCountries: Set<string>;
-    visitedCount: number;
-    savedCount: number;
-    collectionsCount: number;
-    curationCompletionPercentage: number;
-    visitedDestinationsWithCoords: Array<{
-      city: string;
-      latitude?: number | null;
-      longitude?: number | null;
-    }>;
-  } => {
-    const uniqueCities = new Set([
-      ...savedPlaces.map(p => p.destination?.city).filter((city): city is string => typeof city === 'string'),
-      ...visitedPlaces.filter(p => p.destination).map(p => p.destination!.city)
-    ]);
-
-    // Get countries from destination.country field first, fallback to cityCountryMap
-    const countriesFromDestinations = new Set([
-      ...savedPlaces.map(p => p.destination?.country).filter((country): country is string => typeof country === 'string'),
-      ...visitedPlaces.filter(p => p.destination?.country).map(p => p.destination!.country!)
-    ]);
-    
-    // Also get countries from city mapping for destinations without country field
-    // Normalize city names to match cityCountryMap format (lowercase, hyphenated)
-    const countriesFromCities = Array.from(uniqueCities)
-      .map(city => {
-        if (!city) return null;
-        // Try exact match first
-        let country = cityCountryMap[city];
-        if (country) return country;
-        
-        // Try lowercase match
-        const cityLower = city.toLowerCase();
-        country = cityCountryMap[cityLower];
-        if (country) return country;
-        
-        // Try hyphenated version (e.g., "New York" -> "new-york")
-        const cityHyphenated = cityLower.replace(/\s+/g, '-');
-        country = cityCountryMap[cityHyphenated];
-        if (country) return country;
-        
-        // Try without hyphens (e.g., "new-york" -> "newyork" - less common but possible)
-        const cityNoHyphens = cityLower.replace(/-/g, '');
-        country = cityCountryMap[cityNoHyphens];
-        
-        return country || null;
-      })
-      .filter((country): country is string => country !== null && country !== undefined);
-    
-    const uniqueCountries = new Set([
-      ...Array.from(countriesFromDestinations),
-      ...countriesFromCities
-    ]);
-    
-    // Extract visited destinations with coordinates for map
-    const visitedDestinationsWithCoords = visitedPlaces
-      .filter(p => p.destination)
-      .map(p => ({
-        city: p.destination!.city,
-        latitude: p.destination!.latitude,
-        longitude: p.destination!.longitude,
-      }))
-      .filter(d => d.latitude && d.longitude);
-
-    // Debug logging to help diagnose map issues
-    console.log('[Account] Countries found:', Array.from(uniqueCountries));
-    console.log('[Account] Countries from destinations:', Array.from(countriesFromDestinations));
-    console.log('[Account] Countries from cities:', countriesFromCities);
-    console.log('[Account] Unique cities:', Array.from(uniqueCities));
-    console.log('[Account] Visited places count:', visitedPlaces.length);
-    console.log('[Account] Visited destinations with coords:', visitedDestinationsWithCoords.length);
-
-    const curationCompletionPercentage = totalDestinations > 0
-      ? Math.round((visitedPlaces.length / totalDestinations) * 100)
-      : 0;
-
-    return {
-      uniqueCities,
-      uniqueCountries,
-      visitedCount: visitedPlaces.length,
-      savedCount: savedPlaces.length,
-      collectionsCount: collections.length,
-      curationCompletionPercentage,
-      visitedDestinationsWithCoords
-    };
-  }, [savedPlaces, visitedPlaces, collections, totalDestinations]);
+  // Calculate stats using custom hook
+  const stats = useUserStats({
+    savedPlaces,
+    visitedPlaces,
+    collectionsCount: collections.length,
+    totalDestinations,
+  });
 
   // Show loading
   if (!authChecked || isLoadingData) {

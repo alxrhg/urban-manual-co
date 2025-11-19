@@ -127,15 +127,16 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
               {/* Name - Only show for sign up */}
               {isSignUp && (
                 <div>
-                  <label htmlFor="name" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  <label htmlFor="login-name" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                     Name
                   </label>
                   <input
-                    id="name"
+                    id="login-name"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required={isSignUp}
+                    autoComplete="name"
                     className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
                     placeholder="Your name"
                   />
@@ -144,15 +145,16 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
               {/* Email */}
               <div>
-                <label htmlFor="email" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <label htmlFor="login-email" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Email
                 </label>
                 <input
-                  id="email"
+                  id="login-email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  autoComplete="email"
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
                   placeholder="you@example.com"
                 />
@@ -160,16 +162,17 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
               {/* Password */}
               <div>
-                <label htmlFor="password" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <label htmlFor="login-password" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Password
                 </label>
                 <input
-                  id="password"
+                  id="login-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
                   className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
                   placeholder="••••••••"
                 />

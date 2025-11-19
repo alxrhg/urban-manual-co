@@ -39,26 +39,61 @@ function readCookie(name: string): string | null {
 function getStoredConsent(): CookiePreferences | null {
   if (typeof window === 'undefined') return null;
 
-  const stored = parseConsent(localStorage.getItem(CONSENT_STORAGE_KEY));
-  if (stored) return stored;
+  try {
+    // Check localStorage first (primary storage)
+    const stored = parseConsent(localStorage.getItem(CONSENT_STORAGE_KEY));
+    if (stored) return stored;
 
-  return parseConsent(readCookie(CONSENT_COOKIE_NAME));
+    // Fallback to cookie (secondary storage)
+    const cookieConsent = parseConsent(readCookie(CONSENT_COOKIE_NAME));
+    if (cookieConsent) {
+      // Sync to localStorage for consistency
+      try {
+        localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify({
+          ...cookieConsent,
+          timestamp: new Date().toISOString(),
+        }));
+      } catch (e) {
+        // Ignore localStorage errors (e.g., quota exceeded)
+      }
+      return cookieConsent;
+    }
+
+    return null;
+  } catch (error) {
+    // If there's any error reading consent, assume no consent
+    console.warn('[CookieConsent] Error reading stored consent:', error);
+    return null;
+  }
 }
 
 function persistConsent(prefs: CookiePreferences) {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-  const payload = JSON.stringify({
-    ...prefs,
-    timestamp: new Date().toISOString(),
-  });
+  try {
+    const payload = JSON.stringify({
+      ...prefs,
+      timestamp: new Date().toISOString(),
+    });
 
-  localStorage.setItem(CONSENT_STORAGE_KEY, payload);
+    // Store in both localStorage and cookie for redundancy
+    try {
+      localStorage.setItem(CONSENT_STORAGE_KEY, payload);
+    } catch (e) {
+      // If localStorage fails (e.g., quota exceeded), still try cookie
+      console.warn('[CookieConsent] Failed to save to localStorage:', e);
+    }
 
-  const secureFlag = window.location.protocol === 'https:' ? ' Secure;' : '';
-  document.cookie = `${CONSENT_COOKIE_NAME}=${encodeURIComponent(payload)}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax;${secureFlag}`;
+    // Also store in cookie (more reliable across subdomains and sessions)
+    const secureFlag = window.location.protocol === 'https:' ? ' Secure;' : '';
+    const maxAge = 60 * 60 * 24 * 365; // 1 year
+    document.cookie = `${CONSENT_COOKIE_NAME}=${encodeURIComponent(payload)}; path=/; max-age=${maxAge}; SameSite=Lax;${secureFlag}`;
 
-  window.dispatchEvent(new Event(CONSENT_UPDATED_EVENT));
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event(CONSENT_UPDATED_EVENT));
+  } catch (error) {
+    console.error('[CookieConsent] Failed to persist consent:', error);
+  }
 }
 
 /**
@@ -83,6 +118,7 @@ export function openCookieSettings() {
 export function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [hasCheckedConsent, setHasCheckedConsent] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>({
     necessary: true, // Always required
     analytics: false,
@@ -90,17 +126,32 @@ export function CookieConsent() {
   });
 
   useEffect(() => {
-    const consent = getStoredConsent();
+    // Only check consent once on mount
+    if (hasCheckedConsent) return;
 
-    if (consent) {
-      setPreferences(prev => ({ ...prev, ...consent }));
-    }
+    let consentTimer: NodeJS.Timeout | null = null;
+    let visibilityTimer: NodeJS.Timeout | null = null;
 
-    // Show banner if no consent is stored
-    if (!consent) {
-      const timer = setTimeout(() => setIsVisible(true), 1000);
-      return () => clearTimeout(timer);
-    }
+    // Wait for client-side hydration to complete
+    const checkConsent = () => {
+      const consent = getStoredConsent();
+
+      if (consent) {
+        setPreferences(prev => ({ ...prev, ...consent }));
+        // Don't show banner if consent exists
+        setIsVisible(false);
+        setHasCheckedConsent(true);
+      } else {
+        // Show banner if no consent is stored (with delay for better UX)
+        visibilityTimer = setTimeout(() => {
+          setIsVisible(true);
+          setHasCheckedConsent(true);
+        }, 1000);
+      }
+    };
+
+    // Small delay to ensure localStorage/cookies are accessible
+    consentTimer = setTimeout(checkConsent, 100);
 
     // Listen for requests to open cookie settings
     const handleOpenSettings = () => {
@@ -109,10 +160,13 @@ export function CookieConsent() {
     };
 
     window.addEventListener('open-cookie-settings', handleOpenSettings);
+    
     return () => {
+      if (consentTimer) clearTimeout(consentTimer);
+      if (visibilityTimer) clearTimeout(visibilityTimer);
       window.removeEventListener('open-cookie-settings', handleOpenSettings);
     };
-  }, []);
+  }, [hasCheckedConsent]);
 
   const savePreferences = (prefs: CookiePreferences) => {
     persistConsent(prefs);
@@ -137,7 +191,10 @@ export function CookieConsent() {
       }
     }
 
+    // Hide banner and mark consent as checked to prevent reappearance
     setIsVisible(false);
+    setHasCheckedConsent(true);
+    setShowDetails(false);
   };
 
   const acceptAll = () => {

@@ -22,8 +22,9 @@ import { withPerformanceMonitoring } from '@/lib/discovery-engine/performance';
  * - userId: User ID for personalization (optional)
  */
 export async function POST(request: NextRequest) {
+  let body: any = null;
   try {
-    const body = await request.json();
+    body = await request.json();
     const { query, userId, filters, pageSize, pageToken } = body;
 
     if (!query || typeof query !== 'string') {
@@ -40,7 +41,8 @@ export async function POST(request: NextRequest) {
     const isAvailable = discoveryEngine.isAvailable();
     
     if (!isAvailable) {
-      // Discovery Engine not configured is expected - use debug log
+      // Discovery Engine not configured - return empty results with fallback flag
+      // This is expected behavior, not an error
       console.debug('[Discovery Engine API] Status check:', {
         isAvailable,
         useDiscoveryEngine: flags.useDiscoveryEngine,
@@ -48,14 +50,17 @@ export async function POST(request: NextRequest) {
         location: process.env.DISCOVERY_ENGINE_LOCATION ? 'set' : 'missing',
         dataStoreId: process.env.DISCOVERY_ENGINE_DATA_STORE_ID ? 'set' : 'missing',
       });
-      console.debug('[Discovery Engine API] Discovery Engine is not available - returning 503 (expected fallback)');
+      console.debug('[Discovery Engine API] Discovery Engine is not available - returning empty results (expected fallback)');
       return NextResponse.json(
         { 
-          error: 'Discovery Engine is not configured',
-          fallback: true,
+          results: [],
+          totalSize: 0,
+          query,
           source: 'fallback',
+          fallback: true,
+          message: 'Discovery Engine is not configured. Please use Supabase search fallback.',
         },
-        { status: 503 }
+        { status: 200 }
       );
     }
 
@@ -146,12 +151,19 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Discovery Engine search error:', error);
+    // Return 200 with empty results instead of 500 to prevent breaking the UI
     return NextResponse.json(
       { 
+        results: [],
+        totalSize: 0,
+        query: body?.query || '',
+        source: 'fallback',
+        fallback: true,
         error: 'Search failed',
-        details: error.message,
+        message: 'An error occurred while searching. Please try again or use the fallback search.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }
@@ -161,8 +173,9 @@ export async function POST(request: NextRequest) {
  * Search destinations using Google Discovery Engine (GET version)
  */
 export async function GET(request: NextRequest) {
+  const url = new URL(request.url);
+  const searchParams = url.searchParams;
   try {
-    const { searchParams } = new URL(request.url);
     const query = searchParams.get('query');
     const city = searchParams.get('city') || undefined;
     const category = searchParams.get('category') || undefined;
@@ -182,12 +195,18 @@ export async function GET(request: NextRequest) {
     const discoveryEngine = getDiscoveryEngineService();
 
     if (!discoveryEngine.isAvailable()) {
+      // Discovery Engine not configured - return empty results with fallback flag
+      // This is expected behavior, not an error
       return NextResponse.json(
         { 
-          error: 'Discovery Engine is not configured',
+          results: [],
+          totalSize: 0,
+          query,
+          source: 'fallback',
           fallback: true,
+          message: 'Discovery Engine is not configured. Please use Supabase search fallback.',
         },
-        { status: 503 }
+        { status: 200 }
       );
     }
 
@@ -244,12 +263,20 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('Discovery Engine search error:', error);
+    // Return 200 with empty results instead of 500 to prevent breaking the UI
+    const query = searchParams.get('query') || '';
     return NextResponse.json(
       { 
+        results: [],
+        totalSize: 0,
+        query,
+        source: 'fallback',
+        fallback: true,
         error: 'Search failed',
-        details: error.message,
+        message: 'An error occurred while searching. Please try again or use the fallback search.',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
-      { status: 500 }
+      { status: 200 }
     );
   }
 }

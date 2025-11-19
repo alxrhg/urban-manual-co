@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
 import { TripPlanner } from '@/components/TripPlanner';
-import { Plus, MapPin, Calendar, ArrowRight, Loader2 } from 'lucide-react';
+import { Plus, MapPin, Calendar, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 
 interface TripsDrawerProps {
@@ -14,11 +14,14 @@ interface TripsDrawerProps {
   onClose: () => void;
 }
 
+const LOADING_TIMEOUT = 15000; // 15 seconds (longer for trips with images)
+
 export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [trips, setTrips] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showTripDialog, setShowTripDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
@@ -26,68 +29,83 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
     if (!user) {
       setTrips([]);
       setLoading(false);
+      setError(null);
       return;
     }
 
     try {
       setLoading(true);
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
-
-      const { data, error } = await supabaseClient
-        .from('trips')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      setError(null);
       
-      // Fetch first location image for each trip
-      const tripsWithImages = await Promise.all(
-        (data || []).map(async (trip) => {
-          if (trip.cover_image) {
-            return { ...trip, firstLocationImage: null };
-          }
+      const supabaseClient = createClient();
+      if (!supabaseClient) {
+        throw new Error('Failed to initialize database connection');
+      }
 
-          const { data: items } = await supabaseClient
-            .from('itinerary_items')
-            .select('destination_slug, notes')
-            .eq('trip_id', trip.id)
-            .order('day', { ascending: true })
-            .order('order_index', { ascending: true })
-            .limit(1)
-            .maybeSingle();
+      // Add timeout handling
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timeout')), LOADING_TIMEOUT);
+      });
 
-          let firstLocationImage: string | null = null;
+      const fetchPromise = (async () => {
+        const { data, error } = await supabaseClient
+          .from('trips')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
 
-          if (items?.destination_slug) {
-            const { data: dest } = await supabaseClient
-              .from('destinations')
-              .select('image')
-              .eq('slug', items.destination_slug)
+        if (error) throw error;
+        
+        // Fetch first location image for each trip
+        const tripsWithImages = await Promise.all(
+          (data || []).map(async (trip) => {
+            if (trip.cover_image) {
+              return { ...trip, firstLocationImage: null };
+            }
+
+            const { data: items } = await supabaseClient
+              .from('itinerary_items')
+              .select('destination_slug, notes')
+              .eq('trip_id', trip.id)
+              .order('day', { ascending: true })
+              .order('order_index', { ascending: true })
+              .limit(1)
               .maybeSingle();
-            
-            if (dest?.image) {
-              firstLocationImage = dest.image;
-            }
-          } else if (items?.notes) {
-            try {
-              const notesData = JSON.parse(items.notes);
-              if (notesData.image) {
-                firstLocationImage = notesData.image;
+
+            let firstLocationImage: string | null = null;
+
+            if (items?.destination_slug) {
+              const { data: dest } = await supabaseClient
+                .from('destinations')
+                .select('image')
+                .eq('slug', items.destination_slug)
+                .maybeSingle();
+              
+              if (dest?.image) {
+                firstLocationImage = dest.image;
               }
-            } catch {
-              // Ignore parse errors
+            } else if (items?.notes) {
+              try {
+                const notesData = JSON.parse(items.notes);
+                if (notesData.image) {
+                  firstLocationImage = notesData.image;
+                }
+              } catch {
+                // Ignore parse errors
+              }
             }
-          }
 
-          return { ...trip, firstLocationImage };
-        })
-      );
+            return { ...trip, firstLocationImage };
+          })
+        );
 
-      setTrips(tripsWithImages);
-    } catch (error) {
+        setTrips(tripsWithImages);
+      })();
+
+      await Promise.race([fetchPromise, timeoutPromise]);
+    } catch (error: any) {
       console.error('Error fetching trips:', error);
+      setError(error.message || 'Failed to load trips. Please try again.');
       setTrips([]);
     } finally {
       setLoading(false);
@@ -97,6 +115,9 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
   useEffect(() => {
     if (isOpen) {
       fetchTrips();
+    } else {
+      // Reset state when drawer closes
+      setError(null);
     }
   }, [isOpen, fetchTrips]);
 
@@ -151,9 +172,31 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
   const content = (
     <div className="px-5 py-6">
       {loading ? (
-        <div className="text-center py-12">
-          <Loader2 className="w-5 h-5 animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        <div className="text-center py-12 space-y-3">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading trips...</p>
+          {/* Skeleton loader */}
+          <div className="space-y-3 mt-6">
+            {[1, 2].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="h-40 bg-gray-200 dark:bg-gray-800 rounded-2xl" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : error ? (
+        <div className="text-center py-12 space-y-4">
+          <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Failed to load</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{error}</p>
+          </div>
+          <button
+            onClick={fetchTrips}
+            className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-xl hover:opacity-80 transition-opacity"
+          >
+            Try Again
+          </button>
         </div>
       ) : (
         <div className="space-y-6">

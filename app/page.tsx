@@ -36,6 +36,7 @@ const DestinationDrawer = dynamic(
   }
 );
 import { useAuth } from "@/contexts/AuthContext";
+import { useDrawer } from "@/contexts/DrawerContext";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -413,7 +414,7 @@ export default function Home() {
   const [searchTier, setSearchTier] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
@@ -2879,7 +2880,7 @@ export default function Home() {
                 <SmartRecommendations
                   onCardClick={destination => {
                     setSelectedDestination(destination);
-                    setIsDrawerOpen(true);
+                    openDrawer('destination');
 
                     // Track destination click
                     trackDestinationClick({
@@ -3017,7 +3018,7 @@ export default function Home() {
                 source: "map_marker" | "map_list"
               ) => {
                 setSelectedDestination(destination);
-                setIsDrawerOpen(true);
+                openDrawer('destination');
                 const position = findDestinationPosition(destination.slug);
                 trackDestinationEngagement(
                   destination,
@@ -3068,7 +3069,7 @@ export default function Home() {
                               showEditAffordance={editModeActive}
                             onClick={() => {
                               setSelectedDestination(destination);
-                              setIsDrawerOpen(true);
+                              openDrawer('destination');
 
                               // Track destination click
                               trackDestinationClick({
@@ -3239,7 +3240,7 @@ export default function Home() {
         {/* Destination Drawer */}
         <DestinationDrawer
           destination={selectedDestination}
-          isOpen={isDrawerOpen}
+          isOpen={isDrawerOpen('destination')}
           onClose={() => {
             // Sort visited items to the back when closing
             setFilteredDestinations(prev => {
@@ -3252,7 +3253,7 @@ export default function Home() {
               });
               return sorted;
             });
-            setIsDrawerOpen(false);
+            closeDrawer();
             setTimeout(() => setSelectedDestination(null), 300);
           }}
           onVisitToggle={(slug, visited) => {

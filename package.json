@@ -74,6 +74,7 @@
     "@vercel/speed-insights": "^1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "critters": "^0.0.16",
     "dompurify": "^3.3.0",
     "dotenv": "^17.2.3",
     "framer-motion": "^11.0.0",

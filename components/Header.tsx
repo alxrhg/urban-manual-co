@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
+import { useDrawer } from "@/contexts/DrawerContext";
 import { AccountDrawer } from "@/components/AccountDrawer";
 import { ChatDrawer } from "@/components/ChatDrawer";
 import { LoginDrawer } from "@/components/LoginDrawer";
@@ -12,9 +13,7 @@ import { LoginDrawer } from "@/components/LoginDrawer";
 export function Header() {
   const router = useRouter();
   const { user } = useAuth();
-  const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
-  const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
-  const [isLoginDrawerOpen, setIsLoginDrawerOpen] = useState(false);
+  const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -99,7 +98,7 @@ export function Header() {
 
       {user ? (
         <button
-          onClick={() => setIsAccountDrawerOpen(true)}
+          onClick={() => openDrawer('account')}
           className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
           aria-label="Open account drawer"
         >
@@ -118,7 +117,7 @@ export function Header() {
         </button>
       ) : (
         <button
-          onClick={() => setIsLoginDrawerOpen(true)}
+          onClick={() => openDrawer('login')}
           className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
           aria-label="Sign in"
         >
@@ -153,21 +152,21 @@ export function Header() {
       </div>
       {/* Account Drawer */}
       <AccountDrawer
-        isOpen={isAccountDrawerOpen}
-        onClose={() => setIsAccountDrawerOpen(false)}
-        onOpenChat={() => setIsChatDrawerOpen(true)}
+        isOpen={isDrawerOpen('account')}
+        onClose={closeDrawer}
+        onOpenChat={() => openDrawer('chat')}
       />
 
       {/* Chat Drawer */}
       <ChatDrawer
-        isOpen={isChatDrawerOpen}
-        onClose={() => setIsChatDrawerOpen(false)}
+        isOpen={isDrawerOpen('chat')}
+        onClose={closeDrawer}
       />
 
       {/* Login Drawer */}
       <LoginDrawer
-        isOpen={isLoginDrawerOpen}
-        onClose={() => setIsLoginDrawerOpen(false)}
+        isOpen={isDrawerOpen('login')}
+        onClose={closeDrawer}
       />
     </header>
   );

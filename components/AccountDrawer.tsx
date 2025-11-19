@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDrawer } from "@/contexts/DrawerContext";
 import {
   User,
   Settings,
@@ -67,10 +68,7 @@ export function AccountDrawer({
     slug: string;
   }>>([]);
   const [totalDestinations, setTotalDestinations] = useState(0);
-  const [isSavedPlacesOpen, setIsSavedPlacesOpen] = useState(false);
-  const [isVisitedPlacesOpen, setIsVisitedPlacesOpen] = useState(false);
-  const [isTripsOpen, setIsTripsOpen] = useState(false);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
 
   // Fetch user profile, avatar, stats, and recent activity
   useEffect(() => {
@@ -231,10 +229,10 @@ export function AccountDrawer({
   );
 
   const shortcuts = [
-    { icon: MapPin, label: "Visited", action: () => runAfterClose(() => setIsVisitedPlacesOpen(true)) },
-    { icon: Bookmark, label: "Saved", action: () => runAfterClose(() => setIsSavedPlacesOpen(true)) },
+    { icon: MapPin, label: "Visited", action: () => runAfterClose(() => openDrawer('visited-places')) },
+    { icon: Bookmark, label: "Saved", action: () => runAfterClose(() => openDrawer('saved-places')) },
     { icon: Layers, label: "Lists", action: () => handleNavigate("/account?tab=collections") },
-    { icon: Compass, label: "Trips", action: () => runAfterClose(() => setIsTripsOpen(true)) },
+    { icon: Compass, label: "Trips", action: () => runAfterClose(() => openDrawer('trips')) },
     { icon: Folder, label: "Collections", action: () => handleNavigate("/account?tab=collections") },
     { icon: Trophy, label: "Achievements", action: () => handleNavigate("/account?tab=achievements") },
   ];
@@ -380,7 +378,7 @@ export function AccountDrawer({
           <div className="pt-4 border-t border-gray-200 dark:border-gray-800 space-y-2">
             <button
               type="button"
-              onClick={() => runAfterClose(() => setIsSettingsOpen(true))}
+              onClick={() => runAfterClose(() => openDrawer('settings'))}
               className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
             >
               <Settings className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
@@ -435,17 +433,17 @@ export function AccountDrawer({
         {accountContent}
       </Drawer>
       <SavedPlacesDrawer
-        isOpen={isSavedPlacesOpen}
-        onClose={() => setIsSavedPlacesOpen(false)}
+        isOpen={isDrawerOpen('saved-places')}
+        onClose={closeDrawer}
       />
       <VisitedPlacesDrawer
-        isOpen={isVisitedPlacesOpen}
-        onClose={() => setIsVisitedPlacesOpen(false)}
+        isOpen={isDrawerOpen('visited-places')}
+        onClose={closeDrawer}
       />
-      <TripsDrawer isOpen={isTripsOpen} onClose={() => setIsTripsOpen(false)} />
+      <TripsDrawer isOpen={isDrawerOpen('trips')} onClose={closeDrawer} />
       <SettingsDrawer
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
+        isOpen={isDrawerOpen('settings')}
+        onClose={closeDrawer}
       />
     </>
   );

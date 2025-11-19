@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
+import { DrawerProvider } from "@/contexts/DrawerContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { SplashScreen } from "@/components/SplashScreen";
@@ -191,18 +192,20 @@ export default function RootLayout({
           <SplashScreen />
           <TRPCProvider>
               <AuthProvider>
-                <Suspense fallback={null}>
-                  <AdminEditModeProvider>
-                    <ItineraryProvider>
-                      <Header />
-                      <main className="min-h-screen page-transition">
-                        {children}
-                      </main>
-                      <Footer />
-                      <CookieConsent />
-                    </ItineraryProvider>
-                  </AdminEditModeProvider>
-                </Suspense>
+                <DrawerProvider>
+                  <Suspense fallback={null}>
+                    <AdminEditModeProvider>
+                      <ItineraryProvider>
+                        <Header />
+                        <main className="min-h-screen page-transition">
+                          {children}
+                        </main>
+                        <Footer />
+                        <CookieConsent />
+                      </ItineraryProvider>
+                    </AdminEditModeProvider>
+                  </Suspense>
+                </DrawerProvider>
               </AuthProvider>
           </TRPCProvider>
           <ToastContainer />
