@@ -256,7 +256,6 @@ export function NavigationRow({
               aria-expanded={isFiltersOpen}
             >
               <SlidersHorizontal className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
-              <span className="hidden sm:inline">Filters</span>
               {hasActiveFilters && (
                 <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full">
                   {activeFilterCount}
@@ -363,7 +362,6 @@ export function NavigationRow({
               aria-label="Grid view"
             >
               <LayoutGrid className="h-4 w-4" />
-              <span className="hidden sm:inline">Grid</span>
             </button>
             <button
               onClick={() => onViewModeChange('map')}
@@ -375,7 +373,6 @@ export function NavigationRow({
               aria-label="Map view"
             >
               <Map className="h-4 w-4" />
-              <span className="hidden sm:inline">Map</span>
             </button>
           </div>
 
