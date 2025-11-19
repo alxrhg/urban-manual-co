@@ -18,26 +18,61 @@ export function createHomepageVisitedHandler(deps: VisitedHandlerDeps) {
       const slugs = await deps.loadVisitedSlugs(userId);
       return NextResponse.json({ success: true, slugs });
     } catch (error: any) {
-      console.error('Error loading visited places for homepage', error);
-      // Check if it's a Supabase config error
-      if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {
+      // Check if it's a Supabase config error or network error
+      const isConfigError = error?.message?.includes('placeholder') || 
+                           error?.message?.includes('invalid') ||
+                           error?.message?.includes('fetch failed') ||
+                           error?.code === 'ECONNREFUSED' ||
+                           error?.code === 'ETIMEDOUT' ||
+                           error?.cause?.code === 'ECONNREFUSED' ||
+                           error?.cause?.message?.includes('fetch failed');
+      
+      if (isConfigError) {
+        // Return 200 with empty slugs for graceful degradation
+        console.warn('[Homepage Visited] Supabase config/network error, returning empty slugs:', error?.message || error?.cause?.message);
         return NextResponse.json({ success: true, slugs: [] }, { status: 200 });
       }
+      
+      // Log unexpected errors
+      console.error('Error loading visited places for homepage', error);
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
   };
 }
 
 async function getUserIdFromSession() {
-  const supabase = await createServerClient();
-  const { data, error } = await supabase.auth.getUser();
+  try {
+    const supabase = await createServerClient();
+    
+    const { data, error } = await supabase.auth.getUser();
 
-  if (error) {
-    console.warn('Error retrieving auth user for homepage visited', error.message);
-    return null;
+    if (error) {
+      // Check if it's a network/config error (placeholder client)
+      if (error?.message?.includes('fetch failed') ||
+          error?.message?.includes('ECONNREFUSED') ||
+          error?.message?.includes('ETIMEDOUT') ||
+          supabase.supabaseUrl?.includes('placeholder')) {
+        console.warn('[Homepage Visited] Supabase config error, returning null user');
+        return null;
+      }
+      console.warn('Error retrieving auth user for homepage visited', error.message);
+      return null;
+    }
+
+    return data?.user?.id ?? null;
+  } catch (error: any) {
+    // Handle network errors and config errors gracefully
+    if (error?.message?.includes('placeholder') || 
+        error?.message?.includes('invalid') ||
+        error?.message?.includes('fetch failed') ||
+        error?.code === 'ECONNREFUSED' ||
+        error?.code === 'ETIMEDOUT' ||
+        error?.cause?.code === 'ECONNREFUSED') {
+      console.warn('[Homepage Visited] Supabase client error:', error?.message || error?.cause?.message);
+      return null;
+    }
+    throw error;
   }
-
-  return data?.user?.id ?? null;
 }
 
 export const GET = createHomepageVisitedHandler({
