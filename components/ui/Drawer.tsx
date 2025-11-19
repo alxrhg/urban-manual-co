@@ -60,6 +60,9 @@ export function Drawer({
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
+  const startYRef = useRef<number | null>(null);
+  const initialTransformRef = useRef<string>('');
+  const activeDirectionRef = useRef<'horizontal' | 'vertical' | null>(null);
 
   // Prevent body scroll when drawer is open (but keep page visible)
   useEffect(() => {
@@ -101,33 +104,73 @@ export function Drawer({
 
     const handleTouchStart = (e: TouchEvent) => {
       startXRef.current = e.touches[0].clientX;
+      startYRef.current = e.touches[0].clientY;
+      activeDirectionRef.current = null;
+      initialTransformRef.current = drawer.style.transform;
+      drawer.style.transition = 'none';
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (startXRef.current === null) return;
+      if (startXRef.current === null || startYRef.current === null) return;
       const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
       const diffX = currentX - startXRef.current;
+      const diffY = currentY - startYRef.current;
+
+      if (!activeDirectionRef.current) {
+        const absX = Math.abs(diffX);
+        const absY = Math.abs(diffY);
+        if (absX > absY && absX > 10) {
+          activeDirectionRef.current = 'horizontal';
+        } else if (absY > absX && absY > 10) {
+          activeDirectionRef.current = 'vertical';
+        } else {
+          return;
+        }
+      }
 
       // Only allow swipe right (positive diffX)
-      if (diffX > 0) {
+      if (activeDirectionRef.current === 'horizontal' && diffX > 0) {
         const translateX = Math.min(diffX, drawer.offsetWidth);
-        drawer.style.transform = `translateX(${translateX}px)`;
+        drawer.style.transform = `${initialTransformRef.current} translate3d(${translateX}px, 0, 0)`;
+      }
+
+      // Allow swipe down to close
+      if (activeDirectionRef.current === 'vertical' && diffY > 0) {
+        const translateY = Math.min(diffY, drawer.offsetHeight);
+        drawer.style.transform = `${initialTransformRef.current} translate3d(0, ${translateY}px, 0)`;
       }
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      if (startXRef.current === null) return;
+      if (startXRef.current === null || startYRef.current === null) return;
       const currentX = e.changedTouches[0].clientX;
+      const currentY = e.changedTouches[0].clientY;
       const diffX = currentX - startXRef.current;
+      const diffY = currentY - startYRef.current;
 
       // If swiped more than 30% of drawer width, close
-      if (diffX > drawer.offsetWidth * 0.3) {
-        onClose();
-      } else {
-        // Snap back
-        drawer.style.transform = '';
+      if (activeDirectionRef.current === 'horizontal') {
+        if (diffX > drawer.offsetWidth * 0.3) {
+          onClose();
+        } else {
+          // Snap back
+          drawer.style.transform = initialTransformRef.current;
+        }
       }
+
+      // If swiped more than 25% of drawer height, close
+      if (activeDirectionRef.current === 'vertical') {
+        if (diffY > drawer.offsetHeight * 0.25) {
+          onClose();
+        } else {
+          drawer.style.transform = initialTransformRef.current;
+        }
+      }
+      drawer.style.transition = '';
       startXRef.current = null;
+      startYRef.current = null;
+      activeDirectionRef.current = null;
     };
 
     drawer.addEventListener('touchstart', handleTouchStart);
