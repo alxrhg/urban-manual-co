@@ -1,12 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
-export function SplashScreen() {
-  const [isVisible, setIsVisible] = useState(true);
+type SplashScreenProps = {
+  disabled?: boolean;
+};
+
+const getPrefersReducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+export function SplashScreen({ disabled = false }: SplashScreenProps) {
+  const prefersReducedMotion = useMemo(getPrefersReducedMotion, []);
+  const [isVisible, setIsVisible] = useState(() => !disabled && !getPrefersReducedMotion());
   const [isFading, setIsFading] = useState(false);
 
   useEffect(() => {
+    if (disabled || prefersReducedMotion) {
+      setIsVisible(false);
+      return;
+    }
+
+    let postLoadHideTimer: ReturnType<typeof setTimeout> | undefined;
+
     // Start fade after 800ms, fully hide after 1000ms
     const fadeTimer = setTimeout(() => {
       setIsFading(true);
@@ -18,8 +33,12 @@ export function SplashScreen() {
 
     // Also hide when page is fully loaded (faster)
     const handleLoad = () => {
+      window.removeEventListener('load', handleLoad);
       setIsFading(true);
-      setTimeout(() => setIsVisible(false), 200);
+
+      clearTimeout(hideTimer);
+      clearTimeout(fadeTimer);
+      postLoadHideTimer = setTimeout(() => setIsVisible(false), 200);
     };
 
     if (document.readyState === 'complete') {
@@ -31,9 +50,10 @@ export function SplashScreen() {
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(hideTimer);
+      if (postLoadHideTimer) clearTimeout(postLoadHideTimer);
       window.removeEventListener('load', handleLoad);
     };
-  }, []);
+  }, [disabled, prefersReducedMotion]);
 
   if (!isVisible) return null;
 
