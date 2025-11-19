@@ -17,7 +17,7 @@ const dataset =
 const apiVersion =
   process.env.NEXT_PUBLIC_SANITY_API_VERSION
   || process.env.SANITY_API_VERSION
-  || '2023-10-01';
+  || '2021-06-07';
 
 if (!projectId) {
   throw new Error('Missing Sanity project ID. Set NEXT_PUBLIC_SANITY_PROJECT_ID or SANITY_STUDIO_PROJECT_ID.');
