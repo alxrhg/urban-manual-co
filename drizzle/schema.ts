@@ -1,81 +1,89 @@
-import { mysqlTable, varchar, int, timestamp, text, datetime } from "drizzle-orm/mysql-core";
+import {
+  pgTable,
+  varchar,
+  integer,
+  timestamp,
+  text,
+  serial,
+  boolean,
+} from "drizzle-orm/pg-core";
 
-export const users = mysqlTable("users", {
+export const users = pgTable("users", {
   id: varchar("id", { length: 255 }).primaryKey(),
   name: varchar("name", { length: 255 }),
   email: varchar("email", { length: 255 }),
   avatar: varchar("avatar", { length: 500 }),
-  createdAt: datetime("created_at"),
-  lastSignedIn: datetime("last_signed_in"),
+  createdAt: timestamp("created_at", { withTimezone: false }),
+  lastSignedIn: timestamp("last_signed_in", { withTimezone: false }),
 });
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-export const savedPlaces = mysqlTable("saved_places", {
-  id: int("id").primaryKey().autoincrement(),
+export const savedPlaces = pgTable("saved_places", {
+  id: serial("id").primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull(),
   destinationSlug: varchar("destination_slug", { length: 255 }).notNull(),
-  savedAt: timestamp("saved_at").notNull(),
+  savedAt: timestamp("saved_at", { withTimezone: false }).notNull(),
   notes: text("notes"),
 });
 
-export const visitedPlaces = mysqlTable("visited_places", {
-  id: int("id").primaryKey().autoincrement(),
+export const visitedPlaces = pgTable("visited_places", {
+  id: serial("id").primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull(),
   destinationSlug: varchar("destination_slug", { length: 255 }).notNull(),
-  visitedAt: timestamp("visited_at").notNull(),
-  rating: int("rating"), // Optional rating 1-5
+  visitedAt: timestamp("visited_at", { withTimezone: false }).notNull(),
+  rating: integer("rating"), // Optional rating 1-5
   notes: text("notes"),
 });
 
-export const userPreferences = mysqlTable("user_preferences", {
-  id: int("id").primaryKey().autoincrement(),
+export const userPreferences = pgTable("user_preferences", {
+  id: serial("id").primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull().unique(),
   favoriteCategories: text("favorite_categories"), // JSON array
   favoriteCities: text("favorite_cities"), // JSON array
   interests: text("interests"), // JSON array
-  updatedAt: timestamp("updated_at").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: false }).notNull(),
 });
 
-export const userActivity = mysqlTable("user_activity", {
-  id: int("id").primaryKey().autoincrement(),
+export const userActivity = pgTable("user_activity", {
+  id: serial("id").primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull(),
   destinationSlug: varchar("destination_slug", { length: 255 }).notNull(),
   action: varchar("action", { length: 50 }).notNull(), // 'view', 'search', 'save', 'unsave'
-  timestamp: timestamp("timestamp").notNull(),
+  timestamp: timestamp("timestamp", { withTimezone: false }).notNull(),
   metadata: text("metadata"), // JSON for additional context
 });
 
-export const trips = mysqlTable("trips", {
-  id: int("id").primaryKey().autoincrement(),
+export const trips = pgTable("trips", {
+  id: serial("id").primaryKey(),
   userId: varchar("user_id", { length: 255 }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   destination: varchar("destination", { length: 255 }), // Main city/destination
-  startDate: datetime("start_date"),
-  endDate: datetime("end_date"),
+  startDate: timestamp("start_date", { withTimezone: false }),
+  endDate: timestamp("end_date", { withTimezone: false }),
   status: varchar("status", { length: 50 }).notNull().default("planning"), // 'planning', 'upcoming', 'ongoing', 'completed'
-  isPublic: int("is_public").notNull().default(0), // 0 = private, 1 = public
+  isPublic: boolean("is_public").notNull().default(false),
   coverImage: varchar("cover_image", { length: 500 }),
-  createdAt: datetime("created_at").notNull(),
-  updatedAt: datetime("updated_at").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: false }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: false }).notNull(),
 });
 
 export type Trip = typeof trips.$inferSelect;
 export type InsertTrip = typeof trips.$inferInsert;
 
-export const itineraryItems = mysqlTable("itinerary_items", {
-  id: int("id").primaryKey().autoincrement(),
-  tripId: int("trip_id").notNull(),
+export const itineraryItems = pgTable("itinerary_items", {
+  id: serial("id").primaryKey(),
+  tripId: integer("trip_id").notNull(),
   destinationSlug: varchar("destination_slug", { length: 255 }),
-  day: int("day").notNull(), // Day number in the trip (1-indexed)
-  orderIndex: int("order_index").notNull(), // Order within the day
+  day: integer("day").notNull(), // Day number in the trip (1-indexed)
+  orderIndex: integer("order_index").notNull(), // Order within the day
   time: varchar("time", { length: 50 }), // e.g., "9:00 AM", "Morning", "Afternoon"
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   notes: text("notes"), // User's personal notes
-  createdAt: datetime("created_at").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: false }).notNull(),
 });
 
 export type ItineraryItem = typeof itineraryItems.$inferSelect;
