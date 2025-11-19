@@ -251,12 +251,12 @@ export function NavigationRow({
           <div className="relative">
             <button
               onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180"
+              className="flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180"
               aria-label={isFiltersOpen ? 'Close filters' : 'Open filters'}
               aria-expanded={isFiltersOpen}
             >
               <SlidersHorizontal className="w-4 h-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
-              <span>Filters</span>
+              <span className="hidden sm:inline">Filters</span>
               {hasActiveFilters && (
                 <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full">
                   {activeFilterCount}
@@ -355,7 +355,7 @@ export function NavigationRow({
           <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
             <button
               onClick={() => onViewModeChange('grid')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+              className={`flex items-center gap-1.5 px-2 sm:px-3 py-2 text-sm font-medium transition-all rounded-full ${
                 viewMode === 'grid'
                   ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -363,11 +363,11 @@ export function NavigationRow({
               aria-label="Grid view"
             >
               <LayoutGrid className="h-4 w-4" />
-              <span>Grid</span>
+              <span className="hidden sm:inline">Grid</span>
             </button>
             <button
               onClick={() => onViewModeChange('map')}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
+              className={`flex items-center gap-1.5 px-2 sm:px-3 py-2 text-sm font-medium transition-all rounded-full ${
                 viewMode === 'map'
                   ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -375,7 +375,7 @@ export function NavigationRow({
               aria-label="Map view"
             >
               <Map className="h-4 w-4" />
-              <span>Map</span>
+              <span className="hidden sm:inline">Map</span>
             </button>
           </div>
 
