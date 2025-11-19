@@ -32,6 +32,7 @@ interface TripLocation {
   time?: string;
   notes?: string;
   duration?: number;
+  slug?: string;
   blockType?: 'destination' | 'flight' | 'train' | 'custom';
   customLocation?: {
     place_id?: string;
@@ -264,6 +265,7 @@ export function AddLocationToTrip({
         time: selectedTime,
         duration,
         notes,
+        slug: selectedDestination.slug,
         blockType: 'destination',
       };
     } else if (blockType === 'flight') {

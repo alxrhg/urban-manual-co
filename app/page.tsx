@@ -417,6 +417,13 @@ export default function Home() {
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [showTripPlanner, setShowTripPlanner] = useState(false);
+  const [plannerPrefill, setPlannerPrefill] = useState<{
+    slug?: string;
+    name: string;
+    image?: string;
+    city?: string;
+    category?: string;
+  } | null>(null);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
 
   const trackDestinationEngagement = useCallback(
@@ -2873,7 +2880,10 @@ export default function Home() {
                         </button>
                       ) : (
                         <button
-                          onClick={() => setShowTripPlanner(true)}
+                          onClick={() => {
+                            setPlannerPrefill(null);
+                            setShowTripPlanner(true);
+                          }}
                           className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
                           style={{ borderRadius: '9999px' }}
                           aria-label="Create Trip"
@@ -3152,52 +3162,29 @@ export default function Home() {
                             onClick={() => {
                               setSelectedDestination(destination);
                               openDrawer('destination');
-
-                              // Track destination click
-                              trackDestinationClick({
-                                destinationSlug: destination.slug,
-                                position: globalIndex,
-                                source: "grid",
+                              trackDestinationEngagement(
+                                destination,
+                                "grid",
+                                globalIndex
+                              );
+                            }}
+                            onPlanTrip={() => {
+                              trackDestinationEngagement(
+                                destination,
+                                "grid",
+                                globalIndex
+                              );
+                              setPlannerPrefill({
+                                slug: destination.slug,
+                                name: destination.name,
+                                image:
+                                  destination.image_thumbnail ||
+                                  destination.image ||
+                                  undefined,
+                                city: destination.city,
+                                category: destination.category,
                               });
-
-                              // Also track with new analytics system
-                              if (destination.id) {
-                                import("@/lib/analytics/track").then(
-                                  ({ trackEvent }) => {
-                                    trackEvent({
-                                      event_type: "click",
-                                      destination_id: destination.id,
-                                      destination_slug: destination.slug,
-                                      metadata: {
-                                        category: destination.category,
-                                        city: destination.city,
-                                        source: "homepage_grid",
-                                        position: globalIndex,
-                                      },
-                                    });
-                                  }
-                                );
-                              }
-
-                              // Track click event to Discovery Engine for personalization
-                              if (user?.id) {
-                                fetch("/api/discovery/track-event", {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    userId: user.id,
-                                    eventType: "click",
-                                    documentId: destination.slug,
-                                  }),
-                                }).catch(error => {
-                                  console.warn(
-                                    "Failed to track click event:",
-                                    error
-                                  );
-                                });
-                              }
+                              setShowTripPlanner(true);
                             }}
                                 index={globalIndex}
                                 isVisited={isVisited}
@@ -3370,11 +3357,15 @@ export default function Home() {
 
         {/* Trip Planner Modal - Only render when open */}
         {showTripPlanner && (
-          <TripPlanner
-            isOpen={true}
-            onClose={() => setShowTripPlanner(false)}
-          />
-        )}
+        <TripPlanner
+          isOpen={showTripPlanner}
+          prefilledDestination={plannerPrefill}
+          onClose={() => {
+            setShowTripPlanner(false);
+            setPlannerPrefill(null);
+          }}
+        />
+      )}
 
         {/* POI Drawer (Admin only) */}
         {isAdmin && (

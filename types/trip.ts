@@ -98,6 +98,7 @@ export interface ItineraryItemNotes {
   image?: string;
   city?: string;
   category?: string;
+  slug?: string;
   // Flight-specific fields
   from?: any;
   to?: any;

@@ -31,6 +31,15 @@ interface TripPlannerProps {
   isOpen: boolean;
   onClose: () => void;
   tripId?: string; // If provided, load existing trip
+  prefilledDestination?: PrefilledDestination | null;
+}
+
+interface PrefilledDestination {
+  slug?: string;
+  name: string;
+  image?: string;
+  city?: string;
+  category?: string;
 }
 
 interface TripLocation {
@@ -42,6 +51,14 @@ interface TripLocation {
   time?: string;
   notes?: string;
   duration?: number;
+  slug?: string;
+  blockType?: 'destination' | 'flight' | 'train' | 'custom';
+  customLocation?: {
+    place_id?: string;
+    formatted_address?: string;
+    geometry?: any;
+  };
+  airline?: string;
 }
 
 interface DayItinerary {
@@ -50,7 +67,12 @@ interface DayItinerary {
   notes?: string;
 }
 
-export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
+export function TripPlanner({
+  isOpen,
+  onClose,
+  tripId,
+  prefilledDestination,
+}: TripPlannerProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [tripName, setTripName] = useState('');
@@ -91,20 +113,46 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
     }
   }, [isOpen, tripId, user]);
 
+  useEffect(() => {
+    if (isOpen && !tripId && prefilledDestination) {
+      setDestination((prev) => prev || prefilledDestination.city || prefilledDestination.name);
+      setTripName((prev) => prev || `${prefilledDestination.name} Trip`);
+
+      if (!coverImage && prefilledDestination.image) {
+        setCoverImage(prefilledDestination.image);
+        setCoverImagePreview(prefilledDestination.image);
+      }
+    }
+  }, [isOpen, tripId, prefilledDestination, coverImage]);
+
+  const createPrefilledLocation = (): TripLocation | null => {
+    if (!prefilledDestination) return null;
+
+    return {
+      id: Date.now(),
+      name: prefilledDestination.name,
+      city: prefilledDestination.city || '',
+      category: prefilledDestination.category || '',
+      image: prefilledDestination.image || '/placeholder-image.jpg',
+      slug: prefilledDestination.slug,
+      blockType: 'destination',
+    };
+  };
+
   // Body scroll is handled by Drawer component
 
   const resetForm = () => {
     setTripName('');
-    setDestination('');
+    setDestination(prefilledDestination?.city || prefilledDestination?.name || '');
     setStartDate('');
     setEndDate('');
     setDays([]);
     setHotelLocation('');
     setStep('create');
     setCurrentTripId(null);
-    setCoverImage(null);
+    setCoverImage(prefilledDestination?.image || null);
     setCoverImageFile(null);
-    setCoverImagePreview(null);
+    setCoverImagePreview(prefilledDestination?.image || null);
     setValidationErrors([]);
     setFieldErrors({});
     setDraftRestored(false);
@@ -198,6 +246,7 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             time: item.time || undefined,
             notes: notesData.raw || undefined,
             duration: notesData.duration || undefined,
+            slug: notesData.slug || item.destination_slug || undefined,
           };
 
           daysMap.get(day)!.push(location);
@@ -388,6 +437,27 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         });
       }
 
+      const prefilledLocation = createPrefilledLocation();
+      if (prefilledLocation && newDays.length > 0) {
+        const hasLocationAlready = newDays[0].locations.some(
+          (loc) =>
+            (loc.slug && prefilledLocation.slug && loc.slug === prefilledLocation.slug) ||
+            loc.name === prefilledLocation.name
+        );
+
+        if (!hasLocationAlready) {
+          newDays[0] = {
+            ...newDays[0],
+            locations: [prefilledLocation, ...newDays[0].locations],
+          };
+        }
+
+        if (!coverImage && prefilledLocation.image) {
+          setCoverImage(prefilledLocation.image);
+          setCoverImagePreview(prefilledLocation.image);
+        }
+      }
+
       setDays(newDays);
       setStep('plan');
       setValidationErrors([]);
@@ -503,11 +573,13 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             image: location.image,
             city: location.city,
             category: location.category,
+            slug: location.slug,
           };
 
           itemsToInsert.push({
             trip_id: currentTripId,
-            destination_slug: location.name.toLowerCase().replace(/\s+/g, '-') || null,
+            destination_slug:
+              location.slug || location.name.toLowerCase().replace(/\s+/g, '-') || null,
             day: dayIndex + 1,
             order_index: locationIndex,
             time: location.time || null,
