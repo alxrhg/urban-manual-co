@@ -297,6 +297,10 @@ export function AccountDrawer() {
     }
   };
 
+  const handleDrawerClose = () => {
+    closeDrawer();
+  };
+
   // Get drawer title based on current subpage
   const getDrawerTitle = () => {
     switch (currentSubpage) {
@@ -906,7 +910,7 @@ export function AccountDrawer() {
   return (
     <Drawer
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleDrawerClose}
       title={undefined}
       headerContent={undefined}
       mobileVariant="bottom"
