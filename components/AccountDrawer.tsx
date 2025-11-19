@@ -8,24 +8,25 @@ import {
   User,
   Settings,
   Heart,
-  Check,
-  Map,
+  MapPin,
+  Layers,
+  Compass,
   LogOut,
   Bookmark,
   ChevronRight,
-  Layers,
-  Trophy,
-  Compass,
-  Pin,
   Loader2,
+  Trophy,
+  Folder,
+  ArrowLeft,
+  Plus,
+  Share2,
+  Download,
+  Trash2,
+  Calendar,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
-import { SavedPlacesDrawer } from "@/components/SavedPlacesDrawer";
-import { VisitedPlacesDrawer } from "@/components/VisitedPlacesDrawer";
-import { TripsDrawer } from "@/components/TripsDrawer";
-import { SettingsDrawer } from "@/components/SettingsDrawer";
 import type { Trip } from "@/types/trip";
 
 interface AccountDrawerProps {
@@ -39,7 +40,19 @@ interface UserStats {
   saved: number;
   trips: number;
   cities: number;
+  countries: number;
+  explorationProgress: number;
 }
+
+type SubpageId = 
+  | 'main_drawer'
+  | 'visited_subpage'
+  | 'saved_subpage'
+  | 'collections_subpage'
+  | 'trips_subpage'
+  | 'trip_details_subpage'
+  | 'achievements_subpage'
+  | 'settings_subpage';
 
 export function AccountDrawer({
   isOpen,
@@ -49,20 +62,43 @@ export function AccountDrawer({
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const [currentSubpage, setCurrentSubpage] = useState<SubpageId>('main_drawer');
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const [stats, setStats] = useState<UserStats>({ visited: 0, saved: 0, trips: 0, cities: 0 });
+  const [stats, setStats] = useState<UserStats>({ 
+    visited: 0, 
+    saved: 0, 
+    trips: 0, 
+    cities: 0, 
+    countries: 0,
+    explorationProgress: 0,
+  });
   const [statsLoading, setStatsLoading] = useState(false);
   const [recentTrips, setRecentTrips] = useState<Trip[]>([]);
-  const [recentVisits, setRecentVisits] = useState<Array<{ name: string; visited_at: string }>>([]);
+  const [visitedPlaces, setVisitedPlaces] = useState<any[]>([]);
+  const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
+  const [collections, setCollections] = useState<any[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  // Fetch user profile, avatar, and stats
+  // Reset to main drawer when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setCurrentSubpage('main_drawer');
+      setSelectedTripId(null);
+      setSelectedTrip(null);
+    }
+  }, [isOpen]);
+
+  // Fetch user profile, avatar, stats, and data
   useEffect(() => {
     async function fetchProfileAndStats() {
       if (!user?.id) {
         setAvatarUrl(null);
         setUsername(null);
-        setStats({ visited: 0, saved: 0, trips: 0, cities: 0 });
+        setStats({ visited: 0, saved: 0, trips: 0, cities: 0, countries: 0, explorationProgress: 0 });
         return;
       }
 
@@ -71,13 +107,13 @@ export function AccountDrawer({
         const supabaseClient = createClient();
         
         // Fetch profile
-        const { data: profileData, error: profileError } = await supabaseClient
+        const { data: profileData } = await supabaseClient
           .from("profiles")
           .select("avatar_url, username")
           .eq("id", user.id)
           .maybeSingle();
 
-        if (!profileError && profileData) {
+        if (profileData) {
           setAvatarUrl(profileData.avatar_url || null);
           setUsername(profileData.username || null);
         } else {
@@ -93,11 +129,17 @@ export function AccountDrawer({
           setAvatarUrl(null);
         }
 
+        // Fetch total destinations for progress calculation
+        const { count: totalDest } = await supabaseClient
+          .from("destinations")
+          .select("*", { count: "exact", head: true });
+        const totalDestinations = totalDest || 0;
+
         // Fetch stats
-        const [visitedResult, savedResult, tripsResult, visitedPlacesResult] = await Promise.all([
+        const [visitedResult, savedResult, tripsResult] = await Promise.all([
           supabaseClient
             .from("visited_places")
-            .select("destination_slug, destination:destinations(city)", { count: "exact" })
+            .select("destination_slug, destination:destinations(city, country)", { count: "exact" })
             .eq("user_id", user.id),
           supabaseClient
             .from("saved_places")
@@ -107,37 +149,39 @@ export function AccountDrawer({
             .from("trips")
             .select("*", { count: "exact", head: true })
             .eq("user_id", user.id),
-          supabaseClient
-            .from("visited_places")
-            .select("destination_slug, visited_at, destination:destinations(name)")
-            .eq("user_id", user.id)
-            .order("visited_at", { ascending: false })
-            .limit(3),
         ]);
 
         const visitedCount = visitedResult.count || 0;
         const savedCount = savedResult.count || 0;
         const tripsCount = tripsResult.count || 0;
 
-        // Count unique cities from visited places
+        // Count unique cities and countries
         const citiesSet = new Set<string>();
+        const countriesSet = new Set<string>();
         if (visitedResult.data) {
           visitedResult.data.forEach((item: any) => {
-            if (item.destination?.city) {
-              citiesSet.add(item.destination.city);
-            }
+            if (item.destination?.city) citiesSet.add(item.destination.city);
+            if (item.destination?.country) countriesSet.add(item.destination.country);
           });
         }
         const citiesCount = citiesSet.size;
+        const countriesCount = countriesSet.size;
+
+        // Calculate exploration progress
+        const explorationProgress = totalDestinations > 0
+          ? Math.round((visitedCount / totalDestinations) * 100)
+          : 0;
 
         setStats({
           visited: visitedCount,
           saved: savedCount,
           trips: tripsCount,
           cities: citiesCount,
+          countries: countriesCount,
+          explorationProgress,
         });
 
-        // Fetch recent trips
+        // Fetch recent trips (limit 3)
         const { data: tripsData } = await supabaseClient
           .from("trips")
           .select("*")
@@ -146,15 +190,6 @@ export function AccountDrawer({
           .limit(3);
 
         setRecentTrips((tripsData as Trip[]) || []);
-
-        // Set recent visits
-        if (visitedPlacesResult.data) {
-          const visits = visitedPlacesResult.data.map((item: any) => ({
-            name: item.destination?.name || item.destination_slug,
-            visited_at: item.visited_at,
-          }));
-          setRecentVisits(visits);
-        }
       } catch (error) {
         console.error("Error fetching profile and stats:", error);
       } finally {
@@ -167,13 +202,78 @@ export function AccountDrawer({
     }
   }, [user, isOpen]);
 
+  // Fetch data for subpages
+  useEffect(() => {
+    async function fetchSubpageData() {
+      if (!user?.id || !isOpen) return;
+
+      const supabaseClient = createClient();
+      setLoading(true);
+
+      try {
+        if (currentSubpage === 'visited_subpage') {
+          const { data: visitedResult } = await supabaseClient
+            .from('visited_places')
+            .select('destination_slug, visited_at, destination:destinations(name, image, city)')
+            .eq('user_id', user.id)
+            .order('visited_at', { ascending: false })
+            .limit(20);
+
+          if (visitedResult) {
+            const mapped = visitedResult.map((item: any) => ({
+              slug: item.destination_slug,
+              visited_at: item.visited_at,
+              destination: item.destination,
+            }));
+            setVisitedPlaces(mapped);
+          }
+        } else if (currentSubpage === 'saved_subpage') {
+          const { data: savedResult } = await supabaseClient
+            .from('saved_places')
+            .select('destination_slug, destination:destinations(name, image, city)')
+            .eq('user_id', user.id)
+            .limit(20);
+
+          if (savedResult) {
+            const mapped = savedResult.map((item: any) => ({
+              slug: item.destination_slug,
+              destination: item.destination,
+            }));
+            setSavedPlaces(mapped);
+          }
+        } else if (currentSubpage === 'trips_subpage' || currentSubpage === 'trip_details_subpage') {
+          const { data: tripsData } = await supabaseClient
+            .from('trips')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          setTrips((tripsData as Trip[]) || []);
+
+          if (selectedTripId && currentSubpage === 'trip_details_subpage') {
+            const trip = tripsData?.find((t: Trip) => t.id === selectedTripId);
+            setSelectedTrip(trip || null);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching subpage data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (currentSubpage !== 'main_drawer' && currentSubpage !== 'settings_subpage' && currentSubpage !== 'achievements_subpage' && currentSubpage !== 'collections_subpage') {
+      fetchSubpageData();
+    }
+  }, [user, isOpen, currentSubpage, selectedTripId]);
+
   const handleSignOut = async () => {
     await signOut();
     onClose();
     router.push("/");
   };
 
-  const handleNavigate = (path: string) => {
+  const handleNavigateToFullPage = (path: string) => {
     onClose();
     setTimeout(() => {
       router.push(path);
@@ -182,167 +282,375 @@ export function AccountDrawer({
 
   const displayUsername = username || user?.email?.split("@")[0] || "user";
 
-  const runAfterClose = (callback: () => void) => {
-    onClose();
-    setTimeout(callback, 200);
+  // Navigation handler
+  const navigateToSubpage = (subpage: SubpageId, tripId?: string) => {
+    if (tripId) {
+      setSelectedTripId(tripId);
+    }
+    setCurrentSubpage(subpage);
   };
 
-  const formatDate = (dateStr: string) => {
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    } catch {
-      return "";
+  const navigateBack = () => {
+    if (currentSubpage === 'trip_details_subpage') {
+      setCurrentSubpage('trips_subpage');
+      setSelectedTripId(null);
+    } else {
+      setCurrentSubpage('main_drawer');
     }
   };
 
-  const navigationItems = [
-    { icon: Bookmark, label: "Saved", action: () => handleNavigate("/account?tab=saved") },
-    { icon: Pin, label: "Visited", action: () => handleNavigate("/account?tab=visited") },
-    { icon: Layers, label: "Collections", action: () => handleNavigate("/account?tab=collections") },
-    { icon: Compass, label: "Trips", action: () => handleNavigate("/trips") },
-    { icon: Trophy, label: "Achievements", action: () => handleNavigate("/account?tab=achievements") },
-    { icon: Settings, label: "Settings", action: () => runAfterClose(() => openDrawer('settings')) },
-  ];
+  // Get drawer title based on current subpage
+  const getDrawerTitle = () => {
+    switch (currentSubpage) {
+      case 'visited_subpage':
+        return 'Visited';
+      case 'saved_subpage':
+        return 'Saved';
+      case 'collections_subpage':
+        return 'Collections';
+      case 'trips_subpage':
+        return 'Your Trips';
+      case 'trip_details_subpage':
+        return selectedTrip?.title || 'Trip Details';
+      case 'achievements_subpage':
+        return 'Achievements';
+      case 'settings_subpage':
+        return 'Settings';
+      default:
+        return 'Your Manual';
+    }
+  };
 
-  const accountContent = (
-    <div className="px-6 py-6">
+  // Render main drawer content (Tier 1)
+  const renderMainDrawer = () => (
+    <div className="space-y-0" style={{ padding: '30px 26px', paddingTop: '30px', paddingBottom: '30px', paddingLeft: '26px', paddingRight: '26px' }}>
       {user ? (
-        <div className="space-y-7">
-          {/* Profile Header - Compact Card */}
-          <div className="flex items-center gap-3 pb-4">
-            <div className="relative w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700">
+        <>
+          {/* Header: Avatar, Name, Username */}
+          <div className="flex items-center gap-3" style={{ gap: '12px', marginBottom: '14px' }}>
+            <div className="relative rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700" style={{ width: '64px', height: '64px' }}>
               {avatarUrl ? (
                 <Image
                   src={avatarUrl}
                   alt="Profile"
                   fill
                   className="object-cover"
-                  sizes="48px"
+                  sizes="64px"
                 />
               ) : (
-                <User className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                <User className="w-8 h-8 text-gray-400 dark:text-gray-500" />
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-gray-900 dark:text-white truncate">
+              <p className="text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight" style={{ fontSize: '22px', fontWeight: 600, letterSpacing: '-0.2px' }}>
                 {displayUsername}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {user.email}
+              <p className="text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight mt-0.5" style={{ fontSize: '14px', opacity: 0.55 }}>
+                @{displayUsername.toLowerCase().replace(/\s+/g, '')}
               </p>
             </div>
             <button
-              onClick={() => handleNavigate("/account")}
-              className="text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex items-center gap-1"
+              onClick={() => handleNavigateToFullPage("/account")}
+              className="flex items-center gap-1.5 rounded-full transition-colors"
+              style={{
+                height: '38px',
+                paddingLeft: '18px',
+                paddingRight: '18px',
+                borderRadius: '999px',
+                backgroundColor: 'rgba(255,255,255,0.09)',
+                color: '#F5F5F5',
+                fontSize: '14px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.09)';
+              }}
+              onMouseDown={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.18)';
+              }}
+              onMouseUp={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+              }}
             >
               View Full Profile
-              <ChevronRight className="w-3 h-3" strokeWidth={1.5} />
+              <ChevronRight className="w-3.5 h-3.5" strokeWidth={1.5} />
             </button>
           </div>
 
-          {/* Quick Stats - Horizontal Pills */}
-          <div className="flex flex-wrap gap-2">
-            {statsLoading ? (
-              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-            ) : (
-              <>
-                <div className="px-2.5 py-1.5 border border-gray-200 dark:border-gray-800 rounded-[10px] bg-white dark:bg-gray-950">
-                  <span className="text-xs font-medium text-gray-900 dark:text-white">
-                    Visited: {stats.visited}
-                  </span>
+          {/* Stats Bar: Horizontal Layout */}
+          <div className="flex items-center" style={{ paddingTop: '16px', paddingBottom: '16px', marginBottom: '28px', gap: '22px' }}>
+            <div className="flex-1 text-center">
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+                {stats.visited}
               </div>
-                <div className="px-2.5 py-1.5 border border-gray-200 dark:border-gray-800 rounded-[10px] bg-white dark:bg-gray-950">
-                  <span className="text-xs font-medium text-gray-900 dark:text-white">
-                    Saved: {stats.saved}
-                  </span>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+                Visited
               </div>
-                <div className="px-2.5 py-1.5 border border-gray-200 dark:border-gray-800 rounded-[10px] bg-white dark:bg-gray-950">
-                  <span className="text-xs font-medium text-gray-900 dark:text-white">
-                    Trips: {stats.trips}
-                  </span>
             </div>
-                <div className="px-2.5 py-1.5 border border-gray-200 dark:border-gray-800 rounded-[10px] bg-white dark:bg-gray-950">
-                  <span className="text-xs font-medium text-gray-900 dark:text-white">
-                    Cities: {stats.cities}
-                  </span>
+            <div className="w-px h-8 bg-[rgba(255,255,255,0.06)]" style={{ width: '1px' }} />
+            <div className="flex-1 text-center">
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+                {stats.saved}
               </div>
-              </>
-            )}
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+                Saved
+              </div>
+            </div>
+            <div className="w-px h-8 bg-[rgba(255,255,255,0.06)]" style={{ width: '1px' }} />
+            <div className="flex-1 text-center">
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+                {stats.trips}
+              </div>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+                Trips
+              </div>
+            </div>
+            <div className="w-px h-8 bg-[rgba(255,255,255,0.06)]" style={{ width: '1px' }} />
+            <div className="flex-1 text-center">
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+                {stats.cities}
+              </div>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+                Cities
+              </div>
+            </div>
           </div>
 
-          {/* Navigation List */}
+          {/* Your Spaces Section */}
+          <div className="space-y-0" style={{ marginBottom: '28px' }}>
+            <h3 className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.45, letterSpacing: '0.3px', paddingBottom: '8px' }}>
+              Your Spaces
+            </h3>
             <div className="space-y-1">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              return (
               <button
-                  key={item.label}
-                  type="button"
-                  onClick={item.action}
-                  className="w-full flex items-center gap-3 px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all duration-180 ease-out rounded-lg"
-                >
-                  <Icon className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" strokeWidth={1.5} />
-                  <span className="flex-1 text-left">{item.label}</span>
+                onClick={() => navigateToSubpage('saved_subpage')}
+                className="w-full flex items-center gap-3 transition-colors"
+                style={{
+                  height: '50px',
+                  paddingLeft: '14px',
+                  paddingRight: '14px',
+                  borderRadius: '14px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  letterSpacing: '-0.1px',
+                  color: '#F5F5F5',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+              >
+                <Bookmark className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <span className="flex-1 text-left">Saved</span>
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
               </button>
-              );
-            })}
+              <button
+                onClick={() => navigateToSubpage('visited_subpage')}
+                className="w-full flex items-center gap-3 transition-colors"
+                style={{
+                  height: '50px',
+                  paddingLeft: '14px',
+                  paddingRight: '14px',
+                  borderRadius: '14px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  letterSpacing: '-0.1px',
+                  color: '#F5F5F5',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+              >
+                <MapPin className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <span className="flex-1 text-left">Visited</span>
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+              </button>
+              <button
+                onClick={() => navigateToSubpage('collections_subpage')}
+                className="w-full flex items-center gap-3 transition-colors"
+                style={{
+                  height: '50px',
+                  paddingLeft: '14px',
+                  paddingRight: '14px',
+                  borderRadius: '14px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  letterSpacing: '-0.1px',
+                  color: '#F5F5F5',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+              >
+                <Folder className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <span className="flex-1 text-left">Lists</span>
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+              </button>
+              <button
+                onClick={() => navigateToSubpage('trips_subpage')}
+                className="w-full flex items-center gap-3 transition-colors"
+                style={{
+                  height: '50px',
+                  paddingLeft: '14px',
+                  paddingRight: '14px',
+                  borderRadius: '14px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  letterSpacing: '-0.1px',
+                  color: '#F5F5F5',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+              >
+                <Compass className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <span className="flex-1 text-left">Trips</span>
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+              </button>
+              <button
+                onClick={() => navigateToSubpage('settings_subpage')}
+                className="w-full flex items-center gap-3 transition-colors"
+                style={{
+                  height: '50px',
+                  paddingLeft: '14px',
+                  paddingRight: '14px',
+                  borderRadius: '14px',
+                  fontSize: '16px',
+                  fontWeight: 500,
+                  letterSpacing: '-0.1px',
+                  color: '#F5F5F5',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+                onMouseDown={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
+                }}
+                onMouseUp={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+              >
+                <Settings className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <span className="flex-1 text-left">Settings</span>
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+              </button>
+            </div>
           </div>
 
-          {/* My Trips Preview */}
+          {/* Contextual Section: Continue Planning */}
           {recentTrips.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                My Trips
-              </h3>
-              <div className="space-y-2">
-                {recentTrips.slice(0, 3).map((trip) => (
+            <div style={{ marginBottom: '28px' }}>
               <button
-                    key={trip.id}
-                    onClick={() => handleNavigate(`/trips/${trip.id}`)}
-                    className="w-full text-left space-y-0.5 hover:opacity-70 transition-opacity"
-                  >
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                      {trip.title}
-                    </p>
-                    {trip.destination && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {trip.destination}
-                      </p>
-                    )}
-                  </button>
-                ))}
-                </div>
+                onClick={() => navigateToSubpage('trip_details_subpage', recentTrips[0].id)}
+                className="w-full text-left transition-all"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  borderRadius: '18px',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  padding: '18px',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
+                }}
+              >
+                {recentTrips[0].cover_image && (
+                  <div className="relative w-full h-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3">
+                    <Image
+                      src={recentTrips[0].cover_image}
+                      alt={recentTrips[0].title}
+                      fill
+                      className="object-cover"
+                      sizes="100%"
+                    />
                   </div>
                 )}
-
-          {/* Recent Visits */}
-          {recentVisits.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                Recent Visits
-              </h3>
-              <div className="space-y-2">
-                {recentVisits.slice(0, 3).map((visit, index) => (
-                  <div key={index} className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                    {visit.name}
+                <div className="text-[#F5F5F5] dark:text-[#F5F5F5] mb-1" style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.2px' }}>
+                  {recentTrips[0].title}
+                </div>
+                {recentTrips[0].start_date && (
+                  <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.55 }}>
+                    {new Date(recentTrips[0].start_date).toLocaleDateString("en-US", { 
+                      month: "short", 
+                      day: "numeric",
+                      year: "numeric"
+                    })}
                   </div>
-                ))}
-              </div>
+                )}
+              </button>
             </div>
           )}
 
-          {/* Sign Out */}
-          <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+          {/* Footer: Sign Out */}
+          <div className="border-t border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]" style={{ paddingTop: '28px' }}>
             <button
               type="button"
               onClick={handleSignOut}
-              className="text-sm font-semibold text-gray-900 dark:text-white hover:opacity-70 transition-opacity"
+              className="w-full flex items-center justify-center gap-2 text-[#F5F5F5] dark:text-[#F5F5F5] transition-colors"
+              style={{
+                fontSize: '15px',
+                paddingTop: '16px',
+                paddingBottom: '16px',
+                opacity: 0.75,
+                borderRadius: '12px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
             >
-              Sign Out
+              <LogOut className="w-4 h-4" strokeWidth={1.5} />
+              <span>Sign Out</span>
             </button>
+            <div className="text-center text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '12px', opacity: 0.35, marginTop: '6px' }}>
+              © {new Date().getFullYear()} Urban Manual
             </div>
           </div>
+        </>
       ) : (
         <div className="text-center py-8 space-y-4">
           <div className="space-y-2">
@@ -355,7 +663,7 @@ export function AccountDrawer({
           </div>
           <button
             type="button"
-            onClick={() => handleNavigate("/auth/login")}
+            onClick={() => handleNavigateToFullPage("/auth/login")}
             className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
           >
             Sign In
@@ -365,46 +673,402 @@ export function AccountDrawer({
     </div>
   );
 
-  return (
-    <>
-      <Drawer 
-        isOpen={isOpen} 
-        onClose={onClose} 
-        headerContent={
-          <div className="flex items-center justify-between w-full">
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-white tracking-tight">Account</h2>
+  // Render visited subpage
+  const renderVisitedSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      {loading ? (
+        <div className="text-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        </div>
+      ) : visitedPlaces.length > 0 ? (
+        <div className="space-y-2">
+          {visitedPlaces.map((visit, index) => (
+              <button
+                key={index}
+                onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
+              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+            >
+              {visit.destination?.image && (
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                  <Image
+                    src={visit.destination.image}
+                    alt={visit.destination.name}
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                  />
                 </div>
-        }
-        mobileVariant="bottom"
-        desktopSpacing="right-4 top-4 bottom-4"
-        desktopWidth="360px"
-        position="right"
-        style="solid"
+              )}
+                <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {visit.destination?.name || visit.slug}
+                  </p>
+                  {visit.visited_at && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(visit.visited_at).toLocaleDateString("en-US", { 
+                      month: "short", 
+                      day: "numeric",
+                      year: "numeric"
+                      })}
+                    </p>
+                  )}
+                </div>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+              </button>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-sm text-gray-500 dark:text-gray-400">No visited places yet</p>
+        </div>
+      )}
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/account?tab=visited")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          View All Visited
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render saved subpage
+  const renderSavedSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      {loading ? (
+        <div className="text-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        </div>
+      ) : savedPlaces.length > 0 ? (
+        <div className="space-y-2">
+          {savedPlaces.map((saved, index) => (
+              <button
+                key={index}
+                onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
+              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+            >
+              {saved.destination?.image && (
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                  <Image
+                    src={saved.destination.image}
+                    alt={saved.destination.name}
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                  />
+                </div>
+              )}
+                <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {saved.destination?.name || saved.slug}
+                  </p>
+                  {saved.destination?.city && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {saved.destination.city}
+                    </p>
+                  )}
+                </div>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+              </button>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-sm text-gray-500 dark:text-gray-400">No saved places yet</p>
+        </div>
+      )}
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/account?tab=saved")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          View Full Saved
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render collections subpage
+  const renderCollectionsSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      <div className="text-center py-12">
+        <p className="text-sm text-gray-500 dark:text-gray-400">Collections coming soon</p>
+      </div>
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/account?tab=collections")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          View All Collections
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render trips subpage
+  const renderTripsSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      <button
+        onClick={() => {
+          onClose();
+          setTimeout(() => {
+            router.push('/trips');
+          }, 200);
+        }}
+        className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium flex items-center justify-center gap-2"
       >
-        {accountContent}
-      </Drawer>
-      {/* Sub-drawers - Only render when open */}
-      {isDrawerOpen('saved-places') && (
-        <SavedPlacesDrawer
-          isOpen={true}
-          onClose={closeDrawer}
-        />
+        <Plus className="w-4 h-4" />
+        New Trip
+      </button>
+      {loading ? (
+        <div className="text-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        </div>
+      ) : trips.length > 0 ? (
+        <div className="space-y-2">
+          {trips.map((trip) => (
+            <button
+              key={trip.id}
+              onClick={() => navigateToSubpage('trip_details_subpage', trip.id)}
+              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+            >
+              {trip.cover_image && (
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                  <Image
+                  src={trip.cover_image}
+                  alt={trip.title}
+                    fill
+                    className="object-cover"
+                    sizes="48px"
+                />
+              </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {trip.title}
+                </p>
+                {trip.start_date && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(trip.start_date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric"
+                    })}
+                  </p>
+                )}
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-sm text-gray-500 dark:text-gray-400">No trips yet</p>
+        </div>
       )}
-      {isDrawerOpen('visited-places') && (
-        <VisitedPlacesDrawer
-          isOpen={true}
-          onClose={closeDrawer}
-        />
-      )}
-      {isDrawerOpen('trips') && (
-        <TripsDrawer isOpen={true} onClose={closeDrawer} />
-      )}
-      {isDrawerOpen('settings') && (
-        <SettingsDrawer
-          isOpen={true}
-          onClose={closeDrawer}
-        />
-      )}
-    </>
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/trips")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          View All Trips
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render trip details subpage
+  const renderTripDetailsSubpage = () => {
+    if (!selectedTrip) {
+      return (
+        <div className="px-6 py-6">
+          <div className="text-center py-12">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Trip not found</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="px-6 py-6 space-y-4">
+        {selectedTrip.cover_image && (
+          <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+            <Image
+              src={selectedTrip.cover_image}
+              alt={selectedTrip.title}
+              fill
+              className="object-cover"
+              sizes="100vw"
+            />
+          </div>
+        )}
+        {selectedTrip.start_date && (
+          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <Calendar className="w-4 h-4" />
+            <span>
+              {new Date(selectedTrip.start_date).toLocaleDateString("en-US", { 
+                month: "long", 
+                day: "numeric",
+                year: "numeric"
+              })}
+              {selectedTrip.end_date && ` - ${new Date(selectedTrip.end_date).toLocaleDateString("en-US", { 
+                month: "long", 
+                day: "numeric",
+                year: "numeric"
+              })}`}
+            </span>
+          </div>
+        )}
+        <div className="flex gap-2">
+          <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+            <Share2 className="w-4 h-4" />
+            Share
+          </button>
+          <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+          <button
+            onClick={() => handleNavigateToFullPage(`/trips/${selectedTrip.id}`)}
+            className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          >
+            Open Full Trip
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Render achievements subpage
+  const renderAchievementsSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      <div className="text-center py-12">
+        <p className="text-sm text-gray-500 dark:text-gray-400">Achievements coming soon</p>
+      </div>
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/account?tab=achievements")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          View All Achievements
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render settings subpage
+  const renderSettingsSubpage = () => (
+    <div className="px-6 py-6 space-y-4">
+      <div className="space-y-2">
+        <button
+          onClick={() => handleNavigateToFullPage("/account?tab=settings")}
+          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+        >
+          <span>Settings</span>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+        </button>
+      </div>
+      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <button
+          onClick={() => handleNavigateToFullPage("/account?tab=settings")}
+          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+        >
+          Open Full Settings
+        </button>
+      </div>
+    </div>
+  );
+
+  // Render content based on current subpage
+  const renderContent = () => {
+    switch (currentSubpage) {
+      case 'visited_subpage':
+        return renderVisitedSubpage();
+      case 'saved_subpage':
+        return renderSavedSubpage();
+      case 'collections_subpage':
+        return renderCollectionsSubpage();
+      case 'trips_subpage':
+        return renderTripsSubpage();
+      case 'trip_details_subpage':
+        return renderTripDetailsSubpage();
+      case 'achievements_subpage':
+        return renderAchievementsSubpage();
+      case 'settings_subpage':
+        return renderSettingsSubpage();
+      default:
+        return renderMainDrawer();
+    }
+  };
+
+  // Render header with back button for subpages (Tier 2)
+  const renderHeader = () => {
+    if (currentSubpage === 'main_drawer') {
+      return undefined; // Use default header
+    }
+
+    return (
+      <div 
+        className="flex items-center gap-3 px-6 h-14"
+        style={{
+          background: 'rgba(18,18,18,0.6)',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)',
+        }}
+      >
+        <button
+          onClick={navigateBack}
+          className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5 text-[#F5F5F5] dark:text-[#F5F5F5]" />
+        </button>
+        <h2 className="text-[20px] font-semibold text-[#F5F5F5] dark:text-[#F5F5F5] flex-1" style={{ fontWeight: 600 }}>
+          {getDrawerTitle()}
+        </h2>
+        <div className="w-9" /> {/* Spacer for centering */}
+      </div>
+    );
+  };
+
+  // Determine z-index based on subpage tier
+  const getZIndex = () => {
+    if (currentSubpage === 'main_drawer') {
+      return 1000; // Tier 1
+    }
+    return 1100; // Tier 2
+  };
+
+  const isTier1 = currentSubpage === 'main_drawer';
+  const isTier2 = currentSubpage !== 'main_drawer';
+
+  return (
+    <Drawer 
+      isOpen={isOpen} 
+      onClose={onClose}
+      title={currentSubpage === 'main_drawer' ? undefined : getDrawerTitle()}
+      headerContent={currentSubpage !== 'main_drawer' ? renderHeader() : undefined}
+      mobileVariant="bottom"
+      desktopSpacing="right-4 top-4 bottom-4"
+      desktopWidth="420px"
+      position="right"
+      style="glassy"
+      backdropOpacity={isTier1 ? "18" : "18"}
+      keepStateOnClose={true}
+      zIndex={getZIndex()}
+    >
+      <div className={`transition-opacity duration-200 ${currentSubpage !== 'main_drawer' ? 'opacity-100' : 'opacity-100'}`}>
+        {renderContent()}
+      </div>
+    </Drawer>
   );
 }
