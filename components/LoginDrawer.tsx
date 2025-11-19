@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useId } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -16,6 +16,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { signIn, signUp, signInWithApple } = useAuth();
+  const uniqueId = useId();
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -127,11 +128,11 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
               {/* Name - Only show for sign up */}
               {isSignUp && (
                 <div>
-                  <label htmlFor="login-name" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  <label htmlFor={`login-name-${uniqueId}`} className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                     Name
                   </label>
                   <input
-                    id="login-name"
+                    id={`login-name-${uniqueId}`}
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -145,11 +146,11 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
               {/* Email */}
               <div>
-                <label htmlFor="login-email" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <label htmlFor={`login-email-${uniqueId}`} className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Email
                 </label>
                 <input
-                  id="login-email"
+                  id={`login-email-${uniqueId}`}
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -162,11 +163,11 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
               {/* Password */}
               <div>
-                <label htmlFor="login-password" className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
+                <label htmlFor={`login-password-${uniqueId}`} className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Password
                 </label>
                 <input
-                  id="login-password"
+                  id={`login-password-${uniqueId}`}
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

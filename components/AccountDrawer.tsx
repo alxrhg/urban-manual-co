@@ -432,19 +432,28 @@ export function AccountDrawer({
       >
         {accountContent}
       </Drawer>
-      <SavedPlacesDrawer
-        isOpen={isDrawerOpen('saved-places')}
-        onClose={closeDrawer}
-      />
-      <VisitedPlacesDrawer
-        isOpen={isDrawerOpen('visited-places')}
-        onClose={closeDrawer}
-      />
-      <TripsDrawer isOpen={isDrawerOpen('trips')} onClose={closeDrawer} />
-      <SettingsDrawer
-        isOpen={isDrawerOpen('settings')}
-        onClose={closeDrawer}
-      />
+      {/* Sub-drawers - Only render when open */}
+      {isDrawerOpen('saved-places') && (
+        <SavedPlacesDrawer
+          isOpen={true}
+          onClose={closeDrawer}
+        />
+      )}
+      {isDrawerOpen('visited-places') && (
+        <VisitedPlacesDrawer
+          isOpen={true}
+          onClose={closeDrawer}
+        />
+      )}
+      {isDrawerOpen('trips') && (
+        <TripsDrawer isOpen={true} onClose={closeDrawer} />
+      )}
+      {isDrawerOpen('settings') && (
+        <SettingsDrawer
+          isOpen={true}
+          onClose={closeDrawer}
+        />
+      )}
     </>
   );
 }

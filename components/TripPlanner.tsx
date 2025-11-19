@@ -636,11 +636,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
       ) : step === 'create' ? (
         <div className="space-y-8">
           <div className="space-y-3">
-            <label htmlFor="trip-planner-name" className="block text-sm text-gray-700 dark:text-gray-300">
+            <label htmlFor={`trip-planner-name-${currentTripId || 'new'}`} className="block text-sm text-gray-700 dark:text-gray-300">
               Trip Name
             </label>
             <input
-              id="trip-planner-name"
+              id={`trip-planner-name-${currentTripId || 'new'}`}
               type="text"
               value={tripName}
               onChange={(e) => setTripName(e.target.value)}
@@ -651,11 +651,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           </div>
 
           <div className="space-y-3">
-            <label htmlFor="trip-planner-destination" className="block text-sm text-gray-700 dark:text-gray-300">
+            <label htmlFor={`trip-planner-destination-${currentTripId || 'new'}`} className="block text-sm text-gray-700 dark:text-gray-300">
               Destination
             </label>
             <input
-              id="trip-planner-destination"
+              id={`trip-planner-destination-${currentTripId || 'new'}`}
               type="text"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
@@ -666,11 +666,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
           </div>
 
           <div className="space-y-3">
-            <label htmlFor="trip-planner-hotel" className="block text-sm text-gray-700 dark:text-gray-300">
+            <label htmlFor={`trip-planner-hotel-${currentTripId || 'new'}`} className="block text-sm text-gray-700 dark:text-gray-300">
               Hotel / Base Location
             </label>
             <input
-              id="trip-planner-hotel"
+              id={`trip-planner-hotel-${currentTripId || 'new'}`}
               type="text"
               value={hotelLocation}
               onChange={(e) => setHotelLocation(e.target.value)}
@@ -682,11 +682,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-3">
-              <label htmlFor="trip-planner-start-date" className="block text-sm text-gray-700 dark:text-gray-300">
+              <label htmlFor={`trip-planner-start-date-${currentTripId || 'new'}`} className="block text-sm text-gray-700 dark:text-gray-300">
                 Start Date
               </label>
               <input
-                id="trip-planner-start-date"
+                id={`trip-planner-start-date-${currentTripId || 'new'}`}
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
@@ -696,11 +696,11 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
             </div>
 
             <div className="space-y-3">
-              <label htmlFor="trip-planner-end-date" className="block text-sm text-gray-700 dark:text-gray-300">
+              <label htmlFor={`trip-planner-end-date-${currentTripId || 'new'}`} className="block text-sm text-gray-700 dark:text-gray-300">
                 End Date
               </label>
               <input
-                id="trip-planner-end-date"
+                id={`trip-planner-end-date-${currentTripId || 'new'}`}
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}

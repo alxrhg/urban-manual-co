@@ -400,18 +400,20 @@ export default function TripsPage() {
         )}
       </div>
 
-      {/* Trip Planner Modal */}
-      <TripPlanner
-        isOpen={showCreateDialog}
-        tripId={editingTripId || undefined}
-        onClose={() => {
-          setShowCreateDialog(false);
-          setEditingTripId(null);
-          if (user) {
-            fetchTrips();
-          }
-        }}
-      />
+      {/* Trip Planner Modal - Only render when open */}
+      {showCreateDialog && (
+        <TripPlanner
+          isOpen={true}
+          tripId={editingTripId || undefined}
+          onClose={() => {
+            setShowCreateDialog(false);
+            setEditingTripId(null);
+            if (user) {
+              fetchTrips();
+            }
+          }}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmTrip && (

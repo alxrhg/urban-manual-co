@@ -135,15 +135,18 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
         </div>
       )}
 
-      <TripPlanner
-        isOpen={showTripDialog}
-        tripId={editingTripId !== null ? String(editingTripId) : undefined}
-        onClose={async () => {
-          setShowTripDialog(false);
-          setEditingTripId(null);
-          await onTripsUpdated();
-        }}
-      />
+      {/* Trip Planner - Only render when open */}
+      {showTripDialog && (
+        <TripPlanner
+          isOpen={true}
+          tripId={editingTripId !== null ? String(editingTripId) : undefined}
+          onClose={async () => {
+            setShowTripDialog(false);
+            setEditingTripId(null);
+            await onTripsUpdated();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -150,24 +150,30 @@ export function Header() {
           <div className="flex items-center gap-2">{actionButtons}</div>
         </nav>
       </div>
-      {/* Account Drawer */}
-      <AccountDrawer
-        isOpen={isDrawerOpen('account')}
-        onClose={closeDrawer}
-        onOpenChat={() => openDrawer('chat')}
-      />
+      {/* Account Drawer - Only render when open */}
+      {isDrawerOpen('account') && (
+        <AccountDrawer
+          isOpen={true}
+          onClose={closeDrawer}
+          onOpenChat={() => openDrawer('chat')}
+        />
+      )}
 
-      {/* Chat Drawer */}
-      <ChatDrawer
-        isOpen={isDrawerOpen('chat')}
-        onClose={closeDrawer}
-      />
+      {/* Chat Drawer - Only render when open */}
+      {isDrawerOpen('chat') && (
+        <ChatDrawer
+          isOpen={true}
+          onClose={closeDrawer}
+        />
+      )}
 
-      {/* Login Drawer */}
-      <LoginDrawer
-        isOpen={isDrawerOpen('login')}
-        onClose={closeDrawer}
-      />
+      {/* Login Drawer - Only render when open */}
+      {isDrawerOpen('login') && (
+        <LoginDrawer
+          isOpen={true}
+          onClose={closeDrawer}
+        />
+      )}
     </header>
   );
 }

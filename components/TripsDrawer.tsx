@@ -328,15 +328,18 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
       >
         {content}
       </Drawer>
-      <TripPlanner
-        isOpen={showTripDialog}
-        tripId={editingTripId || undefined}
-        onClose={() => {
-          setShowTripDialog(false);
-          setEditingTripId(null);
-          fetchTrips();
-        }}
-      />
+      {/* Trip Planner - Only render when open */}
+      {showTripDialog && (
+        <TripPlanner
+          isOpen={true}
+          tripId={editingTripId || undefined}
+          onClose={() => {
+            setShowTripDialog(false);
+            setEditingTripId(null);
+            fetchTrips();
+          }}
+        />
+      )}
     </>
   );
 }

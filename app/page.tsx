@@ -3237,60 +3237,64 @@ export default function Home() {
               </div>
             </div>
 
-        {/* Destination Drawer */}
-        <DestinationDrawer
-          destination={selectedDestination}
-          isOpen={isDrawerOpen('destination')}
-          onClose={() => {
-            // Sort visited items to the back when closing
-            setFilteredDestinations(prev => {
-              const sorted = [...prev].sort((a, b) => {
-                const aVisited = user && visitedSlugs.has(a.slug);
-                const bVisited = user && visitedSlugs.has(b.slug);
-                if (aVisited && !bVisited) return 1;
-                if (!aVisited && bVisited) return -1;
-                return 0;
+        {/* Destination Drawer - Only render when open */}
+        {isDrawerOpen('destination') && selectedDestination && (
+          <DestinationDrawer
+            destination={selectedDestination}
+            isOpen={true}
+            onClose={() => {
+              // Sort visited items to the back when closing
+              setFilteredDestinations(prev => {
+                const sorted = [...prev].sort((a, b) => {
+                  const aVisited = user && visitedSlugs.has(a.slug);
+                  const bVisited = user && visitedSlugs.has(b.slug);
+                  if (aVisited && !bVisited) return 1;
+                  if (!aVisited && bVisited) return -1;
+                  return 0;
+                });
+                return sorted;
               });
-              return sorted;
-            });
-            closeDrawer();
-            setTimeout(() => setSelectedDestination(null), 300);
-          }}
-          onVisitToggle={(slug, visited) => {
-            // Update visited slugs
-            setVisitedSlugs(prev => {
-              const newSet = new Set(prev);
-              if (visited) {
-                newSet.add(slug);
-              } else {
-                newSet.delete(slug);
-              }
-              return newSet;
-            });
-
-            // Sort visited items to the back
-            setFilteredDestinations(prev => {
-              const sorted = [...prev].sort((a, b) => {
-                const aVisited =
-                  user &&
-                  (visitedSlugs.has(a.slug) || (visited && a.slug === slug));
-                const bVisited =
-                  user &&
-                  (visitedSlugs.has(b.slug) || (visited && b.slug === slug));
-                if (aVisited && !bVisited) return 1;
-                if (!aVisited && bVisited) return -1;
-                return 0;
+              closeDrawer();
+              setTimeout(() => setSelectedDestination(null), 300);
+            }}
+            onVisitToggle={(slug, visited) => {
+              // Update visited slugs
+              setVisitedSlugs(prev => {
+                const newSet = new Set(prev);
+                if (visited) {
+                  newSet.add(slug);
+                } else {
+                  newSet.delete(slug);
+                }
+                return newSet;
               });
-              return sorted;
-            });
-          }}
-        />
 
-        {/* Trip Planner Modal */}
-        <TripPlanner
-          isOpen={showTripPlanner}
-          onClose={() => setShowTripPlanner(false)}
-        />
+              // Sort visited items to the back
+              setFilteredDestinations(prev => {
+                const sorted = [...prev].sort((a, b) => {
+                  const aVisited =
+                    user &&
+                    (visitedSlugs.has(a.slug) || (visited && a.slug === slug));
+                  const bVisited =
+                    user &&
+                    (visitedSlugs.has(b.slug) || (visited && b.slug === slug));
+                  if (aVisited && !bVisited) return 1;
+                  if (!aVisited && bVisited) return -1;
+                  return 0;
+                });
+                return sorted;
+              });
+            }}
+          />
+        )}
+
+        {/* Trip Planner Modal - Only render when open */}
+        {showTripPlanner && (
+          <TripPlanner
+            isOpen={true}
+            onClose={() => setShowTripPlanner(false)}
+          />
+        )}
 
         {/* POI Drawer (Admin only) */}
         {isAdmin && (
