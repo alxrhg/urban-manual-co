@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, memo } from 'react';
+import { ReactNode, memo, useMemo } from 'react';
 
 interface UniversalGridProps<T> {
   items: T[];
@@ -17,7 +17,7 @@ interface UniversalGridProps<T> {
  * across all pages (homepage, cities, categories, etc.)
  * 
  * Grid breakpoints:
- * - Mobile: swipeable horizontal track (auto column width ~65% viewport)
+ * - Mobile: paginated swipe (full-width pages, 2-column grid)
  * - sm: 3 columns
  * - md: 4 columns
  * - lg: 5 columns
@@ -26,6 +26,8 @@ interface UniversalGridProps<T> {
  * 
  * Memoized to prevent unnecessary re-renders when items haven't changed
  */
+const MOBILE_PAGE_SIZE = 4;
+
 export const UniversalGrid = memo(function UniversalGrid<T>({
   items,
   renderItem,
@@ -39,6 +41,14 @@ export const UniversalGrid = memo(function UniversalGrid<T>({
     lg: 'gap-6 md:gap-8 lg:gap-10',
   };
 
+  const mobilePages = useMemo(() => {
+    const chunks: T[][] = [];
+    for (let i = 0; i < items.length; i += MOBILE_PAGE_SIZE) {
+      chunks.push(items.slice(i, i + MOBILE_PAGE_SIZE));
+    }
+    return chunks.length ? chunks : [items];
+  }, [items]);
+
   if (items.length === 0 && emptyState) {
     return <>{emptyState}</>;
   }
@@ -48,11 +58,24 @@ export const UniversalGrid = memo(function UniversalGrid<T>({
   }
 
   return (
-    <div
-      className="w-full overflow-x-auto pb-4 [-webkit-overflow-scrolling:touch] sm:overflow-visible sm:pb-0"
-    >
+    <div className="w-full">
+      <div className="flex snap-x snap-mandatory overflow-x-auto pb-4 [-webkit-overflow-scrolling:touch] sm:hidden">
+        {mobilePages.map((pageItems, pageIndex) => (
+          <div
+            key={`mobile-page-${pageIndex}`}
+            className="w-full shrink-0 snap-center px-1"
+          >
+            <div className={`grid grid-cols-2 ${gapClasses[gap]} items-start ${className}`}>
+              {pageItems.map((item, itemIndex) =>
+                renderItem(item, pageIndex * MOBILE_PAGE_SIZE + itemIndex),
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div
-        className={`grid grid-flow-col auto-cols-[minmax(65%,_1fr)] snap-x snap-mandatory [&>*]:snap-start sm:grid-flow-row sm:auto-cols-auto sm:snap-none sm:[&>*]:snap-none sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 ${gapClasses[gap]} items-start ${className}`}
+        className={`hidden sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 ${gapClasses[gap]} items-start ${className}`}
       >
         {items.map((item, index) => renderItem(item, index))}
       </div>
