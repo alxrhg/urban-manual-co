@@ -51,7 +51,8 @@ async function getUserIdFromSession() {
       if (error?.message?.includes('fetch failed') ||
           error?.message?.includes('ECONNREFUSED') ||
           error?.message?.includes('ETIMEDOUT') ||
-          supabase.supabaseUrl?.includes('placeholder')) {
+          error?.cause?.code === 'ECONNREFUSED' ||
+          error?.cause?.message?.includes('fetch failed')) {
         console.warn('[Homepage Visited] Supabase config error, returning null user');
         return null;
       }
