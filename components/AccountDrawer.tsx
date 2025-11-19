@@ -26,6 +26,7 @@ import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
 import type { Trip } from "@/types/trip";
+import type { Collection } from "@/types/common";
 
 interface AccountDrawerProps {
   isOpen: boolean;
@@ -74,7 +75,7 @@ export function AccountDrawer({
   });
   const [visitedPlaces, setVisitedPlaces] = useState<any[]>([]);
   const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
-  const [collections, setCollections] = useState<any[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(false);
@@ -226,6 +227,15 @@ export function AccountDrawer({
             }));
             setSavedPlaces(mapped);
           }
+        } else if (currentSubpage === 'collections_subpage') {
+          const { data: collectionsResult } = await supabaseClient
+            .from('collections')
+            .select('id, name, description, emoji, color, destination_count, is_public, created_at')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(20);
+
+          setCollections((collectionsResult as Collection[]) || []);
         } else if (currentSubpage === 'trips_subpage' || currentSubpage === 'trip_details_subpage') {
           const { data: tripsData } = await supabaseClient
             .from('trips')
@@ -247,9 +257,17 @@ export function AccountDrawer({
       }
     }
 
-    if (currentSubpage !== 'main_drawer' && currentSubpage !== 'settings_subpage' && currentSubpage !== 'achievements_subpage' && currentSubpage !== 'collections_subpage') {
-      fetchSubpageData();
-    }
+      const shouldFetch = [
+        'visited_subpage',
+        'saved_subpage',
+        'collections_subpage',
+        'trips_subpage',
+        'trip_details_subpage'
+      ].includes(currentSubpage);
+
+      if (shouldFetch) {
+        fetchSubpageData();
+      }
   }, [user, isOpen, currentSubpage, selectedTripId]);
 
   const handleSignOut = async () => {
@@ -591,15 +609,56 @@ export function AccountDrawer({
   // Render collections subpage
   const renderCollectionsSubpage = () => (
     <div className="px-6 py-6 space-y-4">
-      <div className="text-center py-12">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Collections coming soon</p>
-      </div>
+      {loading ? (
+        <div className="text-center py-12">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading collections...</p>
+        </div>
+      ) : collections.length > 0 ? (
+        <div className="space-y-2">
+          {collections.map((collection) => (
+            <button
+              key={collection.id}
+              onClick={() => handleNavigateToFullPage(`/collection/${collection.id}`)}
+              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-lg dark:bg-gray-800">
+                  <span>{collection.emoji || '📚'}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{collection.name}</p>
+                  {collection.description && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{collection.description}</p>
+                  )}
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                    {(collection.destination_count || 0).toLocaleString()} places
+                    {collection.is_public && <span className="ml-1">• Public</span>}
+                  </p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              </div>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center dark:border-gray-800 dark:bg-gray-900/50">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">No collections yet</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Create lists to group your favorite places.</p>
+          <button
+            onClick={() => handleNavigateToFullPage('/account?tab=collections')}
+            className="mt-4 inline-flex items-center justify-center rounded-full bg-gray-900 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-gray-800 dark:bg-white dark:text-gray-900"
+          >
+            Start a collection
+          </button>
+        </div>
+      )}
       <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=collections")}
           className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
         >
-          View All Collections
+          Manage Collections
         </button>
       </div>
     </div>
