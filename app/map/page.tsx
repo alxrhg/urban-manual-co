@@ -386,15 +386,17 @@ export default function MapPage() {
           </div>
         </div>
 
-      {/* Destination Drawer */}
-      <DestinationDrawer
-        destination={selectedDestination}
-        isOpen={isDrawerOpen}
-        onClose={() => {
-          setIsDrawerOpen(false);
-          setTimeout(() => setSelectedDestination(null), 300);
-        }}
-      />
+      {/* Destination Drawer - Only render when open */}
+      {isDrawerOpen && selectedDestination && (
+        <DestinationDrawer
+          destination={selectedDestination}
+          isOpen={true}
+          onClose={() => {
+            setIsDrawerOpen(false);
+            setTimeout(() => setSelectedDestination(null), 300);
+          }}
+        />
+      )}
     </div>
   );
 }

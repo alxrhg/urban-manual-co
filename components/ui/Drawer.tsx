@@ -56,7 +56,7 @@ export function Drawer({
   mobileMaxHeight,
   mobileBorderRadius,
   mobileExpanded = false,
-  keepStateOnClose = true,
+  keepStateOnClose = false, // Changed default to false to prevent multiple drawers
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);

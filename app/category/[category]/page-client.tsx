@@ -179,14 +179,17 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
           </div>
         )}
 
-        <DestinationDrawer
-          destination={selectedDestination}
-          isOpen={isDrawerOpen}
-          onClose={() => {
-            setIsDrawerOpen(false);
-            setSelectedDestination(null);
-          }}
-        />
+        {/* Destination Drawer - Only render when open */}
+        {isDrawerOpen && selectedDestination && (
+          <DestinationDrawer
+            destination={selectedDestination}
+            isOpen={true}
+            onClose={() => {
+              setIsDrawerOpen(false);
+              setSelectedDestination(null);
+            }}
+          />
+        )}
       </main>
     </div>
   );

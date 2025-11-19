@@ -365,7 +365,7 @@ export function AccountDrawer({
     </div>
   );
 
-            return (
+  return (
     <>
       <Drawer 
         isOpen={isOpen} 

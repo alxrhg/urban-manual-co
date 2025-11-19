@@ -505,13 +505,15 @@ export default function CityPageClient() {
         </div>
       </main>
 
-      <DestinationDrawer
-        destination={selectedDestination}
-        isOpen={isDrawerOpen}
-        onClose={() => {
-          setIsDrawerOpen(false);
-          setSelectedDestination(null);
-        }}
+      {/* Destination Drawer - Only render when open */}
+      {isDrawerOpen && selectedDestination && (
+        <DestinationDrawer
+          destination={selectedDestination}
+          isOpen={true}
+          onClose={() => {
+            setIsDrawerOpen(false);
+            setSelectedDestination(null);
+          }}
         onSaveToggle={async (slug: string) => {
           if (!user) return;
 
@@ -545,7 +547,8 @@ export default function CityPageClient() {
           // The DestinationDrawer already handles the database update,
           // so we just need to sync our local state
         }}
-      />
+        />
+      )}
 
       {isAdmin && (
         <POIDrawer
