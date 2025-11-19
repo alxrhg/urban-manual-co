@@ -16,7 +16,8 @@ import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { TripPlanner } from "@/components/TripPlanner";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
-import type { Collection, Trip, SavedPlace, VisitedPlace } from "@/types/common";
+import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
+import type { Trip } from "@/types/trip";
 import type { User } from "@supabase/supabase-js";
 
 // Force dynamic rendering
@@ -65,7 +66,7 @@ export default function Account() {
 
   // Trip management state
   const [showTripDialog, setShowTripDialog] = useState(false);
-  const [editingTripId, setEditingTripId] = useState<number | null>(null);
+  const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
   // Check authentication
   useEffect(() => {
@@ -876,7 +877,7 @@ export default function Account() {
       {showTripDialog && (
         <TripPlanner
           isOpen={true}
-          tripId={editingTripId !== null ? String(editingTripId) : undefined}
+          tripId={editingTripId ?? undefined}
           onClose={() => {
             setShowTripDialog(false);
             setEditingTripId(null);

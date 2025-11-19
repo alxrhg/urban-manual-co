@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { Trip } from '@/types/common';
+import type { Trip } from '@/types/trip';
 import { MapPin, Plus, Calendar, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { TripPlanner } from '@/components/TripPlanner';
@@ -15,7 +15,7 @@ interface TripsTabProps {
 export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
   const router = useRouter();
   const [showTripDialog, setShowTripDialog] = useState(false);
-  const [editingTripId, setEditingTripId] = useState<number | null>(null);
+  const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
   return (
     <div className="fade-in">
@@ -139,7 +139,7 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
       {showTripDialog && (
         <TripPlanner
           isOpen={true}
-          tripId={editingTripId !== null ? String(editingTripId) : undefined}
+          tripId={editingTripId ?? undefined}
           onClose={async () => {
             setShowTripDialog(false);
             setEditingTripId(null);
