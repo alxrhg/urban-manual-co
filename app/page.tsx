@@ -2581,7 +2581,7 @@ export default function Home() {
                     {/* City List - Only shows Taipei, Tokyo, New York, and London */}
                     <div className="mb-[50px]">
                       {/* City Buttons */}
-                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                      <div className="flex flex-nowrap gap-x-5 overflow-x-auto text-xs">
                         <button
                           onClick={() => {
                             setSelectedCity("");
@@ -2641,7 +2641,7 @@ export default function Home() {
                     
                     {/* Category List (including Michelin) */}
                     {categories.length > 0 && (
-                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                      <div className="flex flex-nowrap gap-x-5 overflow-x-auto text-xs">
                         <button
                           onClick={() => {
                             setSelectedCategory("");
