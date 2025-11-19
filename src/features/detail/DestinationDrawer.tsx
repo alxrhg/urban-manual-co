@@ -1059,64 +1059,75 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
   // Create custom header content - Place Drawer spec
   const headerContent = (
-    <div className="flex items-center justify-between w-full relative">
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate flex-1">
-        {destination.name || 'Destination'}
-      </h2>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        {/* Bookmark Action */}
+    <div className="flex items-center justify-between w-full gap-3">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
         <button
-          onClick={async () => {
-            if (!user) {
-              router.push('/auth/login');
-              return;
-            }
-            if (!isSaved) {
-              setShowSaveModal(true);
-            } else {
-              try {
-                const supabaseClient = createClient();
-                if (!supabaseClient) return;
-                const { error } = await supabaseClient
-                  .from('saved_places')
-                  .delete()
-                  .eq('user_id', user.id)
-                  .eq('destination_slug', destination.slug);
-                if (!error) {
-                  setIsSaved(false);
-                  if (onSaveToggle) onSaveToggle(destination.slug, false);
-                }
-              } catch (error) {
-                console.error('Error unsaving:', error);
-              }
-            }
-          }}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          aria-label={isSaved ? 'Remove from saved' : 'Save destination'}
+          onClick={onClose}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-900"
+          aria-label="Close drawer"
         >
-          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} strokeWidth={1.5} />
+          <X className="h-4 w-4" />
         </button>
-        {/* Trip Action */}
-        <button
-          onClick={() => {
-            if (!user) {
-              router.push('/auth/login');
-              return;
-            }
-            if (isAddedToTrip) return;
-            setShowAddToTripModal(true);
-          }}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          aria-label="Add to trip"
-          disabled={isAddedToTrip}
-        >
-          {isAddedToTrip ? (
-            <Check className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={1.5} />
-          ) : (
-            <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
-          )}
-        </button>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+          {destination.name || 'Destination'}
+        </h2>
       </div>
+      {user && (
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Bookmark Action */}
+          <button
+            onClick={async () => {
+              if (!user) {
+                router.push('/auth/login');
+                return;
+              }
+              if (!isSaved) {
+                setShowSaveModal(true);
+              } else {
+                try {
+                  const supabaseClient = createClient();
+                  if (!supabaseClient) return;
+                  const { error } = await supabaseClient
+                    .from('saved_places')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('destination_slug', destination.slug);
+                  if (!error) {
+                    setIsSaved(false);
+                    if (onSaveToggle) onSaveToggle(destination.slug, false);
+                  }
+                } catch (error) {
+                  console.error('Error unsaving:', error);
+                }
+              }
+            }}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label={isSaved ? 'Remove from saved' : 'Save destination'}
+          >
+            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} strokeWidth={1.5} />
+          </button>
+          {/* Trip Action */}
+          <button
+            onClick={() => {
+              if (!user) {
+                router.push('/auth/login');
+                return;
+              }
+              if (isAddedToTrip) return;
+              setShowAddToTripModal(true);
+            }}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label="Add to trip"
+            disabled={isAddedToTrip}
+          >
+            {isAddedToTrip ? (
+              <Check className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={1.5} />
+            ) : (
+              <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -1325,57 +1336,61 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
             <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
               <div className="grid grid-cols-2 gap-3">
-                <button
-                  onClick={async () => {
-                    if (!user) {
-                      router.push('/auth/login');
-                      return;
-                    }
-                    if (!isSaved) {
-                      setShowSaveModal(true);
-                    } else {
-                      try {
-                        const supabaseClient = createClient();
-                        if (!supabaseClient) {
-                          alert('Failed to connect to database. Please try again.');
-                          return;
-                        }
-                        const { error } = await supabaseClient
-                          .from('saved_places')
-                          .delete()
-                          .eq('user_id', user.id)
-                          .eq('destination_slug', destination.slug);
-                        if (!error) {
-                          setIsSaved(false);
-                          if (onSaveToggle) onSaveToggle(destination.slug, false);
-                        }
-                      } catch (error) {
-                        console.error('Error unsaving:', error);
+                {user && (
+                  <button
+                    onClick={async () => {
+                      if (!user) {
+                        router.push('/auth/login');
+                        return;
                       }
-                    }
-                  }}
-                  className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
-                    isSaved
-                      ? 'border-gray-900 bg-gray-900 text-white'
-                      : 'border-gray-200 bg-gray-50 text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100'
-                  }`}
-                  aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
-                >
-                  <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                  {isSaved ? 'Saved' : 'Save'}
-                </button>
+                      if (!isSaved) {
+                        setShowSaveModal(true);
+                      } else {
+                        try {
+                          const supabaseClient = createClient();
+                          if (!supabaseClient) {
+                            alert('Failed to connect to database. Please try again.');
+                            return;
+                          }
+                          const { error } = await supabaseClient
+                            .from('saved_places')
+                            .delete()
+                            .eq('user_id', user.id)
+                            .eq('destination_slug', destination.slug);
+                          if (!error) {
+                            setIsSaved(false);
+                            if (onSaveToggle) onSaveToggle(destination.slug, false);
+                          }
+                        } catch (error) {
+                          console.error('Error unsaving:', error);
+                        }
+                      }
+                    }}
+                    className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
+                      isSaved
+                        ? 'border-gray-900 bg-gray-900 text-white'
+                        : 'border-gray-200 bg-gray-50 text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100'
+                    }`}
+                    aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
+                  >
+                    <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save'}
+                  </button>
+                )}
 
-                <button
-                  onClick={handleVisitToggle}
-                  className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
-                    isVisited
-                      ? 'border-green-500 bg-green-500 text-white'
-                      : 'border-gray-200 bg-gray-50 text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100'
-                  }`}
-                >
-                  <Check className="h-4 w-4" />
-                  {isVisited ? 'Visited' : 'Mark Visited'}
-                </button>
+                {user && (
+                  <button
+                    onClick={handleVisitToggle}
+                    className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
+                      isVisited
+                        ? 'border-green-500 bg-green-500 text-white'
+                        : 'border-gray-200 bg-gray-50 text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100'
+                    }`}
+                  >
+                    <Check className="h-4 w-4" />
+                    {isVisited ? 'Visited' : 'Mark Visited'}
+                  </button>
+                )}
 
                 <button
                   onClick={handleShare}
