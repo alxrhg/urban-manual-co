@@ -32,6 +32,8 @@ export default function TripsPage() {
   useEffect(() => {
     if (user) {
       fetchTrips();
+    } else {
+      setTrips([]);
     }
   }, [user]);
 
@@ -39,12 +41,16 @@ export default function TripsPage() {
     try {
       setLoading(true);
       const supabaseClient = createClient();
-      if (!supabaseClient) return;
+      if (!supabaseClient || !user) return;
 
-      const { data, error } = await supabaseClient
+      let query = supabaseClient
         .from('trips')
         .select('*')
         .order('created_at', { ascending: false });
+
+      query = query.eq('user_id', user.id);
+
+      const { data, error } = await query;
 
       if (error) throw error;
       
