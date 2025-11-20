@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, MapPin, Loader2, Search, ChevronDown, Globe2, SlidersHorizontal, Sparkles, Funnel } from 'lucide-react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 
@@ -56,6 +57,7 @@ export function SearchFiltersComponent({
   const { latitude, longitude, error, loading, requestLocation, hasLocation } = useGeolocation();
   const [nearMeRadius, setNearMeRadius] = useState(filters.nearMeRadius || 5);
   const [searchQuery, setSearchQuery] = useState(filters.searchQuery || '');
+  const [portalElement, setPortalElement] = useState<HTMLElement | null>(null);
 
   // Sync searchQuery with filters
   useEffect(() => {
@@ -128,6 +130,10 @@ export function SearchFiltersComponent({
     }
   }, [hasLocation, latitude, longitude, filters.nearMe, nearMeRadius, onLocationChange]);
 
+  useEffect(() => {
+    setPortalElement(document.getElementById('search-filters-inline-slot'));
+  }, []);
+
   const activeFilterCount = Object.keys(filters).length;
   const hasActiveFilters = activeFilterCount > 0;
 
@@ -178,12 +184,14 @@ export function SearchFiltersComponent({
       </span>
 
       {/* Filter panel - Full width or dropdown */}
-        {isOpen && (
+      {isOpen && (
           <>
-            {fullWidthPanel ? (
-              <>
-                {/* Full-width panel attached under top controls, pushes content below */}
-                <div className="mt-4 w-full overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out animate-in fade-in slide-in-from-top-2 dark:border-gray-800 dark:bg-gray-900">
+            {fullWidthPanel
+              ? portalElement &&
+                createPortal(
+                  <>
+                    {/* Full-width panel attached under top controls, pushes content below */}
+                    <div className="mt-4 w-full overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out animate-in fade-in slide-in-from-top-2 dark:border-gray-800 dark:bg-gray-900">
                   <div className="w-full px-4 py-6 sm:px-6 md:px-10 md:py-8">
                     <div className="mx-auto max-w-[1800px] space-y-8">
                       {/* Header */}
@@ -468,10 +476,12 @@ export function SearchFiltersComponent({
                   </div>
                 </div>
               </div>
-              </>
-            ) : (
-            /* Dropdown popover (original behavior) */
-            <>
+              </>,
+              portalElement
+            )
+              : (
+                /* Dropdown popover (original behavior) */
+                <>
               {/* Backdrop */}
               <div
                 className="fixed inset-0 bg-black/30 z-40"

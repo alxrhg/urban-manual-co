@@ -2897,6 +2897,8 @@ export default function Home() {
                 </div>
 
 
+            <div id="search-filters-inline-slot" className="px-2 sm:px-0" />
+
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
             {user && !submittedQuery && !selectedCity && !selectedCategory && (
               <div className="mb-12 md:mb-16">
