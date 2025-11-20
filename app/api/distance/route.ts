@@ -19,11 +19,11 @@ export async function POST(request: NextRequest) {
     const body: DistanceRequest = await request.json();
     const { origins, destinations, mode = 'walking' } = body;
 
-    // Check if Google Maps API key is available
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    // Check if Google API key is available (works for Maps, Places, etc.)
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
     if (!apiKey) {
-      console.warn('Google Maps API key not configured, using estimates');
+      console.warn('Google API key not configured, using estimates');
       // Fallback to distance-based estimates
       return NextResponse.json({
         results: calculateEstimates(origins, destinations, mode),

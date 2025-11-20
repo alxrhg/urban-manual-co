@@ -2824,8 +2824,8 @@ export default function Home() {
                         )}
                       </button>
 
-                      {/* Create Trip - Pill Filled (Black) */}
-                      {isAdmin ? (
+                      {/* Create Trip / Add POI - Pill Filled (Black) */}
+                      {editModeActive ? (
                         <button
                           onClick={() => {
                             setEditingDestination(null);

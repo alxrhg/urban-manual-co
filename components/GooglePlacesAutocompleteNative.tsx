@@ -56,7 +56,7 @@ export default function GooglePlacesAutocompleteNative({
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     
     if (!apiKey) {
-      console.error('Google Maps API key not found');
+      console.error('Google API key not found. Please configure NEXT_PUBLIC_GOOGLE_API_KEY in your environment variables.');
       setIsLoading(false);
       return;
     }
@@ -75,7 +75,7 @@ export default function GooglePlacesAutocompleteNative({
     };
 
     script.onerror = () => {
-      console.error('Failed to load Google Maps API');
+      console.error('Failed to load Google Maps API. Please check your NEXT_PUBLIC_GOOGLE_API_KEY configuration.');
       setIsLoading(false);
     };
 

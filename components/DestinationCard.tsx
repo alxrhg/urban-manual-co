@@ -143,24 +143,21 @@ export const DestinationCard = memo(function DestinationCard({
           </div>
         )}
 
-        {/* Admin Edit Button - Top Right */}
-          {isAdmin && onEdit && (
+        {/* Admin Edit Button - Top Right - Only visible in edit mode */}
+          {showEditAffordance && onEdit && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               onEdit(destination);
             }}
-              className={`absolute top-3 right-3 z-20 p-2 rounded-xl transition-all shadow-md backdrop-blur-md
-                ${showEditAffordance 
-                  ? 'opacity-100 scale-100 bg-amber-500 text-white border border-white/20 shadow-amber-500/40 ring-2 ring-amber-500/20' 
-                  : 'opacity-0 group-hover:opacity-100 bg-white/95 dark:bg-gray-900/95 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50'
-                }
+              className="absolute top-3 right-3 z-20 p-2 rounded-xl transition-all shadow-md backdrop-blur-md
+                opacity-100 scale-100 bg-amber-500 text-white border border-white/20 shadow-amber-500/40 ring-2 ring-amber-500/20
                 hover:scale-105 active:scale-95 hover:shadow-lg
-              `}
+              "
             title="Edit destination"
             aria-label="Edit destination"
           >
-            <Edit className={`h-4 w-4 ${showEditAffordance ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`} />
+            <Edit className="h-4 w-4 text-white" />
           </button>
         )}
 

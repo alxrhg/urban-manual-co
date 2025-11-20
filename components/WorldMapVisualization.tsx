@@ -144,7 +144,8 @@ export function WorldMapVisualization({
       }
       
       if (iso2) {
-        isoSet.add(iso2);
+        // Normalize to uppercase for consistent matching
+        isoSet.add(iso2.toUpperCase());
       } else {
         // Log unmapped countries for debugging
         unmappedCountries.push(country);
@@ -223,24 +224,42 @@ export function WorldMapVisualization({
           <Geographies geography={geoUrl}>
             {({ geographies }) => {
               // Debug: Log visited ISO codes
-              console.log('[WorldMap] Visited countries:', Array.from(visitedCountries));
+              if (visitedCountries.size > 0) {
+                console.log('[WorldMap] Visited countries:', Array.from(visitedCountries));
                 console.log('[WorldMap] Visited ISO2 codes:', Array.from(visitedISO2Codes));
+                console.log('[WorldMap] Total geographies:', geographies.length);
+                
+                // Sample a few geographies to check their ISO codes
+                const sampleGeos = geographies.slice(0, 10).map(g => ({
+                  name: g.properties.NAME || g.properties.NAME_LONG || 'Unknown',
+                  iso_a2: g.properties.ISO_A2,
+                  iso_a2_eh: g.properties.ISO_A2_EH,
+                }));
+                console.log('[WorldMap] Sample geography ISO codes:', sampleGeos);
+              }
               console.log('[WorldMap] City markers:', cityMarkers.length);
               
               return geographies.map((geo) => {
                 // world-110m.json uses ISO_A2 for 2-letter codes
                 // Some territories use ISO_A2_EH (Western Sahara, etc.)
-                const iso2Code = geo.properties.ISO_A2 || geo.properties.ISO_A2_EH;
-                const isVisited = iso2Code && visitedISO2Codes.has(iso2Code);
+                // Also check ISO_A2_EH, ISO_A2_UK, and other variants
+                const iso2CodeRaw = geo.properties.ISO_A2 || geo.properties.ISO_A2_EH || geo.properties.ISO_A2_UK;
+                // Normalize to uppercase for consistent matching
+                const iso2Code = iso2CodeRaw && typeof iso2CodeRaw === 'string' 
+                  ? iso2CodeRaw.toUpperCase().trim() 
+                  : null;
+                // Also check if it's -99 (which means no ISO code assigned)
+                const hasValidCode = iso2Code && iso2Code !== '-99' && iso2Code.length === 2;
+                const isVisited = hasValidCode && visitedISO2Codes.has(iso2Code);
                 const countryName = geo.properties.NAME || geo.properties.NAME_LONG || geo.properties.NAME_EN || 'Unknown';
                 
-                // Debug: Log first few countries to verify matching
-                if (process.env.NODE_ENV === 'development' && geo.rsmKey === '0') {
-                  console.log('[WorldMap] Sample geography:', {
+                // Debug: Log matching for visited countries
+                if (isVisited || (visitedISO2Codes.size > 0 && hasValidCode && visitedISO2Codes.has(iso2Code))) {
+                  console.log('[WorldMap] Country match:', {
                     name: countryName,
                     iso2: iso2Code,
                     isVisited,
-                    hasVisitedCodes: visitedISO2Codes.size > 0
+                    visitedCodes: Array.from(visitedISO2Codes)
                   });
                 }
                 

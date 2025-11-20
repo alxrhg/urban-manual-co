@@ -23,7 +23,10 @@ interface Destination {
   slug: string;
   name: string;
   city: string;
+  country?: string;
+  neighborhood?: string | null;
   category: string;
+  micro_description?: string;
   description?: string | null;
   content?: string | null;
   image?: string | null;
@@ -31,6 +34,28 @@ interface Destination {
   crown?: boolean;
   brand?: string | null;
   architect?: string | null;
+  interior_designer?: string | null;
+  design_firm?: string | null;
+  architectural_style?: string | null;
+  design_period?: string | null;
+  construction_year?: number | null;
+  architectural_significance?: string | null;
+  design_story?: string | null;
+  rating?: number | null;
+  price_level?: number | null;
+  phone_number?: string | null;
+  website?: string | null;
+  google_maps_url?: string | null;
+  instagram_handle?: string | null;
+  instagram_url?: string | null;
+  opentable_url?: string | null;
+  resy_url?: string | null;
+  booking_url?: string | null;
+  reservation_phone?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  formatted_address?: string | null;
+  tags?: string[] | null;
 }
 
 export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }: POIDrawerProps) {
@@ -48,7 +73,10 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
     slug: '',
     name: '',
     city: '',
+    country: '',
+    neighborhood: '',
     category: '',
+    micro_description: '',
     description: '',
     content: '',
     image: '',
@@ -56,6 +84,28 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
     crown: false,
     brand: '',
     architect: '',
+    interior_designer: '',
+    design_firm: '',
+    architectural_style: '',
+    design_period: '',
+    construction_year: null as number | null,
+    architectural_significance: '',
+    design_story: '',
+    rating: null as number | null,
+    price_level: null as number | null,
+    phone_number: '',
+    website: '',
+    google_maps_url: '',
+    instagram_handle: '',
+    instagram_url: '',
+    opentable_url: '',
+    resy_url: '',
+    booking_url: '',
+    reservation_phone: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
+    formatted_address: '',
+    tags: [] as string[],
   });
 
   // Reset form when drawer opens/closes, or load destination data for editing
@@ -65,7 +115,10 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         slug: '',
         name: '',
         city: '',
+        country: '',
+        neighborhood: '',
         category: '',
+        micro_description: '',
         description: '',
         content: '',
         image: '',
@@ -73,6 +126,28 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         crown: false,
         brand: '',
         architect: '',
+        interior_designer: '',
+        design_firm: '',
+        architectural_style: '',
+        design_period: '',
+        construction_year: null,
+        architectural_significance: '',
+        design_story: '',
+        rating: null,
+        price_level: null,
+        phone_number: '',
+        website: '',
+        google_maps_url: '',
+        instagram_handle: '',
+        instagram_url: '',
+        opentable_url: '',
+        resy_url: '',
+        booking_url: '',
+        reservation_phone: '',
+        latitude: null,
+        longitude: null,
+        formatted_address: '',
+        tags: [],
       });
       setImageFile(null);
       setImagePreview(null);
@@ -83,7 +158,10 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         slug: destination.slug || '',
         name: destination.name || '',
         city: destination.city || '',
+        country: destination.country || '',
+        neighborhood: destination.neighborhood || '',
         category: destination.category || '',
+        micro_description: destination.micro_description || '',
         description: destination.description || '',
         content: destination.content || '',
         image: destination.image || '',
@@ -91,6 +169,28 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         crown: destination.crown || false,
         brand: destination.brand || '',
         architect: destination.architect || '',
+        interior_designer: destination.interior_designer || '',
+        design_firm: destination.design_firm || '',
+        architectural_style: destination.architectural_style || '',
+        design_period: destination.design_period || '',
+        construction_year: destination.construction_year || null,
+        architectural_significance: destination.architectural_significance || '',
+        design_story: destination.design_story || '',
+        rating: destination.rating || null,
+        price_level: destination.price_level || null,
+        phone_number: destination.phone_number || '',
+        website: destination.website || '',
+        google_maps_url: destination.google_maps_url || '',
+        instagram_handle: destination.instagram_handle || '',
+        instagram_url: destination.instagram_url || '',
+        opentable_url: destination.opentable_url || '',
+        resy_url: destination.resy_url || '',
+        booking_url: destination.booking_url || '',
+        reservation_phone: destination.reservation_phone || '',
+        latitude: destination.latitude || null,
+        longitude: destination.longitude || null,
+        formatted_address: destination.formatted_address || '',
+        tags: destination.tags || [],
       });
       if (destination.image) {
         setImagePreview(destination.image);
@@ -101,7 +201,10 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         slug: '',
         name: '',
         city: initialCity,
+        country: '',
+        neighborhood: '',
         category: '',
+        micro_description: '',
         description: '',
         content: '',
         image: '',
@@ -109,6 +212,28 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         crown: false,
         brand: '',
         architect: '',
+        interior_designer: '',
+        design_firm: '',
+        architectural_style: '',
+        design_period: '',
+        construction_year: null,
+        architectural_significance: '',
+        design_story: '',
+        rating: null,
+        price_level: null,
+        phone_number: '',
+        website: '',
+        google_maps_url: '',
+        instagram_handle: '',
+        instagram_url: '',
+        opentable_url: '',
+        resy_url: '',
+        booking_url: '',
+        reservation_phone: '',
+        latitude: null,
+        longitude: null,
+        formatted_address: '',
+        tags: [],
       });
     }
   }, [isOpen, destination, initialCity]);
@@ -242,11 +367,14 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         return;
       }
 
-      const destinationData = {
+      const destinationData: any = {
         slug: formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
         name: formData.name.trim(),
         city: formData.city.trim(),
+        country: formData.country?.trim() || null,
+        neighborhood: formData.neighborhood?.trim() || null,
         category: formData.category.trim(),
+        micro_description: formData.micro_description?.trim() || null,
         description: formData.description?.trim() || null,
         content: formData.content?.trim() || null,
         image: imageUrl || null,
@@ -254,6 +382,28 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         crown: formData.crown || false,
         brand: formData.brand?.trim() || null,
         architect: formData.architect?.trim() || null,
+        interior_designer: formData.interior_designer?.trim() || null,
+        design_firm: formData.design_firm?.trim() || null,
+        architectural_style: formData.architectural_style?.trim() || null,
+        design_period: formData.design_period?.trim() || null,
+        construction_year: formData.construction_year || null,
+        architectural_significance: formData.architectural_significance?.trim() || null,
+        design_story: formData.design_story?.trim() || null,
+        rating: formData.rating || null,
+        price_level: formData.price_level || null,
+        phone_number: formData.phone_number?.trim() || null,
+        website: formData.website?.trim() || null,
+        google_maps_url: formData.google_maps_url?.trim() || null,
+        instagram_handle: formData.instagram_handle?.trim() || null,
+        instagram_url: formData.instagram_url?.trim() || null,
+        opentable_url: formData.opentable_url?.trim() || null,
+        resy_url: formData.resy_url?.trim() || null,
+        booking_url: formData.booking_url?.trim() || null,
+        reservation_phone: formData.reservation_phone?.trim() || null,
+        latitude: formData.latitude || null,
+        longitude: formData.longitude || null,
+        formatted_address: formData.formatted_address?.trim() || null,
+        tags: formData.tags && formData.tags.length > 0 ? formData.tags : null,
       };
 
       // Log the data being sent for debugging
@@ -518,6 +668,36 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
             />
           </div>
 
+          {/* Country */}
+          <div className="mb-6">
+            <label htmlFor="country" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Country
+            </label>
+            <input
+              id="country"
+              type="text"
+              value={formData.country}
+              onChange={(e) => setFormData(prev => ({ ...prev, country: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="Japan"
+            />
+          </div>
+
+          {/* Neighborhood */}
+          <div className="mb-6">
+            <label htmlFor="neighborhood" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Neighborhood
+            </label>
+            <input
+              id="neighborhood"
+              type="text"
+              value={formData.neighborhood}
+              onChange={(e) => setFormData(prev => ({ ...prev, neighborhood: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="Ginza"
+            />
+          </div>
+
           {/* Category */}
           <div className="mb-6">
             <label htmlFor="category" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
@@ -566,6 +746,21 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
           <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Content</h3>
           
+          {/* Micro Description */}
+          <div className="mb-6">
+            <label htmlFor="micro_description" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Micro Description
+            </label>
+            <input
+              id="micro_description"
+              type="text"
+              value={formData.micro_description}
+              onChange={(e) => setFormData(prev => ({ ...prev, micro_description: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="One-line description for cards"
+            />
+          </div>
+
           {/* Description */}
           <div className="mb-6">
             <label htmlFor="description" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
@@ -743,7 +938,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
           </div>
 
           {/* Crown */}
-          <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800 mb-6">
             <input
               id="crown"
               type="checkbox"
@@ -754,6 +949,350 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
             <label htmlFor="crown" className="text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
               Crown (Featured destination)
             </label>
+          </div>
+        </div>
+
+        {/* Section Divider: Architecture & Design */}
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+          <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Architecture & Design</h3>
+          
+          {/* Interior Designer */}
+          <div className="mb-6">
+            <label htmlFor="interior_designer" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Interior Designer
+            </label>
+            <input
+              id="interior_designer"
+              type="text"
+              value={formData.interior_designer}
+              onChange={(e) => setFormData(prev => ({ ...prev, interior_designer: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="Interior designer name"
+            />
+          </div>
+
+          {/* Design Firm */}
+          <div className="mb-6">
+            <label htmlFor="design_firm" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Design Firm
+            </label>
+            <input
+              id="design_firm"
+              type="text"
+              value={formData.design_firm}
+              onChange={(e) => setFormData(prev => ({ ...prev, design_firm: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="Design firm name"
+            />
+          </div>
+
+          {/* Architectural Style */}
+          <div className="mb-6">
+            <label htmlFor="architectural_style" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Architectural Style
+            </label>
+            <input
+              id="architectural_style"
+              type="text"
+              value={formData.architectural_style}
+              onChange={(e) => setFormData(prev => ({ ...prev, architectural_style: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="Contemporary, Modern, etc."
+            />
+          </div>
+
+          {/* Design Period */}
+          <div className="mb-6">
+            <label htmlFor="design_period" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Design Period
+            </label>
+            <input
+              id="design_period"
+              type="text"
+              value={formData.design_period}
+              onChange={(e) => setFormData(prev => ({ ...prev, design_period: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="2020s, 2010s, etc."
+            />
+          </div>
+
+          {/* Construction Year */}
+          <div className="mb-6">
+            <label htmlFor="construction_year" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Construction Year
+            </label>
+            <input
+              id="construction_year"
+              type="number"
+              value={formData.construction_year || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, construction_year: e.target.value ? parseInt(e.target.value) : null }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="2020"
+            />
+          </div>
+
+          {/* Architectural Significance */}
+          <div className="mb-6">
+            <label htmlFor="architectural_significance" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Architectural Significance
+            </label>
+            <textarea
+              id="architectural_significance"
+              value={formData.architectural_significance}
+              onChange={(e) => setFormData(prev => ({ ...prev, architectural_significance: e.target.value }))}
+              rows={3}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="Why this matters architecturally..."
+            />
+          </div>
+
+          {/* Design Story */}
+          <div>
+            <label htmlFor="design_story" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Design Story
+            </label>
+            <textarea
+              id="design_story"
+              value={formData.design_story}
+              onChange={(e) => setFormData(prev => ({ ...prev, design_story: e.target.value }))}
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="Rich narrative about the design..."
+            />
+          </div>
+        </div>
+
+        {/* Section Divider: Contact & Location */}
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+          <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Contact & Location</h3>
+          
+          {/* Phone Number */}
+          <div className="mb-6">
+            <label htmlFor="phone_number" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Phone Number
+            </label>
+            <input
+              id="phone_number"
+              type="tel"
+              value={formData.phone_number}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="+1 234 567 8900"
+            />
+          </div>
+
+          {/* Reservation Phone */}
+          <div className="mb-6">
+            <label htmlFor="reservation_phone" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Reservation Phone
+            </label>
+            <input
+              id="reservation_phone"
+              type="tel"
+              value={formData.reservation_phone}
+              onChange={(e) => setFormData(prev => ({ ...prev, reservation_phone: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="+1 234 567 8900"
+            />
+          </div>
+
+          {/* Website */}
+          <div className="mb-6">
+            <label htmlFor="website" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Website
+            </label>
+            <input
+              id="website"
+              type="url"
+              value={formData.website}
+              onChange={(e) => setFormData(prev => ({ ...prev, website: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="https://example.com"
+            />
+          </div>
+
+          {/* Google Maps URL */}
+          <div className="mb-6">
+            <label htmlFor="google_maps_url" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Google Maps URL
+            </label>
+            <input
+              id="google_maps_url"
+              type="url"
+              value={formData.google_maps_url}
+              onChange={(e) => setFormData(prev => ({ ...prev, google_maps_url: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="https://maps.google.com/..."
+            />
+          </div>
+
+          {/* Instagram Handle */}
+          <div className="mb-6">
+            <label htmlFor="instagram_handle" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Instagram Handle
+            </label>
+            <input
+              id="instagram_handle"
+              type="text"
+              value={formData.instagram_handle}
+              onChange={(e) => setFormData(prev => ({ ...prev, instagram_handle: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="@restaurant"
+            />
+          </div>
+
+          {/* Instagram URL */}
+          <div className="mb-6">
+            <label htmlFor="instagram_url" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Instagram URL
+            </label>
+            <input
+              id="instagram_url"
+              type="url"
+              value={formData.instagram_url}
+              onChange={(e) => setFormData(prev => ({ ...prev, instagram_url: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="https://instagram.com/restaurant"
+            />
+          </div>
+
+          {/* Formatted Address */}
+          <div className="mb-6">
+            <label htmlFor="formatted_address" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Formatted Address
+            </label>
+            <input
+              id="formatted_address"
+              type="text"
+              value={formData.formatted_address}
+              onChange={(e) => setFormData(prev => ({ ...prev, formatted_address: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="123 Main St, City, Country"
+            />
+          </div>
+
+          {/* Latitude */}
+          <div className="mb-6">
+            <label htmlFor="latitude" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Latitude
+            </label>
+            <input
+              id="latitude"
+              type="number"
+              step="any"
+              value={formData.latitude || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value ? parseFloat(e.target.value) : null }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="35.6762"
+            />
+          </div>
+
+          {/* Longitude */}
+          <div className="mb-6">
+            <label htmlFor="longitude" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Longitude
+            </label>
+            <input
+              id="longitude"
+              type="number"
+              step="any"
+              value={formData.longitude || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value ? parseFloat(e.target.value) : null }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="139.6503"
+            />
+          </div>
+        </div>
+
+        {/* Section Divider: Booking */}
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+          <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Booking</h3>
+          
+          {/* OpenTable URL */}
+          <div className="mb-6">
+            <label htmlFor="opentable_url" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              OpenTable URL
+            </label>
+            <input
+              id="opentable_url"
+              type="url"
+              value={formData.opentable_url}
+              onChange={(e) => setFormData(prev => ({ ...prev, opentable_url: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="https://www.opentable.com/..."
+            />
+          </div>
+
+          {/* Resy URL */}
+          <div className="mb-6">
+            <label htmlFor="resy_url" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Resy URL
+            </label>
+            <input
+              id="resy_url"
+              type="url"
+              value={formData.resy_url}
+              onChange={(e) => setFormData(prev => ({ ...prev, resy_url: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="https://resy.com/..."
+            />
+          </div>
+
+          {/* Booking URL */}
+          <div>
+            <label htmlFor="booking_url" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Booking URL
+            </label>
+            <input
+              id="booking_url"
+              type="url"
+              value={formData.booking_url}
+              onChange={(e) => setFormData(prev => ({ ...prev, booking_url: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="https://booking.com/..."
+            />
+          </div>
+        </div>
+
+        {/* Section Divider: Ratings & Pricing */}
+        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+          <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Ratings & Pricing</h3>
+          
+          {/* Rating */}
+          <div className="mb-6">
+            <label htmlFor="rating" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Rating
+            </label>
+            <input
+              id="rating"
+              type="number"
+              step="0.1"
+              min="0"
+              max="5"
+              value={formData.rating || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, rating: e.target.value ? parseFloat(e.target.value) : null }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              placeholder="4.5"
+            />
+          </div>
+
+          {/* Price Level */}
+          <div>
+            <label htmlFor="price_level" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Price Level (1-4)
+            </label>
+            <select
+              id="price_level"
+              value={formData.price_level || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, price_level: e.target.value ? parseInt(e.target.value) : null }))}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm appearance-none cursor-pointer"
+            >
+              <option value="">None</option>
+              <option value="1">$ (1)</option>
+              <option value="2">$$ (2)</option>
+              <option value="3">$$$ (3)</option>
+              <option value="4">$$$$ (4)</option>
+            </select>
           </div>
         </div>
 

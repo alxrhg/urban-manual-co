@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe, Building2 } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe, Building2, Cloud, Calendar, Image as ImageIcon, TrendingUp, DollarSign, Users, Calendar as CalendarIcon } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -349,6 +349,36 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             architectural_significance,
             design_story,
             construction_year,
+            photos_json,
+            primary_photo_url,
+            photo_count,
+            current_weather_json,
+            weather_forecast_json,
+            weather_updated_at,
+            best_visit_months,
+            nearby_events_json,
+            upcoming_event_count,
+            walking_time_from_center_minutes,
+            driving_time_from_center_minutes,
+            transit_time_from_center_minutes,
+            distance_from_center_meters,
+            static_map_url,
+            currency_code,
+            price_range_local,
+            opentable_url,
+            resy_url,
+            booking_url,
+            reservation_phone,
+            instagram_url,
+            instagram_handle,
+            michelin_stars,
+            crown,
+            brand,
+            neighborhood,
+            country,
+            micro_description,
+            description,
+            content,
             architect:architects(id, name, slug, bio, birth_year, death_year, nationality, design_philosophy, image_url),
             design_firm:design_firms(id, name, slug, description, founded_year, image_url),
             interior_designer:architects!interior_designer_id(id, name, slug, bio, birth_year, death_year, nationality, image_url),
@@ -401,6 +431,45 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 : dataObj.address_components_json;
             } catch (e) {
               console.error('Error parsing address_components_json:', e);
+            }
+          }
+          // Parse weather data
+          if (dataObj.current_weather_json) {
+            try {
+              enriched.current_weather = typeof dataObj.current_weather_json === 'string'
+                ? JSON.parse(dataObj.current_weather_json)
+                : dataObj.current_weather_json;
+            } catch (e) {
+              console.error('Error parsing current_weather_json:', e);
+            }
+          }
+          if (dataObj.weather_forecast_json) {
+            try {
+              enriched.weather_forecast = typeof dataObj.weather_forecast_json === 'string'
+                ? JSON.parse(dataObj.weather_forecast_json)
+                : dataObj.weather_forecast_json;
+            } catch (e) {
+              console.error('Error parsing weather_forecast_json:', e);
+            }
+          }
+          // Parse photos
+          if (dataObj.photos_json) {
+            try {
+              enriched.photos = typeof dataObj.photos_json === 'string'
+                ? JSON.parse(dataObj.photos_json)
+                : dataObj.photos_json;
+            } catch (e) {
+              console.error('Error parsing photos_json:', e);
+            }
+          }
+          // Parse nearby events
+          if (dataObj.nearby_events_json) {
+            try {
+              enriched.nearby_events = typeof dataObj.nearby_events_json === 'string'
+                ? JSON.parse(dataObj.nearby_events_json)
+                : dataObj.nearby_events_json;
+            } catch (e) {
+              console.error('Error parsing nearby_events_json:', e);
             }
           }
           
@@ -1254,11 +1323,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       >
         <div className="p-6">
           {/* Mobile Content */}
-          <div className="md:hidden space-y-4">
-          {/* Image */}
+          <div className="md:hidden space-y-6">
+          {/* Hero Image */}
           {destination.image && (
-            <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
-              <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
+            <div className="mt-0 -mx-6 mb-6 rounded-none overflow-hidden aspect-[16/10] bg-gray-100 dark:bg-gray-800">
+              <div className="relative w-full h-full">
                 <Image
                   src={destination.image}
                   alt={destination.name}
@@ -1266,28 +1335,276 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   className="object-cover"
                   sizes="(max-width: 640px) 100vw, 420px"
                   priority={false}
-                  quality={85}
+                  quality={90}
                 />
               </div>
             </div>
           )}
 
           {/* Identity Block */}
-          <div className="space-y-4 mt-6">
+          <div className="space-y-5">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Details</p>
-              <h1 className="mt-1 text-[26px] font-semibold leading-tight text-gray-900 dark:text-white">
+              <h1 className="text-2xl font-bold leading-tight text-gray-900 dark:text-white mb-3">
                 {destination.name || 'Destination'}
               </h1>
+
+            {/* Location */}
+            {(destination.neighborhood || destination.city || destination.country) && (
+              <div className="flex items-start gap-2 text-sm">
+                <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  {destination.neighborhood && (
+                    <div className="font-semibold text-gray-900 dark:text-white mb-0.5">
+                      {destination.neighborhood}
+                    </div>
+                  )}
+                  <div className="text-gray-600 dark:text-gray-400">
+                    {destination.city && capitalizeCity(destination.city)}
+                    {destination.city && destination.country && ', '}
+                    {destination.country && destination.country}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Badges */}
+            <div className="flex flex-wrap items-center gap-2">
+                {destination.category && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200">
+                    <Tag className="h-3.5 w-3.5" />
+                    {destination.category}
+                  </span>
+                )}
+                {destination.brand && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900">
+                    <Building2 className="h-3.5 w-3.5" />
+                    {destination.brand}
+                  </span>
+                )}
+                {destination.crown && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                    <Crown className="h-3.5 w-3.5" />
+                    Crown
+                  </span>
+                )}
+                {rating && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-900 dark:text-gray-100">
+                    <Star className="h-3.5 w-3.5 fill-current text-yellow-500" />
+                    {rating.toFixed(1)}
+                    {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
+                      <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
+                        ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
+                      </span>
+                    )}
+                  </span>
+                )}
+                {priceLevel && priceLevel > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-900 dark:text-gray-100">
+                    <span className="text-green-600 dark:text-green-400 font-semibold">
+                      {'$'.repeat(priceLevel)}
+                    </span>
+                  </span>
+                )}
+              </div>
             </div>
 
-            <div className="flex flex-col gap-2">
+            {/* Description */}
+            {destination.micro_description && (
+              <div className="pt-2">
+                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                  {destination.micro_description}
+                </p>
+              </div>
+            )}
+
+            {highlightTags.length > 0 && (
+              <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
+                  Highlights
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {highlightTags.map(tag => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-900 text-xs font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
+              <div className="grid grid-cols-2 gap-2.5">
+                {user && (
+                  <button
+                    onClick={async () => {
+                      if (!user) {
+                        router.push('/auth/login');
+                        return;
+                      }
+                      if (!isSaved) {
+                        setShowSaveModal(true);
+                      } else {
+                        try {
+                          const supabaseClient = createClient();
+                          if (!supabaseClient) {
+                            alert('Failed to connect to database. Please try again.');
+                            return;
+                          }
+                          const { error } = await supabaseClient
+                            .from('saved_places')
+                            .delete()
+                            .eq('user_id', user.id)
+                            .eq('destination_slug', destination.slug);
+                          if (!error) {
+                            setIsSaved(false);
+                            if (onSaveToggle) onSaveToggle(destination.slug, false);
+                          }
+                        } catch (error) {
+                          console.error('Error unsaving:', error);
+                        }
+                      }
+                    }}
+                    className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
+                      isSaved
+                        ? 'border-gray-900 bg-gray-900 text-white shadow-sm'
+                        : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                    aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
+                  >
+                    <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save'}
+                  </button>
+                )}
+
+                {user && (
+                  <button
+                    onClick={handleVisitToggle}
+                    className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
+                      isVisited
+                        ? 'border-green-500 bg-green-500 text-white shadow-sm'
+                        : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <Check className="h-4 w-4" />
+                    {isVisited ? 'Visited' : 'Mark Visited'}
+                  </button>
+                )}
+
+                <button
+                  onClick={handleShare}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                >
+                  <Share2 className="h-4 w-4" />
+                  {copied ? 'Copied!' : 'Share'}
+                </button>
+
+                <a
+                  href={directionsUrl || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
+                    directionsUrl
+                      ? 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
+                      : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
+                  }`}
+                  onClick={(e) => {
+                    if (!directionsUrl) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  <Navigation className="h-4 w-4" />
+                  Directions
+                </a>
+
+                {/* Website Quick Action */}
+                {destination.website && (
+                  <a
+                    href={destination.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <Globe className="h-4 w-4" />
+                    Website
+                  </a>
+                )}
+
+                {/* Call Quick Action */}
+                {destination.phone_number && (
+                  <a
+                    href={`tel:${destination.phone_number}`}
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <Phone className="h-4 w-4" />
+                    Call
+                  </a>
+                )}
+
+                {isAdmin && destination && (
+                  <button
+                    onClick={() => setIsEditDrawerOpen(true)}
+                    className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800 col-span-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit destination
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Sign in prompt */}
+          {!user && (
+            <div className="px-6 pb-4">
+              <button
+                onClick={() => router.push('/auth/login')}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Sign in to save and track visits
+              </button>
+            </div>
+          )}
+          </div>
+
+          {/* Desktop Content */}
+          <div className="hidden md:block space-y-6">
+            {/* Hero Image */}
+            {destination.image && (
+              <div className="mt-0 -mx-6 mb-0 rounded-none overflow-hidden aspect-[16/10] bg-gray-100 dark:bg-gray-800">
+                <div className="relative w-full h-full">
+                  <Image
+                    src={destination.image}
+                    alt={destination.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, 420px"
+                    priority={false}
+                    quality={90}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Identity Block */}
+            <div className="space-y-5">
+              <div>
+                <h1 className="text-2xl font-bold leading-tight text-gray-900 dark:text-white mb-3">
+                  {destination.name || 'Destination'}
+                </h1>
+              </div>
+
+              {/* Location */}
               {(destination.neighborhood || destination.city || destination.country) && (
-                <div className="flex items-start gap-1.5 text-sm">
-                  <MapPin className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                <div className="flex items-start gap-2 text-sm">
+                  <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     {destination.neighborhood && (
-                      <div className="font-medium text-gray-900 dark:text-white">
+                      <div className="font-semibold text-gray-900 dark:text-white mb-0.5">
                         {destination.neighborhood}
                       </div>
                     )}
@@ -1300,6 +1617,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </div>
               )}
 
+              {/* Badges */}
               <div className="flex flex-wrap items-center gap-2">
                 {destination.category && (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200">
@@ -1340,267 +1658,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             </div>
 
+            {/* Description */}
             {destination.micro_description && (
-              <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                {destination.micro_description}
-              </p>
-            )}
-
-            {highlightTags.length > 0 && (
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
-                  Highlights
+              <div className="pt-2">
+                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                  {destination.micro_description}
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {highlightTags.map(tag => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-900 text-xs font-medium text-gray-700 dark:text-gray-200"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
               </div>
             )}
 
-            <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-              <div className="grid grid-cols-2 gap-3">
-                {user && (
-                  <button
-                    onClick={async () => {
-                      if (!user) {
-                        router.push('/auth/login');
-                        return;
-                      }
-                      if (!isSaved) {
-                        setShowSaveModal(true);
-                      } else {
-                        try {
-                          const supabaseClient = createClient();
-                          if (!supabaseClient) {
-                            alert('Failed to connect to database. Please try again.');
-                            return;
-                          }
-                          const { error } = await supabaseClient
-                            .from('saved_places')
-                            .delete()
-                            .eq('user_id', user.id)
-                            .eq('destination_slug', destination.slug);
-                          if (!error) {
-                            setIsSaved(false);
-                            if (onSaveToggle) onSaveToggle(destination.slug, false);
-                          }
-                        } catch (error) {
-                          console.error('Error unsaving:', error);
-                        }
-                      }
-                    }}
-                    className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
-                      isSaved
-                        ? 'border-gray-900 bg-gray-900 text-white'
-                        : 'border-gray-200 bg-gray-50 text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100'
-                    }`}
-                    aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
-                  >
-                    <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                    {isSaved ? 'Saved' : 'Save'}
-                  </button>
-                )}
-
-                {user && (
-                  <button
-                    onClick={handleVisitToggle}
-                    className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
-                      isVisited
-                        ? 'border-green-500 bg-green-500 text-white'
-                        : 'border-gray-200 bg-gray-50 text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100'
-                    }`}
-                  >
-                    <Check className="h-4 w-4" />
-                    {isVisited ? 'Visited' : 'Mark Visited'}
-                  </button>
-                )}
-
-                <button
-                  onClick={handleShare}
-                  className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                >
-                  <Share2 className="h-4 w-4" />
-                  {copied ? 'Copied!' : 'Share'}
-                </button>
-
-                <a
-                  href={directionsUrl || undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
-                    directionsUrl
-                      ? 'border-gray-200 bg-gray-50 text-gray-900 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100'
-                      : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
-                  }`}
-                  onClick={(e) => {
-                    if (!directionsUrl) {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  <Navigation className="h-4 w-4" />
-                  Directions
-                </a>
-
-                {/* Website Quick Action */}
-                {destination.website && (
-                  <a
-                    href={destination.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                  >
-                    <Globe className="h-4 w-4" />
-                    Website
-                  </a>
-                )}
-
-                {/* Call Quick Action */}
-                {destination.phone_number && (
-                  <a
-                    href={`tel:${destination.phone_number}`}
-                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                  >
-                    <Phone className="h-4 w-4" />
-                    Call
-                  </a>
-                )}
-
-                {isAdmin && destination && (
-                  <button
-                    onClick={() => setIsEditDrawerOpen(true)}
-                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-3 text-sm font-medium text-gray-900 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 col-span-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit destination
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Sign in prompt */}
-          {!user && (
-            <div className="px-6 pb-4">
-              <button
-                onClick={() => router.push('/auth/login')}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                Sign in to save and track visits
-              </button>
-            </div>
-          )}
-          </div>
-
-          {/* Desktop Content */}
-          <div className="hidden md:block">
-          {/* Image */}
-          {destination.image && (
-            <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
-              <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
-              <Image
-                src={destination.image}
-                alt={destination.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 100vw, 420px"
-                priority={false}
-                quality={85}
-              />
-              </div>
-            </div>
-          )}
-
-          {/* Identity Block */}
-          <div className="space-y-4 mt-6">
-            {/* Location Badge */}
-            <div>
-              <a
-                href={`/city/${destination.city}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  router.push(`/city/${destination.city}`);
-                }}
-              >
-                <MapPin className="h-3 w-3" />
-                {destination.country ? `${capitalizeCity(destination.city)}, ${destination.country}` : capitalizeCity(destination.city)}
-              </a>
-            </div>
-
-          {/* Title */}
-            <div className="space-y-3">
-              <h1 className="text-2xl font-medium leading-tight text-black dark:text-white">
-                {destination.name}
-              </h1>
-
-              {/* Pills: Category, Brand, Crown, Michelin, Google Rating */}
-              <div className="flex flex-wrap gap-2">
-              {destination.category && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
-                    {destination.category}
-                    </span>
-                )}
-
-                {destination.brand && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
-                    <Building2 className="h-3.5 w-3.5" />
-                    {destination.brand}
-                  </span>
-                )}
-
-                {destination.crown && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400">
-                    Crown
-                </span>
-              )}
-
-              {destination.michelin_stars && destination.michelin_stars > 0 && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                    alt="Michelin star"
-                    className="h-3 w-3"
-                    loading="lazy"
-                    onError={(e) => {
-                      // Fallback to local file if external URL fails
-                      const target = e.currentTarget;
-                      if (target.src !== '/michelin-star.svg') {
-                        target.src = '/michelin-star.svg';
-                      }
-                    }}
-                  />
-                  {destination.michelin_stars} Michelin star{destination.michelin_stars > 1 ? 's' : ''}
-                  </span>
-            )}
-
-                {(enrichedData?.rating || destination.rating) && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                  </svg>
-                  {(enrichedData?.rating || destination.rating).toFixed(1)}
-                  {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
-                    <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
-                      ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
-                    </span>
-                  )}
-                    </span>
-              )}
-
-              {/* Instagram Handle */}
-              {(destination.instagram_handle || destination.instagram_url) && (() => {
+            {/* Instagram Handle */}
+            {(destination.instagram_handle || destination.instagram_url) && (() => {
                 const instagramHandle = destination.instagram_handle || 
                   (destination.instagram_url 
                     ? destination.instagram_url.match(/instagram\.com\/([^/?]+)/)?.[1]?.replace('@', '')
@@ -1623,14 +1691,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   </a>
                 );
               })()}
-                  </div>
-
-              {destination.micro_description && (
-                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                  {destination.micro_description}
-                </p>
-                )}
               </div>
+            </div>
 
             {/* Action Row - Pill Buttons */}
             <div className="flex items-center gap-2 mt-4 flex-wrap">
@@ -1779,8 +1841,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   View Full Page
                 </Link>
               ) : null}
-                  </div>
-                </div>
+            </div>
 
           {/* Sign in prompt */}
           {!user && (
@@ -1794,11 +1855,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
+            {/* Divider */}
+            <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
 
-          {/* Meta & Info Section */}
-          <div className="space-y-6">
+            {/* Meta & Info Section */}
+            <div className="space-y-6">
             {/* Parent destination context */}
             {parentDestination && (
               <div className="space-y-3">
@@ -1992,7 +2053,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {copied ? 'Copied!' : 'Share'}
               </button>
             </div>
-            </div>
 
             {/* Nested Destinations */}
             {(loadingNested || (nestedDestinations && nestedDestinations.length > 0)) && (
@@ -2019,12 +2079,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
-          {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
+            {/* Divider */}
+            <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
 
-
-          {/* Description */}
-          {destination.description && (
+            {/* Description */}
+            {destination.description && (
             <div>
               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                 {stripHtmlTags(destination.description)}
@@ -2115,58 +2174,220 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   </a>
                 )}
               </div>
-            </div>
-          )}
-
-          {/* AI Review Summary */}
-          {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">What Reviewers Say</h3>
-              {loadingReviewSummary ? (
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-white"></div>
-                  <span>Summarizing reviews...</span>
-                        </div>
-              ) : reviewSummary ? (
-                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/50">
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
-                      </div>
-              ) : null}
-            </div>
-          )}
-
-          {/* Map Section */}
-          {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
-              <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-                <MapView
-                  destinations={[{
-                    ...destination,
-                    latitude: destination.latitude || enrichedData?.latitude,
-                    longitude: destination.longitude || enrichedData?.longitude,
-                  }].filter(d => d.latitude && d.longitude) as Destination[]}
-                  center={{
-                    lat: destination.latitude || enrichedData?.latitude || 0,
-                    lng: destination.longitude || enrichedData?.longitude || 0,
-                  }}
-                  zoom={15}
-                  isDark={false}
-                />
               </div>
-            </div>
-          )}
+            )}
 
-          {/* AI Recommendations */}
-          {(loadingRecommendations || recommendations.length > 0) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <div className="mb-4">
-                <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
-                  You might also like
+            {/* AI Review Summary */}
+            {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">What Reviewers Say</h3>
+                {loadingReviewSummary ? (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-white"></div>
+                    <span>Summarizing reviews...</span>
+                  </div>
+                ) : reviewSummary ? (
+                  <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/50">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
+                  </div>
+                ) : null}
+              </div>
+            )}
+
+            {/* Weather Section */}
+            {enrichedData?.current_weather && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <Cloud className="h-3.5 w-3.5" />
+                  Current Weather
                 </h3>
+                <div className="flex items-center gap-4">
+                  {enrichedData.current_weather.temperature && (
+                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {Math.round(enrichedData.current_weather.temperature)}°
+                    </div>
+                  )}
+                  {enrichedData.current_weather.weatherDescription && (
+                    <div className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                      {enrichedData.current_weather.weatherDescription}
+                    </div>
+                  )}
+                </div>
+                {enrichedData.best_visit_months && Array.isArray(enrichedData.best_visit_months) && enrichedData.best_visit_months.length > 0 && (
+                  <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                    Best months to visit: {enrichedData.best_visit_months.map((m: number) => {
+                      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                      return monthNames[m - 1];
+                    }).join(', ')}
+                  </div>
+                )}
               </div>
+            )}
 
-              {loadingRecommendations ? (
+            {/* Distance from Center */}
+            {(enrichedData?.distance_from_center_meters || enrichedData?.walking_time_from_center_minutes || enrichedData?.driving_time_from_center_minutes || enrichedData?.transit_time_from_center_minutes) && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <Navigation className="h-3.5 w-3.5" />
+                  Distance from City Center
+                </h3>
+                <div className="space-y-2 text-sm">
+                  {enrichedData.distance_from_center_meters && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Distance</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {(enrichedData.distance_from_center_meters / 1000).toFixed(1)} km
+                        {enrichedData.distance_from_center_meters < 1000 && ` (${enrichedData.distance_from_center_meters} m)`}
+                      </span>
+                    </div>
+                  )}
+                  {enrichedData.walking_time_from_center_minutes && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Walking</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {enrichedData.walking_time_from_center_minutes} min
+                      </span>
+                    </div>
+                  )}
+                  {enrichedData.driving_time_from_center_minutes && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Driving</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {enrichedData.driving_time_from_center_minutes} min
+                      </span>
+                    </div>
+                  )}
+                  {enrichedData.transit_time_from_center_minutes && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Transit</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {enrichedData.transit_time_from_center_minutes} min
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Photos Section */}
+            {(enrichedData?.photos || enrichedData?.primary_photo_url || enrichedData?.photo_count) && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <ImageIcon className="h-3.5 w-3.5" />
+                  Photos
+                  {enrichedData.photo_count && (
+                    <span className="text-gray-400 dark:text-gray-500 font-normal">
+                      ({enrichedData.photo_count})
+                    </span>
+                  )}
+                </h3>
+                {enrichedData.primary_photo_url && (
+                  <div className="relative w-full h-48 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800 mb-3">
+                    <Image
+                      src={enrichedData.primary_photo_url}
+                      alt={`${destination.name} - Photo`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, 420px"
+                      quality={85}
+                    />
+                  </div>
+                )}
+                {enrichedData.photos && Array.isArray(enrichedData.photos) && enrichedData.photos.length > 1 && (
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {enrichedData.photos.length} photos available
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Nearby Events */}
+            {enrichedData?.nearby_events && Array.isArray(enrichedData.nearby_events) && enrichedData.nearby_events.length > 0 && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <CalendarIcon className="h-3.5 w-3.5" />
+                  Nearby Events
+                  {enrichedData.upcoming_event_count && (
+                    <span className="text-gray-400 dark:text-gray-500 font-normal">
+                      ({enrichedData.upcoming_event_count})
+                    </span>
+                  )}
+                </h3>
+                <div className="space-y-2">
+                  {enrichedData.nearby_events.slice(0, 3).map((event: any, idx: number) => (
+                    <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">
+                      {event.name || event.title}
+                      {event.date && (
+                        <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
+                          {new Date(event.date).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Currency & Pricing */}
+            {(enrichedData?.currency_code || enrichedData?.price_range_local) && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400 flex items-center gap-2">
+                  <DollarSign className="h-3.5 w-3.5" />
+                  Pricing
+                </h3>
+                <div className="space-y-2 text-sm">
+                  {enrichedData.currency_code && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Currency</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {enrichedData.currency_code}
+                      </span>
+                    </div>
+                  )}
+                  {enrichedData.price_range_local && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Price Range</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {enrichedData.price_range_local}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Map Section */}
+            {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
+                <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+                  <MapView
+                    destinations={[{
+                      ...destination,
+                      latitude: destination.latitude || enrichedData?.latitude,
+                      longitude: destination.longitude || enrichedData?.longitude,
+                    }].filter(d => d.latitude && d.longitude) as Destination[]}
+                    center={{
+                      lat: destination.latitude || enrichedData?.latitude || 0,
+                      lng: destination.longitude || enrichedData?.longitude || 0,
+                    }}
+                    zoom={15}
+                    isDark={false}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* AI Recommendations */}
+            {(loadingRecommendations || recommendations.length > 0) && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+                <div className="mb-4">
+                  <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
+                    You might also like
+                  </h3>
+                </div>
+
+                {loadingRecommendations ? (
                 <div className="flex gap-4 overflow-x-auto pb-2">
                   {[1, 2, 3].map(i => (
                     <div key={i} className="flex-shrink-0 w-32">
@@ -2234,13 +2455,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               )}
             </div>
           )}
-
           </div>
-        </div>
       </Drawer>
 
       {/* Save Destination Modal */}
-      {destination?.id && (
+      {destination && destination.id && destination.slug && (
         <SaveDestinationModal
           destinationId={destination.id}
           destinationSlug={destination.slug}
@@ -2268,6 +2487,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             }
           }}
           onSave={async (collectionId) => {
+            if (!destination) return;
             // If collectionId is null, user unsaved - remove from saved_places
             if (collectionId === null && destination.slug && user) {
               try {
@@ -2313,8 +2533,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       {/* Visited Modal */}
       {destination && (
         <VisitedModal
-          destinationSlug={destination.slug}
-          destinationName={destination.name}
+          destinationSlug={destination.slug || ''}
+          destinationName={destination.name || ''}
           isOpen={showVisitedModal}
           onClose={() => setShowVisitedModal(false)}
           onUpdate={handleVisitedModalUpdate}
@@ -2324,14 +2544,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       {/* Add to Trip Modal */}
       {destination && (
         <AddToTripModal
-          destinationSlug={destination.slug}
-          destinationName={destination.name}
+          destinationSlug={destination.slug || ''}
+          destinationName={destination.name || ''}
           isOpen={showAddToTripModal}
           onClose={() => setShowAddToTripModal(false)}
           onAdd={(tripId) => {
             setIsAddedToTrip(true);
             setShowAddToTripModal(false);
-            console.log(`Added ${destination.name} to trip ${tripId}`);
+            console.log(`Added ${destination?.name || 'destination'} to trip ${tripId}`);
           }}
         />
       )}

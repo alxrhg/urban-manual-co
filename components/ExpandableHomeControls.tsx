@@ -224,8 +224,8 @@ export function ExpandableHomeControls({
             )}
           </button>
 
-          {/* Create Trip Pill */}
-          {isAdmin && onAddPOI ? (
+          {/* Create Trip / Add POI Pill */}
+          {onAddPOI ? (
             <button
               onClick={onAddPOI}
               className="flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200"

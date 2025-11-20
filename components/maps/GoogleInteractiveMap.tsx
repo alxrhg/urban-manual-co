@@ -257,7 +257,7 @@ export default function GoogleInteractiveMap({
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
     
     if (!apiKey) {
-      setError('Google Maps API key not found');
+      setError('Google API key not found. Please configure NEXT_PUBLIC_GOOGLE_API_KEY in your environment variables.');
       setIsLoading(false);
       return;
     }
@@ -352,7 +352,7 @@ export default function GoogleInteractiveMap({
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 z-10">
           <div className="text-center p-6">
             <p className="text-sm font-medium">{error}</p>
-            <p className="text-xs text-gray-500 mt-1">Please check your Google Maps API key configuration.</p>
+            <p className="text-xs text-gray-500 mt-1">Please check your Google API key configuration (NEXT_PUBLIC_GOOGLE_API_KEY).</p>
           </div>
         </div>
       )}

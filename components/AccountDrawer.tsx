@@ -21,6 +21,8 @@ import {
   Download,
   Trash2,
   Calendar,
+  User,
+  Shield,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
@@ -371,7 +373,7 @@ export function AccountDrawer() {
           {/* Profile Header */}
           <div className="flex flex-col items-center text-center gap-4 pb-6 border-b border-gray-200 dark:border-gray-800">
             <div className="relative">
-              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gradient-to-br from-gray-100 to-gray-200 text-2xl font-semibold text-gray-700 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 dark:bg-gray-800 text-2xl font-semibold text-gray-700 dark:text-gray-200">
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl}
@@ -512,183 +514,228 @@ export function AccountDrawer() {
 
   // Render visited subpage
   const renderVisitedSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
+    <div className="px-6 py-6 space-y-6">
       {loading ? (
-        <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        <div className="text-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-3" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading your visits...</p>
         </div>
       ) : visitedPlaces.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {visitedPlaces.map((visit, index) => (
-              <button
-                key={index}
-                onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+            <button
+              key={index}
+              onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
+              className="w-full flex items-center gap-4 p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all text-left group"
             >
-              {visit.destination?.image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+              {visit.destination?.image ? (
+                <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-gray-200 dark:ring-gray-800">
                   <Image
                     src={visit.destination.image}
                     alt={visit.destination.name}
                     fill
                     className="object-cover"
-                    sizes="48px"
+                    sizes="56px"
                   />
                 </div>
+              ) : (
+                <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-gray-400" />
+                </div>
               )}
-                <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {visit.destination?.name || visit.slug}
-                  </p>
-                  {visit.visited_at && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(visit.visited_at).toLocaleDateString("en-US", { 
-                      month: "short", 
-                      day: "numeric",
-                      year: "numeric"
-                      })}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+                  {visit.destination?.name || visit.slug}
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  {visit.destination?.city && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {visit.destination.city}
                     </p>
                   )}
+                  {visit.visited_at && (
+                    <>
+                      {visit.destination?.city && <span className="text-gray-300 dark:text-gray-600">•</span>}
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {new Date(visit.visited_at).toLocaleDateString("en-US", { 
+                          month: "short", 
+                          day: "numeric",
+                          year: "numeric"
+                        })}
+                      </p>
+                    </>
+                  )}
                 </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              </button>
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0" />
+            </button>
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No visited places yet</p>
+        <div className="text-center py-16">
+          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+            <MapPin className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">No visited places yet</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Mark places as visited to see them here</p>
         </div>
       )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <button
-          onClick={() => handleNavigateToFullPage("/account?tab=visited")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
-        >
-          View All Visited
-        </button>
-      </div>
+      {visitedPlaces.length > 0 && (
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+          <button
+            onClick={() => handleNavigateToFullPage("/account?tab=visited")}
+            className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
+          >
+            View All Visited
+          </button>
+        </div>
+      )}
     </div>
   );
 
   // Render saved subpage
   const renderSavedSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
+    <div className="px-6 py-6 space-y-6">
       {loading ? (
-        <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        <div className="text-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-3" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading your saved places...</p>
         </div>
       ) : savedPlaces.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {savedPlaces.map((saved, index) => (
-              <button
-                key={index}
-                onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+            <button
+              key={index}
+              onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
+              className="w-full flex items-center gap-4 p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all text-left group"
             >
-              {saved.destination?.image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+              {saved.destination?.image ? (
+                <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-gray-200 dark:ring-gray-800">
                   <Image
                     src={saved.destination.image}
                     alt={saved.destination.name}
                     fill
                     className="object-cover"
-                    sizes="48px"
+                    sizes="56px"
                   />
                 </div>
-              )}
-                <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {saved.destination?.name || saved.slug}
-                  </p>
-                  {saved.destination?.city && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {saved.destination.city}
-                    </p>
-                  )}
+              ) : (
+                <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center">
+                  <Bookmark className="w-5 h-5 text-gray-400" />
                 </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              </button>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+                  {saved.destination?.name || saved.slug}
+                </p>
+                {saved.destination?.city && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
+                    {saved.destination.city}
+                  </p>
+                )}
+              </div>
+              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0" />
+            </button>
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No saved places yet</p>
+        <div className="text-center py-16">
+          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+            <Bookmark className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">No saved places yet</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Save places you want to visit later</p>
         </div>
       )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <button
-          onClick={() => handleNavigateToFullPage("/account?tab=saved")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
-        >
-          View Full Saved
-        </button>
-      </div>
+      {savedPlaces.length > 0 && (
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+          <button
+            onClick={() => handleNavigateToFullPage("/account?tab=saved")}
+            className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
+          >
+            View All Saved
+          </button>
+        </div>
+      )}
     </div>
   );
 
   // Render collections subpage
   const renderCollectionsSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
+    <div className="px-6 py-6 space-y-6">
       {loading ? (
-        <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
+        <div className="text-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-3" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading collections...</p>
         </div>
       ) : collections.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {collections.map((collection) => (
             <button
               key={collection.id}
               onClick={() => handleNavigateToFullPage(`/collection/${collection.id}`)}
-              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
+              className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-4 text-left shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-700 transition-all group"
             >
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-lg dark:bg-gray-800">
+              <div className="flex items-start gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-xl flex-shrink-0 ring-1 ring-gray-200 dark:ring-gray-800">
                   <span>{collection.emoji || '📚'}</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{collection.name}</p>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
+                      {collection.name}
+                    </p>
+                    {collection.is_public && (
+                      <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium flex-shrink-0">
+                        Public
+                      </span>
+                    )}
+                  </div>
                   {collection.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{collection.description}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
+                      {collection.description}
+                    </p>
                   )}
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    {(collection.destination_count || 0).toLocaleString()} places
-                    {collection.is_public && <span className="ml-1">• Public</span>}
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                    {(collection.destination_count || 0).toLocaleString()} {collection.destination_count === 1 ? 'place' : 'places'}
                   </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0 mt-1" />
               </div>
             </button>
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center dark:border-gray-800 dark:bg-gray-900/50">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">No collections yet</p>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Create lists to group your favorite places.</p>
+        <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 px-6 py-12 text-center">
+          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+            <Folder className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">No collections yet</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Create lists to group your favorite places</p>
           <button
             onClick={() => handleNavigateToFullPage('/account?tab=collections')}
-            className="mt-4 inline-flex items-center justify-center rounded-full bg-gray-900 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-gray-800 dark:bg-white dark:text-gray-900"
+            className="inline-flex items-center justify-center rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2.5 text-sm font-semibold shadow-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
           >
             Start a collection
           </button>
         </div>
       )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <button
-          onClick={() => handleNavigateToFullPage("/account?tab=collections")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
-        >
-          Manage Collections
-        </button>
-      </div>
+      {collections.length > 0 && (
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+          <button
+            onClick={() => handleNavigateToFullPage("/account?tab=collections")}
+            className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
+          >
+            Manage Collections
+          </button>
+        </div>
+      )}
     </div>
   );
 
   // Render trips subpage
   const renderTripsSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
+    <div className="px-6 py-6 space-y-6">
       <button
         onClick={() => {
           closeDrawer();
@@ -696,66 +743,79 @@ export function AccountDrawer() {
             router.push('/trips');
           }, 200);
         }}
-        className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium flex items-center justify-center gap-2"
+        className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md flex items-center justify-center gap-2"
       >
         <Plus className="w-4 h-4" />
         New Trip
       </button>
       {loading ? (
-        <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        <div className="text-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-3" />
+          <p className="text-sm text-gray-500 dark:text-gray-400">Loading your trips...</p>
         </div>
       ) : trips.length > 0 ? (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {trips.map((trip) => (
             <button
               key={trip.id}
               onClick={() => navigateToSubpage('trip_details_subpage', trip.id)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
+              className="w-full flex items-center gap-4 p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all text-left group"
             >
-              {trip.cover_image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+              {trip.cover_image ? (
+                <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-gray-200 dark:ring-gray-800">
                   <Image
-                  src={trip.cover_image}
-                  alt={trip.title}
+                    src={trip.cover_image}
+                    alt={trip.title}
                     fill
                     className="object-cover"
-                    sizes="48px"
-                />
-              </div>
+                    sizes="56px"
+                  />
+                </div>
+              ) : (
+                <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center">
+                  <Compass className="w-5 h-5 text-gray-400" />
+                </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
                   {trip.title}
                 </p>
                 {trip.start_date && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(trip.start_date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric"
-                    })}
-                  </p>
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(trip.start_date).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric"
+                      })}
+                    </p>
+                  </div>
                 )}
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
+              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0" />
             </button>
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No trips yet</p>
+        <div className="text-center py-16">
+          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+            <Compass className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">No trips yet</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Plan your next adventure</p>
         </div>
       )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <button
-          onClick={() => handleNavigateToFullPage("/trips")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
-        >
-          View All Trips
-        </button>
-      </div>
+      {trips.length > 0 && (
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+          <button
+            onClick={() => handleNavigateToFullPage("/trips")}
+            className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
+          >
+            View All Trips
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -764,17 +824,21 @@ export function AccountDrawer() {
     if (!selectedTrip) {
       return (
         <div className="px-6 py-6">
-          <div className="text-center py-12">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Trip not found</p>
+          <div className="text-center py-16">
+            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+              <Compass className="w-8 h-8 text-gray-400" />
+            </div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Trip not found</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">This trip may have been deleted</p>
           </div>
         </div>
       );
     }
 
     return (
-      <div className="px-6 py-6 space-y-4">
+      <div className="px-6 py-6 space-y-6">
         {selectedTrip.cover_image && (
-          <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+          <div className="relative w-full h-56 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-800">
             <Image
               src={selectedTrip.cover_image}
               alt={selectedTrip.title}
@@ -784,40 +848,50 @@ export function AccountDrawer() {
             />
           </div>
         )}
-        {selectedTrip.start_date && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <Calendar className="w-4 h-4" />
-            <span>
-              {new Date(selectedTrip.start_date).toLocaleDateString("en-US", { 
-                month: "long", 
-                day: "numeric",
-                year: "numeric"
-              })}
-              {selectedTrip.end_date && ` - ${new Date(selectedTrip.end_date).toLocaleDateString("en-US", { 
-                month: "long", 
-                day: "numeric",
-                year: "numeric"
-              })}`}
-            </span>
+        
+        <div className="space-y-4">
+          <div>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-2">
+              {selectedTrip.title}
+            </h3>
+            {selectedTrip.start_date && (
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <Calendar className="w-4 h-4" />
+                <span>
+                  {new Date(selectedTrip.start_date).toLocaleDateString("en-US", { 
+                    month: "long", 
+                    day: "numeric",
+                    year: "numeric"
+                  })}
+                  {selectedTrip.end_date && ` - ${new Date(selectedTrip.end_date).toLocaleDateString("en-US", { 
+                    month: "long", 
+                    day: "numeric",
+                    year: "numeric"
+                  })}`}
+                </span>
+              </div>
+            )}
           </div>
-        )}
-        <div className="flex gap-2">
-          <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
-            <Share2 className="w-4 h-4" />
-            Share
-          </button>
-          <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
-            <Download className="w-4 h-4" />
-            Export
-          </button>
-          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
-            <Trash2 className="w-4 h-4" />
-          </button>
+
+          <div className="flex gap-2">
+            <button className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium flex items-center justify-center gap-2">
+              <Share2 className="w-4 h-4" />
+              Share
+            </button>
+            <button className="flex-1 px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm font-medium flex items-center justify-center gap-2">
+              <Download className="w-4 h-4" />
+              Export
+            </button>
+            <button className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors text-sm font-medium flex items-center justify-center">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
+
         <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={() => handleNavigateToFullPage(`/trips/${selectedTrip.id}`)}
-            className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+            className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
           >
             Open Full Trip
           </button>
@@ -828,14 +902,18 @@ export function AccountDrawer() {
 
   // Render achievements subpage
   const renderAchievementsSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
-      <div className="text-center py-12">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Achievements coming soon</p>
+    <div className="px-6 py-6 space-y-6">
+      <div className="text-center py-16">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 flex items-center justify-center mx-auto mb-4">
+          <Trophy className="w-8 h-8 text-amber-600 dark:text-amber-400" />
+        </div>
+        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Achievements coming soon</p>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Track your travel milestones and unlock badges</p>
       </div>
       <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=achievements")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
         >
           View All Achievements
         </button>
@@ -845,20 +923,51 @@ export function AccountDrawer() {
 
   // Render settings subpage
   const renderSettingsSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
-      <div className="space-y-2">
+    <div className="px-6 py-6 space-y-6">
+      <div className="space-y-1">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Manage your account settings, privacy preferences, and data.
+        </p>
+      </div>
+      
+      <div className="space-y-3">
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
         >
-          <span>Settings</span>
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+              <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Profile & Preferences</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Edit your profile information</p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-400" />
+        </button>
+
+        <button
+          onClick={() => handleNavigateToFullPage("/account?tab=settings")}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+              <Shield className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900 dark:text-white">Privacy & Data</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Control your privacy settings</p>
+            </div>
+          </div>
           <ChevronRight className="w-4 h-4 text-gray-400" />
         </button>
       </div>
+
       <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
         >
           Open Full Settings
         </button>
@@ -873,16 +982,16 @@ export function AccountDrawer() {
     }
 
     return (
-      <div className="sticky top-0 z-10 flex items-center gap-3 px-6 pb-4 pt-5">
+      <div className="sticky top-0 z-10 flex items-center gap-3 px-6 py-4 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
         <button
           onClick={navigateBack}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900/80 text-white shadow-sm ring-1 ring-white/15 transition hover:bg-gray-800/90 dark:bg-white/10 dark:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white transition hover:bg-gray-200 dark:hover:bg-gray-700"
           aria-label="Back"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h2 className="text-lg font-semibold text-white drop-shadow-sm dark:text-white flex-1">{getDrawerTitle()}</h2>
-        <div className="w-10" />
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white flex-1">{getDrawerTitle()}</h2>
+        <div className="w-9" />
       </div>
     );
   };
@@ -891,8 +1000,7 @@ export function AccountDrawer() {
     if (currentSubpage === 'main_drawer') return content;
 
     return (
-      <div className="relative flex h-full flex-col">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-gray-950/80 via-gray-950/50 to-transparent dark:from-black/80 dark:via-black/40" />
+      <div className="flex h-full flex-col">
         {renderHeader()}
         <div className="flex-1 overflow-y-auto">{content}</div>
       </div>

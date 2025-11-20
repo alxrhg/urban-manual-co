@@ -115,7 +115,8 @@ export default function AdminPage() {
   // Load destinations when admin/auth is ready, or when search changes
   useEffect(() => {
     loadDestinationList();
-  }, [loadDestinationList]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listSearchQuery]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {

@@ -781,7 +781,7 @@ export default function Account() {
 
         {/* Settings Tab */}
         {activeTab === 'settings' && user && (
-          <div className="fade-in space-y-10">
+          <div className="fade-in space-y-6">
             <ProfileEditor
               userId={user.id}
               onSaveComplete={() => {
@@ -792,19 +792,24 @@ export default function Account() {
             <AccountPrivacyManager />
             
             {/* Cookie Settings */}
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-lg font-light mb-2">Cookie Preferences</h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                  Manage your cookie preferences to control how we collect and use data.
-                </p>
-                <button
-                  onClick={openCookieSettings}
-                  className="px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm font-medium"
-                >
-                  Manage Cookie Settings
-                </button>
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-900/20">
+                  <svg className="h-5 w-5 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white">Cookie Preferences</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Manage your cookie preferences to control how we collect and use data.</p>
+                </div>
               </div>
+              <button
+                onClick={openCookieSettings}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
+              >
+                Manage Cookie Settings
+              </button>
             </div>
           </div>
         )}

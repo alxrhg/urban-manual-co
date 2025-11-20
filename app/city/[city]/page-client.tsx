@@ -288,7 +288,7 @@ export default function CityPageClient() {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap justify-end">
-                  {isAdmin && (
+                  {editModeActive && (
                     <button
                       onClick={handleAddNewPOI}
                       className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out text-xs font-medium flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
