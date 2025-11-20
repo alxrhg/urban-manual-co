@@ -1,6 +1,15 @@
 "use client";
 
-import { DndContext, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import {
+  DndContext,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  type DragEndEvent,
+  type DragStartEvent,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMemo, useState } from "react";
 import { createPortal } from "react-dom";
@@ -84,11 +93,12 @@ export default function PlannerPage() {
 
   const days = [1, 2, 3];
 
-  const handleDragStart = ({ active }: { active: { id: string } }) => {
-    setActiveId(active.id);
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(String(event.active.id));
   };
 
-  const handleDragEnd = ({ active, over }: any) => {
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    const activeKey = String(active.id);
     setActiveId(null);
     if (!over) return;
 
@@ -96,9 +106,9 @@ export default function PlannerPage() {
     const overData = over.data?.current;
 
     if (over.id === "dock-drop" && activeType === "scheduled") {
-      const moving = scheduledEvents.find((evt) => evt.id === active.id);
+      const moving = scheduledEvents.find((evt) => evt.id === activeKey);
       if (moving) {
-        setScheduledEvents((prev) => prev.filter((evt) => evt.id !== active.id));
+        setScheduledEvents((prev) => prev.filter((evt) => evt.id !== activeKey));
         setDockItems((prev) => [{
           id: moving.id,
           title: moving.title,
@@ -115,9 +125,9 @@ export default function PlannerPage() {
       const day = overData.day as number;
 
       if (activeType === "dock") {
-        const item = dockItems.find((itm) => itm.id === active.id);
+        const item = dockItems.find((itm) => itm.id === activeKey);
         if (!item) return;
-        setDockItems((prev) => prev.filter((itm) => itm.id !== active.id));
+        setDockItems((prev) => prev.filter((itm) => itm.id !== activeKey));
         setScheduledEvents((prev) => [
           ...prev,
           {
@@ -133,9 +143,7 @@ export default function PlannerPage() {
       }
 
       if (activeType === "scheduled") {
-        setScheduledEvents((prev) =>
-          prev.map((evt) => (evt.id === active.id ? { ...evt, start, day } : evt))
-        );
+        setScheduledEvents((prev) => prev.map((evt) => (evt.id === activeKey ? { ...evt, start, day } : evt)));
       }
     }
   };
