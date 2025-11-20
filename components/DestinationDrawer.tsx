@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit, Instagram } from 'lucide-react';
+import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit, Instagram, Trash2 } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -26,8 +26,11 @@ import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import VisitModal from './VisitModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
-import { POIDrawer } from './POIDrawer';
 import { ArchitectDesignInfo } from './ArchitectDesignInfo';
+import { CityAutocompleteInput } from './CityAutocompleteInput';
+import { CategoryAutocompleteInput } from './CategoryAutocompleteInput';
+import GooglePlacesAutocompleteNative from './GooglePlacesAutocompleteNative';
+import { useToast } from '@/hooks/useToast';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -187,7 +190,31 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [checkAnimating, setCheckAnimating] = useState(false);
   const [enrichedData, setEnrichedData] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const toast = useToast();
+  
+  // Edit form state
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [googlePlaceQuery, setGooglePlaceQuery] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    slug: '',
+    name: '',
+    city: '',
+    category: '',
+    description: '',
+    content: '',
+    image: '',
+    michelin_stars: null as number | null,
+    crown: false,
+    brand: '',
+    architect: '',
+  });
 
   // List management state
   const [showListsModal, setShowListsModal] = useState(false);
@@ -223,6 +250,57 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
+
+  // Initialize edit form when entering edit mode
+  useEffect(() => {
+    if (isEditMode && destination) {
+      setEditFormData({
+        slug: destination.slug || '',
+        name: destination.name || '',
+        city: destination.city || '',
+        category: destination.category || '',
+        description: stripHtmlTags(destination.description || ''),
+        content: stripHtmlTags(destination.content || ''),
+        image: destination.image || '',
+        michelin_stars: destination.michelin_stars || null,
+        crown: destination.crown || false,
+        brand: destination.brand || '',
+        architect: destination.architect || '',
+      });
+      if (destination.image) {
+        setImagePreview(destination.image);
+      }
+    } else if (!isEditMode) {
+      // Reset form when exiting edit mode
+      setEditFormData({
+        slug: '',
+        name: '',
+        city: '',
+        category: '',
+        description: '',
+        content: '',
+        image: '',
+        michelin_stars: null,
+        crown: false,
+        brand: '',
+        architect: '',
+      });
+      setImageFile(null);
+      setImagePreview(null);
+      setShowDeleteConfirm(false);
+    }
+  }, [isEditMode, destination]);
+
+  // Auto-generate slug from name
+  useEffect(() => {
+    if (isEditMode && editFormData.name && !editFormData.slug) {
+      const slug = editFormData.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      setEditFormData(prev => ({ ...prev, slug }));
+    }
+  }, [isEditMode, editFormData.name]);
 
   // Load enriched data and saved/visited status
   useEffect(() => {
@@ -693,6 +771,242 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     fetchUserLists();
   };
 
+  // Edit mode handlers
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return null;
+    setUploadingImage(true);
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', imageFile);
+      formDataToSend.append('slug', editFormData.slug || editFormData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        throw new Error('Not authenticated');
+      }
+
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formDataToSend,
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+
+      const data = await res.json();
+      return data.url;
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error(`Image upload failed: ${error.message}`);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleGooglePlaceSelect = async (placeDetails: any) => {
+    const placeId = placeDetails?.place_id || placeDetails?.placeId;
+    if (!placeId) return;
+    
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+
+      const response = await fetch('/api/fetch-google-place', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ placeId }),
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch place details');
+      const data = await response.json();
+      
+      if (data) {
+        setEditFormData(prev => ({
+          ...prev,
+          name: data.name !== undefined && data.name !== null ? data.name : prev.name,
+          city: data.city !== undefined && data.city !== null ? data.city : prev.city,
+          category: data.category !== undefined && data.category !== null ? data.category : prev.category,
+          description: data.description !== undefined && data.description !== null ? data.description : prev.description,
+          content: data.content !== undefined && data.content !== null ? data.content : prev.content,
+          image: data.image !== undefined && data.image !== null ? data.image : prev.image,
+          michelin_stars: data.michelin_stars !== undefined && data.michelin_stars !== null ? data.michelin_stars : prev.michelin_stars,
+        }));
+        
+        if (data.image) {
+          setImagePreview(data.image);
+        } else {
+          setImagePreview(null);
+        }
+        
+        setGooglePlaceQuery('');
+        toast.success('Place details loaded from Google');
+      }
+    } catch (error: any) {
+      console.error('Error fetching Google place:', error);
+      toast.error('Failed to load place details');
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editFormData.name || !editFormData.city || !editFormData.category) {
+      toast.error('Please fill in name, city, and category');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      let imageUrl = editFormData.image;
+      if (imageFile) {
+        const uploadedUrl = await uploadImage();
+        if (uploadedUrl) {
+          imageUrl = uploadedUrl;
+        } else {
+          setIsSaving(false);
+          return;
+        }
+      }
+
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      if (!editFormData.category || !editFormData.category.trim()) {
+        toast.error('Category is required');
+        setIsSaving(false);
+        return;
+      }
+
+      const destinationData = {
+        slug: editFormData.slug || editFormData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        name: editFormData.name.trim(),
+        city: editFormData.city.trim(),
+        category: editFormData.category.trim(),
+        description: editFormData.description?.trim() || null,
+        content: editFormData.content?.trim() || null,
+        image: imageUrl || null,
+        michelin_stars: editFormData.michelin_stars || null,
+        crown: editFormData.crown || false,
+        brand: editFormData.brand?.trim() || null,
+        architect: editFormData.architect?.trim() || null,
+      };
+
+      const { data: updateData, error: updateError } = await supabase
+        .from('destinations')
+        .update(destinationData)
+        .eq('slug', destination?.slug)
+        .select('slug, name, city, category, brand, architect');
+
+      if (updateError) {
+        if (updateError.code === '23505') {
+          toast.error('A destination with this slug already exists');
+        } else {
+          throw updateError;
+        }
+        return;
+      }
+
+      toast.success('Destination updated successfully');
+      setIsEditMode(false);
+      // Reload destination data
+      if (destination) {
+        window.location.reload();
+      }
+    } catch (error: any) {
+      console.error('Error updating destination:', error);
+      toast.error(error.message || 'Failed to update destination');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleEditDelete = async () => {
+    if (!destination || !destination.slug) {
+      toast.error('No destination to delete');
+      return;
+    }
+
+    if (!showDeleteConfirm) {
+      setShowDeleteConfirm(true);
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('destinations')
+        .delete()
+        .eq('slug', destination.slug);
+
+      if (error) throw error;
+
+      toast.success('Destination deleted successfully');
+      setIsEditMode(false);
+      onClose();
+    } catch (error: any) {
+      console.error('Error deleting destination:', error);
+      toast.error(error.message || 'Failed to delete destination');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   // Load AI recommendations
   useEffect(() => {
     async function loadRecommendations() {
@@ -782,6 +1096,395 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
         {/* Content */}
         <div className="p-6">
+          {isEditMode ? (
+            /* Edit Form */
+            <form onSubmit={handleEditSubmit} className="space-y-6">
+              {/* Google Places Autocomplete */}
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+                  Search Google Places (optional)
+                </label>
+                <GooglePlacesAutocompleteNative
+                  value={googlePlaceQuery}
+                  onChange={setGooglePlaceQuery}
+                  onPlaceSelect={handleGooglePlaceSelect}
+                  placeholder="Search for a place on Google..."
+                  className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm"
+                  types={['establishment']}
+                />
+              </div>
+
+              {/* Basic Information */}
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Basic Information</h3>
+                
+                {/* Name */}
+                <div className="mb-6">
+                  <label htmlFor="edit-name" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+                    Name *
+                  </label>
+                  <input
+                    id="edit-name"
+                    type="text"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                    required
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                    placeholder="Restaurant name"
+                  />
+                </div>
+
+                {/* Slug */}
+                <div className="mb-6">
+                  <label htmlFor="edit-slug" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+                    Slug
+                  </label>
+                  <input
+                    id="edit-slug"
+                    type="text"
+                    value={editFormData.slug}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, slug: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                    placeholder="auto-generated-from-name"
+                  />
+                </div>
+
+                {/* City */}
+                <div className="mb-6">
+                  <label htmlFor="edit-city" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+                    City *
+                  </label>
+                  <CityAutocompleteInput
+                    value={editFormData.city}
+                    onChange={(value) => setEditFormData(prev => ({ ...prev, city: value }))}
+                    placeholder="Tokyo"
+                    required
+                  />
+                </div>
+
+                {/* Category */}
+                <div className="mb-6">
+                  <label htmlFor="edit-category" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+                    Category *
+                  </label>
+                  <CategoryAutocompleteInput
+                    value={editFormData.category}
+                    onChange={(value) => setEditFormData(prev => ({ ...prev, category: value }))}
+                    placeholder="Dining"
+                    required
+                  />
+                </div>
+
+                {/* Brand */}
+                <div className="mb-6">
+                  <label htmlFor="edit-brand" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+                    Brand
+                  </label>
+                  <input
+                    id="edit-brand"
+                    type="text"
+                    value={editFormData.brand}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, brand: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                    placeholder="Brand name"
+                  />
+                </div>
+
+                {/* Architect */}
+                <div>
+                  <label htmlFor="edit-architect" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+                    Architect
+                  </label>
+                  <input
+                    id="edit-architect"
+                    type="text"
+                    value={editFormData.architect}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, architect: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                    placeholder="Architect name"
+                  />
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Content</h3>
+                
+                {/* Description */}
+                <div className="mb-6">
+                  <label htmlFor="edit-description" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+                    Description
+                  </label>
+                  <textarea
+                    id="edit-description"
+                    value={editFormData.description}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                    placeholder="Short description..."
+                  />
+                </div>
+
+                {/* Content */}
+                <div>
+                  <label htmlFor="edit-content" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+                    Content
+                  </label>
+                  <textarea
+                    id="edit-content"
+                    value={editFormData.content}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, content: e.target.value }))}
+                    rows={6}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                    placeholder="Full content (markdown supported)..."
+                  />
+                </div>
+              </div>
+
+              {/* Media */}
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Media</h3>
+                
+                <div>
+                  <label className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+                    Image
+                  </label>
+                  
+                  {/* Drag and Drop Zone */}
+                  <div
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    className={`relative border-2 border-dashed rounded-2xl p-8 transition-all duration-200 ease-in-out mb-4 ${
+                      isDragging
+                        ? 'border-black dark:border-white bg-gray-100 dark:bg-gray-800 scale-[1.01] shadow-lg'
+                        : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:border-gray-400 dark:hover:border-gray-600'
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
+                      id="edit-image-upload-input"
+                    />
+                    <label
+                      htmlFor="edit-image-upload-input"
+                      className="flex flex-col items-center justify-center cursor-pointer min-h-[120px]"
+                    >
+                      {imagePreview ? (
+                        <div className="relative w-full group">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="w-full h-48 object-cover rounded-xl mb-3 border border-gray-200 dark:border-gray-800"
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setImageFile(null);
+                              setImagePreview(null);
+                              const input = document.getElementById('edit-image-upload-input') as HTMLInputElement;
+                              if (input) input.value = '';
+                            }}
+                            className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-all duration-200 ease-in-out hover:scale-110 shadow-lg"
+                            title="Remove image"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="text-4xl mb-3 opacity-60">📷</div>
+                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Drag & drop an image here
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            or click to browse
+                          </span>
+                        </>
+                      )}
+                    </label>
+                  </div>
+
+                  {!imagePreview && (
+                    <div className="flex items-center gap-2 mb-4">
+                      <label className="flex-1 cursor-pointer">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="hidden"
+                          id="edit-image-upload-button"
+                        />
+                        <span className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 ease-in-out text-sm font-medium">
+                          📁 Choose File
+                        </span>
+                      </label>
+                    </div>
+                  )}
+
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-3 text-center">or</div>
+                  <input
+                    id="edit-image"
+                    type="url"
+                    value={editFormData.image}
+                    onChange={(e) => {
+                      setEditFormData(prev => ({ ...prev, image: e.target.value }));
+                      if (!imageFile && e.target.value) {
+                        setImagePreview(e.target.value);
+                      }
+                    }}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
+                    placeholder="Enter image URL"
+                  />
+                  {imagePreview && editFormData.image && !imageFile && (
+                    <div className="mt-4">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-800"
+                        onError={() => setImagePreview(null)}
+                      />
+                    </div>
+                  )}
+                  {uploadingImage && (
+                    <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="h-4 w-4 animate-spin text-gray-600 dark:text-gray-400" />
+                        <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">Uploading image...</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Metadata */}
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Metadata</h3>
+                
+                {/* Michelin Stars */}
+                <div className="mb-6">
+                  <label htmlFor="edit-michelin_stars" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+                    Michelin Stars
+                  </label>
+                  <select
+                    id="edit-michelin_stars"
+                    value={editFormData.michelin_stars || ''}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, michelin_stars: e.target.value ? parseInt(e.target.value) : null }))}
+                    className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm appearance-none cursor-pointer"
+                  >
+                    <option value="">None</option>
+                    <option value="1">1 Star</option>
+                    <option value="2">2 Stars</option>
+                    <option value="3">3 Stars</option>
+                  </select>
+                </div>
+
+                {/* Crown */}
+                <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800">
+                  <input
+                    id="edit-crown"
+                    type="checkbox"
+                    checked={editFormData.crown}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, crown: e.target.checked }))}
+                    className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-black dark:text-white focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-0 cursor-pointer transition-all duration-200 ease-in-out"
+                  />
+                  <label htmlFor="edit-crown" className="text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
+                    Crown (Featured destination)
+                  </label>
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="space-y-4 pt-6 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditMode(false)}
+                    className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200 ease-in-out text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSaving || isDeleting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving || isDeleting || !editFormData.name || !editFormData.city || !editFormData.category}
+                    className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm font-medium flex items-center justify-center gap-2"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Update Destination'
+                    )}
+                  </button>
+                </div>
+
+                {/* Delete Button */}
+                {destination && (
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                    {showDeleteConfirm ? (
+                      <div className="space-y-4">
+                        <div className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 rounded-xl">
+                          <p className="text-sm text-gray-900 dark:text-white text-center font-medium mb-1">
+                            Delete "{destination.name}"?
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
+                            This action cannot be undone.
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setShowDeleteConfirm(false)}
+                            className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200 ease-in-out text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isDeleting}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleEditDelete}
+                            disabled={isDeleting}
+                            className="flex-1 px-4 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm font-medium flex items-center justify-center gap-2"
+                          >
+                            {isDeleting ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Deleting...
+                              </>
+                            ) : (
+                              <>
+                                <Trash2 className="h-4 w-4" />
+                                Delete Destination
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        disabled={isSaving || isDeleting}
+                        className="w-full px-4 py-3 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-400 dark:hover:border-red-700 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-red-300 dark:disabled:hover:border-red-800 text-sm font-medium flex items-center justify-center gap-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete Destination
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </form>
+          ) : (
+            /* View Mode */
+            <>
           {/* Image */}
           {destination.image && (
             <div className="aspect-[16/10] rounded-2xl overflow-hidden mb-6 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 relative">
@@ -1320,13 +2023,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           <div className="flex justify-center gap-3">
             {isAdmin && destination && (
               <button
-                onClick={() => setIsEditDrawerOpen(true)}
+                onClick={() => setIsEditMode(true)}
                 className="flex items-center gap-2 px-6 py-3 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors rounded-lg font-medium"
                 title="Edit destination"
                 aria-label="Edit destination"
               >
                 <Edit className="h-4 w-4" />
-                <span>Edit</span>
+                <span>{isEditMode ? 'View' : 'Edit'}</span>
               </button>
             )}
             <button
@@ -1337,6 +2040,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <span>{copied ? 'Link Copied!' : 'Share'}</span>
             </button>
           </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -1487,20 +2192,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </div>
         </div>
       )}
-
-      {/* Edit Drawer */}
-      <POIDrawer
-        isOpen={isEditDrawerOpen}
-        onClose={() => setIsEditDrawerOpen(false)}
-        destination={destination}
-        onSave={() => {
-          setIsEditDrawerOpen(false);
-          // Reload destination data after save
-          if (destination) {
-            window.location.reload();
-          }
-        }}
-      />
 
       {/* Visit Modal */}
       <VisitModal
