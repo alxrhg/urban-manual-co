@@ -167,29 +167,19 @@ const nextConfig: NextConfig = {
 };
 
 // Wrap the Next.js config with Sentry
-const sentryConfig = withSentryConfig(
-  nextConfig,
-  {
-    // For all available options, see:
-    // https://github.com/getsentry/sentry-webpack-plugin#options
+const sentryConfig = withSentryConfig(nextConfig, {
+  // For all available options, see:
+  // https://github.com/getsentry/sentry-webpack-plugin#options
 
-    // Suppresses source map uploading logs during build
-    silent: true,
-    org: "the-manual-company",
-    project: "sentry-red-park",
-  },
-  {
-    // For all available options, see:
-    // https://github.com/getsentry/sentry-webpack-plugin#options
-
-    // Suppresses source map uploading logs during build
-    silent: true,
-    // Automatically tree-shake Sentry logger statements to reduce bundle size
-    hideSourceMaps: true,
-    // Disable source maps in production builds
-    disableServerWebpackPlugin: false,
-    disableClientWebpackPlugin: false,
-  }
-);
+  // Suppresses source map uploading logs during build
+  silent: true,
+  org: "the-manual-company",
+  project: "sentry-red-park",
+  // Automatically tree-shake Sentry logger statements to reduce bundle size
+  hideSourceMaps: true,
+  // Disable source maps in production builds
+  disableServerWebpackPlugin: false,
+  disableClientWebpackPlugin: false,
+});
 
 export default sentryConfig;
