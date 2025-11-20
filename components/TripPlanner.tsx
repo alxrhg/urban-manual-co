@@ -766,34 +766,34 @@ export function TripPlanner({
 
   const progressHeader = (
     <div className="mb-6">
-      <div className="flex items-center justify-between text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-[0.2em]">
-        <div className="flex items-center gap-3">
-          <span className={`px-2 py-1 rounded-full ${
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-medium transition-colors ${
             step === 'create'
-              ? 'bg-black text-white dark:bg-white dark:text-black'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300'
+              ? 'text-gray-900 dark:text-white'
+              : 'text-gray-400 dark:text-gray-500'
           }`}>
             Details
           </span>
-          <span className="text-gray-300 dark:text-gray-700">→</span>
-          <span className={`px-2 py-1 rounded-full ${
+          <span className="text-gray-300 dark:text-gray-700 text-xs">→</span>
+          <span className={`text-xs font-medium transition-colors ${
             step === 'plan'
-              ? 'bg-black text-white dark:bg-white dark:text-black'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-300'
+              ? 'text-gray-900 dark:text-white'
+              : 'text-gray-400 dark:text-gray-500'
           }`}>
             Itinerary
           </span>
         </div>
         {(saving || uploadingCover) && (
-          <div className="flex items-center gap-2 text-[11px] text-blue-600 dark:text-blue-400 font-semibold">
+          <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-medium">
             <Loader2 className="h-3 w-3 animate-spin" />
-            <span>Saving changes...</span>
+            <span>Saving...</span>
           </div>
         )}
       </div>
-      <div className="mt-3 h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+      <div className="h-0.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
         <div
-          className="h-full bg-black dark:bg-white transition-all duration-300"
+          className="h-full bg-gray-900 dark:bg-white transition-all duration-300 ease-out"
           style={{ width: step === 'plan' ? '100%' : '50%' }}
         />
       </div>
@@ -865,13 +865,13 @@ export function TripPlanner({
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading trip...</p>
         </div>
       ) : step === 'create' ? (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {validationErrors.length > 0 && (
-            <div className="rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-4 flex gap-3 text-sm text-red-800 dark:text-red-200">
-              <AlertCircle className="h-5 w-5 shrink-0" />
+            <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3 flex gap-2.5 text-xs text-red-800 dark:text-red-200">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold mb-2">Please fix the required fields:</p>
-                <ul className="list-disc list-inside space-y-1">
+                <p className="font-medium mb-1.5">Please fix the required fields:</p>
+                <ul className="list-disc list-inside space-y-0.5">
                   {validationErrors.map((error, index) => (
                     <li key={index}>{error}</li>
                   ))}
@@ -879,8 +879,8 @@ export function TripPlanner({
               </div>
             </div>
           )}
-          <div className="space-y-3">
-            <label htmlFor={`trip-planner-name-${currentTripId || 'new'}`} className="block text-sm text-gray-700 dark:text-gray-300">
+          <div className="space-y-2">
+            <label htmlFor={`trip-planner-name-${currentTripId || 'new'}`} className="block text-xs font-medium text-gray-700 dark:text-gray-300">
               Trip Name
             </label>
             <input
@@ -890,19 +890,19 @@ export function TripPlanner({
               onChange={(e) => setTripName(e.target.value)}
               placeholder="Summer in Paris"
               autoComplete="off"
-              className={`w-full px-4 py-3 border rounded-2xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
+              className={`w-full px-3.5 py-2.5 border rounded-xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
                 fieldErrors.tripName
                   ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-400'
-                  : 'border-gray-200 dark:border-gray-800 focus:border-black dark:focus:border-white'
+                  : 'border-gray-200 dark:border-gray-800 focus:border-gray-900 dark:focus:border-white'
               }`}
             />
             {fieldErrors.tripName && (
-              <p className="text-xs text-red-700 dark:text-red-300">{fieldErrors.tripName}</p>
+              <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.tripName}</p>
             )}
           </div>
 
-          <div className="space-y-3">
-            <label htmlFor={`trip-planner-destination-${currentTripId || 'new'}`} className="block text-sm text-gray-700 dark:text-gray-300">
+          <div className="space-y-2">
+            <label htmlFor={`trip-planner-destination-${currentTripId || 'new'}`} className="block text-xs font-medium text-gray-700 dark:text-gray-300">
               Destination
             </label>
             <input
@@ -912,19 +912,19 @@ export function TripPlanner({
               onChange={(e) => setDestination(e.target.value)}
               placeholder="Paris, France"
               autoComplete="off"
-              className={`w-full px-4 py-3 border rounded-2xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
+              className={`w-full px-3.5 py-2.5 border rounded-xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
                 fieldErrors.destination
                   ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-400'
-                  : 'border-gray-200 dark:border-gray-800 focus:border-black dark:focus:border-white'
+                  : 'border-gray-200 dark:border-gray-800 focus:border-gray-900 dark:focus:border-white'
               }`}
             />
             {fieldErrors.destination && (
-              <p className="text-xs text-red-700 dark:text-red-300">{fieldErrors.destination}</p>
+              <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.destination}</p>
             )}
           </div>
 
-          <div className="space-y-3">
-            <label htmlFor={`trip-planner-hotel-${currentTripId || 'new'}`} className="block text-sm text-gray-700 dark:text-gray-300">
+          <div className="space-y-2">
+            <label htmlFor={`trip-planner-hotel-${currentTripId || 'new'}`} className="block text-xs font-medium text-gray-700 dark:text-gray-300">
               Hotel / Base Location
             </label>
             <input
@@ -934,13 +934,13 @@ export function TripPlanner({
               onChange={(e) => setHotelLocation(e.target.value)}
               placeholder="Hotel Le Marais"
               autoComplete="off"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+              className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-white transition-colors text-sm"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-3">
-              <label htmlFor={`trip-planner-start-date-${currentTripId || 'new'}`} className="block text-sm text-gray-700 dark:text-gray-300">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <label htmlFor={`trip-planner-start-date-${currentTripId || 'new'}`} className="block text-xs font-medium text-gray-700 dark:text-gray-300">
                 Start Date
               </label>
               <input
@@ -949,16 +949,16 @@ export function TripPlanner({
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 autoComplete="off"
-                className={`w-full px-4 py-3 border rounded-2xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
+                className={`w-full px-3.5 py-2.5 border rounded-xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
                   fieldErrors.startDate
                     ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-400'
-                    : 'border-gray-200 dark:border-gray-800 focus:border-black dark:focus:border-white'
+                    : 'border-gray-200 dark:border-gray-800 focus:border-gray-900 dark:focus:border-white'
                 }`}
               />
             </div>
 
-            <div className="space-y-3">
-              <label htmlFor={`trip-planner-end-date-${currentTripId || 'new'}`} className="block text-sm text-gray-700 dark:text-gray-300">
+            <div className="space-y-2">
+              <label htmlFor={`trip-planner-end-date-${currentTripId || 'new'}`} className="block text-xs font-medium text-gray-700 dark:text-gray-300">
                 End Date
               </label>
               <input
@@ -967,44 +967,46 @@ export function TripPlanner({
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 autoComplete="off"
-                className={`w-full px-4 py-3 border rounded-2xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
+                className={`w-full px-3.5 py-2.5 border rounded-xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
                   fieldErrors.endDate
                     ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-400'
-                    : 'border-gray-200 dark:border-gray-800 focus:border-black dark:focus:border-white'
+                    : 'border-gray-200 dark:border-gray-800 focus:border-gray-900 dark:focus:border-white'
                 }`}
               />
             </div>
           </div>
 
           {(fieldErrors.startDate || fieldErrors.endDate) && (
-            <p className="text-xs text-red-700 dark:text-red-300">
+            <p className="text-xs text-red-600 dark:text-red-400">
               {fieldErrors.startDate || fieldErrors.endDate}
             </p>
           )}
 
-          <button
-            onClick={handleCreateTrip}
-            disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
-            className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              'Create Trip'
-            )}
-          </button>
+          <div className="pt-2 space-y-2.5">
+            <button
+              onClick={handleCreateTrip}
+              disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
+              className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create Trip'
+              )}
+            </button>
 
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            disabled={saving}
-            className="w-full px-6 py-3 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-          >
-            Save draft locally
-          </button>
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={saving}
+              className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+            >
+              Save draft locally
+            </button>
+          </div>
         </div>
       ) : (
         <>
