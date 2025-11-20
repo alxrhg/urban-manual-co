@@ -6,8 +6,11 @@ import { createServerClient } from '@supabase/ssr'
  * Middleware to protect admin routes with Supabase authentication
  */
 export async function middleware(request: NextRequest) {
-  // Protect /admin routes (custom admin page)
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  // Protect /admin routes (custom admin page) and /studio routes (Sanity Studio)
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin')
+  const isStudioRoute = request.nextUrl.pathname.startsWith('/studio')
+  
+  if (isAdminRoute || isStudioRoute) {
     // Skip API routes
     if (request.nextUrl.pathname.startsWith('/api')) {
       return NextResponse.next()
@@ -46,7 +49,8 @@ export async function middleware(request: NextRequest) {
 
       if (error || !session) {
         // Redirect to login if not authenticated
-        return NextResponse.redirect(new URL('/auth/login?redirect=/admin', request.url))
+        const redirectPath = isStudioRoute ? '/studio' : '/admin'
+        return NextResponse.redirect(new URL(`/auth/login?redirect=${redirectPath}`, request.url))
       }
 
       // Check if user has admin role
@@ -68,6 +72,6 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/studio/:path*'],
 }
 
