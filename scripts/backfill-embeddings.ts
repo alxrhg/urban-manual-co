@@ -28,13 +28,16 @@ if (!supabaseUrl || !supabaseKey) {
   process.exit(1);
 }
 
-console.log('Environment check:');
-console.log(`- OpenAI API Key: ${process.env.OPENAI_API_KEY ? '✓ Set' : '✗ Missing'}`);
-console.log(`- Supabase URL: ${supabaseUrl ? '✓ Set' : '✗ Missing'}`);
-console.log(`- Supabase Key: ${supabaseKey ? '✓ Set' : '✗ Missing'}`);
-console.log('');
+// Environment check (without exposing sensitive values)
+const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+const hasSupabaseUrl = !!supabaseUrl;
+const hasSupabaseKey = !!supabaseKey;
 
-// Note: These are environment checks only, not logging actual secret values
+console.log('Environment check:');
+console.log(`- OpenAI API Key: ${hasOpenAIKey ? '✓ Set' : '✗ Missing'}`);
+console.log(`- Supabase URL: ${hasSupabaseUrl ? '✓ Set' : '✗ Missing'}`);
+console.log(`- Supabase Key: ${hasSupabaseKey ? '✓ Set' : '✗ Missing'}`);
+console.log('');
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
