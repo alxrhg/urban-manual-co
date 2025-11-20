@@ -208,64 +208,68 @@ export default function AdminPage() {
   const inlineCityLabel = capitalizeCity(inlineCitySlug);
 
   return (
-    <div className="space-y-10 text-sm">
-      <section className="space-y-10">
+    <div className="space-y-6 text-sm">
+      <section className="space-y-6">
         <AdminStats refreshKey={statsRefreshKey} />
 
         <SanitySyncSection />
 
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">Inline editing</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Toggle edit affordances on the live site. Changes sync straight to Supabase.
-          </p>
-          <div className="flex flex-wrap gap-2 text-xs">
+        <div className="space-y-3 p-4 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/50">
+          <div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-white">Inline editing</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Toggle edit affordances on the live site. Changes sync straight to Supabase.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => handleLaunchEditMode('/')}
-              className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Open homepage
             </button>
             <button
               onClick={() => handleLaunchEditMode(`/city/${inlineCitySlug}`)}
-              className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Edit {inlineCityLabel}
             </button>
             {inlineEditModeEnabled ? (
               <button
                 onClick={disableInlineEditMode}
-                className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+                className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-red-600 dark:bg-red-500 rounded-xl hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
               >
                 Turn off
               </button>
             ) : (
               <button
                 onClick={enableInlineEditMode}
-                className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+                className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-gray-900 dark:bg-gray-100 dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
               >
                 Enable now
               </button>
             )}
             <Link
               href="/admin/discover"
-              className="rounded border border-gray-200 dark:border-gray-700 px-3 py-1 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900"
+              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Go to Discover
             </Link>
           </div>
           {inlineEditModeEnabled && (
-            <p className="text-xs text-amber-800 dark:text-amber-200 italic">
-              Edit mode is active. Use the edit badge on any destination card to make changes in place.
-            </p>
+            <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <p className="text-xs text-amber-800 dark:text-amber-200">
+                Edit mode is active. Use the edit badge on any destination card to make changes in place.
+              </p>
+            </div>
           )}
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-3 p-4 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/50">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Destinations</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 Search, edit, or delete any record in the catalog.
               </p>
             </div>
@@ -274,7 +278,7 @@ export default function AdminPage() {
                 setEditingDestination(null);
                 setShowCreateModal(true);
               }}
-              className="inline-flex items-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-100"
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-white bg-gray-900 dark:bg-gray-100 dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
             >
               <Plus className="h-4 w-4" />
               Add place

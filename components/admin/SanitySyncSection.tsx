@@ -70,7 +70,7 @@ export function SanitySyncSection({ toast: toastProp }: SanitySyncSectionProps =
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-gray-900 dark:text-white">Sanity Sync</p>
@@ -81,7 +81,7 @@ export function SanitySyncSection({ toast: toastProp }: SanitySyncSectionProps =
         <Database className="h-4 w-4 text-gray-400 dark:text-gray-500" />
       </div>
       
-      <div className="space-y-3 p-4 border border-gray-200 dark:border-gray-800 rounded-lg bg-gray-50/50 dark:bg-gray-900/50">
+      <div className="space-y-3 p-4 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/50">
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -117,7 +117,7 @@ export function SanitySyncSection({ toast: toastProp }: SanitySyncSectionProps =
           <button
             onClick={() => runSync(true)}
             disabled={isSyncing}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <RefreshCw className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`} />
             Preview
@@ -125,7 +125,7 @@ export function SanitySyncSection({ toast: toastProp }: SanitySyncSectionProps =
           <button
             onClick={() => runSync(false)}
             disabled={isSyncing}
-            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-white bg-gray-900 dark:bg-gray-100 dark:text-gray-900 rounded hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-white bg-gray-900 dark:bg-gray-100 dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Loader2 className={`h-3 w-3 ${isSyncing ? 'animate-spin' : 'hidden'}`} />
             {isSyncing ? 'Syncing...' : 'Sync Now'}

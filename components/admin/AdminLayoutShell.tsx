@@ -32,30 +32,32 @@ export default function AdminLayoutShell({ children }: { children: ReactNode }) 
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-10 space-y-10">
-        <header className="space-y-6">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-8 md:py-10 space-y-8">
+        <header className="space-y-4">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-xs uppercase tracking-[0.4em] text-gray-400 dark:text-gray-500">
                 Admin Console
               </p>
-              <h1 className="text-2xl font-light text-gray-900 dark:text-white mt-2">
+              <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white mt-2">
                 Content Operations
               </h1>
             </div>
-            <div className="text-right">
-              <div className="text-sm font-medium text-gray-900 dark:text-white">
-                {user?.email}
-              </div>
-              <div className="mt-1 inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-600 dark:text-gray-300">
-                Admin
+            <div className="flex items-center gap-3">
+              <div className="text-right">
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  {user?.email}
+                </div>
+                <div className="mt-1 inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
+                  Admin
+                </div>
               </div>
             </div>
           </div>
           <AdminNav />
         </header>
 
-        <section className="space-y-10">
+        <section className="space-y-6">
           {children}
         </section>
       </div>

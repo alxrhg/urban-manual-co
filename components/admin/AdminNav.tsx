@@ -23,7 +23,7 @@ export function AdminNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="mt-8 flex flex-wrap gap-2 text-xs">
+    <nav className="flex flex-wrap gap-2 text-xs">
       {NAV_LINKS.map((link) => {
         const active = isActive(pathname, link.href);
         return (
@@ -31,10 +31,10 @@ export function AdminNav() {
             key={link.href}
             href={link.href}
             className={`
-              inline-flex items-center rounded-full border px-4 py-2 font-medium transition-colors
+              inline-flex items-center rounded-xl border px-4 py-2 font-medium transition-all
               ${active
-                ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white'
-                : 'border-gray-200 dark:border-gray-800 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-900 dark:hover:text-gray-100'}
+                ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 border-gray-900 dark:border-white shadow-sm'
+                : 'border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-900'}
             `}
           >
             {link.label}

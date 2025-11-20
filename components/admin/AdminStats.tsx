@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw, MapPin, Database, Award, Crown } from "lucide-react";
 
 interface AdminStatsProps {
   refreshKey?: number;
@@ -52,38 +52,74 @@ export function AdminStats({ refreshKey }: AdminStatsProps) {
     loadAdminStats();
   }, [loadAdminStats, refreshKey]);
 
+  const statCards = [
+    {
+      label: 'Destinations',
+      value: stats.total,
+      icon: MapPin,
+      color: 'text-blue-600 dark:text-blue-400',
+      bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+    },
+    {
+      label: 'Google enriched',
+      value: stats.enriched,
+      icon: Database,
+      color: 'text-green-600 dark:text-green-400',
+      bgColor: 'bg-green-50 dark:bg-green-900/20',
+    },
+    {
+      label: 'Michelin spots',
+      value: stats.michelin,
+      icon: Award,
+      color: 'text-amber-600 dark:text-amber-400',
+      bgColor: 'bg-amber-50 dark:bg-amber-900/20',
+    },
+    {
+      label: 'Crown picks',
+      value: stats.crown,
+      icon: Crown,
+      color: 'text-purple-600 dark:text-purple-400',
+      bgColor: 'bg-purple-50 dark:bg-purple-900/20',
+    },
+  ];
+
   return (
-    <div className="space-y-2">
-      <p className="text-sm font-semibold text-gray-900 dark:text-white">Stats</p>
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        Live counts pulled directly from Supabase.
-      </p>
-      <dl className="space-y-1">
-        <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
-          <dt className="text-gray-500 dark:text-gray-400">Destinations</dt>
-          <dd className="font-mono">{statsLoading ? '…' : stats.total.toLocaleString()}</dd>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-semibold text-gray-900 dark:text-white">Stats</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Live counts pulled directly from Supabase.
+          </p>
         </div>
-        <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
-          <dt className="text-gray-500 dark:text-gray-400">Google enriched</dt>
-          <dd className="font-mono">{statsLoading ? '…' : stats.enriched.toLocaleString()}</dd>
-        </div>
-        <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
-          <dt className="text-gray-500 dark:text-gray-400">Michelin spots</dt>
-          <dd className="font-mono">{statsLoading ? '…' : stats.michelin.toLocaleString()}</dd>
-        </div>
-        <div className="flex justify-between border-b border-gray-100 dark:border-gray-800 pb-1">
-          <dt className="text-gray-500 dark:text-gray-400">Crown picks</dt>
-          <dd className="font-mono">{statsLoading ? '…' : stats.crown.toLocaleString()}</dd>
-        </div>
-      </dl>
-      <button
-        onClick={() => loadAdminStats()}
-        disabled={statsLoading}
-        className="mt-2 inline-flex items-center gap-2 text-xs text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 disabled:opacity-50"
-      >
-        <Loader2 className={`h-3 w-3 ${statsLoading ? 'animate-spin' : 'hidden'}`} />
-        Refresh stats
-      </button>
+        <button
+          onClick={() => loadAdminStats()}
+          disabled={statsLoading}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+        >
+          <RefreshCw className={`h-3 w-3 ${statsLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {statCards.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={stat.label}
+              className={`p-4 rounded-xl border border-gray-200 dark:border-gray-800 ${stat.bgColor}`}
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Icon className={`h-4 w-4 ${stat.color}`} />
+                <span className="text-xs text-gray-600 dark:text-gray-400">{stat.label}</span>
+              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                {statsLoading ? '…' : stat.value.toLocaleString()}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
