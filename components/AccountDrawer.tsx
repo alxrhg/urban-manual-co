@@ -327,22 +327,39 @@ export function AccountDrawer() {
     label: string,
     icon: ReactNode,
     onClick: () => void,
-    description?: string
+    description?: string,
+    isDanger?: boolean
   ) => (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-900/70"
+      className={`flex w-full items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 text-left transition-all hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-sm ${
+        isDanger ? 'hover:border-red-200 dark:hover:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/10' : ''
+      }`}
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+        isDanger 
+          ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' 
+          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200'
+      }`}>
         {icon}
       </div>
-      <div className="flex-1">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white">{label}</p>
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-semibold ${
+          isDanger 
+            ? 'text-red-600 dark:text-red-400' 
+            : 'text-gray-900 dark:text-white'
+        }`}>{label}</p>
         {description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+          <p className={`text-xs mt-0.5 ${
+            isDanger 
+              ? 'text-red-500 dark:text-red-500' 
+              : 'text-gray-500 dark:text-gray-400'
+          }`}>{description}</p>
         )}
       </div>
-      <ChevronRight className="w-4 h-4 text-gray-400" />
+      <ChevronRight className={`w-4 h-4 flex-shrink-0 ${
+        isDanger ? 'text-red-400' : 'text-gray-400'
+      }`} />
     </button>
   );
 
@@ -351,16 +368,17 @@ export function AccountDrawer() {
     <div className="px-6 py-6 space-y-6">
       {user ? (
         <>
-          <div className="flex flex-col items-center text-center gap-3">
+          {/* Profile Header */}
+          <div className="flex flex-col items-center text-center gap-4 pb-6 border-b border-gray-200 dark:border-gray-800">
             <div className="relative">
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100 text-lg font-semibold text-gray-600 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-200">
+              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gradient-to-br from-gray-100 to-gray-200 text-2xl font-semibold text-gray-700 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200">
                 {avatarUrl ? (
                   <Image
                     src={avatarUrl}
                     alt="Profile"
                     fill
                     className="object-cover"
-                    sizes="64px"
+                    sizes="80px"
                   />
                 ) : (
                   displayUsername.charAt(0).toUpperCase()
@@ -368,87 +386,93 @@ export function AccountDrawer() {
               </div>
               <button
                 onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-                className="absolute -right-1 -bottom-1 flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                className="absolute -right-1 -bottom-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white dark:border-gray-900 bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-md transition hover:scale-110 dark:hover:bg-gray-100"
                 aria-label="Update profile photo"
               >
-                <Camera className="w-4 h-4" />
+                <Camera className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="space-y-1">
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">{displayUsername}</p>
-              <div className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+            <div className="space-y-2">
+              <p className="text-xl font-bold text-gray-900 dark:text-white">{displayUsername}</p>
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
                 <span>@{displayUsername.toLowerCase().replace(/\s+/g, '')}</span>
               </div>
               {user.email && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-500">{user.email}</p>
               )}
             </div>
 
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="flex flex-wrap justify-center gap-2 w-full">
               <button
                 onClick={() => handleNavigateToFullPage("/account")}
-                className="rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800 dark:bg-white dark:text-gray-900"
+                className="flex-1 min-w-[120px] rounded-xl bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-gray-900 shadow-sm transition hover:bg-gray-800 dark:hover:bg-gray-100"
               >
                 Edit profile
               </button>
               <button
                 onClick={openChatDrawer}
-                className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                className="flex-1 min-w-[120px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 transition hover:bg-gray-50 dark:hover:bg-gray-800"
               >
                 Message concierge
               </button>
             </div>
           </div>
 
+          {/* Stats */}
           <div className="grid grid-cols-3 gap-3">
-            {[{ label: 'Visited', value: stats.visited }, { label: 'Saved', value: stats.saved }, { label: 'Trips', value: stats.trips }].map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-xl border border-gray-200 bg-white px-3 py-3 text-center shadow-sm dark:border-gray-800 dark:bg-gray-900"
-              >
-                <div className="text-lg font-semibold text-gray-900 dark:text-white">{stat.value}</div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
-              </div>
-            ))}
+            {[
+              { label: 'Visited', value: stats.visited, icon: MapPin, color: 'text-blue-600 dark:text-blue-400' },
+              { label: 'Saved', value: stats.saved, icon: Bookmark, color: 'text-amber-600 dark:text-amber-400' },
+              { label: 'Trips', value: stats.trips, icon: Compass, color: 'text-purple-600 dark:text-purple-400' }
+            ].map((stat) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={stat.label}
+                  className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-4 text-center shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <Icon className={`w-4 h-4 mx-auto mb-2 ${stat.color}`} />
+                  <div className="text-xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{stat.label}</p>
+                </div>
+              );
+            })}
           </div>
 
-          <div className="space-y-3">
+          {/* Quick Actions */}
+          <div className="grid grid-cols-2 gap-3">
             <button
               onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-              className="flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
+              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-4 text-center shadow-sm transition hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
                 <Camera className="w-5 h-5" />
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">Add a profile photo</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Personalize your account</p>
+              <div>
+                <p className="text-xs font-semibold text-gray-900 dark:text-white">Add photo</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Personalize</p>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
             </button>
             <button
               onClick={openChatDrawer}
-              className="flex w-full items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
+              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-4 text-center shadow-sm transition hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
                 <Share2 className="w-5 h-5" />
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">Invite friends</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Share Urban Manual with others</p>
+              <div>
+                <p className="text-xs font-semibold text-gray-900 dark:text-white">Invite</p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Share</p>
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
             </button>
           </div>
 
+          {/* Your Manual Section */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Your manual</h3>
-              <span className="text-xs text-gray-400 dark:text-gray-500">Shortcuts</span>
-            </div>
-            <div className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:divide-gray-800 dark:border-gray-800 dark:bg-gray-900">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Your manual</h3>
+            <div className="space-y-2">
               {renderNavItem('Saved places', <Bookmark className="w-4 h-4" />, () => navigateToSubpage('saved_subpage'), `${stats.saved} items`)}
               {renderNavItem('Visited places', <MapPin className="w-4 h-4" />, () => navigateToSubpage('visited_subpage'), `${stats.visited} logged`)}
               {renderNavItem('Lists', <Folder className="w-4 h-4" />, () => navigateToSubpage('collections_subpage'), 'Organize favorites')}
@@ -457,11 +481,12 @@ export function AccountDrawer() {
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Account & settings</h3>
-            <div className="divide-y divide-gray-100 overflow-hidden rounded-2xl border border-gray-200 bg-white dark:divide-gray-800 dark:border-gray-800 dark:bg-gray-900">
+          {/* Account & Settings Section */}
+          <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-800">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Account & settings</h3>
+            <div className="space-y-2">
               {renderNavItem('Profile & preferences', <Settings className="w-4 h-4" />, () => navigateToSubpage('settings_subpage'), 'Notifications, privacy')}
-              {renderNavItem('Sign out', <LogOut className="w-4 h-4" />, handleSignOut, 'Log out safely')}
+              {renderNavItem('Sign out', <LogOut className="w-4 h-4" />, handleSignOut, 'Log out safely', true)}
             </div>
           </div>
         </>
