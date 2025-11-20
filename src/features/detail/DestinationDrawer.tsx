@@ -1285,7 +1285,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               {destination.city && (
                 <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                   <MapPin className="h-3.5 w-3.5" />
-                  <span>{capitalizeCity(destination.city)}</span>
+                  <span>
+                    {destination.country 
+                      ? `${capitalizeCity(destination.city)}, ${destination.country}`
+                      : capitalizeCity(destination.city)
+                    }
+                    {destination.neighborhood && ` · ${destination.neighborhood}`}
+                  </span>
                 </div>
               )}
 
@@ -1294,6 +1300,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200">
                     <Tag className="h-3.5 w-3.5" />
                     {destination.category}
+                  </span>
+                )}
+                {destination.brand && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900">
+                    {destination.brand}
                   </span>
                 )}
                 {destination.crown && (
@@ -1306,6 +1317,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-900 dark:text-gray-100">
                     <Star className="h-3.5 w-3.5 fill-current text-yellow-500" />
                     {rating.toFixed(1)}
+                    {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
+                      <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
+                        ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
+                      </span>
+                    )}
                   </span>
                 )}
                 {priceLevel && priceLevel > 0 && (
@@ -1520,12 +1536,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {destination.name}
               </h1>
 
-              {/* Pills: Category, Crown, Michelin, Google Rating */}
+              {/* Pills: Category, Brand, Crown, Michelin, Google Rating */}
               <div className="flex flex-wrap gap-2">
               {destination.category && (
                   <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
                     {destination.category}
                     </span>
+                )}
+
+                {destination.brand && (
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
+                    {destination.brand}
+                  </span>
                 )}
 
                 {destination.crown && (
@@ -1562,6 +1584,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                   </svg>
                   {(enrichedData?.rating || destination.rating).toFixed(1)}
+                  {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
+                    <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
+                      ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
+                    </span>
+                  )}
                     </span>
               )}
 
@@ -1904,12 +1931,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             })()}
 
             {/* Address */}
-            {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
+            {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.neighborhood) && (
               <div>
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-black dark:text-white mb-1">Address</div>
+                    <div className="text-sm font-medium text-black dark:text-white mb-1">Location</div>
+                    {destination.neighborhood && (
+                      <div className="text-sm text-gray-700 dark:text-gray-300 mb-1">
+                        {destination.neighborhood}
+                        {destination.city && `, ${capitalizeCity(destination.city)}`}
+                        {destination.country && `, ${destination.country}`}
+                      </div>
+                    )}
                     {enrichedData?.formatted_address && (
                       <div className="text-sm text-gray-600 dark:text-gray-400">{enrichedData.formatted_address}</div>
                     )}
@@ -1994,9 +2028,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {enhancedDestination && <ArchitectDesignInfo destination={enhancedDestination} />}
 
           {/* Contact & Links */}
-          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url) && (
+          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.opentable_url || destination.resy_url || destination.booking_url) && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Contact</h3>
+              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Contact & Booking</h3>
               <div className="flex flex-wrap gap-2">
                 {(enrichedData?.website || destination.website) && (() => {
                   const websiteUrl = (enrichedData?.website || destination.website) || '';
@@ -2014,12 +2048,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     </a>
                   );
                 })()}
-                {(enrichedData?.international_phone_number || destination.phone_number) && (
+                {(enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone) && (
                   <a
-                    href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
+                    href={`tel:${enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}`}
                     className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
-                    {enrichedData?.international_phone_number || destination.phone_number}
+                    {enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}
                   </a>
                 )}
                 {destination.instagram_url && (
@@ -2030,6 +2064,36 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                   >
                     Instagram
+                  </a>
+                )}
+                {destination.opentable_url && (
+                  <a
+                    href={destination.opentable_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    OpenTable
+                  </a>
+                )}
+                {destination.resy_url && (
+                  <a
+                    href={destination.resy_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    Resy
+                  </a>
+                )}
+                {destination.booking_url && (
+                  <a
+                    href={destination.booking_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    Book Now
                   </a>
                 )}
               </div>
