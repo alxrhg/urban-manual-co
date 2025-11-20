@@ -16,6 +16,7 @@ import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { TripPlanner } from "@/components/TripPlanner";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
+import { openCookieSettings } from "@/components/CookieConsent";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
 import type { Trip } from "@/types/trip";
 import type { User } from "@supabase/supabase-js";
@@ -789,6 +790,22 @@ export default function Account() {
               }}
             />
             <AccountPrivacyManager />
+            
+            {/* Cookie Settings */}
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-light mb-2">Cookie Preferences</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                  Manage your cookie preferences to control how we collect and use data.
+                </p>
+                <button
+                  onClick={openCookieSettings}
+                  className="px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm font-medium"
+                >
+                  Manage Cookie Settings
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

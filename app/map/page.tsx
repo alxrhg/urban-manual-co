@@ -67,10 +67,18 @@ export default function MapPage() {
         } else {
           setDestinations((destData || []) as Destination[]);
           
-          // Extract unique categories
-          const uniqueCategories = Array.from(
-            new Set((destData || []).map((d: any) => d.category).filter(Boolean))
-          ) as string[];
+          // Extract unique categories (case-insensitive deduplication)
+          const categoryLowerSet = new Set<string>();
+          const uniqueCategories: string[] = [];
+          (destData || []).forEach((d: any) => {
+            if (d.category) {
+              const categoryLower = d.category.toLowerCase();
+              if (!categoryLowerSet.has(categoryLower)) {
+                categoryLowerSet.add(categoryLower);
+                uniqueCategories.push(d.category);
+              }
+            }
+          });
           setCategories(uniqueCategories.sort());
         }
       } catch (error) {

@@ -223,19 +223,18 @@ export function CookieConsent() {
     savePreferences(preferences);
   };
 
-  // Show minimal top-right buttons if no consent, or always show settings button
+  // Show minimal bottom-left banner if no consent
   const hasConsent = getStoredConsent() !== null;
   const showMinimalBanner = !hasConsent && isVisible && !showDetails;
-  const showSettingsButton = hasConsent && !isVisible && !showDetails;
 
   return (
     <>
-      {/* Minimal top-right cookie buttons - shown when no consent */}
+      {/* Minimal bottom-left cookie banner - shown when no consent */}
       {showMinimalBanner && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <div className="fixed bottom-4 left-4 z-50 flex flex-col sm:flex-row items-stretch sm:items-center gap-2 max-w-[calc(100vw-2rem)]">
           <button
             onClick={acceptAll}
-            className="px-3 py-1.5 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-sm"
+            className="px-4 py-2 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-lg whitespace-nowrap"
           >
             🍪 Accept cookies
           </button>
@@ -244,22 +243,7 @@ export function CookieConsent() {
               setIsVisible(true);
               setShowDetails(true);
             }}
-            className="px-3 py-1.5 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-sm"
-          >
-            Settings
-          </button>
-        </div>
-      )}
-
-      {/* Settings button - always visible when consent is given */}
-      {showSettingsButton && (
-        <div className="fixed top-4 right-4 z-50">
-          <button
-            onClick={() => {
-              setIsVisible(true);
-              setShowDetails(true);
-            }}
-            className="px-3 py-1.5 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-sm"
+            className="px-4 py-2 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-lg whitespace-nowrap"
           >
             Settings
           </button>

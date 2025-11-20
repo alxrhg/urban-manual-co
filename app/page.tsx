@@ -662,7 +662,9 @@ export default function Home() {
     rows: Array<{ city?: string | null; category?: string | null }>
   ) => {
     const citySet = new Set<string>();
-    const categorySet = new Set<string>();
+    // Use Set with lowercase keys for deduplication, and array to preserve original case
+    const categoryLowerSet = new Set<string>();
+    const categoryArray: string[] = [];
 
     rows.forEach(row => {
       const city = (row.city ?? "").toString().trim();
@@ -672,13 +674,18 @@ export default function Home() {
         citySet.add(city);
       }
       if (category) {
-        categorySet.add(category);
+        const categoryLower = category.toLowerCase();
+        // Only add if we haven't seen this category (case-insensitive) before
+        if (!categoryLowerSet.has(categoryLower)) {
+          categoryLowerSet.add(categoryLower);
+          categoryArray.push(category);
+        }
       }
     });
 
     return {
       cities: Array.from(citySet).sort(),
-      categories: Array.from(categorySet).sort(),
+      categories: categoryArray.sort(),
     };
   };
 
@@ -2263,7 +2270,7 @@ export default function Home() {
       />
       <main
         id="main-content"
-        className="relative min-h-screen dark:text-white"
+        className="relative min-h-screen dark:text-white drawer-split-adjust"
         role="main"
       >
         {/* SEO H1 - Visually hidden but accessible to search engines */}

@@ -1241,6 +1241,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         style="glassy"
         backdropOpacity="18"
         keepStateOnClose={true}
+        desktopMode="split"
         headerContent={headerContent}
         footerContent={
           <>

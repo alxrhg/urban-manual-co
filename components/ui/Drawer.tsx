@@ -25,6 +25,7 @@ export interface DrawerProps {
   mobileBorderRadius?: string;
   mobileExpanded?: boolean;
   keepStateOnClose?: boolean; // New: Keep state when drawer closes
+  desktopMode?: 'overlay' | 'split'; // New: 'overlay' = blocking backdrop, 'split' = compresses main content
 }
 
 /**
@@ -57,6 +58,7 @@ export function Drawer({
   mobileBorderRadius,
   mobileExpanded = false,
   keepStateOnClose = false, // Changed default to false to prevent multiple drawers
+  desktopMode = 'overlay', // Default to overlay mode for backward compatibility
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
@@ -172,6 +174,40 @@ export function Drawer({
   // Don't unmount if keepStateOnClose is true
   if (!isOpen && !keepStateOnClose) return null;
 
+  // In split mode on desktop, backdrop should not block interactions
+  const shouldBlockBackdrop = desktopMode === 'overlay' || mobileVariant === 'bottom';
+  const backdropPointerEvents = shouldBlockBackdrop ? 'auto' : 'none';
+
+  // Set CSS variable for main content adjustment in split mode
+  useEffect(() => {
+    if (desktopMode === 'split') {
+      const drawerWidth = desktopWidth || '420px';
+      const drawerWidthValue = parseInt(drawerWidth) || 420;
+      const spacing = 16; // right-4 = 1rem = 16px
+      const totalOffset = drawerWidthValue + spacing * 2; // drawer width + left spacing + right spacing
+      
+      if (isOpen) {
+        document.documentElement.style.setProperty('--drawer-width', `${drawerWidthValue}px`);
+        document.documentElement.style.setProperty('--drawer-offset', `${totalOffset}px`);
+        document.documentElement.classList.add('drawer-open-split');
+      } else {
+        document.documentElement.style.removeProperty('--drawer-width');
+        document.documentElement.style.removeProperty('--drawer-offset');
+        document.documentElement.classList.remove('drawer-open-split');
+      }
+    } else {
+      // Clean up if mode changes
+      document.documentElement.classList.remove('drawer-open-split');
+    }
+    return () => {
+      if (desktopMode === 'split') {
+        document.documentElement.style.removeProperty('--drawer-width');
+        document.documentElement.style.removeProperty('--drawer-offset');
+        document.documentElement.classList.remove('drawer-open-split');
+      }
+    };
+  }, [isOpen, desktopMode, desktopWidth]);
+
   return (
     <>
       {/* Backdrop */}
@@ -183,8 +219,9 @@ export function Drawer({
           style={{
             backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity) / 100})`,
             zIndex: zIndex - 10,
+            pointerEvents: isOpen ? backdropPointerEvents : 'none',
           }}
-          onClick={onClose}
+          onClick={shouldBlockBackdrop ? onClose : undefined}
         />
       )}
 
@@ -343,6 +380,7 @@ export function Drawer({
           zIndex, 
           width: desktopWidth, // Desktop: fixed width (420px)
           maxWidth: 'calc(100vw - 2rem)',
+          pointerEvents: 'auto', // Ensure drawer content is always interactive
         }}
       >
         {/* Header - 56px height, blurred */}

@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect, memo } from 'react';
 import Image from 'next/image';
-import { MapPin, Check, Edit } from 'lucide-react';
+import { MapPin, Check, Edit, Clock } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
 import { DestinationBadges } from './DestinationBadges';
+import { isOpenNow } from '@/lib/utils/opening-hours';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -223,6 +224,40 @@ export const DestinationCard = memo(function DestinationCard({
              : destination.city
                ? `Located in ${capitalizeCity(destination.city)}`
                : destination.category || '')}
+        </div>
+
+        {/* Price, Rating, and Open Now Status */}
+        <div className="mt-2 flex items-center gap-3 flex-wrap">
+          {/* Price Level */}
+          {destination.price_level && destination.price_level > 0 && (
+            <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              {'$'.repeat(destination.price_level)}
+            </div>
+          )}
+
+          {/* Rating */}
+          {destination.rating && destination.rating > 0 && (
+            <div className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-300">
+              <span className="text-yellow-500">⭐</span>
+              <span className="font-medium">{destination.rating.toFixed(1)}</span>
+            </div>
+          )}
+
+          {/* Open Now Status */}
+          {destination.opening_hours_json && (() => {
+            const openNow = isOpenNow(
+              destination.opening_hours_json,
+              destination.city,
+              destination.timezone_id,
+              destination.utc_offset
+            );
+            return openNow ? (
+              <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 font-medium">
+                <Clock className="h-3 w-3" />
+                <span>Open now</span>
+              </div>
+            ) : null;
+          })()}
         </div>
 
         {/* ML Forecasting Badges */}
