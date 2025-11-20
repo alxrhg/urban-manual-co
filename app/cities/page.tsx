@@ -1,516 +1,304 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import { Destination } from '@/types/destination';
-import { MapPin, ArrowLeft, Loader2, X } from 'lucide-react';
-import { cityCountryMap } from '@/data/cityCountryMap';
-import { UniversalGrid } from '@/components/UniversalGrid';
-import { DestinationCard } from '@/components/DestinationCard';
-import Image from 'next/image';
-import { useItemsPerPage } from '@/hooks/useGridColumns';
-import { toast } from 'sonner';
+import { useMemo, useState } from 'react';
+import { ArrowLeft, Search, MapPin } from 'lucide-react';
+import Link from 'next/link';
 
-interface CityStats {
+interface CityCard {
   city: string;
   country: string;
-  count: number;
-  featuredImage?: string;
+  places: number;
+  image?: string;
 }
 
-interface CityEditDrawerProps {
-  city: CityStats | null;
-  isOpen: boolean;
-  isSaving: boolean;
-  onClose: () => void;
-  onSave: (country: string) => Promise<void>;
-}
+const featuredCities: CityCard[] = [
+  {
+    city: 'New York',
+    country: 'USA',
+    places: 127,
+    image:
+      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    city: 'Tokyo',
+    country: 'Japan',
+    places: 112,
+    image:
+      'https://images.unsplash.com/photo-1526481280695-3c469c2f88b8?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    city: 'Taipei',
+    country: 'Taiwan',
+    places: 101,
+    image:
+      'https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    city: 'London',
+    country: 'UK',
+    places: 79,
+    image:
+      'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80',
+  },
+];
 
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
+const countries = [
+  'All Countries',
+  'Australia',
+  'Austria',
+  'Belgium',
+  'Czech Republic',
+  'Denmark',
+  'France',
+  'Indonesia',
+  'Italy',
+  'Japan',
+  'Mexico',
+  'Portugal',
+  'Singapore',
+  'South Korea',
+  'Spain',
+  'Switzerland',
+  'Taiwan',
+  'Thailand',
+  'UK',
+  'USA',
+  'Vietnam',
+];
 
-function normalizeCityKey(city: string): string {
-  return city
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-');
-}
+const allCities: CityCard[] = [
+  { city: 'New York', country: 'USA', places: 127 },
+  { city: 'Los Angeles', country: 'USA', places: 94 },
+  { city: 'San Francisco', country: 'USA', places: 76 },
+  { city: 'Austin', country: 'USA', places: 65 },
+  { city: 'Tokyo', country: 'Japan', places: 112 },
+  { city: 'Kyoto', country: 'Japan', places: 74 },
+  { city: 'Osaka', country: 'Japan', places: 68 },
+  { city: 'Sapporo', country: 'Japan', places: 54 },
+  { city: 'Taipei', country: 'Taiwan', places: 101 },
+  { city: 'Kaohsiung', country: 'Taiwan', places: 42 },
+  { city: 'London', country: 'UK', places: 79 },
+  { city: 'Edinburgh', country: 'UK', places: 51 },
+  { city: 'Paris', country: 'France', places: 72 },
+  { city: 'Lyon', country: 'France', places: 39 },
+  { city: 'Sydney', country: 'Australia', places: 63 },
+  { city: 'Melbourne', country: 'Australia', places: 58 },
+  { city: 'Vienna', country: 'Austria', places: 47 },
+  { city: 'Brussels', country: 'Belgium', places: 34 },
+  { city: 'Prague', country: 'Czech Republic', places: 52 },
+  { city: 'Copenhagen', country: 'Denmark', places: 41 },
+  { city: 'Jakarta', country: 'Indonesia', places: 56 },
+  { city: 'Bali', country: 'Indonesia', places: 62 },
+  { city: 'Rome', country: 'Italy', places: 70 },
+  { city: 'Milan', country: 'Italy', places: 59 },
+  { city: 'Florence', country: 'Italy', places: 48 },
+  { city: 'Mexico City', country: 'Mexico', places: 66 },
+  { city: 'Lisbon', country: 'Portugal', places: 53 },
+  { city: 'Porto', country: 'Portugal', places: 44 },
+  { city: 'Singapore', country: 'Singapore', places: 60 },
+  { city: 'Seoul', country: 'South Korea', places: 73 },
+  { city: 'Busan', country: 'South Korea', places: 45 },
+  { city: 'Barcelona', country: 'Spain', places: 69 },
+  { city: 'Madrid', country: 'Spain', places: 64 },
+  { city: 'Zurich', country: 'Switzerland', places: 46 },
+  { city: 'Geneva', country: 'Switzerland', places: 37 },
+  { city: 'Bangkok', country: 'Thailand', places: 71 },
+  { city: 'Chiang Mai', country: 'Thailand', places: 49 },
+  { city: 'Hanoi', country: 'Vietnam', places: 57 },
+  { city: 'Ho Chi Minh City', country: 'Vietnam', places: 61 },
+];
 
-// Convert CityStats to Destination format for DestinationCard
-function cityStatsToDestination(cityData: CityStats): Destination {
-  return {
-    slug: cityData.city,
-    name: capitalizeCity(cityData.city),
-    city: cityData.city,
-    category: `${cityData.count} places`,
-    micro_description: `${cityData.country}`,
-    image: cityData.featuredImage,
-    image_thumbnail: cityData.featuredImage,
-  };
+function CityCardBlock({ city, country, places, image }: CityCard) {
+  return (
+    <div className="group relative overflow-hidden rounded-[18px] bg-gradient-to-br from-white/10 via-white/5 to-white/10 border border-white/10 shadow-lg transition-transform duration-300 ease-out hover:-translate-y-1 hover:shadow-2xl">
+      <div
+        className="relative h-48 w-full overflow-hidden"
+        style={{
+          backgroundImage: `linear-gradient(135deg, rgba(15, 22, 36, 0.7), rgba(15, 22, 36, 0.2)), url(${image ?? 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?auto=format&fit=crop&w=1200&q=80'})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+        <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur">
+          <MapPin className="h-4 w-4" />
+          <span>{country}</span>
+        </div>
+      </div>
+      <div className="flex items-center justify-between px-5 py-4">
+        <div>
+          <h3 className="text-lg font-semibold text-white">{city}</h3>
+          <p className="text-sm text-white/70">{country}</p>
+        </div>
+        <div className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">{places} places</div>
+      </div>
+    </div>
+  );
 }
 
 export default function CitiesPage() {
-  const router = useRouter();
-  const [cityStats, setCityStats] = useState<CityStats[]>([]);
-  const [filteredCities, setFilteredCities] = useState<CityStats[]>([]);
-  const [countries, setCountries] = useState<string[]>([]);
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [loading, setLoading] = useState(true);
-  const itemsPerPage = useItemsPerPage(4); // Items to add per "Show More" click
-  const [displayCount, setDisplayCount] = useState(itemsPerPage); // Initial display count
-  const [advancedFilters, setAdvancedFilters] = useState<{
-    city?: string;
-    category?: string;
-    michelin?: boolean;
-    crown?: boolean;
-    minPrice?: number;
-    maxPrice?: number;
-    minRating?: number;
-    openNow?: boolean;
-  }>({});
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [cityToEdit, setCityToEdit] = useState<CityStats | null>(null);
-  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
-  const [isSavingCity, setIsSavingCity] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('All Countries');
+  const [displayCount, setDisplayCount] = useState(12);
 
-  useEffect(() => {
-    fetchCityStats();
-  }, []);
+  const filteredCities = useMemo(() => {
+    return allCities.filter(city => {
+      const matchesCountry =
+        selectedCountry === 'All Countries' || city.country.toLowerCase() === selectedCountry.toLowerCase();
+      const matchesSearch = city.city.toLowerCase().includes(searchTerm.trim().toLowerCase());
+      return matchesCountry && matchesSearch;
+    });
+  }, [searchTerm, selectedCountry]);
 
-  useEffect(() => {
-    applyFilters(cityStats, selectedCountry, advancedFilters);
-  }, [selectedCountry, advancedFilters, cityStats]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const checkAdminStatus = async () => {
-      try {
-        const response = await fetch('/api/is-admin');
-        if (!response.ok) {
-          if (isMounted) setIsAdmin(false);
-          return;
-        }
-        const data = await response.json();
-        if (isMounted) {
-          setIsAdmin(Boolean(data.isAdmin));
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-        if (isMounted) setIsAdmin(false);
-      }
-    };
-
-    checkAdminStatus();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const applyFilters = (cities: CityStats[], country: string, filters: typeof advancedFilters) => {
-    let filtered = [...cities];
-    
-    // Country filter
-    if (country) {
-      filtered = filtered.filter(c => c.country === country);
-    }
-    
-    setFilteredCities(filtered);
-    // Reset display count when filters change
-    setDisplayCount(itemsPerPage);
-  };
-
-  const fetchCityStats = async () => {
-    try {
-      // Fetch all destinations with images
-      const { data, error } = await supabase
-        .from('destinations')
-        .select('city, image, country');
-
-      if (error) throw error;
-
-      const destinations = data as Destination[];
-
-      // Count cities and get featured image (first destination with image)
-      const cityData = destinations.reduce((acc, dest) => {
-        const citySlug = dest.city?.trim();
-        if (!citySlug) return acc;
-
-        if (!acc[citySlug]) {
-          const normalizedKey = normalizeCityKey(citySlug);
-          const inferredCountry =
-            dest.country ||
-            cityCountryMap[normalizedKey] ||
-            cityCountryMap[citySlug] ||
-            'Unknown';
-
-          acc[citySlug] = {
-            count: 0,
-            featuredImage: dest.image || undefined,
-            country: inferredCountry,
-          };
-        }
-
-        acc[citySlug].count += 1;
-
-        // Update featured image if current one doesn't have image but this one does
-        if (!acc[citySlug].featuredImage && dest.image) {
-          acc[citySlug].featuredImage = dest.image;
-        }
-
-        if ((!acc[citySlug].country || acc[citySlug].country === 'Unknown') && dest.country) {
-          acc[citySlug].country = dest.country;
-        }
-
-        return acc;
-      }, {} as Record<string, { count: number; featuredImage?: string; country: string }>);
-
-      const stats = Object.entries(cityData)
-        .map(([city, data]) => ({
-          city,
-          country: data.country || cityCountryMap[normalizeCityKey(city)] || cityCountryMap[city] || 'Unknown',
-          count: data.count,
-          featuredImage: data.featuredImage,
-        }))
-        .sort((a, b) => b.count - a.count); // Sort by count descending
-
-      setCityStats(stats);
-      
-      // Extract unique countries
-      const uniqueCountries = Array.from(new Set(stats.map(s => s.country).filter(Boolean))) as string[];
-      setCountries(uniqueCountries.sort());
-      
-      // Apply initial filtering
-      applyFilters(stats, selectedCountry, advancedFilters);
-    } catch (error) {
-      console.error('Error fetching city stats:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSaveCity = async (countryName: string) => {
-    if (!cityToEdit) return;
-
-    const trimmedCountry = countryName.trim();
-    if (!trimmedCountry) {
-      toast.error('Country is required');
-      return;
-    }
-
-    try {
-      setIsSavingCity(true);
-      const { error } = await supabase
-        .from('destinations')
-        .update({ country: trimmedCountry })
-        .eq('city', cityToEdit.city);
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success('City details updated');
-      await fetchCityStats();
-      setIsEditDrawerOpen(false);
-      setCityToEdit(null);
-    } catch (error) {
-      console.error('Error updating city country:', error);
-      toast.error('Failed to update city');
-    } finally {
-      setIsSavingCity(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-white dark:bg-gray-900">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Loading cities…</div>
-        </div>
-      </main>
-    );
-  }
-
-  // Featured cities (top 4 by count from all cities)
-  const featuredCities = cityStats.slice(0, 4);
+  const visibleCities = filteredCities.slice(0, displayCount);
+  const remaining = filteredCities.length - visibleCities.length;
 
   return (
-    <>
-      <main className="relative min-h-screen bg-white dark:bg-gray-900">
-      {/* Hero Section */}
-      <section className="px-6 md:px-10 py-12 md:py-16">
-        <div className="max-w-[1800px] mx-auto">
-          {/* Back Button */}
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-200 ease-out mb-8"
-          >
-            <ArrowLeft className="h-3 w-3" />
-            <span>Back to Discovery</span>
-          </button>
+    <main className="min-h-screen bg-[#0F1624] text-white">
+      <div className="mx-auto w-full max-w-[1440px] px-5 pb-16 pt-12 sm:px-8 lg:px-10">
+        <div className="mb-10 flex items-center gap-2 text-sm text-white/60">
+          <ArrowLeft className="h-4 w-4" />
+          <Link href="/" className="underline-offset-4 hover:underline">
+            Back to home
+          </Link>
+        </div>
 
-          {/* Hero Content */}
-          <div className="space-y-4 mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold leading-tight text-black dark:text-white">
-              Cities Around the World
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
-              Explore destinations curated by locals and travelers. Each city tells a story through its places—from hidden cafes to celebrated landmarks.
+        <header className="mb-14 grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+          <div className="space-y-5">
+            <p className="text-xs uppercase tracking-[0.25em] text-white/50">Cities</p>
+            <h1 className="text-4xl font-bold leading-tight sm:text-5xl">Explore Cities Around the World</h1>
+            <p className="max-w-2xl text-lg text-white/70">
+              Discover top destinations curated by locals and travelers—hidden cafes, iconic landmarks, and everything in between.
             </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-              {cityStats.length} cities • {countries.length} countries
-            </p>
+            <div className="flex flex-wrap gap-3">
+              {['64 Cities', '21 Countries', 'Updated Weekly'].map(stat => (
+                <span
+                  key={stat}
+                  className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur"
+                >
+                  {stat}
+                </span>
+              ))}
+            </div>
+            <div className="flex max-w-xl items-center rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-inner focus-within:ring-2 focus-within:ring-white/40">
+              <Search className="mr-3 h-4 w-4 text-white/60" />
+              <input
+                type="text"
+                placeholder="Search a city…"
+                value={searchTerm}
+                onChange={event => {
+                  setSearchTerm(event.target.value);
+                  setDisplayCount(12);
+                }}
+                className="w-full bg-transparent text-sm text-white placeholder:text-white/50 focus:outline-none"
+              />
+            </div>
           </div>
 
-          {/* Featured Cities Carousel - At the top */}
-          {featuredCities.length > 0 && (
-            <div className="mb-12">
-              <div className="mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold mb-2 text-black dark:text-white">Featured Cities</h2>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Most explored destinations this month
-                </p>
-              </div>
-              {/* Horizontal scrolling carousel */}
-              <div className="relative -mx-6 md:-mx-10">
-                <div className="overflow-x-auto scrollbar-hide px-6 md:px-10">
-                  <div className="flex gap-5 md:gap-7 lg:gap-8 pb-4">
-                    {featuredCities.map((cityData) => (
-                      <div key={cityData.city} className="flex-shrink-0 w-[280px] sm:w-[320px] md:w-[360px]">
-                        <DestinationCard
-                          destination={cityStatsToDestination(cityData)}
-                          onClick={() => router.push(`/city/${encodeURIComponent(cityData.city)}`)}
-                          isAdmin={isAdmin}
-                          onEdit={isAdmin ? () => {
-                            setCityToEdit(cityData);
-                            setIsEditDrawerOpen(true);
-                          } : undefined}
-                          showBadges={false}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/10 via-white/5 to-white/10 p-6 shadow-xl">
+            <div className="flex items-center justify-between text-sm text-white/70">
+              <span className="text-white">Trending Cities</span>
+              <span>Updated weekly</span>
             </div>
-          )}
-
-          {/* Country Filter Panel */}
-          {countries.length > 0 && (
-            <div className="mb-12">
-              <div className="mb-4">
-                <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
-                  Explore by Country
+            <div className="mt-4 space-y-3">
+              {featuredCities.map(city => (
+                <div
+                  key={city.city}
+                  className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3 text-sm text-white/80"
+                >
+                  <div>
+                    <p className="font-semibold text-white">{city.city}</p>
+                    <p className="text-xs text-white/60">{city.country}</p>
+                  </div>
+                  <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold">{city.places} places</span>
                 </div>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Select a country to discover its cities
-                </p>
-              </div>
+              ))}
+            </div>
+          </div>
+        </header>
 
-              <div className="flex flex-wrap gap-x-5 gap-y-3">
+        <section className="mb-14 space-y-6">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl font-semibold">Featured Cities</h2>
+            <p className="text-sm text-white/70">Most explored destinations this month</p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {featuredCities.map(city => (
+              <CityCardBlock key={city.city} {...city} />
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-12 space-y-4">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl font-semibold">Explore by Country</h2>
+            <p className="text-sm text-white/70">Choose a country to discover its cities</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {countries.map(country => {
+              const isActive = country === selectedCountry;
+              return (
                 <button
+                  key={country}
                   onClick={() => {
-                    setSelectedCountry("");
-                    setAdvancedFilters(prev => ({ ...prev, city: undefined }));
+                    setSelectedCountry(country);
+                    setDisplayCount(12);
                   }}
-                  className={`text-xs font-medium transition-all duration-200 ease-out ${
-                    !selectedCountry
-                      ? "text-black dark:text-white"
-                      : "text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-white/15 text-white shadow-[0_10px_30px_rgba(0,0,0,0.25)]'
+                      : 'bg-white/5 text-white/70 hover:bg-white/10'
                   }`}
                 >
-                  All Countries
+                  {country}
                 </button>
-                {countries.map((country) => (
-                  <button
-                    key={country}
-                    onClick={() => {
-                      const newCountry = country === selectedCountry ? "" : country;
-                      setSelectedCountry(newCountry);
-                      setAdvancedFilters(prev => ({ ...prev, city: undefined }));
-                    }}
-                    className={`text-xs font-medium transition-all duration-200 ease-out ${
-                      selectedCountry === country
-                        ? "text-black dark:text-white"
-                        : "text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                    }`}
-                  >
-                    {country}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </section>
+              );
+            })}
+          </div>
+        </section>
 
-      {/* Grid Section */}
-      <div className="pb-12 px-6 md:px-10">
-        <div className="max-w-[1800px] mx-auto">
+        <section className="space-y-6">
+          <div className="flex flex-col gap-2">
+            <h2 className="text-2xl font-semibold">All Cities</h2>
+            <p className="text-sm text-white/70">Browse every destination in our collection</p>
+          </div>
+
           {filteredCities.length === 0 ? (
-            <div className="text-center py-16">
-              <span className="text-sm text-gray-600 dark:text-gray-400">No cities found</span>
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-8 text-center text-white/70">
+              No cities found. Try another search or country.
             </div>
           ) : (
             <>
-              <UniversalGrid
-                items={filteredCities.slice(0, displayCount)}
-                gap="md"
-                renderItem={(cityData) => (
-                  <DestinationCard
-                    key={cityData.city}
-                    destination={cityStatsToDestination(cityData)}
-                    onClick={() => router.push(`/city/${encodeURIComponent(cityData.city)}`)}
-                    isAdmin={isAdmin}
-                    onEdit={isAdmin ? () => {
-                      setCityToEdit(cityData);
-                      setIsEditDrawerOpen(true);
-                    } : undefined}
-                    showBadges={false}
-                  />
-                )}
-              />
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {visibleCities.map(city => (
+                  <CityCardBlock key={`${city.city}-${city.country}`} {...city} />
+                ))}
+              </div>
 
-              {/* Show More Button */}
-              {displayCount < filteredCities.length && (
-                <div className="mt-8 flex justify-center">
+              {remaining > 0 && (
+                <div className="flex justify-center">
                   <button
-                    onClick={() => setDisplayCount(prev => prev + itemsPerPage)}
-                    className="px-6 py-3 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-60 transition-all duration-200 ease-out text-gray-900 dark:text-white"
+                    onClick={() => setDisplayCount(count => count + 12)}
+                    className="rounded-xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white shadow-lg transition hover:border-white/25 hover:bg-white/15"
                   >
-                    Show More ({filteredCities.length - displayCount} remaining)
+                    Show {Math.min(remaining, 12)} more cities
                   </button>
-                </div>
-              )}
-
-              {/* Horizontal Ad below pagination */}
-              {filteredCities.length > 0 && (
-                <div className="mt-8 w-full">
-                  <div className="max-w-4xl mx-auto border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-white dark:bg-gray-900">
-                    <div className="text-xs text-gray-400 dark:text-gray-500 mb-2 text-center uppercase tracking-wide">Sponsored</div>
-                    <ins
-                      className="adsbygoogle"
-                      style={{ display: 'block', height: '90px' }}
-                      data-ad-client="ca-pub-3052286230434362"
-                      data-ad-slot="3271683710"
-                      data-ad-format="horizontal"
-                      data-full-width-responsive="false"
-                    />
-                  </div>
                 </div>
               )}
             </>
           )}
-        </div>
-      </div>
-      </main>
+        </section>
 
-      {isAdmin && (
-        <CityEditDrawer
-          city={cityToEdit}
-          isOpen={isEditDrawerOpen}
-          isSaving={isSavingCity}
-          onClose={() => {
-            setIsEditDrawerOpen(false);
-            setCityToEdit(null);
-          }}
-          onSave={handleSaveCity}
-        />
-      )}
-    </>
-  );
-}
-
-function CityEditDrawer({ city, isOpen, isSaving, onClose, onSave }: CityEditDrawerProps) {
-  const [countryInput, setCountryInput] = useState('');
-
-  useEffect(() => {
-    setCountryInput(city?.country || '');
-  }, [city]);
-
-  if (!isOpen || !city) return null;
-
-  const handleSave = () => {
-    onSave(countryInput);
-  };
-
-  return (
-    <div className="fixed inset-0 z-[70] flex">
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={() => {
-          if (!isSaving) onClose();
-        }}
-      />
-      <div className="relative ml-auto h-full w-full max-w-md bg-white dark:bg-gray-900 shadow-2xl flex flex-col">
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200 dark:border-gray-800">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.2em] text-gray-400 dark:text-gray-500 mb-1">Editing City</p>
-            <h2 className="text-2xl font-bold text-black dark:text-white">{capitalizeCity(city.city)}</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Slug: {city.city}</p>
+        <footer className="mt-16 border-t border-white/10 pt-8">
+          <div className="flex flex-wrap gap-4 text-sm text-white/60">
+            {['Newsletter', 'About', 'Contact', 'Sitemap', 'Cookie Settings', 'Privacy Policy'].map(link => (
+              <span key={link} className="hover:text-white cursor-pointer transition-colors">
+                {link}
+              </span>
+            ))}
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              if (!isSaving) onClose();
-            }}
-            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            aria-label="Close city edit drawer"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
-          <div>
-            <label className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-500 dark:text-gray-400">
-              Country
-            </label>
-            <input
-              type="text"
-              value={countryInput}
-              onChange={(event) => setCountryInput(event.target.value)}
-              placeholder="e.g., Japan"
-              className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10"
-            />
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              This updates the country for all destinations within this city.
-            </p>
-          </div>
-        </div>
-
-        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-800 flex gap-3">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            disabled={isSaving}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={isSaving || !countryInput.trim()}
-            className="flex-1 px-4 py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              'Save Changes'
-            )}
-          </button>
-        </div>
+        </footer>
       </div>
-    </div>
+    </main>
   );
 }
