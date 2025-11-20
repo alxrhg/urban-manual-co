@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { User } from "lucide-react";
+import { Map, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
@@ -95,6 +95,15 @@ export function Header() {
           {buildVersion}
         </span>
       )}
+
+      <button
+        onClick={() => navigate("/trips")}
+        className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+        aria-label="Open trips page"
+      >
+        <Map className="w-4 h-4" />
+        <span>Trips</span>
+      </button>
 
       {user ? (
         <button
