@@ -53,7 +53,8 @@ OPENAI_API_KEY=sk-xxx
 
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=eyJxxx
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+# ⚠️  Never commit actual keys to version control!
 
 # Google APIs (for jobs)
 NEXT_PUBLIC_GOOGLE_API_KEY=AIzaxxx

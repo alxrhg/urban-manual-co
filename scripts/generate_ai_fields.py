@@ -21,8 +21,20 @@ import google.generativeai as genai
 from datetime import datetime
 
 # Configuration
-SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://avdnefdfwvpjkuanhdwk.supabase.co')
-SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2ZG5lZmRmd3Zwamt1YW5oZHdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MTg4MzMsImV4cCI6MjA2OTI5NDgzM30.imGFTDynzDG5bK0w_j5pgwMPBeT9rkXm8ZQ18W6A-nw')
+SUPABASE_URL = os.getenv('SUPABASE_URL') or os.getenv('NEXT_PUBLIC_SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY') or os.getenv('SUPABASE_KEY')
+
+if not SUPABASE_URL:
+    print("❌ Error: SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL environment variable is required")
+    print("   Set it with: export SUPABASE_URL=your_supabase_url")
+    sys.exit(1)
+
+if not SUPABASE_KEY:
+    print("❌ Error: SUPABASE_SERVICE_ROLE_KEY or SUPABASE_KEY environment variable is required")
+    print("   Set it with: export SUPABASE_SERVICE_ROLE_KEY=your_service_role_key")
+    print("   ⚠️  Never hardcode API keys or tokens in source code!")
+    sys.exit(1)
+
 GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY')
 
 if not GOOGLE_API_KEY:
