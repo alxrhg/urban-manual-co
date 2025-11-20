@@ -175,8 +175,6 @@ const sentryConfig = withSentryConfig(nextConfig, {
   silent: true,
   org: "the-manual-company",
   project: "sentry-red-park",
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  hideSourceMaps: true,
   // Disable source maps in production builds
   disableServerWebpackPlugin: false,
   disableClientWebpackPlugin: false,
