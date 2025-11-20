@@ -149,7 +149,7 @@ export async function getHomepageDestinations(limit = 5000) {
   try {
     const { data, error } = await client
       .from('destinations')
-      .select('id, slug, name, city, country, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset, rating, architect, design_firm_id, architectural_style, design_period, designer_name, architect_info_json, instagram_handle, instagram_url, created_at')
+      .select('id, slug, name, city, country, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset, rating, architect, design_firm_id, architectural_style, design_period, designer_name, architect_info_json, instagram_handle, instagram_url, latitude, longitude, created_at')
       .is('parent_destination_id', null)
       .limit(limit)
       .order('created_at', { ascending: false })

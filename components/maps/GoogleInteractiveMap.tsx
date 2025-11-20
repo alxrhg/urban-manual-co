@@ -130,16 +130,26 @@ export default function GoogleInteractiveMap({
     if (!mapRef.current || !window.google?.maps) return;
 
     try {
-      mapInstanceRef.current = new google.maps.Map(mapRef.current, {
+      // When using mapId, styles should be configured in Google Cloud Console
+      // Only use styles prop if mapId is not provided
+      const mapOptions: google.maps.MapOptions = {
         center: { lat: center.lat, lng: center.lng },
         zoom: zoom,
-        mapId: 'URBAN_MANUAL_MAP',
         disableDefaultUI: false,
         zoomControl: true,
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: true,
-        styles: isDark ? [
+      };
+
+      // Only set mapId if available, otherwise use styles
+      // Check for both env var and fallback to hardcoded value for backward compatibility
+      const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || 'URBAN_MANUAL_MAP';
+      if (mapId) {
+        mapOptions.mapId = mapId;
+      } else if (isDark) {
+        // Fallback to inline styles if mapId is not configured
+        mapOptions.styles = [
           { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
           { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
           { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
@@ -218,8 +228,10 @@ export default function GoogleInteractiveMap({
             elementType: 'labels.text.stroke',
             stylers: [{ color: '#17263c' }]
           }
-        ] : undefined,
-      });
+        ];
+      }
+
+      mapInstanceRef.current = new google.maps.Map(mapRef.current, mapOptions);
 
       addMarkers();
     } catch (err) {
