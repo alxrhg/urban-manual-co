@@ -29,6 +29,9 @@ export default function GoogleInteractiveMap({
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const infoWindowsRef = useRef<google.maps.InfoWindow[]>([]);
+  const isInitializedRef = useRef(false);
+  const lastCenterRef = useRef<{ lat: number; lng: number } | null>(null);
+  const lastZoomRef = useRef<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -232,13 +235,20 @@ export default function GoogleInteractiveMap({
       }
 
       mapInstanceRef.current = new google.maps.Map(mapRef.current, mapOptions);
+      isInitializedRef.current = true;
+      lastCenterRef.current = { lat: center.lat, lng: center.lng };
+      lastZoomRef.current = zoom;
 
-      addMarkers();
+      // Add markers after map is initialized
+      if (destinations.length > 0) {
+        addMarkers();
+      }
     } catch (err) {
       console.error('Error initializing Google Map:', err);
       setError('Failed to initialize map');
+      isInitializedRef.current = false;
     }
-  }, [center.lat, center.lng, zoom, isDark, addMarkers]);
+  }, [center.lat, center.lng, zoom, isDark]); // Removed addMarkers to prevent re-initialization
 
   // Load Google Maps script
   useEffect(() => {
@@ -302,48 +312,56 @@ export default function GoogleInteractiveMap({
     };
   }, [initializeMap]);
 
-  // Update map center and zoom when props change
+  // Update map center and zoom when props change (but only if map is already initialized)
   useEffect(() => {
-    if (mapInstanceRef.current) {
-      mapInstanceRef.current.setCenter({ lat: center.lat, lng: center.lng });
-      mapInstanceRef.current.setZoom(zoom);
+    if (mapInstanceRef.current && isInitializedRef.current && !isLoading) {
+      // Only update if center/zoom actually changed (prevent unnecessary updates)
+      const centerChanged = 
+        !lastCenterRef.current ||
+        Math.abs(lastCenterRef.current.lat - center.lat) > 0.001 || 
+        Math.abs(lastCenterRef.current.lng - center.lng) > 0.001;
+      
+      const zoomChanged = lastZoomRef.current === null || lastZoomRef.current !== zoom;
+      
+      if (centerChanged || zoomChanged) {
+        mapInstanceRef.current.setCenter({ lat: center.lat, lng: center.lng });
+        mapInstanceRef.current.setZoom(zoom);
+        lastCenterRef.current = { lat: center.lat, lng: center.lng };
+        lastZoomRef.current = zoom;
+      }
     }
-  }, [center.lat, center.lng, zoom]);
+  }, [center.lat, center.lng, zoom, isLoading]);
 
-  // Update markers when destinations change
+  // Update markers when destinations change (but don't re-initialize map)
   useEffect(() => {
-    if (mapInstanceRef.current && window.google?.maps) {
+    if (mapInstanceRef.current && window.google?.maps && isInitializedRef.current && !isLoading) {
       addMarkers();
     }
-  }, [addMarkers]);
-
-  if (error) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400">
-        <div className="text-center p-6">
-          <p className="text-sm font-medium">{error}</p>
-          <p className="text-xs text-gray-500 mt-1">Please check your Google Maps API key configuration.</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400">
-        <div className="text-center p-6">
-          <p className="text-sm font-medium">Loading map...</p>
-        </div>
-      </div>
-    );
-  }
+  }, [destinations, addMarkers, isLoading]);
 
   return (
-    <div 
-      ref={mapRef} 
-      className="w-full h-full"
-      style={{ minHeight: '600px' }}
-    />
+    <div className="w-full h-full relative">
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 z-10">
+          <div className="text-center p-6">
+            <p className="text-sm font-medium">Loading map...</p>
+          </div>
+        </div>
+      )}
+      {error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 z-10">
+          <div className="text-center p-6">
+            <p className="text-sm font-medium">{error}</p>
+            <p className="text-xs text-gray-500 mt-1">Please check your Google Maps API key configuration.</p>
+          </div>
+        </div>
+      )}
+      <div 
+        ref={mapRef} 
+        className="w-full h-full"
+        style={{ minHeight: '600px', visibility: isLoading || error ? 'hidden' : 'visible' }}
+      />
+    </div>
   );
 }
 
