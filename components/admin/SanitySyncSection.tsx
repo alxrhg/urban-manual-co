@@ -16,7 +16,7 @@ interface SanitySyncSectionProps {
 }
 
 export function SanitySyncSection({ toast: toastProp }: SanitySyncSectionProps = {}) {
-  const { toast: toastHook } = useToast();
+  const toastHook = useToast();
   const toast = toastProp || toastHook;
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStats, setSyncStats] = useState<{

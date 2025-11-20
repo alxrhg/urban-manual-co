@@ -2808,18 +2808,57 @@ export default function Home() {
                 {/* Mid Nav - Horizontal Row, Right Aligned */}
                 <div className="mb-6">
                   <div className="flex justify-start sm:justify-end">
-                    <div className="-mx-2 flex w-full max-w-full flex-nowrap items-center gap-3 overflow-x-auto px-2 pb-2 scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent sm:flex-wrap sm:justify-end sm:overflow-visible">
-                      {/* Discover by Cities - Pill */}
-                      <Link
-                        href="/cities"
-                        className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 ease-out hover:bg-gray-50 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
+                    <div className="-mx-2 flex w-full max-w-full flex-nowrap items-center gap-2 overflow-x-auto px-2 pb-2 scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent sm:flex-wrap sm:justify-end sm:overflow-visible sm:gap-3">
+                      {/* View Toggle - Single Button showing opposite mode */}
+                      <button
+                        onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
+                        className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 sm:px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
                         style={{ borderRadius: '9999px' }}
+                        aria-label={viewMode === 'grid' ? 'Switch to map view' : 'Switch to grid view'}
                       >
-                        <Globe className="h-4 w-4" />
-                        <span>Discover by Cities</span>
-                      </Link>
+                        {viewMode === 'grid' ? (
+                          <>
+                            <Map className="h-4 w-4" />
+                            <span className="hidden sm:inline">Map</span>
+                          </>
+                        ) : (
+                          <>
+                            <LayoutGrid className="h-4 w-4" />
+                            <span className="hidden sm:inline">Grid</span>
+                          </>
+                        )}
+                      </button>
 
-                      {/* Filters - Pill */}
+                      {/* Create Trip - Pill Filled (Black) */}
+                      {isAdmin ? (
+                        <button
+                          onClick={() => {
+                            setEditingDestination(null);
+                            setShowPOIDrawer(true);
+                          }}
+                          className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-4 sm:px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
+                          style={{ borderRadius: '9999px' }}
+                          aria-label="Add New POI"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span className="hidden sm:inline">Add New POI</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setPlannerPrefill(null);
+                            setShowTripPlanner(true);
+                          }}
+                          className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-4 sm:px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
+                          style={{ borderRadius: '9999px' }}
+                          aria-label="Create Trip"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span className="hidden sm:inline">Create Trip</span>
+                        </button>
+                      )}
+
+                      {/* Filters - Compact Icon Button */}
                       <div className="relative flex-shrink-0">
                         <SearchFiltersComponent
                           filters={advancedFilters}
@@ -2851,54 +2890,15 @@ export default function Home() {
                         />
                       </div>
 
-                      {/* View Toggle - Single Button showing opposite mode */}
-                      <button
-                        onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
-                        className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
+                      {/* Discover by Cities - Compact Link */}
+                      <Link
+                        href="/cities"
+                        className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 sm:px-5 text-sm font-medium text-gray-900 transition-all duration-200 ease-out hover:bg-gray-50 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
                         style={{ borderRadius: '9999px' }}
-                        aria-label={viewMode === 'grid' ? 'Switch to map view' : 'Switch to grid view'}
                       >
-                        {viewMode === 'grid' ? (
-                          <>
-                            <Map className="h-4 w-4" />
-                            <span>Map</span>
-                          </>
-                        ) : (
-                          <>
-                            <LayoutGrid className="h-4 w-4" />
-                            <span>Grid</span>
-                          </>
-                        )}
-                      </button>
-
-                      {/* Create Trip - Pill Filled (Black) */}
-                      {isAdmin ? (
-                        <button
-                          onClick={() => {
-                            setEditingDestination(null);
-                            setShowPOIDrawer(true);
-                          }}
-                          className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
-                          style={{ borderRadius: '9999px' }}
-                          aria-label="Add New POI"
-                        >
-                          <Plus className="h-4 w-4" />
-                          <span>Add New POI</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            setPlannerPrefill(null);
-                            setShowTripPlanner(true);
-                          }}
-                          className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
-                          style={{ borderRadius: '9999px' }}
-                          aria-label="Create Trip"
-                        >
-                          <Plus className="h-4 w-4" />
-                          <span>Create Trip</span>
-                        </button>
-                      )}
+                        <Globe className="h-4 w-4" />
+                        <span className="hidden sm:inline">Discover by Cities</span>
+                      </Link>
                     </div>
                   </div>
                 </div>
