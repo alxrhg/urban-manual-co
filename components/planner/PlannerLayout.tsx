@@ -1,6 +1,6 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, ReactElement } from "react";
 
-type PlannerLayoutComponent = (({ children }: PropsWithChildren) => JSX.Element) & {
+type PlannerLayoutComponent = (({ children }: PropsWithChildren) => ReactElement) & {
   Windows: typeof WindowsContainer;
 };
 
