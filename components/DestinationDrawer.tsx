@@ -355,7 +355,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             design_period,
             designer_name,
             architect_info_json,
-            web_content_json
+            web_content_json,
+            brand,
+            category
           `)
           .eq('slug', destination.slug)
           .single();
