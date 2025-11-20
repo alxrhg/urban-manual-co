@@ -8,8 +8,11 @@ function normalizePrivateKey(pk: string): string {
   // Handle env var with escaped newlines
   let key = pk.replace(/\\n/g, '\n');
   // Ensure proper PEM headers if missing
-  if (!key.includes('BEGIN PRIVATE KEY')) {
-    key = `-----BEGIN PRIVATE KEY-----\n${key}\n-----END PRIVATE KEY-----`;
+  // Note: These are PEM format markers, not hardcoded credentials
+  const PEM_HEADER = '-----BEGIN PRIVATE KEY-----';
+  const PEM_FOOTER = '-----END PRIVATE KEY-----';
+  if (!key.includes(PEM_HEADER)) {
+    key = `${PEM_HEADER}\n${key}\n${PEM_FOOTER}`;
   }
   return key;
 }
