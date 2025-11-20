@@ -150,12 +150,12 @@ export const DestinationCard = memo(function DestinationCard({
               e.stopPropagation();
               onEdit(destination);
             }}
-              className={`absolute top-2 right-2 z-20 p-2 rounded-full transition-all shadow-lg backdrop-blur-sm
+              className={`absolute top-3 right-3 z-20 p-2 rounded-xl transition-all shadow-md backdrop-blur-md
                 ${showEditAffordance 
-                  ? 'opacity-100 scale-100 bg-amber-500 text-white border-2 border-white dark:border-gray-900 shadow-amber-500/30' 
-                  : 'opacity-0 group-hover:opacity-100 bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800'
+                  ? 'opacity-100 scale-100 bg-amber-500 text-white border border-white/20 shadow-amber-500/40 ring-2 ring-amber-500/20' 
+                  : 'opacity-0 group-hover:opacity-100 bg-white/95 dark:bg-gray-900/95 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50'
                 }
-                hover:scale-110 active:scale-95
+                hover:scale-105 active:scale-95 hover:shadow-lg
               `}
             title="Edit destination"
             aria-label="Edit destination"
@@ -166,8 +166,8 @@ export const DestinationCard = memo(function DestinationCard({
 
           {showEditAffordance && (
             <>
-              <div className="pointer-events-none absolute inset-0 rounded-2xl border-2 border-amber-400/50 dark:border-amber-500/50 shadow-[0_0_0_1px_rgba(251,191,36,0.2)]" />
-              <div className="pointer-events-none absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 rounded-t-2xl" />
+              <div className="pointer-events-none absolute inset-0 rounded-2xl border border-amber-400/40 dark:border-amber-500/40" />
+              <div className="pointer-events-none absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-400/60 via-amber-500/80 to-amber-400/60 rounded-t-2xl" />
             </>
           )}
 
