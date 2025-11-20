@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const cspDirectives = [
   "default-src 'self'",
@@ -10,7 +11,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https://*",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://api.mapbox.com https://events.mapbox.com https://cdn.jsdelivr.net/npm/world-atlas@* https://cdn.apple-mapkit.com https://api.apple-mapkit.com https://googleads.g.doubleclick.net https://*.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://*.api.sanity.io",
+  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://api.mapbox.com https://events.mapbox.com https://cdn.jsdelivr.net/npm/world-atlas@* https://cdn.apple-mapkit.com https://api.apple-mapkit.com https://googleads.g.doubleclick.net https://*.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://*.api.sanity.io https://*.sentry.io https://*.ingest.sentry.io",
   "worker-src 'self' blob:",
   "child-src 'none'",
   "frame-ancestors 'none'",
@@ -165,4 +166,30 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap the Next.js config with Sentry
+const sentryConfig = withSentryConfig(
+  nextConfig,
+  {
+    // For all available options, see:
+    // https://github.com/getsentry/sentry-webpack-plugin#options
+
+    // Suppresses source map uploading logs during build
+    silent: true,
+    org: "the-manual-company",
+    project: "sentry-red-park",
+  },
+  {
+    // For all available options, see:
+    // https://github.com/getsentry/sentry-webpack-plugin#options
+
+    // Suppresses source map uploading logs during build
+    silent: true,
+    // Automatically tree-shake Sentry logger statements to reduce bundle size
+    hideSourceMaps: true,
+    // Disable source maps in production builds
+    disableServerWebpackPlugin: false,
+    disableClientWebpackPlugin: false,
+  }
+);
+
+export default sentryConfig;
