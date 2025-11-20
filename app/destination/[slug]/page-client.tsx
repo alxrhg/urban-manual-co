@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, MapPin, Bookmark, Check, Plus, ChevronDown, X } from 'lucide-react';
+import { ArrowLeft, MapPin, Bookmark, Check, Plus, ChevronDown, X, Phone, Globe, ExternalLink, Navigation, Clock, Tag, Building2, Share2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
@@ -29,6 +29,7 @@ import { ExplanationPanel } from '@/components/ExplanationPanel';
 import { useSequenceTracker } from '@/hooks/useSequenceTracker';
 import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
+import { PRICE_LEVEL } from '@/lib/constants';
 
 interface Recommendation {
   slug: string;
@@ -386,8 +387,8 @@ export default function DestinationPageClient({ initialDestination, parentDestin
   const cityName = capitalizeCity(destination.city || '');
 
   return (
-    <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
-      <div className="w-full space-y-12">
+    <main className="w-full px-6 md:px-10 lg:px-12 py-12 md:py-16 min-h-screen">
+      <div className="w-full max-w-4xl mx-auto space-y-10 md:space-y-12">
         {/* Header */}
         <div>
           <button
@@ -402,19 +403,22 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
           <div className="space-y-3">
             {/* Location */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <a
                 href={`/city/${destination.city}`}
-                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 text-xs"
+                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 text-xs"
               >
                 <MapPin className="h-3 w-3" />
+                {destination.neighborhood && (
+                  <span>{destination.neighborhood} · </span>
+                )}
                 {destination.country ? `${cityName}, ${destination.country}` : cityName}
               </a>
             </div>
 
             {/* Title and Action Buttons */}
             <div className="flex items-start justify-between gap-4">
-              <h1 className="text-2xl font-bold leading-tight flex-1">
+              <h1 className="text-2xl md:text-3xl font-bold leading-tight flex-1">
                 {destination.name}
               </h1>
               {user && (
@@ -481,7 +485,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             </div>
 
             {/* Meta badges */}
-            <div className="flex flex-wrap gap-2 text-xs">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
               {/* Parent destination badge - show if this is nested */}
               {parentDestination && (
                 <LocatedInBadge
@@ -491,12 +495,19 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               )}
               
               {destination.category && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <Tag className="h-3 w-3" />
                   {formatLabel(destination.category)}
                 </span>
               )}
+              {destination.brand && (
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <Building2 className="h-3 w-3" />
+                  {destination.brand}
+                </span>
+              )}
               {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <Image
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
@@ -504,7 +515,6 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                     height={12}
                     className="h-3 w-3"
                     onError={(e) => {
-                      // Fallback to local file if external URL fails
                       const target = e.currentTarget;
                       if (target.src !== '/michelin-star.svg') {
                         target.src = '/michelin-star.svg';
@@ -515,12 +525,12 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                 </span>
               )}
               {destination.crown && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400">
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400">
                   Crown
                 </span>
               )}
               {(enrichedData?.rating || destination.rating) && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
                   <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -531,6 +541,11 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   {enrichedData?.user_ratings_total && (
                     <span className="text-gray-400">({enrichedData.user_ratings_total.toLocaleString()})</span>
                   )}
+                </span>
+              )}
+              {(enrichedData?.price_level || destination.price_level) && (
+                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 font-medium">
+                  {PRICE_LEVEL.LABELS[(enrichedData?.price_level || destination.price_level) as keyof typeof PRICE_LEVEL.LABELS]}
                 </span>
               )}
             </div>
@@ -587,16 +602,16 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           </div>
         )}
 
-        {/* Image */}
+        {/* Hero Image */}
         {destination.image && (
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900">
+          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 shadow-sm">
             <Image
               src={destination.image}
               alt={`${destination.name} - ${destination.category} in ${destination.city}`}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
               className="object-cover"
-              quality={85}
+              quality={90}
               priority
             />
           </div>
@@ -609,21 +624,107 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             <div className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
               {stripHtmlTags(destination.content)}
             </div>
+            {destination.micro_description && destination.micro_description !== destination.content && (
+              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <p className="text-xs text-gray-500 dark:text-gray-500 italic">
+                  {destination.micro_description}
+                </p>
+              </div>
+            )}
           </div>
         )}
 
         {/* Architecture & Design */}
         <ArchitectDesignInfo destination={destination} />
 
+        {/* Location & Contact */}
+        {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.formatted_address || 
+          enrichedData?.international_phone_number || destination.phone_number || 
+          enrichedData?.website || destination.website || destination.instagram_url) && (
+          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
+            <h2 className="text-sm font-medium mb-4">Location & Contact</h2>
+            <div className="space-y-4">
+              {/* Address */}
+              {(enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity) && (
+                <div className="flex items-start gap-3">
+                  <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      {enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity}
+                    </div>
+                    {destination.latitude && destination.longitude && (
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        <Navigation className="h-3 w-3" />
+                        Get Directions
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Contact Info */}
+              <div className="flex flex-wrap gap-3">
+                {(enrichedData?.international_phone_number || destination.phone_number) && (
+                  <a
+                    href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <Phone className="h-4 w-4" />
+                    Call
+                  </a>
+                )}
+                {(enrichedData?.website || destination.website) && (() => {
+                  const websiteUrl = (enrichedData?.website || destination.website) || '';
+                  const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+                  return (
+                    <a
+                      href={fullUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <Globe className="h-4 w-4" />
+                      Website
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  );
+                })()}
+                {destination.instagram_url && (
+                  <a
+                    href={destination.instagram_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                    Instagram
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Opening Hours */}
         {enrichedData?.opening_hours?.weekday_text && Array.isArray(enrichedData.opening_hours.weekday_text) && (
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <h2 className="text-sm font-medium mb-4">Opening Hours</h2>
+            <h2 className="text-sm font-medium mb-4 flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Opening Hours
+            </h2>
             <div className="space-y-2 text-sm">
               {enrichedData.opening_hours.weekday_text.map((day: string, index: number) => {
                 const [dayName, hoursText] = day.split(': ');
                 return (
-                  <div key={index} className="flex justify-between">
+                  <div key={index} className="flex justify-between items-center py-1">
                     <span className="text-gray-600 dark:text-gray-400">{dayName}</span>
                     <span className="text-gray-900 dark:text-white font-medium">{hoursText}</span>
                   </div>
@@ -637,17 +738,17 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
             <h2 className="text-sm font-medium mb-4">Top Reviews</h2>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
-                <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-lg p-4">
+                <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <span className="font-medium text-sm">{review.author_name}</span>
+                      <span className="font-medium text-sm text-gray-900 dark:text-white">{review.author_name}</span>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-yellow-500">⭐</span>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">{review.rating}</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{review.rating}</span>
                         {review.relative_time_description && (
-                          <span className="text-xs text-gray-500">· {review.relative_time_description}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-500">· {review.relative_time_description}</span>
                         )}
                       </div>
                     </div>
@@ -766,18 +867,35 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         )}
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
+        <div className="flex flex-wrap gap-3 pt-8 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={() => router.push('/')}
-            className="flex-1 min-w-[160px] px-6 py-2 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="flex-1 min-w-[160px] px-6 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
             Back to catalogue
           </button>
           <button
             onClick={() => router.push(`/city/${destination.city}`)}
-            className="flex-1 min-w-[160px] px-6 py-2 text-xs font-medium bg-black text-white dark:bg-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity"
+            className="flex-1 min-w-[160px] px-6 py-2.5 text-xs font-medium bg-black text-white dark:bg-white dark:text-black rounded-xl hover:opacity-80 transition-opacity"
           >
             Explore {cityName}
+          </button>
+          <button
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: destination.name,
+                  text: `Check out ${destination.name} in ${cityName}`,
+                  url: window.location.href,
+                }).catch(() => {});
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+              }
+            }}
+            className="px-6 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2"
+          >
+            <Share2 className="h-3 w-3" />
+            Share
           </button>
         </div>
       </div>
