@@ -136,8 +136,12 @@ export function SearchFiltersComponent({
     return `${km}km`;
   };
 
+  const containerClassName = fullWidthPanel
+    ? `relative flex-1 min-w-[280px]${isOpen ? ' basis-full' : ''}`
+    : 'relative';
+
   return (
-    <div className="relative">
+    <div className={containerClassName}>
       <button
         ref={buttonRef}
         onClick={() => {
@@ -181,11 +185,10 @@ export function SearchFiltersComponent({
       {isOpen && (
         <>
           {fullWidthPanel ? (
-            /* Full-width panel attached under top controls */
-            <div className="absolute left-0 right-0 top-full mt-2 w-screen bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-50 shadow-lg">
-              <div className="w-full px-6 md:px-10 py-8">
-                <div className="max-w-[1800px] mx-auto">
-                  <div className="space-y-8">
+            /* Full-width panel attached under top controls, pushes content below */
+            <div className="mt-4 w-full overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-[0_24px_70px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out animate-in fade-in slide-in-from-top-2 dark:border-gray-800 dark:bg-gray-900">
+              <div className="w-full px-4 py-6 sm:px-6 md:px-10 md:py-8">
+                <div className="mx-auto max-w-[1800px] space-y-8">
                     {/* Header */}
                     <div className="flex items-center justify-between">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">Filters</div>
