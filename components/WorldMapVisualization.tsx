@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
 import { cityCountryMap } from '@/data/cityCountryMap';
 
@@ -119,6 +119,7 @@ export function WorldMapVisualization({
   visitedDestinations = []
 }: WorldMapVisualizationProps) {
   const [hoveredCity, setHoveredCity] = useState<string | null>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Convert country names to ISO-2 codes
   const visitedISO2Codes = useMemo(() => {
@@ -179,6 +180,34 @@ export function WorldMapVisualization({
 
     return Array.from(cityMap.values());
   }, [visitedDestinations]);
+
+  // Check if map data can be loaded
+  useEffect(() => {
+    fetch(geoUrl)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      })
+      .catch((error) => {
+        console.error('[WorldMap] Error loading geography data:', error);
+        setMapError('Failed to load map data. Please check your connection and refresh the page.');
+      });
+  }, []);
+
+  // Handle map loading errors
+  if (mapError) {
+    return (
+      <div className="w-full">
+        <div className="w-full aspect-[2/1] max-w-full bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex items-center justify-center">
+          <div className="text-center p-6">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">Unable to load map</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">{mapError}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
