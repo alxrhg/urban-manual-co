@@ -1,4 +1,4 @@
-fastapi>=0.104.0
+fastapi>=0.115.0
 uvicorn[standard]>=0.24.0
 pydantic>=2.0.0
 pydantic-settings>=2.0.0
@@ -12,8 +12,8 @@ python-dotenv>=1.0.0
 psycopg2-binary>=2.9.0
 supabase>=2.0.0
 scipy>=1.11.0
-transformers>=4.35.0
-torch>=2.0.0
+transformers>=4.40.0
+torch>=2.1.0
 bertopic>=0.15.0
 sentence-transformers>=2.2.0
 umap-learn>=0.5.4
