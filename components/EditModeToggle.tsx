@@ -1,6 +1,6 @@
 'use client';
 
-import { PenSquare, ShieldCheck } from 'lucide-react';
+import { PenSquare, ShieldCheck, X } from 'lucide-react';
 
 interface EditModeToggleProps {
   active: boolean;
@@ -17,33 +17,32 @@ export function EditModeToggle({ active, onToggle, className = '', size = 'defau
       aria-pressed={active}
       className={`
         group relative inline-flex items-center gap-2 rounded-full border
-        transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2
+        transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2
         dark:focus:ring-white/20 dark:focus:ring-offset-gray-900
         ${active
-          ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white shadow-lg shadow-black/10 dark:shadow-white/10'
-          : 'bg-white text-gray-700 dark:bg-gray-900 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
+          ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20 hover:bg-amber-600'
+          : 'bg-white text-gray-700 dark:bg-gray-900 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
         }
-        ${size === 'compact' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}
+        ${size === 'compact' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2.5 text-sm'}
         ${className}
       `}
     >
       {active ? (
-        <ShieldCheck className="h-4 w-4" />
+        <>
+          <ShieldCheck className="h-4 w-4" />
+          <span className="font-semibold tracking-tight">
+            Edit Mode
+          </span>
+          <X className="h-3.5 w-3.5 ml-1 opacity-70" />
+        </>
       ) : (
-        <PenSquare className="h-4 w-4" />
+        <>
+          <PenSquare className="h-4 w-4" />
+          <span className="font-medium tracking-tight">
+            Edit Mode
+          </span>
+        </>
       )}
-      <span className="font-medium tracking-tight">
-        {active ? 'Editing' : 'Edit Mode'}
-      </span>
-      <span
-        className={`
-          absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-medium uppercase tracking-[0.2em]
-          text-gray-400 transition-opacity duration-200
-          ${active ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
-        `}
-      >
-        Admin
-      </span>
     </button>
   );
 }

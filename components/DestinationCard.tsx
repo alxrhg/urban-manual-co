@@ -2,12 +2,11 @@
 
 import { useState, useRef, useEffect, memo } from 'react';
 import Image from 'next/image';
-import { MapPin, Check, Edit, Clock } from 'lucide-react';
+import { MapPin, Check, Edit } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
 import { DestinationBadges } from './DestinationBadges';
-import { isOpenNow } from '@/lib/utils/opening-hours';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -151,18 +150,25 @@ export const DestinationCard = memo(function DestinationCard({
               e.stopPropagation();
               onEdit(destination);
             }}
-              className={`absolute top-2 right-2 z-20 p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-900 transition-all shadow-lg
-                ${showEditAffordance ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100'}
+              className={`absolute top-2 right-2 z-20 p-2 rounded-full transition-all shadow-lg backdrop-blur-sm
+                ${showEditAffordance 
+                  ? 'opacity-100 scale-100 bg-amber-500 text-white border-2 border-white dark:border-gray-900 shadow-amber-500/30' 
+                  : 'opacity-0 group-hover:opacity-100 bg-white/90 dark:bg-gray-900/90 border border-gray-200 dark:border-gray-800'
+                }
+                hover:scale-110 active:scale-95
               `}
             title="Edit destination"
             aria-label="Edit destination"
           >
-            <Edit className="h-4 w-4 text-gray-700 dark:text-gray-300" />
+            <Edit className={`h-4 w-4 ${showEditAffordance ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`} />
           </button>
         )}
 
           {showEditAffordance && (
-            <div className="pointer-events-none absolute inset-1 rounded-2xl border border-dashed border-black/20 dark:border-white/30" />
+            <>
+              <div className="pointer-events-none absolute inset-0 rounded-2xl border-2 border-amber-400/50 dark:border-amber-500/50 shadow-[0_0_0_1px_rgba(251,191,36,0.2)]" />
+              <div className="pointer-events-none absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 rounded-t-2xl" />
+            </>
           )}
 
         {/* Badges - Animated on hover */}
@@ -224,40 +230,6 @@ export const DestinationCard = memo(function DestinationCard({
              : destination.city
                ? `Located in ${capitalizeCity(destination.city)}`
                : destination.category || '')}
-        </div>
-
-        {/* Price, Rating, and Open Now Status */}
-        <div className="mt-2 flex items-center gap-3 flex-wrap">
-          {/* Price Level */}
-          {destination.price_level && destination.price_level > 0 && (
-            <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
-              {'$'.repeat(destination.price_level)}
-            </div>
-          )}
-
-          {/* Rating */}
-          {destination.rating && destination.rating > 0 && (
-            <div className="flex items-center gap-1 text-xs text-gray-700 dark:text-gray-300">
-              <span className="text-yellow-500">⭐</span>
-              <span className="font-medium">{destination.rating.toFixed(1)}</span>
-            </div>
-          )}
-
-          {/* Open Now Status */}
-          {destination.opening_hours_json && (() => {
-            const openNow = isOpenNow(
-              destination.opening_hours_json,
-              destination.city,
-              destination.timezone_id,
-              destination.utc_offset
-            );
-            return openNow ? (
-              <div className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400 font-medium">
-                <Clock className="h-3 w-3" />
-                <span>Open now</span>
-              </div>
-            ) : null;
-          })()}
         </div>
 
         {/* ML Forecasting Badges */}

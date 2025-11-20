@@ -2270,7 +2270,7 @@ export default function Home() {
       />
       <main
         id="main-content"
-        className="relative min-h-screen dark:text-white drawer-split-adjust"
+        className="relative min-h-screen dark:text-white"
         role="main"
       >
         {/* SEO H1 - Visually hidden but accessible to search engines */}
@@ -2748,35 +2748,39 @@ export default function Home() {
         </section>
 
 
-        {/* Edit Mode Banner */}
+        {/* Edit Mode Banner - Compact and Sticky */}
         {editModeActive && (
-          <div className="w-full px-6 md:px-10">
-            <div className="max-w-[1800px] mx-auto mb-6">
-              <div className="rounded-3xl border border-amber-200/70 dark:border-amber-400/30 bg-amber-50/80 dark:bg-amber-400/10 px-5 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-                    Edit mode is active
-                  </p>
-                  <p className="text-xs text-amber-800/80 dark:text-amber-100/80">
-                    Click any card's edit badge to update details or add a brand new place directly from this page.
-                  </p>
+          <div className="sticky top-0 z-40 w-full px-6 md:px-10 mb-6">
+            <div className="max-w-[1800px] mx-auto">
+              <div className="rounded-2xl border border-amber-300/50 dark:border-amber-500/30 bg-gradient-to-r from-amber-50/95 to-amber-100/95 dark:from-amber-900/20 dark:to-amber-800/20 backdrop-blur-sm px-4 py-3 flex items-center justify-between gap-4 shadow-sm">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="flex-shrink-0 w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 truncate">
+                      Edit mode active
+                    </p>
+                    <p className="text-[10px] text-amber-700/80 dark:text-amber-200/80 truncate">
+                      Click cards to edit or add new places
+                    </p>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   <button
                     onClick={() => {
                       setEditingDestination(null);
                       setShowPOIDrawer(true);
                     }}
-                    className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-full bg-white text-amber-900 border border-amber-200 shadow-sm hover:bg-amber-100 transition-all"
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-white/90 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 border border-amber-200/50 dark:border-amber-500/30 hover:bg-white dark:hover:bg-amber-900/40 transition-all shadow-sm"
                   >
-                    <Plus className="h-4 w-4" />
-                    Add Place
+                    <Plus className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Add Place</span>
                   </button>
                   <button
                     onClick={() => disableEditMode()}
-                    className="flex items-center justify-center gap-2 px-4 py-2 text-xs font-semibold rounded-full bg-amber-900 text-white border border-transparent hover:bg-amber-800 transition-all"
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full bg-amber-600 dark:bg-amber-500 text-white border border-transparent hover:bg-amber-700 dark:hover:bg-amber-600 transition-all shadow-sm"
                   >
-                    Exit Edit Mode
+                    <X className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Exit</span>
                   </button>
                 </div>
               </div>
@@ -2784,8 +2788,8 @@ export default function Home() {
           </div>
         )}
 
-        {/* Admin Edit Mode Toggle */}
-        {isAdmin && !editModeActive && (
+        {/* Admin Edit Mode Toggle - Always visible when admin */}
+        {isAdmin && (
           <div className="w-full px-6 md:px-10">
             <div className="max-w-[1800px] mx-auto mb-6 flex justify-end">
               <EditModeToggle
@@ -3047,7 +3051,7 @@ export default function Home() {
                 source: "map_marker" | "map_list"
               ) => {
                 setSelectedDestination(destination);
-                openDrawer('destination');
+                // Don't open drawer in map view - details show in sidebar
                 const position = findDestinationPosition(destination.slug);
                 trackDestinationEngagement(
                   destination,
@@ -3069,6 +3073,7 @@ export default function Home() {
                           onListItemSelect={destination =>
                             openDestinationFromMap(destination, "map_list")
                           }
+                          onCloseDetail={() => setSelectedDestination(null)}
                           isLoading={isDestinationsLoading}
                         />
                       </div>
@@ -3313,8 +3318,8 @@ export default function Home() {
               </div>
             </div>
 
-        {/* Destination Drawer - Only render when open */}
-        {isDrawerOpen('destination') && selectedDestination && (
+        {/* Destination Drawer - Only render when open and NOT in map view */}
+        {isDrawerOpen('destination') && selectedDestination && viewMode !== 'map' && (
           <DestinationDrawer
             destination={selectedDestination}
             isOpen={true}

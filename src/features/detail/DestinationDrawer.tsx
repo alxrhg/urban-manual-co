@@ -1036,8 +1036,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     );
   }
 
-  // Get rating for display
+  // Get rating and price level for display
   const rating = enrichedData?.rating || destination.rating;
+  const priceLevel = enrichedData?.price_level || destination.price_level;
   const highlightTags: string[] = (
     Array.isArray(destination.tags) && destination.tags.length > 0
       ? destination.tags
@@ -1241,7 +1242,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         style="glassy"
         backdropOpacity="18"
         keepStateOnClose={true}
-        desktopMode="split"
         headerContent={headerContent}
         footerContent={
           <>
@@ -1306,6 +1306,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-900 dark:text-gray-100">
                     <Star className="h-3.5 w-3.5 fill-current text-yellow-500" />
                     {rating.toFixed(1)}
+                  </span>
+                )}
+                {priceLevel && priceLevel > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-900 dark:text-gray-100">
+                    <span className="text-green-600 dark:text-green-400 font-semibold">
+                      {'$'.repeat(priceLevel)}
+                    </span>
                   </span>
                 )}
               </div>

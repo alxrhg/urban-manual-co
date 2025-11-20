@@ -555,25 +555,6 @@
   }
 }
 
-/* Split-window drawer behavior on desktop */
-html.drawer-open-split {
-  --drawer-offset: 452px; /* Default: 420px drawer + 32px spacing */
-}
-
-/* Main content adjustment when drawer is open in split mode */
-@media (min-width: 1024px) {
-  .drawer-split-adjust {
-    transition: transform 220ms ease-out, width 220ms ease-out;
-  }
-
-  html.drawer-open-split .drawer-split-adjust {
-    /* Compress main content to make room for drawer */
-    width: calc(100vw - var(--drawer-offset, 452px));
-    /* Shift left to center the compressed content */
-    transform: translateX(calc((var(--drawer-offset, 452px) - 100vw) / 2));
-  }
-}
-
 /* Smooth scroll behavior */
 html {
   scroll-behavior: smooth;
