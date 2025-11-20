@@ -3159,33 +3159,15 @@ export default function Home() {
                                 setShowPOIDrawer(true);
                               }}
                               showEditAffordance={editModeActive}
-                            onClick={() => {
-                              setSelectedDestination(destination);
-                              openDrawer('destination');
-                              trackDestinationEngagement(
-                                destination,
-                                "grid",
-                                globalIndex
-                              );
-                            }}
-                            onPlanTrip={() => {
-                              trackDestinationEngagement(
-                                destination,
-                                "grid",
-                                globalIndex
-                              );
-                              setPlannerPrefill({
-                                slug: destination.slug,
-                                name: destination.name,
-                                image:
-                                  destination.image_thumbnail ||
-                                  destination.image ||
-                                  undefined,
-                                city: destination.city,
-                                category: destination.category,
-                              });
-                              setShowTripPlanner(true);
-                            }}
+                              onClick={() => {
+                                setSelectedDestination(destination);
+                                openDrawer('destination');
+                                trackDestinationEngagement(
+                                  destination,
+                                  "grid",
+                                  globalIndex
+                                );
+                              }}
                                 index={globalIndex}
                                 isVisited={isVisited}
                                 showBadges={true}

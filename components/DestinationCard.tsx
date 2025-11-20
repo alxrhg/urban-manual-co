@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, memo } from 'react';
 import Image from 'next/image';
-import { MapPin, Check, Edit, Plus } from 'lucide-react';
+import { MapPin, Check, Edit } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
@@ -18,7 +18,6 @@ interface DestinationCardProps {
   isAdmin?: boolean;
   onEdit?: (destination: Destination) => void;
   showEditAffordance?: boolean;
-  onPlanTrip?: () => void;
 }
 
 /**
@@ -35,7 +34,6 @@ export const DestinationCard = memo(function DestinationCard({
   isAdmin = false,
   onEdit,
   showEditAffordance = false,
-  onPlanTrip,
 }: DestinationCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -227,22 +225,6 @@ export const DestinationCard = memo(function DestinationCard({
                : destination.category || '')}
         </div>
 
-        {onPlanTrip && (
-          <div className="mt-2">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onPlanTrip();
-              }}
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Plan in Trip
-            </button>
-          </div>
-        )}
-        
         {/* ML Forecasting Badges */}
         {showBadges && destination.id && (
           <div className="mt-2">
