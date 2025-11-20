@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe } from 'lucide-react';
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe, Building2 } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -1282,16 +1282,21 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
 
             <div className="flex flex-col gap-2">
-              {destination.city && (
-                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span>
-                    {destination.country 
-                      ? `${capitalizeCity(destination.city)}, ${destination.country}`
-                      : capitalizeCity(destination.city)
-                    }
-                    {destination.neighborhood && ` · ${destination.neighborhood}`}
-                  </span>
+              {(destination.neighborhood || destination.city || destination.country) && (
+                <div className="flex items-start gap-1.5 text-sm">
+                  <MapPin className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    {destination.neighborhood && (
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {destination.neighborhood}
+                      </div>
+                    )}
+                    <div className="text-gray-600 dark:text-gray-400">
+                      {destination.city && capitalizeCity(destination.city)}
+                      {destination.city && destination.country && ', '}
+                      {destination.country && destination.country}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -1304,6 +1309,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 )}
                 {destination.brand && (
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900">
+                    <Building2 className="h-3.5 w-3.5" />
                     {destination.brand}
                   </span>
                 )}
@@ -1545,7 +1551,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 )}
 
                 {destination.brand && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
+                    <Building2 className="h-3.5 w-3.5" />
                     {destination.brand}
                   </span>
                 )}
@@ -1931,24 +1938,35 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             })()}
 
             {/* Address */}
-            {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.neighborhood) && (
+            {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.neighborhood || destination.city || destination.country) && (
               <div>
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-black dark:text-white mb-1">Location</div>
-                    {destination.neighborhood && (
-                      <div className="text-sm text-gray-700 dark:text-gray-300 mb-1">
-                        {destination.neighborhood}
-                        {destination.city && `, ${capitalizeCity(destination.city)}`}
-                        {destination.country && `, ${destination.country}`}
+                    <div className="text-sm font-medium text-black dark:text-white mb-2">Location</div>
+                    {/* Neighborhood, City, Country - Better organized */}
+                    {(destination.neighborhood || destination.city || destination.country) && (
+                      <div className="space-y-1 mb-2">
+                        {destination.neighborhood && (
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {destination.neighborhood}
+                          </div>
+                        )}
+                        {(destination.city || destination.country) && (
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {destination.city && capitalizeCity(destination.city)}
+                            {destination.city && destination.country && ', '}
+                            {destination.country && destination.country}
+                          </div>
+                        )}
                       </div>
                     )}
+                    {/* Full Address */}
                     {enrichedData?.formatted_address && (
-                      <div className="text-sm text-gray-600 dark:text-gray-400">{enrichedData.formatted_address}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{enrichedData.formatted_address}</div>
                     )}
                     {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
-                      <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">{enrichedData.vicinity}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-500">{enrichedData.vicinity}</div>
                     )}
               </div>
               </div>
