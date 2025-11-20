@@ -404,6 +404,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           }
           setEnrichedData(enriched);
           console.log('Enriched data loaded:', enriched);
+          
+          // Update form if in edit mode and brand/category are available from enriched data
+          if (isEditMode && (enriched.brand !== undefined || enriched.category !== undefined)) {
+            setEditFormData(prev => ({
+              ...prev,
+              ...(enriched.brand !== undefined && { brand: enriched.brand || '' }),
+              ...(enriched.category !== undefined && { category: enriched.category || '' }),
+            }));
+          }
         } else if (error) {
           console.error('Error fetching enriched data:', error);
           // Set enriched data to null on error to prevent rendering issues
