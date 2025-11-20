@@ -175,9 +175,6 @@ const sentryConfig = withSentryConfig(nextConfig, {
   silent: true,
   org: "the-manual-company",
   project: "sentry-red-park",
-  // Disable source maps in production builds
-  disableServerWebpackPlugin: false,
-  disableClientWebpackPlugin: false,
 });
 
 export default sentryConfig;
