@@ -59,10 +59,10 @@ export default function NewsletterPage() {
                 Want to be notified when our newsletter launches? Send us an email:
               </p>
               <a 
-                href="mailto:newsletter@theurbanmanual.com" 
+                href="mailto:newsletter@urbanmanual.co" 
                 className="text-sm text-black dark:text-white underline hover:opacity-60 transition-opacity"
               >
-                newsletter@theurbanmanual.com
+                newsletter@urbanmanual.co
               </a>
             </div>
           </div>

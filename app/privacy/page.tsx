@@ -124,7 +124,7 @@ export default function PrivacyPage() {
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
                       The Urban Manual (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;us&rdquo;) helps you discover, save, and organize destinations.
-                      This Privacy Policy describes the personal information we process when you visit theurbanmanual.com, use our
+                      This Privacy Policy describes the personal information we process when you visit www.urbanmanual.co, use our
                       web and mobile applications, or interact with our communications.
                     </p>
                   </div>
@@ -363,7 +363,7 @@ export default function PrivacyPage() {
                         <strong className="font-medium text-black dark:text-white">Deletion:</strong> We permanently remove your account, purge saved content, and delete the associated Supabase auth record. This action cannot be undone.
                       </li>
                       <li className="list-disc">
-                        <strong className="font-medium text-black dark:text-white">Support:</strong> If you do not receive confirmation within 72 hours, contact <a className="underline hover:text-black dark:hover:text-white transition-colors" href="mailto:privacy@theurbanmanual.com">privacy@theurbanmanual.com</a> with your account email.
+                        <strong className="font-medium text-black dark:text-white">Support:</strong> If you do not receive confirmation within 72 hours, contact <a className="underline hover:text-black dark:hover:text-white transition-colors" href="mailto:privacy@urbanmanual.co">privacy@urbanmanual.co</a> with your account email.
                       </li>
                     </ul>
                   </div>
@@ -425,7 +425,7 @@ export default function PrivacyPage() {
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Contact Us</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
                     <p>
-                      Questions or concerns about this Privacy Policy can be sent to <a className="underline hover:text-black dark:hover:text-white transition-colors" href="mailto:privacy@theurbanmanual.com">privacy@theurbanmanual.com</a>.
+                      Questions or concerns about this Privacy Policy can be sent to <a className="underline hover:text-black dark:hover:text-white transition-colors" href="mailto:privacy@urbanmanual.co">privacy@urbanmanual.co</a>.
                     </p>
                   </div>
                 </section>

@@ -152,8 +152,8 @@ async function processDeletionRequests(client: ReturnType<typeof createServiceRo
         await sendPrivacyEmail({
           to: email,
           subject: 'Your Urban Manual account has been deleted',
-          html: 'Your request to delete your Urban Manual account has been processed. All personal data has been purged. If this was not you, contact privacy@theurbanmanual.com immediately.',
-          text: 'Your Urban Manual account has been deleted. Contact privacy@theurbanmanual.com if you need help.',
+          html: 'Your request to delete your Urban Manual account has been processed. All personal data has been purged. If this was not you, contact privacy@urbanmanual.co immediately.',
+          text: 'Your Urban Manual account has been deleted. Contact privacy@urbanmanual.co if you need help.',
         });
 
         await client

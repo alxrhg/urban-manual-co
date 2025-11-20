@@ -23,10 +23,10 @@ export default function ContactPage() {
                 For general questions, feedback, or support:
               </p>
               <a 
-                href="mailto:hello@theurbanmanual.com" 
+                href="mailto:hello@urbanmanual.co" 
                 className="text-sm text-black dark:text-white underline hover:opacity-60 transition-opacity"
               >
-                hello@theurbanmanual.com
+                hello@urbanmanual.co
               </a>
             </div>
 
@@ -36,10 +36,10 @@ export default function ContactPage() {
                 Have a great place you'd like to see in our guide?
               </p>
               <a 
-                href="mailto:submit@theurbanmanual.com" 
+                href="mailto:submit@urbanmanual.co" 
                 className="text-sm text-black dark:text-white underline hover:opacity-60 transition-opacity"
               >
-                submit@theurbanmanual.com
+                submit@urbanmanual.co
               </a>
               <p className="text-xs text-gray-500 dark:text-gray-500 mt-3">
                 Or visit our <Link href="/submit" className="underline hover:text-black dark:hover:text-white transition-colors">submit page</Link> for more information.
@@ -52,10 +52,10 @@ export default function ContactPage() {
                 For privacy-related questions or data requests:
               </p>
               <a 
-                href="mailto:privacy@theurbanmanual.com" 
+                href="mailto:privacy@urbanmanual.co" 
                 className="text-sm text-black dark:text-white underline hover:opacity-60 transition-opacity"
               >
-                privacy@theurbanmanual.com
+                privacy@urbanmanual.co
               </a>
               <p className="text-xs text-gray-500 dark:text-gray-500 mt-3">
                 You can also manage your data directly from your <Link href="/account" className="underline hover:text-black dark:hover:text-white transition-colors">account settings</Link>.

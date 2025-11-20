@@ -10,7 +10,7 @@ interface PrivacyEmailOptions {
  */
 export async function sendPrivacyEmail(options: PrivacyEmailOptions) {
   const apiKey = process.env.RESEND_API_KEY || process.env.PRIVACY_EMAIL_API_KEY;
-  const fromAddress = process.env.PRIVACY_EMAIL_FROM || 'Urban Manual <privacy@theurbanmanual.com>';
+  const fromAddress = process.env.PRIVACY_EMAIL_FROM || 'Urban Manual <privacy@urbanmanual.co>';
 
   if (!apiKey) {
     console.warn('[privacy-email] RESEND_API_KEY not configured. Skipping email send.');

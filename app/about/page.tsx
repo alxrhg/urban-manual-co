@@ -83,7 +83,7 @@ export default function AboutPage() {
             <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
               <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">Contact</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                Have questions or want to get in touch? Visit our <Link href="/contact" className="underline hover:text-black dark:hover:text-white transition-colors">contact page</Link> or email us at <a href="mailto:hello@theurbanmanual.com" className="underline hover:text-black dark:hover:text-white transition-colors">hello@theurbanmanual.com</a>.
+                Have questions or want to get in touch? Visit our <Link href="/contact" className="underline hover:text-black dark:hover:text-white transition-colors">contact page</Link> or email us at <a href="mailto:hello@urbanmanual.co" className="underline hover:text-black dark:hover:text-white transition-colors">hello@urbanmanual.co</a>.
               </p>
             </div>
           </div>
