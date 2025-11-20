@@ -63,6 +63,7 @@ import HomeMapSplitView from '@/components/HomeMapSplitView';
 import { EditModeToggle } from '@/components/EditModeToggle';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
+import { useDestinationLoading } from '@/hooks/useDestinationLoading';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 
@@ -411,6 +412,12 @@ export default function Home() {
   // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
   const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
+  
+  // Shared loading state for grid and map views
+  const destinationLoading = useDestinationLoading();
+  
+  // Combined loading state - true if either searching or discovery engine is loading
+  const isDestinationsLoading = searching || discoveryEngineLoading;
   const [searchTier, setSearchTier] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
@@ -3068,6 +3075,7 @@ export default function Home() {
                           onListItemSelect={destination =>
                             openDestinationFromMap(destination, "map_list")
                           }
+                          isLoading={isDestinationsLoading}
                         />
                       </div>
                     ) : (
@@ -3143,9 +3151,19 @@ export default function Home() {
                         onTouchMove={handleTouchMove}
                         onTouchEnd={handleTouchEnd}
                       >
-                        <UniversalGrid
-                          items={paginatedDestinations}
-                          renderItem={(destination, index) => {
+                        {isDestinationsLoading && displayDestinations.length === 0 ? (
+                          <div className="flex items-center justify-center py-24">
+                            <div className="text-center">
+                              <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 dark:border-gray-700 dark:border-t-gray-100 mx-auto mb-4"></div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {currentLoadingText || "Loading destinations..."}
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <UniversalGrid
+                            items={paginatedDestinations}
+                            renderItem={(destination, index) => {
                           const isVisited = !!(
                             user && visitedSlugs.has(destination.slug)
                           );
@@ -3176,7 +3194,20 @@ export default function Home() {
                               />
                             );
                           }}
+                          emptyState={
+                            displayDestinations.length === 0 ? (
+                              <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
+                                <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                                  No destinations found
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  Try adjusting your filters or search terms
+                                </p>
+                              </div>
+                            ) : undefined
+                          }
                         />
+                        )}
                       </div>
                     );
                   })()

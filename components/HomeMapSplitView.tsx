@@ -1,21 +1,35 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import { Destination } from '@/types/destination';
 import dynamic from 'next/dynamic';
 import { ChevronLeft, ChevronRight, List, MapPin, X } from 'lucide-react';
+import { useDestinationLoading } from '@/hooks/useDestinationLoading';
 
-const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
+const MapView = dynamic(() => import('@/components/MapView'), { 
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <div className="text-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 dark:border-gray-700 dark:border-t-gray-100 mx-auto mb-2"></div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">Loading map...</p>
+      </div>
+    </div>
+  )
+});
 
 interface HomeMapSplitViewProps {
   destinations: Destination[];
   selectedDestination?: Destination | null;
   onMarkerSelect?: (destination: Destination) => void;
   onListItemSelect?: (destination: Destination) => void;
+  isLoading?: boolean;
 }
 
 const DEFAULT_CENTER = { lat: 23.5, lng: 121.0 };
+const ITEMS_PER_PAGE = 5; // Fixed number of items visible in list
+const LIST_ITEM_HEIGHT = 88; // Approximate height of each list item (76px + gap)
 
 const formatCountLabel = (count: number) =>
   `${count} ${count === 1 ? 'place' : 'places'}`;
@@ -25,10 +39,22 @@ export default function HomeMapSplitView({
   selectedDestination,
   onMarkerSelect,
   onListItemSelect,
+  isLoading = false,
 }: HomeMapSplitViewProps) {
   const [isDesktopPanelCollapsed, setIsDesktopPanelCollapsed] = useState(false);
   const [isMobilePanelOpen, setIsMobilePanelOpen] = useState(false);
+  const [listPage, setListPage] = useState(1);
+  const { isDestinationLoading } = useDestinationLoading();
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
 
+  // Reset page when destinations change
+  useEffect(() => {
+    setListPage(1);
+  }, [destinations.length]);
+
+  // Filter destinations with coordinates for map
   const destinationsWithCoords = useMemo(
     () =>
       destinations.filter(
@@ -39,6 +65,7 @@ export default function HomeMapSplitView({
     [destinations]
   );
 
+  // Calculate map center and zoom to show all pins
   const mapCenter = useMemo(() => {
     if (!destinationsWithCoords.length) {
       return DEFAULT_CENTER;
@@ -82,6 +109,48 @@ export default function HomeMapSplitView({
     return 8;
   }, [destinationsWithCoords]);
 
+  // Pagination for list
+  const totalListPages = Math.ceil(destinations.length / ITEMS_PER_PAGE);
+  const startIndex = (listPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedDestinations = destinations.slice(startIndex, endIndex);
+
+  // Lazy loading: Set up intersection observer for visible items
+  useEffect(() => {
+    if (!listContainerRef.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const slug = entry.target.getAttribute('data-slug');
+          if (slug) {
+            setVisibleItems((prev) => {
+              const next = new Set(prev);
+              if (entry.isIntersecting) {
+                next.add(slug);
+              } else {
+                next.delete(slug);
+              }
+              return next;
+            });
+          }
+        });
+      },
+      {
+        root: listContainerRef.current,
+        rootMargin: '50px', // Start loading slightly before item is visible
+        threshold: 0.1,
+      }
+    );
+
+    const items = listContainerRef.current.querySelectorAll('[data-slug]');
+    items.forEach((item) => observerRef.current?.observe(item));
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [paginatedDestinations]);
+
   const panelCountLabel = formatCountLabel(destinations.length);
   const pinnedCountLabel =
     destinationsWithCoords.length === destinations.length
@@ -90,7 +159,15 @@ export default function HomeMapSplitView({
           destinationsWithCoords.length === 1 ? 'pin' : 'pins'
         }`;
 
-  if (!destinations.length) {
+  const handlePreviousPage = useCallback(() => {
+    setListPage((prev) => Math.max(1, prev - 1));
+  }, []);
+
+  const handleNextPage = useCallback(() => {
+    setListPage((prev) => Math.min(totalListPages, prev + 1));
+  }, [totalListPages]);
+
+  if (!destinations.length && !isLoading) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-6 text-center">
         <p className="text-sm font-medium text-gray-900 dark:text-white">
@@ -103,58 +180,114 @@ export default function HomeMapSplitView({
     );
   }
 
-  const renderList = (variant: 'desktop' | 'mobile') => (
-    <div className="space-y-3">
-      {destinations.map(destination => {
-        const isSelected = selectedDestination?.slug === destination.slug;
-        return (
-          <button
-            key={destination.slug}
-            onClick={() => {
-              onListItemSelect?.(destination);
-              if (variant === 'mobile') {
-                setIsMobilePanelOpen(false);
-              }
-            }}
-            className={`w-full flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 ${
-              variant === 'desktop' ? 'p-4' : 'p-4 min-h-[76px]'
-            } ${
-              isSelected
-                ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
-                : 'bg-white/95 dark:bg-gray-900/90 border-gray-200 dark:border-gray-800 hover:bg-gray-50/80 dark:hover:bg-gray-800/70'
-            }`}
-          >
-            <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-              {destination.image ? (
-                <Image
-                  src={destination.image}
-                  alt={destination.name}
-                  fill
-                  sizes="56px"
-                  className="object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-xs text-gray-500 dark:text-gray-400">
-                  <MapPin className="h-4 w-4" />
-                </div>
-              )}
+  const renderListItem = (destination: Destination, index: number) => {
+    const isSelected = selectedDestination?.slug === destination.slug;
+    const isVisible = visibleItems.has(destination.slug) || index < 2; // Always load first 2 items
+    const isLoading = isDestinationLoading(destination.slug);
+
+    return (
+      <div
+        key={destination.slug}
+        data-slug={destination.slug}
+        className="transition-opacity duration-200"
+        style={{ opacity: isVisible ? 1 : 0.3 }}
+      >
+        <button
+          onClick={() => {
+            onListItemSelect?.(destination);
+          }}
+          className={`w-full flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 p-4 min-h-[76px] ${
+            isSelected
+              ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
+              : 'bg-white/95 dark:bg-gray-900/90 border-gray-200 dark:border-gray-800 hover:bg-gray-50/80 dark:hover:bg-gray-800/70'
+          } ${isLoading ? 'opacity-50' : ''}`}
+        >
+          <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+            {destination.image && isVisible ? (
+              <Image
+                src={destination.image}
+                alt={destination.name}
+                fill
+                sizes="56px"
+                className="object-cover"
+                loading={index < 2 ? 'eager' : 'lazy'}
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-xs text-gray-500 dark:text-gray-400">
+                <MapPin className="h-4 w-4" />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+              {destination.name}
+            </p>
+            <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
+              {[destination.category, destination.city]
+                .filter(Boolean)
+                .join(' • ')}
+            </p>
+          </div>
+          <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+        </button>
+      </div>
+    );
+  };
+
+  const renderList = (variant: 'desktop' | 'mobile') => {
+    const listItems = paginatedDestinations.map((destination, index) =>
+      renderListItem(destination, startIndex + index)
+    );
+
+    return (
+      <div className="relative h-full flex flex-col">
+        {/* Fixed height scrollable list container */}
+        <div
+          ref={listContainerRef}
+          className="flex-1 overflow-y-auto px-5 py-4 space-y-3"
+          style={{ maxHeight: `${ITEMS_PER_PAGE * LIST_ITEM_HEIGHT}px` }}
+        >
+          {isLoading && destinations.length === 0 ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900 dark:border-gray-700 dark:border-t-gray-100 mx-auto mb-2"></div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Loading destinations...</p>
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
-                {destination.name}
-              </p>
-              <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
-                {[destination.category, destination.city]
-                  .filter(Boolean)
-                  .join(' • ')}
-              </p>
-            </div>
-            <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400 dark:text-gray-500" />
-          </button>
-        );
-      })}
-    </div>
-  );
+          ) : (
+            listItems
+          )}
+        </div>
+
+        {/* Pagination controls - only show if more than one page */}
+        {totalListPages > 1 && (
+          <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-5 py-3 bg-white/95 dark:bg-gray-950/95">
+            <button
+              onClick={handlePreviousPage}
+              disabled={listPage === 1}
+              className="flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Previous</span>
+            </button>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Page {listPage} of {totalListPages}
+            </span>
+            <button
+              onClick={handleNextPage}
+              disabled={listPage === totalListPages}
+              className="flex items-center gap-1 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              aria-label="Next page"
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div
@@ -162,6 +295,7 @@ export default function HomeMapSplitView({
       role="region"
       aria-label="Homepage map view with destination list"
     >
+      {/* Desktop List Panel */}
       <div
         className={`pointer-events-auto absolute left-0 top-0 hidden h-full w-[360px] flex-col overflow-hidden rounded-r-3xl border border-gray-200/80 bg-white/95 shadow-lg backdrop-blur-md transition-transform duration-300 dark:border-gray-800/80 dark:bg-gray-950/95 lg:flex ${
           isDesktopPanelCollapsed
@@ -169,7 +303,7 @@ export default function HomeMapSplitView({
             : 'translate-x-0 opacity-100'
         }`}
       >
-        <div className="flex items-center justify-between border-b border-gray-200/80 px-5 py-4 dark:border-gray-800/80">
+        <div className="flex items-center justify-between border-b border-gray-200/80 px-5 py-4 dark:border-gray-800/80 flex-shrink-0">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400">
               {panelCountLabel}
@@ -188,9 +322,10 @@ export default function HomeMapSplitView({
             Hide
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-5 py-4">{renderList('desktop')}</div>
+        {renderList('desktop')}
       </div>
 
+      {/* Show List Button (when collapsed) */}
       {isDesktopPanelCollapsed && destinations.length > 0 && (
         <button
           type="button"
@@ -202,6 +337,7 @@ export default function HomeMapSplitView({
         </button>
       )}
 
+      {/* Map View - Always visible, shows all pins immediately */}
       <div
         className={`absolute top-0 bottom-0 right-0 left-0 ${
           !isDesktopPanelCollapsed && destinations.length > 0
@@ -219,10 +355,11 @@ export default function HomeMapSplitView({
         />
       </div>
 
+      {/* Mobile List Panel */}
       {isMobilePanelOpen && destinations.length > 0 && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 md:hidden">
           <div className="pointer-events-auto rounded-t-3xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950">
-            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+            <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800 flex-shrink-0">
               <div className="flex items-center gap-3">
                 <div className="h-1 w-8 rounded-full bg-gray-300 dark:bg-gray-700" />
                 <span className="text-xs font-semibold uppercase tracking-[0.08em] text-gray-600 dark:text-gray-400">
@@ -238,13 +375,14 @@ export default function HomeMapSplitView({
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="max-h-[55vh] overflow-y-auto px-5 py-4">
+            <div className="relative h-[55vh] flex flex-col">
               {renderList('mobile')}
             </div>
           </div>
         </div>
       )}
 
+      {/* Mobile Show List Button */}
       {!isMobilePanelOpen && destinations.length > 0 && (
         <button
           type="button"
