@@ -18,6 +18,7 @@ function parseConsent(rawValue: string | null): CookiePreferences | null {
       necessary: parsed.necessary ?? true,
       analytics: parsed.analytics ?? false,
       marketing: parsed.marketing ?? false,
+      personalization: parsed.personalization ?? false,
     };
   } catch (error) {
     return null;
@@ -106,6 +107,7 @@ interface CookiePreferences {
   necessary: boolean;
   analytics: boolean;
   marketing: boolean;
+  personalization?: boolean;
 }
 
 // Function to open cookie settings (can be called from anywhere)
@@ -123,6 +125,7 @@ export function CookieConsent() {
     necessary: true, // Always required
     analytics: false,
     marketing: false,
+    personalization: false,
   });
 
   useEffect(() => {
@@ -157,6 +160,7 @@ export function CookieConsent() {
     const handleOpenSettings = () => {
       setIsVisible(true);
       setShowDetails(true);
+      setHasCheckedConsent(true); // Prevent banner from showing
     };
 
     window.addEventListener('open-cookie-settings', handleOpenSettings);
@@ -202,6 +206,7 @@ export function CookieConsent() {
       necessary: true,
       analytics: true,
       marketing: true,
+      personalization: true,
     });
   };
 
@@ -210,6 +215,7 @@ export function CookieConsent() {
       necessary: true,
       analytics: false,
       marketing: false,
+      personalization: false,
     });
   };
 
@@ -217,179 +223,198 @@ export function CookieConsent() {
     savePreferences(preferences);
   };
 
-  if (!isVisible) return null;
+  // Show minimal top-right buttons if no consent, or always show settings button
+  const hasConsent = getStoredConsent() !== null;
+  const showMinimalBanner = !hasConsent && isVisible && !showDetails;
+  const showSettingsButton = hasConsent && !isVisible && !showDetails;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl p-6">
-          <div className="flex items-start gap-4">
-            {/* Icon */}
-            <div className="flex-shrink-0">
-              <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full">
-                <Cookie className="h-5 w-5 text-gray-900 dark:text-white" />
-              </div>
-            </div>
+    <>
+      {/* Minimal top-right cookie buttons - shown when no consent */}
+      {showMinimalBanner && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+          <button
+            onClick={acceptAll}
+            className="px-3 py-1.5 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-sm"
+          >
+            🍪 Accept cookies
+          </button>
+          <button
+            onClick={() => {
+              setIsVisible(true);
+              setShowDetails(true);
+            }}
+            className="px-3 py-1.5 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-sm"
+          >
+            Settings
+          </button>
+        </div>
+      )}
 
-            {/* Content */}
-            <div className="flex-1 space-y-4">
+      {/* Settings button - always visible when consent is given */}
+      {showSettingsButton && (
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={() => {
+              setIsVisible(true);
+              setShowDetails(true);
+            }}
+            className="px-3 py-1.5 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-sm"
+          >
+            Settings
+          </button>
+        </div>
+      )}
+
+      {/* Settings Modal */}
+      {showDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 dark:bg-black/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 space-y-4">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Cookie Settings</h3>
+                <button
+                  onClick={() => {
+                    setShowDetails(false);
+                    if (hasConsent) setIsVisible(false);
+                  }}
+                  className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
+
+              {/* Description */}
               <div>
-                <h3 className="text-sm font-medium mb-2">We value your privacy</h3>
-                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                  We use cookies to enhance your browsing experience, analyze site traffic, and personalize content.
-                  By clicking "Accept All", you consent to our use of cookies.
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  By clicking "Accept All Cookies", you agree to the storing of cookies on your device to enhance site navigation, analyze site usage and assist in our marketing efforts.{' '}
+                  <a href="/privacy" className="underline hover:text-gray-900 dark:hover:text-white transition-colors">
+                    More info
+                  </a>
                 </p>
               </div>
 
-              {/* Detailed Preferences (Toggle) */}
-              {showDetails && (
-                <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-800">
-                  {/* Necessary Cookies */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="text-xs font-medium mb-1">
-                        Necessary Cookies
-                      </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400">
-                        Required for basic site functionality. Always enabled.
-                      </div>
+              {/* Cookie Preferences */}
+              <div className="space-y-3 pt-3 border-t border-gray-200 dark:border-gray-800">
+                {/* Necessary Cookies */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium mb-1 text-gray-900 dark:text-white">
+                      Strictly Necessary (Always Active)
                     </div>
-                    <div className="flex-shrink-0">
-                      <div className="px-3 py-1 bg-gray-100 dark:bg-gray-800 rounded-full text-xs text-gray-600 dark:text-gray-400">
-                        Required
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Analytics Cookies */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="text-xs font-medium mb-1">
-                        Analytics Cookies
-                      </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                        <p>
-                          We use Google Analytics to understand how you use our site, including page views, navigation patterns, and user interactions. This helps us improve your experience and optimize our content.
-                        </p>
-                        <p className="text-[10px] text-gray-500 dark:text-gray-500">
-                          When enabled, this may include: Google Signals data collection, User-ID tracking, granular location and device data, and ads personalization features. See our Privacy Policy for details.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <button
-                        onClick={() => setPreferences(prev => ({ ...prev, analytics: !prev.analytics }))}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                          preferences.analytics
-                            ? 'bg-black dark:bg-white'
-                            : 'bg-gray-200 dark:bg-gray-700'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
-                            preferences.analytics ? 'translate-x-5' : 'translate-x-0.5'
-                          }`}
-                        />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Marketing Cookies */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <div className="text-xs font-medium mb-1">
-                        Marketing Cookies
-                      </div>
-                      <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                        <p>
-                          Used to deliver personalized ads and track campaign performance.
-                        </p>
-                        <p className="text-[10px] text-gray-500 dark:text-gray-500">
-                          When enabled, this activates ads cookie consent (ad_storage), ads measurement consent (ad_user_data), and ads personalization consent (ad_personalization) signals. See our Privacy Policy for details.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0">
-                      <button
-                        onClick={() => setPreferences(prev => ({ ...prev, marketing: !prev.marketing }))}
-                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                          preferences.marketing
-                            ? 'bg-black dark:bg-white'
-                            : 'bg-gray-200 dark:bg-gray-700'
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
-                            preferences.marketing ? 'translate-x-5' : 'translate-x-0.5'
-                          }`}
-                        />
-                      </button>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Cookies required to enable basic website functionality.
                     </div>
                   </div>
                 </div>
-              )}
+
+                {/* Analytics Cookies */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium mb-1 text-gray-900 dark:text-white">
+                      Analytics
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Cookies helping understand how this website performs, how visitors interact with the site, and whether there may be technical issues.
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <button
+                      onClick={() => setPreferences(prev => ({ ...prev, analytics: !prev.analytics }))}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        preferences.analytics
+                          ? 'bg-black dark:bg-white'
+                          : 'bg-gray-200 dark:bg-gray-700'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
+                          preferences.analytics ? 'translate-x-5' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Marketing Cookies */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium mb-1 text-gray-900 dark:text-white">
+                      Marketing
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Cookies used to deliver advertising that is more relevant to you and your interests.
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <button
+                      onClick={() => setPreferences(prev => ({ ...prev, marketing: !prev.marketing }))}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        preferences.marketing
+                          ? 'bg-black dark:bg-white'
+                          : 'bg-gray-200 dark:bg-gray-700'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
+                          preferences.marketing ? 'translate-x-5' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Personalization Cookies */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium mb-1 text-gray-900 dark:text-white">
+                      Personalization
+                    </div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      Cookies allowing the website to remember choices you make (such as your user name, language, or the region you are in).
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <button
+                      onClick={() => setPreferences(prev => ({ ...prev, personalization: !prev.personalization }))}
+                      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                        preferences.personalization
+                          ? 'bg-black dark:bg-white'
+                          : 'bg-gray-200 dark:bg-gray-700'
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${
+                          preferences.personalization ? 'translate-x-5' : 'translate-x-0.5'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                </div>
+              </div>
 
               {/* Actions */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                {!showDetails ? (
-                  <>
-                    <button
-                      onClick={acceptAll}
-                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
-                    >
-                      Accept All
-                    </button>
-                    <button
-                      onClick={acceptNecessary}
-                      className="px-4 py-2 border border-gray-200 dark:border-gray-800 text-xs font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-                    >
-                      Necessary Only
-                    </button>
-                    <button
-                      onClick={() => setShowDetails(true)}
-                      className="px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                    >
-                      Customize
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={saveCustom}
-                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
-                    >
-                      Save Preferences
-                    </button>
-                    <button
-                      onClick={() => setShowDetails(false)}
-                      className="px-4 py-2 border border-gray-200 dark:border-gray-800 text-xs font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-                    >
-                      Back
-                    </button>
-                  </>
-                )}
-
-                <a
-                  href="/privacy"
-                  className="px-4 py-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors text-center"
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-4 border-t border-gray-200 dark:border-gray-800">
+                <button
+                  onClick={acceptAll}
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-90 transition-opacity"
                 >
-                  Privacy Policy
-                </a>
+                  Accept All Cookies
+                </button>
+                <button
+                  onClick={saveCustom}
+                  className="px-4 py-2 border border-gray-200 dark:border-gray-800 text-sm font-medium rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                >
+                  Save Settings
+                </button>
               </div>
             </div>
-
-            {/* Close button (mobile) */}
-            <button
-              onClick={acceptNecessary}
-              className="flex-shrink-0 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors sm:hidden"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 
