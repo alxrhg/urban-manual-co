@@ -7,12 +7,21 @@ import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { getUserLocation } from '@/lib/location/getUserLocation';
 import { expandNearbyLocations, getLocationContext, findLocationByName } from '@/lib/search/expandLocations';
 
-export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get('q') || '';
-  const city = searchParams.get('city');
-  const category = searchParams.get('category');
-  const openNow = searchParams.get('open_now') === 'true';
+type TripContext = {
+  location?: string | null;
+  date?: string | null;
+};
+
+type SearchInput = {
+  query: string;
+  city?: string | null;
+  category?: string | null;
+  openNow?: boolean;
+  tripContext?: TripContext;
+};
+
+async function handleIntelligentSearch(request: NextRequest, input: SearchInput) {
+  const { query, city, category, openNow = false, tripContext } = input;
 
   const supabase = await createServerClient();
   const { data: { session } } = await supabase.auth.getSession();
@@ -23,9 +32,9 @@ export async function GET(request: NextRequest) {
 
   try {
     // Extract location from query if not explicitly provided
-    let searchCity = city;
+    let searchCity = city || tripContext?.location || undefined;
     let locationName: string | null = null;
-    
+
     if (!searchCity) {
       // Try to find location in query
       const lowerQuery = query.toLowerCase();
@@ -70,16 +79,16 @@ export async function GET(request: NextRequest) {
     // If few results and we have a location, expand to nearby neighborhoods
     const expandedResults = results || [];
     let expandedLocations: string[] = [];
-    
+
     if ((expandedResults.length < 5) && locationName) {
       const nearbyLocations = await expandNearbyLocations(locationName, 15);
       expandedLocations = nearbyLocations.slice(1); // Exclude original
-      
+
       if (expandedLocations.length > 0) {
         // Re-search with expanded locations
         // We'll search each location and combine results
         const allExpandedResults: any[] = [];
-        
+
         for (const nearbyLoc of expandedLocations) {
           const { data: nearbyResults } = await supabase.rpc(
             'search_destinations_intelligent',
@@ -92,12 +101,12 @@ export async function GET(request: NextRequest) {
               limit_count: 1000,
             }
           );
-          
+
           if (nearbyResults) {
             allExpandedResults.push(...nearbyResults);
           }
         }
-        
+
         // Combine original + expanded, deduplicate by slug
         const seen = new Set((expandedResults || []).map((r: any) => r.slug));
         for (const result of allExpandedResults) {
@@ -122,7 +131,7 @@ export async function GET(request: NextRequest) {
 
     const limited = (rerankedResults || []).slice(0, 1000);
     const userLocation = await getUserLocation(request);
-    
+
     // Generate context response (always ensure it's a string)
     let contextResponse: string = '';
     try {
@@ -132,7 +141,7 @@ export async function GET(request: NextRequest) {
         filters: { openNow },
         userLocation: userLocation || undefined,
       }) || '';
-      
+
       // Add nearby locations context if applicable
       if (expandedLocations.length > 0 && limited.length > 0) {
         const locationContext = locationName ? await getLocationContext(locationName) : null;
@@ -143,7 +152,7 @@ export async function GET(request: NextRequest) {
               return time ? `${loc} (${time} min walk)` : loc;
             })
             .slice(0, 3); // Limit to 3 nearby mentions
-          
+
           if (walkingTimes.length > 0) {
             const originalCount = (results || []).length;
             const additionalCount = limited.length - originalCount;
@@ -158,13 +167,13 @@ export async function GET(request: NextRequest) {
       // Fallback to simple message
       contextResponse = `Found ${limited.length} ${limited.length === 1 ? 'place' : 'places'}.`;
     }
-    
+
     // Generate suggestions (always ensure it's an array)
     let suggestions: Array<{ label: string; refinement: string }> = [];
     try {
-      suggestions = await generateSuggestions({ 
-        query, 
-        results: limited, 
+      suggestions = await generateSuggestions({
+        query,
+        results: limited,
         filters: { openNow },
         refinements: [],
       }) || [];
@@ -182,9 +191,10 @@ export async function GET(request: NextRequest) {
         destination_id: null,
         metadata: {
           query,
-          filters: { city, category, openNow },
+          filters: { city: searchCity || city, category, openNow },
           count: limited.length,
           source: 'api/search/intelligent',
+          tripContext,
         }
       });
     } catch {}
@@ -195,9 +205,10 @@ export async function GET(request: NextRequest) {
       suggestions,
       meta: {
         query,
-        filters: { city, category, openNow },
+        filters: { city: searchCity || city, category, openNow },
         count: limited.length,
         reranked: true,
+        tripContext,
       },
       userLocation: userLocation
         ? {
@@ -209,8 +220,8 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Search error:', error);
     return NextResponse.json(
-      { 
-        error: 'Search failed', 
+      {
+        error: 'Search failed',
         details: error.message,
         results: [],
         contextResponse: 'Sorry, there was an error processing your search. Please try again.',
@@ -219,5 +230,32 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const query = searchParams.get('q') || '';
+  const city = searchParams.get('city');
+  const category = searchParams.get('category');
+  const openNow = searchParams.get('open_now') === 'true';
+
+  return handleIntelligentSearch(request, { query, city, category, openNow });
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json().catch(() => ({}));
+  const query = typeof body?.query === 'string' ? body.query : '';
+  const tripContext: TripContext | undefined = body?.tripContext;
+  const cityFromBody = typeof body?.city === 'string' ? body.city : undefined;
+  const category = typeof body?.category === 'string' ? body.category : undefined;
+  const openNow = Boolean(body?.openNow);
+
+  return handleIntelligentSearch(request, {
+    query,
+    city: cityFromBody || tripContext?.location || null,
+    category: category || null,
+    openNow,
+    tripContext,
+  });
 }
 
