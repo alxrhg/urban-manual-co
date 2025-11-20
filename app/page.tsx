@@ -25,16 +25,7 @@ import {
 } from "lucide-react";
 import { getCategoryIconComponent } from "@/lib/icons/category-icons";
 // Lazy load drawer (only when opened)
-const DestinationDrawer = dynamic(
-  () =>
-    import("@/src/features/detail/DestinationDrawer").then(mod => ({
-      default: mod.DestinationDrawer,
-    })),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useDrawer } from "@/contexts/DrawerContext";
 import dynamic from "next/dynamic";
@@ -157,18 +148,8 @@ const RealtimeStatusBadge = dynamic(
     })),
   { ssr: false }
 );
-const TripPlanner = dynamic(
-  () =>
-    import("@/components/TripPlanner").then(mod => ({
-      default: mod.TripPlanner,
-    })),
-  { ssr: false }
-);
-const POIDrawer = dynamic(
-  () =>
-    import("@/components/POIDrawer").then(mod => ({ default: mod.POIDrawer })),
-  { ssr: false }
-);
+
+
 
 // Category icons using Untitled UI icons
 function getCategoryIcon(
@@ -382,8 +363,7 @@ export default function Home() {
   } = useAdminEditMode();
   const { trackAction, predictions } = useSequenceTracker();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showPOIDrawer, setShowPOIDrawer] = useState(false);
-  const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
+
   const editModeActive = isAdmin && adminEditMode;
 
   const handleToggleEditMode = useCallback(() => {
@@ -392,7 +372,7 @@ export default function Home() {
     }
     toggleEditMode();
   }, [canUseEditMode, isAdmin, toggleEditMode]);
-  
+
   // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
   const [isAIEnabled, setIsAIEnabled] = useState(true);
 
@@ -412,19 +392,11 @@ export default function Home() {
   const [searching, setSearching] = useState(false);
   const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
   const [searchTier, setSearchTier] = useState<string | null>(null);
-  const [selectedDestination, setSelectedDestination] =
-    useState<Destination | null>(null);
-  const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+
+  const { openDrawer, isDrawerOpen, closeDrawer, activeDrawer, drawerData } = useDrawer();
+  const selectedDestination = activeDrawer === 'destination' ? drawerData?.destination : null;
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
-  const [showTripPlanner, setShowTripPlanner] = useState(false);
-  const [plannerPrefill, setPlannerPrefill] = useState<{
-    slug?: string;
-    name: string;
-    image?: string;
-    city?: string;
-    category?: string;
-  } | null>(null);
-  const [showTripSidebar, setShowTripSidebar] = useState(false);
+
 
   const trackDestinationEngagement = useCallback(
     (
@@ -557,7 +529,7 @@ export default function Home() {
           ? nearbyDestinations
           : filteredDestinations;
       const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
-      
+
       if (totalPages <= 1 || viewMode !== 'grid') {
         return;
       }
@@ -697,9 +669,9 @@ export default function Home() {
             ? item.tags
             : typeof item.cardTags === "string"
               ? item.cardTags
-                  .split(",")
-                  .map((tag: string) => tag.trim())
-                  .filter(Boolean)
+                .split(",")
+                .map((tag: string) => tag.trim())
+                .filter(Boolean)
               : undefined;
 
           return {
@@ -888,8 +860,8 @@ export default function Home() {
 
         const normalized = Array.isArray(payload.results)
           ? payload.results
-              .map(normalizeDiscoveryEngineRecord)
-              .filter((item): item is Destination => Boolean(item))
+            .map(normalizeDiscoveryEngineRecord)
+            .filter((item): item is Destination => Boolean(item))
           : [];
 
         discoveryBootstrapRef.current = normalized;
@@ -1371,7 +1343,7 @@ export default function Home() {
             const categoryMatch =
               d.category &&
               d.category.toLowerCase().trim() ===
-                categoryFilter.toLowerCase().trim();
+              categoryFilter.toLowerCase().trim();
 
             // If category matches, include it
             if (categoryMatch) return true;
@@ -2457,82 +2429,82 @@ export default function Home() {
                       >
                         {chatMessages.length > 0
                           ? chatMessages.map((message, index) => (
-                              <div key={index} className="space-y-2">
-                                {message.type === "user" ? (
-                                  <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
-                                    {message.content}
-                                  </div>
-                                ) : (
-                                  <div className="space-y-4">
-                                    <MarkdownRenderer
-                                      content={message.content}
-                                      className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                                    />
-                                    {message.contextPrompt && (
-                                      <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
-                                        {message.contextPrompt}
-                                      </div>
+                            <div key={index} className="space-y-2">
+                              {message.type === "user" ? (
+                                <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                                  {message.content}
+                                </div>
+                              ) : (
+                                <div className="space-y-4">
+                                  <MarkdownRenderer
+                                    content={message.content}
+                                    className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                                  />
+                                  {message.contextPrompt && (
+                                    <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
+                                      {message.contextPrompt}
+                                    </div>
+                                  )}
+                                  {/* Show follow-up suggestions after the last assistant message */}
+                                  {index === chatMessages.length - 1 &&
+                                    followUpSuggestions.length > 0 && (
+                                      <FollowUpSuggestions
+                                        suggestions={followUpSuggestions}
+                                        onSuggestionClick={suggestion => {
+                                          // Only set searchTerm - the useEffect will handle the search
+                                          // This prevents duplicate searches
+                                          setSearchTerm(suggestion);
+                                          setFollowUpInput("");
+                                        }}
+                                        isLoading={searching}
+                                      />
                                     )}
-                                    {/* Show follow-up suggestions after the last assistant message */}
-                                    {index === chatMessages.length - 1 &&
-                                      followUpSuggestions.length > 0 && (
-                                        <FollowUpSuggestions
-                                          suggestions={followUpSuggestions}
-                                          onSuggestionClick={suggestion => {
-                                            // Only set searchTerm - the useEffect will handle the search
-                                            // This prevents duplicate searches
-                                            setSearchTerm(suggestion);
-                                            setFollowUpInput("");
-                                          }}
-                                          isLoading={searching}
-                                        />
-                                      )}
-                                  </div>
-                                )}
-                              </div>
-                            ))
+                                </div>
+                              )}
+                            </div>
+                          ))
                           : null}
 
                         {/* Loading State - Show when searching OR when submittedQuery exists but no messages yet */}
                         {(searching ||
                           (submittedQuery && chatMessages.length === 0)) && (
-                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                            <div className="flex items-center gap-2">
-                              {discoveryEngineLoading && (
-                                <div className="flex gap-1">
-                                  <span
-                                    className="animate-bounce"
-                                    style={{
-                                      animationDelay: "0ms",
-                                      animationDuration: "1.4s",
-                                    }}
-                                  >
-                                    .
-                                  </span>
-                                  <span
-                                    className="animate-bounce"
-                                    style={{
-                                      animationDelay: "200ms",
-                                      animationDuration: "1.4s",
-                                    }}
-                                  >
-                                    .
-                                  </span>
-                                  <span
-                                    className="animate-bounce"
-                                    style={{
-                                      animationDelay: "400ms",
-                                      animationDuration: "1.4s",
-                                    }}
-                                  >
-                                    .
-                                  </span>
-                                </div>
-                              )}
-                              <span>{currentLoadingText}</span>
+                            <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                              <div className="flex items-center gap-2">
+                                {discoveryEngineLoading && (
+                                  <div className="flex gap-1">
+                                    <span
+                                      className="animate-bounce"
+                                      style={{
+                                        animationDelay: "0ms",
+                                        animationDuration: "1.4s",
+                                      }}
+                                    >
+                                      .
+                                    </span>
+                                    <span
+                                      className="animate-bounce"
+                                      style={{
+                                        animationDelay: "200ms",
+                                        animationDuration: "1.4s",
+                                      }}
+                                    >
+                                      .
+                                    </span>
+                                    <span
+                                      className="animate-bounce"
+                                      style={{
+                                        animationDelay: "400ms",
+                                        animationDuration: "1.4s",
+                                      }}
+                                    >
+                                      .
+                                    </span>
+                                  </div>
+                                )}
+                                <span>{currentLoadingText}</span>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
                       </div>
 
                       {/* Follow-up input field - Chat style */}
@@ -2591,7 +2563,7 @@ export default function Home() {
                     )}
                 </div>
               </div>
-              
+
               {/* City and Category Lists - Uses space below greeting, aligned to bottom */}
               {!submittedQuery && (
                 <div className="flex-1 flex items-end">
@@ -2606,11 +2578,10 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'city', value: 'all' });
                           }}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCity
+                          className={`transition-all duration-200 ease-out ${!selectedCity
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
+                            }`}
                         >
                           All Cities
                         </button>
@@ -2623,17 +2594,16 @@ export default function Home() {
                               setCurrentPage(1);
                               trackFilterChange({ filterType: 'city', value: newCity || 'all' });
                             }}
-                            className={`transition-all duration-200 ease-out ${
-                              selectedCity === city
+                            className={`transition-all duration-200 ease-out ${selectedCity === city
                                 ? "font-medium text-black dark:text-white"
                                 : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                            }`}
+                              }`}
                           >
                             {capitalizeCity(city)}
                           </button>
                         ))}
                       </div>
-                      
+
                       {/* More Cities / Show Less Button */}
                       {cities.length > displayedCities.length && !showAllCities && (
                         <button
@@ -2656,7 +2626,7 @@ export default function Home() {
                         </button>
                       )}
                     </div>
-                    
+
                     {/* Category List (including Michelin) */}
                     {categories.length > 0 && (
                       <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
@@ -2667,11 +2637,10 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'category', value: 'all' });
                           }}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCategory && !advancedFilters.michelin
+                          className={`transition-all duration-200 ease-out ${!selectedCategory && !advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
+                            }`}
                         >
                           All Categories
                         </button>
@@ -2684,11 +2653,10 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'michelin', value: newValue });
                           }}
-                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                            advancedFilters.michelin
+                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                          }`}
+                            }`}
                         >
                           <Image
                             src="/michelin-star.svg"
@@ -2711,11 +2679,10 @@ export default function Home() {
                                 setCurrentPage(1);
                                 trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
                               }}
-                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                selectedCategory === category && !advancedFilters.michelin
+                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${selectedCategory === category && !advancedFilters.michelin
                                   ? "font-medium text-black dark:text-white"
                                   : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                              }`}
+                                }`}
                             >
                               {IconComponent && (
                                 <IconComponent className="h-3 w-3" size={12} />
@@ -2795,106 +2762,104 @@ export default function Home() {
           </div>
         )}
 
-              {/* Content Section - Grid directly below hero */}
-              <div className="w-full px-6 md:px-10 pb-12 mt-8">
-                <div className="max-w-[1800px] mx-auto">
-                {/* Mid Nav - Horizontal Row, Right Aligned */}
-                <div className="mb-6">
-                  <div className="flex justify-start sm:justify-end">
-                    <div className="-mx-2 flex w-full max-w-full flex-nowrap items-center gap-3 overflow-x-auto px-2 pb-2 scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent sm:flex-wrap sm:justify-end sm:overflow-visible">
-                      {/* Discover by Cities - Pill */}
-                      <Link
-                        href="/cities"
-                        className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 ease-out hover:bg-gray-50 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
-                        style={{ borderRadius: '9999px' }}
-                      >
-                        <Globe className="h-4 w-4" />
-                        <span>Discover by Cities</span>
-                      </Link>
+        {/* Content Section - Grid directly below hero */}
+        <div className="w-full px-6 md:px-10 pb-12 mt-8">
+          <div className="max-w-[1800px] mx-auto">
+            {/* Mid Nav - Horizontal Row, Right Aligned */}
+            <div className="mb-6">
+              <div className="flex justify-start sm:justify-end">
+                <div className="-mx-2 flex w-full max-w-full flex-nowrap items-center gap-3 overflow-x-auto px-2 pb-2 scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent sm:flex-wrap sm:justify-end sm:overflow-visible">
+                  {/* Discover by Cities - Pill */}
+                  <Link
+                    href="/cities"
+                    className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 ease-out hover:bg-gray-50 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
+                    style={{ borderRadius: '9999px' }}
+                  >
+                    <Globe className="h-4 w-4" />
+                    <span>Discover by Cities</span>
+                  </Link>
 
-                      {/* Filters - Pill */}
-                      <div className="relative flex-shrink-0">
-                        <SearchFiltersComponent
-                          filters={advancedFilters}
-                          onFiltersChange={(newFilters) => {
-                            setAdvancedFilters(newFilters);
-                            if (newFilters.city !== undefined) {
-                              setSelectedCity(newFilters.city || '');
-                            }
-                            if (newFilters.category !== undefined) {
-                              setSelectedCategory(newFilters.category || '');
-                            }
-                            Object.entries(newFilters).forEach(([key, value]) => {
-                              if (value !== undefined && value !== null && value !== '') {
-                                trackFilterChange({ filterType: key, value });
-                              }
-                            });
-                          }}
-                          availableCities={cities}
-                          availableCategories={categories}
-                          onLocationChange={handleLocationChange}
-                          sortBy={sortBy}
-                          onSortChange={(newSort) => {
-                            setSortBy(newSort);
-                            setCurrentPage(1);
-                          }}
-                          isAdmin={isAdmin}
-                          fullWidthPanel={true}
-                          useFunnelIcon={true}
-                        />
-                      </div>
-
-                      {/* View Toggle - Single Button showing opposite mode */}
-                      <button
-                        onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
-                        className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
-                        style={{ borderRadius: '9999px' }}
-                        aria-label={viewMode === 'grid' ? 'Switch to map view' : 'Switch to grid view'}
-                      >
-                        {viewMode === 'grid' ? (
-                          <>
-                            <Map className="h-4 w-4" />
-                            <span>Map</span>
-                          </>
-                        ) : (
-                          <>
-                            <LayoutGrid className="h-4 w-4" />
-                            <span>Grid</span>
-                          </>
-                        )}
-                      </button>
-
-                      {/* Create Trip - Pill Filled (Black) */}
-                      {isAdmin ? (
-                        <button
-                          onClick={() => {
-                            setEditingDestination(null);
-                            setShowPOIDrawer(true);
-                          }}
-                          className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
-                          style={{ borderRadius: '9999px' }}
-                          aria-label="Add New POI"
-                        >
-                          <Plus className="h-4 w-4" />
-                          <span>Add New POI</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => {
-                            setPlannerPrefill(null);
-                            setShowTripPlanner(true);
-                          }}
-                          className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
-                          style={{ borderRadius: '9999px' }}
-                          aria-label="Create Trip"
-                        >
-                          <Plus className="h-4 w-4" />
-                          <span>Create Trip</span>
-                        </button>
-                      )}
-                    </div>
+                  {/* Filters - Pill */}
+                  <div className="relative flex-shrink-0">
+                    <SearchFiltersComponent
+                      filters={advancedFilters}
+                      onFiltersChange={(newFilters) => {
+                        setAdvancedFilters(newFilters);
+                        if (newFilters.city !== undefined) {
+                          setSelectedCity(newFilters.city || '');
+                        }
+                        if (newFilters.category !== undefined) {
+                          setSelectedCategory(newFilters.category || '');
+                        }
+                        Object.entries(newFilters).forEach(([key, value]) => {
+                          if (value !== undefined && value !== null && value !== '') {
+                            trackFilterChange({ filterType: key, value });
+                          }
+                        });
+                      }}
+                      availableCities={cities}
+                      availableCategories={categories}
+                      onLocationChange={handleLocationChange}
+                      sortBy={sortBy}
+                      onSortChange={(newSort) => {
+                        setSortBy(newSort);
+                        setCurrentPage(1);
+                      }}
+                      isAdmin={isAdmin}
+                      fullWidthPanel={true}
+                      useFunnelIcon={true}
+                    />
                   </div>
+
+                  {/* View Toggle - Single Button showing opposite mode */}
+                  <button
+                    onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
+                    className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
+                    style={{ borderRadius: '9999px' }}
+                    aria-label={viewMode === 'grid' ? 'Switch to map view' : 'Switch to grid view'}
+                  >
+                    {viewMode === 'grid' ? (
+                      <>
+                        <Map className="h-4 w-4" />
+                        <span>Map</span>
+                      </>
+                    ) : (
+                      <>
+                        <LayoutGrid className="h-4 w-4" />
+                        <span>Grid</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Create Trip - Pill Filled (Black) */}
+                  {isAdmin ? (
+                    <button
+                      onClick={() => {
+                        openDrawer('poi', { onSave: handlePOISave });
+                      }}
+                      className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
+                      style={{ borderRadius: '9999px' }}
+                      aria-label="Add New POI"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Add New POI</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        openDrawer('create-trip');
+                      }}
+                      className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
+                      style={{ borderRadius: '9999px' }}
+                      aria-label="Create Trip"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Create Trip</span>
+                    </button>
+                  )}
                 </div>
+              </div>
+            </div>
 
 
             {/* Smart Recommendations - Show only when user is logged in and no active search */}
@@ -3034,6 +2999,39 @@ export default function Home() {
                 return null; // Message shown above
               }
 
+              const handleVisitToggle = useCallback((slug: string, visited: boolean) => {
+                setVisitedSlugs(prev => {
+                  const newSet = new Set(prev);
+                  if (visited) {
+                    newSet.add(slug);
+                  } else {
+                    newSet.delete(slug);
+                  }
+                  return newSet;
+                });
+
+                setFilteredDestinations(prev => {
+                  const sorted = [...prev].sort((a, b) => {
+                    const aVisited =
+                      user &&
+                      (visitedSlugs.has(a.slug) || (visited && a.slug === slug));
+                    const bVisited =
+                      user &&
+                      (visitedSlugs.has(b.slug) || (visited && b.slug === slug));
+                    if (aVisited && !bVisited) return 1;
+                    if (!aVisited && bVisited) return -1;
+                    return 0;
+                  });
+                  return sorted;
+                });
+              }, [user, visitedSlugs]);
+
+              const handlePOISave = useCallback(async () => {
+                await new Promise(resolve => setTimeout(resolve, 200));
+                await fetchDestinations();
+                setCurrentPage(1);
+              }, [fetchDestinations]);
+
               const findDestinationPosition = (slug: string) =>
                 displayDestinations.findIndex(
                   destination => destination.slug === slug
@@ -3043,8 +3041,10 @@ export default function Home() {
                 destination: Destination,
                 source: "map_marker" | "map_list"
               ) => {
-                setSelectedDestination(destination);
-                openDrawer('destination');
+                openDrawer('destination', {
+                  destination,
+                  onVisitToggle: handleVisitToggle
+                });
                 const position = findDestinationPosition(destination.slug);
                 trackDestinationEngagement(
                   destination,
@@ -3054,131 +3054,131 @@ export default function Home() {
               };
 
               return (
-                  <>
-                    {viewMode === "map" ? (
-                      <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-                        <HomeMapSplitView
-                          destinations={displayDestinations}
-                          selectedDestination={selectedDestination}
-                          onMarkerSelect={destination =>
-                            openDestinationFromMap(destination, "map_marker")
-                          }
-                          onListItemSelect={destination =>
-                            openDestinationFromMap(destination, "map_list")
-                          }
-                        />
-                      </div>
-                    ) : (
+                <>
+                  {viewMode === "map" ? (
+                    <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                      <HomeMapSplitView
+                        destinations={displayDestinations}
+                        selectedDestination={selectedDestination}
+                        onMarkerSelect={destination =>
+                          openDestinationFromMap(destination, "map_marker")
+                        }
+                        onListItemSelect={destination =>
+                          openDestinationFromMap(destination, "map_list")
+                        }
+                      />
+                    </div>
+                  ) : (
                     (() => {
-                  const startIndex = (currentPage - 1) * itemsPerPage;
-                  const endIndex = startIndex + itemsPerPage;
+                      const startIndex = (currentPage - 1) * itemsPerPage;
+                      const endIndex = startIndex + itemsPerPage;
                       const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
 
-                    const handleTouchStart = (
-                      event: React.TouchEvent<HTMLDivElement>
-                    ) => {
-                      if (totalPages <= 1) return;
-                      const touch = event.touches[0];
-                      gridSwipeState.current.startX = touch.clientX;
-                      gridSwipeState.current.startY = touch.clientY;
-                      gridSwipeState.current.isActive = true;
-                      gridSwipeState.current.isHorizontal = false;
-                    };
+                      const handleTouchStart = (
+                        event: React.TouchEvent<HTMLDivElement>
+                      ) => {
+                        if (totalPages <= 1) return;
+                        const touch = event.touches[0];
+                        gridSwipeState.current.startX = touch.clientX;
+                        gridSwipeState.current.startY = touch.clientY;
+                        gridSwipeState.current.isActive = true;
+                        gridSwipeState.current.isHorizontal = false;
+                      };
 
-                    const handleTouchMove = (
-                      event: React.TouchEvent<HTMLDivElement>
-                    ) => {
-                      const state = gridSwipeState.current;
-                      if (!state.isActive) return;
-                      const touch = event.touches[0];
-                      const deltaX = touch.clientX - state.startX;
-                      const deltaY = touch.clientY - state.startY;
+                      const handleTouchMove = (
+                        event: React.TouchEvent<HTMLDivElement>
+                      ) => {
+                        const state = gridSwipeState.current;
+                        if (!state.isActive) return;
+                        const touch = event.touches[0];
+                        const deltaX = touch.clientX - state.startX;
+                        const deltaY = touch.clientY - state.startY;
 
-                      if (!state.isHorizontal) {
-                        const absDeltaX = Math.abs(deltaX);
-                        const absDeltaY = Math.abs(deltaY);
+                        if (!state.isHorizontal) {
+                          const absDeltaX = Math.abs(deltaX);
+                          const absDeltaY = Math.abs(deltaY);
 
-                        if (absDeltaX > 10 && absDeltaX > absDeltaY) {
-                          state.isHorizontal = true;
-                        } else if (absDeltaY > 10 && absDeltaY > absDeltaX) {
-                          state.isActive = false;
+                          if (absDeltaX > 10 && absDeltaX > absDeltaY) {
+                            state.isHorizontal = true;
+                          } else if (absDeltaY > 10 && absDeltaY > absDeltaX) {
+                            state.isActive = false;
+                          }
                         }
-                      }
-                    };
+                      };
 
-                    const handleTouchEnd = (
-                      event: React.TouchEvent<HTMLDivElement>
-                    ) => {
-                      const state = gridSwipeState.current;
-                      if (!state.isActive) return;
+                      const handleTouchEnd = (
+                        event: React.TouchEvent<HTMLDivElement>
+                      ) => {
+                        const state = gridSwipeState.current;
+                        if (!state.isActive) return;
 
-                      state.isActive = false;
-                      if (!state.isHorizontal || totalPages <= 1) {
-                        return;
-                      }
+                        state.isActive = false;
+                        if (!state.isHorizontal || totalPages <= 1) {
+                          return;
+                        }
 
-                      const touch = event.changedTouches[0];
-                      const deltaX = touch.clientX - state.startX;
-                      const threshold = 50;
+                        const touch = event.changedTouches[0];
+                        const deltaX = touch.clientX - state.startX;
+                        const threshold = 50;
 
-                      if (Math.abs(deltaX) < threshold) {
-                        return;
-                      }
+                        if (Math.abs(deltaX) < threshold) {
+                          return;
+                        }
 
-                      if (deltaX < 0) {
-                        setCurrentPage(prev =>
-                          Math.min(totalPages, prev + 1)
-                        );
-                      } else {
-                        setCurrentPage(prev => Math.max(1, prev - 1));
-                      }
-                    };
-
-                    return (
-                      <div
-                        className="relative w-full touch-pan-y"
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                      >
-                        <UniversalGrid
-                          items={paginatedDestinations}
-                          renderItem={(destination, index) => {
-                          const isVisited = !!(
-                            user && visitedSlugs.has(destination.slug)
+                        if (deltaX < 0) {
+                          setCurrentPage(prev =>
+                            Math.min(totalPages, prev + 1)
                           );
-                          const globalIndex = startIndex + index;
+                        } else {
+                          setCurrentPage(prev => Math.max(1, prev - 1));
+                        }
+                      };
 
-                          return (
-                            <DestinationCard
-                              key={destination.slug}
-                              destination={destination}
-                              isAdmin={isAdmin}
-                              onEdit={dest => {
-                                setEditingDestination(dest);
-                                setShowPOIDrawer(true);
-                              }}
-                              showEditAffordance={editModeActive}
-                              onClick={() => {
-                                setSelectedDestination(destination);
-                                openDrawer('destination');
-                                trackDestinationEngagement(
-                                  destination,
-                                  "grid",
-                                  globalIndex
-                                );
-                              }}
-                                index={globalIndex}
-                                isVisited={isVisited}
-                                showBadges={true}
-                              />
-                            );
-                          }}
-                        />
-                      </div>
-                    );
-                  })()
-                )}
+                      return (
+                        <div
+                          className="relative w-full touch-pan-y"
+                          onTouchStart={handleTouchStart}
+                          onTouchMove={handleTouchMove}
+                          onTouchEnd={handleTouchEnd}
+                        >
+                          <UniversalGrid
+                            items={paginatedDestinations}
+                            renderItem={(destination, index) => {
+                              const isVisited = !!(
+                                user && visitedSlugs.has(destination.slug)
+                              );
+                              const globalIndex = startIndex + index;
+
+                              return (
+                                <DestinationCard
+                                  key={destination.slug}
+                                  destination={destination}
+                                  isAdmin={isAdmin}
+                                  onEdit={dest => {
+                                    setEditingDestination(dest);
+                                    setShowPOIDrawer(true);
+                                  }}
+                                  showEditAffordance={editModeActive}
+                                  onClick={() => {
+                                    setSelectedDestination(destination);
+                                    openDrawer('destination');
+                                    trackDestinationEngagement(
+                                      destination,
+                                      "grid",
+                                      globalIndex
+                                    );
+                                  }}
+                                  index={globalIndex}
+                                  isVisited={isVisited}
+                                  showBadges={true}
+                                />
+                              );
+                            }}
+                          />
+                        </div>
+                      );
+                    })()
+                  )}
 
                   {/* Pagination - Only show in grid view */}
                   {viewMode === "grid" &&
@@ -3231,11 +3231,10 @@ export default function Home() {
                                   <button
                                     key={pageNum}
                                     onClick={() => setCurrentPage(pageNum)}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
-                                      isActive
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${isActive
                                         ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium"
                                         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                                    }`}
+                                      }`}
                                     aria-label={`Page ${pageNum}`}
                                     aria-current={isActive ? "page" : undefined}
                                   >
@@ -3283,96 +3282,11 @@ export default function Home() {
                 </>
               );
             })()}
-              </div>
-            </div>
+          </div>
+        </div>
 
         {/* Destination Drawer - Only render when open */}
-        {isDrawerOpen('destination') && selectedDestination && (
-          <DestinationDrawer
-            destination={selectedDestination}
-            isOpen={true}
-            onClose={() => {
-              // Sort visited items to the back when closing
-              setFilteredDestinations(prev => {
-                const sorted = [...prev].sort((a, b) => {
-                  const aVisited = user && visitedSlugs.has(a.slug);
-                  const bVisited = user && visitedSlugs.has(b.slug);
-                  if (aVisited && !bVisited) return 1;
-                  if (!aVisited && bVisited) return -1;
-                  return 0;
-                });
-                return sorted;
-              });
-              closeDrawer();
-              setTimeout(() => setSelectedDestination(null), 300);
-            }}
-            onVisitToggle={(slug, visited) => {
-              // Update visited slugs
-              setVisitedSlugs(prev => {
-                const newSet = new Set(prev);
-                if (visited) {
-                  newSet.add(slug);
-                } else {
-                  newSet.delete(slug);
-                }
-                return newSet;
-              });
 
-              // Sort visited items to the back
-              setFilteredDestinations(prev => {
-                const sorted = [...prev].sort((a, b) => {
-                  const aVisited =
-                    user &&
-                    (visitedSlugs.has(a.slug) || (visited && a.slug === slug));
-                  const bVisited =
-                    user &&
-                    (visitedSlugs.has(b.slug) || (visited && b.slug === slug));
-                  if (aVisited && !bVisited) return 1;
-                  if (!aVisited && bVisited) return -1;
-                  return 0;
-                });
-                return sorted;
-              });
-            }}
-          />
-        )}
-
-        {/* Trip Planner Modal - Only render when open */}
-        {showTripPlanner && (
-        <TripPlanner
-          isOpen={showTripPlanner}
-          prefilledDestination={plannerPrefill}
-          onClose={() => {
-            setShowTripPlanner(false);
-            setPlannerPrefill(null);
-          }}
-        />
-      )}
-
-        {/* POI Drawer (Admin only) */}
-        {isAdmin && (
-          <POIDrawer
-            isOpen={showPOIDrawer}
-            onClose={() => {
-              setShowPOIDrawer(false);
-              setEditingDestination(null);
-            }}
-            destination={editingDestination}
-            onSave={async () => {
-              // Refresh destinations immediately after creating/updating/deleting POI
-              // Small delay to ensure database transaction is committed
-              await new Promise(resolve => setTimeout(resolve, 200));
-
-              // Fetch fresh destinations (this will automatically apply current filters)
-              await fetchDestinations();
-
-              // Reset to first page to show the newly created POI at the top
-              setCurrentPage(1);
-
-              setEditingDestination(null);
-            }}
-          />
-        )}
       </main>
     </ErrorBoundary>
   );
