@@ -538,6 +538,40 @@ export default function Home() {
     []
   );
 
+  // Determine which destinations to show (shared between Map and Grid)
+  const displayDestinations = useMemo(
+    () =>
+      advancedFilters.nearMe && nearbyDestinations.length > 0
+        ? nearbyDestinations
+        : filteredDestinations,
+    [advancedFilters.nearMe, nearbyDestinations, filteredDestinations]
+  );
+
+  const totalPages = useMemo(
+    () => Math.ceil(displayDestinations.length / itemsPerPage),
+    [displayDestinations.length, itemsPerPage]
+  );
+
+  const findDestinationPosition = useCallback(
+    (slug: string) =>
+      displayDestinations.findIndex(destination => destination.slug === slug),
+    [displayDestinations]
+  );
+
+  const openDestinationFromMap = useCallback(
+    (destination: Destination, source: "map_marker" | "map_list") => {
+      setSelectedDestination(destination);
+      openDrawer('destination');
+      const position = findDestinationPosition(destination.slug);
+      trackDestinationEngagement(
+        destination,
+        source,
+        position >= 0 ? position : undefined
+      );
+    },
+    [findDestinationPosition, openDrawer, trackDestinationEngagement]
+  );
+
   // Arrow key navigation for pagination
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -552,12 +586,6 @@ export default function Home() {
       }
 
       // Only handle if pagination is visible
-      const displayDestinations =
-        advancedFilters.nearMe && nearbyDestinations.length > 0
-          ? nearbyDestinations
-          : filteredDestinations;
-      const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
-      
       if (totalPages <= 1 || viewMode !== 'grid') {
         return;
       }
@@ -573,7 +601,7 @@ export default function Home() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [viewMode, advancedFilters.nearMe, nearbyDestinations, filteredDestinations, itemsPerPage]);
+  }, [viewMode, totalPages]);
 
   // Featured cities to always show in filter
   const FEATURED_CITIES = ["taipei", "tokyo", "new-york", "london"];
@@ -3005,76 +3033,47 @@ export default function Home() {
                     for setup instructions.
                   </p>
                 </div>
-              )}
+            )}
 
             {/* Filter Panel - Now handled in NavigationRow, expanded panel pushes grid down */}
 
-            {/* Destination Grid - Original design */}
-            {(() => {
-              // Determine which destinations to show
-              const displayDestinations =
-                advancedFilters.nearMe && nearbyDestinations.length > 0
-                  ? nearbyDestinations
-                  : filteredDestinations;
-              const totalPages = Math.ceil(
-                displayDestinations.length / itemsPerPage
-              );
+            {/* --------------------------------------------------------------------------- */}
+            {/* VIEWPORTS: Both rendered, visibility toggled via CSS to prevent reloading */}
+            {/* --------------------------------------------------------------------------- */}
 
-              // Always render the grid structure, even if empty (for instant page load)
-              // Show empty state if no destinations
-              if (displayDestinations.length === 0 && !advancedFilters.nearMe) {
-                return (
-                  <div className="text-center py-12 px-4">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      Loading destinations...
-                    </p>
-                  </div>
-                );
-              }
+            {/* 1. MAP VIEWPORT */}
+            <div className={viewMode === 'map' ? 'block' : 'hidden'}>
+              <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                <HomeMapSplitView
+                  destinations={displayDestinations}
+                  selectedDestination={selectedDestination}
+                  onMarkerSelect={destination =>
+                    openDestinationFromMap(destination, "map_marker")
+                  }
+                  onListItemSelect={destination =>
+                    openDestinationFromMap(destination, "map_list")
+                  }
+                />
+              </div>
+            </div>
 
-              if (displayDestinations.length === 0 && advancedFilters.nearMe) {
-                return null; // Message shown above
-              }
-
-              const findDestinationPosition = (slug: string) =>
-                displayDestinations.findIndex(
-                  destination => destination.slug === slug
-                );
-
-              const openDestinationFromMap = (
-                destination: Destination,
-                source: "map_marker" | "map_list"
-              ) => {
-                setSelectedDestination(destination);
-                openDrawer('destination');
-                const position = findDestinationPosition(destination.slug);
-                trackDestinationEngagement(
-                  destination,
-                  source,
-                  position >= 0 ? position : undefined
-                );
-              };
-
-              return (
-                  <>
-                    {viewMode === "map" ? (
-                      <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-                        <HomeMapSplitView
-                          destinations={displayDestinations}
-                          selectedDestination={selectedDestination}
-                          onMarkerSelect={destination =>
-                            openDestinationFromMap(destination, "map_marker")
-                          }
-                          onListItemSelect={destination =>
-                            openDestinationFromMap(destination, "map_list")
-                          }
-                        />
-                      </div>
-                    ) : (
-                    (() => {
-                  const startIndex = (currentPage - 1) * itemsPerPage;
-                  const endIndex = startIndex + itemsPerPage;
-                      const paginatedDestinations = displayDestinations.slice(startIndex, endIndex);
+            {/* 2. GRID VIEWPORT */}
+            <div className={viewMode === 'grid' ? 'block' : 'hidden'}>
+              {displayDestinations.length === 0 && !advancedFilters.nearMe ? (
+                <div className="text-center py-12 px-4">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Loading destinations...
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {(() => {
+                    const startIndex = (currentPage - 1) * itemsPerPage;
+                    const endIndex = startIndex + itemsPerPage;
+                    const paginatedDestinations = displayDestinations.slice(
+                      startIndex,
+                      endIndex
+                    );
 
                     const handleTouchStart = (
                       event: React.TouchEvent<HTMLDivElement>
@@ -3115,22 +3114,16 @@ export default function Home() {
                       if (!state.isActive) return;
 
                       state.isActive = false;
-                      if (!state.isHorizontal || totalPages <= 1) {
-                        return;
-                      }
+                      if (!state.isHorizontal || totalPages <= 1) return;
 
                       const touch = event.changedTouches[0];
                       const deltaX = touch.clientX - state.startX;
                       const threshold = 50;
 
-                      if (Math.abs(deltaX) < threshold) {
-                        return;
-                      }
+                      if (Math.abs(deltaX) < threshold) return;
 
                       if (deltaX < 0) {
-                        setCurrentPage(prev =>
-                          Math.min(totalPages, prev + 1)
-                        );
+                        setCurrentPage(prev => Math.min(totalPages, prev + 1));
                       } else {
                         setCurrentPage(prev => Math.max(1, prev - 1));
                       }
@@ -3146,30 +3139,30 @@ export default function Home() {
                         <UniversalGrid
                           items={paginatedDestinations}
                           renderItem={(destination, index) => {
-                          const isVisited = !!(
-                            user && visitedSlugs.has(destination.slug)
-                          );
-                          const globalIndex = startIndex + index;
+                            const isVisited = !!(
+                              user && visitedSlugs.has(destination.slug)
+                            );
+                            const globalIndex = startIndex + index;
 
-                          return (
-                            <DestinationCard
-                              key={destination.slug}
-                              destination={destination}
-                              isAdmin={isAdmin}
-                              onEdit={dest => {
-                                setEditingDestination(dest);
-                                setShowPOIDrawer(true);
-                              }}
-                              showEditAffordance={editModeActive}
-                              onClick={() => {
-                                setSelectedDestination(destination);
-                                openDrawer('destination');
-                                trackDestinationEngagement(
-                                  destination,
-                                  "grid",
-                                  globalIndex
-                                );
-                              }}
+                            return (
+                              <DestinationCard
+                                key={destination.slug}
+                                destination={destination}
+                                isAdmin={isAdmin}
+                                onEdit={dest => {
+                                  setEditingDestination(dest);
+                                  setShowPOIDrawer(true);
+                                }}
+                                showEditAffordance={editModeActive}
+                                onClick={() => {
+                                  setSelectedDestination(destination);
+                                  openDrawer('destination');
+                                  trackDestinationEngagement(
+                                    destination,
+                                    "grid",
+                                    globalIndex
+                                  );
+                                }}
                                 index={globalIndex}
                                 isVisited={isVisited}
                                 showBadges={true}
@@ -3179,112 +3172,93 @@ export default function Home() {
                         />
                       </div>
                     );
-                  })()
-                )}
+                  })()}
 
-                  {/* Pagination - Only show in grid view */}
-                  {viewMode === "grid" &&
-                    (() => {
-                      if (totalPages <= 1) return null;
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2 mx-auto">
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        disabled={currentPage === 1}
+                        className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label="Previous page"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M15 19l-7-7 7-7"
+                          />
+                        </svg>
+                      </button>
 
-                      return (
-                        <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2 mx-auto">
-                          <button
-                            onClick={() =>
-                              setCurrentPage(prev => Math.max(1, prev - 1))
-                            }
-                            disabled={currentPage === 1}
-                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                            aria-label="Previous page"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
+                      <div className="flex items-center gap-2">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+                          const isActive = currentPage === pageNum;
+                          return (
+                            <button
+                              key={pageNum}
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
+                                isActive
+                                  ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium"
+                                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                              }`}
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M15 19l-7-7 7-7"
-                              />
-                            </svg>
-                          </button>
+                              {pageNum}
+                            </button>
+                          );
+                        })}
+                      </div>
 
-                          <div className="flex items-center gap-2">
-                            {Array.from(
-                              { length: Math.min(5, totalPages) },
-                              (_, i) => {
-                                let pageNum;
-                                if (totalPages <= 5) {
-                                  pageNum = i + 1;
-                                } else if (currentPage <= 3) {
-                                  pageNum = i + 1;
-                                } else if (currentPage >= totalPages - 2) {
-                                  pageNum = totalPages - 4 + i;
-                                } else {
-                                  pageNum = currentPage - 2 + i;
-                                }
+                      <button
+                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                        disabled={currentPage === totalPages}
+                        className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label="Next page"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  )}
 
-                                const isActive = currentPage === pageNum;
-
-                                return (
-                                  <button
-                                    key={pageNum}
-                                    onClick={() => setCurrentPage(pageNum)}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
-                                      isActive
-                                        ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium"
-                                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                                    }`}
-                                    aria-label={`Page ${pageNum}`}
-                                    aria-current={isActive ? "page" : undefined}
-                                  >
-                                    {pageNum}
-                                  </button>
-                                );
-                              }
-                            )}
-                          </div>
-
-                          <button
-                            onClick={() =>
-                              setCurrentPage(prev =>
-                                Math.min(totalPages, prev + 1)
-                              )
-                            }
-                            disabled={currentPage === totalPages}
-                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                            aria-label="Next page"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M9 5l7 7-7 7"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      );
-                    })()}
-
-                  {/* Ad below pagination */}
+                  {/* Ad */}
                   {displayDestinations.length > 0 && (
                     <div className="mt-8 w-full">
                       <MultiplexAd slot="3271683710" />
                     </div>
                   )}
                 </>
-              );
-            })()}
+              )}
+            </div>
               </div>
             </div>
 
