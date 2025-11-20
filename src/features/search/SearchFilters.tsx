@@ -136,12 +136,8 @@ export function SearchFiltersComponent({
     return `${km}km`;
   };
 
-  const containerClassName = fullWidthPanel
-    ? `relative flex-1 min-w-[280px]${isOpen ? ' basis-full' : ''}`
-    : 'relative';
-
   return (
-    <div className={containerClassName}>
+    <div className="relative">
       <button
         ref={buttonRef}
         onClick={() => {
