@@ -3,13 +3,17 @@ import type { Destination } from '@/types/destination';
 import { getHomepageDestinations } from '@/server/services/homepage-loaders';
 
 type DestinationsHandlerDeps = {
-  loadDestinations: () => Promise<Destination[]>;
+  loadDestinations: (limit?: number) => Promise<Destination[]>;
 };
 
 export function createHomepageDestinationsHandler(deps: DestinationsHandlerDeps) {
-  return async function handler(_request: NextRequest) {
+  return async function handler(request: NextRequest) {
     try {
-      const destinations = await deps.loadDestinations();
+      // Allow limit to be specified via query parameter, default to 5000
+      const searchParams = request.nextUrl.searchParams;
+      const limitParam = searchParams.get('limit');
+      const limit = limitParam ? parseInt(limitParam, 10) : 5000;
+      const destinations = await deps.loadDestinations(limit);
       return NextResponse.json({ success: true, destinations });
     } catch (error: any) {
       console.error('[Homepage Destinations API] Error loading destinations:', error?.message || error);

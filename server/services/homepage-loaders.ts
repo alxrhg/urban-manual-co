@@ -139,7 +139,7 @@ export async function getFilterRows(limit = 1000) {
   }
 }
 
-export async function getHomepageDestinations(limit = 500) {
+export async function getHomepageDestinations(limit = 5000) {
   const client = await getSupabaseClient();
   if (!client) {
     console.warn('[Homepage Loaders] No Supabase client available, returning empty destinations');
