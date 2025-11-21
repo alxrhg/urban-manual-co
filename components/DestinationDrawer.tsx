@@ -31,6 +31,7 @@ import { CityAutocompleteInput } from './CityAutocompleteInput';
 import { CategoryAutocompleteInput } from './CategoryAutocompleteInput';
 import GooglePlacesAutocompleteNative from './GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
+import { AddToTripModal } from './AddToTripModal';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -191,6 +192,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [enrichedData, setEnrichedData] = useState<any>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isInTrip, setIsInTrip] = useState(false);
+  const [lastTripName, setLastTripName] = useState<string | null>(null);
+  const [showAddToTripModal, setShowAddToTripModal] = useState(false);
   const toast = useToast();
   
   // Edit form state
@@ -309,8 +313,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         setEnrichedData(null);
         setIsSaved(false);
         setIsVisited(false);
+        setIsInTrip(false);
+        setLastTripName(null);
+        setShowAddToTripModal(false);
         return;
       }
+
+      setIsInTrip(false);
+      setLastTripName(null);
+      setShowAddToTripModal(false);
 
       // Fetch enriched data from database
       try {
@@ -1743,8 +1754,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Action Buttons */}
           {user && (
-            <div className="flex gap-2 mb-6">
-              <div className="flex-1 flex gap-2">
+            <div className="flex flex-col gap-3 sm:flex-row mb-6">
+              <div className="flex gap-2 sm:flex-1 w-full">
                 <button
                   onClick={handleSave}
                   disabled={loading}
@@ -1786,9 +1797,28 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
 
               <button
+                onClick={() => setShowAddToTripModal(true)}
+                disabled={loading || !destination?.slug}
+                className={`w-full sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${
+                  isInTrip
+                    ? 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/30 dark:text-green-200 dark:border-green-800'
+                    : 'bg-black dark:bg-white text-white dark:text-black hover:opacity-80'
+                } ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              >
+                <Navigation className={`h-5 w-5 ${isInTrip ? 'text-green-700 dark:text-green-300' : ''}`} />
+                <span>
+                  {isInTrip
+                    ? lastTripName
+                      ? `Added to ${lastTripName}`
+                      : 'Added to Trip'
+                    : 'Add to Trip'}
+                </span>
+              </button>
+
+              <button
                 onClick={handleVisitClick}
                 disabled={loading}
-                className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${
+                className={`relative w-full sm:flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${
                   isVisited
                     ? 'bg-green-500 text-white hover:bg-green-600'
                     : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-800'
@@ -2202,6 +2232,24 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           </div>
         </div>
+      )}
+
+      {destination && (
+        <AddToTripModal
+          destinationSlug={destination.slug || ''}
+          destinationName={destination.name || ''}
+          isOpen={showAddToTripModal}
+          onClose={() => setShowAddToTripModal(false)}
+          onAdd={(_, tripTitle) => {
+            setIsInTrip(true);
+            setLastTripName(tripTitle || null);
+            setShowAddToTripModal(false);
+          }}
+          onRemove={(_, tripTitle) => {
+            setIsInTrip(false);
+            setLastTripName(tripTitle || null);
+          }}
+        />
       )}
 
       {/* Visit Modal */}

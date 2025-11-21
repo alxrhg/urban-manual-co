@@ -13,7 +13,8 @@ interface AddToTripModalProps {
   destinationName: string;
   isOpen: boolean;
   onClose: () => void;
-  onAdd?: (tripId: string) => void;
+  onAdd?: (tripId: string, tripTitle?: string) => void;
+  onRemove?: (tripId: string, tripTitle?: string) => void;
 }
 
 export function AddToTripModal({
@@ -22,12 +23,13 @@ export function AddToTripModal({
   isOpen,
   onClose,
   onAdd,
+  onRemove,
 }: AddToTripModalProps) {
   const { user } = useAuth();
   const toast = useToast();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState<string | null>(null);
+  const [processingTripId, setProcessingTripId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTrip, setNewTrip] = useState({
     title: '',
@@ -40,6 +42,7 @@ export function AddToTripModal({
   const [creating, setCreating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [tripsWithDestination, setTripsWithDestination] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (isOpen && user) {
@@ -47,7 +50,7 @@ export function AddToTripModal({
     } else if (isOpen && !user) {
       setLoading(false);
     }
-  }, [isOpen, user]);
+  }, [destinationSlug, isOpen, user]);
 
   async function fetchTrips() {
     try {
@@ -63,8 +66,25 @@ export function AddToTripModal({
 
       if (error) throw error;
       setTrips(data || []);
+
+      if (destinationSlug) {
+        const { data: itemsWithDestination, error: itemsError } = await supabaseClient
+          .from('itinerary_items')
+          .select('trip_id')
+          .eq('destination_slug', destinationSlug);
+
+        if (itemsError) {
+          console.error('Error checking trip destinations:', itemsError);
+          setTripsWithDestination(new Set());
+        } else {
+          setTripsWithDestination(new Set((itemsWithDestination || []).map(item => item.trip_id)));
+        }
+      } else {
+        setTripsWithDestination(new Set());
+      }
     } catch (error) {
       console.error('Error fetching trips:', error);
+      setTripsWithDestination(new Set());
     } finally {
       setLoading(false);
     }
@@ -79,7 +99,7 @@ export function AddToTripModal({
       return;
     }
 
-    setAdding(tripId);
+    setProcessingTripId(tripId);
     try {
       const supabaseClient = createClient();
       if (!supabaseClient) throw new Error('Unable to reach the database client.');
@@ -192,7 +212,12 @@ export function AddToTripModal({
         throw new Error('Failed to add destination to trip. No data returned.');
       }
 
-      if (onAdd) onAdd(tripId);
+      const tripTitle = trips.find(trip => trip.id === tripId)?.title;
+      setTripsWithDestination(prev => new Set(prev).add(tripId));
+      toast.success(
+        `${destinationName || 'Destination'} added to ${tripTitle || 'trip'}.`
+      );
+      if (onAdd) onAdd(tripId, tripTitle);
       onClose();
     } catch (error: any) {
       console.error('Error adding to trip:', error);
@@ -201,7 +226,61 @@ export function AddToTripModal({
       setActionError(errorMessage);
       toast.error(errorMessage);
     } finally {
-      setAdding(null);
+      setProcessingTripId(null);
+    }
+  }
+
+  async function handleRemoveFromTrip(tripId: string) {
+    setActionError(null);
+    if (!user) {
+      const message = 'Please sign in to manage trips.';
+      setActionError(message);
+      toast.error(message);
+      return;
+    }
+
+    setProcessingTripId(tripId);
+
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) throw new Error('Unable to reach the database client.');
+
+      // Verify trip ownership
+      const { data: trip, error: tripError } = await supabaseClient
+        .from('trips')
+        .select('id, title, user_id')
+        .eq('id', tripId)
+        .single();
+
+      if (tripError || !trip || trip.user_id !== user.id) {
+        throw new Error('Trip not found or you do not have permission to modify it');
+      }
+
+      const { error } = await supabaseClient
+        .from('itinerary_items')
+        .delete()
+        .eq('trip_id', tripId)
+        .eq('destination_slug', destinationSlug);
+
+      if (error) throw error;
+
+      const tripTitle = trips.find(t => t.id === tripId)?.title || trip.title;
+      setTripsWithDestination(prev => {
+        const next = new Set(prev);
+        next.delete(tripId);
+        return next;
+      });
+      toast.success(
+        `${destinationName || 'Destination'} removed from ${tripTitle || 'trip'}.`
+      );
+      onRemove?.(tripId, tripTitle);
+    } catch (error: any) {
+      console.error('Error removing from trip:', error);
+      const errorMessage = error?.message || 'Failed to remove destination from trip. Please try again.';
+      setActionError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setProcessingTripId(null);
     }
   }
 
@@ -341,11 +420,15 @@ export function AddToTripModal({
                     {upcomingTrips.map((trip) => {
                       const startDate = formatDateForDisplay(trip.start_date);
                       const endDate = formatDateForDisplay(trip.end_date);
+                      const isInTrip = tripsWithDestination.has(trip.id);
+
                       return (
                         <button
                           key={trip.id}
-                          onClick={() => handleAddToTrip(trip.id)}
-                          disabled={adding === trip.id}
+                          onClick={() =>
+                            isInTrip ? handleRemoveFromTrip(trip.id) : handleAddToTrip(trip.id)
+                          }
+                          disabled={processingTripId === trip.id}
                           className="w-full text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-180 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                         >
                           <div className="flex items-start justify-between gap-4">
@@ -372,11 +455,11 @@ export function AddToTripModal({
                                 </div>
                               )}
                             </div>
-                            {adding === trip.id ? (
+                            {processingTripId === trip.id ? (
                               <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
                             ) : (
-                              <span className="text-xs font-medium text-gray-900 dark:text-white flex-shrink-0">
-                                Add
+                              <span className={`text-xs font-medium flex-shrink-0 ${isInTrip ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-white'}`}>
+                                {isInTrip ? 'Remove' : 'Add'}
                               </span>
                             )}
                           </div>
