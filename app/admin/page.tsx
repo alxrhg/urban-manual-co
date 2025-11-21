@@ -15,6 +15,7 @@ import { StatsDashboard } from '@/components/admin/StatsDashboard';
 import { SanitySyncSection } from '@/components/admin/SanitySyncSection';
 import { SyncOperationsDashboard } from '@/components/admin/SyncOperationsDashboard';
 import { EditModePanel } from '@/components/admin/EditModePanel';
+import { QuickActionsPanel } from '@/components/admin/QuickActionsPanel';
 import { DestinationForm } from '@/components/admin/DestinationForm';
 
 // Force dynamic rendering
@@ -347,6 +348,104 @@ export default function AdminPage() {
         <SyncOperationsDashboard />
 
         <EditModePanel />
+
+        <QuickActionsPanel
+          onCreateDestination={() => {
+            setEditingDestination(null);
+            setShowCreateModal(true);
+          }}
+          onExportData={async (format) => {
+            try {
+              const supabase = createClient({ skipValidation: true });
+              const { data, error } = await supabase
+                .from('destinations')
+                .select('*')
+                .limit(1000);
+
+              if (error) throw error;
+
+              let content = '';
+              let mimeType = '';
+              let extension = '';
+
+              if (format === 'json') {
+                content = JSON.stringify(data, null, 2);
+                mimeType = 'application/json';
+                extension = 'json';
+              } else if (format === 'csv') {
+                if (data && data.length > 0) {
+                  const headers = Object.keys(data[0]).join(',');
+                  const rows = data.map(row => Object.values(row).map(v => 
+                    typeof v === 'string' ? `"${v.replace(/"/g, '""')}"` : v
+                  ).join(','));
+                  content = [headers, ...rows].join('\n');
+                }
+                mimeType = 'text/csv';
+                extension = 'csv';
+              } else {
+                // Excel format (CSV for now)
+                if (data && data.length > 0) {
+                  const headers = Object.keys(data[0]).join(',');
+                  const rows = data.map(row => Object.values(row).map(v => 
+                    typeof v === 'string' ? `"${v.replace(/"/g, '""')}"` : v
+                  ).join(','));
+                  content = [headers, ...rows].join('\n');
+                }
+                mimeType = 'text/csv';
+                extension = 'xlsx';
+              }
+
+              const blob = new Blob([content], { type: mimeType });
+              const url = URL.createObjectURL(blob);
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = `destinations-export-${new Date().toISOString().split('T')[0]}.${extension}`;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+
+              toast.success(`Exported ${data?.length || 0} destinations as ${format.toUpperCase()}`);
+            } catch (e: any) {
+              toast.error(`Failed to export: ${e.message || 'Unknown error'}`);
+            }
+          }}
+          onRunEnrichment={async (slugs) => {
+            try {
+              const supabase = createClient({ skipValidation: true });
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session) {
+                toast.error('Not authenticated');
+                return;
+              }
+
+              const slugsToEnrich = slugs && slugs.length > 0 ? slugs : [];
+              
+              const response = await fetch('/api/admin/enrich-google', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify({
+                  slugs: slugsToEnrich,
+                  limit: slugsToEnrich.length > 0 ? slugsToEnrich.length : 10,
+                }),
+              });
+
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Enrichment failed');
+              }
+
+              const result = await response.json();
+              toast.success(`Enriched ${result.results?.filter((r: any) => r.ok).length || 0} destination(s)`);
+              setStatsRefreshKey(prev => prev + 1);
+            } catch (e: any) {
+              toast.error(`Enrichment failed: ${e.message || 'Unknown error'}`);
+            }
+          }}
+        />
 
         <div className="space-y-3 p-4 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/50">
           <div className="flex items-start justify-between gap-4">
