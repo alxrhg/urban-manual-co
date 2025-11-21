@@ -36,10 +36,49 @@ export default function MapPage() {
     searchQuery: '',
   });
   const [showListPanel, setShowListPanel] = useState(true);
-  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 23.5, lng: 121.0 }); // Taiwan center
+  const fallbackCenter = { lat: 23.5, lng: 121.0 }; // Taiwan center
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(fallbackCenter);
   const [mapZoom, setMapZoom] = useState(8);
   const [showFilters, setShowFilters] = useState(false);
   const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
+  const googleApiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+
+  const geocodePlaceIds = useCallback(
+    async (places: Destination[]): Promise<Destination[]> => {
+      if (!googleApiKey || places.length === 0) return [];
+
+      const geocoded = await Promise.all(
+        places.map(async place => {
+          if (!place.place_id) return null;
+
+          try {
+            const response = await fetch(
+              `https://maps.googleapis.com/maps/api/place/details/json?placeid=${place.place_id}&key=${googleApiKey}&fields=geometry/location`
+            );
+
+            if (!response.ok) {
+              console.warn('[Map Page] Failed to geocode place', place.place_id, response.statusText);
+              return null;
+            }
+
+            const result = await response.json();
+            const location = result?.result?.geometry?.location;
+
+            if (location?.lat && location?.lng) {
+              return { ...place, latitude: location.lat, longitude: location.lng } as Destination;
+            }
+          } catch (error) {
+            console.warn('[Map Page] Error geocoding place', place.place_id, error);
+          }
+
+          return null;
+        })
+      );
+
+      return geocoded.filter(Boolean) as Destination[];
+    },
+    [googleApiKey]
+  );
 
   // Fetch destinations and categories
   useEffect(() => {
@@ -53,24 +92,41 @@ export default function MapPage() {
         }
 
         // Fetch destinations with location data
+        const destinationFields =
+          'id, slug, name, city, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, tags, latitude, longitude, place_id, parent_destination_id, rating';
+
         const { data: destData, error: destError } = await supabaseClient
           .from('destinations')
-          .select('id, slug, name, city, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, tags, latitude, longitude, place_id, parent_destination_id, rating')
+          .select(destinationFields)
           .is('parent_destination_id', null)
-          .or('latitude.not.is.null,longitude.not.is.null,place_id.not.is.null')
+          .not('latitude', 'is', null)
+          .not('longitude', 'is', null)
           .order('name')
           .limit(1000);
+
+        const { data: placeIdOnlyData } = await supabaseClient
+          .from('destinations')
+          .select(destinationFields)
+          .is('parent_destination_id', null)
+          .is('latitude', null)
+          .is('longitude', null)
+          .not('place_id', 'is', null)
+          .order('name')
+          .limit(50);
 
         if (destError) {
           console.warn('[Map Page] Error fetching destinations:', destError);
           setDestinations([]);
         } else {
-          setDestinations((destData || []) as Destination[]);
-          
+          const geocodedPlaceIdDestinations = await geocodePlaceIds((placeIdOnlyData || []) as Destination[]);
+          const combinedDestinations = [...((destData || []) as Destination[]), ...geocodedPlaceIdDestinations];
+
+          setDestinations(combinedDestinations);
+
           // Extract unique categories (case-insensitive deduplication)
           const categoryLowerSet = new Set<string>();
           const uniqueCategories: string[] = [];
-          (destData || []).forEach((d: any) => {
+          combinedDestinations.forEach((d: any) => {
             if (d.category) {
               const categoryLower = d.category.toLowerCase();
               if (!categoryLowerSet.has(categoryLower)) {
@@ -129,6 +185,10 @@ export default function MapPage() {
       const avgLat = destinationsWithCoords.reduce((sum, d) => sum + (d.latitude || 0), 0) / destinationsWithCoords.length;
       const avgLng = destinationsWithCoords.reduce((sum, d) => sum + (d.longitude || 0), 0) / destinationsWithCoords.length;
       setMapCenter({ lat: avgLat, lng: avgLng });
+      setMapZoom(8);
+    } else {
+      setMapCenter(fallbackCenter);
+      setMapZoom(5);
     }
   }, [filteredDestinations]);
 
