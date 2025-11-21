@@ -4,7 +4,7 @@ import React from "react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { MapPin, Plus, Calendar, Trash2, Edit2 } from "lucide-react";
+import { ArrowRight, FolderOpen, MapPin, Plus, Calendar, Trash2, Edit2, Sparkles } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
 import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
@@ -16,6 +16,7 @@ import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { TripPlanner } from "@/components/TripPlanner";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
+import { CollectionCard } from "@/components/account/CollectionCard";
 import { openCookieSettings } from "@/components/CookieConsent";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
 import type { Trip } from "@/types/trip";
@@ -599,38 +600,95 @@ export default function Account() {
 
         {/* Collections Tab */}
         {activeTab === 'collections' && (
-          <div className="fade-in">
+          <div className="fade-in space-y-6">
+            <div className="grid gap-4 lg:grid-cols-3">
+              <div className="lg:col-span-2 rounded-3xl border border-gray-200 dark:border-gray-800 bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 p-6 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-2">
+                    <div className="inline-flex items-center gap-2 rounded-full bg-gray-900 text-white dark:bg-white dark:text-gray-900 px-3 py-1 text-xs font-semibold">
+                      <Sparkles className="w-3 h-3" />
+                      Curate your lists
+                    </div>
+                    <h3 className="text-xl font-light text-gray-900 dark:text-white">Collections as beautiful as the places they hold</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 max-w-2xl">
+                      Bundle your favorite spots into themed lists, share them with friends, and keep private drafts while you finish planning.
+                    </p>
+                    <div className="flex flex-wrap gap-3 text-xs text-gray-500">
+                      <span className="px-3 py-1 rounded-full bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800">{collections.length} lists</span>
+                      <span className="px-3 py-1 rounded-full bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800">{savedPlaces.length} saved spots to sort</span>
+                      <span className="px-3 py-1 rounded-full bg-white border border-gray-200 dark:bg-gray-900 dark:border-gray-800">{stats.uniqueCities.size} cities covered</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => setShowCreateModal(true)}
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-black px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Start a new list
+                    </button>
+                    <button
+                      onClick={() => router.push('/collections')}
+                      className="inline-flex items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-700 transition hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200"
+                    >
+                      <FolderOpen className="h-4 w-4" />
+                      Browse featured lists
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/70 p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Signal boost</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">Share with friends</p>
+                  </div>
+                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200">New</span>
+                </div>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Public lists get a unique link for sharing and will soon appear on destination pages.
+                </p>
+                <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-700 p-4 text-xs text-gray-600 dark:text-gray-400 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <ArrowRight className="h-4 w-4" />
+                    Toggle Public to publish a list
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ArrowRight className="h-4 w-4" />
+                    Add a description so readers know the vibe
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <ArrowRight className="h-4 w-4" />
+                    Keep drafts private while you plan
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {collections.length === 0 ? (
               <NoCollectionsEmptyState onCreateCollection={() => setShowCreateModal(true)} />
             ) : (
               <>
-                <div className="flex justify-end mb-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Your lists</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Curated sets of places you want to explore, return to, or share.</p>
+                  </div>
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-gray-900 px-4 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
                   >
-                    + New Collection
+                    <Plus className="h-4 w-4" />
+                    New collection
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {collections.map((collection) => (
-                    <button
+                    <CollectionCard
                       key={collection.id}
+                      collection={collection}
                       onClick={() => router.push(`/collection/${collection.id}`)}
-                      className="text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">{collection.emoji || '📚'}</span>
-                        <h3 className="font-medium text-sm flex-1">{collection.name}</h3>
-                      </div>
-                      {collection.description && (
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{collection.description}</p>
-                      )}
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
-                        <span>{collection.destination_count || 0} places</span>
-                        {collection.is_public && <span>• Public</span>}
-                      </div>
-                    </button>
+                    />
                   ))}
                 </div>
               </>

@@ -29,6 +29,7 @@ import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
 import type { Trip } from "@/types/trip";
 import type { Collection } from "@/types/common";
+import { CollectionCard } from "@/components/account/CollectionCard";
 
 interface UserStats {
   visited: number;
@@ -669,41 +670,33 @@ export function AccountDrawer() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading collections...</p>
         </div>
       ) : collections.length > 0 ? (
-        <div className="space-y-3">
-          {collections.map((collection) => (
-            <button
-              key={collection.id}
-              onClick={() => handleNavigateToFullPage(`/collection/${collection.id}`)}
-              className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-4 text-left shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-700 transition-all group"
-            >
-              <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-xl flex-shrink-0 ring-1 ring-gray-200 dark:ring-gray-800">
-                  <span>{collection.emoji || '📚'}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
-                      {collection.name}
-                    </p>
-                    {collection.is_public && (
-                      <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium flex-shrink-0">
-                        Public
-                      </span>
-                    )}
-                  </div>
-                  {collection.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
-                      {collection.description}
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                    {(collection.destination_count || 0).toLocaleString()} {collection.destination_count === 1 ? 'place' : 'places'}
-                  </p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0 mt-1" />
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4 shadow-sm">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gray-500">Lists</p>
+                <p className="text-sm text-gray-700 dark:text-gray-300">Organize saved places and publish your favorites.</p>
               </div>
-            </button>
-          ))}
+              <button
+                onClick={() => handleNavigateToFullPage('/account?tab=collections')}
+                className="inline-flex items-center gap-2 rounded-full bg-gray-900 px-3 py-2 text-[11px] font-semibold text-white transition hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200"
+              >
+                <Plus className="w-4 h-4" />
+                New list
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {collections.map((collection) => (
+              <CollectionCard
+                key={collection.id}
+                collection={collection}
+                variant="drawer"
+                onClick={() => handleNavigateToFullPage(`/collection/${collection.id}`)}
+              />
+            ))}
+          </div>
         </div>
       ) : (
         <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 px-6 py-12 text-center">
