@@ -521,7 +521,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               ...updatedDestination,
               movement_id: movementObj.id,
               movement_obj: movementObj,
-              movement: movementObj.name,
             };
           }
           
