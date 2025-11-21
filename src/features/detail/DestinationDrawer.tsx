@@ -802,12 +802,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Map */}
           {enrichedData?.latitude && enrichedData?.longitude && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              <MapView
-                latitude={enrichedData.latitude}
-                longitude={enrichedData.longitude}
-                destinationName={destination.name}
-                height={200}
-              />
+              <div className="w-full h-[200px] rounded-lg overflow-hidden">
+                <MapView
+                  destinations={[{
+                    ...destination,
+                    latitude: enrichedData.latitude,
+                    longitude: enrichedData.longitude,
+                  }]}
+                  center={{ lat: enrichedData.latitude, lng: enrichedData.longitude }}
+                  zoom={15}
+                />
+              </div>
             </div>
           )}
 
@@ -853,11 +858,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Realtime Status */}
-          {destination.slug && (
+          {destination.id && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              <RealtimeStatusBadge destinationSlug={destination.slug} />
+              <RealtimeStatusBadge destinationId={destination.id} />
               <div className="mt-4">
-                <RealtimeReportForm destinationSlug={destination.slug} />
+                <RealtimeReportForm destinationId={destination.id} destinationName={destination.name} />
               </div>
             </div>
           )}
@@ -865,10 +870,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       </Drawer>
 
       {/* Modals */}
-      {showSaveModal && (
+      {showSaveModal && destination.id && (
         <SaveDestinationModal
           isOpen={showSaveModal}
           onClose={() => setShowSaveModal(false)}
+          destinationId={destination.id}
           destinationSlug={destination.slug}
           onSave={() => {
             setShowSaveModal(false);
@@ -882,7 +888,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           isOpen={showVisitedModal}
           onClose={() => setShowVisitedModal(false)}
           destinationSlug={destination.slug}
-          onVisit={() => {
+          destinationName={destination.name}
+          onUpdate={() => {
             setShowVisitedModal(false);
             handleVisit();
           }}
