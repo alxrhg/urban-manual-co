@@ -11,7 +11,7 @@ import { DataTableEnhanced } from "./data-table-enhanced";
 import { createColumns } from "./columns";
 import type { Destination } from '@/types/destination';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
-import { AdminStats } from '@/components/admin/AdminStats';
+import { StatsDashboard } from '@/components/admin/StatsDashboard';
 import { SanitySyncSection } from '@/components/admin/SanitySyncSection';
 import { SyncOperationsDashboard } from '@/components/admin/SyncOperationsDashboard';
 import { EditModePanel } from '@/components/admin/EditModePanel';
@@ -342,7 +342,7 @@ export default function AdminPage() {
   return (
     <div className="space-y-6 text-sm">
       <section className="space-y-6">
-        <AdminStats refreshKey={statsRefreshKey} />
+        <StatsDashboard refreshKey={statsRefreshKey} />
 
         <SyncOperationsDashboard />
 
