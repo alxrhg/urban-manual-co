@@ -1110,6 +1110,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   // Get rating and price level for display
   const rating = enrichedData?.rating || destination.rating;
   const priceLevel = enrichedData?.price_level || destination.price_level;
+  const headerOpeningHours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || (destination as any).opening_hours_json;
+  const headerOpenStatus = headerOpeningHours
+    ? getOpenStatus(headerOpeningHours, destination.city, enrichedData?.timezone_id, enrichedData?.utc_offset)
+    : null;
   const highlightTags: string[] = (
     Array.isArray(destination.tags) && destination.tags.length > 0
       ? destination.tags
@@ -1326,251 +1330,704 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         <div className="p-6">
           {/* Mobile Content */}
           <div className="md:hidden space-y-6">
-          {/* Hero Image */}
-          {destination.image && (
-            <div className="mt-0 -mx-6 mb-6 rounded-none overflow-hidden aspect-[16/10] bg-gray-100 dark:bg-gray-800">
-              <div className="relative w-full h-full">
-                <Image
-                  src={destination.image}
-                  alt={destination.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, 420px"
-                  priority={false}
-                  quality={90}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Identity Block */}
-          <div className="space-y-5">
-            <div>
-              <h1 className="text-2xl font-bold leading-tight text-gray-900 dark:text-white mb-3">
-                {destination.name || 'Destination'}
-              </h1>
-
-            {/* Location */}
-            {(destination.neighborhood || destination.city || destination.country) && (
-              <div className="flex items-start gap-2 text-sm">
-                <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  {destination.neighborhood && (
-                    <div className="font-semibold text-gray-900 dark:text-white mb-0.5">
-                      {destination.neighborhood}
+            <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 shadow-sm backdrop-blur-sm">
+              <div className="p-4 space-y-4">
+                <div className="flex gap-4">
+                  {destination.image && (
+                    <div className="relative h-28 w-28 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+                      <Image
+                        src={destination.image}
+                        alt={destination.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, 420px"
+                        quality={90}
+                      />
                     </div>
                   )}
-                  <div className="text-gray-600 dark:text-gray-400">
-                    {destination.city && capitalizeCity(destination.city)}
-                    {destination.city && destination.country && ', '}
-                    {destination.country && destination.country}
+
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="space-y-1">
+                        <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          {destination.city ? capitalizeCity(destination.city) : 'Destination'}
+                        </p>
+                        <h1 className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">
+                          {destination.name || 'Destination'}
+                        </h1>
+                        {(destination.neighborhood || destination.country) && (
+                          <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+                            <span className="leading-tight">
+                              {destination.neighborhood && `${destination.neighborhood} · `}
+                              {destination.country || ''}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {destination.crown && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                          <Crown className="h-3.5 w-3.5" />
+                          Crown
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {destination.category && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900/60">
+                          <Tag className="h-3.5 w-3.5" />
+                          {destination.category}
+                        </span>
+                      )}
+                      {destination.brand && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900/60">
+                          <Building2 className="h-3.5 w-3.5" />
+                          {destination.brand}
+                        </span>
+                      )}
+                      {rating && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-semibold text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900">
+                          <Star className="h-3.5 w-3.5 fill-current text-yellow-500" />
+                          {rating.toFixed(1)}
+                          {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
+                            <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
+                              ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                      <Star className="h-4 w-4 text-yellow-500" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Rating</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {rating ? rating.toFixed(1) : 'Not rated'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                      <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {headerOpenStatus?.todayHours
+                          ? `${headerOpenStatus.isOpen ? 'Open now' : 'Closed'} · ${headerOpenStatus.todayHours}`
+                          : 'Hours unavailable'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                      <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Pricing</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {priceLevel && priceLevel > 0 ? '$'.repeat(priceLevel) : 'Unknown'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                      <Tag className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Type</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {destination.category || destination.brand || 'Unspecified'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {destination.micro_description && (
+                  <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                    {destination.micro_description}
+                  </p>
+                )}
+
+                {highlightTags.length > 0 && (
+                  <div className="pt-2 border-t border-dashed border-gray-200 dark:border-gray-800">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
+                      Highlights
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {highlightTags.map(tag => (
+                        <span
+                          key={tag}
+                          className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-900 text-xs font-medium text-gray-700 dark:text-gray-200"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 shadow-sm backdrop-blur-sm">
+              <div className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Quick actions</p>
+                  <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                    <List className="h-3.5 w-3.5" />
+                    <span>Stay organized</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {user && (
+                    <button
+                      onClick={async () => {
+                        if (!user) {
+                          router.push('/auth/login');
+                          return;
+                        }
+                        if (!isSaved) {
+                          setShowSaveModal(true);
+                        } else {
+                          try {
+                            const supabaseClient = createClient();
+                            if (!supabaseClient) {
+                              alert('Failed to connect to database. Please try again.');
+                              return;
+                            }
+                            const { error } = await supabaseClient
+                              .from('saved_places')
+                              .delete()
+                              .eq('user_id', user.id)
+                              .eq('destination_slug', destination.slug);
+                            if (!error) {
+                              setIsSaved(false);
+                              if (onSaveToggle) onSaveToggle(destination.slug, false);
+                            }
+                          } catch (error) {
+                            console.error('Error unsaving:', error);
+                          }
+                        }
+                      }}
+                      className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition-all ${
+                        isSaved
+                          ? 'border-gray-900 bg-gray-900 text-white shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
+                      }`}
+                      aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                        {isSaved ? 'Saved' : 'Save'}
+                      </span>
+                      <ChevronDown className="h-3 w-3 opacity-50" />
+                    </button>
+                  )}
+
+                  {user && (
+                    <button
+                      onClick={handleVisitToggle}
+                      className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition-all ${
+                        isVisited
+                          ? 'border-green-500 bg-green-500 text-white shadow-sm'
+                          : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <Check className="h-4 w-4" />
+                        {isVisited ? 'Visited' : 'Mark visited'}
+                      </span>
+                      <ChevronDown className="h-3 w-3 opacity-50" />
+                    </button>
+                  )}
+
+                  <button
+                    onClick={handleShare}
+                    className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Share2 className="h-4 w-4" />
+                      {copied ? 'Copied!' : 'Share'}
+                    </span>
+                    <ExternalLink className="h-3 w-3 opacity-50" />
+                  </button>
+
+                  <a
+                    href={directionsUrl || undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition-all ${
+                      directionsUrl
+                        ? 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
+                        : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
+                    }`}
+                    onClick={(e) => {
+                      if (!directionsUrl) {
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Navigation className="h-4 w-4" />
+                      Directions
+                    </span>
+                    <ExternalLink className="h-3 w-3 opacity-50" />
+                  </a>
+
+                  {destination.website && (
+                    <a
+                      href={destination.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        Website
+                      </span>
+                      <ExternalLink className="h-3 w-3 opacity-50" />
+                    </a>
+                  )}
+
+                  {destination.phone_number && (
+                    <a
+                      href={`tel:${destination.phone_number}`}
+                      className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        Call
+                      </span>
+                      <ExternalLink className="h-3 w-3 opacity-50" />
+                    </a>
+                  )}
+
+                  {isAdmin && destination && (
+                    <button
+                      onClick={() => setIsEditDrawerOpen(true)}
+                      className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800 col-span-2"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Edit className="h-4 w-4" />
+                        Edit destination
+                      </span>
+                      <ChevronDown className="h-3 w-3 opacity-50" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Sign in prompt */}
+            {!user && (
+              <div className="px-1 pb-2">
+                <button
+                  onClick={() => router.push('/auth/login')}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Sign in to save and track visits
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Content */}
+          <div className="hidden md:block space-y-6">
+            <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 shadow-sm backdrop-blur-sm">
+              <div className="p-5 space-y-4">
+                <div className="grid grid-cols-[160px,1fr] gap-5">
+                  {destination.image && (
+                    <div className="relative h-36 w-full rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+                      <Image
+                        src={destination.image}
+                        alt={destination.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, 420px"
+                        quality={90}
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="space-y-1">
+                        <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          {destination.city ? capitalizeCity(destination.city) : 'Destination'}
+                        </p>
+                        <h1 className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">
+                          {destination.name || 'Destination'}
+                        </h1>
+                        {(destination.neighborhood || destination.country) && (
+                          <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+                            <span className="leading-tight">
+                              {destination.neighborhood && `${destination.neighborhood} · `}
+                              {destination.country || ''}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {destination.crown && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                          <Crown className="h-3.5 w-3.5" />
+                          Crown
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {destination.category && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900/60">
+                          <Tag className="h-3.5 w-3.5" />
+                          {destination.category}
+                        </span>
+                      )}
+                      {destination.brand && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900/60">
+                          <Building2 className="h-3.5 w-3.5" />
+                          {destination.brand}
+                        </span>
+                      )}
+                      {rating && (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-semibold text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900">
+                          <Star className="h-3.5 w-3.5 fill-current text-yellow-500" />
+                          {rating.toFixed(1)}
+                          {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
+                            <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
+                              ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                          <Star className="h-4 w-4 text-yellow-500" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Rating</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {rating ? rating.toFixed(1) : 'Not rated'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                          <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {headerOpenStatus?.todayHours
+                              ? `${headerOpenStatus.isOpen ? 'Open now' : 'Closed'} · ${headerOpenStatus.todayHours}`
+                              : 'Hours unavailable'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                          <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Pricing</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {priceLevel && priceLevel > 0 ? '$'.repeat(priceLevel) : 'Unknown'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                          <Tag className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Type</p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {destination.category || destination.brand || 'Unspecified'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {destination.micro_description && (
+                      <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                        {destination.micro_description}
+                      </p>
+                    )}
+
+                    {highlightTags.length > 0 && (
+                      <div className="pt-2 border-t border-dashed border-gray-200 dark:border-gray-800">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
+                          Highlights
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {highlightTags.map(tag => (
+                            <span
+                              key={tag}
+                              className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-900 text-xs font-medium text-gray-700 dark:text-gray-200"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            )}
-
-            {/* Badges */}
-            <div className="flex flex-wrap items-center gap-2">
-                {destination.category && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200">
-                    <Tag className="h-3.5 w-3.5" />
-                    {destination.category}
-                  </span>
-                )}
-                {destination.brand && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900">
-                    <Building2 className="h-3.5 w-3.5" />
-                    {destination.brand}
-                  </span>
-                )}
-                {destination.crown && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-                    <Crown className="h-3.5 w-3.5" />
-                    Crown
-                  </span>
-                )}
-                {rating && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-900 dark:text-gray-100">
-                    <Star className="h-3.5 w-3.5 fill-current text-yellow-500" />
-                    {rating.toFixed(1)}
-                    {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
-                      <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
-                        ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
-                      </span>
-                    )}
-                  </span>
-                )}
-                {priceLevel && priceLevel > 0 && (
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-900 dark:text-gray-100">
-                    <span className="text-green-600 dark:text-green-400 font-semibold">
-                      {'$'.repeat(priceLevel)}
-                    </span>
-                  </span>
-                )}
-              </div>
             </div>
 
-            {/* Description */}
-            {destination.micro_description && (
-              <div className="pt-2">
-                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                  {destination.micro_description}
-                </p>
-              </div>
-            )}
-
-            {highlightTags.length > 0 && (
-              <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
-                  Highlights
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {highlightTags.map(tag => (
-                    <span
-                      key={tag}
-                      className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-900 text-xs font-medium text-gray-700 dark:text-gray-200"
-                    >
-                      {tag}
-                    </span>
-                  ))}
+            <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 shadow-sm backdrop-blur-sm">
+              <div className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Quick actions</p>
+                  <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                    <List className="h-3.5 w-3.5" />
+                    <span>Stay organized</span>
+                  </div>
                 </div>
-              </div>
-            )}
+                <div className="grid grid-cols-2 gap-2.5">
+                  {user && (
+                    <DropdownMenu open={showSaveDropdown} onOpenChange={setShowSaveDropdown}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition-all ${
+                            isSaved
+                              ? 'border-gray-900 bg-gray-900 text-white shadow-sm'
+                              : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
+                          }`}
+                          onClick={(e) => {
+                            if (!isSaved) {
+                              e.preventDefault();
+                              setShowSaveModal(true);
+                            }
+                          }}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Heart className={`h-4 w-4 ${isSaved ? 'fill-current stroke-[3]' : ''}`} />
+                            {isSaved ? 'Saved' : 'Save'}
+                          </span>
+                          <ChevronDown className="h-3 w-3 opacity-50" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      {isSaved && (
+                        <DropdownMenuContent align="start" className="w-52">
+                          <DropdownMenuItem onClick={() => {
+                            setShowSaveModal(true);
+                            setShowSaveDropdown(false);
+                          }}>
+                            <List className="h-3 w-3 mr-2" />
+                            Add to list
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={async () => {
+                            try {
+                              const supabaseClient = createClient();
+                              if (supabaseClient && destination.slug && user) {
+                                const { error } = await supabaseClient
+                                  .from('saved_places')
+                                  .delete()
+                                  .eq('user_id', user.id)
+                                  .eq('destination_slug', destination.slug);
+                                if (!error) {
+                                  setIsSaved(false);
+                                  if (onSaveToggle) onSaveToggle(destination.slug, false);
+                                }
+                              }
+                            } catch (error) {
+                              console.error('Error unsaving:', error);
+                              toast.error('Failed to unsave. Please try again.');
+                            }
+                            setShowSaveDropdown(false);
+                          }}>
+                            <X className="h-3 w-3 mr-2" />
+                            Remove from Saved
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      )}
+                    </DropdownMenu>
+                  )}
 
-            {/* Action Buttons */}
-            <div className="pt-6 border-t border-gray-200 dark:border-gray-800">
-              <div className="grid grid-cols-2 gap-2.5">
-                {user && (
                   <button
-                    onClick={async () => {
-                      if (!user) {
-                        router.push('/auth/login');
-                        return;
-                      }
-                      if (!isSaved) {
-                        setShowSaveModal(true);
-                      } else {
-                        try {
-                          const supabaseClient = createClient();
-                          if (!supabaseClient) {
-                            alert('Failed to connect to database. Please try again.');
-                            return;
-                          }
-                          const { error } = await supabaseClient
-                            .from('saved_places')
-                            .delete()
-                            .eq('user_id', user.id)
-                            .eq('destination_slug', destination.slug);
-                          if (!error) {
-                            setIsSaved(false);
-                            if (onSaveToggle) onSaveToggle(destination.slug, false);
-                          }
-                        } catch (error) {
-                          console.error('Error unsaving:', error);
-                        }
-                      }
-                    }}
-                    className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
-                      isSaved
-                        ? 'border-gray-900 bg-gray-900 text-white shadow-sm'
-                        : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
-                    }`}
-                    aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
+                    className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                    onClick={handleShare}
                   >
-                    <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                    {isSaved ? 'Saved' : 'Save'}
+                    <span className="flex items-center gap-2">
+                      <Share2 className="h-4 w-4" />
+                      {copied ? 'Copied!' : 'Share'}
+                    </span>
+                    <ExternalLink className="h-3 w-3 opacity-50" />
                   </button>
-                )}
 
-                {user && (
-                  <button
-                    onClick={handleVisitToggle}
-                    className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
-                      isVisited
-                        ? 'border-green-500 bg-green-500 text-white shadow-sm'
-                        : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
-                    }`}
-                  >
-                    <Check className="h-4 w-4" />
-                    {isVisited ? 'Visited' : 'Mark Visited'}
-                  </button>
-                )}
+                  {user && (
+                    <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition-all ${
+                            isVisited
+                              ? 'border-green-500 bg-green-500 text-white shadow-sm'
+                              : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
+                          }`}
+                          onClick={(e) => {
+                            if (!isVisited) {
+                              e.preventDefault();
+                              handleVisitToggle();
+                            }
+                          }}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
+                            {isVisited ? 'Visited' : 'Mark visited'}
+                          </span>
+                          {isVisited && <ChevronDown className="h-3 w-3 opacity-50" />}
+                        </button>
+                      </DropdownMenuTrigger>
+                      {isVisited && (
+                        <DropdownMenuContent align="start" className="w-52">
+                          <DropdownMenuItem onClick={() => {
+                            setShowVisitedModal(true);
+                            setShowVisitedDropdown(false);
+                          }}>
+                            <Plus className="h-3 w-3 mr-2" />
+                            Add Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            handleVisitToggle();
+                            setShowVisitedDropdown(false);
+                          }}>
+                            <X className="h-3 w-3 mr-2" />
+                            Remove Visit
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      )}
+                    </DropdownMenu>
+                  )}
 
-                <button
-                  onClick={handleShare}
-                  className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                >
-                  <Share2 className="h-4 w-4" />
-                  {copied ? 'Copied!' : 'Share'}
-                </button>
+                  {destination.slug && destination.slug.trim() ? (
+                    <Link
+                      href={`/destination/${destination.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                    >
+                      <span className="flex items-center gap-2">
+                        <ExternalLink className="h-4 w-4" />
+                        View Full Page
+                      </span>
+                      <ExternalLink className="h-3 w-3 opacity-50" />
+                    </Link>
+                  ) : null}
 
-                <a
-                  href={directionsUrl || undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`flex items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition-all ${
-                    directionsUrl
-                      ? 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
-                      : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
-                  }`}
-                  onClick={(e) => {
-                    if (!directionsUrl) {
-                      e.preventDefault();
-                    }
-                  }}
-                >
-                  <Navigation className="h-4 w-4" />
-                  Directions
-                </a>
-
-                {/* Website Quick Action */}
-                {destination.website && (
                   <a
-                    href={destination.website}
+                    href={directionsUrl || undefined}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                    className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition-all ${
+                      directionsUrl
+                        ? 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
+                        : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
+                    }`}
+                    onClick={(e) => {
+                      if (!directionsUrl) {
+                        e.preventDefault();
+                      }
+                    }}
                   >
-                    <Globe className="h-4 w-4" />
-                    Website
+                    <span className="flex items-center gap-2">
+                      <Navigation className="h-4 w-4" />
+                      Directions
+                    </span>
+                    <ExternalLink className="h-3 w-3 opacity-50" />
                   </a>
-                )}
 
-                {/* Call Quick Action */}
-                {destination.phone_number && (
-                  <a
-                    href={`tel:${destination.phone_number}`}
-                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                  >
-                    <Phone className="h-4 w-4" />
-                    Call
-                  </a>
-                )}
+                  {destination.website && (
+                    <a
+                      href={destination.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Globe className="h-4 w-4" />
+                        Website
+                      </span>
+                      <ExternalLink className="h-3 w-3 opacity-50" />
+                    </a>
+                  )}
 
-                {isAdmin && destination && (
-                  <button
-                    onClick={() => setIsEditDrawerOpen(true)}
-                    className="flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800 col-span-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Edit destination
-                  </button>
-                )}
+                  {destination.phone_number && (
+                    <a
+                      href={`tel:${destination.phone_number}`}
+                      className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        Call
+                      </span>
+                      <ExternalLink className="h-3 w-3 opacity-50" />
+                    </a>
+                  )}
+
+                  {isAdmin && destination && (
+                    <button
+                      onClick={() => setIsEditDrawerOpen(true)}
+                      className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800 col-span-2"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Edit className="h-4 w-4" />
+                        Edit destination
+                      </span>
+                      <ChevronDown className="h-3 w-3 opacity-50" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
+            {!user && (
+              <div className="mt-2">
+                <button
+                  onClick={() => router.push('/auth/login')}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Sign in to save and track visits
+                </button>
+              </div>
+            )}
+
+            {/* Divider */}
+            <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
+            {/* Divider */}
++            <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
           {/* Sign in prompt */}
-          {!user && (
-            <div className="px-6 pb-4">
-              <button
-                onClick={() => router.push('/auth/login')}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-              >
-                Sign in to save and track visits
-              </button>
-            </div>
-          )}
+            {!user && (
+              <div className="px-1 pb-2">
+                <button
+                  onClick={() => router.push('/auth/login')}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Sign in to save and track visits
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Desktop Content */}
