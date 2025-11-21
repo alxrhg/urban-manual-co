@@ -11,7 +11,6 @@ import {
   LogOut,
   Bookmark,
   ChevronRight,
-  Loader2,
   Trophy,
   Folder,
   ArrowLeft,
@@ -27,6 +26,16 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { CARD_MEDIA, CARD_META, CARD_TITLE, CARD_WRAPPER } from "@/components/CardStyles";
+import {
+  EmptyState,
+  NoCollectionsEmptyState,
+  NoSavedPlacesEmptyState,
+  NoVisitedPlacesEmptyState,
+} from "@/components/EmptyStates";
+import { DestinationGridSkeleton } from "@/components/skeletons/DestinationCardSkeleton";
 import type { Trip } from "@/types/trip";
 import type { Collection } from "@/types/common";
 
@@ -278,6 +287,52 @@ export function AccountDrawer() {
 
   const displayUsername = username || user?.email?.split("@")[0] || "user";
 
+  const getTripStatus = (trip: Trip) => {
+    const today = new Date();
+    const startDate = trip.start_date ? new Date(trip.start_date) : null;
+    const endDate = trip.end_date ? new Date(trip.end_date) : null;
+
+    if (startDate && endDate) {
+      if (endDate < today) {
+        return {
+          label: 'Completed',
+          className: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/30 dark:text-emerald-200',
+        };
+      }
+
+      if (startDate <= today && endDate >= today) {
+        return {
+          label: 'In progress',
+          className: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/40 dark:bg-blue-900/30 dark:text-blue-200',
+        };
+      }
+
+      return {
+        label: 'Upcoming',
+        className: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/30 dark:text-amber-200',
+      };
+    }
+
+    if (startDate) {
+      if (startDate > today) {
+        return {
+          label: 'Upcoming',
+          className: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/30 dark:text-amber-200',
+        };
+      }
+
+      return {
+        label: 'In progress',
+        className: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/40 dark:bg-blue-900/30 dark:text-blue-200',
+      };
+    }
+
+    return {
+      label: 'Draft',
+      className: 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300',
+    };
+  };
+
   // Navigation handler
   const navigateToSubpage = (subpage: SubpageId, tripId?: string) => {
     if (tripId) {
@@ -516,78 +571,73 @@ export function AccountDrawer() {
   const renderVisitedSubpage = () => (
     <div className="px-6 py-6 space-y-6">
       {loading ? (
-        <div className="text-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading your visits...</p>
-        </div>
+        <DestinationGridSkeleton count={6} />
       ) : visitedPlaces.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {visitedPlaces.map((visit, index) => (
             <button
               key={index}
               onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
-              className="w-full flex items-center gap-4 p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all text-left group"
+              className={`${CARD_WRAPPER} w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-lg/60 text-left p-1.5`}
             >
-              {visit.destination?.image ? (
-                <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-gray-200 dark:ring-gray-800">
+              <div className={`${CARD_MEDIA} aspect-[4/3]`}>
+                {visit.destination?.image ? (
                   <Image
                     src={visit.destination.image}
                     alt={visit.destination.name}
                     fill
-                    className="object-cover"
-                    sizes="56px"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 768px) 80vw, 40vw"
                   />
-                </div>
-              ) : (
-                <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-gray-400" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
-                  {visit.destination?.name || visit.slug}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  {visit.destination?.city && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {visit.destination.city}
-                    </p>
-                  )}
-                  {visit.visited_at && (
-                    <>
-                      {visit.destination?.city && <span className="text-gray-300 dark:text-gray-600">•</span>}
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {new Date(visit.visited_at).toLocaleDateString("en-US", { 
-                          month: "short", 
-                          day: "numeric",
-                          year: "numeric"
-                        })}
-                      </p>
-                    </>
-                  )}
-                </div>
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-gray-300 dark:text-gray-700">
+                    <MapPin className="h-8 w-8 opacity-60" />
+                  </div>
+                )}
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0" />
+              <div className="flex items-start justify-between gap-3 pt-3 px-2 pb-1">
+                <div className="min-w-0 space-y-1">
+                  <p className={`${CARD_TITLE} truncate`}>{visit.destination?.name || visit.slug}</p>
+                  <div className={`${CARD_META} flex-wrap gap-1.5`}>
+                    {visit.destination?.city && (
+                      <span className="capitalize">{visit.destination.city}</span>
+                    )}
+                    {visit.visited_at && (
+                      <>
+                        {visit.destination?.city && <span className="text-gray-300 dark:text-gray-700">•</span>}
+                        <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                          {new Date(visit.visited_at).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <Badge
+                  variant="outline"
+                  className="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/30 dark:text-emerald-200"
+                >
+                  Visited
+                </Badge>
+              </div>
             </button>
           ))}
         </div>
       ) : (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
-            <MapPin className="w-8 h-8 text-gray-400" />
-          </div>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">No visited places yet</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Mark places as visited to see them here</p>
-        </div>
+        <NoVisitedPlacesEmptyState />
       )}
       {visitedPlaces.length > 0 && (
         <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => handleNavigateToFullPage("/account?tab=visited")}
-            className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => handleNavigateToFullPage('/account?tab=visited')}
           >
-            View All Visited
-          </button>
+            View all visited
+          </Button>
         </div>
       )}
     </div>
@@ -597,64 +647,61 @@ export function AccountDrawer() {
   const renderSavedSubpage = () => (
     <div className="px-6 py-6 space-y-6">
       {loading ? (
-        <div className="text-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading your saved places...</p>
-        </div>
+        <DestinationGridSkeleton count={6} />
       ) : savedPlaces.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {savedPlaces.map((saved, index) => (
             <button
               key={index}
               onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
-              className="w-full flex items-center gap-4 p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all text-left group"
+              className={`${CARD_WRAPPER} w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-lg/60 text-left p-1.5`}
             >
-              {saved.destination?.image ? (
-                <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-gray-200 dark:ring-gray-800">
+              <div className={`${CARD_MEDIA} aspect-[4/3]`}>
+                {saved.destination?.image ? (
                   <Image
                     src={saved.destination.image}
                     alt={saved.destination.name}
                     fill
-                    className="object-cover"
-                    sizes="56px"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    sizes="(max-width: 768px) 80vw, 40vw"
                   />
-                </div>
-              ) : (
-                <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center">
-                  <Bookmark className="w-5 h-5 text-gray-400" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
-                  {saved.destination?.name || saved.slug}
-                </p>
-                {saved.destination?.city && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 truncate">
-                    {saved.destination.city}
-                  </p>
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-gray-300 dark:text-gray-700">
+                    <Bookmark className="h-8 w-8 opacity-60" />
+                  </div>
                 )}
               </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0" />
+              <div className="flex items-start justify-between gap-3 pt-3 px-2 pb-1">
+                <div className="min-w-0 space-y-1">
+                  <p className={`${CARD_TITLE} truncate`}>{saved.destination?.name || saved.slug}</p>
+                  {saved.destination?.city && (
+                    <div className={`${CARD_META}`}>
+                      <span className="text-[11px] text-gray-500 dark:text-gray-400">{saved.destination.city}</span>
+                    </div>
+                  )}
+                </div>
+                <Badge
+                  variant="outline"
+                  className="border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/30 dark:text-amber-200"
+                >
+                  Saved
+                </Badge>
+              </div>
             </button>
           ))}
         </div>
       ) : (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
-            <Bookmark className="w-8 h-8 text-gray-400" />
-          </div>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">No saved places yet</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Save places you want to visit later</p>
-        </div>
+        <NoSavedPlacesEmptyState />
       )}
       {savedPlaces.length > 0 && (
         <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => handleNavigateToFullPage("/account?tab=saved")}
-            className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => handleNavigateToFullPage('/account?tab=saved')}
           >
-            View All Saved
-          </button>
+            View all saved
+          </Button>
         </div>
       )}
     </div>
@@ -664,70 +711,62 @@ export function AccountDrawer() {
   const renderCollectionsSubpage = () => (
     <div className="px-6 py-6 space-y-6">
       {loading ? (
-        <div className="text-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading collections...</p>
-        </div>
+        <DestinationGridSkeleton count={4} />
       ) : collections.length > 0 ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {collections.map((collection) => (
             <button
               key={collection.id}
               onClick={() => handleNavigateToFullPage(`/collection/${collection.id}`)}
-              className="w-full rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-4 text-left shadow-sm hover:shadow-md hover:border-gray-300 dark:hover:border-gray-700 transition-all group"
+              className={`${CARD_WRAPPER} w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-lg/60 text-left p-4`}
             >
-              <div className="flex items-start gap-4">
+              <div className="flex items-start gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 text-xl flex-shrink-0 ring-1 ring-gray-200 dark:ring-gray-800">
                   <span>{collection.emoji || '📚'}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
-                      {collection.name}
-                    </p>
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center gap-2">
+                    <p className={`${CARD_TITLE} truncate`}>{collection.name}</p>
                     {collection.is_public && (
-                      <span className="px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium flex-shrink-0">
+                      <Badge
+                        variant="outline"
+                        className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/40 dark:bg-blue-900/30 dark:text-blue-200"
+                      >
                         Public
-                      </span>
+                      </Badge>
                     )}
                   </div>
                   {collection.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                       {collection.description}
                     </p>
                   )}
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                    {(collection.destination_count || 0).toLocaleString()} {collection.destination_count === 1 ? 'place' : 'places'}
-                  </p>
+                  <div className={`${CARD_META} gap-1.5`}>
+                    <span>
+                      {(collection.destination_count || 0).toLocaleString()} {collection.destination_count === 1 ? 'place' : 'places'}
+                    </span>
+                    <span className="text-gray-300 dark:text-gray-700">•</span>
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400">
+                      {new Date(collection.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </span>
+                  </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0 mt-1" />
               </div>
             </button>
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 px-6 py-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
-            <Folder className="w-8 h-8 text-gray-400" />
-          </div>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">No collections yet</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Create lists to group your favorite places</p>
-          <button
-            onClick={() => handleNavigateToFullPage('/account?tab=collections')}
-            className="inline-flex items-center justify-center rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2.5 text-sm font-semibold shadow-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
-          >
-            Start a collection
-          </button>
-        </div>
+        <NoCollectionsEmptyState onCreateCollection={() => handleNavigateToFullPage('/account?tab=collections')} />
       )}
       {collections.length > 0 && (
         <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => handleNavigateToFullPage("/account?tab=collections")}
-            className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => handleNavigateToFullPage('/account?tab=collections')}
           >
-            Manage Collections
-          </button>
+            Manage collections
+          </Button>
         </div>
       )}
     </div>
@@ -736,84 +775,86 @@ export function AccountDrawer() {
   // Render trips subpage
   const renderTripsSubpage = () => (
     <div className="px-6 py-6 space-y-6">
-      <button
+      <Button
+        size="lg"
+        className="w-full justify-center gap-2"
         onClick={() => {
           closeDrawer();
           setTimeout(() => {
             router.push('/trips');
           }, 200);
         }}
-        className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md flex items-center justify-center gap-2"
       >
         <Plus className="w-4 h-4" />
-        New Trip
-      </button>
+        New trip
+      </Button>
       {loading ? (
-        <div className="text-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading your trips...</p>
-        </div>
+        <DestinationGridSkeleton count={4} />
       ) : trips.length > 0 ? (
-        <div className="space-y-3">
-          {trips.map((trip) => (
-            <button
-              key={trip.id}
-              onClick={() => navigateToSubpage('trip_details_subpage', trip.id)}
-              className="w-full flex items-center gap-4 p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-all text-left group"
-            >
-              {trip.cover_image ? (
-                <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ring-1 ring-gray-200 dark:ring-gray-800">
-                  <Image
-                    src={trip.cover_image}
-                    alt={trip.title}
-                    fill
-                    className="object-cover"
-                    sizes="56px"
-                  />
+        <div className="space-y-4">
+          {trips.map((trip) => {
+            const status = getTripStatus(trip);
+            return (
+              <button
+                key={trip.id}
+                onClick={() => navigateToSubpage('trip_details_subpage', trip.id)}
+                className={`${CARD_WRAPPER} w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-lg/60 text-left p-1.5`}
+              >
+                <div className={`${CARD_MEDIA} aspect-[4/3]`}>
+                  {trip.cover_image ? (
+                    <Image
+                      src={trip.cover_image}
+                      alt={trip.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      sizes="(max-width: 768px) 80vw, 40vw"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-gray-300 dark:text-gray-700">
+                      <Compass className="h-8 w-8 opacity-60" />
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 flex-shrink-0 flex items-center justify-center">
-                  <Compass className="w-5 h-5 text-gray-400" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200 transition-colors">
-                  {trip.title}
-                </p>
-                {trip.start_date && (
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {new Date(trip.start_date).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric"
-                      })}
-                    </p>
+                <div className="flex items-start justify-between gap-3 pt-3 px-2 pb-1">
+                  <div className="min-w-0 space-y-1">
+                    <p className={`${CARD_TITLE} truncate`}>{trip.title}</p>
+                    {(trip.start_date || trip.end_date) && (
+                      <div className={`${CARD_META} gap-1.5`}>
+                        <span className="text-[11px] text-gray-600 dark:text-gray-400">
+                          {trip.start_date
+                            ? new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                            : 'Unscheduled'}
+                          {trip.end_date && ` — ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors flex-shrink-0" />
-            </button>
-          ))}
+                  <Badge variant="outline" className={status.className}>
+                    {status.label}
+                  </Badge>
+                </div>
+              </button>
+            );
+          })}
         </div>
       ) : (
-        <div className="text-center py-16">
-          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
-            <Compass className="w-8 h-8 text-gray-400" />
-          </div>
-          <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">No trips yet</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">Plan your next adventure</p>
-        </div>
+        <EmptyState
+          icon="🧭"
+          title="No trips yet"
+          description="Plan your next adventure and keep itineraries synced"
+          actionLabel="Start a trip"
+          onAction={() => handleNavigateToFullPage('/trips')}
+        />
       )}
       {trips.length > 0 && (
         <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => handleNavigateToFullPage("/trips")}
-            className="w-full px-4 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors text-sm font-semibold shadow-sm hover:shadow-md"
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() => handleNavigateToFullPage('/trips')}
           >
-            View All Trips
-          </button>
+            View all trips
+          </Button>
         </div>
       )}
     </div>
