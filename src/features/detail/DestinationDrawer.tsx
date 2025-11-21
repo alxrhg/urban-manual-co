@@ -659,13 +659,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     </div>
   );
 
-  // Don't render drawer if destination is null
-  if (!destination) return null;
-
   return (
     <>
       <Drawer
-        isOpen={isOpen && !!destination}
+        isOpen={isOpen}
         onClose={onClose}
         headerContent={headerContent}
         footerContent={footerContent}
