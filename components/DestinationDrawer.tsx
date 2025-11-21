@@ -2050,7 +2050,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </>
           )}
         </div>
-      </div>
     </Drawer>
 
     {/* Lists Modal */}
