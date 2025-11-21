@@ -478,12 +478,15 @@ export async function POST(
       },
     });
   } catch (error: any) {
-    console.error('Conversation streaming API error:', error);
+    // Use logger instead of console.error
+    const { logError } = await import('@/lib/utils/logger');
+    logError('Conversation streaming API error', error);
+    
     return new Response(
       encoder.encode(createSSEMessage({
         type: 'error',
         error: 'Failed to initialize conversation stream',
-        details: error.message
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       })),
       {
         status: 500,

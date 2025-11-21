@@ -264,9 +264,15 @@ export async function POST(
       model: usedModel,
     });
   } catch (error: any) {
-    console.error('Conversation API error:', error);
+    // Use logger instead of console.error
+    const { logError } = await import('@/lib/utils/logger');
+    logError('Conversation API error', error);
+    
     return NextResponse.json(
-      { error: 'Failed to process conversation', details: error.message },
+      {
+        error: 'Failed to process conversation',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
       { status: 500 }
     );
   }
@@ -285,9 +291,17 @@ export async function GET(
 
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const params = await context.params;
+    
+    // Handle params - support both Promise and direct object (for compatibility)
+    let params: { user_id?: string };
+    if (context.params && typeof (context.params as any).then === 'function') {
+      params = await context.params;
+    } else {
+      params = context.params as { user_id?: string };
+    }
+    
     const { user_id } = params || {};
-    const userId = normalizeUserId(user?.id || user_id || undefined);
+    const userId = normalizeUserId(user?.id || user_id || 'guest');
 
     const session = await getOrCreateSession(userId, session_token);
     if (!session) {
@@ -305,7 +319,17 @@ export async function GET(
       last_activity: session.lastActivity,
     });
   } catch (error: any) {
-    console.error('Error fetching conversation:', error);
-    return NextResponse.json({ error: 'Failed to fetch conversation' }, { status: 500 });
+    // Use logger instead of console.error
+    const { logError } = await import('@/lib/utils/logger');
+    logError('Error fetching conversation', error);
+    
+    // Return proper error response
+    return NextResponse.json(
+      { 
+        error: 'Failed to fetch conversation',
+        details: process.env.NODE_ENV === 'development' ? error?.message : undefined
+      },
+      { status: 500 }
+    );
   }
 }
