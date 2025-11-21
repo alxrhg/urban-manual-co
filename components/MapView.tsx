@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { Destination } from '@/types/destination';
 import AppleMapView from '@/components/maps/AppleMapView';
 import MapboxMultiMap from '@/components/maps/MapboxMultiMap';
