@@ -616,6 +616,19 @@ export default function Home() {
   const [enrichedGreetingContext, setEnrichedGreetingContext] =
     useState<any>(null);
 
+  const isHolidaySeason = useMemo(() => {
+    const month = new Date().getMonth();
+    const season = seasonalContext?.season?.toString().toLowerCase();
+    const theme = seasonalContext?.theme?.toString().toLowerCase();
+
+    return (
+      month === 11 ||
+      season === "winter" ||
+      theme === "holiday" ||
+      theme === "christmas"
+    );
+  }, [seasonalContext]);
+
   // Track submitted query for chat display
   const [submittedQuery, setSubmittedQuery] = useState<string>("");
   const [followUpInput, setFollowUpInput] = useState<string>("");
@@ -2348,8 +2361,19 @@ export default function Home() {
           The Urban Manual
         </h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
-          <div className="w-full flex md:justify-start flex-1 items-center">
+        <section
+          className={`min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12 relative overflow-hidden ${
+            isHolidaySeason ? "seasonal-hero-bg" : ""
+          }`}
+          aria-label="Greeting and search"
+        >
+          {isHolidaySeason && (
+            <>
+              <div className="seasonal-hero__backdrop" aria-hidden="true" />
+              <div className="seasonal-hero__snow" aria-hidden="true" />
+            </>
+          )}
+          <div className="w-full flex md:justify-start flex-1 items-center relative z-10">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
               <div className="flex-1 flex items-center">
