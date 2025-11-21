@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Loader2, MapPin, Calendar } from 'lucide-react';
 import { Drawer } from '@/components/ui/Drawer';
 import type { Trip, ItineraryItemNotes } from '@/types/trip';
+import { useToast } from '@/hooks/useToast';
 
 interface AddToTripModalProps {
   destinationSlug: string;
@@ -23,6 +24,7 @@ export function AddToTripModal({
   onAdd,
 }: AddToTripModalProps) {
   const { user } = useAuth();
+  const toast = useToast();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState<string | null>(null);
@@ -36,10 +38,14 @@ export function AddToTripModal({
     end_date: '',
   });
   const [creating, setCreating] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen && user) {
       fetchTrips();
+    } else if (isOpen && !user) {
+      setLoading(false);
     }
   }, [isOpen, user]);
 
@@ -65,12 +71,18 @@ export function AddToTripModal({
   }
 
   async function handleAddToTrip(tripId: string) {
+    setActionError(null);
+    if (!user) {
+      const message = 'Please sign in to add this place to a trip.';
+      setActionError(message);
+      toast.error(message);
+      return;
+    }
+
     setAdding(tripId);
     try {
       const supabaseClient = createClient();
-      if (!supabaseClient || !user) {
-        throw new Error('Not authenticated');
-      }
+      if (!supabaseClient) throw new Error('Unable to reach the database client.');
 
       // First verify the trip exists and belongs to the user
       const { data: trip, error: tripError } = await supabaseClient
@@ -186,22 +198,33 @@ export function AddToTripModal({
       console.error('Error adding to trip:', error);
       const errorMessage = error?.message || 'Failed to add destination to trip. Please try again.';
       console.error('Full error details:', error);
-      alert(errorMessage);
+      setActionError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setAdding(null);
     }
   }
 
   async function handleCreateTrip() {
+    setFormError(null);
+    setActionError(null);
+
+    if (!user) {
+      const message = 'Please sign in to create and save trips.';
+      setFormError(message);
+      toast.error(message);
+      return;
+    }
+
     if (!newTrip.title.trim()) {
-      alert('Please enter a trip title');
+      setFormError('Trip title is required.');
       return;
     }
 
     setCreating(true);
     try {
       const supabaseClient = createClient();
-      if (!supabaseClient || !user) return;
+      if (!supabaseClient) throw new Error('Unable to reach the database client.');
 
       const { data, error } = await (supabaseClient
         .from('trips')
@@ -230,7 +253,9 @@ export function AddToTripModal({
       await fetchTrips();
     } catch (error: any) {
       console.error('Error creating trip:', error);
-      alert(error?.message || 'Failed to create trip. Please try again.');
+      const errorMessage = error?.message || 'Failed to create trip. Please try again.';
+      setFormError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setCreating(false);
     }
@@ -262,18 +287,33 @@ export function AddToTripModal({
   const completedTrips = trips.filter(t => t.status === 'completed');
 
   const content = (
-    <div className="px-5 py-6">
+    <div className="px-5 py-6 space-y-4">
+      {!user && (
+        <div className="p-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800">
+          <p className="text-sm text-gray-700 dark:text-gray-300 font-medium mb-2">Sign in to save trips</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            You need an account to create trips and add places. Please sign in to continue.
+          </p>
+        </div>
+      )}
+
       {/* Selected Place Preview */}
       {destinationName && (
-        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
+        <div className="p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Adding <span className="font-medium text-gray-900 dark:text-white">{destinationName}</span> to your trip
           </p>
         </div>
       )}
 
+      {actionError && !showCreateForm && (
+        <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+          <p className="text-sm text-red-700 dark:text-red-200">{actionError}</p>
+        </div>
+      )}
+
       {/* Trip List - Grouped by status */}
-      {!showCreateForm && (
+      {user && !showCreateForm && (
         <div className="space-y-6">
           {loading ? (
             <div className="flex items-center justify-center py-12">
@@ -458,6 +498,62 @@ export function AddToTripModal({
                   </div>
                 </div>
               )}
+
+              {/* Completed Trips */}
+              {completedTrips.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Completed Trips
+                  </h3>
+                  <div className="space-y-2">
+                    {completedTrips.map((trip) => {
+                      const startDate = formatDateForDisplay(trip.start_date);
+                      const endDate = formatDateForDisplay(trip.end_date);
+                      return (
+                        <button
+                          key={trip.id}
+                          onClick={() => handleAddToTrip(trip.id)}
+                          disabled={adding === trip.id}
+                          className="w-full text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-180 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                                {trip.title}
+                              </h4>
+                              {(startDate || endDate || trip.destination) && (
+                                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                  {trip.destination && (
+                                    <span className="flex items-center gap-1">
+                                      <MapPin className="h-3 w-3" />
+                                      {trip.destination}
+                                    </span>
+                                  )}
+                                  {(startDate || endDate) && (
+                                    <span className="flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      {startDate && endDate
+                                        ? `${startDate} - ${endDate}`
+                                        : startDate || endDate}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            {adding === trip.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
+                            ) : (
+                              <span className="text-xs font-medium text-gray-900 dark:text-white flex-shrink-0">
+                                Add
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
@@ -472,12 +568,19 @@ export function AddToTripModal({
               onClick={() => {
                 setShowCreateForm(false);
                 setNewTrip({ title: '', description: '', destination: '', hotel: '', start_date: '', end_date: '' });
+                setFormError(null);
               }}
               className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               Cancel
             </button>
           </div>
+
+          {formError && (
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+              <p className="text-sm text-red-700 dark:text-red-200">{formError}</p>
+            </div>
+          )}
 
           <div className="space-y-5">
             {/* Trip Name */}
@@ -490,7 +593,11 @@ export function AddToTripModal({
                 value={newTrip.title}
                 onChange={(e) => setNewTrip({ ...newTrip, title: e.target.value })}
                 placeholder="Summer in Paris"
-                className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                className={`w-full px-4 py-2.5 border rounded-xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
+                  formError && !newTrip.title.trim()
+                    ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-500'
+                    : 'border-gray-200 dark:border-gray-800 focus:border-black dark:focus:border-white'
+                }`}
                 autoFocus
               />
             </div>
