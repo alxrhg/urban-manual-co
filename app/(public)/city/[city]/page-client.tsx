@@ -235,11 +235,11 @@ export default function CityPageClient() {
 
   if (loading) {
     return (
-      <main className="w-full px-6 md:px-10 lg:px-12 py-20">
+      <div className="w-full px-6 md:px-10 lg:px-12 py-20">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-sm text-gray-500 dark:text-gray-400">Loading...</div>
         </div>
-      </main>
+      </div>
     );
   }
 
@@ -262,7 +262,7 @@ export default function CityPageClient() {
 
   return (
     <>
-      <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
+      <div className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-[60vh]">
         <div className="max-w-[1800px] mx-auto">
           {/* Header - Minimal design matching homepage */}
           <div className="mb-12">
@@ -511,7 +511,7 @@ export default function CityPageClient() {
             </div>
           )}
         </div>
-      </main>
+      </div>
 
       {/* Destination Drawer - Only render when open */}
       {isDrawerTypeOpen('destination') && selectedDestination && (

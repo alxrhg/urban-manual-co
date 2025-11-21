@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+// Header and Footer are now provided by PublicLayout for public routes
+// Private routes should implement their own layout if needed
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
@@ -198,11 +198,9 @@ export default function RootLayout({
                   <Suspense fallback={null}>
                     <AdminEditModeProvider>
                       <ItineraryProvider>
-                        <Header />
-                        <main className="min-h-screen page-transition">
-                          {children}
-                        </main>
-                        <Footer />
+                        {/* Public routes (homepage, city, destination, etc.) use PublicLayout via (public) route group */}
+                        {/* Private routes should implement their own layout */}
+                        {children}
                         <CookieConsent />
                       </ItineraryProvider>
                     </AdminEditModeProvider>
