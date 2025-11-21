@@ -33,14 +33,14 @@ export default function MapView({
     setProviderError(null);
   }, [providerIndex]);
 
-  const handleProviderError = (message: string) => {
+  const handleProviderError = useCallback((message: string) => {
     if (hasFallback) {
       setProviderIndex(prev => Math.min(prev + 1, providerOptions.length - 1));
       return;
     }
 
     setProviderError(message || 'Unable to load the selected map provider.');
-  };
+  }, [hasFallback, providerOptions.length]);
 
   if (!provider) {
     return (
