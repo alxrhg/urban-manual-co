@@ -53,7 +53,7 @@ export default function MapPage() {
 
           try {
             const response = await fetch(
-              `https://maps.googleapis.com/maps/api/place/details/json?placeid=${place.place_id}&key=${googleApiKey}&fields=geometry/location`
+              `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&key=${googleApiKey}&fields=geometry/location`
             );
 
             if (!response.ok) {
