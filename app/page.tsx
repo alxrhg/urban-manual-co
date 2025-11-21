@@ -27,7 +27,7 @@ import { getCategoryIconComponent } from "@/lib/icons/category-icons";
 // Lazy load drawer (only when opened)
 const DestinationDrawer = dynamic(
   () =>
-    import("@/src/features/detail/DestinationDrawer").then(mod => ({
+    import("@/components/DestinationDrawer").then(mod => ({
       default: mod.DestinationDrawer,
     })),
   {
@@ -3384,8 +3384,8 @@ export default function Home() {
               </div>
             </div>
 
-        {/* Destination Drawer - Only render when open and NOT in map view */}
-        {isDrawerOpen('destination') && selectedDestination && viewMode !== 'map' && (
+        {/* Destination Drawer - Only render when open */}
+        {isDrawerOpen('destination') && selectedDestination && (
           <DestinationDrawer
             destination={selectedDestination}
             isOpen={true}

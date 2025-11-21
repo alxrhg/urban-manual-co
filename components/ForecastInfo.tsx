@@ -100,3 +100,5 @@ export function ForecastInfo({ destinationId, compact = false }: ForecastInfoPro
 
 
 
+
+
