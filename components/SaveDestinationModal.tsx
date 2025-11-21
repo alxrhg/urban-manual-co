@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Collection } from '@/types/personalization';
 import { CollectionsManager } from './CollectionsManager';
 import { X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/useToast';
 
 interface SaveDestinationModalProps {
   destinationId: number;
@@ -23,14 +25,18 @@ export function SaveDestinationModal({
   onSave,
 }: SaveDestinationModalProps) {
   const { user } = useAuth();
+  const toast = useToast();
   const [currentCollectionId, setCurrentCollectionId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && user) {
       loadCurrentSave();
+    } else if (isOpen && !user) {
+      setCurrentCollectionId(null);
     }
-  }, [isOpen, destinationId]);
+  }, [isOpen, destinationId, user]);
 
   async function loadCurrentSave() {
     try {
@@ -55,9 +61,14 @@ export function SaveDestinationModal({
   }
 
   async function handleSave(collectionId: string | null) {
+    if (!user) {
+      setError('Sign in to save destinations to your lists.');
+      return;
+    }
+
     setSaving(true);
+    setError(null);
     try {
-      if (!user) return;
       const supabaseClient = createClient();
 
       // Check if already saved
@@ -123,16 +134,22 @@ export function SaveDestinationModal({
       onClose();
     } catch (error) {
       console.error('Error saving destination:', error);
-      alert('Failed to save destination. Please try again.');
+      setError('Failed to save destination. Please try again.');
+      toast.error('Failed to save destination. Please try again.');
     } finally {
       setSaving(false);
     }
   }
 
   async function handleUnsave() {
+    if (!user) {
+      setError('Sign in to manage your saved destinations.');
+      return;
+    }
+
     setSaving(true);
+    setError(null);
     try {
-      if (!user) return;
       const supabaseClient = createClient();
 
       // Delete from saved_destinations
@@ -161,7 +178,8 @@ export function SaveDestinationModal({
       onClose();
     } catch (error) {
       console.error('Error unsaving destination:', error);
-      alert('Failed to unsave destination. Please try again.');
+      setError('Failed to unsave destination. Please try again.');
+      toast.error('Failed to unsave destination. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -182,30 +200,53 @@ export function SaveDestinationModal({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
-          <CollectionsManager
-            destinationId={destinationId}
-            onCollectionSelect={handleSave}
-          />
-        </div>
-
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex gap-2">
-          {currentCollectionId && (
-            <button
-              onClick={handleUnsave}
-              disabled={saving}
-              className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-2xl disabled:opacity-50 transition-colors"
+        {!user ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center">
+            <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">Sign in to save destinations</div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 max-w-sm">
+              Create an account to build collections, save places, and pick up right where you left off.
+            </p>
+            <Link
+              href="/account"
+              className="inline-flex items-center justify-center px-4 py-2 bg-gray-900 text-white rounded-2xl hover:bg-gray-800 transition-colors"
             >
-              {saving ? 'Removing...' : 'Remove from Saved'}
-            </button>
-          )}
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-colors"
-          >
-            Close
-          </button>
-        </div>
+              Go to sign in
+            </Link>
+          </div>
+        ) : (
+          <>
+            {error && (
+              <div className="mx-4 mt-3 rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-100">
+                {error}
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto">
+              <CollectionsManager
+                destinationId={destinationId}
+                onCollectionSelect={handleSave}
+              />
+            </div>
+
+            <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex gap-2">
+              {currentCollectionId && (
+                <button
+                  onClick={handleUnsave}
+                  disabled={saving}
+                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-2xl disabled:opacity-50 transition-colors"
+                >
+                  {saving ? 'Removing...' : 'Remove from Saved'}
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-2xl transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
