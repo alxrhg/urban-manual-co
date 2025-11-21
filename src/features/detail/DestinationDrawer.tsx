@@ -393,45 +393,51 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           // Fetch related architect, design firm, interior designer, and movement separately
           // to avoid relationship ambiguity errors (PGRST201)
-          const [architectResult, designFirmResult, interiorDesignerResult, movementResult] = await Promise.all([
-            dataObj.architect_id 
-              ? supabaseClient.from('architects')
-                  .select('id, name, slug, bio, birth_year, death_year, nationality, design_philosophy, image_url')
-                  .eq('id', dataObj.architect_id)
-                  .maybeSingle()
-              : Promise.resolve({ data: null, error: null }),
-            dataObj.design_firm_id
-              ? supabaseClient.from('design_firms')
-                  .select('id, name, slug, description, founded_year, image_url')
-                  .eq('id', dataObj.design_firm_id)
-                  .maybeSingle()
-              : Promise.resolve({ data: null, error: null }),
-            dataObj.interior_designer_id
-              ? supabaseClient.from('architects')
-                  .select('id, name, slug, bio, birth_year, death_year, nationality, image_url')
-                  .eq('id', dataObj.interior_designer_id)
-                  .maybeSingle()
-              : Promise.resolve({ data: null, error: null }),
-            dataObj.movement_id
-              ? supabaseClient.from('design_movements')
-                  .select('id, name, slug, description, period_start, period_end')
-                  .eq('id', dataObj.movement_id)
-                  .maybeSingle()
-              : Promise.resolve({ data: null, error: null }),
-          ]);
+          try {
+            const [architectResult, designFirmResult, interiorDesignerResult, movementResult] = await Promise.all([
+              dataObj.architect_id 
+                ? supabaseClient.from('architects')
+                    .select('id, name, slug, bio, birth_year, death_year, nationality, design_philosophy, image_url')
+                    .eq('id', dataObj.architect_id)
+                    .maybeSingle()
+                : Promise.resolve({ data: null, error: null }),
+              dataObj.design_firm_id
+                ? supabaseClient.from('design_firms')
+                    .select('id, name, slug, description, founded_year, image_url')
+                    .eq('id', dataObj.design_firm_id)
+                    .maybeSingle()
+                : Promise.resolve({ data: null, error: null }),
+              dataObj.interior_designer_id
+                ? supabaseClient.from('architects')
+                    .select('id, name, slug, bio, birth_year, death_year, nationality, image_url')
+                    .eq('id', dataObj.interior_designer_id)
+                    .maybeSingle()
+                : Promise.resolve({ data: null, error: null }),
+              dataObj.movement_id
+                ? supabaseClient.from('design_movements')
+                    .select('id, name, slug, description, period_start, period_end')
+                    .eq('id', dataObj.movement_id)
+                    .maybeSingle()
+                : Promise.resolve({ data: null, error: null }),
+            ]);
 
-          // Add the related objects to enriched data
-          if (architectResult.data) {
-            enriched.architect_obj = architectResult.data;
-          }
-          if (designFirmResult.data) {
-            enriched.design_firm_obj = designFirmResult.data;
-          }
-          if (interiorDesignerResult.data) {
-            enriched.interior_designer_obj = interiorDesignerResult.data;
-          }
-          if (movementResult.data) {
-            enriched.movement_obj = movementResult.data;
+            // Add the related objects to enriched data
+            if (architectResult.data) {
+              enriched.architect_obj = architectResult.data;
+            }
+            if (designFirmResult.data) {
+              enriched.design_firm_obj = designFirmResult.data;
+            }
+            if (interiorDesignerResult.data) {
+              enriched.interior_designer_obj = interiorDesignerResult.data;
+            }
+            if (movementResult.data) {
+              enriched.movement_obj = movementResult.data;
+            }
+          } catch (fetchError) {
+            // If fetching related objects fails, continue without them
+            // This prevents the drawer from crashing if there's an issue with the related data
+            console.warn('Error fetching related architect/design data:', fetchError);
           }
 
           if (dataObj.opening_hours_json) {
