@@ -110,39 +110,14 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const session_token = searchParams.get('session_token') || undefined;
-
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const userId = normalizeUserId(user?.id || 'guest');
-
-    const session = await getOrCreateSession(userId, session_token);
-    if (!session) {
-      return NextResponse.json({ messages: [], context: {} });
-    }
-
-    const messages = await getConversationMessages(session.sessionId, 20);
-
-    return NextResponse.json({
-      messages,
-      context: session.context,
-      context_summary: session.contextSummary,
-      session_id: session.sessionId,
-      session_token: session.sessionToken,
-      last_activity: session.lastActivity,
-    });
-  } catch (error: any) {
-    const { logError } = await import('@/lib/utils/logger');
-    logError('Error fetching conversation', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to fetch conversation',
-        details: process.env.NODE_ENV === 'development' ? error?.message : undefined,
-      },
-      { status: 500 }
-    );
-  }
+  // Return error indicating user_id is required
+  return NextResponse.json(
+    {
+      error: 'User ID required in path',
+      message: 'Please use /api/conversation/{user_id} or /api/conversation/guest',
+      suggestion: 'If you are a guest user, use /api/conversation/guest',
+    },
+    { status: 404 }
+  );
 }
 
