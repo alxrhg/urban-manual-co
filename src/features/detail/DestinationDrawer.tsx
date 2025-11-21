@@ -1329,302 +1329,215 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       >
         <div className="p-6">
           {/* Mobile Content */}
-          <div className="md:hidden space-y-6">
-            <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 shadow-sm backdrop-blur-sm">
-              <div className="p-4 space-y-4">
-                <div className="flex gap-4">
-                  {destination.image && (
-                    <div className="relative h-28 w-28 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-                      <Image
-                        src={destination.image}
-                        alt={destination.name}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 100vw, 420px"
-                        quality={90}
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1">
-                        <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                          {destination.city ? capitalizeCity(destination.city) : 'Destination'}
-                        </p>
-                        <h1 className="text-2xl font-bold leading-tight text-gray-900 dark:text-white">
-                          {destination.name || 'Destination'}
-                        </h1>
-                        {(destination.neighborhood || destination.country) && (
-                          <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
-                            <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
-                            <span className="leading-tight">
-                              {destination.neighborhood && `${destination.neighborhood} · `}
-                              {destination.country || ''}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {destination.crown && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                          <Crown className="h-3.5 w-3.5" />
-                          Crown
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-2">
-                      {destination.category && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900/60">
-                          <Tag className="h-3.5 w-3.5" />
-                          {destination.category}
-                        </span>
-                      )}
-                      {destination.brand && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900/60">
-                          <Building2 className="h-3.5 w-3.5" />
-                          {destination.brand}
-                        </span>
-                      )}
-                      {rating && (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-semibold text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900">
-                          <Star className="h-3.5 w-3.5 fill-current text-yellow-500" />
-                          {rating.toFixed(1)}
-                          {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
-                            <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
-                              ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
-                            </span>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+          <div className="md:hidden space-y-8">
+            <div className="space-y-4">
+              {destination.image && (
+                <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-900">
+                  <Image
+                    src={destination.image}
+                    alt={destination.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, 420px"
+                    quality={90}
+                  />
                 </div>
+              )}
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                      <Star className="h-4 w-4 text-yellow-500" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Rating</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {rating ? rating.toFixed(1) : 'Not rated'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                      <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {headerOpenStatus?.todayHours
-                          ? `${headerOpenStatus.isOpen ? 'Open now' : 'Closed'} · ${headerOpenStatus.todayHours}`
-                          : 'Hours unavailable'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                      <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Pricing</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {priceLevel && priceLevel > 0 ? '$'.repeat(priceLevel) : 'Unknown'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 p-3 flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                      <Tag className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Type</p>
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {destination.category || destination.brand || 'Unspecified'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {destination.micro_description && (
-                  <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
-                    {destination.micro_description}
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-2">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {destination.city ? capitalizeCity(destination.city) : 'Destination'}
                   </p>
-                )}
-
-                {highlightTags.length > 0 && (
-                  <div className="pt-2 border-t border-dashed border-gray-200 dark:border-gray-800">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
-                      Highlights
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {highlightTags.map(tag => (
-                        <span
-                          key={tag}
-                          className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-900 text-xs font-medium text-gray-700 dark:text-gray-200"
-                        >
-                          {tag}
+                  <div className="space-y-1">
+                    <h1 className="text-2xl font-semibold leading-tight text-gray-900 dark:text-white">
+                      {destination.name || 'Destination'}
+                    </h1>
+                    {(destination.neighborhood || destination.country) && (
+                      <div className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+                        <span className="leading-tight">
+                          {destination.neighborhood && `${destination.neighborhood} · `}
+                          {destination.country || ''}
                         </span>
-                      ))}
-                    </div>
+                      </div>
+                    )}
                   </div>
+                </div>
+                {destination.crown && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                    <Crown className="h-3.5 w-3.5" />
+                    Crown
+                  </span>
                 )}
               </div>
+
+              <div className="flex flex-wrap gap-3 text-sm text-gray-700 dark:text-gray-300">
+                {rating && (
+                  <span className="inline-flex items-center gap-2">
+                    <Star className="h-4 w-4 text-yellow-500" />
+                    {rating.toFixed(1)}
+                    {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
+                      </span>
+                    )}
+                  </span>
+                )}
+                {headerOpenStatus?.todayHours && (
+                  <span className="inline-flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    {headerOpenStatus.isOpen ? 'Open now' : 'Closed'} · {headerOpenStatus.todayHours}
+                  </span>
+                )}
+                {priceLevel && priceLevel > 0 && (
+                  <span className="inline-flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    {'$'.repeat(priceLevel)}
+                  </span>
+                )}
+                {destination.category && (
+                  <span className="inline-flex items-center gap-2">
+                    <Tag className="h-4 w-4" />
+                    {destination.category}
+                  </span>
+                )}
+                {destination.brand && (
+                  <span className="inline-flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    {destination.brand}
+                  </span>
+                )}
+              </div>
+
+              {destination.micro_description && (
+                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                  {destination.micro_description}
+                </p>
+              )}
             </div>
 
-            <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 shadow-sm backdrop-blur-sm">
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Quick actions</p>
-                  <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-                    <List className="h-3.5 w-3.5" />
-                    <span>Stay organized</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  {user && (
-                    <button
-                      onClick={async () => {
-                        if (!user) {
-                          router.push('/auth/login');
-                          return;
-                        }
-                        if (!isSaved) {
-                          setShowSaveModal(true);
-                        } else {
-                          try {
-                            const supabaseClient = createClient();
-                            if (!supabaseClient) {
-                              alert('Failed to connect to database. Please try again.');
-                              return;
-                            }
-                            const { error } = await supabaseClient
-                              .from('saved_places')
-                              .delete()
-                              .eq('user_id', user.id)
-                              .eq('destination_slug', destination.slug);
-                            if (!error) {
-                              setIsSaved(false);
-                              if (onSaveToggle) onSaveToggle(destination.slug, false);
-                            }
-                          } catch (error) {
-                            console.error('Error unsaving:', error);
-                          }
-                        }
-                      }}
-                      className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition-all ${
-                        isSaved
-                          ? 'border-gray-900 bg-gray-900 text-white shadow-sm'
-                          : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
-                      }`}
-                      aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      <span className="flex items-center gap-2">
-                        <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                        {isSaved ? 'Saved' : 'Save'}
-                      </span>
-                      <ChevronDown className="h-3 w-3 opacity-50" />
-                    </button>
-                  )}
-
-                  {user && (
-                    <button
-                      onClick={handleVisitToggle}
-                      className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition-all ${
-                        isVisited
-                          ? 'border-green-500 bg-green-500 text-white shadow-sm'
-                          : 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        <Check className="h-4 w-4" />
-                        {isVisited ? 'Visited' : 'Mark visited'}
-                      </span>
-                      <ChevronDown className="h-3 w-3 opacity-50" />
-                    </button>
-                  )}
-
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Quick actions</p>
+              <div className="flex flex-wrap gap-2">
+                {user && (
                   <button
-                    onClick={handleShare}
-                    className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                  >
-                    <span className="flex items-center gap-2">
-                      <Share2 className="h-4 w-4" />
-                      {copied ? 'Copied!' : 'Share'}
-                    </span>
-                    <ExternalLink className="h-3 w-3 opacity-50" />
-                  </button>
-
-                  <a
-                    href={directionsUrl || undefined}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-3 text-sm font-semibold transition-all ${
-                      directionsUrl
-                        ? 'border-gray-200 bg-white text-gray-900 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800'
-                        : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
-                    }`}
-                    onClick={(e) => {
-                      if (!directionsUrl) {
-                        e.preventDefault();
+                    onClick={async () => {
+                      if (!user) {
+                        router.push('/auth/login');
+                        return;
+                      }
+                      if (!isSaved) {
+                        setShowSaveModal(true);
+                      } else {
+                        try {
+                          const supabaseClient = createClient();
+                          if (!supabaseClient) return;
+                          const { error } = await supabaseClient
+                            .from('saved_places')
+                            .delete()
+                            .eq('user_id', user.id)
+                            .eq('destination_slug', destination.slug);
+                          if (!error) {
+                            setIsSaved(false);
+                            if (onSaveToggle) onSaveToggle(destination.slug, false);
+                          }
+                        } catch (error) {
+                          console.error('Error unsaving:', error);
+                        }
                       }
                     }}
+                    className="flex items-center gap-2 rounded-full border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
+                    aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
                   >
-                    <span className="flex items-center gap-2">
-                      <Navigation className="h-4 w-4" />
-                      Directions
-                    </span>
-                    <ExternalLink className="h-3 w-3 opacity-50" />
+                    <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save'}
+                  </button>
+                )}
+
+                {user && (
+                  <button
+                    onClick={handleVisitToggle}
+                    className="flex items-center gap-2 rounded-full border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <Check className="h-4 w-4" />
+                    {isVisited ? 'Visited' : 'Mark visited'}
+                  </button>
+                )}
+
+                <button
+                  onClick={handleShare}
+                  className="flex items-center gap-2 rounded-full border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
+                >
+                  <Share2 className="h-4 w-4" />
+                  {copied ? 'Copied!' : 'Share'}
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (!user) {
+                      router.push('/auth/login');
+                      return;
+                    }
+                    if (isAddedToTrip) return;
+                    setShowAddToTripModal(true);
+                  }}
+                  className="flex items-center gap-2 rounded-full border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
+                >
+                  <Plus className="h-4 w-4" />
+                  {isAddedToTrip ? 'Added to trip' : 'Plan a trip'}
+                </button>
+
+                <a
+                  href={directionsUrl || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    if (!directionsUrl) {
+                      e.preventDefault();
+                    }
+                  }}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition-colors ${
+                    directionsUrl
+                      ? 'text-gray-900 hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800'
+                      : 'text-gray-400 dark:text-gray-600 cursor-not-allowed border-gray-200 dark:border-gray-800'
+                  }`}
+                >
+                  <Navigation className="h-4 w-4" />
+                  Directions
+                </a>
+
+                {destination.website && (
+                  <a
+                    href={destination.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 rounded-full border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <Globe className="h-4 w-4" />
+                    Website
                   </a>
+                )}
 
-                  {destination.website && (
-                    <a
-                      href={destination.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Globe className="h-4 w-4" />
-                        Website
-                      </span>
-                      <ExternalLink className="h-3 w-3 opacity-50" />
-                    </a>
-                  )}
+                {destination.phone_number && (
+                  <a
+                    href={`tel:${destination.phone_number}`}
+                    className="flex items-center gap-2 rounded-full border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <Phone className="h-4 w-4" />
+                    Call
+                  </a>
+                )}
 
-                  {destination.phone_number && (
-                    <a
-                      href={`tel:${destination.phone_number}`}
-                      className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        Call
-                      </span>
-                      <ExternalLink className="h-3 w-3 opacity-50" />
-                    </a>
-                  )}
-
-                  {isAdmin && destination && (
-                    <button
-                      onClick={() => setIsEditDrawerOpen(true)}
-                      className="flex items-center justify-between gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-3 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800 col-span-2"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Edit className="h-4 w-4" />
-                        Edit destination
-                      </span>
-                      <ChevronDown className="h-3 w-3 opacity-50" />
-                    </button>
-                  )}
-                </div>
+                {isAdmin && destination && (
+                  <button
+                    onClick={() => setIsEditDrawerOpen(true)}
+                    className="flex items-center gap-2 rounded-full border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit destination
+                  </button>
+                )}
               </div>
             </div>
 
