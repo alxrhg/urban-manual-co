@@ -27,6 +27,8 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Trip } from "@/types/trip";
 import type { Collection } from "@/types/common";
 
@@ -367,109 +369,118 @@ export function AccountDrawer() {
 
   // Render main drawer content (Tier 1)
   const renderMainDrawer = () => (
-    <div className="px-6 py-6 space-y-6">
+    <div className="px-6 py-6 space-y-6 bg-gradient-to-b from-gray-50/70 via-white to-white dark:from-gray-950/60 dark:via-gray-950 dark:to-gray-950">
       {user ? (
         <>
           {/* Profile Header */}
-          <div className="flex flex-col items-center text-center gap-4 pb-6 border-b border-gray-200 dark:border-gray-800">
-            <div className="relative">
-              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gray-100 dark:bg-gray-800 text-2xl font-semibold text-gray-700 dark:text-gray-200">
-                {avatarUrl ? (
-                  <Image
-                    src={avatarUrl}
-                    alt="Profile"
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                  />
-                ) : (
-                  displayUsername.charAt(0).toUpperCase()
+          <Card className="border-gray-200/80 dark:border-gray-800/80 bg-white/90 dark:bg-gray-950/80 shadow-none">
+            <CardContent className="flex flex-col items-center text-center gap-4">
+              <div className="relative">
+                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-gray-200/80 bg-gray-100 dark:border-gray-800/80 dark:bg-gray-900 text-2xl font-semibold text-gray-800 dark:text-gray-100">
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt="Profile"
+                      fill
+                      className="object-cover"
+                      sizes="80px"
+                    />
+                  ) : (
+                    displayUsername.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <Button
+                  variant="secondary"
+                  size="icon-sm"
+                  onClick={() => handleNavigateToFullPage("/account?tab=settings")}
+                  className="absolute -right-2 -bottom-2 border border-white/80 bg-gray-900 text-white dark:border-gray-900 dark:bg-white dark:text-gray-900 shadow-sm"
+                  aria-label="Update profile photo"
+                >
+                  <Camera className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-xl font-semibold text-gray-900 dark:text-white">{displayUsername}</p>
+                <div className="inline-flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-800 bg-gray-50/60 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-900 dark:text-gray-200">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                  <span className="tracking-tight">@{displayUsername.toLowerCase().replace(/\s+/g, '')}</span>
+                </div>
+                {user.email && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
                 )}
               </div>
+
+              <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
+                <Button size="lg" className="w-full" onClick={() => handleNavigateToFullPage("/account")}>
+                  Edit profile
+                </Button>
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="w-full border border-gray-200 dark:border-gray-800 bg-white text-gray-900 hover:bg-gray-50 dark:bg-gray-900 dark:text-gray-50"
+                  onClick={openChatDrawer}
+                >
+                  Message concierge
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Stats */}
+          <Card className="border-gray-200/80 dark:border-gray-800/80 bg-white/90 dark:bg-gray-950/80 shadow-none">
+            <CardContent className="grid grid-cols-3 gap-3 p-0">
+              {[ 
+                { label: 'Visited', value: stats.visited, icon: MapPin, color: 'text-blue-600 dark:text-blue-400' },
+                { label: 'Saved', value: stats.saved, icon: Bookmark, color: 'text-amber-600 dark:text-amber-400' },
+                { label: 'Trips', value: stats.trips, icon: Compass, color: 'text-emerald-600 dark:text-emerald-400' }
+              ].map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <div
+                    key={stat.label}
+                    className="flex flex-col items-center gap-2 rounded-lg border border-gray-100/80 bg-gray-50/60 px-3 py-4 text-center dark:border-gray-900 dark:bg-gray-900"
+                  >
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-gray-50">
+                      <Icon className={`h-4 w-4 ${stat.color}`} />
+                    </div>
+                    <div className="text-xl font-semibold text-gray-900 dark:text-white">{stat.value}</div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{stat.label}</p>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card className="border-gray-200/80 dark:border-gray-800/80 bg-white/90 dark:bg-gray-950/80 shadow-none">
+            <CardContent className="grid grid-cols-2 gap-3 p-0">
               <button
                 onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-                className="absolute -right-1 -bottom-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white dark:border-gray-900 bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-md transition hover:scale-110 dark:hover:bg-gray-100"
-                aria-label="Update profile photo"
+                className="flex flex-col items-center gap-2 rounded-lg border border-gray-100/80 bg-gray-50/80 px-4 py-4 text-center transition hover:border-gray-200 hover:bg-white dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700"
               >
-                <Camera className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{displayUsername}</p>
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-                <span>@{displayUsername.toLowerCase().replace(/\s+/g, '')}</span>
-              </div>
-              {user.email && (
-                <p className="text-xs text-gray-500 dark:text-gray-500">{user.email}</p>
-              )}
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-2 w-full">
-              <button
-                onClick={() => handleNavigateToFullPage("/account")}
-                className="flex-1 min-w-[120px] rounded-xl bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-gray-900 shadow-sm transition hover:bg-gray-800 dark:hover:bg-gray-100"
-              >
-                Edit profile
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-gray-50">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Add photo</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Personalize</p>
+                </div>
               </button>
               <button
                 onClick={openChatDrawer}
-                className="flex-1 min-w-[120px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 transition hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="flex flex-col items-center gap-2 rounded-lg border border-gray-100/80 bg-gray-50/80 px-4 py-4 text-center transition hover:border-gray-200 hover:bg-white dark:border-gray-900 dark:bg-gray-900 dark:hover:border-gray-700"
               >
-                Message concierge
-              </button>
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: 'Visited', value: stats.visited, icon: MapPin, color: 'text-blue-600 dark:text-blue-400' },
-              { label: 'Saved', value: stats.saved, icon: Bookmark, color: 'text-amber-600 dark:text-amber-400' },
-              { label: 'Trips', value: stats.trips, icon: Compass, color: 'text-purple-600 dark:text-purple-400' }
-            ].map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={stat.label}
-                  className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-4 text-center shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <Icon className={`w-4 h-4 mx-auto mb-2 ${stat.color}`} />
-                  <div className="text-xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{stat.label}</p>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-gray-50">
+                  <Share2 className="w-5 h-5" />
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Quick Actions */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-4 text-center shadow-sm transition hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                <Camera className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-900 dark:text-white">Add photo</p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Personalize</p>
-              </div>
-            </button>
-            <button
-              onClick={openChatDrawer}
-              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-4 text-center shadow-sm transition hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                <Share2 className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-900 dark:text-white">Invite</p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Share</p>
-              </div>
-            </button>
-          </div>
+                <div className="space-y-0.5">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Invite</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Share</p>
+                </div>
+              </button>
+            </CardContent>
+          </Card>
 
           {/* Your Manual Section */}
           <div className="space-y-3">
@@ -500,13 +511,13 @@ export function AccountDrawer() {
               Sign in to save places, build trips, and sync your travel profile across devices.
             </p>
           </div>
-          <button
-            type="button"
+          <Button
+            size="lg"
+            className="w-full rounded-full"
             onClick={() => handleNavigateToFullPage("/auth/login")}
-            className="w-full rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800 dark:bg-white dark:text-gray-900"
           >
             Sign in to continue
-          </button>
+          </Button>
         </div>
       )}
     </div>
