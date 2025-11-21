@@ -11,10 +11,10 @@ import { DataTableEnhanced } from "./data-table-enhanced";
 import { createColumns } from "./columns";
 import type { Destination } from '@/types/destination';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
-import { capitalizeCity } from '@/lib/utils';
 import { AdminStats } from '@/components/admin/AdminStats';
 import { SanitySyncSection } from '@/components/admin/SanitySyncSection';
 import { SyncOperationsDashboard } from '@/components/admin/SyncOperationsDashboard';
+import { EditModePanel } from '@/components/admin/EditModePanel';
 import { DestinationForm } from '@/components/admin/DestinationForm';
 
 // Force dynamic rendering
@@ -36,13 +36,6 @@ export default function AdminPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [statsRefreshKey, setStatsRefreshKey] = useState(0);
 
-  const handleLaunchEditMode = useCallback((path: string) => {
-    if (typeof window === 'undefined') return;
-    const formattedPath = path.startsWith('/') ? path : `/${path}`;
-    enableInlineEditMode();
-    const url = formattedPath.includes('?') ? `${formattedPath}&edit=1` : `${formattedPath}?edit=1`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }, [enableInlineEditMode]);
 
   // Load destination list
   const loadDestinationList = useCallback(async () => {
@@ -346,9 +339,6 @@ export default function AdminPage() {
     }
   };
 
-  const inlineCitySlug = destinationList[0]?.city || 'tokyo';
-  const inlineCityLabel = capitalizeCity(inlineCitySlug);
-
   return (
     <div className="space-y-6 text-sm">
       <section className="space-y-6">
@@ -356,56 +346,7 @@ export default function AdminPage() {
 
         <SyncOperationsDashboard />
 
-        <div className="space-y-3 p-4 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/50">
-          <div>
-            <p className="text-sm font-semibold text-gray-900 dark:text-white">Inline editing</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Toggle edit affordances on the live site. Changes sync straight to Supabase.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => handleLaunchEditMode('/')}
-              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Open homepage
-            </button>
-            <button
-              onClick={() => handleLaunchEditMode(`/city/${inlineCitySlug}`)}
-              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Edit {inlineCityLabel}
-            </button>
-            {inlineEditModeEnabled ? (
-              <button
-                onClick={disableInlineEditMode}
-                className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-red-600 dark:bg-red-500 rounded-xl hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
-              >
-                Turn off
-              </button>
-            ) : (
-              <button
-                onClick={enableInlineEditMode}
-                className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-white bg-gray-900 dark:bg-gray-100 dark:text-gray-900 rounded-xl hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
-              >
-                Enable now
-              </button>
-            )}
-            <Link
-              href="/admin/discover"
-              className="inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              Go to Discover
-            </Link>
-          </div>
-          {inlineEditModeEnabled && (
-            <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-              <p className="text-xs text-amber-800 dark:text-amber-200">
-                Edit mode is active. Use the edit badge on any destination card to make changes in place.
-              </p>
-            </div>
-          )}
-        </div>
+        <EditModePanel />
 
         <div className="space-y-3 p-4 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/50">
           <div className="flex items-start justify-between gap-4">
