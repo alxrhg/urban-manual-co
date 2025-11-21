@@ -21,12 +21,14 @@ import {
   Download,
   Trash2,
   Calendar,
+  Clock,
   User,
   Shield,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
+import { TripQuickViewDrawer } from "@/components/TripQuickViewDrawer";
 import type { Trip } from "@/types/trip";
 import type { Collection } from "@/types/common";
 
@@ -58,9 +60,9 @@ export function AccountDrawer() {
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const [stats, setStats] = useState<UserStats>({ 
-    visited: 0, 
-    saved: 0, 
+  const [stats, setStats] = useState<UserStats>({
+    visited: 0,
+    saved: 0,
     trips: 0, 
     cities: 0, 
     countries: 0,
@@ -71,6 +73,7 @@ export function AccountDrawer() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [showTripQuickView, setShowTripQuickView] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Reset to main drawer when drawer closes
@@ -79,6 +82,7 @@ export function AccountDrawer() {
       setCurrentSubpage('main_drawer');
       setSelectedTripId(null);
       setSelectedTrip(null);
+      setShowTripQuickView(false);
     }
   }, [isOpen]);
 
@@ -283,6 +287,9 @@ export function AccountDrawer() {
     if (tripId) {
       setSelectedTripId(tripId);
     }
+    if (subpage !== 'trip_details_subpage') {
+      setShowTripQuickView(false);
+    }
     setCurrentSubpage(subpage);
   };
 
@@ -294,12 +301,14 @@ export function AccountDrawer() {
     if (currentSubpage === 'trip_details_subpage') {
       setCurrentSubpage('trips_subpage');
       setSelectedTripId(null);
+      setShowTripQuickView(false);
     } else {
       setCurrentSubpage('main_drawer');
     }
   };
 
   const handleDrawerClose = () => {
+    setShowTripQuickView(false);
     closeDrawer();
   };
 
@@ -888,6 +897,14 @@ export function AccountDrawer() {
           </div>
         </div>
 
+        <button
+          onClick={() => setShowTripQuickView(true)}
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-semibold text-gray-900 dark:text-white flex items-center justify-center gap-2 shadow-sm"
+        >
+          <Clock className="w-4 h-4" />
+          Quick timeline view
+        </button>
+
         <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={() => handleNavigateToFullPage(`/trips/${selectedTrip.id}`)}
@@ -1041,23 +1058,31 @@ export function AccountDrawer() {
   const isTier2 = currentSubpage !== 'main_drawer';
 
   return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={handleDrawerClose}
-      title={undefined}
-      headerContent={undefined}
-      mobileVariant="bottom"
-      desktopSpacing="right-4 top-4 bottom-4"
-      desktopWidth="420px"
-      position="right"
-      style="glassy"
-      backdropOpacity={isTier1 ? "18" : "18"}
-      keepStateOnClose={true}
-      zIndex={getZIndex()}
-    >
-      <div className={`transition-opacity duration-200 ${currentSubpage !== 'main_drawer' ? 'opacity-100' : 'opacity-100'}`}>
-        {renderContent()}
-      </div>
-    </Drawer>
+    <>
+      <Drawer
+        isOpen={isOpen}
+        onClose={handleDrawerClose}
+        title={undefined}
+        headerContent={undefined}
+        mobileVariant="bottom"
+        desktopSpacing="right-4 top-4 bottom-4"
+        desktopWidth="420px"
+        position="right"
+        style="glassy"
+        backdropOpacity={isTier1 ? "18" : "18"}
+        keepStateOnClose={true}
+        zIndex={getZIndex()}
+      >
+        <div className={`transition-opacity duration-200 ${currentSubpage !== 'main_drawer' ? 'opacity-100' : 'opacity-100'}`}>
+          {renderContent()}
+        </div>
+      </Drawer>
+
+      <TripQuickViewDrawer
+        isOpen={showTripQuickView && !!selectedTripId}
+        onClose={() => setShowTripQuickView(false)}
+        tripId={selectedTripId}
+      />
+    </>
   );
 }
