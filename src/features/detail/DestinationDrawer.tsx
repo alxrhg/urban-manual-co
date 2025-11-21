@@ -451,7 +451,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     setEnhancedDestination(destination);
   }, [destination]);
 
-  if (!destination) return null;
+  // Early return if no destination or drawer is closed - must be before any destination property access
+  if (!destination || !isOpen) return null;
 
   const openStatus = enrichedData?.opening_hours 
     ? getOpenStatus(enrichedData.opening_hours, destination.city || '', enrichedData.timezone_id, enrichedData.utc_offset)
@@ -658,10 +659,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     </div>
   );
 
+  // Don't render drawer if destination is null
+  if (!destination) return null;
+
   return (
     <>
       <Drawer
-        isOpen={isOpen}
+        isOpen={isOpen && !!destination}
         onClose={onClose}
         headerContent={headerContent}
         footerContent={footerContent}
