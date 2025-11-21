@@ -966,6 +966,6 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           onUpdate={handleVisitedModalUpdate}
         />
       )}
-    </main>
+    </div>
   );
 }
