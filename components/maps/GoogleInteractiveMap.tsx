@@ -9,6 +9,7 @@ interface GoogleInteractiveMapProps {
   center?: { lat: number; lng: number };
   zoom?: number;
   isDark?: boolean;
+  onProviderError?: (message: string) => void;
 }
 
 declare global {
@@ -24,6 +25,7 @@ export default function GoogleInteractiveMap({
   center = { lat: 23.5, lng: 121.0 },
   zoom = 8,
   isDark = true,
+  onProviderError,
 }: GoogleInteractiveMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
@@ -34,6 +36,12 @@ export default function GoogleInteractiveMap({
   const lastZoomRef = useRef<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (error && !isLoading && onProviderError) {
+      onProviderError(error);
+    }
+  }, [error, isLoading, onProviderError]);
 
   // Add markers
   const addMarkers = useCallback(() => {
