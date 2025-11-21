@@ -31,6 +31,7 @@ import { CityAutocompleteInput } from './CityAutocompleteInput';
 import { CategoryAutocompleteInput } from './CategoryAutocompleteInput';
 import GooglePlacesAutocompleteNative from './GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
+import { Drawer } from '@/components/ui/Drawer';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -226,30 +227,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [newListDescription, setNewListDescription] = useState('');
   const [newListPublic, setNewListPublic] = useState(true);
   const [creatingList, setCreatingList] = useState(false);
-
-  // Prevent body scroll when drawer is open
-  useEffect(() => {
-    if (isOpen) {
-      document.documentElement.style.overflow = 'hidden';
-    } else {
-      document.documentElement.style.overflow = '';
-    }
-    return () => {
-      document.documentElement.style.overflow = '';
-    };
-  }, [isOpen]);
-
-  // Close on escape key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
 
   // Initialize edit form when entering edit mode
   useEffect(() => {
@@ -1060,56 +1037,75 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
   if (!destination) return null;
 
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={onClose}
-      />
-
-      {/* Drawer */}
-      <div
-        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        } overflow-y-auto`}
-      >
-        {/* Header */}
-        <div className="sticky top-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-sm font-bold uppercase tracking-wide">Destination</h2>
-          <div className="flex items-center gap-2">
-            {destination?.slug && (
-              <Link
-                href={`/destination/${destination.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-                className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
-                title="Open in new tab"
-                aria-label="Open destination in new tab"
-              >
-                <ExternalLink className="h-5 w-5" />
-              </Link>
+  const headerContent = (
+    <div className="flex items-center justify-between w-full">
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-pink-500 via-amber-400 to-red-500 p-[1px] shadow-sm">
+          <div className="h-full w-full rounded-[15px] bg-white dark:bg-gray-950 flex items-center justify-center overflow-hidden">
+            {destination.image ? (
+              <div className="relative h-full w-full">
+                <Image
+                  src={destination.image}
+                  alt={destination.name}
+                  fill
+                  className="object-cover rounded-[14px]"
+                  sizes="40px"
+                />
+              </div>
+            ) : (
+              <div className="h-10 w-10 rounded-[15px] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
+                <MapPin className="h-5 w-5 text-gray-500" />
+              </div>
             )}
-            <button
-              onClick={onClose}
-              className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
-              aria-label="Close drawer"
-            >
-              <X className="h-5 w-5" />
-            </button>
           </div>
         </div>
+        <div className="min-w-0">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+            {destination.name}
+          </h2>
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+            {capitalizeCity(destination.city || '')} • {destination.category}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        {destination.slug && (
+          <Link
+            href={`/destination/${destination.slug}`}
+            className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open in new tab"
+            aria-label="Open destination in new tab"
+          >
+            <ExternalLink className="h-5 w-5" />
+          </Link>
+        )}
+        <button
+          onClick={onClose}
+          className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
+          aria-label="Close drawer"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  );
 
-        {/* Content */}
+  return (
+    <>
+      <Drawer
+        isOpen={isOpen}
+        onClose={onClose}
+        headerContent={headerContent}
+        desktopWidth="480px"
+        position="right"
+        mobileVariant="side"
+      >
         <div className="p-6">
-          {isEditMode ? (
-            /* Edit Form */
-            <form onSubmit={handleEditSubmit} className="space-y-6">
+        {isEditMode ? (
+          /* Edit Form */
+          <form onSubmit={handleEditSubmit} className="space-y-6">
               {/* Google Places Autocomplete */}
               <div>
                 <label className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
@@ -2054,9 +2050,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </>
           )}
         </div>
-      </div>
+    </Drawer>
 
-      {/* Lists Modal */}
+    {/* Lists Modal */}
       {showListsModal && (
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
