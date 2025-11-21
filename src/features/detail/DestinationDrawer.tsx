@@ -37,7 +37,7 @@ import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { RealtimeReportForm } from '@/components/RealtimeReportForm';
-import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
+import { LocatedInBadge } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
@@ -220,6 +220,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
+
+  const nestedDestinationsToShow = (nestedDestinations && nestedDestinations.length > 0)
+    ? nestedDestinations
+    : enhancedDestination?.nested_destinations || [];
+  const hasNestedDestinations = nestedDestinationsToShow.length > 0;
 
   // Generate AI summary of reviews
   const generateReviewSummary = async (reviews: any[], destinationName: string) => {
@@ -702,8 +707,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       if (!destination || !isOpen) {
         setParentDestination(null);
         setNestedDestinations([]);
+        setEnhancedDestination(destination);
         return;
       }
+
+      // Seed with any nested destinations already on the destination object
+      const initialNested = destination.nested_destinations || [];
+      setNestedDestinations(initialNested);
+      setEnhancedDestination(prev => prev ? { ...prev, nested_destinations: initialNested } : { ...destination, nested_destinations: initialNested });
 
       setLoadingNested(true);
       const supabaseClient = createClient();
@@ -717,7 +728,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         if (destination.parent_destination_id) {
           const parent = await getParentDestination(supabaseClient, destination.id!);
           setParentDestination(parent);
-      } else {
+        } else {
           setParentDestination(null);
         }
 
@@ -725,14 +736,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         if (destination.id) {
           const nested = await getNestedDestinations(supabaseClient, destination.id, false);
           setNestedDestinations(nested);
-      } else {
+          setEnhancedDestination(prev => prev ? { ...prev, nested_destinations: nested } : { ...destination, nested_destinations: nested });
+        } else {
           setNestedDestinations([]);
-      }
-    } catch (error) {
+          setEnhancedDestination(prev => prev ? { ...prev, nested_destinations: [] } : { ...destination, nested_destinations: [] });
+        }
+      } catch (error) {
         console.warn('[DestinationDrawer] Error loading nested data:', error);
-    } finally {
+      } finally {
         setLoadingNested(false);
-    }
+      }
     }
 
     loadNestedData();
@@ -2057,27 +2070,118 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
 
             {/* Nested Destinations */}
-            {(loadingNested || (nestedDestinations && nestedDestinations.length > 0)) && (
-              <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+            {(loadingNested || hasNestedDestinations) && (
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-6 space-y-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-gray-500 dark:text-gray-400">On this property</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Explore spots inside {destination.name}</p>
+                  </div>
+                  {(destination.google_name || destination.google_maps_url || enhancedDestination?.google_name) && (
+                    <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400 px-2 py-1 rounded-full border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/70">
+                      <Globe className="h-3 w-3" />
+                      <span>Google</span>
+                    </div>
+                  )}
+                </div>
+
                 {loadingNested ? (
                   <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     Loading venues located here…
                   </div>
-                ) : (
-                  nestedDestinations && nestedDestinations.length > 0 && (
-                    <NestedDestinations
-                      destinations={nestedDestinations}
-                      parentName={destination.name}
-                      onDestinationClick={(nested) => {
-                        if (nested.slug) {
-                          onClose();
-                          setTimeout(() => router.push(`/destination/${nested.slug}`), 100);
-                        }
-                      }}
-                    />
-                  )
-                )}
+                ) : hasNestedDestinations ? (
+                  <div className="-mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible pb-1">
+                    <div className="flex gap-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 snap-x md:snap-none">
+                      {nestedDestinationsToShow.map((nested) => (
+                        <button
+                          key={nested.slug}
+                          onClick={() => {
+                            if (nested.slug) {
+                              onClose();
+                              setTimeout(() => router.push(`/destination/${nested.slug}`), 100);
+                            }
+                          }}
+                          className={`${CARD_WRAPPER} text-left group flex-shrink-0 md:flex-shrink md:w-auto min-w-[220px] max-w-[260px] md:min-w-0 snap-start bg-white dark:bg-gray-900/40 border border-gray-200 dark:border-gray-800 rounded-2xl p-2.5 shadow-sm hover:shadow-md hover:-translate-y-0.5`}
+                        >
+                          <div className={`${CARD_MEDIA} mb-3 aspect-[4/5] min-h-[200px]`}>
+                            {nested.image ? (
+                              <Image
+                                src={nested.image}
+                                alt={nested.name}
+                                fill
+                                sizes="(max-width: 640px) 75vw, (max-width: 1024px) 50vw, 33vw"
+                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                quality={80}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                                <MapPin className="h-10 w-10 opacity-20" />
+                              </div>
+                            )}
+
+                            {nested.michelin_stars && nested.michelin_stars > 0 && (
+                              <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
+                                <img
+                                  src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                                  alt="Michelin star"
+                                  width={12}
+                                  height={12}
+                                  className="h-3 w-3"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    if (target.src !== '/michelin-star.svg') {
+                                      target.src = '/michelin-star.svg';
+                                    }
+                                  }}
+                                />
+                                {nested.michelin_stars}
+                              </div>
+                            )}
+
+                            {(nested.google_name || nested.google_maps_url) && (
+                              <div className="absolute top-2 right-2 px-2 py-1 rounded-full border border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-900/90 text-[10px] text-gray-600 dark:text-gray-400 flex items-center gap-1 backdrop-blur-sm">
+                                <Globe className="h-3 w-3" />
+                                <span>Google</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="space-y-1">
+                            <h4 className={`${CARD_TITLE} !mt-0 text-sm`}>{nested.name}</h4>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                              {nested.micro_description ||
+                                (nested.category && nested.city
+                                  ? `${formatHighlightTag(nested.category)} • ${capitalizeCity(nested.city)}`
+                                  : nested.city
+                                    ? capitalizeCity(nested.city)
+                                    : nested.category || 'Nestled inside this property')}
+                            </p>
+
+                            {(nested.google_name || nested.google_maps_url) && (
+                              <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
+                                <Globe className="h-3 w-3" />
+                                <span className="line-clamp-1">{nested.google_name || 'Google Maps listing'}</span>
+                                {nested.google_maps_url && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      window.open(nested.google_maps_url!, '_blank');
+                                    }}
+                                    className="p-1 -m-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    aria-label={`Open ${nested.name} on Google Maps`}
+                                  >
+                                    <ExternalLink className="h-3 w-3" />
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             )}
 
