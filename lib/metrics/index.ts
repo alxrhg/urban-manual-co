@@ -1,14 +1,25 @@
-import { createClient } from '@supabase/supabase-js';
+'use server';
 
-const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
-// Support both new (publishable/secret) and legacy (anon/service_role) key naming
-const key = (
-  process.env.SUPABASE_SECRET_KEY || 
-  process.env.SUPABASE_SERVICE_ROLE_KEY || 
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-) as string;
-const supabase = createClient(url, key);
+import { SupabaseClient, createClient } from '@supabase/supabase-js';
+
+const url = process.env.SUPABASE_URL as string | undefined;
+const key = (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY) as
+  | string
+  | undefined;
+
+let supabaseClient: SupabaseClient | null = null;
+
+function getSupabaseClient() {
+  if (!url || !key) {
+    throw new Error('Missing server-side Supabase credentials');
+  }
+
+  if (!supabaseClient) {
+    supabaseClient = createClient(url, key);
+  }
+
+  return supabaseClient;
+}
 
 export type ContentMetricEvent =
   | 'click'
@@ -19,6 +30,7 @@ export type ContentMetricEvent =
 
 export async function trackContentMetric(event: ContentMetricEvent, payload: any) {
   try {
+    const supabase = getSupabaseClient();
     await supabase.from('content_metrics').insert({ event, payload, created_at: new Date().toISOString() });
   } catch {}
 }
