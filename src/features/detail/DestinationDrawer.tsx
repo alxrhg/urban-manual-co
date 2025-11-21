@@ -473,7 +473,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           }
           
           // Merge architect data into destination for ArchitectDesignInfo component
-          // Handle architect object (from join) - could be array or single object
+          // Use separately fetched objects to avoid relationship ambiguity
           let updatedDestination: Destination & {
             architect_obj?: any;
             design_firm_obj?: any;
@@ -481,73 +481,48 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             movement_obj?: any;
           } = { ...destination };
           
-          if (dataObj.architect) {
-            const architectObj = Array.isArray(dataObj.architect) && dataObj.architect.length > 0
-              ? dataObj.architect[0]
-              : dataObj.architect;
-            if (architectObj && architectObj.name) {
-              // Update destination with architect object
-              updatedDestination = {
-                ...updatedDestination,
-                architect_id: architectObj.id,
-                architect_obj: architectObj,
-                // Keep legacy text field for backward compatibility
-                architect: updatedDestination.architect || architectObj.name,
-              };
-            }
+          // Handle architect object from separately fetched data
+          if (enriched.architect_obj) {
+            const architectObj = enriched.architect_obj;
+            updatedDestination = {
+              ...updatedDestination,
+              architect_id: architectObj.id,
+              architect_obj: architectObj,
+              architect: updatedDestination.architect || architectObj.name,
+            };
           }
           
-          // Handle design firm object (note: Supabase join returns it as 'design_firm' object, not text)
-          // Check if design_firm is an object (from join) vs string (legacy field)
-          if (dataObj.design_firm && typeof dataObj.design_firm === 'object' && !Array.isArray(dataObj.design_firm) && dataObj.design_firm.name) {
-            // This is the joined object
-            const firmObj = dataObj.design_firm;
+          // Handle design firm object from separately fetched data
+          if (enriched.design_firm_obj) {
+            const firmObj = enriched.design_firm_obj;
             updatedDestination = {
               ...updatedDestination,
               design_firm_id: firmObj.id,
               design_firm_obj: firmObj,
               design_firm: firmObj.name,
             };
-          } else if (dataObj.design_firm && Array.isArray(dataObj.design_firm) && dataObj.design_firm.length > 0) {
-            // Handle array case (shouldn't happen but just in case)
-            const firmObj = dataObj.design_firm[0];
-            if (firmObj && firmObj.name) {
-              updatedDestination = {
-                ...updatedDestination,
-                design_firm_id: firmObj.id,
-                design_firm_obj: firmObj,
-                design_firm: firmObj.name,
-              };
-            }
           }
           
-          // Handle interior designer object
-          if (dataObj.interior_designer) {
-            const interiorDesignerObj = Array.isArray(dataObj.interior_designer) && dataObj.interior_designer.length > 0
-              ? dataObj.interior_designer[0]
-              : dataObj.interior_designer;
-            if (interiorDesignerObj && interiorDesignerObj.name) {
-              updatedDestination = {
-                ...updatedDestination,
-                interior_designer_id: interiorDesignerObj.id,
-                interior_designer_obj: interiorDesignerObj,
-                interior_designer: updatedDestination.interior_designer || interiorDesignerObj.name,
-              };
-            }
+          // Handle interior designer object from separately fetched data
+          if (enriched.interior_designer_obj) {
+            const interiorDesignerObj = enriched.interior_designer_obj;
+            updatedDestination = {
+              ...updatedDestination,
+              interior_designer_id: interiorDesignerObj.id,
+              interior_designer_obj: interiorDesignerObj,
+              interior_designer: updatedDestination.interior_designer || interiorDesignerObj.name,
+            };
           }
           
-          // Handle movement object
-          if (dataObj.movement) {
-            const movementObj = Array.isArray(dataObj.movement) && dataObj.movement.length > 0
-              ? dataObj.movement[0]
-              : dataObj.movement;
-            if (movementObj && movementObj.name) {
-              updatedDestination = {
-                ...updatedDestination,
-                movement_id: movementObj.id,
-                movement_obj: movementObj,
-              };
-            }
+          // Handle movement object from separately fetched data
+          if (enriched.movement_obj) {
+            const movementObj = enriched.movement_obj;
+            updatedDestination = {
+              ...updatedDestination,
+              movement_id: movementObj.id,
+              movement_obj: movementObj,
+              movement: movementObj.name,
+            };
           }
           
           // Merge architectural fields
