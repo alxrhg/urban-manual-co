@@ -31,3 +31,23 @@ export async function POST(request: NextRequest) {
   );
 }
 
+export async function GET(request: NextRequest) {
+  // Return error indicating user_id is required
+  return new Response(
+    encoder.encode(createSSEMessage({
+      type: 'error',
+      error: 'User ID required in path',
+      message: 'Please use /api/conversation-stream/{user_id} or /api/conversation-stream/guest',
+      suggestion: 'If you are a guest user, use /api/conversation-stream/guest',
+    })),
+    {
+      status: 404,
+      headers: {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    }
+  );
+}
+

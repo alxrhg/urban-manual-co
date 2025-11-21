@@ -273,9 +273,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             micro_description,
             description,
             content,
-            architect:architects(id, name, slug, bio, birth_year, death_year, nationality, design_philosophy, image_url),
-            design_firm:design_firms(id, name, slug, description, founded_year, image_url),
-            movement:design_movements(id, name, slug, description, period_start, period_end)
+            architect_id,
+            design_firm_id,
+            interior_designer_id,
+            movement_id
           `)
           .eq('slug', destination.slug)
           .single();
@@ -314,45 +315,81 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             }
           }
           
+          setEnrichedData(enriched);
+          
+          // Load architect/design firm/movement data separately to avoid relationship ambiguity
           let updatedDestination: Destination & {
             architect_obj?: any;
             design_firm_obj?: any;
+            interior_designer_obj?: any;
             movement_obj?: any;
           } = { ...destination };
           
-          if (dataObj.architect) {
-            const architectObj = Array.isArray(dataObj.architect) && dataObj.architect.length > 0
-              ? dataObj.architect[0]
-              : dataObj.architect;
-            if (architectObj && architectObj.name) {
-              updatedDestination = {
-                ...updatedDestination,
-                architect_id: architectObj.id,
-                architect_obj: architectObj,
-                architect: updatedDestination.architect || architectObj.name,
-              };
+          // Load architect if architect_id exists
+          if (dataObj.architect_id && supabaseClient) {
+            try {
+              const { data: architectData } = await supabaseClient
+                .from('architects')
+                .select('id, name, slug, bio, birth_year, death_year, nationality, design_philosophy, image_url')
+                .eq('id', dataObj.architect_id)
+                .single();
+              if (architectData) {
+                updatedDestination.architect_obj = architectData;
+                updatedDestination.architect = updatedDestination.architect || architectData.name;
+              }
+            } catch (err) {
+              // Silently fail - architect might not exist
             }
           }
           
-          if (dataObj.design_firm) {
-            const firmObj = Array.isArray(dataObj.design_firm) && dataObj.design_firm.length > 0
-              ? dataObj.design_firm[0]
-              : dataObj.design_firm;
-            if (firmObj && firmObj.name) {
-              updatedDestination.design_firm_obj = firmObj;
+          // Load design firm if design_firm_id exists
+          if (dataObj.design_firm_id && supabaseClient) {
+            try {
+              const { data: firmData } = await supabaseClient
+                .from('design_firms')
+                .select('id, name, slug, description, founded_year, image_url')
+                .eq('id', dataObj.design_firm_id)
+                .single();
+              if (firmData) {
+                updatedDestination.design_firm_obj = firmData;
+              }
+            } catch (err) {
+              // Silently fail
             }
           }
           
-          if (dataObj.movement) {
-            const movementObj = Array.isArray(dataObj.movement) && dataObj.movement.length > 0
-              ? dataObj.movement[0]
-              : dataObj.movement;
-            if (movementObj && movementObj.name) {
-              updatedDestination.movement_obj = movementObj;
+          // Load interior designer if interior_designer_id exists
+          if (dataObj.interior_designer_id && supabaseClient) {
+            try {
+              const { data: designerData } = await supabaseClient
+                .from('architects')
+                .select('id, name, slug, bio, birth_year, death_year, nationality, image_url')
+                .eq('id', dataObj.interior_designer_id)
+                .single();
+              if (designerData) {
+                updatedDestination.interior_designer_obj = designerData;
+              }
+            } catch (err) {
+              // Silently fail
             }
           }
           
-          setEnrichedData(enriched);
+          // Load movement if movement_id exists
+          if (dataObj.movement_id && supabaseClient) {
+            try {
+              const { data: movementData } = await supabaseClient
+                .from('design_movements')
+                .select('id, name, slug, description, period_start, period_end')
+                .eq('id', dataObj.movement_id)
+                .single();
+              if (movementData) {
+                updatedDestination.movement_obj = movementData;
+              }
+            } catch (err) {
+              // Silently fail
+            }
+          }
+          
           setEnhancedDestination(updatedDestination);
         }
 
@@ -368,8 +405,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           try {
             const nested = await getNestedDestinations(supabaseClient, destination.id);
             setNestedDestinations(nested || []);
-          } catch (error) {
-            console.error('Error loading nested destinations:', error);
+          } catch (error: any) {
+            // Silently handle RPC function errors - it might not exist in all databases
+            if (error?.message?.includes('function') || error?.code === '42883') {
+              console.debug('[Destination Drawer] Nested destinations RPC not available');
+            } else {
+              console.warn('[Destination Drawer] Error loading nested destinations:', error?.message || error);
+            }
+            setNestedDestinations([]);
           } finally {
             setLoadingNested(false);
           }
@@ -454,17 +497,30 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
     const newState = !isVisited;
     
-    if (newState) {
-      await supabaseClient.from('visited_places').insert({
-        user_id: user.id,
-        destination_slug: destination.slug,
-      });
-    } else {
-      await supabaseClient
-        .from('visited_places')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('destination_slug', destination.slug);
+    try {
+      if (newState) {
+        const { error } = await supabaseClient.from('visited_places').insert({
+          user_id: user.id,
+          destination_slug: destination.slug,
+        });
+        if (error) {
+          // If insert fails, try to handle gracefully
+          console.warn('[Destination Drawer] Failed to mark as visited:', error.message);
+        }
+      } else {
+        const { error } = await supabaseClient
+          .from('visited_places')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('destination_slug', destination.slug);
+        if (error) {
+          console.warn('[Destination Drawer] Failed to unmark as visited:', error.message);
+        }
+      }
+    } catch (error: any) {
+      console.warn('[Destination Drawer] Error updating visited status:', error?.message || error);
+      // Don't update state if the operation failed
+      return;
     }
 
     setIsVisited(newState);
