@@ -29,6 +29,22 @@ export class DiscoveryEngineService {
     // Format: projects/{project}/locations/{location}/collections/{collection}/dataStores/{data_store}
     this.dataStorePath = `projects/${this.projectId}/locations/${this.location}/collections/${this.collectionId}/dataStores/${this.dataStoreId}`;
 
+    // Debug logging in development to help diagnose configuration issues
+    if (process.env.NODE_ENV === 'development') {
+      console.debug('[Discovery Engine] Configuration:', {
+        projectId: this.projectId || 'MISSING',
+        location: this.location,
+        dataStoreId: this.dataStoreId,
+        hasCredentials: !!(process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.GOOGLE_CLOUD_CREDENTIALS_JSON),
+        envVarsPresent: {
+          GOOGLE_CLOUD_PROJECT_ID: !!process.env.GOOGLE_CLOUD_PROJECT_ID,
+          GCP_PROJECT_ID: !!process.env.GCP_PROJECT_ID,
+          DISCOVERY_ENGINE_DATA_STORE_ID: !!process.env.DISCOVERY_ENGINE_DATA_STORE_ID,
+          GOOGLE_CLOUD_LOCATION: !!process.env.GOOGLE_CLOUD_LOCATION,
+        },
+      });
+    }
+
     // Don't initialize clients in constructor - do it lazily when needed
     // This prevents unhandled promise rejections from credential loading
   }
@@ -93,7 +109,17 @@ export class DiscoveryEngineService {
   }
 
   /**
+   * Check if Discovery Engine is configured (has required env vars)
+   */
+  isConfigured(): boolean {
+    // Check if we have the required configuration variables
+    return !!(this.projectId && this.dataStoreId);
+  }
+
+  /**
    * Check if Discovery Engine is configured and available
+   * Returns true if configured (even if clients not yet initialized)
+   * Returns false only if configuration is missing or initialization failed
    */
   isAvailable(): boolean {
     // Check if we have the required configuration
@@ -101,15 +127,14 @@ export class DiscoveryEngineService {
       return false;
     }
 
-    // If clients haven't been initialized yet, they're not available
-    // (but we don't want to trigger initialization here as it's async)
-    // Return false if we know initialization failed
+    // If we know initialization failed, we're not available
     if (this.initializationError) {
       return false;
     }
 
-    // If clients are initialized and exist, we're available
-    return this.clientsInitialized && this.documentClient !== null && this.searchClient !== null;
+    // If we have the config, we're available (clients will initialize on first use)
+    // If clients are already initialized, that's even better
+    return true;
   }
 
   /**
@@ -483,6 +508,36 @@ export class DiscoveryEngineService {
    */
   getDataStorePath(): string {
     return this.dataStorePath;
+  }
+
+  /**
+   * Get detailed status information
+   */
+  getStatus(): {
+    isAvailable: boolean;
+    isConfigured: boolean;
+    projectId: string;
+    location: string;
+    dataStoreId: string;
+    clientsInitialized: boolean;
+    hasCredentials: boolean;
+    initializationError: string | null;
+  } {
+    const hasCredentials = !!(
+      process.env.GOOGLE_APPLICATION_CREDENTIALS ||
+      process.env.GOOGLE_CLOUD_CREDENTIALS_JSON
+    );
+
+    return {
+      isAvailable: this.isAvailable(),
+      isConfigured: this.isConfigured(),
+      projectId: this.projectId || 'missing',
+      location: this.location || 'missing',
+      dataStoreId: this.dataStoreId || 'missing',
+      clientsInitialized: this.clientsInitialized,
+      hasCredentials,
+      initializationError: this.initializationError?.message || null,
+    };
   }
 }
 

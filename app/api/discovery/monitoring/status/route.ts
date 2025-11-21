@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPerformanceMonitor } from '@/lib/discovery-engine/performance';
 import { getDiscoveryEngineCache } from '@/lib/discovery-engine/cache';
 import { getFeatureFlags, getABTestAssignment } from '@/lib/discovery-engine/feature-flags';
+import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase-server';
 
 /**
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
     const flags = getFeatureFlags();
     const monitor = getPerformanceMonitor();
     const cache = getDiscoveryEngineCache();
+    const discoveryEngine = getDiscoveryEngineService();
 
     // Get user ID for A/B test assignment
     let userId: string | undefined;
@@ -27,8 +29,13 @@ export async function GET(request: NextRequest) {
     const stats = monitor.getStats(60 * 60 * 1000); // Last hour
     const cacheStats = cache.getStats();
     const abTestAssignment = userId ? getABTestAssignment(userId) : {};
+    const discoveryStatus = discoveryEngine.getStatus();
 
     return NextResponse.json({
+      discoveryEngine: {
+        ...discoveryStatus,
+        useDiscoveryEngine: flags.useDiscoveryEngine,
+      },
       featureFlags: flags,
       performance: {
         lastHour: stats,
