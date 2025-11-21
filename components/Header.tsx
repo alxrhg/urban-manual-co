@@ -134,7 +134,7 @@ export function Header() {
       role="banner"
     >
       {/* Primary Nav */}
-      <div className="w-full px-6 md:px-10">
+      <div className="w-full px-6 md:px-10 festive-garland festive-dots">
         <nav
           className="flex items-center justify-between py-4"
           aria-label="Main navigation"
@@ -144,6 +144,7 @@ export function Header() {
             className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
             aria-label="Go to homepage"
           >
+            <span aria-hidden className="festive-brand-badge">✷</span>
             Urban Manual®
           </button>
 

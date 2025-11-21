@@ -68,6 +68,12 @@
     --container-padding-desktop: 48px;
     --gutter-nav: 12px;
     --gutter-grid: 20px;
+
+    /* Seasonal accents */
+    --festive-green: #2f7a55;
+    --festive-red: #c44444;
+    --festive-gold: #d9a441;
+    --festive-icing: #f4f7fb;
     
     /* Ensure container uses 1280px max-width */
     --tw-container-max-width: 1280px;
@@ -93,6 +99,12 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
+
+    /* Seasonal accents */
+    --festive-green: #6fb58a;
+    --festive-red: #f08a8a;
+    --festive-gold: #f6d58a;
+    --festive-icing: #0f172a;
   }
 
   * {
@@ -286,6 +298,92 @@
     overflow: visible;
     clip: auto;
     white-space: normal;
+  }
+
+  /* Seasonal decorative accents (CSS-only, easy to remove) */
+  .festive-garland {
+    position: relative;
+    isolation: isolate;
+    border-radius: 14px;
+  }
+
+  .festive-garland::before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: -10px;
+    height: 8px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--festive-green) 0 18px,
+      var(--festive-gold) 18px 24px,
+      var(--festive-red) 24px 32px,
+      var(--festive-icing) 32px 36px
+    );
+    border-radius: 9999px;
+    opacity: 0.65;
+    pointer-events: none;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.05));
+  }
+
+  .festive-garland::after {
+    content: "";
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: -10px;
+    height: 6px;
+    background: linear-gradient(
+      90deg,
+      var(--festive-icing),
+      color-mix(in srgb, var(--festive-gold) 50%, transparent),
+      var(--festive-icing)
+    );
+    border-radius: 9999px;
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .festive-dots {
+    position: relative;
+    padding-bottom: 18px;
+  }
+
+  .festive-dots::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 4px;
+    height: 8px;
+    background-image:
+      radial-gradient(circle at 4px 4px, var(--festive-gold) 0 2px, transparent 2px),
+      radial-gradient(circle at 12px 4px, var(--festive-green) 0 2px, transparent 2px),
+      radial-gradient(circle at 20px 4px, var(--festive-red) 0 2px, transparent 2px);
+    background-size: 28px 8px;
+    background-repeat: repeat-x;
+    opacity: 0.6;
+    pointer-events: none;
+    mix-blend-mode: normal;
+  }
+
+  .festive-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    border-radius: 9999px;
+    background: radial-gradient(circle at 50% 35%, var(--festive-gold), transparent 60%),
+      radial-gradient(circle at 30% 70%, var(--festive-green), transparent 65%),
+      radial-gradient(circle at 70% 75%, var(--festive-red), transparent 65%),
+      var(--festive-icing);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--festive-icing) 70%, transparent),
+      0 1px 3px rgba(0, 0, 0, 0.08);
+    color: color-mix(in srgb, var(--festive-green) 70%, var(--festive-red));
+    font-size: 12px;
+    line-height: 1;
+    pointer-events: none;
   }
 
   /* Page transition animations */
