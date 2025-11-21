@@ -39,7 +39,7 @@ This checklist covers CookieConsent behavior, Google Analytics/AdSense gating, a
 - Preferred: add a Playwright smoke test run (CI cron or pre-deploy job) that:
   - Clears storage, loads the home page, asserts the banner shows after ~1s, and inspects `dataLayer` for default `denied` consent.
   - Clicks Accept Necessary → asserts no GA config call captured via `page.waitForRequest` on `https://www.google-analytics.com/g/collect`.
-  - Clicks Accept All → waits for `cookie_consents` storage update and asserts a GA collect request is observed.
+  - Clicks Accept All → waits for `cookie_consent` storage update and asserts a GA collect request is observed.
   - Toggles Marketing off/on to confirm ad calls only appear after marketing consent is granted.
 - If automation is unavailable, run the above steps manually each Tuesday and before any staging → production promotion; record results in `evidence/` with timestamps and reviewer initials.
 - Optional: wire Playwright/Cypress run outputs (HAR + screenshots) to the `evidence/` folder for Legal/Compliance review.
