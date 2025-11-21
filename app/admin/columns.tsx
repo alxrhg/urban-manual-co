@@ -1,7 +1,7 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { ArrowUpDown, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Edit, Trash2, Copy, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -31,7 +31,9 @@ export type Destination = {
 
 export const createColumns = (
   onEdit: (destination: Destination) => void,
-  onDelete: (slug: string, name: string) => void
+  onDelete: (slug: string, name: string) => void,
+  onDuplicate?: (destination: Destination) => void,
+  onView?: (destination: Destination) => void
 ): ColumnDef<Destination>[] => [
   {
     accessorKey: 'name',
@@ -151,12 +153,31 @@ export const createColumns = (
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            {onView && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => onView(destination)}
+                >
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  View on Site
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem
               onClick={() => onEdit(destination)}
             >
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
+            {onDuplicate && (
+              <DropdownMenuItem
+                onClick={() => onDuplicate(destination)}
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Duplicate
+              </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => onDelete(destination.slug, destination.name)}

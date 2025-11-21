@@ -7,12 +7,14 @@ import { Loader2, Plus, X } from "lucide-react";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { DataTable } from "./data-table";
+import { DataTableEnhanced } from "./data-table-enhanced";
 import { createColumns } from "./columns";
 import type { Destination } from '@/types/destination';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 import { capitalizeCity } from '@/lib/utils';
 import { AdminStats } from '@/components/admin/AdminStats';
 import { SanitySyncSection } from '@/components/admin/SanitySyncSection';
+import { SyncOperationsDashboard } from '@/components/admin/SyncOperationsDashboard';
 import { DestinationForm } from '@/components/admin/DestinationForm';
 
 // Force dynamic rendering
@@ -160,6 +162,145 @@ export default function AdminPage() {
     });
   };
 
+  const handleBulkDelete = async (selectedRows: any[]) => {
+    confirm({
+      title: 'Delete Multiple Destinations',
+      message: `Are you sure you want to delete ${selectedRows.length} destination(s)? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Delete All',
+      cancelText: 'Cancel',
+      onConfirm: async () => {
+        try {
+          const supabase = createClient({ skipValidation: true });
+          const slugs = selectedRows.map(row => row.slug).filter(Boolean);
+          
+          if (slugs.length === 0) {
+            toast.error('No valid destinations to delete');
+            return;
+          }
+
+          const { error } = await supabase
+            .from('destinations')
+            .delete()
+            .in('slug', slugs);
+
+          if (error) throw error;
+
+          await loadDestinationList();
+          setStatsRefreshKey(prev => prev + 1);
+          toast.success(`${selectedRows.length} destination(s) deleted successfully.`);
+        } catch (e: any) {
+          console.error('[Admin] Error bulk deleting destinations:', e);
+          toast.error(`Failed to delete destinations: ${e.message || 'Unknown error'}`);
+        }
+      },
+    });
+  };
+
+  const handleBulkEdit = (selectedRows: any[]) => {
+    // For now, just edit the first one
+    // In the future, could open a bulk edit modal
+    if (selectedRows.length > 0) {
+      setEditingDestination(selectedRows[0]);
+      setShowCreateModal(true);
+      toast.info(`Editing first of ${selectedRows.length} selected destinations.`);
+    }
+  };
+
+  const handleBulkExport = async (selectedRows: any[]) => {
+    try {
+      const dataStr = JSON.stringify(selectedRows, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `destinations-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${selectedRows.length} destination(s).`);
+    } catch (e: any) {
+      console.error('[Admin] Error exporting destinations:', e);
+      toast.error(`Failed to export: ${e.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleBulkSync = async (selectedRows: any[]) => {
+    try {
+      const supabase = createClient({ skipValidation: true });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error('Not authenticated');
+        return;
+      }
+
+      const slugs = selectedRows.map(row => row.slug).filter(Boolean);
+      const response = await fetch('/api/admin/sync-sanity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          slugs: slugs,
+          dryRun: false,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Sync failed');
+      }
+
+      const result = await response.json();
+      toast.success(`Synced ${result.synced || selectedRows.length} destination(s) to Sanity.`);
+    } catch (e: any) {
+      console.error('[Admin] Error syncing to Sanity:', e);
+      toast.error(`Failed to sync: ${e.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleRowDuplicate = async (destination: any) => {
+    try {
+      const supabase = createClient({ skipValidation: true });
+      const { data, error } = await supabase
+        .from('destinations')
+        .select('*')
+        .eq('slug', destination.slug)
+        .single();
+
+      if (error) throw error;
+
+      // Create a copy with a new slug
+      const newSlug = `${destination.slug}-copy-${Date.now()}`;
+      const { data: newData, error: insertError } = await supabase
+        .from('destinations')
+        .insert({
+          ...data,
+          slug: newSlug,
+          name: `${data.name} (Copy)`,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      await loadDestinationList();
+      setStatsRefreshKey(prev => prev + 1);
+      toast.success(`Duplicated "${destination.name}" as "${newData.name}".`);
+    } catch (e: any) {
+      console.error('[Admin] Error duplicating destination:', e);
+      toast.error(`Failed to duplicate: ${e.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleRowView = (destination: any) => {
+    if (destination.slug) {
+      window.open(`/destination/${destination.slug}`, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   const handleSaveDestination = async (data: Partial<Destination>) => {
     setIsSaving(true);
     try {
@@ -213,7 +354,7 @@ export default function AdminPage() {
       <section className="space-y-6">
         <AdminStats refreshKey={statsRefreshKey} />
 
-        <SanitySyncSection />
+        <SyncOperationsDashboard />
 
         <div className="space-y-3 p-4 border border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/50">
           <div>
@@ -291,18 +432,31 @@ export default function AdminPage() {
               Loading destinations…
             </div>
           ) : (
-            <DataTable
+            <DataTableEnhanced
               columns={createColumns(
                 (dest) => {
                   setEditingDestination(dest);
                   setShowCreateModal(true);
                 },
-                handleDeleteDestination
+                handleDeleteDestination,
+                handleRowDuplicate,
+                handleRowView
               )}
               data={destinationList}
               searchQuery={listSearchQuery}
               onSearchChange={setListSearchQuery}
               isLoading={isLoadingList}
+              onBulkDelete={handleBulkDelete}
+              onBulkEdit={handleBulkEdit}
+              onBulkExport={handleBulkExport}
+              onBulkSync={handleBulkSync}
+              onRowEdit={(dest) => {
+                setEditingDestination(dest);
+                setShowCreateModal(true);
+              }}
+              onRowDuplicate={handleRowDuplicate}
+              onRowView={handleRowView}
+              onRowDelete={(dest) => handleDeleteDestination(dest.slug, dest.name)}
             />
           )}
         </div>

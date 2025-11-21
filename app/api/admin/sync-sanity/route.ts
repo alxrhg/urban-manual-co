@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const { user } = await requireAdmin(request);
 
     const body = await request.json();
-    const { limit, slug, dryRun } = body;
+    const { limit, slug, slugs, dryRun } = body;
 
     // Get Supabase credentials
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -66,6 +66,8 @@ export async function POST(request: NextRequest) {
 
     if (slug) {
       query = query.eq('slug', slug);
+    } else if (slugs && Array.isArray(slugs) && slugs.length > 0) {
+      query = query.in('slug', slugs);
     }
 
     const { data: destinations, error: fetchError } = await query;
@@ -147,15 +149,51 @@ export async function POST(request: NextRequest) {
       errorDetails: [] as Array<{ slug: string; error: string }>,
     };
 
+    const diffs: Array<{ slug: string; changes: string[] }> = [];
+
+    // Helper to get existing document data for diff
+    const getExistingDocumentData = async (slug: string) => {
+      try {
+        const existing = await sanityClient.fetch(
+          `*[_type == "destination" && slug.current == $slug][0]`,
+          { slug }
+        );
+        return existing || null;
+      } catch {
+        return null;
+      }
+    };
+
     // Process destinations
     for (const dest of toSync) {
       try {
         const sanityDoc = mapToSanityDocument(dest);
         const existingId = await getExistingDocument(dest.slug);
+        const existingData = dryRun ? await getExistingDocumentData(dest.slug) : null;
 
         if (dryRun) {
-          if (existingId) stats.updated++;
-          else stats.created++;
+          if (existingId) {
+            stats.updated++;
+            // Generate diff
+            if (existingData) {
+              const changes: string[] = [];
+              if (existingData.name !== dest.name) changes.push(`Name: "${existingData.name}" → "${dest.name}"`);
+              if (existingData.city !== dest.city) changes.push(`City: "${existingData.city || ''}" → "${dest.city || ''}"`);
+              if (existingData.country !== dest.country) changes.push(`Country: "${existingData.country || ''}" → "${dest.country || ''}"`);
+              if (JSON.stringify(existingData.categories || []) !== JSON.stringify(dest.category ? [dest.category] : [])) {
+                changes.push(`Categories: ${JSON.stringify(existingData.categories || [])} → ${JSON.stringify(dest.category ? [dest.category] : [])}`);
+              }
+              if (changes.length > 0) {
+                diffs.push({ slug: dest.slug, changes });
+              }
+            }
+          } else {
+            stats.created++;
+            diffs.push({
+              slug: dest.slug,
+              changes: ['New document will be created'],
+            });
+          }
           continue;
         }
 
@@ -179,6 +217,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       stats,
+      diffs: dryRun ? diffs : undefined,
       message: dryRun
         ? `Would ${stats.created > 0 ? 'create' : 'update'} ${stats.created + stats.updated} document(s)`
         : `Synced ${stats.created + stats.updated} document(s)`,
