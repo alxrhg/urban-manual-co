@@ -42,6 +42,7 @@ import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nest
 import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { Drawer } from '@/components/ui/Drawer';
+import { useToast } from '@/hooks/useToast';
 
 // Dynamically import POIDrawer to avoid SSR issues
 const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
@@ -198,6 +199,7 @@ function parseTime(timeStr: string): number {
 export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle }: DestinationDrawerProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const toast = useToast();
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [isAddedToTrip, setIsAddedToTrip] = useState(false);
@@ -1763,7 +1765,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           }
                         } catch (error) {
                           console.error('Error unsaving:', error);
-                          alert('Failed to unsave. Please try again.');
+                          toast.error('Failed to unsave. Please try again.');
                         }
                       }
                       setShowSaveDropdown(false);
