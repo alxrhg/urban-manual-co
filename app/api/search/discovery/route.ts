@@ -41,16 +41,51 @@ export async function POST(request: NextRequest) {
     const isAvailable = discoveryEngine.isAvailable();
     
     if (!isAvailable) {
-      // Discovery Engine not configured - return empty results with fallback flag
+      // Discovery Engine not configured - try to fetch from Supabase as fallback
       // This is expected behavior, not an error
-      console.debug('[Discovery Engine API] Status check:', {
-        isAvailable,
-        useDiscoveryEngine: flags.useDiscoveryEngine,
-        projectId: process.env.DISCOVERY_ENGINE_PROJECT_ID ? 'set' : 'missing',
-        location: process.env.DISCOVERY_ENGINE_LOCATION ? 'set' : 'missing',
-        dataStoreId: process.env.DISCOVERY_ENGINE_DATA_STORE_ID ? 'set' : 'missing',
-      });
-      console.debug('[Discovery Engine API] Discovery Engine is not available - returning empty results (expected fallback)');
+      const { logSilent } = await import('@/lib/utils/logger');
+      logSilent('[Discovery Engine API] Discovery Engine not available - attempting Supabase fallback');
+      
+      try {
+        // Import Supabase search fallback
+        const { getHomepageDestinations } = await import('@/server/services/homepage-loaders');
+        const supabaseDestinations = await getHomepageDestinations(pageSize || 200);
+        
+        if (supabaseDestinations && supabaseDestinations.length > 0) {
+          // Transform Supabase destinations to Discovery Engine format
+          const transformedResults = supabaseDestinations.map((dest: any) => ({
+            id: dest.id?.toString() || dest.slug || '',
+            name: dest.name || '',
+            description: dest.description || dest.micro_description || '',
+            city: dest.city || '',
+            category: dest.category || '',
+            tags: dest.tags || [],
+            rating: dest.rating || 0,
+            priceLevel: dest.price_level || 0,
+            slug: dest.slug || '',
+            uri: `/destination/${dest.slug}`,
+            relevanceScore: 1.0,
+          }));
+
+          return NextResponse.json(
+            { 
+              results: transformedResults,
+              totalSize: transformedResults.length,
+              query,
+              source: 'supabase_fallback',
+              fallback: true,
+              message: 'Discovery Engine is not configured. Using Supabase fallback.',
+            },
+            { status: 200 }
+          );
+        }
+      } catch (fallbackError) {
+        // If Supabase fallback also fails, return empty results
+        const { logWarn } = await import('@/lib/utils/logger');
+        logWarn('[Discovery Engine API] Supabase fallback failed', { error: fallbackError });
+      }
+      
+      // Return empty results if fallback also failed
       return NextResponse.json(
         { 
           results: [],
@@ -58,7 +93,7 @@ export async function POST(request: NextRequest) {
           query,
           source: 'fallback',
           fallback: true,
-          message: 'Discovery Engine is not configured. Please use Supabase search fallback.',
+          message: 'Discovery Engine is not configured. Supabase fallback also failed.',
         },
         { status: 200 }
       );

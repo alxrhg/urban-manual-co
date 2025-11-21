@@ -901,6 +901,43 @@ export default function Home() {
           fallback?: boolean;
         } = await response.json().catch(() => ({ results: [] as unknown[] }));
 
+        // If Discovery Engine is not configured (fallback: true), fetch from Supabase instead
+        if (payload.fallback === true && (!payload.results || (Array.isArray(payload.results) && payload.results.length === 0))) {
+          logSilent("[Discovery Engine] Bootstrap fallback - fetching from Supabase");
+          
+          try {
+            const supabaseResponse = await fetch("/api/homepage/destinations?limit=200", {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+
+            if (supabaseResponse.ok) {
+              const supabaseData = await supabaseResponse.json().catch(() => ({}));
+              const supabaseDestinations = Array.isArray(supabaseData.destinations) 
+                ? supabaseData.destinations 
+                : Array.isArray(supabaseData) 
+                  ? supabaseData 
+                  : [];
+
+              if (supabaseDestinations.length > 0) {
+                discoveryBootstrapRef.current = supabaseDestinations as Destination[];
+                logDebug(
+                  `[Discovery Engine] Bootstrap fallback successful - loaded ${supabaseDestinations.length} destinations from Supabase`,
+                  {
+                    source: "supabase_fallback",
+                    elapsed: `${Date.now() - startTime}ms`,
+                  }
+                );
+                return supabaseDestinations as Destination[];
+              }
+            }
+          } catch (fallbackError) {
+            logWarn("[Discovery Engine] Supabase fallback failed", { error: fallbackError });
+          }
+        }
+
         const normalized = Array.isArray(payload.results)
           ? payload.results
               .map(normalizeDiscoveryEngineRecord)
@@ -919,6 +956,42 @@ export default function Home() {
             }
           );
         } else {
+          // If we still have no results, try Supabase fallback one more time
+          if (normalized.length === 0) {
+            logSilent("[Discovery Engine] No results from Discovery Engine, trying Supabase fallback");
+            try {
+              const supabaseResponse = await fetch("/api/homepage/destinations?limit=200", {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              });
+
+              if (supabaseResponse.ok) {
+                const supabaseData = await supabaseResponse.json().catch(() => ({}));
+                const supabaseDestinations = Array.isArray(supabaseData.destinations) 
+                  ? supabaseData.destinations 
+                  : Array.isArray(supabaseData) 
+                    ? supabaseData 
+                    : [];
+
+                if (supabaseDestinations.length > 0) {
+                  discoveryBootstrapRef.current = supabaseDestinations as Destination[];
+                  logDebug(
+                    `[Discovery Engine] Supabase fallback successful - loaded ${supabaseDestinations.length} destinations`,
+                    {
+                      source: "supabase_fallback",
+                      elapsed: `${Date.now() - startTime}ms`,
+                    }
+                  );
+                  return supabaseDestinations as Destination[];
+                }
+              }
+            } catch (fallbackError) {
+              logWarn("[Discovery Engine] Supabase fallback failed", { error: fallbackError });
+            }
+          }
+          
           logWarn(
             "[Discovery Engine] Bootstrap returned no destinations",
             {
