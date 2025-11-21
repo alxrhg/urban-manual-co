@@ -8,12 +8,43 @@
 import { createServerClient as createSSRServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
-import { 
-  validateSupabaseUrl, 
+import {
+  validateSupabaseUrl,
   validateSupabaseAnonKey, 
   validateSupabaseServiceRoleKey,
-  formatValidationErrors 
+  formatValidationErrors
 } from './validation';
+
+/**
+ * Determine if placeholder clients should be allowed.
+ *
+ * - Always disallowed in production (runtime or Vercel production).
+ * - Allowed in development/preview by default, but can be toggled via
+ *   SUPABASE_ALLOW_PLACEHOLDER_CLIENTS.
+ */
+function shouldAllowPlaceholderClients(): boolean {
+  const vercelEnv = process.env.VERCEL_ENV;
+  const nodeEnv = process.env.NODE_ENV;
+  const flag = process.env.SUPABASE_ALLOW_PLACEHOLDER_CLIENTS;
+
+  // Never allow placeholders in production environments
+  if (nodeEnv === 'production' || vercelEnv === 'production') {
+    return false;
+  }
+
+  // Explicit opt-in/out via flag
+  if (flag === 'true') return true;
+  if (flag === 'false') return false;
+
+  // Default: allow during development or preview for smoother DX
+  return nodeEnv === 'development' || vercelEnv === 'preview' || vercelEnv === 'development';
+}
+
+function throwConfigError(prefix: string, errorMessage: string): never {
+  const action =
+    'Set SUPABASE_ALLOW_PLACEHOLDER_CLIENTS=true in development/preview or provide valid Supabase environment variables.';
+  throw new Error(`${prefix} Supabase configuration invalid. ${errorMessage}\n${action}`);
+}
 
 /**
  * Get Supabase URL from environment variables
@@ -95,24 +126,22 @@ export async function createServerClient() {
   const key = getSupabaseAnonKey();
 
   const validation = validateConfig(url, key);
+  const allowPlaceholder = shouldAllowPlaceholderClients();
 
   if (!validation.valid) {
     const errorMessage = formatValidationErrors(validation.errors);
-    
-    // Log error in all environments
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[Supabase Server] Configuration Validation Failed:');
-      console.error(errorMessage);
-      console.warn('[Supabase Server] Using placeholder client. Fix configuration to enable Supabase features.');
-    } else {
-      // In production, log error but don't throw during build
-      // Runtime errors will occur when the client is actually used
-      console.error('[Supabase Server] Configuration Validation Failed (production):');
-      console.error(errorMessage);
+
+    if (!allowPlaceholder) {
+      throwConfigError('[Supabase Server]', errorMessage);
     }
 
-    // Return placeholder client (allows build to proceed)
-    // Actual runtime errors will occur when client methods are called
+    console.error('[Supabase Server] Configuration Validation Failed:');
+    console.error(errorMessage);
+    console.warn(
+      '[Supabase Server] Using placeholder client. Fix configuration to enable Supabase features or disable placeholders via SUPABASE_ALLOW_PLACEHOLDER_CLIENTS=false.'
+    );
+
+    // Return placeholder client (allows boot to proceed in dev/preview)
     const cookieStore = await cookies();
     return createSSRServerClient(
       'https://placeholder.supabase.co',
@@ -168,24 +197,22 @@ export function createServiceRoleClient() {
   const key = getSupabaseServiceRoleKey();
 
   const validation = validateServiceRoleConfig(url, key);
+  const allowPlaceholder = shouldAllowPlaceholderClients();
 
   if (!validation.valid) {
     const errorMessage = formatValidationErrors(validation.errors);
-    
-    // Log error in all environments
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[Supabase Service Role] Configuration Validation Failed:');
-      console.error(errorMessage);
-      console.warn('[Supabase Service Role] Using placeholder client. Fix configuration to enable admin operations.');
-    } else {
-      // In production, log error but don't throw during build
-      // Runtime errors will occur when the client is actually used
-      console.error('[Supabase Service Role] Configuration Validation Failed (production):');
-      console.error(errorMessage);
+
+    if (!allowPlaceholder) {
+      throwConfigError('[Supabase Service Role]', errorMessage);
     }
 
-    // Return placeholder client (allows build to proceed)
-    // Actual runtime errors will occur when client methods are called
+    console.error('[Supabase Service Role] Configuration Validation Failed:');
+    console.error(errorMessage);
+    console.warn(
+      '[Supabase Service Role] Using placeholder client. Fix configuration to enable admin operations or disable placeholders via SUPABASE_ALLOW_PLACEHOLDER_CLIENTS=false.'
+    );
+
+    // Return placeholder client (allows boot to proceed in dev/preview)
     return createClient(
       'https://placeholder.supabase.co',
       'placeholder-key',
