@@ -130,7 +130,22 @@ export default function GoogleInteractiveMap({
 
   // Initialize map
   const initializeMap = useCallback(() => {
-    if (!mapRef.current || !window.google?.maps) return;
+    if (!mapRef.current) {
+      console.warn('Map container ref not available');
+      return;
+    }
+
+    if (!window.google?.maps) {
+      console.warn('Google Maps API not loaded yet');
+      setError('Google Maps API is still loading. Please wait...');
+      return;
+    }
+
+    // Prevent double initialization
+    if (isInitializedRef.current && mapInstanceRef.current) {
+      console.log('Map already initialized, skipping...');
+      return;
+    }
 
     try {
       // When using mapId, styles should be configured in Google Cloud Console
@@ -145,13 +160,18 @@ export default function GoogleInteractiveMap({
         fullscreenControl: true,
       };
 
-      // Only set mapId if available, otherwise use styles
+      // Only set mapId if available and valid, otherwise use styles
       // Check for both env var and fallback to hardcoded value for backward compatibility
       const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || 'URBAN_MANUAL_MAP';
-      if (mapId) {
+      
+      // Try to use mapId, but fallback to styles if it fails
+      if (mapId && mapId !== '') {
         mapOptions.mapId = mapId;
-      } else if (isDark) {
-        // Fallback to inline styles if mapId is not configured
+      }
+      
+      // Always provide styles as fallback (mapId might not be configured in Google Cloud Console)
+      if (isDark) {
+        // Fallback to inline styles if mapId is not configured or fails
         mapOptions.styles = [
           { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
           { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
@@ -234,21 +254,80 @@ export default function GoogleInteractiveMap({
         ];
       }
 
+      // Initialize the map
       mapInstanceRef.current = new google.maps.Map(mapRef.current, mapOptions);
-      isInitializedRef.current = true;
-      lastCenterRef.current = { lat: center.lat, lng: center.lng };
-      lastZoomRef.current = zoom;
+      
+      // Wait for map to be ready before marking as initialized
+      google.maps.event.addListenerOnce(mapInstanceRef.current, 'idle', () => {
+        isInitializedRef.current = true;
+        lastCenterRef.current = { lat: center.lat, lng: center.lng };
+        lastZoomRef.current = zoom;
+        setIsLoading(false);
+        setError(null);
 
-      // Add markers after map is initialized
-      if (destinations.length > 0) {
-        addMarkers();
-      }
-    } catch (err) {
+        // Markers will be added by the destinations effect when map is ready
+      });
+
+      // Handle map errors
+      google.maps.event.addListener(mapInstanceRef.current, 'error', (e: any) => {
+        console.error('Google Maps error event:', e);
+        setError('Map error occurred. Please refresh the page.');
+        setIsLoading(false);
+      });
+
+    } catch (err: any) {
       console.error('Error initializing Google Map:', err);
-      setError('Failed to initialize map');
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to initialize map';
+      if (err?.message) {
+        errorMessage = err.message;
+      } else if (err?.toString) {
+        errorMessage = err.toString();
+      }
+      
+      // Check for common errors
+      if (errorMessage.includes('InvalidKeyMapError') || errorMessage.includes('RefererNotAllowedMapError')) {
+        errorMessage = 'Invalid Google Maps API key or domain restrictions. Please check your API key configuration.';
+      } else if (errorMessage.includes('mapId')) {
+        errorMessage = 'Invalid map ID. The map ID may not be configured in Google Cloud Console. Using default styles.';
+        // Retry without mapId
+        try {
+          const fallbackOptions: google.maps.MapOptions = {
+            center: { lat: center.lat, lng: center.lng },
+            zoom: zoom,
+            disableDefaultUI: false,
+            zoomControl: true,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            styles: isDark ? [
+              { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+              { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+              { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
+            ] : undefined,
+          };
+          mapInstanceRef.current = new google.maps.Map(mapRef.current, fallbackOptions);
+          // Wait for map to be ready
+          google.maps.event.addListenerOnce(mapInstanceRef.current, 'idle', () => {
+            isInitializedRef.current = true;
+            lastCenterRef.current = { lat: center.lat, lng: center.lng };
+            lastZoomRef.current = zoom;
+            setIsLoading(false);
+            setError(null);
+            // Markers will be added by the destinations effect
+          });
+          return;
+        } catch (retryErr) {
+          console.error('Retry with fallback also failed:', retryErr);
+        }
+      }
+      
+      setError(errorMessage);
       isInitializedRef.current = false;
+      setIsLoading(false);
     }
-  }, [center.lat, center.lng, zoom, isDark]); // Removed addMarkers to prevent re-initialization
+  }, [center.lat, center.lng, zoom, isDark, destinations, onMarkerClick]);
 
   // Load Google Maps script
   useEffect(() => {
@@ -265,17 +344,29 @@ export default function GoogleInteractiveMap({
     // Check if already loaded
     if (window.google?.maps) {
       setIsLoading(false);
-      initializeMap();
+      setError(null);
+      // Small delay to ensure DOM is ready
+      setTimeout(() => initializeMap(), 100);
       return;
     }
 
     // Check if script is already being loaded
-    if (document.querySelector('script[data-google-maps]')) {
+    const existingScript = document.querySelector('script[data-google-maps]');
+    if (existingScript) {
+      let attempts = 0;
+      const maxAttempts = 50; // 5 seconds max wait
       const checkInterval = setInterval(() => {
+        attempts++;
         if (window.google?.maps) {
           setIsLoading(false);
-          initializeMap();
+          setError(null);
           clearInterval(checkInterval);
+          setTimeout(() => initializeMap(), 100);
+        } else if (attempts >= maxAttempts) {
+          // Script loading timeout
+          clearInterval(checkInterval);
+          setError('Google Maps API failed to load. Please check your internet connection and API key.');
+          setIsLoading(false);
         }
       }, 100);
       return () => clearInterval(checkInterval);
@@ -289,25 +380,46 @@ export default function GoogleInteractiveMap({
     script.setAttribute('data-google-maps', 'true');
     
     script.onload = () => {
-      if (window.google?.maps) {
-        setIsLoading(false);
-        setError(null);
-        initializeMap();
-      }
+      // Wait a bit for Google Maps to fully initialize
+      setTimeout(() => {
+        if (window.google?.maps) {
+          setIsLoading(false);
+          setError(null);
+          initializeMap();
+        } else {
+          setError('Google Maps API loaded but not available. Please check your API key configuration.');
+          setIsLoading(false);
+        }
+      }, 100);
     };
 
-    script.onerror = () => {
-      setError('Failed to load Google Maps API');
+    script.onerror = (err) => {
+      console.error('Google Maps script load error:', err);
+      setError('Failed to load Google Maps API. Please check your API key and network connection.');
       setIsLoading(false);
+      
+      // Remove the failed script to allow retry
+      const failedScript = document.querySelector('script[data-google-maps]');
+      if (failedScript) {
+        failedScript.remove();
+      }
     };
 
     document.head.appendChild(script);
 
     return () => {
       // Cleanup markers
-      markersRef.current.forEach(marker => marker.map = null);
+      markersRef.current.forEach(marker => {
+        if (marker) {
+          marker.map = null;
+        }
+      });
       markersRef.current = [];
-      infoWindowsRef.current.forEach(iw => iw.close());
+      infoWindowsRef.current.forEach(iw => {
+        if (iw) {
+          iw.close();
+        }
+      });
       infoWindowsRef.current = [];
     };
   }, [initializeMap]);
@@ -350,9 +462,25 @@ export default function GoogleInteractiveMap({
       )}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 z-10">
-          <div className="text-center p-6">
-            <p className="text-sm font-medium">{error}</p>
-            <p className="text-xs text-gray-500 mt-1">Please check your Google API key configuration (NEXT_PUBLIC_GOOGLE_API_KEY).</p>
+          <div className="text-center p-6 max-w-md">
+            <p className="text-sm font-medium mb-2">{error}</p>
+            <p className="text-xs text-gray-500 mb-4">Please check your Google API key configuration (NEXT_PUBLIC_GOOGLE_API_KEY).</p>
+            <button
+              onClick={() => {
+                setError(null);
+                setIsLoading(true);
+                // Remove existing script and retry
+                const existingScript = document.querySelector('script[data-google-maps]');
+                if (existingScript) {
+                  existingScript.remove();
+                }
+                // Trigger re-initialization
+                window.location.reload();
+              }}
+              className="text-xs px-3 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-80 transition-opacity"
+            >
+              Retry
+            </button>
           </div>
         </div>
       )}
