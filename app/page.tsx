@@ -66,6 +66,7 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useDestinationLoading } from '@/hooks/useDestinationLoading';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
+import { logDebug, logWarn, logError, logSilent } from '@/lib/utils/logger';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -466,7 +467,7 @@ export default function Home() {
             });
           })
           .catch(error => {
-            console.warn("Failed to record analytics event:", error);
+            logWarn("Failed to record analytics event", { error });
           });
       }
 
@@ -482,7 +483,7 @@ export default function Home() {
             documentId: destination.slug,
           }),
         }).catch(error => {
-          console.warn("Failed to track click event:", error);
+          logWarn("Failed to track click event", { error });
         });
       }
     },
@@ -737,7 +738,7 @@ export default function Home() {
       fallbackDestinationsRef.current = normalized;
       return normalized;
     } catch (error) {
-      console.warn("[Fallback] Unable to load static destinations:", error);
+      logWarn("[Fallback] Unable to load static destinations", { error });
       fallbackDestinationsRef.current = [];
       return [];
     }
@@ -832,19 +833,19 @@ export default function Home() {
 
   const fetchDiscoveryBootstrap = async (): Promise<Destination[]> => {
     if (discoveryBootstrapRef.current !== null) {
-      console.log("[Discovery Engine] Using cached bootstrap data");
+      logDebug("[Discovery Engine] Using cached bootstrap data");
       return discoveryBootstrapRef.current;
     }
 
     if (discoveryBootstrapPromiseRef.current) {
-      console.log("[Discovery Engine] Waiting for existing bootstrap request");
+      logDebug("[Discovery Engine] Waiting for existing bootstrap request");
       return discoveryBootstrapPromiseRef.current;
     }
 
     const promise = (async () => {
       const startTime = Date.now();
       try {
-        console.log("[Discovery Engine] Starting bootstrap request...");
+        logDebug("[Discovery Engine] Starting bootstrap request...");
         const response = await fetch("/api/search/discovery", {
           method: "POST",
           headers: {
@@ -859,7 +860,7 @@ export default function Home() {
         });
 
         const elapsed = Date.now() - startTime;
-        console.log(`[Discovery Engine] Response received (${elapsed}ms):`, {
+        logDebug(`[Discovery Engine] Response received (${elapsed}ms)`, {
           status: response.status,
           statusText: response.statusText,
           ok: response.ok,
@@ -867,8 +868,8 @@ export default function Home() {
 
         if (!response.ok) {
           if (response.status === 503) {
-            // 503 is expected when Discovery Engine is not configured - use debug log instead of warn
-            console.debug(
+            // 503 is expected when Discovery Engine is not configured - silent
+            logSilent(
               "[Discovery Engine] Service unavailable (503) - Discovery Engine not configured, using Supabase fallback"
             );
           } else {
@@ -883,11 +884,11 @@ export default function Home() {
               (typeof errorDetails?.details === "string" &&
                 errorDetails.details) ||
               response.statusText;
-            console.warn("[Discovery Engine] Bootstrap request failed:", {
+            logWarn("[Discovery Engine] Bootstrap request failed", {
               status: response.status,
               message: detailMessage,
             });
-            console.debug("[Discovery Engine] Falling back to Supabase only");
+            logDebug("[Discovery Engine] Falling back to Supabase only");
           }
 
           discoveryBootstrapRef.current = null;
@@ -909,7 +910,7 @@ export default function Home() {
         discoveryBootstrapRef.current = normalized;
 
         if (normalized.length > 0) {
-          console.log(
+          logDebug(
             `[Discovery Engine] Successfully bootstrapped ${normalized.length} destinations`,
             {
               source: payload.source || "unknown",
@@ -918,7 +919,7 @@ export default function Home() {
             }
           );
         } else {
-          console.warn(
+          logWarn(
             "[Discovery Engine] Bootstrap returned no destinations",
             {
               source: payload.source || "unknown",
@@ -932,16 +933,11 @@ export default function Home() {
         const message = error instanceof Error ? error.message : String(error);
         // Only warn if it's not a 503/configuration error
         if (!message.includes("503") && !message.includes("not configured")) {
-          console.warn("[Discovery Engine] Bootstrap failed:", message, {
-            elapsed: `${Date.now() - startTime}ms`,
-          });
+          logWarn("[Discovery Engine] Bootstrap failed", { message, elapsed: `${Date.now() - startTime}ms` });
         } else {
-          console.debug(
-            "[Discovery Engine] Bootstrap failed (expected):",
-            message
-          );
+          logSilent("[Discovery Engine] Bootstrap failed (expected)", { message });
         }
-        console.debug("[Discovery Engine] Falling back to Supabase only");
+        logDebug("[Discovery Engine] Falling back to Supabase only");
         discoveryBootstrapRef.current = null;
         return [];
       } finally {
@@ -1023,7 +1019,7 @@ export default function Home() {
     } catch (error) {
       // Expected error if user is not logged in - suppress
       if (user) {
-        console.warn("Error fetching last session:", error);
+        logWarn("Error fetching last session", { error });
       }
     }
   }
@@ -1044,7 +1040,7 @@ export default function Home() {
       }
 
       if (!response.ok) {
-        console.warn("Error fetching user profile:", await response.text());
+        logWarn("Error fetching user profile", { response: await response.text() });
         return;
       }
 
@@ -1069,7 +1065,7 @@ export default function Home() {
     } catch (error) {
       // Expected error if user is not logged in - suppress
       if (user) {
-        console.warn("Error fetching user profile:", error);
+        logWarn("Error fetching user profile", { error });
       }
     }
   }
@@ -1099,7 +1095,7 @@ export default function Home() {
     } catch (error) {
       // Expected error if user is not logged in - suppress
       if (user && userProfile) {
-        console.warn("Error fetching enriched greeting context:", error);
+        logWarn("Error fetching enriched greeting context", { error });
       }
     }
   }
@@ -1197,7 +1193,7 @@ export default function Home() {
     const discoveryBaselinePromise = fetchDiscoveryBootstrap();
 
     try {
-      console.log("[Filter Data] Starting fetch...");
+      logDebug("[Filter Data] Starting fetch...");
 
       let filterRows: any[] | null = null;
       let fetchError: any = null;
@@ -1217,9 +1213,9 @@ export default function Home() {
           filterRows = payload.rows || [];
         }
       } catch (networkError: any) {
-        console.warn(
-          "[Filter Data] Network error:",
-          networkError?.message || networkError
+        logWarn(
+          "[Filter Data] Network error",
+          { message: networkError?.message || networkError }
         );
         fetchError = networkError;
       } finally {
@@ -1234,9 +1230,9 @@ export default function Home() {
             !fetchError.message?.includes("Network") &&
             !fetchError.message?.includes("timeout")
           ) {
-            console.warn(
-              "[Filter Data] Error:",
-              fetchError.message || fetchError
+            logWarn(
+              "[Filter Data] Error",
+              { message: fetchError.message || fetchError }
             );
           }
         }
@@ -1305,7 +1301,7 @@ export default function Home() {
         }
       }
 
-      console.log("[Filter Data] State updated:", {
+      logDebug("[Filter Data] State updated", {
         cities: uniqueCities.length,
         categories: uniqueCategories.length,
         sampleCities: uniqueCities.slice(0, 5),
@@ -1313,7 +1309,7 @@ export default function Home() {
     } catch (error: any) {
       // OPTIMIZATION: Use helper function for error checking
       if (!isIgnorableSupabaseError(error)) {
-        console.warn("[Filter Data] Exception:", error?.message || error);
+        logWarn("[Filter Data] Exception", { message: error?.message || error });
       }
 
       // OPTIMIZATION: Reuse Discovery Engine call (already started)
@@ -1346,7 +1342,7 @@ export default function Home() {
           });
         }
       } catch (fallbackError) {
-        console.warn("[Filter Data] Fallback also failed:", fallbackError);
+        logWarn("[Filter Data] Fallback also failed", { error: fallbackError });
         // OPTIMIZATION: Batch state updates
         React.startTransition(() => {
           setCities([]);
@@ -1597,9 +1593,9 @@ export default function Home() {
           destinationsData = payload.destinations || [];
         }
       } catch (networkError: any) {
-        console.warn(
-          "[Destinations] Network error:",
-          networkError?.message || networkError
+        logWarn(
+          "[Destinations] Network error",
+          { message: networkError?.message || networkError }
         );
         fetchError = networkError;
       } finally {
@@ -1619,9 +1615,9 @@ export default function Home() {
             !fetchError.message?.includes("Network") &&
             !fetchError.message?.includes("timeout")
           ) {
-            console.warn(
-              "Error fetching destinations:",
-              fetchError.message || fetchError
+            logWarn(
+              "Error fetching destinations",
+              { message: fetchError.message || fetchError }
             );
           }
         }
@@ -1744,7 +1740,7 @@ export default function Home() {
         });
     } catch (error: any) {
       if (!isIgnorableSupabaseError(error)) {
-        console.warn("Error fetching destinations:", error?.message || error);
+        logWarn("Error fetching destinations", { message: error?.message || error });
       }
 
       const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
@@ -1777,7 +1773,7 @@ export default function Home() {
       }
 
       if (!response.ok) {
-        console.warn("Error fetching visited places:", await response.text());
+        logWarn("Error fetching visited places", { response: await response.text() });
         return;
       }
 
@@ -1787,7 +1783,7 @@ export default function Home() {
     } catch (error) {
       // Expected error if user is not logged in - suppress
       if (user) {
-        console.warn("Error fetching visited places:", error);
+        logWarn("Error fetching visited places", { error });
       }
     }
   };
@@ -1947,7 +1943,7 @@ export default function Home() {
           },
         ]);
       } catch (error) {
-        console.error("AI chat error:", error);
+        logError("AI chat error", error);
         setChatResponse("Sorry, I encountered an error. Please try again.");
         setFilteredDestinations([]);
         setSearchIntent(null);
@@ -2125,7 +2121,7 @@ export default function Home() {
     setUserLocation({ lat, lng });
 
     try {
-      console.log(
+      logDebug(
         `[Near Me] Fetching destinations within ${radius}km of ${lat}, ${lng}`
       );
       const response = await fetch(
@@ -2134,14 +2130,14 @@ export default function Home() {
       const data = await response.json();
 
       if (data.error) {
-        console.error("[Near Me] API error:", data.error, data.details);
+        logError("[Near Me] API error", undefined, { error: data.error, details: data.details });
         setNearbyDestinations([]);
         return;
       }
 
-      console.log(
+      logDebug(
         `[Near Me] Found ${data.count} destinations`,
-        data.usesFallback ? "(using fallback)" : "(using database function)"
+        { source: data.usesFallback ? "(using fallback)" : "(using database function)" }
       );
 
       if (data.destinations) {
@@ -2150,7 +2146,7 @@ export default function Home() {
         setNearbyDestinations([]);
       }
     } catch (error) {
-      console.error("[Near Me] Error fetching nearby destinations:", error);
+      logError("[Near Me] Error fetching nearby destinations", error);
       setNearbyDestinations([]);
     }
   };
@@ -2951,9 +2947,9 @@ export default function Home() {
                           source: "smart_recommendations",
                         }),
                       }).catch(error => {
-                        console.warn(
-                          "Failed to track Discovery Engine event:",
-                          error
+                        logWarn(
+                          "Failed to track Discovery Engine event",
+                          { error }
                         );
                       });
                     }

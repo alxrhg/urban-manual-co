@@ -5,6 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logSilent, logWarn, logError } from '@/lib/utils/logger';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
@@ -28,7 +29,8 @@ export async function GET(request: NextRequest) {
   try {
     // Check if ML service is configured and not localhost
     if (!ML_SERVICE_URL || isLocalhostUrl(ML_SERVICE_URL)) {
-      console.debug('[ML Forecast Demand] ML service not configured or using localhost, returning empty results');
+      // Silent - this is expected behavior when ML service is not configured
+      logSilent('[ML Forecast Demand] ML service not configured, returning empty results');
       return NextResponse.json(
         {
           error: 'ML forecast service is not configured',
@@ -62,7 +64,7 @@ export async function GET(request: NextRequest) {
     );
 
     if (!mlResponse.ok) {
-      console.warn('[ML Forecast Demand] Service error:', mlResponse.status, mlResponse.statusText);
+      logWarn('[ML Forecast Demand] Service error', { status: mlResponse.status, statusText: mlResponse.statusText });
       // Return 200 with empty results instead of 503 to prevent breaking the UI
       return NextResponse.json(
         {
@@ -87,9 +89,10 @@ export async function GET(request: NextRequest) {
       error?.cause?.code === 'ECONNREFUSED';
     
     if (isConnectionError) {
-      console.warn('[ML Forecast Demand] Connection error (ML service unavailable):', error?.message || error?.cause?.message);
+      // Silent - expected when ML service is not available
+      logSilent('[ML Forecast Demand] Connection error (ML service unavailable)');
     } else {
-      console.error('[ML Forecast Demand] Error:', error instanceof Error ? error.message : 'Unknown error');
+      logError('[ML Forecast Demand] Unexpected error', error);
     }
     
     // Return 200 with empty results instead of 500 to prevent breaking the UI
