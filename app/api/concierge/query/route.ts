@@ -1,10 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { getVectorIndex } from '@/lib/upstash-vector';
 import { generateTextEmbedding } from '@/lib/ml/embeddings';
+import { createServerClient } from '@/lib/supabase-server';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute window
+
+function checkRateLimit(userId: string): boolean {
+  const now = Date.now();
+  const limit = rateLimitMap.get(userId);
+
+  if (!limit || now > limit.resetAt) {
+    rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+
+  if (limit.count >= RATE_LIMIT_MAX) {
+    return false;
+  }
+
+  limit.count += 1;
+  return true;
+}
 
 interface ConciergeRequest {
   query: string;
@@ -54,12 +72,49 @@ interface ConciergeResponse {
  */
 export async function POST(request: NextRequest) {
   try {
+    const supabase = await createServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    if (!checkRateLimit(user.id)) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please try again soon.' },
+        { status: 429 }
+      );
+    }
+
     const body: ConciergeRequest = await request.json();
     const { query, userContext, limit = 5, includeExternal = true } = body;
 
     if (!query || query.trim().length === 0) {
       return NextResponse.json(
         { error: 'Query is required' },
+        { status: 400 }
+      );
+    }
+
+    const normalizedLimit = Number(limit);
+    if (
+      !Number.isFinite(normalizedLimit) ||
+      !Number.isInteger(normalizedLimit) ||
+      normalizedLimit < 1 ||
+      normalizedLimit > 20
+    ) {
+      return NextResponse.json(
+        { error: 'Limit must be an integer between 1 and 20' },
+        { status: 400 }
+      );
+    }
+
+    if (typeof includeExternal !== 'boolean') {
+      return NextResponse.json(
+        { error: 'includeExternal must be a boolean' },
         { status: 400 }
       );
     }
@@ -71,7 +126,7 @@ export async function POST(request: NextRequest) {
     const vectorIndex = getVectorIndex();
     const vectorResults = await vectorIndex.query({
       vector: embeddingResult.embedding,
-      topK: limit * 2, // Get more results for filtering
+      topK: normalizedLimit * 2, // Get more results for filtering
       includeMetadata: true,
     });
 
@@ -79,7 +134,7 @@ export async function POST(request: NextRequest) {
     const destinationIds = vectorResults
       .filter((r: any) => r.score && r.score > 0.7) // Filter by similarity threshold
       .map((r: any) => parseInt(String(r.id)))
-      .slice(0, limit);
+      .slice(0, normalizedLimit);
 
     if (destinationIds.length === 0) {
       return NextResponse.json<ConciergeResponse>({
@@ -89,7 +144,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 4: Fetch full destination data from Supabase
-    const supabase = createClient(supabaseUrl, supabaseKey);
     const { data: destinations, error } = await supabase
       .from('destinations')
       .select('id, name, city, country, category, price_range, michelin_stars, description, ai_description')
