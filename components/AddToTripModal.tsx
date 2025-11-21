@@ -480,11 +480,15 @@ export function AddToTripModal({
                     {trips.filter(t => t.status === 'ongoing').map((trip) => {
                       const startDate = formatDateForDisplay(trip.start_date);
                       const endDate = formatDateForDisplay(trip.end_date);
+                      const isInTrip = tripsWithDestination.has(trip.id);
+
                       return (
                         <button
                           key={trip.id}
-                          onClick={() => handleAddToTrip(trip.id)}
-                          disabled={adding === trip.id}
+                          onClick={() =>
+                            isInTrip ? handleRemoveFromTrip(trip.id) : handleAddToTrip(trip.id)
+                          }
+                          disabled={processingTripId === trip.id}
                           className="w-full text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-180 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                         >
                           <div className="flex items-start justify-between gap-4">
@@ -511,11 +515,13 @@ export function AddToTripModal({
                                 </div>
                               )}
                             </div>
-                            {adding === trip.id ? (
+                            {processingTripId === trip.id ? (
                               <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
                             ) : (
-                              <span className="text-xs font-medium text-gray-900 dark:text-white flex-shrink-0">
-                                Add
+                              <span
+                                className={`text-xs font-medium flex-shrink-0 ${isInTrip ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-white'}`}
+                              >
+                                {isInTrip ? 'Remove' : 'Add'}
                               </span>
                             )}
                           </div>
@@ -536,11 +542,15 @@ export function AddToTripModal({
                     {planningTrips.map((trip) => {
                       const startDate = formatDateForDisplay(trip.start_date);
                       const endDate = formatDateForDisplay(trip.end_date);
+                      const isInTrip = tripsWithDestination.has(trip.id);
+
                       return (
                         <button
                           key={trip.id}
-                          onClick={() => handleAddToTrip(trip.id)}
-                          disabled={adding === trip.id}
+                          onClick={() =>
+                            isInTrip ? handleRemoveFromTrip(trip.id) : handleAddToTrip(trip.id)
+                          }
+                          disabled={processingTripId === trip.id}
                           className="w-full text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-180 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                         >
                           <div className="flex items-start justify-between gap-4">
@@ -567,11 +577,13 @@ export function AddToTripModal({
                                 </div>
                               )}
                             </div>
-                            {adding === trip.id ? (
+                            {processingTripId === trip.id ? (
                               <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
                             ) : (
-                              <span className="text-xs font-medium text-gray-900 dark:text-white flex-shrink-0">
-                                Add
+                              <span
+                                className={`text-xs font-medium flex-shrink-0 ${isInTrip ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-white'}`}
+                              >
+                                {isInTrip ? 'Remove' : 'Add'}
                               </span>
                             )}
                           </div>
@@ -592,11 +604,15 @@ export function AddToTripModal({
                     {completedTrips.map((trip) => {
                       const startDate = formatDateForDisplay(trip.start_date);
                       const endDate = formatDateForDisplay(trip.end_date);
+                      const isInTrip = tripsWithDestination.has(trip.id);
+
                       return (
                         <button
                           key={trip.id}
-                          onClick={() => handleAddToTrip(trip.id)}
-                          disabled={adding === trip.id}
+                          onClick={() =>
+                            isInTrip ? handleRemoveFromTrip(trip.id) : handleAddToTrip(trip.id)
+                          }
+                          disabled={processingTripId === trip.id}
                           className="w-full text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-180 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                         >
                           <div className="flex items-start justify-between gap-4">
@@ -623,11 +639,13 @@ export function AddToTripModal({
                                 </div>
                               )}
                             </div>
-                            {adding === trip.id ? (
+                            {processingTripId === trip.id ? (
                               <Loader2 className="h-4 w-4 animate-spin text-gray-400 flex-shrink-0" />
                             ) : (
-                              <span className="text-xs font-medium text-gray-900 dark:text-white flex-shrink-0">
-                                Add
+                              <span
+                                className={`text-xs font-medium flex-shrink-0 ${isInTrip ? 'text-green-700 dark:text-green-300' : 'text-gray-900 dark:text-white'}`}
+                              >
+                                {isInTrip ? 'Remove' : 'Add'}
                               </span>
                             )}
                           </div>
