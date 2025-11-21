@@ -741,12 +741,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Parent/Located In */}
           {parentDestination && (
-            <div onClick={() => {
-              onClose();
-              setTimeout(() => router.push(`/destination/${parentDestination.slug}`), 100);
-            }}>
-              <LocatedInBadge parent={parentDestination} />
-            </div>
+            <LocatedInBadge
+              parent={parentDestination}
+              onClick={() => {
+                onClose();
+                setTimeout(() => router.push(`/destination/${parentDestination.slug}`), 100);
+              }}
+            />
           )}
 
           {/* Nested Destinations */}
@@ -795,15 +796,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Architecture & Design */}
           {enhancedDestination && (
-            <ArchitectDesignInfo
-              destination={enhancedDestination}
-              onArchitectClick={(architect) => {
-                if (architect.slug) {
-                  onClose();
-                  setTimeout(() => router.push(`/architect/${architect.slug}`), 100);
-                }
-              }}
-            />
+            <ArchitectDesignInfo destination={enhancedDestination} />
           )}
 
           {/* Map */}
