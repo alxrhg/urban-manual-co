@@ -1,5 +1,7 @@
 # Quick Start: Run Enrichment for Cuisine Type
 
+For a full rundown of every `package.json` script, required credentials, and dry-run options, read the [Package Script Runbook](./PACKAGE_SCRIPTS_RUNBOOK.md) before running enrichment jobs.
+
 ## Option 1: Using npm (Recommended)
 
 Open your terminal and run:

@@ -1,5 +1,7 @@
 # Run Supabase Migrations
 
+For environment requirements, dry-run guidance, and verification steps across every `package.json` script, start with the [Package Script Runbook](./PACKAGE_SCRIPTS_RUNBOOK.md) before triggering migration workflows.
+
 ## Quick Command
 
 From the project root directory (`/Users/alxrhg/urban-manual`), run:
