@@ -37,7 +37,9 @@
     "export:r2": "tsx scripts/export-destinations-to-r2.ts",
     "export:r2:dry-run": "tsx scripts/export-destinations-to-r2.ts --dry-run",
     "sanity:sync": "tsx scripts/sync-supabase-to-sanity.ts",
-    "sanity:sync:reverse": "tsx scripts/sync-sanity-to-supabase.ts"
+    "sanity:sync:reverse": "tsx scripts/sync-sanity-to-supabase.ts",
+    "plasmic:sync": "plasmic sync --projects pEZdPb88zvW8NfciQQQwSK",
+    "plasmic:watch": "plasmic watch --projects pEZdPb88zvW8NfciQQQwSK"
   },
   "dependencies": {
     "@amcharts/amcharts5": "^5.14.4",
