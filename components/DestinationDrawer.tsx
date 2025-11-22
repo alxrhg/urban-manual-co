@@ -12,11 +12,16 @@ function extractDomain(url: string): string {
     // Remove protocol if present
     let cleanUrl = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
     // Remove path and query params
-    cleanUrl = cleanUrl.split('/')[0].split('?')[0];
+    if (!cleanUrl) return '';
+    const parts = cleanUrl.split('/');
+    if (parts && parts[0]) {
+      return parts[0].split('?')[0];
+    }
     return cleanUrl;
   } catch {
     // If parsing fails, return original or a cleaned version
-    return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+    if (!url) return '';
+    return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0] || url;
   }
 }
 import { Destination } from '@/types/destination';
@@ -31,7 +36,7 @@ import { ArchitectDesignInfo } from './ArchitectDesignInfo';
 import { getDestinationImageUrl } from '@/lib/destination-images';
 
 // Dynamically import GoogleMap to avoid SSR issues
-const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
+const GoogleMap = dynamic(() => import('@/components/GoogleMap'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
@@ -67,7 +72,8 @@ interface DestinationDrawerProps {
   onVisitToggle?: (slug: string, visited: boolean) => void;
 }
 
-function capitalizeCity(city: string): string {
+function capitalizeCity(city: string | null | undefined): string {
+  if (!city) return '';
   return city
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -98,7 +104,7 @@ function getOpenStatus(openingHours: any, city: string, timezoneId?: string | nu
     // Use timezone_id from Google Places API if available (handles DST automatically)
     // Otherwise fallback to city mapping, then UTC offset calculation, then UTC
     let now: Date;
-    
+
     if (timezoneId) {
       // Best: Use timezone_id - automatically handles DST
       now = new Date(new Date().toLocaleString('en-US', { timeZone: timezoneId }));
@@ -113,7 +119,7 @@ function getOpenStatus(openingHours: any, city: string, timezoneId?: string | nu
       // Fallback: UTC
       now = new Date();
     }
-    
+
     const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
     // Google Places API weekday_text starts with Monday (index 0)
@@ -138,6 +144,7 @@ function getOpenStatus(openingHours: any, city: string, timezoneId?: string | nu
       return { isOpen: true, currentDay: dayName, todayHours: 'Open 24 hours' };
     }
 
+    if (!hoursText) return { isOpen: false, currentDay: dayName, todayHours: hoursText };
     // Parse time ranges (e.g., "10:00 AM – 9:00 PM" or "10:00 AM – 2:00 PM, 5:00 PM – 9:00 PM")
     const timeRanges = hoursText.split(',').map((range: string) => range.trim());
     const currentTime = now.getHours() * 60 + now.getMinutes();
@@ -200,7 +207,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [newListDescription, setNewListDescription] = useState('');
   const [newListPublic, setNewListPublic] = useState(true);
   const [creatingList, setCreatingList] = useState(false);
-  const drawerImage = getDestinationImageUrl(destination);
+
+  // Merge destination with enriched data to ensure we have all fields
+  const fullDestination = { ...destination, ...enrichedData };
+  const drawerImage = getDestinationImageUrl(fullDestination);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -240,13 +250,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       try {
         const supabaseClient = createClient();
         if (!supabaseClient) return;
-        
+
         // Check if destination has a valid slug
         if (!destination?.slug) {
           console.warn('Destination missing slug, skipping enriched data fetch');
           return;
         }
-        
+
         const { data, error } = await supabaseClient
           .from('destinations')
           .select(`
@@ -279,18 +289,31 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             design_period,
             designer_name,
             architect_info_json,
-            web_content_json
+            web_content_json,
+            content,
+            tags,
+            instagram_url,
+            instagram_handle,
+            phone_number,
+            google_maps_url,
+            architect_obj,
+            design_firm_obj,
+            interior_designer_obj,
+            movement_obj,
+            architectural_significance,
+            design_story,
+            construction_year
           `)
           .eq('slug', destination.slug)
           .single();
-        
+
         if (!error && data) {
           // Parse JSON fields
           const enriched: any = { ...data };
           if (data.opening_hours_json) {
             try {
-              enriched.opening_hours = typeof data.opening_hours_json === 'string' 
-                ? JSON.parse(data.opening_hours_json) 
+              enriched.opening_hours = typeof data.opening_hours_json === 'string'
+                ? JSON.parse(data.opening_hours_json)
                 : data.opening_hours_json;
             } catch (e) {
               console.error('Error parsing opening_hours_json:', e);
@@ -375,11 +398,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         setIsAdmin(isUserAdmin);
         // Debug log (remove in production)
         if (process.env.NODE_ENV === 'development') {
-          console.log('[DestinationDrawer] Admin check:', { 
-            role, 
-            isUserAdmin, 
+          console.log('[DestinationDrawer] Admin check:', {
+            role,
+            isUserAdmin,
             userId: user.id,
-            hasDestination: !!destination 
+            hasDestination: !!destination
           });
         }
       } else {
@@ -408,7 +431,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     try {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
-      
+
       if (previousState) {
         await supabaseClient
           .from('saved_places')
@@ -422,7 +445,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             user_id: user.id,
             destination_slug: destination.slug,
           });
-        
+
         // Track save event
         trackEvent({
           event_type: 'save',
@@ -465,7 +488,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     try {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
-      
+
       if (previousState) {
         // Remove visit
         await supabaseClient
@@ -484,7 +507,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             rating: rating || null,
             notes: notes || null,
           });
-        
+
         // Track visit event (similar to save, but for visits)
         trackEvent({
           event_type: 'save', // Visited is also a form of engagement
@@ -566,7 +589,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     try {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
-      
+
       // Fetch user's lists
       const { data: lists, error: listsError } = await supabaseClient
         .from('lists')
@@ -648,7 +671,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     try {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
-      
+
       const { data, error } = await supabaseClient
         .from('lists')
         .insert([{
@@ -707,17 +730,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
       try {
         const response = await fetch(`/api/recommendations?slug=${destination.slug}&limit=6`);
-        
+
         // If unauthorized, skip recommendations (user not signed in)
         if (response.status === 401) {
           setRecommendations([]);
           return;
         }
-        
+
         if (!response.ok) {
           throw new Error('Failed to fetch recommendations');
         }
-        
+
         const data = await response.json();
 
         if (data.recommendations) {
@@ -741,17 +764,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     <>
       {/* Backdrop */}
       <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
+        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
         onClick={onClose}
       />
 
       {/* Drawer */}
       <div
-        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        } overflow-y-auto`}
+        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : 'translate-x-full'
+          } overflow-y-auto`}
       >
         {/* Header */}
         <div className="sticky top-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
@@ -802,7 +823,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           <div className="mb-6">
             <div className="flex items-start gap-3 mb-4">
               <h1 className="text-2xl font-bold flex-1">
-                {destination.name}
+                {fullDestination.name}
               </h1>
               {/* Crown hidden for now */}
             </div>
@@ -811,17 +832,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div className="flex flex-wrap items-center gap-3 mt-3">
               <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                 <MapPin className="h-3.5 w-3.5" />
-                <span>{capitalizeCity(destination.city)}</span>
+                <span>{capitalizeCity(fullDestination.city)}</span>
               </div>
 
               {destination.category && (
                 <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                   <Tag className="h-3.5 w-3.5" />
-                  <span className="capitalize">{destination.category}</span>
+                  <span className="capitalize">{fullDestination.category}</span>
                 </div>
               )}
 
-              {typeof destination.michelin_stars === 'number' && destination.michelin_stars > 0 && (
+              {typeof fullDestination.michelin_stars === 'number' && fullDestination.michelin_stars > 0 && (
                 <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
@@ -835,21 +856,21 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       }
                     }}
                   />
-                  <span>{destination.michelin_stars} Michelin Star{destination.michelin_stars !== 1 ? 's' : ''}</span>
+                  <span>{fullDestination.michelin_stars} Michelin Star{fullDestination.michelin_stars !== 1 ? 's' : ''}</span>
                 </div>
               )}
 
               {/* Instagram Handle */}
-              {(destination.instagram_handle || destination.instagram_url) && (() => {
-                const instagramHandle = destination.instagram_handle || 
-                  (destination.instagram_url 
-                    ? destination.instagram_url.match(/instagram\.com\/([^/?]+)/)?.[1]?.replace('@', '')
+              {(fullDestination.instagram_handle || fullDestination.instagram_url) && (() => {
+                const instagramHandle = fullDestination.instagram_handle ||
+                  (fullDestination.instagram_url && typeof fullDestination.instagram_url === 'string'
+                    ? fullDestination.instagram_url.match(/instagram\.com\/([^/?]+)/)?.[1]?.replace('@', '')
                     : null);
-                const instagramUrl = destination.instagram_url || 
+                const instagramUrl = fullDestination.instagram_url ||
                   (instagramHandle ? `https://www.instagram.com/${instagramHandle.replace('@', '')}/` : null);
-                
+
                 if (!instagramHandle || !instagramUrl) return null;
-                
+
                 return (
                   <a
                     href={instagramUrl}
@@ -866,9 +887,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
 
             {/* AI-Generated Tags */}
-            {destination.tags && destination.tags.length > 0 && (
+            {fullDestination.tags && fullDestination.tags.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
-                {destination.tags.map((tag, index) => (
+                {fullDestination.tags.map((tag: string, index: number) => (
                   <span
                     key={index}
                     className="inline-flex items-center px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-full border border-gray-200 dark:border-gray-700"
@@ -913,7 +934,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
 
             {/* Architecture & Design */}
-            {destination && <ArchitectDesignInfo destination={destination} />}
+            {fullDestination && <ArchitectDesignInfo destination={fullDestination} />}
 
             {/* Formatted Address */}
             {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
@@ -961,14 +982,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 }
                 return null;
               }
-              
+
               const openStatus = getOpenStatus(
-                hours, 
-                destination.city, 
-                enrichedData?.timezone_id, 
+                hours,
+                destination.city,
+                enrichedData?.timezone_id,
                 enrichedData?.utc_offset
               );
-              
+
               // Calculate timezone for "today" highlighting using same logic as getOpenStatus
               let now: Date;
               if (enrichedData?.timezone_id) {
@@ -981,7 +1002,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               } else {
                 now = new Date();
               }
-              
+
               return (
                 <div className="mt-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -1009,7 +1030,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       </summary>
                       <div className="mt-2 space-y-1 pl-6">
                         {hours.weekday_text.map((day: string, index: number) => {
-                          const [dayName, hoursText] = day.split(': ');
+                          if (!day) return null;
+                          const parts = day.split(': ');
+                          const dayName = parts[0];
+                          const hoursText = parts[1] || '';
                           const dayOfWeek = now.getDay();
                           const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
                           const isToday = index === googleDayIndex;
@@ -1036,11 +1060,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <button
                   onClick={handleSave}
                   disabled={loading}
-                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${
-                    isSaved
-                      ? 'bg-red-500 text-white hover:bg-red-600'
-                      : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-800'
-                  } ${heartAnimating ? 'scale-95' : 'scale-100'}`}
+                  className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${isSaved
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-800'
+                    } ${heartAnimating ? 'scale-95' : 'scale-100'}`}
                 >
                   <Heart className={`h-5 w-5 transition-all duration-300 ${isSaved ? 'fill-current scale-110' : 'scale-100'} ${heartAnimating ? 'animate-[heartBeat_0.6s_ease-in-out]' : ''}`} />
                   <span className={`${heartAnimating && isSaved ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
@@ -1076,11 +1099,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <button
                 onClick={handleVisitClick}
                 disabled={loading}
-                className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${
-                  isVisited
-                    ? 'bg-green-500 text-white hover:bg-green-600'
-                    : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-800'
-                } ${checkAnimating ? 'scale-95' : 'scale-100'}`}
+                className={`relative flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-full font-medium transition-all duration-200 ${isVisited
+                  ? 'bg-green-500 text-white hover:bg-green-600'
+                  : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-800'
+                  } ${checkAnimating ? 'scale-95' : 'scale-100'}`}
               >
                 <Check className={`h-5 w-5 transition-all duration-300 ${isVisited ? 'scale-110' : 'scale-100'} ${checkAnimating ? 'animate-[checkPop_0.6s_ease-in-out]' : ''}`} />
                 <span className={`${checkAnimating && isVisited ? 'animate-[fadeIn_0.3s_ease-in]' : ''}`}>
@@ -1114,11 +1136,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Description */}
-          {destination.content && (
+          {fullDestination.content && (
             <div className="mb-6">
               <h3 className="text-sm font-bold uppercase tracking-wide mb-4 text-gray-500 dark:text-gray-400">About</h3>
               <div className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                {stripHtmlTags(destination.content)}
+                {stripHtmlTags(fullDestination.content)}
               </div>
             </div>
           )}

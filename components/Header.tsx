@@ -70,9 +70,9 @@ export function Header() {
         const versionData = await versionRes.json();
         setBuildVersion(
           versionData.shortSha ||
-            versionData.commitSha?.substring(0, 7) ||
-            versionData.version ||
-            null
+          versionData.commitSha?.substring(0, 7) ||
+          versionData.version ||
+          null
         );
       } catch {
         // Ignore version fetch errors
@@ -100,6 +100,23 @@ export function Header() {
   const navigate = (path: string) => {
     router.push(path);
   };
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      const header = document.getElementById('top-header');
+      if (header) {
+        if (window.scrollY > 10) {
+          header.setAttribute('data-scrolled', 'true');
+        } else {
+          header.setAttribute('data-scrolled', 'false');
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const actionButtons = (
     <>
@@ -148,8 +165,7 @@ export function Header() {
   return (
     <header
       id="top-header"
-      className="mt-6 md:mt-8 sticky top-0 bg-white dark:bg-gray-900"
-      style={{ zIndex: 400 }}
+      className="sticky top-0 w-full z-[400] transition-all duration-300 border-b border-transparent data-[scrolled=true]:bg-white/80 data-[scrolled=true]:dark:bg-gray-900/80 data-[scrolled=true]:backdrop-blur-md data-[scrolled=true]:border-gray-200 data-[scrolled=true]:dark:border-gray-800"
       role="banner"
     >
       {/* Primary Nav */}

@@ -86,7 +86,7 @@ export default function RootLayout({
         {resourceHints.map((hint) => (
           <link key={hint.href} {...hint} />
         ))}
-        
+
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600&display=swap" rel="stylesheet" />
 
         {/* RSS Feed */}
@@ -96,7 +96,7 @@ export default function RootLayout({
           title="The Urban Manual RSS Feed"
           href="https://www.urbanmanual.co/feed.xml"
         />
-        
+
         {/* Critical inline CSS for above-the-fold content */}
         {/* Safe: Static CSS from codebase, no user input */}
         <style dangerouslySetInnerHTML={{
@@ -107,7 +107,7 @@ export default function RootLayout({
             .dark{color-scheme:dark}
           `
         }} />
-        
+
         {/* Handle chunk loading errors gracefully */}
         <script
           dangerouslySetInnerHTML={{
@@ -147,7 +147,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+      <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -155,20 +155,20 @@ export default function RootLayout({
           <SkipNavigation />
           <SplashScreen />
           <TRPCProvider>
-              <AuthProvider>
-                <Suspense fallback={null}>
-                  <AdminEditModeProvider>
-                    <ItineraryProvider>
-                      <Header />
-                      <main id="main-content" className="min-h-screen page-transition" style={{ zIndex: 200 }}>
-                        {children}
-                      </main>
-                      <Footer />
-                      <CookieConsent />
-                    </ItineraryProvider>
-                  </AdminEditModeProvider>
-                </Suspense>
-              </AuthProvider>
+            <AuthProvider>
+              <Suspense fallback={null}>
+                <AdminEditModeProvider>
+                  <ItineraryProvider>
+                    <Header />
+                    <main id="main-content" className="min-h-screen page-transition" style={{ zIndex: 200 }}>
+                      {children}
+                    </main>
+                    <Footer />
+                    <CookieConsent />
+                  </ItineraryProvider>
+                </AdminEditModeProvider>
+              </Suspense>
+            </AuthProvider>
           </TRPCProvider>
           <ToastContainer />
           <GoogleAnalytics />

@@ -20,7 +20,7 @@ export async function getUserProfileById(userId: string) {
   if (!adminClient) {
     return null;
   }
-  
+
   try {
     const { data, error } = await adminClient
       .from('user_profiles')
@@ -47,7 +47,7 @@ export async function getVisitedSlugsForUser(userId: string) {
   if (!adminClient) {
     return [];
   }
-  
+
   try {
     const { data, error } = await adminClient
       .from('visited_places')
@@ -75,7 +75,7 @@ export async function getFilterRows(limit = 1000) {
   if (!adminClient) {
     return [];
   }
-  
+
   try {
     const { data, error } = await adminClient
       .from('destinations')
@@ -98,12 +98,12 @@ export async function getFilterRows(limit = 1000) {
   }
 }
 
-export async function getHomepageDestinations(limit = 500) {
+export async function getHomepageDestinations(limit = 5000) {
   const adminClient = getAdminClient();
   if (!adminClient) {
     return [];
   }
-  
+
   try {
     const { data, error } = await adminClient
       .from('destinations')
@@ -118,6 +118,35 @@ export async function getHomepageDestinations(limit = 500) {
     }
 
     return (data ?? []) as Destination[];
+  } catch (error: any) {
+    // If it's a placeholder client error, return empty array gracefully
+    if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {
+      return [];
+    }
+    throw error;
+  }
+}
+
+export async function getMapPins(limit = 1000) {
+  const adminClient = getAdminClient();
+  if (!adminClient) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await adminClient
+      .from('destinations')
+      .select('id, slug, name, latitude, longitude, category, city')
+      .is('parent_destination_id', null)
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null)
+      .limit(limit);
+
+    if (error) {
+      throw error;
+    }
+
+    return (data ?? []) as Pick<Destination, 'id' | 'slug' | 'name' | 'latitude' | 'longitude' | 'category' | 'city'>[];
   } catch (error: any) {
     // If it's a placeholder client error, return empty array gracefully
     if (error?.message?.includes('placeholder') || error?.message?.includes('invalid')) {

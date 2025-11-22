@@ -73,27 +73,27 @@ export const DestinationCard = memo(function DestinationCard({
       ref={cardRef}
       onClick={onClick}
       className={`
-        group relative w-full flex flex-col transition-all duration-300 ease-out
+        group relative w-full flex flex-col transition-all duration-500 ease-out
         cursor-pointer text-left focus-ring
-        hover:scale-[1.01]
-        active:scale-[0.98]
+        hover:-translate-y-1
         ${showEditAffordance ? 'ring-1 ring-black/10 dark:ring-white/10' : ''}
         ${className}
       `}
       aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
     >
-        {/* Image Container with Progressive Loading */}
-        <div
-          className={`
-            relative aspect-video overflow-hidden rounded-2xl
+      {/* Image Container with Progressive Loading */}
+      <div
+        className={`
+            relative aspect-video overflow-hidden rounded-xl
             bg-gray-100 dark:bg-gray-800
             border border-gray-200 dark:border-gray-800
-            transition-all duration-300 ease-out
-            mb-3
+            transition-all duration-500 ease-out
+            mb-4
+            shadow-sm group-hover:shadow-xl
             ${isLoaded ? 'opacity-100' : 'opacity-0'}
             ${showEditAffordance ? 'ring-1 ring-black/10 dark:ring-white/10' : ''}
           `}
-        >
+      >
         {/* Skeleton while loading */}
         {!isLoaded && isInView && (
           <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
@@ -108,8 +108,8 @@ export const DestinationCard = memo(function DestinationCard({
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className={`
               object-cover
-              transition-all duration-500 ease-out
-              group-hover:scale-105
+              transition-all duration-700 ease-out
+              group-hover:scale-110
               ${isLoaded ? 'opacity-100' : 'opacity-0'}
             `}
             quality={80}
@@ -131,9 +131,9 @@ export const DestinationCard = memo(function DestinationCard({
         <div
           className={`
             absolute inset-0
-            bg-gradient-to-t from-black/60 via-transparent to-transparent
+            bg-gradient-to-t from-black/40 via-transparent to-transparent
             opacity-0 group-hover:opacity-100
-            transition-opacity duration-300
+            transition-opacity duration-500
             pointer-events-none
           `}
         />
@@ -146,13 +146,13 @@ export const DestinationCard = memo(function DestinationCard({
         )}
 
         {/* Admin Edit Button - Top Right */}
-          {isAdmin && onEdit && (
+        {isAdmin && onEdit && (
           <button
             onClick={(e) => {
               e.stopPropagation();
               onEdit(destination);
             }}
-              className={`absolute top-2 right-2 z-20 p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-900 transition-all shadow-lg
+            className={`absolute top-2 right-2 z-20 p-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-900 transition-all shadow-lg
                 ${showEditAffordance ? 'opacity-100 scale-100' : 'opacity-0 group-hover:opacity-100'}
               `}
             title="Edit destination"
@@ -162,9 +162,9 @@ export const DestinationCard = memo(function DestinationCard({
           </button>
         )}
 
-          {showEditAffordance && (
-            <div className="pointer-events-none absolute inset-1 rounded-2xl border border-dashed border-black/20 dark:border-white/30" />
-          )}
+        {showEditAffordance && (
+          <div className="pointer-events-none absolute inset-1 rounded-2xl border border-dashed border-black/20 dark:border-white/30" />
+        )}
 
         {/* Badges - Animated on hover */}
         {showBadges && (
@@ -175,19 +175,18 @@ export const DestinationCard = memo(function DestinationCard({
                 <div
                   className={`
                     absolute bottom-2 left-2 z-10
-                    px-3 py-1 border border-gray-200 dark:border-gray-800
-                    rounded-2xl text-gray-600 dark:text-gray-400 text-xs
-                    bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
-                    flex items-center gap-1.5
-                    transform scale-100 group-hover:scale-[1.02]
+                    px-2.5 py-1 border border-white/20
+                    rounded-full text-white text-[10px] font-medium
+                    bg-black/40 backdrop-blur-md
+                    flex items-center gap-1
+                    transform scale-100 group-hover:scale-105
                     transition-transform duration-300
-                    shadow-sm group-hover:shadow-md
                   `}
                 >
                   <img
                     src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
                     alt="Michelin star"
-                    className="h-3 w-3"
+                    className="h-3 w-3 invert brightness-0"
                     onError={(e) => {
                       // Fallback to local file if external URL fails
                       const target = e.currentTarget;
@@ -204,35 +203,35 @@ export const DestinationCard = memo(function DestinationCard({
       </div>
 
       {/* Info Section */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col px-1">
         <div>
-        <h3
-          className={`
-            text-sm font-medium text-gray-900 dark:text-white
-              line-clamp-2
+          <h3
+            className={`
+            text-base font-semibold text-gray-900 dark:text-white
+              line-clamp-1 mb-1
             transition-colors duration-200
-            group-hover:text-gray-700 dark:group-hover:text-gray-200
+            group-hover:text-gray-600 dark:group-hover:text-gray-300
           `}
-        >
-          {destination.name}
-        </h3>
+          >
+            {destination.name}
+          </h3>
 
-        {/* Micro Description - Always show with fallback, stuck to title */}
-        <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-          {destination.micro_description || 
-           (destination.category && destination.city 
-             ? `${destination.category} in ${capitalizeCity(destination.city)}`
-             : destination.city 
-               ? `Located in ${capitalizeCity(destination.city)}`
-               : destination.category || '')}
-        </div>
-        
-        {/* ML Forecasting Badges */}
-        {showBadges && destination.id && (
-          <div className="mt-2">
-            <DestinationBadges destinationId={destination.id} compact={true} showTiming={false} />
+          {/* Micro Description - Always show with fallback, stuck to title */}
+          <div className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1 font-medium">
+            {destination.micro_description ||
+              (destination.category && destination.city
+                ? `${destination.category} in ${capitalizeCity(destination.city)}`
+                : destination.city
+                  ? `Located in ${capitalizeCity(destination.city)}`
+                  : destination.category || '')}
           </div>
-        )}
+
+          {/* ML Forecasting Badges */}
+          {showBadges && destination.id && (
+            <div className="mt-3">
+              <DestinationBadges destinationId={destination.id} compact={true} showTiming={false} />
+            </div>
+          )}
         </div>
       </div>
 

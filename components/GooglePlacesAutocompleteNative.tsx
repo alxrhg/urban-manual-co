@@ -31,7 +31,7 @@ export default function GooglePlacesAutocompleteNative({
   const [isLoading, setIsLoading] = useState(false);
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
 
-  // Load Google Maps JavaScript API with Places Library (New)
+  // Load Google Maps JavaScript API with Places Library using unified loader
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -41,59 +41,35 @@ export default function GooglePlacesAutocompleteNative({
       return;
     }
 
-    // Check if script is already being loaded
-    if (document.querySelector('script[data-google-maps-autocomplete]')) {
-      const checkInterval = setInterval(() => {
-        if (window.google?.maps?.places?.PlaceAutocompleteElement) {
-          setIsScriptLoaded(true);
-          clearInterval(checkInterval);
-        }
-      }, 100);
-      return () => clearInterval(checkInterval);
-    }
-
     setIsLoading(true);
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
-    if (!apiKey) {
-      console.error('Google Maps API key not found');
-      setIsLoading(false);
-      return;
-    }
+    // Use unified loader
+    import('@/lib/maps/google-loader').then(({ loadGoogleMaps }) => {
+      loadGoogleMaps({ libraries: ['places'] })
+        .then(() => {
+          // Wait for PlaceAutocompleteElement to be available
+          const checkPlaceElement = setInterval(() => {
+            if (window.google?.maps?.places?.PlaceAutocompleteElement) {
+              setIsScriptLoaded(true);
+              setIsLoading(false);
+              clearInterval(checkPlaceElement);
+            }
+          }, 100);
 
-    // Load the new Places API library
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&loading=async`;
-    script.async = true;
-    script.defer = true;
-    script.setAttribute('data-google-maps-autocomplete', 'true');
-
-    script.onload = () => {
-      // Wait for PlaceAutocompleteElement to be available
-      const checkPlaceElement = setInterval(() => {
-        if (window.google?.maps?.places?.PlaceAutocompleteElement) {
-          setIsScriptLoaded(true);
+          // Timeout after 5 seconds
+          setTimeout(() => {
+            clearInterval(checkPlaceElement);
+            if (!window.google?.maps?.places?.PlaceAutocompleteElement) {
+              console.error('PlaceAutocompleteElement not available');
+              setIsLoading(false);
+            }
+          }, 5000);
+        })
+        .catch((err) => {
+          console.error('Failed to load Google Maps API:', err);
           setIsLoading(false);
-          clearInterval(checkPlaceElement);
-        }
-      }, 100);
-
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        clearInterval(checkPlaceElement);
-        if (!window.google?.maps?.places?.PlaceAutocompleteElement) {
-          console.error('PlaceAutocompleteElement not available');
-          setIsLoading(false);
-        }
-      }, 5000);
-    };
-
-    script.onerror = () => {
-      console.error('Failed to load Google Maps API');
-      setIsLoading(false);
-    };
-
-    document.head.appendChild(script);
+        });
+    });
 
     return () => {
       // Cleanup autocomplete element on unmount

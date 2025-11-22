@@ -222,6 +222,7 @@ const nextConfig: NextConfig = {
         // External photography + Google imagery
         { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
         { protocol: 'https', hostname: 'maps.googleapis.com' },
+        { protocol: 'https', hostname: 'places.googleapis.com' },
         { protocol: 'https', hostname: 'maps.gstatic.com' },
         { protocol: 'https', hostname: 'images.unsplash.com' },
         { protocol: 'https', hostname: 'images.pexels.com' },

@@ -91,7 +91,7 @@ export default function GoogleInteractiveMap({
       marker.addListener('click', () => {
         // Close all other info windows
         infoWindowsRef.current.forEach(iw => iw.close());
-        
+
         // Open this info window
         infoWindow.open({
           anchor: marker,
@@ -228,12 +228,12 @@ export default function GoogleInteractiveMap({
     }
   }, [center.lat, center.lng, zoom, isDark, addMarkers]);
 
-  // Load Google Maps script
+  // Load Google Maps script using unified loader
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-    
+
     if (!apiKey) {
       setError('Google Maps API key not found');
       setIsLoading(false);
@@ -247,39 +247,22 @@ export default function GoogleInteractiveMap({
       return;
     }
 
-    // Check if script is already being loaded
-    if (document.querySelector('script[data-google-maps]')) {
-      const checkInterval = setInterval(() => {
-        if (window.google?.maps) {
-          setIsLoading(false);
-          initializeMap();
-          clearInterval(checkInterval);
-        }
-      }, 100);
-      return () => clearInterval(checkInterval);
-    }
-
     setIsLoading(true);
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker&loading=async`;
-    script.async = true;
-    script.defer = true;
-    script.setAttribute('data-google-maps', 'true');
-    
-    script.onload = () => {
-      if (window.google?.maps) {
-        setIsLoading(false);
-        setError(null);
-        initializeMap();
-      }
-    };
 
-    script.onerror = () => {
-      setError('Failed to load Google Maps API');
-      setIsLoading(false);
-    };
-
-    document.head.appendChild(script);
+    // Use unified loader
+    import('@/lib/maps/google-loader').then(({ loadGoogleMaps }) => {
+      loadGoogleMaps({ libraries: ['marker'] })
+        .then(() => {
+          setIsLoading(false);
+          setError(null);
+          initializeMap();
+        })
+        .catch((err) => {
+          console.error('Failed to load Google Maps:', err);
+          setError('Failed to load Google Maps API');
+          setIsLoading(false);
+        });
+    });
 
     return () => {
       // Cleanup markers
@@ -327,8 +310,8 @@ export default function GoogleInteractiveMap({
   }
 
   return (
-    <div 
-      ref={mapRef} 
+    <div
+      ref={mapRef}
       className="w-full h-full"
       style={{ minHeight: '600px' }}
     />

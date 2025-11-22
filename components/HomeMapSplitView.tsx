@@ -7,7 +7,7 @@ import dynamic from 'next/dynamic';
 import { ChevronLeft, ChevronRight, List, MapPin, X } from 'lucide-react';
 import { getDestinationImageUrl } from '@/lib/destination-images';
 
-const MapView = dynamic(() => import('@/components/MapView'), { ssr: false });
+import MyGoogleMap from '@/app/map/MyGoogleMap';
 
 interface HomeMapSplitViewProps {
   destinations: Destination[];
@@ -87,9 +87,8 @@ export default function HomeMapSplitView({
   const pinnedCountLabel =
     destinationsWithCoords.length === destinations.length
       ? 'All mapped'
-      : `${destinationsWithCoords.length} ${
-          destinationsWithCoords.length === 1 ? 'pin' : 'pins'
-        }`;
+      : `${destinationsWithCoords.length} ${destinationsWithCoords.length === 1 ? 'pin' : 'pins'
+      }`;
 
   if (!destinations.length) {
     return (
@@ -118,13 +117,11 @@ export default function HomeMapSplitView({
                 setIsMobilePanelOpen(false);
               }
             }}
-            className={`w-full flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 ${
-              variant === 'desktop' ? 'p-4' : 'p-4 min-h-[76px]'
-            } ${
-              isSelected
+            className={`w-full flex items-center gap-3 rounded-2xl border text-left transition-all duration-200 ${variant === 'desktop' ? 'p-4' : 'p-4 min-h-[76px]'
+              } ${isSelected
                 ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'
                 : 'bg-white/95 dark:bg-gray-900/90 border-gray-200 dark:border-gray-800 hover:bg-gray-50/80 dark:hover:bg-gray-800/70'
-            }`}
+              }`}
           >
             <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
               {displayImage ? (
@@ -165,11 +162,10 @@ export default function HomeMapSplitView({
       aria-label="Homepage map view with destination list"
     >
       <div
-        className={`pointer-events-auto absolute left-0 top-0 hidden h-full w-[360px] flex-col overflow-hidden rounded-r-3xl border border-gray-200/80 bg-white/95 shadow-lg backdrop-blur-md transition-transform duration-300 dark:border-gray-800/80 dark:bg-gray-950/95 lg:flex ${
-          isDesktopPanelCollapsed
-            ? '-translate-x-full opacity-0'
-            : 'translate-x-0 opacity-100'
-        }`}
+        className={`pointer-events-auto absolute left-0 top-0 hidden h-full w-[360px] flex-col overflow-hidden rounded-r-3xl border border-gray-200/80 bg-white/95 shadow-lg backdrop-blur-md transition-transform duration-300 dark:border-gray-800/80 dark:bg-gray-950/95 lg:flex ${isDesktopPanelCollapsed
+          ? '-translate-x-full opacity-0'
+          : 'translate-x-0 opacity-100'
+          }`}
       >
         <div className="flex items-center justify-between border-b border-gray-200/80 px-5 py-4 dark:border-gray-800/80">
           <div>
@@ -205,13 +201,12 @@ export default function HomeMapSplitView({
       )}
 
       <div
-        className={`absolute top-0 bottom-0 right-0 left-0 ${
-          !isDesktopPanelCollapsed && destinations.length > 0
-            ? 'lg:left-[360px]'
-            : 'lg:left-0'
-        }`}
+        className={`absolute top-0 bottom-0 right-0 left-0 ${!isDesktopPanelCollapsed && destinations.length > 0
+          ? 'lg:left-[360px]'
+          : 'lg:left-0'
+          }`}
       >
-        <MapView
+        <MyGoogleMap
           destinations={destinationsWithCoords}
           onMarkerClick={destination => {
             onMarkerSelect?.(destination);

@@ -58,7 +58,7 @@ import { type RefinementTag } from '@/components/RefinementChips';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
-import HomeMapSplitView from '@/components/HomeMapSplitView';
+import HomeMapSection from '@/components/homepage/HomeMapSection';
 import { EditModeToggle } from '@/components/EditModeToggle';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
@@ -475,9 +475,15 @@ export default function Home() {
       const params = new URLSearchParams(window.location.search);
       const viewParam = params.get("view");
       if (viewParam === "map") {
-        setViewMode(prev => (prev === "map" ? prev : "map"));
+        setViewMode(prev => {
+          if (prev !== "map") setCurrentPage(1);
+          return "map";
+        });
       } else if (viewParam === "grid") {
-        setViewMode(prev => (prev === "grid" ? prev : "grid"));
+        setViewMode(prev => {
+          if (prev !== "grid") setCurrentPage(1);
+          return "grid";
+        });
       }
     };
 
@@ -2049,7 +2055,7 @@ export default function Home() {
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
               <div className="flex-1 flex items-center">
-                <div className="w-full">
+                <div className="w-full" suppressHydrationWarning>
                   {/* Show GreetingHero only when no active search */}
                   {!submittedQuery && (
                     <>
@@ -2511,7 +2517,7 @@ export default function Home() {
         {/* Edit Mode Banner */}
         {editModeActive && (
           <div className="w-full px-6 md:px-10">
-            <div className="max-w-[1800px] mx-auto mb-6">
+            <div className="max-w-[1280px] mx-auto mb-6">
               <div className="rounded-3xl border border-amber-200/70 dark:border-amber-400/30 bg-amber-50/80 dark:bg-amber-400/10 px-5 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
@@ -2547,7 +2553,7 @@ export default function Home() {
         {/* Admin Add POI Button */}
         {isAdmin && !editModeActive && (
           <div className="w-full px-6 md:px-10">
-            <div className="max-w-[1800px] mx-auto mb-6 flex justify-end">
+            <div className="max-w-[1280px] mx-auto mb-6 flex justify-end">
               <div className="flex gap-3">
                 <button
                   onClick={() => {
@@ -2571,7 +2577,7 @@ export default function Home() {
 
         {/* Content Section - Grid directly below hero */}
         <div className="w-full px-6 md:px-10 pb-12 mt-8">
-          <div className="max-w-[1800px] mx-auto">
+          <div className="max-w-[1280px] mx-auto">
             {/* Expandable Home Controls */}
             <div className="mb-6">
               <ExpandableHomeControls
@@ -2751,8 +2757,8 @@ export default function Home() {
               });
 
               // Always render the grid structure, even if empty (for instant page load)
-              // Show empty state if no destinations
-              if (destinationsLoading && displayDestinations.length === 0) {
+              // Show empty state if no destinations (unless in map view, where we want to show the map immediately)
+              if (destinationsLoading && displayDestinations.length === 0 && viewMode !== 'map') {
                 return (
                   <div className="text-center py-12 px-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -2762,7 +2768,7 @@ export default function Home() {
                 );
               }
 
-              if (displayDestinations.length === 0 && !advancedFilters.nearMe) {
+              if (displayDestinations.length === 0 && !advancedFilters.nearMe && viewMode !== 'map') {
                 return (
                   <div className="text-center py-12 px-4">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -2772,7 +2778,7 @@ export default function Home() {
                 );
               }
 
-              if (displayDestinations.length === 0 && advancedFilters.nearMe) {
+              if (displayDestinations.length === 0 && advancedFilters.nearMe && viewMode !== 'map') {
                 return null; // Message shown above
               }
 
@@ -2786,7 +2792,10 @@ export default function Home() {
                 source: "map_marker" | "map_list"
               ) => {
                 setSelectedDestination(destination);
-                setIsDrawerOpen(true);
+                // In map view, we show details in the sidebar, so don't open the drawer
+                if (viewMode !== 'map') {
+                  setIsDrawerOpen(true);
+                }
                 const position = findDestinationPosition(destination.slug);
                 trackDestinationEngagement(
                   destination,
@@ -2798,18 +2807,32 @@ export default function Home() {
               return (
                 <>
                   {viewMode === "map" ? (
-                    <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
-                      <HomeMapSplitView
-                        destinations={displayDestinations}
-                        selectedDestination={selectedDestination}
-                        onMarkerSelect={destination =>
-                          openDestinationFromMap(destination, "map_marker")
-                        }
-                        onListItemSelect={destination =>
-                          openDestinationFromMap(destination, "map_list")
-                        }
-                      />
-                    </div>
+                    (() => {
+                      const mapItemsPerPage = 10; // Only show what fits in visible area
+                      const mapStartIndex = (currentPage - 1) * mapItemsPerPage;
+                      const mapEndIndex = mapStartIndex + mapItemsPerPage;
+                      const paginatedMapDestinations = displayDestinations.slice(mapStartIndex, mapEndIndex);
+                      const mapTotalPages = Math.ceil(displayDestinations.length / mapItemsPerPage);
+
+                      return (
+                        <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                          <HomeMapSection
+                            destinations={paginatedMapDestinations}
+                            selectedDestination={selectedDestination}
+                            onMarkerSelect={destination =>
+                              openDestinationFromMap(destination, "map_marker")
+                            }
+                            onListItemSelect={destination =>
+                              openDestinationFromMap(destination, "map_list")
+                            }
+                            currentPage={currentPage}
+                            totalPages={mapTotalPages}
+                            onPageChange={setCurrentPage}
+                            totalCount={displayDestinations.length}
+                          />
+                        </div>
+                      );
+                    })()
                   ) : (
                     (() => {
                       const startIndex = (currentPage - 1) * itemsPerPage;
@@ -3080,6 +3103,6 @@ export default function Home() {
           />
         )}
       </main>
-    </ErrorBoundary>
+    </ErrorBoundary >
   );
 }
