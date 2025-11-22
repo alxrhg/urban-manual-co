@@ -398,14 +398,10 @@ export default function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const { user, loading: authLoading } = useAuth();
   const { openDrawer } = useDrawer();
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   // State
-  const [destinations, setDestinations] = useState<Destination[]>([]);
-  const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
   const [displayDestinations, setDisplayDestinations] = useState<Destination[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
