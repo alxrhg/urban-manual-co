@@ -199,7 +199,7 @@ export function ExpandableHomeControls({
             }`}
           >
             <Funnel className="h-4 w-4" />
-            <span>Filters</span>
+            <span className="hidden md:inline">Filters</span>
             {hasActiveFilters && (
               <span className="flex items-center justify-center min-w-[18px] h-4.5 px-1.5 text-xs bg-blue-500 text-white rounded-full">
                 {Object.keys(advancedFilters).filter(key => advancedFilters[key as keyof SearchFilters] !== undefined && advancedFilters[key as keyof SearchFilters] !== null && advancedFilters[key as keyof SearchFilters] !== '').length + (selectedCity ? 1 : 0) + (selectedCategory ? 1 : 0)}
