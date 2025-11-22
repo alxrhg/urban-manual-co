@@ -10,7 +10,7 @@ import { UniversalGrid } from '@/components/UniversalGrid';
 import { DestinationCard } from '@/components/DestinationCard';
 import Image from 'next/image';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 
 interface CityStats {
   city: string;
@@ -56,6 +56,7 @@ function cityStatsToDestination(cityData: CityStats): Destination {
 
 export default function CitiesPage() {
   const router = useRouter();
+  const toast = useToast();
   const [cityStats, setCityStats] = useState<CityStats[]>([]);
   const [filteredCities, setFilteredCities] = useState<CityStats[]>([]);
   const [countries, setCountries] = useState<string[]>([]);
