@@ -71,7 +71,9 @@ export function DestinationBadges({ destinationId, compact = false, showTiming =
         }
       } catch (error) {
         // Silently fail - badges are optional enhancements
-        console.debug('ML forecasting unavailable for destination', destinationId);
+        if (process.env.NODE_ENV === 'development') {
+          console.debug('ML forecasting unavailable for destination', destinationId);
+        }
       } finally {
         setLoading(false);
       }
