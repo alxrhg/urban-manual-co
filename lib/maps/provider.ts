@@ -1,29 +1,18 @@
-export type MapProvider = 'apple' | 'mapbox' | 'google';
+// Simplified to only use Google Maps
+export type MapProvider = 'google';
 
-const MAP_PROVIDER_ORDER: MapProvider[] = ['google', 'apple', 'mapbox'];
+const googleAvailable = Boolean(process.env.NEXT_PUBLIC_GOOGLE_API_KEY);
 
-const appleAvailable = process.env.NEXT_PUBLIC_MAPKIT_AVAILABLE === 'true';
-const mapboxAvailable = Boolean(process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN);
-const googleAvailable = Boolean(
-  process.env.NEXT_PUBLIC_GOOGLE_API_KEY
-);
-
-const availabilityMap: Record<MapProvider, boolean> = {
-  apple: appleAvailable,
-  mapbox: mapboxAvailable,
-  google: googleAvailable,
-};
-
-export function getAvailableProviders(order: MapProvider[] = MAP_PROVIDER_ORDER): MapProvider[] {
-  return order.filter(provider => availabilityMap[provider]);
+export function getAvailableProviders(): MapProvider[] {
+  return googleAvailable ? ['google'] : [];
 }
 
 export function isProviderAvailable(provider: MapProvider): boolean {
-  return availabilityMap[provider];
+  return provider === 'google' && googleAvailable;
 }
 
 export function getDefaultProvider(): MapProvider | null {
-  return getAvailableProviders()[0] ?? null;
+  return googleAvailable ? 'google' : null;
 }
 
-export const mapProviderOrder = MAP_PROVIDER_ORDER;
+export const mapProviderOrder: MapProvider[] = ['google'];

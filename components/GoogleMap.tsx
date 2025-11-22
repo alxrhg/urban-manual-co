@@ -1,10 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import AppleMap from '@/components/AppleMap';
-import MapboxSingleMap from '@/components/maps/MapboxSingleMap';
 import GoogleStaticMap from '@/components/maps/GoogleStaticMap';
-import { getAvailableProviders } from '@/lib/maps/provider';
+import GoogleInteractiveMap from '@/components/maps/GoogleInteractiveMap';
+import { getDefaultProvider } from '@/lib/maps/provider';
 
 interface GoogleMapProps {
   query?: string;
@@ -39,17 +37,7 @@ export default function GoogleMap(props: GoogleMapProps) {
     staticMode = false,
   } = props;
 
-  const providerOptions = useMemo(() => getAvailableProviders(), []);
-  const [providerIndex, setProviderIndex] = useState(0);
-  const provider = providerOptions[providerIndex];
-  const hasFallback = providerIndex < providerOptions.length - 1;
-
-  const handleProviderError = () => {
-    if (hasFallback) {
-      setProviderIndex(prev => Math.min(prev + 1, providerOptions.length - 1));
-    }
-  };
-
+  const provider = getDefaultProvider();
   const normalizedHeight = typeof height === 'number' ? `${height}px` : height;
 
   if (!provider) {
@@ -64,42 +52,24 @@ export default function GoogleMap(props: GoogleMapProps) {
     );
   }
 
-  if (provider === 'apple') {
+  // Use interactive map if interactive is true and not in static mode
+  if (interactive && !staticMode) {
     return (
-      <AppleMap
-        query={query}
-        latitude={latitude}
-        longitude={longitude}
-        height={normalizedHeight}
-        className={className}
+      <GoogleInteractiveMap
+        destinations={[]}
+        center={latitude && longitude ? { lat: latitude, lng: longitude } : undefined}
+        zoom={15}
+        isDark={false}
       />
     );
   }
 
-  if (provider === 'mapbox') {
-    return (
-      <MapboxSingleMap
-        query={query}
-        latitude={latitude}
-        longitude={longitude}
-        height={height}
-        className={className}
-        interactive={interactive}
-        showInfoWindow={showInfoWindow}
-        infoWindowContent={infoWindowContent}
-        autoOpenInfoWindow={autoOpenInfoWindow}
-        staticMode={staticMode}
-        onProviderError={hasFallback ? handleProviderError : undefined}
-        suppressErrorUI={hasFallback}
-      />
-    );
-  }
-
+  // Otherwise use static map
   return (
     <GoogleStaticMap
       query={query}
       center={latitude && longitude ? { lat: latitude, lng: longitude } : undefined}
-      height={height}
+      height={normalizedHeight}
       className={className}
       infoWindowContent={infoWindowContent}
     />

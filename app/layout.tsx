@@ -94,7 +94,6 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
         <link rel="dns-prefetch" href="https://guide.michelin.com" />
         <link rel="dns-prefetch" href="https://maps.googleapis.com" />
-        <link rel="dns-prefetch" href="https://api.mapbox.com" />
         <link rel="dns-prefetch" href="https://cdn.amcharts.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
