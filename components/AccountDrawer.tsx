@@ -25,6 +25,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
+import { TripViewDrawer } from "@/components/TripViewDrawer";
 import type { Trip } from "@/types/trip";
 import type { Collection } from "@/types/common";
 
@@ -70,6 +71,8 @@ export function AccountDrawer() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showTripViewDrawer, setShowTripViewDrawer] = useState(false);
+  const [viewingTripId, setViewingTripId] = useState<string | null>(null);
 
   // Reset to main drawer when drawer closes
   useEffect(() => {
@@ -77,6 +80,8 @@ export function AccountDrawer() {
       setCurrentSubpage('main_drawer');
       setSelectedTripId(null);
       setSelectedTrip(null);
+      setShowTripViewDrawer(false);
+      setViewingTripId(null);
     }
   }, [isOpen]);
 
@@ -276,12 +281,67 @@ export function AccountDrawer() {
 
   const displayUsername = username || user?.email?.split("@")[0] || "user";
 
+  // Helper functions for trip formatting
+  const formatDate = (date: string | null) => {
+    if (!date) return null;
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    });
+  };
+
+  const formatDateRange = (start: string | null, end: string | null) => {
+    if (!start && !end) return null;
+    const startFormatted = formatDate(start);
+    const endFormatted = formatDate(end);
+    if (startFormatted && endFormatted) {
+      return `${startFormatted} – ${endFormatted}`;
+    }
+    return startFormatted || endFormatted;
+  };
+
+  const getStatusLabel = (status: string | null | undefined) => {
+    switch (status) {
+      case 'planning':
+        return 'Planning';
+      case 'upcoming':
+        return 'Upcoming';
+      case 'ongoing':
+        return 'Ongoing';
+      case 'completed':
+        return 'Completed';
+      default:
+        return 'Planning';
+    }
+  };
+
+  const getStatusColor = (status: string | null | undefined) => {
+    switch (status) {
+      case 'planning':
+        return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300';
+      case 'upcoming':
+      case 'ongoing':
+        return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300';
+      case 'completed':
+        return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300';
+      default:
+        return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300';
+    }
+  };
+
   // Navigation handler
   const navigateToSubpage = (subpage: SubpageId, tripId?: string) => {
     if (tripId) {
       setSelectedTripId(tripId);
     }
     setCurrentSubpage(subpage);
+  };
+
+  // Open trip quickview drawer
+  const openTripQuickview = (tripId: string) => {
+    setViewingTripId(tripId);
+    setShowTripViewDrawer(true);
   };
 
   const openChatDrawer = () => {
@@ -686,7 +746,7 @@ export function AccountDrawer() {
     </div>
   );
 
-  // Render trips subpage
+  // Render trips subpage - Redesigned with cover images
   const renderTripsSubpage = () => (
     <div className="px-6 py-6 space-y-4">
       <button
@@ -707,41 +767,72 @@ export function AccountDrawer() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
         </div>
       ) : trips.length > 0 ? (
-        <div className="space-y-2">
-          {trips.map((trip) => (
-            <button
-              key={trip.id}
-              onClick={() => navigateToSubpage('trip_details_subpage', trip.id)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
-            >
-              {trip.cover_image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                  <Image
-                  src={trip.cover_image}
-                  alt={trip.title}
-                    fill
-                    className="object-cover"
-                    sizes="48px"
-                />
-              </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {trip.title}
-                </p>
-                {trip.start_date && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(trip.start_date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric"
-                    })}
-                  </p>
+        <div className="space-y-3">
+          {trips.map((trip) => {
+            const imageUrl = trip.cover_image || (trip as any).firstLocationImage;
+            const dateRange = formatDateRange(trip.start_date, trip.end_date);
+
+            return (
+              <button
+                key={trip.id}
+                onClick={() => openTripQuickview(trip.id)}
+                className="w-full flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-950 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200 text-left"
+              >
+                {/* Cover Image */}
+                {imageUrl ? (
+                  <div className="relative w-full h-32 bg-gray-200 dark:bg-gray-800">
+                    <Image
+                      src={imageUrl}
+                      alt={trip.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 420px"
+                    />
+                    {/* Status Badge */}
+                    <div className="absolute top-3 right-3">
+                      <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(trip.status)}`}>
+                        {getStatusLabel(trip.status)}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative w-full h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <MapPin className="w-8 h-8 text-gray-300 dark:text-gray-700" />
+                    {/* Status Badge */}
+                    <div className="absolute top-3 right-3">
+                      <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(trip.status)}`}>
+                        {getStatusLabel(trip.status)}
+                      </span>
+                    </div>
+                  </div>
                 )}
-              </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-            </button>
-          ))}
+
+                {/* Content */}
+                <div className="p-3 space-y-1.5">
+                  {/* Trip Title */}
+                  <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2">
+                    {trip.title}
+                  </h3>
+
+                  {/* Date Range */}
+                  {dateRange && (
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      <Calendar className="w-3 h-3" />
+                      <span>{dateRange}</span>
+                    </div>
+                  )}
+
+                  {/* Destination */}
+                  {trip.destination && (
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      <MapPin className="w-3 h-3" />
+                      <span>{trip.destination}</span>
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-12">
@@ -933,23 +1024,61 @@ export function AccountDrawer() {
   const isTier2 = currentSubpage !== 'main_drawer';
 
   return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={handleDrawerClose}
-      title={undefined}
-      headerContent={undefined}
-      mobileVariant="bottom"
-      desktopSpacing="right-4 top-4 bottom-4"
-      desktopWidth="420px"
-      position="right"
-      style="glassy"
-      backdropOpacity={isTier1 ? "18" : "18"}
-      keepStateOnClose={true}
-      zIndex={getZIndex()}
-    >
-      <div className={`transition-opacity duration-200 ${currentSubpage !== 'main_drawer' ? 'opacity-100' : 'opacity-100'}`}>
-        {renderContent()}
-      </div>
-    </Drawer>
+    <>
+      <Drawer
+        isOpen={isOpen}
+        onClose={handleDrawerClose}
+        title={undefined}
+        headerContent={undefined}
+        mobileVariant="bottom"
+        desktopSpacing="right-4 top-4 bottom-4"
+        desktopWidth="420px"
+        position="right"
+        style="glassy"
+        backdropOpacity={isTier1 ? "18" : "18"}
+        keepStateOnClose={true}
+        zIndex={getZIndex()}
+      >
+        <div className={`transition-opacity duration-200 ${currentSubpage !== 'main_drawer' ? 'opacity-100' : 'opacity-100'}`}>
+          {renderContent()}
+        </div>
+      </Drawer>
+
+      {/* Trip Quickview Drawer */}
+      {viewingTripId && (
+        <TripViewDrawer
+          isOpen={showTripViewDrawer}
+          onClose={() => {
+            setShowTripViewDrawer(false);
+            setViewingTripId(null);
+          }}
+          tripId={viewingTripId}
+          onEdit={() => {
+            setShowTripViewDrawer(false);
+            setViewingTripId(null);
+            closeDrawer();
+            setTimeout(() => {
+              router.push(`/trips/${viewingTripId}`);
+            }, 200);
+          }}
+          onDelete={() => {
+            setShowTripViewDrawer(false);
+            setViewingTripId(null);
+            // Refresh trips list
+            if (user?.id && isOpen) {
+              const supabaseClient = createClient();
+              supabaseClient
+                .from('trips')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .then(({ data }) => {
+                  setTrips((data as Trip[]) || []);
+                });
+            }
+          }}
+        />
+      )}
+    </>
   );
 }
