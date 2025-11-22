@@ -22,6 +22,7 @@ import {
   Sparkles,
   Globe,
   Funnel,
+  ChevronDown,
 } from "lucide-react";
 import { getCategoryIconComponent } from "@/lib/icons/category-icons";
 // Lazy load drawer (only when opened)
@@ -1360,7 +1361,6 @@ export default function Home() {
 
             // Also check tags for category-related matches
             const tags = d.tags || [];
-            const categoryLower = categoryFilter.toLowerCase().trim();
 
             // Map categories to relevant tag patterns
             const categoryTagMap: Record<string, string[]> = {
@@ -2520,7 +2520,6 @@ export default function Home() {
                   </div>
                 </div>
               )}
-              </div>
             </div>
           </div>
         </section>
@@ -2588,8 +2587,26 @@ export default function Home() {
         )}
 
         {/* Content Section - Grid directly below hero */}
-        <div className="w-full px-6 md:px-10 pb-12 mt-8">
+        <div id="main" className="w-full px-6 md:px-10 pb-12 mt-8 scroll-mt-20">
           <div className="max-w-[1280px] mx-auto">
+            {/* Scroll Down Button */}
+            <div className="flex justify-center mb-6 -mt-2">
+              <a
+                href="#main"
+                aria-label="Scroll Down"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const element = document.getElementById('main');
+                  if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+                className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 hover:scale-105 active:scale-95"
+              >
+                <span className="text-xl leading-none">↓</span>
+              </a>
+            </div>
+            
             {/* Expandable Home Controls */}
             <div className="mb-6">
               <ExpandableHomeControls

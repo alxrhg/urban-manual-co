@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import GooglePlacesAutocompleteNative from './GooglePlacesAutocompleteNative';
 import { getDestinationImageUrl } from '@/lib/destination-images';
+import { Drawer } from './ui/Drawer';
 
 interface Airport {
   iata: string;
@@ -45,11 +46,13 @@ interface TripLocation {
 interface AddLocationToTripProps {
   onAdd: (location: TripLocation) => void;
   onClose: () => void;
+  isOpen?: boolean;
 }
 
 export function AddLocationToTrip({
   onAdd,
   onClose,
+  isOpen = true,
 }: AddLocationToTripProps) {
   const [blockType, setBlockType] = useState<'destination' | 'flight' | 'train' | 'custom'>('destination');
   const [searchQuery, setSearchQuery] = useState('');
@@ -334,28 +337,18 @@ export function AddLocationToTrip({
     onAdd(location);
   };
 
-  return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-8">
-      <div
-        className="absolute inset-0 bg-black/20 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative bg-white dark:bg-gray-950 w-full max-w-4xl max-h-[85vh] overflow-hidden border border-neutral-200 dark:border-neutral-800 flex flex-col">
-        {/* Header */}
-        <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-5 flex items-center justify-between flex-shrink-0">
-          <h3 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.2em] uppercase">
-            Add to Trip
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors rounded-lg"
-          >
-            <XIcon className="w-4 h-4 text-neutral-900 dark:text-neutral-100" />
-          </button>
-        </div>
+  const headerContent = (
+    <div className="flex items-center justify-between w-full">
+      <h3 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.2em] uppercase">
+        Add to Trip
+      </h3>
+    </div>
+  );
 
-        {/* Block Type Selector */}
-        <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-4 flex-shrink-0">
+  const content = (
+    <>
+      {/* Block Type Selector */}
+      <div className="border-b border-neutral-200 dark:border-neutral-800 px-5 py-4 flex-shrink-0">
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
@@ -425,8 +418,8 @@ export function AddLocationToTrip({
           </div>
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6">
+      {/* Content Area */}
+      <div className="flex-1 overflow-y-auto px-5 py-5">
           {blockType === 'destination' ? (
             <div className="space-y-6">
               {/* Search for destinations */}
@@ -930,7 +923,21 @@ export function AddLocationToTrip({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+    </>
+  );
+
+  return (
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      headerContent={headerContent}
+      desktopWidth="600px"
+      position="right"
+      style="solid"
+      zIndex={70}
+      backdropOpacity="20"
+    >
+      {content}
+    </Drawer>
   );
 }

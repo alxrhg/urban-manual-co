@@ -521,15 +521,14 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
       </Drawer>
 
       {/* Add Location Modal */}
-      {trip && selectedDay !== null && (
-        <AddLocationToTrip
-          onAdd={handleLocationAdded}
-          onClose={() => {
-            setShowAddLocationModal(false);
-            setSelectedDay(null);
-          }}
-        />
-      )}
+      <AddLocationToTrip
+        isOpen={trip !== null && selectedDay !== null}
+        onAdd={handleLocationAdded}
+        onClose={() => {
+          setShowAddLocationModal(false);
+          setSelectedDay(null);
+        }}
+      />
 
       {/* Delete Confirmation */}
       {showDeleteConfirm && (

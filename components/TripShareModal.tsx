@@ -8,13 +8,15 @@ import {
   MessageSquareIcon,
   CheckIcon,
 } from 'lucide-react';
+import { Drawer } from './ui/Drawer';
 
 interface TripShareModalProps {
   tripName: string;
   onClose: () => void;
+  isOpen: boolean;
 }
 
-export function TripShareModal({ tripName, onClose }: TripShareModalProps) {
+export function TripShareModal({ tripName, onClose, isOpen }: TripShareModalProps) {
   const [copied, setCopied] = useState(false);
   const [email, setEmail] = useState('');
   const shareUrl = `https://urbanmanual.com/trip/${tripName.toLowerCase().replace(/\s+/g, '-')}`;
@@ -29,25 +31,16 @@ export function TripShareModal({ tripName, onClose }: TripShareModalProps) {
     window.location.href = `mailto:${email}?subject=Check out my trip: ${tripName}&body=I wanted to share my trip itinerary with you: ${shareUrl}`;
   };
 
-  return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center p-8">
-      <div
-        className="absolute inset-0 bg-black/20 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div className="relative bg-white dark:bg-gray-950 w-full max-w-md border border-neutral-200 dark:border-neutral-800">
-        <div className="border-b border-neutral-200 dark:border-neutral-800 px-8 py-6 flex items-center justify-between">
-          <h3 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.2em] uppercase">
-            Share Trip
-          </h3>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
-          >
-            <XIcon className="w-4 h-4 text-neutral-900 dark:text-neutral-100" />
-          </button>
-        </div>
-        <div className="p-8 space-y-6">
+  const headerContent = (
+    <div className="flex items-center justify-between w-full">
+      <h3 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.2em] uppercase">
+        Share Trip
+      </h3>
+    </div>
+  );
+
+  const content = (
+    <div className="px-5 py-5 space-y-6">
           {/* Copy Link */}
           <div>
             <label className="block text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-3">
@@ -150,8 +143,22 @@ export function TripShareModal({ tripName, onClose }: TripShareModalProps) {
             </div>
           </div>
         </div>
-      </div>
     </div>
+  );
+
+  return (
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      headerContent={headerContent}
+      desktopWidth="480px"
+      position="right"
+      style="solid"
+      zIndex={80}
+      backdropOpacity="20"
+    >
+      {content}
+    </Drawer>
   );
 }
 

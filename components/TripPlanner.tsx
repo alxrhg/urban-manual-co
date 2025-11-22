@@ -872,19 +872,21 @@ export function TripPlanner({ isOpen, onClose, tripId }: TripPlannerProps) {
         {content}
       </Drawer>
 
-      {showAddLocation !== null && (
-        <AddLocationToTrip
-          onAdd={(location) => handleAddLocation(showAddLocation, location)}
-          onClose={() => setShowAddLocation(null)}
-        />
-      )}
+      <AddLocationToTrip
+        isOpen={showAddLocation !== null}
+        onAdd={(location) => {
+          if (showAddLocation !== null) {
+            handleAddLocation(showAddLocation, location);
+          }
+        }}
+        onClose={() => setShowAddLocation(null)}
+      />
 
-      {showShare && (
-        <TripShareModal
-          tripName={tripName}
-          onClose={() => setShowShare(false)}
-        />
-      )}
+      <TripShareModal
+        tripName={tripName}
+        isOpen={showShare}
+        onClose={() => setShowShare(false)}
+      />
     </>
   );
 }

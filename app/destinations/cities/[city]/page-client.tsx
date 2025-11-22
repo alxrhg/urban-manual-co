@@ -196,7 +196,6 @@ export default function CityPageClient() {
         
         // Also check tags for category-related matches
         const tags = d.tags || [];
-        const categoryLower = category.toLowerCase().trim();
         
         // Map categories to relevant tag patterns
         const categoryTagMap: Record<string, string[]> = {

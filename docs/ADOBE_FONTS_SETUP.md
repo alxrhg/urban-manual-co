@@ -4,9 +4,19 @@
 
 Yes! Having an Adobe Creative Cloud subscription gives you access to **Adobe Fonts** (formerly Typekit), which includes over 30,000 fonts from 150+ type foundries. This opens up many high-quality font options for your Lovably-inspired design.
 
-## Key Benefits
+## ⚠️ IMPORTANT: Educational License Warning
 
-✅ **Commercial License Included** - All fonts are licensed for commercial use  
+**If you're using a school-provided Adobe account, commercial use is typically NOT permitted.**
+
+- ❌ School accounts are usually for educational use only
+- ❌ Using school account fonts on commercial websites may violate license terms
+- ✅ **See `ADOBE_EDUCATIONAL_LICENSE_WARNING.md` for details**
+
+**Recommendation**: If using a school account, stick with free fonts (Inter, Manrope, etc.) for commercial projects.
+
+## Key Benefits (Commercial License)
+
+✅ **Commercial License Included** - All fonts are licensed for commercial use (with commercial subscription)  
 ✅ **Web Fonts Available** - Can be used on websites via Adobe's CDN  
 ✅ **No Additional Cost** - Included with your Creative Cloud subscription  
 ✅ **High Quality** - Professional fonts from reputable foundries  
@@ -15,44 +25,60 @@ Yes! Having an Adobe Creative Cloud subscription gives you access to **Adobe Fon
 
 ⚠️ **Must Use Adobe's CDN** - You cannot self-host Adobe Font files  
 ⚠️ **Client Websites** - If building for a client, they need their own Adobe subscription  
-✅ **Your Projects** - You can use fonts on your own websites/projects  
+⚠️ **Educational Licenses** - May restrict commercial use - verify your license type  
+✅ **Your Projects** - You can use fonts on your own websites/projects (with proper license)  
 
 ## Fonts Similar to Scto Grotesk A (Available on Adobe Fonts)
 
-### Top Recommendations:
+### Top Recommendations (with Similarity Scores):
 
-1. **Brandon Grotesque**
+1. **Brandon Grotesque** ⭐ (8.5/10 similarity)
    - Clean, geometric sans-serif
    - Very similar aesthetic to Scto Grotesk A
    - Multiple weights available
    - Excellent for headlines and body text
+   - **Best overall match on Adobe Fonts**
 
-2. **Avenir**
+2. **Aktiv Grotesk** (8.5/10 similarity)
+   - Modern, clean grotesque
+   - Removes quirks, adds warmth
+   - Very versatile
+   - Clean geometric structure
+
+3. **Avenir** (8/10 similarity)
    - Swiss-inspired geometric sans-serif
    - Clean, modern, professional
    - Designed by Adrian Frutiger
-   - Very similar to Scto Grotesk A
+   - Classic Swiss design aesthetic
 
-3. **Proxima Nova**
+4. **Neue Haas Grotesk** (8/10 similarity)
+   - Modern Helvetica revival
+   - Swiss design tradition
+   - Very clean, professional
+   - Shares same design DNA
+
+5. **Proxima Nova** (8/10 similarity)
    - Modern geometric sans-serif
    - Clean, versatile
    - Excellent readability
    - Good match for Lovably aesthetic
 
-4. **Founders Grotesk**
+6. **Founders Grotesk** (7.5/10 similarity)
    - Geometric sans-serif
    - Clean, minimal
-   - Similar to Scto Grotesk A
+   - Slightly more condensed
 
-5. **Neue Haas Grotesk**
-   - Modern Helvetica revival
-   - Swiss design tradition
-   - Very clean, professional
+7. **Roc Grotesk** (7.5/10 similarity)
+   - Contemporary geometric structure
+   - Modern feel
+   - Good versatility
 
-6. **GT America**
-   - Swiss/American hybrid
-   - Geometric, clean
-   - Similar aesthetic
+8. **Recent Grotesk** (7.5/10 similarity)
+   - Designed by Eric Olson
+   - Balances neutrality with character
+   - Slightly warmer tone
+
+See `ADOBE_FONTS_SIMILARITY_SCORES.md` for complete comparison table.
 
 ## Setup Instructions
 
@@ -148,12 +174,17 @@ body {
 
 | Font | Similarity to Scto Grotesk A | Available on Adobe Fonts | Best For |
 |------|------------------------------|--------------------------|----------|
-| **Brandon Grotesque** | 8.5/10 | ✅ Yes | Headlines, body text |
+| **Brandon Grotesque** | 8.5/10 ⭐ | ✅ Yes | Headlines, body text |
+| **Aktiv Grotesk** | 8.5/10 ⭐ | ✅ Yes | Body, UI |
 | **Avenir** | 8/10 | ✅ Yes | Body text, UI |
-| **Proxima Nova** | 7.5/10 | ✅ Yes | UI, web design |
-| **Founders Grotesk** | 7.5/10 | ✅ Yes | Headlines |
 | **Neue Haas Grotesk** | 8/10 | ✅ Yes | Professional design |
+| **Proxima Nova** | 8/10 | ✅ Yes | UI, web design |
+| **Founders Grotesk** | 7.5/10 | ✅ Yes | Headlines |
+| **Roc Grotesk** | 7.5/10 | ✅ Yes | Versatile |
+| **Recent Grotesk** | 7.5/10 | ✅ Yes | Versatile |
 | **Inter** (current) | 8/10 | ❌ No (Google Fonts) | Web, UI |
+
+See `ADOBE_FONTS_SIMILARITY_SCORES.md` for detailed scores and comparison.
 
 ## Next Steps
 

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Trash2, Edit2, Eye, Calendar, MapPin, Loader2, X } from 'lucide-react';
 import { TripPlanner } from '@/components/TripPlanner';
+import { TripViewDrawer } from '@/components/TripViewDrawer';
 import type { Trip } from '@/types/trip';
 import Image from 'next/image';
 
@@ -22,6 +23,7 @@ export default function TripsPage() {
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [deleteConfirmTrip, setDeleteConfirmTrip] = useState<{ id: string; title: string } | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'planning' | 'upcoming' | 'past'>('all');
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -320,7 +322,7 @@ export default function TripsPage() {
                     <TripCard
                       key={trip.id}
                       trip={trip}
-                      onView={() => router.push(`/trips/${trip.id}`)}
+                      onView={() => setSelectedTripId(trip.id)}
                       onEdit={() => {
                         setEditingTripId(trip.id);
                         setShowCreateDialog(true);
@@ -351,7 +353,7 @@ export default function TripsPage() {
                     <TripCard
                       key={trip.id}
                       trip={trip}
-                      onView={() => router.push(`/trips/${trip.id}`)}
+                      onView={() => setSelectedTripId(trip.id)}
                       onEdit={() => {
                         setEditingTripId(trip.id);
                         setShowCreateDialog(true);
@@ -382,7 +384,7 @@ export default function TripsPage() {
                     <TripCard
                       key={trip.id}
                       trip={trip}
-                      onView={() => router.push(`/trips/${trip.id}`)}
+                      onView={() => setSelectedTripId(trip.id)}
                       onEdit={() => {
                         setEditingTripId(trip.id);
                         setShowCreateDialog(true);
@@ -444,6 +446,22 @@ export default function TripsPage() {
           </div>
         </div>
       )}
+
+      {/* Trip Quickview Drawer */}
+      <TripViewDrawer
+        isOpen={selectedTripId !== null}
+        onClose={() => setSelectedTripId(null)}
+        tripId={selectedTripId || ''}
+        onEdit={() => {
+          setEditingTripId(selectedTripId);
+          setSelectedTripId(null);
+          setShowCreateDialog(true);
+        }}
+        onDelete={() => {
+          setSelectedTripId(null);
+          fetchTrips();
+        }}
+      />
     </main>
   );
 }
@@ -469,6 +487,14 @@ function TripCard({ trip, onView, onEdit, onDelete, formatDateRange, getStatusBa
     <div
       className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white dark:bg-gray-950 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180 ease-out cursor-pointer"
       onClick={onView}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onView();
+        }
+      }}
     >
       {/* Image - 16:9 ratio */}
       <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-800 overflow-hidden">
