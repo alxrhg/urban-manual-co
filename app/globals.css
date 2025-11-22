@@ -60,7 +60,7 @@
     --input: 0 0% 89.8%;
     --ring: 0 0% 3.9%;
     --radius: 0.5rem;
-    
+
     /* Unified layout container system */
     --container-max: 1280px;
     --container-padding-mobile: 16px;
@@ -68,7 +68,7 @@
     --container-padding-desktop: 48px;
     --gutter-nav: 12px;
     --gutter-grid: 20px;
-    
+
     /* Ensure container uses 1280px max-width */
     --tw-container-max-width: 1280px;
   }
@@ -105,41 +105,17 @@
     transition: background-color 0.2s ease, color 0.2s ease;
     max-width: 100%;
     overflow-x: hidden;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
-  
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Playfair Display', serif;
-    font-weight: 600;
-    letter-spacing: -0.02em;
   }
 
-  h1 {
-    font-size: clamp(2.5rem, 5vw, 3.75rem);
-    line-height: 1.1;
-  }
-
-  h2 {
-    font-size: clamp(2rem, 4vw, 3rem);
-    line-height: 1.2;
-  }
-
-  h3 {
-    font-size: clamp(1.5rem, 3vw, 2rem);
-    line-height: 1.3;
-  }
-
-  
   html.dark {
     color-scheme: dark;
   }
-  
+
+
   html.light {
     color-scheme: light;
   }
-  
+
   /* Ensure container max-width is 1280px site-wide */
   .container {
     max-width: 1280px;
@@ -165,7 +141,7 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -233,9 +209,11 @@
     0% {
       opacity: 1;
     }
+
     50% {
       opacity: 0;
     }
+
     100% {
       opacity: 1;
     }
@@ -315,7 +293,7 @@
 
   /* Page transition animations */
   .page-transition {
-    animation: pageIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: pageIn 0.4s cubic-bezier(0.16,1,0.3,1);
   }
 
   .fade-in {
@@ -323,33 +301,51 @@
   }
 
   .slide-up {
-    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
   }
 
   .slide-in-from-right {
-    animation: slideInFromRight 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideInFromRight 0.4s cubic-bezier(0.16,1,0.3,1);
   }
 
   .slide-in-from-left {
-    animation: slideInFromLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideInFromLeft 0.4s cubic-bezier(0.16,1,0.3,1);
   }
 
   .scale-in {
-    animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: scaleIn 0.3s cubic-bezier(0.16,1,0.3,1);
   }
 
   /* Stagger animations for lists */
-  .stagger-1 { animation-delay: 0.05s; }
-  .stagger-2 { animation-delay: 0.1s; }
-  .stagger-3 { animation-delay: 0.15s; }
-  .stagger-4 { animation-delay: 0.2s; }
-  .stagger-5 { animation-delay: 0.25s; }
-  .stagger-6 { animation-delay: 0.3s; }
+  .stagger-1 {
+    animation-delay: 0.05s;
+  }
+
+  .stagger-2 {
+    animation-delay: 0.1s;
+  }
+
+  .stagger-3 {
+    animation-delay: 0.15s;
+  }
+
+  .stagger-4 {
+    animation-delay: 0.2s;
+  }
+
+  .stagger-5 {
+    animation-delay: 0.25s;
+  }
+
+  .stagger-6 {
+    animation-delay: 0.3s;
+  }
 
   /* Hover lift effect */
   .hover-lift {
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.2s cubic-bezier(0.16,1,0.3,1), box-shadow 0.2s cubic-bezier(0.16,1,0.3,1);
   }
+
   .hover-lift:hover {
     transform: translateY(-4px);
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
@@ -358,12 +354,12 @@
   /* Smooth reveal */
   .reveal {
     opacity: 0;
-    animation: reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: reveal 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
   }
 
   /* Smooth transitions for interactive elements */
   .transition-smooth {
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
   }
 
   /* Better focus states for accessibility */
@@ -383,33 +379,29 @@
 
   /* Staggered fade-in for grid items */
   .stagger-fade-in {
-    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation: fadeInUp 0.6s cubic-bezier(0.16,1,0.3,1) backwards;
   }
 
   /* Image loading shimmer effect */
   .shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0) 100%);
     background-size: 1000px 100%;
     animation: shimmer 2s infinite;
   }
 
   .dark .shimmer {
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.05) 50%,
-      rgba(255, 255, 255, 0) 100%
-    );
+    background: linear-gradient(90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(255, 255, 255, 0) 100%);
   }
 
   /* Subtle scale on interaction */
   .interactive-scale {
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.2s cubic-bezier(0.16,1,0.3,1);
   }
 
   .interactive-scale:active {
@@ -425,21 +417,53 @@
 
   /* Refined drawer animation */
   .drawer-enter {
-    animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: slideInRight 0.3s cubic-bezier(0.16,1,0.3,1);
   }
 
   /* Grid item stagger delays */
-  .stagger-0 { animation-delay: 0ms; }
-  .stagger-1 { animation-delay: 50ms; }
-  .stagger-2 { animation-delay: 100ms; }
-  .stagger-3 { animation-delay: 150ms; }
-  .stagger-4 { animation-delay: 200ms; }
-  .stagger-5 { animation-delay: 250ms; }
-  .stagger-6 { animation-delay: 300ms; }
-  .stagger-7 { animation-delay: 350ms; }
-  .stagger-8 { animation-delay: 400ms; }
-  .stagger-9 { animation-delay: 450ms; }
-  .stagger-10 { animation-delay: 500ms; }
+  .stagger-0 {
+    animation-delay: 0ms;
+  }
+
+  .stagger-1 {
+    animation-delay: 50ms;
+  }
+
+  .stagger-2 {
+    animation-delay: 100ms;
+  }
+
+  .stagger-3 {
+    animation-delay: 150ms;
+  }
+
+  .stagger-4 {
+    animation-delay: 200ms;
+  }
+
+  .stagger-5 {
+    animation-delay: 250ms;
+  }
+
+  .stagger-6 {
+    animation-delay: 300ms;
+  }
+
+  .stagger-7 {
+    animation-delay: 350ms;
+  }
+
+  .stagger-8 {
+    animation-delay: 400ms;
+  }
+
+  .stagger-9 {
+    animation-delay: 450ms;
+  }
+
+  .stagger-10 {
+    animation-delay: 500ms;
+  }
 }
 
 @keyframes pageIn {
@@ -447,6 +471,7 @@
     opacity: 0;
     transform: translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -457,6 +482,7 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -467,6 +493,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -478,6 +505,7 @@
     opacity: 0;
     transform: translateX(30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -489,6 +517,7 @@
     opacity: 0;
     transform: translateX(-30px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -500,6 +529,7 @@
     opacity: 0;
     transform: scale(0.9);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -511,6 +541,7 @@
     opacity: 0;
     transform: translateY(30px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -521,25 +552,33 @@
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
 }
 
 @keyframes pulse-subtle {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
 }
 
 @keyframes typing-dot {
-  0%, 60%, 100% {
+
+  0%,
+  60%,
+  100% {
     opacity: 0.3;
     transform: scale(0.8);
   }
+
   30% {
     opacity: 0.6;
     transform: scale(1);
@@ -552,6 +591,7 @@
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -563,6 +603,7 @@
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -574,6 +615,7 @@
     opacity: 0;
     transform: translateX(20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
@@ -589,7 +631,7 @@ html {
   html {
     scroll-behavior: auto;
   }
-  
+
   *,
   *::before,
   *::after {

@@ -5,17 +5,12 @@ import { useState, useEffect } from "react";
 import { User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
-import { AccountDrawer } from "@/components/AccountDrawer";
-import { ChatDrawer } from "@/components/ChatDrawer";
-import { LoginDrawer } from "@/components/LoginDrawer";
+import { useDrawer } from "@/contexts/DrawerContext";
 
 export function Header() {
   const router = useRouter();
   const { user } = useAuth();
-  const [isAccountDrawerOpen, setIsAccountDrawerOpen] = useState(false);
-  const [accountDrawerInitialSubpage, setAccountDrawerInitialSubpage] = useState<'main_drawer' | 'trips_subpage' | undefined>(undefined);
-  const [isChatDrawerOpen, setIsChatDrawerOpen] = useState(false);
-  const [isLoginDrawerOpen, setIsLoginDrawerOpen] = useState(false);
+  const { openDrawer } = useDrawer();
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -85,17 +80,14 @@ export function Header() {
   // Listen for custom event to open account drawer with specific subpage
   useEffect(() => {
     const handleOpenAccountDrawer = (event: CustomEvent<{ subpage?: 'trips_subpage' }>) => {
-      if (event.detail?.subpage) {
-        setAccountDrawerInitialSubpage(event.detail.subpage);
-      }
-      setIsAccountDrawerOpen(true);
+      openDrawer("account", { initialSubpage: event.detail?.subpage });
     };
 
     window.addEventListener('openAccountDrawer', handleOpenAccountDrawer as EventListener);
     return () => {
       window.removeEventListener('openAccountDrawer', handleOpenAccountDrawer as EventListener);
     };
-  }, []);
+  }, [openDrawer]);
 
   const navigate = (path: string) => {
     router.push(path);
@@ -132,7 +124,7 @@ export function Header() {
 
       {user ? (
         <button
-          onClick={() => setIsAccountDrawerOpen(true)}
+          onClick={() => openDrawer("account")}
           className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
           aria-label="Open account drawer"
         >
@@ -151,7 +143,7 @@ export function Header() {
         </button>
       ) : (
         <button
-          onClick={() => setIsLoginDrawerOpen(true)}
+          onClick={() => openDrawer("login")}
           className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
           aria-label="Sign in"
         >
@@ -185,28 +177,6 @@ export function Header() {
           <div className="flex items-center gap-2">{actionButtons}</div>
         </nav>
       </div>
-      {/* Account Drawer */}
-      <AccountDrawer
-        isOpen={isAccountDrawerOpen}
-        onClose={() => {
-          setIsAccountDrawerOpen(false);
-          setAccountDrawerInitialSubpage(undefined);
-        }}
-        onOpenChat={() => setIsChatDrawerOpen(true)}
-        initialSubpage={accountDrawerInitialSubpage}
-      />
-
-      {/* Chat Drawer */}
-      <ChatDrawer
-        isOpen={isChatDrawerOpen}
-        onClose={() => setIsChatDrawerOpen(false)}
-      />
-
-      {/* Login Drawer */}
-      <LoginDrawer
-        isOpen={isLoginDrawerOpen}
-        onClose={() => setIsLoginDrawerOpen(false)}
-      />
     </header>
   );
 }

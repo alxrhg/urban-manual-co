@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { DrawerProvider } from "@/contexts/DrawerContext";
+import { GlobalDrawers } from "@/components/GlobalDrawers";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
@@ -159,11 +161,17 @@ export default function RootLayout({
               <Suspense fallback={null}>
                 <AdminEditModeProvider>
                   <ItineraryProvider>
-                    <Header />
-                    <main id="main-content" className="min-h-screen page-transition" style={{ zIndex: 200 }}>
-                      {children}
-                    </main>
-                    <Footer />
+                    <DrawerProvider>
+                      <div className="flex flex-col min-h-screen">
+                        <Header />
+                        <main className="flex-grow pt-0">
+                          {children}
+                        </main>
+                        <Footer />
+                        <GlobalDrawers />
+                      </div>
+                      <ToastContainer />
+                    </DrawerProvider>
                     <CookieConsent />
                   </ItineraryProvider>
                 </AdminEditModeProvider>

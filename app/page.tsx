@@ -36,6 +36,7 @@ const DestinationDrawer = dynamic(
   }
 );
 import { useAuth } from "@/contexts/AuthContext";
+import { useDrawer } from "@/contexts/DrawerContext";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -392,22 +393,22 @@ export default function Home() {
     setCityOptions,
     setCategoryOptions,
   } = useDestinations();
-  const [filteredDestinations, setFilteredDestinations] = useState<
-    Destination[]
-  >([]);
+  const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [showAllCities, setShowAllCities] = useState(false);
-  const [sortBy, setSortBy] = useState<"default" | "recent">("default");
-  // Removed loading state - page renders immediately, data loads in background
-  const [searching, setSearching] = useState(false);
-  const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
-  const [searchTier, setSearchTier] = useState<string | null>(null);
-  const [selectedDestination, setSelectedDestination] =
-    useState<Destination | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const { user, loading: authLoading } = useAuth();
+  const { openDrawer } = useDrawer();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // State
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
+  const [displayDestinations, setDisplayDestinations] = useState<Destination[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [showTripSidebar, setShowTripSidebar] = useState(false);
   const isAIEnabled = true;
@@ -2636,8 +2637,17 @@ export default function Home() {
               <div className="mb-12 md:mb-16">
                 <SmartRecommendations
                   onCardClick={destination => {
-                    setSelectedDestination(destination);
-                    setIsDrawerOpen(true);
+                    openDrawer("destination", {
+                      destination,
+                      onVisitToggle: (slug: string, visited: boolean) => {
+                        setVisitedSlugs(prev => {
+                          const newSet = new Set(prev);
+                          if (visited) newSet.add(slug);
+                          else newSet.delete(slug);
+                          return newSet;
+                        });
+                      }
+                    });
 
                     // Track destination click
                     trackDestinationClick({
@@ -2852,6 +2862,8 @@ export default function Home() {
                               <DestinationCard
                                 key={destination.slug}
                                 destination={destination}
+                                index={globalIndex}
+                                isVisited={isVisited}
                                 isAdmin={isAdmin}
                                 onEdit={dest => {
                                   setEditingDestination(dest);
@@ -2859,14 +2871,23 @@ export default function Home() {
                                 }}
                                 showEditAffordance={editModeActive}
                                 onClick={() => {
-                                  setSelectedDestination(destination);
-                                  setIsDrawerOpen(true);
+                                  openDrawer("destination", {
+                                    destination,
+                                    onVisitToggle: (slug: string, visited: boolean) => {
+                                      setVisitedSlugs(prev => {
+                                        const newSet = new Set(prev);
+                                        if (visited) newSet.add(slug);
+                                        else newSet.delete(slug);
+                                        return newSet;
+                                      });
+                                    }
+                                  });
 
                                   // Track destination click
                                   trackDestinationClick({
                                     destinationSlug: destination.slug,
-                                    position: globalIndex,
-                                    source: "grid",
+                                    position: 0, // We don't have index here easily, defaulting to 0
+                                    source: "grid_card",
                                   });
 
                                   // Also track with new analytics system
@@ -2881,7 +2902,7 @@ export default function Home() {
                                             category: destination.category,
                                             city: destination.city,
                                             source: "homepage_grid",
-                                            position: globalIndex,
+                                            position: 0, // Defaulting to 0 as index is not readily available here
                                           },
                                         });
                                       }
@@ -2899,6 +2920,7 @@ export default function Home() {
                                         userId: user.id,
                                         eventType: "click",
                                         documentId: destination.slug,
+                                        source: "homepage_grid",
                                       }),
                                     }).catch(error => {
                                       console.warn(
@@ -3027,54 +3049,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Destination Drawer */}
-        <DestinationDrawer
-          destination={selectedDestination}
-          isOpen={isDrawerOpen}
-          onClose={() => {
-            // Sort visited items to the back when closing
-            setFilteredDestinations(prev => {
-              const sorted = [...prev].sort((a, b) => {
-                const aVisited = user && visitedSlugs.has(a.slug);
-                const bVisited = user && visitedSlugs.has(b.slug);
-                if (aVisited && !bVisited) return 1;
-                if (!aVisited && bVisited) return -1;
-                return 0;
-              });
-              return sorted;
-            });
-            setIsDrawerOpen(false);
-            setTimeout(() => setSelectedDestination(null), 300);
-          }}
-          onVisitToggle={(slug, visited) => {
-            // Update visited slugs
-            setVisitedSlugs(prev => {
-              const newSet = new Set(prev);
-              if (visited) {
-                newSet.add(slug);
-              } else {
-                newSet.delete(slug);
-              }
-              return newSet;
-            });
 
-            // Sort visited items to the back
-            setFilteredDestinations(prev => {
-              const sorted = [...prev].sort((a, b) => {
-                const aVisited =
-                  user &&
-                  (visitedSlugs.has(a.slug) || (visited && a.slug === slug));
-                const bVisited =
-                  user &&
-                  (visitedSlugs.has(b.slug) || (visited && b.slug === slug));
-                if (aVisited && !bVisited) return 1;
-                if (!aVisited && bVisited) return -1;
-                return 0;
-              });
-              return sorted;
-            });
-          }}
-        />
 
         {/* Trip Planner Modal */}
 

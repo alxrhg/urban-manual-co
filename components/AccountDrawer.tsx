@@ -46,7 +46,7 @@ interface UserStats {
   explorationProgress: number;
 }
 
-type SubpageId = 
+type SubpageId =
   | 'main_drawer'
   | 'visited_subpage'
   | 'saved_subpage'
@@ -69,11 +69,11 @@ export function AccountDrawer({
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const [stats, setStats] = useState<UserStats>({ 
-    visited: 0, 
-    saved: 0, 
-    trips: 0, 
-    cities: 0, 
+  const [stats, setStats] = useState<UserStats>({
+    visited: 0,
+    saved: 0,
+    trips: 0,
+    cities: 0,
     countries: 0,
     explorationProgress: 0,
   });
@@ -130,7 +130,7 @@ export function AccountDrawer({
       try {
         setStatsLoading(true);
         const supabaseClient = createClient();
-        
+
         // Fetch profile
         const { data: profileData } = await supabaseClient
           .from("profiles")
@@ -367,12 +367,12 @@ export function AccountDrawer({
 
   // Render main drawer content (Tier 1)
   const renderMainDrawer = () => (
-    <div className="space-y-0" style={{ padding: '30px 26px', paddingTop: '30px', paddingBottom: '30px', paddingLeft: '26px', paddingRight: '26px' }}>
+    <div className="px-[26px] py-[30px] space-y-0">
       {user ? (
         <>
           {/* Header: Avatar, Name, Username */}
-          <div className="flex items-center gap-3" style={{ gap: '12px', marginBottom: '14px' }}>
-            <div className="relative rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700" style={{ width: '64px', height: '64px' }}>
+          <div className="flex items-center gap-3 mb-3.5">
+            <div className="relative w-16 h-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 border border-gray-200 dark:border-gray-700">
               {avatarUrl ? (
                 <Image
                   src={avatarUrl}
@@ -386,37 +386,16 @@ export function AccountDrawer({
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight" style={{ fontSize: '22px', fontWeight: 600, letterSpacing: '-0.2px' }}>
+              <p className="text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight text-[22px] font-semibold tracking-tight">
                 {displayUsername}
               </p>
-              <p className="text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight mt-0.5" style={{ fontSize: '14px', opacity: 0.55 }}>
+              <p className="text-[#F5F5F5] dark:text-[#F5F5F5] truncate leading-tight mt-0.5 text-sm opacity-55">
                 @{displayUsername.toLowerCase().replace(/\s+/g, '')}
               </p>
             </div>
             <button
               onClick={() => handleNavigateToFullPage("/account")}
-              className="flex items-center gap-1.5 rounded-full transition-colors"
-              style={{
-                height: '38px',
-                paddingLeft: '18px',
-                paddingRight: '18px',
-                borderRadius: '999px',
-                backgroundColor: 'rgba(255,255,255,0.09)',
-                color: '#F5F5F5',
-                fontSize: '14px',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.09)';
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.18)';
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
-              }}
+              className="flex items-center gap-1.5 h-[38px] px-[18px] rounded-full bg-white/10 text-[#F5F5F5] text-sm hover:bg-white/15 active:bg-white/20 transition-colors"
             >
               View Full Profile
               <ChevronRight className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -424,221 +403,99 @@ export function AccountDrawer({
           </div>
 
           {/* Stats Bar: Horizontal Layout */}
-          <div className="flex items-center" style={{ paddingTop: '16px', paddingBottom: '16px', marginBottom: '28px', gap: '22px' }}>
+          <div className="flex items-center py-4 mb-7 gap-[22px]">
             <div className="flex-1 text-center">
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5] text-lg font-semibold">
                 {stats.visited}
               </div>
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5] text-[13px] opacity-45">
                 Visited
               </div>
             </div>
-            <div className="w-px h-8 bg-[rgba(255,255,255,0.06)]" style={{ width: '1px' }} />
+            <div className="w-px h-8 bg-white/5" />
             <div className="flex-1 text-center">
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5] text-lg font-semibold">
                 {stats.saved}
               </div>
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5] text-[13px] opacity-45">
                 Saved
               </div>
             </div>
-            <div className="w-px h-8 bg-[rgba(255,255,255,0.06)]" style={{ width: '1px' }} />
+            <div className="w-px h-8 bg-white/5" />
             <div className="flex-1 text-center">
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5] text-lg font-semibold">
                 {stats.trips}
               </div>
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5] text-[13px] opacity-45">
                 Trips
               </div>
             </div>
-            <div className="w-px h-8 bg-[rgba(255,255,255,0.06)]" style={{ width: '1px' }} />
+            <div className="w-px h-8 bg-white/5" />
             <div className="flex-1 text-center">
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '18px', fontWeight: 600 }}>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5] text-lg font-semibold">
                 {stats.cities}
               </div>
-              <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.48 }}>
+              <div className="text-[#F5F5F5] dark:text-[#F5F5F5] text-[13px] opacity-45">
                 Cities
               </div>
             </div>
           </div>
 
           {/* Your Spaces Section */}
-          <div className="space-y-0" style={{ marginBottom: '28px' }}>
-            <h3 className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.45, letterSpacing: '0.3px', paddingBottom: '8px' }}>
+          <div className="space-y-0 mb-7">
+            <h3 className="text-[#F5F5F5] dark:text-[#F5F5F5] text-[13px] opacity-45 tracking-wide pb-2">
               Your Spaces
             </h3>
             <div className="space-y-1">
               <button
                 onClick={() => navigateToSubpage('saved_subpage')}
-                className="w-full flex items-center gap-3 transition-colors"
-                style={{
-                  height: '50px',
-                  paddingLeft: '14px',
-                  paddingRight: '14px',
-                  borderRadius: '14px',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  letterSpacing: '-0.1px',
-                  color: '#F5F5F5',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-                onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
-                }}
-                onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                }}
+                className="w-full flex items-center gap-3 h-[50px] px-3.5 rounded-[14px] text-base font-medium tracking-tight text-[#F5F5F5] hover:bg-white/5 active:bg-white/15 transition-colors group"
               >
-                <Bookmark className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <Bookmark className="text-[#F5F5F5] dark:text-[#F5F5F5] w-5 h-5" strokeWidth={1.5} />
                 <span className="flex-1 text-left">Saved</span>
-                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5] w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
               </button>
               <button
                 onClick={() => navigateToSubpage('visited_subpage')}
-                className="w-full flex items-center gap-3 transition-colors"
-                style={{
-                  height: '50px',
-                  paddingLeft: '14px',
-                  paddingRight: '14px',
-                  borderRadius: '14px',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  letterSpacing: '-0.1px',
-                  color: '#F5F5F5',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-                onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
-                }}
-                onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                }}
+                className="w-full flex items-center gap-3 h-[50px] px-3.5 rounded-[14px] text-base font-medium tracking-tight text-[#F5F5F5] hover:bg-white/5 active:bg-white/15 transition-colors group"
               >
-                <MapPin className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <MapPin className="text-[#F5F5F5] dark:text-[#F5F5F5] w-5 h-5" strokeWidth={1.5} />
                 <span className="flex-1 text-left">Visited</span>
-                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5] w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
               </button>
               <button
                 onClick={() => navigateToSubpage('collections_subpage')}
-                className="w-full flex items-center gap-3 transition-colors"
-                style={{
-                  height: '50px',
-                  paddingLeft: '14px',
-                  paddingRight: '14px',
-                  borderRadius: '14px',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  letterSpacing: '-0.1px',
-                  color: '#F5F5F5',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-                onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
-                }}
-                onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                }}
+                className="w-full flex items-center gap-3 h-[50px] px-3.5 rounded-[14px] text-base font-medium tracking-tight text-[#F5F5F5] hover:bg-white/5 active:bg-white/15 transition-colors group"
               >
-                <Folder className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <Folder className="text-[#F5F5F5] dark:text-[#F5F5F5] w-5 h-5" strokeWidth={1.5} />
                 <span className="flex-1 text-left">Lists</span>
-                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5] w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
               </button>
               <button
                 onClick={() => navigateToSubpage('trips_subpage')}
-                className="w-full flex items-center gap-3 transition-colors"
-                style={{
-                  height: '50px',
-                  paddingLeft: '14px',
-                  paddingRight: '14px',
-                  borderRadius: '14px',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  letterSpacing: '-0.1px',
-                  color: '#F5F5F5',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-                onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
-                }}
-                onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                }}
+                className="w-full flex items-center gap-3 h-[50px] px-3.5 rounded-[14px] text-base font-medium tracking-tight text-[#F5F5F5] hover:bg-white/5 active:bg-white/15 transition-colors group"
               >
-                <Compass className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <Compass className="text-[#F5F5F5] dark:text-[#F5F5F5] w-5 h-5" strokeWidth={1.5} />
                 <span className="flex-1 text-left">Trips</span>
-                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5] w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
               </button>
               <button
                 onClick={() => navigateToSubpage('settings_subpage')}
-                className="w-full flex items-center gap-3 transition-colors"
-                style={{
-                  height: '50px',
-                  paddingLeft: '14px',
-                  paddingRight: '14px',
-                  borderRadius: '14px',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  letterSpacing: '-0.1px',
-                  color: '#F5F5F5',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-                onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.14)';
-                }}
-                onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                }}
+                className="w-full flex items-center gap-3 h-[50px] px-3.5 rounded-[14px] text-base font-medium tracking-tight text-[#F5F5F5] hover:bg-white/5 active:bg-white/15 transition-colors group"
               >
-                <Settings className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '20px', height: '20px' }} strokeWidth={1.5} />
+                <Settings className="text-[#F5F5F5] dark:text-[#F5F5F5] w-5 h-5" strokeWidth={1.5} />
                 <span className="flex-1 text-left">Settings</span>
-                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ width: '16px', height: '16px', opacity: 0.5 }} />
+                <ChevronRight className="text-[#F5F5F5] dark:text-[#F5F5F5] w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
               </button>
             </div>
           </div>
 
           {/* Contextual Section: Continue Planning */}
           {recentTrips.length > 0 && (
-            <div style={{ marginBottom: '28px' }}>
+            <div className="mb-7">
               <button
                 onClick={() => navigateToSubpage('trip_details_subpage', recentTrips[0].id)}
-                className="w-full text-left transition-all"
-                style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  borderRadius: '18px',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  padding: '18px',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-                }}
+                className="w-full text-left transition-all bg-white/5 rounded-[18px] border border-white/5 p-[18px] hover:bg-white/10"
               >
                 {recentTrips[0].cover_image && (
                   <div className="relative w-full h-24 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3">
@@ -651,13 +508,13 @@ export function AccountDrawer({
                     />
                   </div>
                 )}
-                <div className="text-[#F5F5F5] dark:text-[#F5F5F5] mb-1" style={{ fontSize: '16px', fontWeight: 600, letterSpacing: '-0.2px' }}>
+                <div className="text-[#F5F5F5] dark:text-[#F5F5F5] mb-1 text-base font-semibold tracking-tight">
                   {recentTrips[0].title}
                 </div>
                 {recentTrips[0].start_date && (
-                  <div className="text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '13px', opacity: 0.55 }}>
-                    {new Date(recentTrips[0].start_date).toLocaleDateString("en-US", { 
-                      month: "short", 
+                  <div className="text-[#F5F5F5] dark:text-[#F5F5F5] text-[13px] opacity-55">
+                    {new Date(recentTrips[0].start_date).toLocaleDateString("en-US", {
+                      month: "short",
                       day: "numeric",
                       year: "numeric"
                     })}
@@ -668,29 +525,16 @@ export function AccountDrawer({
           )}
 
           {/* Footer: Sign Out */}
-          <div className="border-t border-[rgba(255,255,255,0.12)] dark:border-[rgba(255,255,255,0.12)]" style={{ paddingTop: '28px' }}>
+          <div className="border-t border-white/10 pt-7">
             <button
               type="button"
               onClick={handleSignOut}
-              className="w-full flex items-center justify-center gap-2 text-[#F5F5F5] dark:text-[#F5F5F5] transition-colors"
-              style={{
-                fontSize: '15px',
-                paddingTop: '16px',
-                paddingBottom: '16px',
-                opacity: 0.75,
-                borderRadius: '12px',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.06)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
+              className="w-full flex items-center justify-center gap-2 text-[#F5F5F5] dark:text-[#F5F5F5] transition-colors py-4 opacity-75 rounded-xl hover:bg-white/5"
             >
               <LogOut className="w-4 h-4" strokeWidth={1.5} />
               <span>Sign Out</span>
             </button>
-            <div className="text-center text-[#F5F5F5] dark:text-[#F5F5F5]" style={{ fontSize: '12px', opacity: 0.35, marginTop: '6px' }}>
+            <div className="text-center text-[#F5F5F5] dark:text-[#F5F5F5] text-xs opacity-35 mt-1.5">
               © {new Date().getFullYear()} Urban Manual
             </div>
           </div>
@@ -719,7 +563,7 @@ export function AccountDrawer({
 
   // Render visited subpage
   const renderVisitedSubpage = () => (
-    <div style={{ padding: '12px 12px 24px 12px' }}>
+    <div className="px-3 py-3 pb-6">
       {loading ? (
         <div className="text-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
@@ -733,25 +577,7 @@ export function AccountDrawer({
               <button
                 key={index}
                 onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
-                className="w-full flex items-center transition-colors text-left"
-                style={{
-                  height: '52px',
-                  padding: '0 20px',
-                  borderRadius: '14px',
-                  backgroundColor: 'rgba(255,255,255,0.04)',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.88)',
-                }}
-                onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-                }}
-                onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-                }}
+                className="w-full flex items-center transition-colors text-left h-[52px] px-5 rounded-[14px] bg-white/5 text-base font-medium text-white/90 hover:bg-white/10 active:bg-white/5"
               >
                 {displayImage && (
                   <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
@@ -765,11 +591,11 @@ export function AccountDrawer({
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
+                  <p className="truncate text-base font-medium text-white/90">
                     {visit.destination?.name || visit.slug}
                   </p>
                   {visit.visited_at && (
-                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
+                    <p className="text-[13px] text-white/55">
                       {new Date(visit.visited_at).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -778,14 +604,14 @@ export function AccountDrawer({
                     </p>
                   )}
                 </div>
-                <ChevronRight className="flex-shrink-0" style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
+                <ChevronRight className="flex-shrink-0 w-[18px] h-[18px] text-white/35" />
               </button>
             );
           })}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>No visited places yet</p>
+          <p className="text-sm text-white/55">No visited places yet</p>
         </div>
       )}
     </div>
@@ -793,7 +619,7 @@ export function AccountDrawer({
 
   // Render saved subpage
   const renderSavedSubpage = () => (
-    <div style={{ padding: '12px 12px 24px 12px' }}>
+    <div className="px-3 py-3 pb-6">
       {loading ? (
         <div className="text-center py-12">
           <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
@@ -807,25 +633,7 @@ export function AccountDrawer({
               <button
                 key={index}
                 onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
-                className="w-full flex items-center transition-colors text-left"
-                style={{
-                  height: '52px',
-                  padding: '0 20px',
-                  borderRadius: '14px',
-                  backgroundColor: 'rgba(255,255,255,0.04)',
-                  fontSize: '16px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.88)',
-                }}
-                onMouseDown={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-                }}
-                onMouseUp={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-                }}
+                className="w-full flex items-center transition-colors text-left h-[52px] px-5 rounded-[14px] bg-white/5 text-base font-medium text-white/90 hover:bg-white/10 active:bg-white/5"
               >
                 {displayImage && (
                   <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
@@ -839,23 +647,23 @@ export function AccountDrawer({
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
+                  <p className="truncate text-base font-medium text-white/90">
                     {saved.destination?.name || saved.slug}
                   </p>
                   {saved.destination?.city && (
-                    <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
+                    <p className="text-[13px] text-white/55">
                       {saved.destination.city}
                     </p>
                   )}
                 </div>
-                <ChevronRight className="flex-shrink-0" style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
+                <ChevronRight className="flex-shrink-0 w-[18px] h-[18px] text-white/35" />
               </button>
             );
           })}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>No saved places yet</p>
+          <p className="text-sm text-white/55">No saved places yet</p>
         </div>
       )}
     </div>
@@ -880,28 +688,10 @@ export function AccountDrawer({
 
   // Render trips subpage
   const renderTripsSubpage = () => (
-    <div style={{ padding: '12px 12px 24px 12px' }}>
+    <div className="px-3 py-3 pb-6">
       <button
         onClick={() => navigateToSubpage('create_trip_subpage')}
-        className="w-full flex items-center justify-center gap-2 transition-colors mb-4"
-        style={{
-          height: '52px',
-          padding: '0 20px',
-          borderRadius: '14px',
-          backgroundColor: 'rgba(255,255,255,0.08)',
-          fontSize: '16px',
-          fontWeight: 500,
-          color: 'rgba(255,255,255,0.88)',
-        }}
-        onMouseDown={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.12)';
-        }}
-        onMouseUp={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-        }}
+        className="w-full flex items-center justify-center gap-2 transition-colors mb-4 h-[52px] px-5 rounded-[14px] bg-white/10 text-base font-medium text-white/90 hover:bg-white/15 active:bg-white/10"
       >
         <Plus className="w-4 h-4" />
         <span>New Trip</span>
@@ -917,25 +707,7 @@ export function AccountDrawer({
             <button
               key={trip.id}
               onClick={() => navigateToSubpage('trip_details_subpage', trip.id)}
-              className="w-full flex items-center transition-colors text-left"
-              style={{
-                height: '52px',
-                padding: '0 20px',
-                borderRadius: '14px',
-                backgroundColor: 'rgba(255,255,255,0.04)',
-                fontSize: '16px',
-                fontWeight: 500,
-                color: 'rgba(255,255,255,0.88)',
-              }}
-              onMouseDown={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-              }}
-              onMouseUp={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-              }}
+              className="w-full flex items-center transition-colors text-left h-[52px] px-5 rounded-[14px] bg-white/5 text-base font-medium text-white/90 hover:bg-white/10 active:bg-white/5"
             >
               {trip.cover_image && (
                 <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 mr-3">
@@ -949,11 +721,11 @@ export function AccountDrawer({
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="truncate" style={{ fontSize: '16px', fontWeight: 500, color: 'rgba(255,255,255,0.88)' }}>
+                <p className="truncate text-base font-medium text-white/90">
                   {trip.title}
                 </p>
                 {trip.start_date && (
-                  <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
+                  <p className="text-[13px] text-white/55">
                     {new Date(trip.start_date).toLocaleDateString("en-US", {
                       month: "short",
                       day: "numeric",
@@ -962,13 +734,13 @@ export function AccountDrawer({
                   </p>
                 )}
               </div>
-              <ChevronRight className="flex-shrink-0" style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
+              <ChevronRight className="flex-shrink-0 w-[18px] h-[18px] text-white/35" />
             </button>
           ))}
         </div>
       ) : (
         <div className="text-center py-12">
-          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>No trips yet</p>
+          <p className="text-sm text-white/55">No trips yet</p>
         </div>
       )}
     </div>
@@ -1003,13 +775,13 @@ export function AccountDrawer({
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <Calendar className="w-4 h-4" />
             <span>
-              {new Date(selectedTrip.start_date).toLocaleDateString("en-US", { 
-                month: "long", 
+              {new Date(selectedTrip.start_date).toLocaleDateString("en-US", {
+                month: "long",
                 day: "numeric",
                 year: "numeric"
               })}
-              {selectedTrip.end_date && ` - ${new Date(selectedTrip.end_date).toLocaleDateString("en-US", { 
-                month: "long", 
+              {selectedTrip.end_date && ` - ${new Date(selectedTrip.end_date).toLocaleDateString("en-US", {
+                month: "long",
                 day: "numeric",
                 year: "numeric"
               })}`}
@@ -1044,19 +816,13 @@ export function AccountDrawer({
   // Render create trip subpage (Tier 3)
   const renderCreateTripSubpage = () => {
     return (
-      <div style={{ padding: '28px', maxWidth: '360px', margin: '0 auto' }}>
-        <div className="space-y-5" style={{ gap: '20px' }}>
+      <div className="p-7 max-w-[360px] mx-auto">
+        <div className="space-y-5">
           {/* Trip Name */}
           <div>
-            <label 
+            <label
               htmlFor="trip-name"
-              style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: 'rgba(255,255,255,0.7)',
-                display: 'block',
-                marginBottom: '8px',
-              }}
+              className="block text-sm font-medium text-white/70 mb-2"
             >
               Trip Name *
             </label>
@@ -1067,32 +833,15 @@ export function AccountDrawer({
               onChange={(e) => setTripName(e.target.value)}
               placeholder="e.g., Summer in Tokyo"
               required
-              style={{
-                width: '100%',
-                height: '42px',
-                padding: '0 18px',
-                borderRadius: '22px',
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                border: 'none',
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#fff',
-              }}
-              className="focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="w-full h-[42px] px-[18px] rounded-[22px] bg-white/10 border-none text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-white/20"
             />
           </div>
 
           {/* Destination */}
           <div>
-            <label 
+            <label
               htmlFor="trip-destination"
-              style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: 'rgba(255,255,255,0.7)',
-                display: 'block',
-                marginBottom: '8px',
-              }}
+              className="block text-sm font-medium text-white/70 mb-2"
             >
               Destination *
             </label>
@@ -1103,32 +852,15 @@ export function AccountDrawer({
               onChange={(e) => setTripDestination(e.target.value)}
               placeholder="e.g., Tokyo, Japan"
               required
-              style={{
-                width: '100%',
-                height: '42px',
-                padding: '0 18px',
-                borderRadius: '22px',
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                border: 'none',
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#fff',
-              }}
-              className="focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="w-full h-[42px] px-[18px] rounded-[22px] bg-white/10 border-none text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-white/20"
             />
           </div>
 
           {/* Hotel / Base Location */}
           <div>
-            <label 
+            <label
               htmlFor="trip-hotel"
-              style={{
-                fontSize: '14px',
-                fontWeight: 500,
-                color: 'rgba(255,255,255,0.7)',
-                display: 'block',
-                marginBottom: '8px',
-              }}
+              className="block text-sm font-medium text-white/70 mb-2"
             >
               Hotel / Base Location
             </label>
@@ -1138,33 +870,16 @@ export function AccountDrawer({
               value={tripHotel}
               onChange={(e) => setTripHotel(e.target.value)}
               placeholder="e.g., Four Seasons Hotel"
-              style={{
-                width: '100%',
-                height: '42px',
-                padding: '0 18px',
-                borderRadius: '22px',
-                backgroundColor: 'rgba(255,255,255,0.08)',
-                border: 'none',
-                fontSize: '14px',
-                fontWeight: 500,
-                color: '#fff',
-              }}
-              className="focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="w-full h-[42px] px-[18px] rounded-[22px] bg-white/10 border-none text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-white/20"
             />
           </div>
 
           {/* Date Range */}
           <div className="space-y-4">
             <div>
-              <label 
+              <label
                 htmlFor="start-date"
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.7)',
-                  display: 'block',
-                  marginBottom: '8px',
-                }}
+                className="block text-sm font-medium text-white/70 mb-2"
               >
                 Start Date *
               </label>
@@ -1174,30 +889,13 @@ export function AccountDrawer({
                 value={tripStartDate}
                 onChange={(e) => setTripStartDate(e.target.value)}
                 required
-                style={{
-                  width: '100%',
-                  height: '42px',
-                  padding: '0 18px',
-                  borderRadius: '22px',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  border: 'none',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#fff',
-                }}
-                className="focus:outline-none focus:ring-2 focus:ring-white/20"
+                className="w-full h-[42px] px-[18px] rounded-[22px] bg-white/10 border-none text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-white/20"
               />
             </div>
             <div>
-              <label 
+              <label
                 htmlFor="end-date"
-                style={{
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.7)',
-                  display: 'block',
-                  marginBottom: '8px',
-                }}
+                className="block text-sm font-medium text-white/70 mb-2"
               >
                 End Date *
               </label>
@@ -1208,18 +906,7 @@ export function AccountDrawer({
                 onChange={(e) => setTripEndDate(e.target.value)}
                 min={tripStartDate}
                 required
-                style={{
-                  width: '100%',
-                  height: '42px',
-                  padding: '0 18px',
-                  borderRadius: '22px',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  border: 'none',
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: '#fff',
-                }}
-                className="focus:outline-none focus:ring-2 focus:ring-white/20"
+                className="w-full h-[42px] px-[18px] rounded-[22px] bg-white/10 border-none text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-white/20"
               />
             </div>
           </div>
@@ -1230,141 +917,51 @@ export function AccountDrawer({
 
   // Render achievements subpage
   const renderAchievementsSubpage = () => (
-    <div style={{ padding: '12px 12px 24px 12px' }}>
+    <div className="px-3 py-3 pb-6">
       <div className="text-center py-12">
-        <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)' }}>Achievements coming soon</p>
+        <p className="text-sm text-white/55">Achievements coming soon</p>
       </div>
     </div>
   );
 
   // Render settings subpage
   const renderSettingsSubpage = () => (
-    <div style={{ padding: '12px 12px 24px 12px' }}>
+    <div className="px-3 py-3 pb-6">
       <div className="space-y-1">
         <button
           onClick={() => handleNavigateToFullPage("/settings?section=privacy")}
-          className="w-full flex items-center justify-between transition-colors"
-          style={{
-            height: '52px',
-            padding: '0 20px',
-            borderRadius: '14px',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            fontSize: '16px',
-            fontWeight: 500,
-            color: 'rgba(255,255,255,0.88)',
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-          }}
+          className="w-full flex items-center justify-between transition-colors h-[52px] px-5 rounded-[14px] bg-white/5 text-base font-medium text-white/90 hover:bg-white/10 active:bg-white/5"
         >
           <span>Privacy</span>
-          <ChevronRight style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
+          <ChevronRight className="w-[18px] h-[18px] text-white/35" />
         </button>
         <button
           onClick={() => handleNavigateToFullPage("/settings?section=personalization")}
-          className="w-full flex items-center justify-between transition-colors"
-          style={{
-            height: '52px',
-            padding: '0 20px',
-            borderRadius: '14px',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            fontSize: '16px',
-            fontWeight: 500,
-            color: 'rgba(255,255,255,0.88)',
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-          }}
+          className="w-full flex items-center justify-between transition-colors h-[52px] px-5 rounded-[14px] bg-white/5 text-base font-medium text-white/90 hover:bg-white/10 active:bg-white/5"
         >
           <span>Personalization</span>
-          <ChevronRight style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
+          <ChevronRight className="w-[18px] h-[18px] text-white/35" />
         </button>
         <button
           onClick={() => handleNavigateToFullPage("/settings?section=notifications")}
-          className="w-full flex items-center justify-between transition-colors"
-          style={{
-            height: '52px',
-            padding: '0 20px',
-            borderRadius: '14px',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            fontSize: '16px',
-            fontWeight: 500,
-            color: 'rgba(255,255,255,0.88)',
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-          }}
+          className="w-full flex items-center justify-between transition-colors h-[52px] px-5 rounded-[14px] bg-white/5 text-base font-medium text-white/90 hover:bg-white/10 active:bg-white/5"
         >
           <span>Notifications</span>
-          <ChevronRight style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
+          <ChevronRight className="w-[18px] h-[18px] text-white/35" />
         </button>
         <button
           onClick={() => handleNavigateToFullPage("/account")}
-          className="w-full flex items-center justify-between transition-colors"
-          style={{
-            height: '52px',
-            padding: '0 20px',
-            borderRadius: '14px',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            fontSize: '16px',
-            fontWeight: 500,
-            color: 'rgba(255,255,255,0.88)',
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-          }}
+          className="w-full flex items-center justify-between transition-colors h-[52px] px-5 rounded-[14px] bg-white/5 text-base font-medium text-white/90 hover:bg-white/10 active:bg-white/5"
         >
           <span>Account Info</span>
-          <ChevronRight style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
+          <ChevronRight className="w-[18px] h-[18px] text-white/35" />
         </button>
         <button
           onClick={() => handleNavigateToFullPage("/settings?section=profile")}
-          className="w-full flex items-center justify-between transition-colors"
-          style={{
-            height: '52px',
-            padding: '0 20px',
-            borderRadius: '14px',
-            backgroundColor: 'rgba(255,255,255,0.04)',
-            fontSize: '16px',
-            fontWeight: 500,
-            color: 'rgba(255,255,255,0.88)',
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.08)';
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.04)';
-          }}
+          className="w-full flex items-center justify-between transition-colors h-[52px] px-5 rounded-[14px] bg-white/5 text-base font-medium text-white/90 hover:bg-white/10 active:bg-white/5"
         >
           <span>Public Profile</span>
-          <ChevronRight style={{ width: '18px', height: '18px', color: 'rgba(255,255,255,0.35)' }} />
+          <ChevronRight className="w-[18px] h-[18px] text-white/35" />
         </button>
       </div>
     </div>
@@ -1401,37 +998,18 @@ export function AccountDrawer({
     }
 
     return (
-      <div 
-        className="flex items-center"
-        style={{
-          height: '64px',
-          padding: '0 20px',
-          background: '#101010',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-        }}
-      >
+      <div className="flex items-center h-16 px-5 bg-[#101010] border-b border-white/5">
         <button
           onClick={navigateBack}
-          className="flex items-center justify-center transition-opacity hover:opacity-70"
-          style={{
-            width: '40px',
-            height: '40px',
-          }}
+          className="flex items-center justify-center w-10 h-10 transition-opacity hover:opacity-70"
           aria-label="Back"
         >
-          <ChevronLeft className="text-[rgba(255,255,255,0.85)]" style={{ width: '22px', height: '22px' }} strokeWidth={1.5} />
+          <ChevronLeft className="text-white/85 w-[22px] h-[22px]" strokeWidth={1.5} />
         </button>
-        <h2 
-          className="flex-1 text-center"
-          style={{
-            fontSize: '17px',
-            fontWeight: 600,
-            color: 'rgba(255,255,255,0.92)',
-          }}
-        >
+        <h2 className="flex-1 text-center text-[17px] font-semibold text-white/90">
           {getDrawerTitle()}
         </h2>
-        <div style={{ width: '40px' }} /> {/* Spacer for centering */}
+        <div className="w-10" /> {/* Spacer for centering */}
       </div>
     );
   };
@@ -1458,7 +1036,7 @@ export function AccountDrawer({
     try {
       const supabaseClient = createClient();
       const { data: { user } } = await supabaseClient.auth.getUser();
-      
+
       if (!user) {
         return;
       }
@@ -1506,20 +1084,11 @@ export function AccountDrawer({
     if (currentSubpage !== 'create_trip_subpage') return null;
 
     return (
-      <div className="flex gap-2.5" style={{ gap: '10px' }}>
+      <div className="flex gap-2.5">
         <button
           onClick={handleCreateTrip}
           disabled={isCreatingTrip || !tripName || !tripDestination || !tripStartDate || !tripEndDate}
-          className="flex-1 flex items-center justify-center transition-all"
-          style={{
-            height: '48px',
-            borderRadius: '24px',
-            fontSize: '15px',
-            fontWeight: 600,
-            backgroundColor: 'rgba(255,255,255,0.92)',
-            color: '#000',
-            opacity: (!tripName || !tripDestination || !tripStartDate || !tripEndDate) ? 0.5 : 1,
-          }}
+          className="flex-1 flex items-center justify-center h-12 rounded-full text-[15px] font-semibold bg-white/90 text-black disabled:opacity-50 transition-all"
         >
           {isCreatingTrip ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create Trip'}
         </button>
@@ -1528,8 +1097,8 @@ export function AccountDrawer({
   };
 
   return (
-    <Drawer 
-      isOpen={isOpen} 
+    <Drawer
+      isOpen={isOpen}
       onClose={onClose}
       title={currentSubpage === 'main_drawer' ? undefined : getDrawerTitle()}
       subtitle={isTier3 ? getDrawerSubtitle() : undefined}
@@ -1546,7 +1115,7 @@ export function AccountDrawer({
       noOverlay={isTier3}
       footerContent={isTier3 ? renderCreateTripFooter() : undefined}
       showHandle={isTier1}
-      customBorderRadius={isTier1 
+      customBorderRadius={isTier1
         ? { topLeft: '22px', topRight: '22px', bottomLeft: '22px', bottomRight: '22px' }
         : { topLeft: '24px', topRight: '24px', bottomLeft: '24px', bottomRight: '24px' }
       }
