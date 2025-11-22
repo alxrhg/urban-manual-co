@@ -44,7 +44,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
     }
     
     // Check for OAuth errors from callback
-    const errorParam = searchParams.get('error');
+    const errorParam = searchParams?.get('error');
     if (errorParam) {
       setError(decodeURIComponent(errorParam));
     }
