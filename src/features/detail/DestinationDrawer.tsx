@@ -2076,45 +2076,49 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
 
             {/* Nested Destinations */}
-            {(loadingNested || (nestedDestinations && nestedDestinations.length > 0)) && (
-              <div>
-                <div style={{
-                  fontSize: '14px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.7)',
-                  marginBottom: '12px',
-                }}>
-                  Venues located here
-                </div>
-                {loadingNested && (
-                  <div className="flex items-center gap-2" style={{
-                    fontSize: '13px',
-                    color: 'rgba(255,255,255,0.6)',
+            {(() => {
+              const hasNestedData = loadingNested || (nestedDestinations && nestedDestinations.length > 0);
+              if (!hasNestedData) return null;
+              
+              return (
+                <div>
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    color: 'rgba(255,255,255,0.7)',
+                    marginBottom: '12px',
                   }}>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    Loading venues…
+                    Venues located here
                   </div>
-                )}
-                {!loadingNested && nestedDestinations && nestedDestinations.length > 0 && (
-                  <NestedDestinations
-                    destinations={nestedDestinations}
-                    parentName={destination.name}
-                    onDestinationClick={(nested) => {
-                      if (nested.slug) {
-                        onClose();
-                        setTimeout(() => {
-                          openDrawer('destination', {
-                            destination: nested,
-                            onVisitToggle: onVisitToggle,
-                            onSaveToggle: onSaveToggle,
-                          });
-                        }, 100);
-                      }
-                    }}
-                  />
-                )}
-              </div>
-            )}
+                  {loadingNested ? (
+                    <div className="flex items-center gap-2" style={{
+                      fontSize: '13px',
+                      color: 'rgba(255,255,255,0.6)',
+                    }}>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Loading venues…
+                    </div>
+                  ) : nestedDestinations && nestedDestinations.length > 0 ? (
+                    <NestedDestinations
+                      destinations={nestedDestinations}
+                      parentName={destination.name}
+                      onDestinationClick={(nested) => {
+                        if (nested.slug) {
+                          onClose();
+                          setTimeout(() => {
+                            openDrawer('destination', {
+                              destination: nested,
+                              onVisitToggle: onVisitToggle,
+                              onSaveToggle: onSaveToggle,
+                            });
+                          }, 100);
+                        }
+                      }}
+                    />
+                  ) : null}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </Drawer>
