@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit, Instagram, Trash2 } from 'lucide-react';
+import { X, MapPin, Tag, Heart, Check, Share2, Navigation, Sparkles, ChevronDown, Plus, Loader2, Clock, ExternalLink, Edit, Instagram, Trash2, Building2 } from 'lucide-react';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -363,7 +363,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             architect_info_json,
             web_content_json,
             brand,
-            category
+            category,
+            neighborhood,
+            country,
+            opentable_url,
+            resy_url,
+            booking_url
           `)
           .eq('slug', destination.slug)
           .single();
@@ -1579,6 +1584,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </div>
               )}
 
+              {(enrichedData?.brand || destination.brand) && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
+                  <Building2 className="h-3.5 w-3.5" />
+                  <span className="capitalize">{enrichedData?.brand || destination.brand}</span>
+                </div>
+              )}
+
               {typeof destination.michelin_stars === 'number' && destination.michelin_stars > 0 && (
                 <div className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400">
                   <img
@@ -1681,18 +1693,36 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             {/* Architecture & Design */}
             {destination && <ArchitectDesignInfo destination={destination} />}
 
-            {/* Formatted Address */}
-            {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
+            {/* Location Section - Improved hierarchy */}
+            {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.neighborhood || destination.city || destination.country || enrichedData?.neighborhood || enrichedData?.country) && (
               <div className="mt-4">
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">Address</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">Location</div>
+                    {/* Neighborhood, City, Country - Better organized */}
+                    {(destination.neighborhood || enrichedData?.neighborhood || destination.city || destination.country || enrichedData?.country) && (
+                      <div className="space-y-1 mb-2">
+                        {(destination.neighborhood || enrichedData?.neighborhood) && (
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {destination.neighborhood || enrichedData?.neighborhood}
+                          </div>
+                        )}
+                        {(destination.city || destination.country || enrichedData?.country) && (
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {destination.city && capitalizeCity(destination.city)}
+                            {destination.city && (destination.country || enrichedData?.country) && ', '}
+                            {destination.country || enrichedData?.country || ''}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {/* Full Address */}
                     {enrichedData?.formatted_address && (
-                      <div className="text-sm text-gray-600 dark:text-gray-400">{enrichedData.formatted_address}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{enrichedData.formatted_address}</div>
                     )}
                     {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
-                      <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">{enrichedData.vicinity}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-500">{enrichedData.vicinity}</div>
                     )}
                   </div>
                 </div>
@@ -1886,8 +1916,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Contact & Links Section */}
-          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.google_maps_url) && (
+          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.google_maps_url || destination.opentable_url || destination.resy_url || destination.booking_url) && (
             <div className="mb-6">
+              <h3 className="text-sm font-bold uppercase tracking-wide mb-4 text-gray-500 dark:text-gray-400">Contact & Links</h3>
               <div className="flex flex-wrap gap-2">
                 {destination.google_maps_url && (
                   <a
@@ -1934,6 +1965,43 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   >
                     <span>📷</span>
                     <span>Instagram</span>
+                  </a>
+                )}
+                {/* Booking Links */}
+                {destination.opentable_url && (
+                  <a
+                    href={destination.opentable_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-orange-100 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-full text-sm text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/30 transition-colors"
+                  >
+                    <span>🍽️</span>
+                    <span>OpenTable</span>
+                    <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+                  </a>
+                )}
+                {destination.resy_url && (
+                  <a
+                    href={destination.resy_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-100 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-full text-sm text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/30 transition-colors"
+                  >
+                    <span>📅</span>
+                    <span>Resy</span>
+                    <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+                  </a>
+                )}
+                {destination.booking_url && !destination.opentable_url && !destination.resy_url && (
+                  <a
+                    href={destination.booking_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    <span>📖</span>
+                    <span>Book Now</span>
+                    <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
                   </a>
                 )}
               </div>
