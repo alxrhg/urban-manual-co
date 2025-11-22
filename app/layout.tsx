@@ -16,6 +16,8 @@ import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
+// Register Plasmic components
+import "@/components/plasmic/register";
 
 export const viewport: Viewport = {
   width: 'device-width',
