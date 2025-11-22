@@ -466,7 +466,9 @@ export default function Home() {
             });
           })
           .catch(error => {
-            console.warn("Failed to record analytics event:", error);
+            if (process.env.NODE_ENV === 'development') {
+              console.warn("Failed to record analytics event:", error);
+            }
           });
       }
 
@@ -482,7 +484,9 @@ export default function Home() {
             documentId: destination.slug,
           }),
         }).catch(error => {
-          console.warn("Failed to track click event:", error);
+          if (process.env.NODE_ENV === 'development') {
+            console.warn("Failed to track click event:", error);
+          }
         });
       }
     },
@@ -737,7 +741,9 @@ export default function Home() {
       fallbackDestinationsRef.current = normalized;
       return normalized;
     } catch (error) {
-      console.warn("[Fallback] Unable to load static destinations:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn("[Fallback] Unable to load static destinations:", error);
+      }
       fallbackDestinationsRef.current = [];
       return [];
     }
@@ -832,19 +838,25 @@ export default function Home() {
 
   const fetchDiscoveryBootstrap = async (): Promise<Destination[]> => {
     if (discoveryBootstrapRef.current !== null) {
-      console.log("[Discovery Engine] Using cached bootstrap data");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[Discovery Engine] Using cached bootstrap data");
+      }
       return discoveryBootstrapRef.current;
     }
 
     if (discoveryBootstrapPromiseRef.current) {
-      console.log("[Discovery Engine] Waiting for existing bootstrap request");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[Discovery Engine] Waiting for existing bootstrap request");
+      }
       return discoveryBootstrapPromiseRef.current;
     }
 
     const promise = (async () => {
       const startTime = Date.now();
       try {
-        console.log("[Discovery Engine] Starting bootstrap request...");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("[Discovery Engine] Starting bootstrap request...");
+        }
         const response = await fetch("/api/search/discovery", {
           method: "POST",
           headers: {
@@ -859,18 +871,22 @@ export default function Home() {
         });
 
         const elapsed = Date.now() - startTime;
-        console.log(`[Discovery Engine] Response received (${elapsed}ms):`, {
-          status: response.status,
-          statusText: response.statusText,
-          ok: response.ok,
-        });
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[Discovery Engine] Response received (${elapsed}ms):`, {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+          });
+        }
 
         if (!response.ok) {
           if (response.status === 503) {
             // 503 is expected when Discovery Engine is not configured - use debug log instead of warn
-            console.debug(
-              "[Discovery Engine] Service unavailable (503) - Discovery Engine not configured, using Supabase fallback"
-            );
+            if (process.env.NODE_ENV === 'development') {
+              console.debug(
+                "[Discovery Engine] Service unavailable (503) - Discovery Engine not configured, using Supabase fallback"
+              );
+            }
           } else {
             let errorDetails: Record<string, unknown> | null = null;
             try {
@@ -883,11 +899,13 @@ export default function Home() {
               (typeof errorDetails?.details === "string" &&
                 errorDetails.details) ||
               response.statusText;
-            console.warn("[Discovery Engine] Bootstrap request failed:", {
-              status: response.status,
-              message: detailMessage,
-            });
-            console.debug("[Discovery Engine] Falling back to Supabase only");
+            if (process.env.NODE_ENV === 'development') {
+              console.warn("[Discovery Engine] Bootstrap request failed:", {
+                status: response.status,
+                message: detailMessage,
+              });
+              console.debug("[Discovery Engine] Falling back to Supabase only");
+            }
           }
 
           discoveryBootstrapRef.current = null;
@@ -909,39 +927,45 @@ export default function Home() {
         discoveryBootstrapRef.current = normalized;
 
         if (normalized.length > 0) {
-          console.log(
-            `[Discovery Engine] Successfully bootstrapped ${normalized.length} destinations`,
-            {
-              source: payload.source || "unknown",
-              fallback: payload.fallback || false,
-              elapsed: `${Date.now() - startTime}ms`,
-            }
-          );
+          if (process.env.NODE_ENV === 'development') {
+            console.log(
+              `[Discovery Engine] Successfully bootstrapped ${normalized.length} destinations`,
+              {
+                source: payload.source || "unknown",
+                fallback: payload.fallback || false,
+                elapsed: `${Date.now() - startTime}ms`,
+              }
+            );
+          }
         } else {
-          console.warn(
-            "[Discovery Engine] Bootstrap returned no destinations",
-            {
-              source: payload.source || "unknown",
-              fallback: payload.fallback || false,
-            }
-          );
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(
+              "[Discovery Engine] Bootstrap returned no destinations",
+              {
+                source: payload.source || "unknown",
+                fallback: payload.fallback || false,
+              }
+            );
+          }
         }
 
         return normalized;
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
         // Only warn if it's not a 503/configuration error
-        if (!message.includes("503") && !message.includes("not configured")) {
-          console.warn("[Discovery Engine] Bootstrap failed:", message, {
-            elapsed: `${Date.now() - startTime}ms`,
-          });
-        } else {
-          console.debug(
-            "[Discovery Engine] Bootstrap failed (expected):",
-            message
-          );
+        if (process.env.NODE_ENV === 'development') {
+          if (!message.includes("503") && !message.includes("not configured")) {
+            console.warn("[Discovery Engine] Bootstrap failed:", message, {
+              elapsed: `${Date.now() - startTime}ms`,
+            });
+          } else {
+            console.debug(
+              "[Discovery Engine] Bootstrap failed (expected):",
+              message
+            );
+          }
+          console.debug("[Discovery Engine] Falling back to Supabase only");
         }
-        console.debug("[Discovery Engine] Falling back to Supabase only");
         discoveryBootstrapRef.current = null;
         return [];
       } finally {
@@ -1022,7 +1046,7 @@ export default function Home() {
       }
     } catch (error) {
       // Expected error if user is not logged in - suppress
-      if (user) {
+      if (user && process.env.NODE_ENV === 'development') {
         console.warn("Error fetching last session:", error);
       }
     }
@@ -1044,7 +1068,9 @@ export default function Home() {
       }
 
       if (!response.ok) {
-        console.warn("Error fetching user profile:", await response.text());
+        if (process.env.NODE_ENV === 'development') {
+          console.warn("Error fetching user profile:", await response.text());
+        }
         return;
       }
 
@@ -1068,7 +1094,7 @@ export default function Home() {
       });
     } catch (error) {
       // Expected error if user is not logged in - suppress
-      if (user) {
+      if (user && process.env.NODE_ENV === 'development') {
         console.warn("Error fetching user profile:", error);
       }
     }
@@ -1098,7 +1124,7 @@ export default function Home() {
       }
     } catch (error) {
       // Expected error if user is not logged in - suppress
-      if (user && userProfile) {
+      if (user && userProfile && process.env.NODE_ENV === 'development') {
         console.warn("Error fetching enriched greeting context:", error);
       }
     }
@@ -1197,7 +1223,9 @@ export default function Home() {
     const discoveryBaselinePromise = fetchDiscoveryBootstrap();
 
     try {
-      console.log("[Filter Data] Starting fetch...");
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[Filter Data] Starting fetch...");
+      }
 
       let filterRows: any[] | null = null;
       let fetchError: any = null;
@@ -1217,10 +1245,12 @@ export default function Home() {
           filterRows = payload.rows || [];
         }
       } catch (networkError: any) {
-        console.warn(
-          "[Filter Data] Network error:",
-          networkError?.message || networkError
-        );
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            "[Filter Data] Network error:",
+            networkError?.message || networkError
+          );
+        }
         fetchError = networkError;
       } finally {
         if (timeoutId) {
@@ -1234,10 +1264,12 @@ export default function Home() {
             !fetchError.message?.includes("Network") &&
             !fetchError.message?.includes("timeout")
           ) {
-            console.warn(
-              "[Filter Data] Error:",
-              fetchError.message || fetchError
-            );
+            if (process.env.NODE_ENV === 'development') {
+              console.warn(
+                "[Filter Data] Error:",
+                fetchError.message || fetchError
+              );
+            }
           }
         }
 
@@ -1305,14 +1337,16 @@ export default function Home() {
         }
       }
 
-      console.log("[Filter Data] State updated:", {
-        cities: uniqueCities.length,
-        categories: uniqueCategories.length,
-        sampleCities: uniqueCities.slice(0, 5),
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log("[Filter Data] State updated:", {
+          cities: uniqueCities.length,
+          categories: uniqueCategories.length,
+          sampleCities: uniqueCities.slice(0, 5),
+        });
+      }
     } catch (error: any) {
       // OPTIMIZATION: Use helper function for error checking
-      if (!isIgnorableSupabaseError(error)) {
+      if (!isIgnorableSupabaseError(error) && process.env.NODE_ENV === 'development') {
         console.warn("[Filter Data] Exception:", error?.message || error);
       }
 
@@ -1346,7 +1380,9 @@ export default function Home() {
           });
         }
       } catch (fallbackError) {
-        console.warn("[Filter Data] Fallback also failed:", fallbackError);
+        if (process.env.NODE_ENV === 'development') {
+          console.warn("[Filter Data] Fallback also failed:", fallbackError);
+        }
         // OPTIMIZATION: Batch state updates
         React.startTransition(() => {
           setCities([]);
@@ -1597,10 +1633,12 @@ export default function Home() {
           destinationsData = payload.destinations || [];
         }
       } catch (networkError: any) {
-        console.warn(
-          "[Destinations] Network error:",
-          networkError?.message || networkError
-        );
+        if (process.env.NODE_ENV === 'development') {
+          console.warn(
+            "[Destinations] Network error:",
+            networkError?.message || networkError
+          );
+        }
         fetchError = networkError;
       } finally {
         if (timeoutId) {
@@ -1619,10 +1657,12 @@ export default function Home() {
             !fetchError.message?.includes("Network") &&
             !fetchError.message?.includes("timeout")
           ) {
-            console.warn(
-              "Error fetching destinations:",
-              fetchError.message || fetchError
-            );
+            if (process.env.NODE_ENV === 'development') {
+              console.warn(
+                "Error fetching destinations:",
+                fetchError.message || fetchError
+              );
+            }
           }
         }
 
@@ -1743,7 +1783,7 @@ export default function Home() {
           setDiscoveryEngineLoading(false);
         });
     } catch (error: any) {
-      if (!isIgnorableSupabaseError(error)) {
+      if (!isIgnorableSupabaseError(error) && process.env.NODE_ENV === 'development') {
         console.warn("Error fetching destinations:", error?.message || error);
       }
 
@@ -1777,7 +1817,9 @@ export default function Home() {
       }
 
       if (!response.ok) {
-        console.warn("Error fetching visited places:", await response.text());
+        if (process.env.NODE_ENV === 'development') {
+          console.warn("Error fetching visited places:", await response.text());
+        }
         return;
       }
 
@@ -1786,7 +1828,7 @@ export default function Home() {
       setVisitedSlugs(slugs);
     } catch (error) {
       // Expected error if user is not logged in - suppress
-      if (user) {
+      if (user && process.env.NODE_ENV === 'development') {
         console.warn("Error fetching visited places:", error);
       }
     }
@@ -1947,7 +1989,9 @@ export default function Home() {
           },
         ]);
       } catch (error) {
-        console.error("AI chat error:", error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("AI chat error:", error);
+        }
         setChatResponse("Sorry, I encountered an error. Please try again.");
         setFilteredDestinations([]);
         setSearchIntent(null);
@@ -2125,24 +2169,30 @@ export default function Home() {
     setUserLocation({ lat, lng });
 
     try {
-      console.log(
-        `[Near Me] Fetching destinations within ${radius}km of ${lat}, ${lng}`
-      );
+      if (process.env.NODE_ENV === 'development') {
+        console.log(
+          `[Near Me] Fetching destinations within ${radius}km of ${lat}, ${lng}`
+        );
+      }
       const response = await fetch(
         `/api/nearby?lat=${lat}&lng=${lng}&radius=${radius}&limit=100`
       );
       const data = await response.json();
 
       if (data.error) {
-        console.error("[Near Me] API error:", data.error, data.details);
+        if (process.env.NODE_ENV === 'development') {
+          console.error("[Near Me] API error:", data.error, data.details);
+        }
         setNearbyDestinations([]);
         return;
       }
 
-      console.log(
-        `[Near Me] Found ${data.count} destinations`,
-        data.usesFallback ? "(using fallback)" : "(using database function)"
-      );
+      if (process.env.NODE_ENV === 'development') {
+        console.log(
+          `[Near Me] Found ${data.count} destinations`,
+          data.usesFallback ? "(using fallback)" : "(using database function)"
+        );
+      }
 
       if (data.destinations) {
         setNearbyDestinations(data.destinations);
@@ -2150,7 +2200,9 @@ export default function Home() {
         setNearbyDestinations([]);
       }
     } catch (error) {
-      console.error("[Near Me] Error fetching nearby destinations:", error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error("[Near Me] Error fetching nearby destinations:", error);
+      }
       setNearbyDestinations([]);
     }
   };
@@ -2951,10 +3003,12 @@ export default function Home() {
                           source: "smart_recommendations",
                         }),
                       }).catch(error => {
-                        console.warn(
-                          "Failed to track Discovery Engine event:",
-                          error
-                        );
+                        if (process.env.NODE_ENV === 'development') {
+                          console.warn(
+                            "Failed to track Discovery Engine event:",
+                            error
+                          );
+                        }
                       });
                     }
                   }}
