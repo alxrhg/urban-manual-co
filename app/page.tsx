@@ -2331,105 +2331,106 @@ export default function Home() {
           The Urban Manual
         </h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
-          <div className="w-full flex md:justify-start flex-1 items-center">
-            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
-              {/* Greeting - Always vertically centered */}
-              <div className="flex-1 flex items-center">
-                <div className="w-full">
-                  {/* Show GreetingHero only when no active search */}
-                  {!submittedQuery && (
-                    <>
-                      {/* Session Resume - Show if there's a recent session */}
-                      {showSessionResume && lastSession && (
-                        <div className="mb-6">
-                          <SessionResume
-                            session={lastSession}
-                            onResume={handleResumeSession}
-                            onDismiss={() => setShowSessionResume(false)}
-                          />
-                        </div>
-                      )}
+        <section className="min-h-[65vh] flex flex-col py-12 pb-8 md:pb-12">
+          <div className="flex-1 flex items-center">
+            <div className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-10">
+              <div className="w-full max-w-3xl lg:max-w-4xl flex flex-col h-full mx-auto">
+                {/* Greeting - Always vertically centered */}
+                <div className="flex-1 flex items-center">
+                  <div className="w-full">
+                    {/* Show GreetingHero only when no active search */}
+                    {!submittedQuery && (
+                      <>
+                        {/* Session Resume - Show if there's a recent session */}
+                        {showSessionResume && lastSession && (
+                          <div className="mb-6">
+                            <SessionResume
+                              session={lastSession}
+                              onResume={handleResumeSession}
+                              onDismiss={() => setShowSessionResume(false)}
+                            />
+                          </div>
+                        )}
 
-                      {/* Context Cards - Show user's saved preferences */}
-                      {userContext && user && !searchTerm && (
-                        <div className="mb-6">
-                          <ContextCards context={userContext} />
-                        </div>
-                      )}
+                        {/* Context Cards - Show user's saved preferences */}
+                        {userContext && user && !searchTerm && (
+                          <div className="mb-6">
+                            <ContextCards context={userContext} />
+                          </div>
+                        )}
 
-                      <GreetingHero
-                        searchQuery={searchTerm}
-                        onSearchChange={value => {
-                          setSearchTerm(value);
-                          // Clear conversation history only if search is cleared
-                          if (!value.trim()) {
-                            setConversationHistory([]);
-                            setSearchIntent(null);
-                            setSeasonalContext(null);
-                            setSearchTier(null);
-                            setChatResponse("");
-                            setFilteredDestinations([]);
-                            setSubmittedQuery("");
-                          }
-                        }}
-                        onSubmit={query => {
-                          // CHAT MODE: Explicit submit on Enter key (like chat component)
-                          if (query.trim() && !searching) {
-                            performAISearch(query);
-                          }
-                        }}
-                        userName={(function () {
-                          const raw = ((user?.user_metadata as any)?.name ||
-                            (user?.email
-                              ? user.email.split("@")[0]
-                              : undefined)) as string | undefined;
-                          if (!raw) return undefined;
-                          return raw
-                            .split(/[\s._-]+/)
-                            .filter(Boolean)
-                            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-                            .join(" ");
-                        })()}
-                        userProfile={userProfile}
-                        lastSession={lastSession}
-                        enrichedContext={enrichedGreetingContext}
-                        isAIEnabled={isAIEnabled}
-                        isSearching={searching}
-                        filters={advancedFilters}
-                        onFiltersChange={newFilters => {
-                          setAdvancedFilters(newFilters);
-                          // Sync with legacy state for backward compatibility
-                          if (newFilters.city !== undefined) {
-                            setSelectedCity(
-                              typeof newFilters.city === "string"
-                                ? newFilters.city
-                                : ""
-                            );
-                          }
-                          if (newFilters.category !== undefined) {
-                            setSelectedCategory(
-                              typeof newFilters.category === "string"
-                                ? newFilters.category
-                                : ""
-                            );
-                          }
-                          // Track filter changes
-                          Object.entries(newFilters).forEach(([key, value]) => {
-                            if (
-                              value !== undefined &&
-                              value !== null &&
-                              value !== ""
-                            ) {
-                              trackFilterChange({ filterType: key, value });
+                        <GreetingHero
+                          searchQuery={searchTerm}
+                          onSearchChange={value => {
+                            setSearchTerm(value);
+                            // Clear conversation history only if search is cleared
+                            if (!value.trim()) {
+                              setConversationHistory([]);
+                              setSearchIntent(null);
+                              setSeasonalContext(null);
+                              setSearchTier(null);
+                              setChatResponse("");
+                              setFilteredDestinations([]);
+                              setSubmittedQuery("");
                             }
-                          });
-                        }}
-                        availableCities={cities}
-                        availableCategories={categories}
-                      />
-                    </>
-                  )}
+                          }}
+                          onSubmit={query => {
+                            // CHAT MODE: Explicit submit on Enter key (like chat component)
+                            if (query.trim() && !searching) {
+                              performAISearch(query);
+                            }
+                          }}
+                          userName={(function () {
+                            const raw = ((user?.user_metadata as any)?.name ||
+                              (user?.email
+                                ? user.email.split("@")[0]
+                                : undefined)) as string | undefined;
+                            if (!raw) return undefined;
+                            return raw
+                              .split(/[\s._-]+/)
+                              .filter(Boolean)
+                              .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                              .join(" ");
+                          })()}
+                          userProfile={userProfile}
+                          lastSession={lastSession}
+                          enrichedContext={enrichedGreetingContext}
+                          isAIEnabled={isAIEnabled}
+                          isSearching={searching}
+                          filters={advancedFilters}
+                          onFiltersChange={newFilters => {
+                            setAdvancedFilters(newFilters);
+                            // Sync with legacy state for backward compatibility
+                            if (newFilters.city !== undefined) {
+                              setSelectedCity(
+                                typeof newFilters.city === "string"
+                                  ? newFilters.city
+                                  : ""
+                              );
+                            }
+                            if (newFilters.category !== undefined) {
+                              setSelectedCategory(
+                                typeof newFilters.category === "string"
+                                  ? newFilters.category
+                                  : ""
+                              );
+                            }
+                            // Track filter changes
+                            Object.entries(newFilters).forEach(([key, value]) => {
+                              if (
+                                value !== undefined &&
+                                value !== null &&
+                                value !== ""
+                              ) {
+                                trackFilterChange({ filterType: key, value });
+                              }
+                            });
+                          }}
+                          availableCities={cities}
+                          availableCategories={categories}
+                        />
+                      </>
+                    )}
 
                   {/* Chat-like display when search is active */}
                   {submittedQuery && (

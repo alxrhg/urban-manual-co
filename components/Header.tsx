@@ -134,21 +134,23 @@ export function Header() {
       role="banner"
     >
       {/* Primary Nav */}
-      <div className="w-full px-6 md:px-10">
-        <nav
-          className="flex items-center justify-between py-4"
-          aria-label="Main navigation"
-        >
-          <button
-            onClick={() => navigate("/")}
-            className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
-            aria-label="Go to homepage"
+      <div className="w-full px-4 sm:px-6 md:px-10">
+        <div className="mx-auto w-full max-w-screen-xl">
+          <nav
+            className="flex items-center justify-between py-4"
+            aria-label="Main navigation"
           >
-            Urban Manual®
-          </button>
+            <button
+              onClick={() => navigate("/")}
+              className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
+              aria-label="Go to homepage"
+            >
+              Urban Manual®
+            </button>
 
-          <div className="flex items-center gap-2">{actionButtons}</div>
-        </nav>
+            <div className="flex items-center gap-2">{actionButtons}</div>
+          </nav>
+        </div>
       </div>
       {/* Account Drawer - Only render when open */}
       {isDrawerOpen('account') && (
