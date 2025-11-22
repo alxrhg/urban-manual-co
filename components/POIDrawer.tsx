@@ -10,6 +10,7 @@ import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocomplet
 import { useToast } from '@/hooks/useToast';
 import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 import { CategoryAutocompleteInput } from '@/components/CategoryAutocompleteInput';
+import { ParentDestinationAutocompleteInput } from '@/components/ParentDestinationAutocompleteInput';
 
 interface POIDrawerProps {
   isOpen: boolean;
@@ -31,6 +32,8 @@ interface Destination {
   crown?: boolean;
   brand?: string | null;
   architect?: string | null;
+  id?: number;
+  parent_destination_id?: number | null;
 }
 
 export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }: POIDrawerProps) {
@@ -56,6 +59,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
     crown: false,
     brand: '',
     architect: '',
+    parent_destination_id: null as number | null,
   });
 
   // Reset form when drawer opens/closes, or load destination data for editing
@@ -73,6 +77,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         crown: false,
         brand: '',
         architect: '',
+        parent_destination_id: null,
       });
       setImageFile(null);
       setImagePreview(null);
@@ -91,6 +96,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         crown: destination.crown || false,
         brand: destination.brand || '',
         architect: destination.architect || '',
+        parent_destination_id: destination.parent_destination_id || null,
       });
       if (destination.image) {
         setImagePreview(destination.image);
@@ -109,6 +115,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         crown: false,
         brand: '',
         architect: '',
+        parent_destination_id: null,
       });
     }
   }, [isOpen, destination, initialCity]);
@@ -254,6 +261,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         crown: formData.crown || false,
         brand: formData.brand?.trim() || null,
         architect: formData.architect?.trim() || null,
+        parent_destination_id: formData.parent_destination_id || null,
       };
 
       // Log the data being sent for debugging
@@ -547,7 +555,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
           </div>
 
           {/* Architect */}
-          <div>
+          <div className="mb-6">
             <label htmlFor="architect" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
               Architect
             </label>
@@ -558,6 +566,22 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
               onChange={(e) => setFormData(prev => ({ ...prev, architect: e.target.value }))}
               className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
               placeholder="Architect name"
+            />
+          </div>
+
+          {/* Parent Destination (Nested Location) */}
+          <div>
+            <label htmlFor="parent_destination" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
+              Located In (Parent Location)
+            </label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+              Select a parent location if this place is nested inside another (e.g., a bar inside a hotel)
+            </p>
+            <ParentDestinationAutocompleteInput
+              value={formData.parent_destination_id}
+              onChange={(id) => setFormData(prev => ({ ...prev, parent_destination_id: id }))}
+              currentDestinationId={destination?.id}
+              placeholder="Search for parent location (e.g., hotel, building)..."
             />
           </div>
         </div>
