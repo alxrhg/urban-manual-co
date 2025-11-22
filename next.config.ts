@@ -76,6 +76,8 @@ const nextConfig: NextConfig = {
   // Enable compression
   compress: true,
 
+  // Skip static generation for 404 page to avoid _document error
+  skipTrailingSlashRedirect: true,
 
   // Optimize CSS
   experimental: {
