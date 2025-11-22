@@ -109,24 +109,51 @@ export default function GooglePlacesAutocompleteNative({
         containerRef.current.appendChild(autocompleteElement as any);
         autocompleteElementRef.current = autocompleteElement as any;
 
-        // Get the input element that was created by PlaceAutocompleteElement
-        const input = (autocompleteElement as any).querySelector?.('input') ||
-          containerRef.current.querySelector('input');
+        // Wait for the input to be created by the custom element
+        let cleanup: (() => void) | null = null;
+        let retryCount = 0;
+        const maxRetries = 20; // Max 1 second of retries (20 * 50ms)
+        
+        const setupInput = () => {
+          // Try multiple ways to find the input
+          const input = (autocompleteElement as any).querySelector?.('input') ||
+            (autocompleteElement as any).shadowRoot?.querySelector('input') ||
+            containerRef.current?.querySelector('input');
+          
+          if (input) {
+            input.value = value;
+            input.placeholder = placeholder;
+            input.className = className;
+            input.disabled = isLoading;
 
-        if (input) {
-          input.value = value;
-          input.placeholder = placeholder;
-          input.className = className;
-          input.disabled = isLoading;
-
-          // Handle input changes to sync with parent
-          input.addEventListener('input', (e: Event) => {
-            const target = e.target as HTMLInputElement;
-            if (target.value !== value) {
+            // Handle input changes to sync with parent
+            const handleInput = (e: Event) => {
+              const target = e.target as HTMLInputElement;
               onChange(target.value);
-            }
-          });
-        }
+            };
+            
+            input.addEventListener('input', handleInput);
+            
+            // Store cleanup function
+            return () => {
+              input.removeEventListener('input', handleInput);
+            };
+          }
+          return null;
+        };
+
+        // Wait for custom element to render and find input
+        const findInput = () => {
+          cleanup = setupInput();
+          if (!cleanup && retryCount < maxRetries) {
+            retryCount++;
+            // Retry after a short delay if input not found
+            setTimeout(findInput, 50);
+          }
+        };
+        
+        // Start looking for input
+        findInput();
 
         // Handle place selection
         autocompleteElement.addEventListener('gmp-placeselect', async (event: any) => {
@@ -175,6 +202,9 @@ export default function GooglePlacesAutocompleteNative({
         });
 
         return () => {
+          if (cleanup) {
+            cleanup();
+          }
           if (containerRef.current) {
             containerRef.current.innerHTML = '';
           }
@@ -268,12 +298,23 @@ export default function GooglePlacesAutocompleteNative({
 
   // Sync external value changes to input
   useEffect(() => {
-    if (!containerRef.current) return;
-    const input = containerRef.current.querySelector('input');
+    if (!containerRef.current || !isScriptLoaded) return;
+    
+    // Try multiple ways to find the input
+    const input = containerRef.current.querySelector('input') ||
+      (autocompleteElementRef.current as any)?.querySelector?.('input') ||
+      (autocompleteElementRef.current as any)?.shadowRoot?.querySelector('input');
+    
     if (input && input.value !== value) {
-      input.value = value;
+      // Only update if the input value is different to avoid infinite loops
+      const currentValue = input.value;
+      if (currentValue !== value) {
+        input.value = value;
+        // Trigger input event to ensure Google Autocomplete is aware of the change
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     }
-  }, [value]);
+  }, [value, isScriptLoaded]);
 
   // Inject styles for Google Autocomplete dropdown
   useEffect(() => {
