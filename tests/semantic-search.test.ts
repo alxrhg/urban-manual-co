@@ -55,8 +55,6 @@ async function createTestContext(): Promise<TestContext> {
       rpc: rpcMock,
       from: fromMock,
     } as any,
-    asimovSearch: asimovSearchMock as any,
-    asimovMapper: asimovMapMock as any,
     metricTracker: metricMock as any,
   });
 
