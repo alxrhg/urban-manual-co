@@ -158,10 +158,13 @@ function getOpenStatus(openingHours: any, city: string, timezoneId?: string | nu
     }
 
     return { isOpen: false, currentDay: dayName, todayHours: hoursText };
-  } catch (error) {
-    console.error('Error parsing opening hours:', error);
-    return { isOpen: false };
-  }
+      } catch (error) {
+        // Silently fail - opening hours parsing errors shouldn't break the UI
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error parsing opening hours:', error);
+        }
+        return { isOpen: false };
+      }
 }
 
 function parseTime(timeStr: string): number {
@@ -320,7 +323,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         
         // Check if destination has a valid slug
         if (!destination?.slug) {
-          console.warn('Destination missing slug, skipping enriched data fetch');
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Destination missing slug, skipping enriched data fetch');
+          }
           return;
         }
         
@@ -372,7 +377,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 ? JSON.parse(data.opening_hours_json) 
                 : data.opening_hours_json;
             } catch (e) {
-              console.error('Error parsing opening_hours_json:', e);
+              if (process.env.NODE_ENV === 'development') {
+                console.error('Error parsing opening_hours_json:', e);
+              }
             }
           }
           // current/secondary opening hours fields removed; rely on opening_hours_json only
@@ -382,7 +389,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 ? JSON.parse(data.place_types_json)
                 : data.place_types_json;
             } catch (e) {
-              console.error('Error parsing place_types_json:', e);
+              if (process.env.NODE_ENV === 'development') {
+                console.error('Error parsing place_types_json:', e);
+              }
             }
           }
           if (data.reviews_json) {
@@ -391,7 +400,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 ? JSON.parse(data.reviews_json)
                 : data.reviews_json;
             } catch (e) {
-              console.error('Error parsing reviews_json:', e);
+              if (process.env.NODE_ENV === 'development') {
+                console.error('Error parsing reviews_json:', e);
+              }
             }
           }
           if (data.address_components_json) {
@@ -400,11 +411,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 ? JSON.parse(data.address_components_json)
                 : data.address_components_json;
             } catch (e) {
-              console.error('Error parsing address_components_json:', e);
+              if (process.env.NODE_ENV === 'development') {
+                console.error('Error parsing address_components_json:', e);
+              }
             }
           }
           setEnrichedData(enriched);
-          console.log('Enriched data loaded:', enriched);
           
           // Update form if in edit mode and brand/category are available from enriched data
           if (isEditMode && (enriched.brand !== undefined || enriched.category !== undefined)) {
@@ -415,7 +427,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             }));
           }
         } else if (error) {
-          console.error('Error fetching enriched data:', error);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Error fetching enriched data:', error);
+          }
           // Set enriched data to null on error to prevent rendering issues
           setEnrichedData(null);
         } else {
@@ -423,7 +437,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           setEnrichedData(null);
         }
       } catch (error) {
-        console.error('Error loading enriched data:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error loading enriched data:', error);
+        }
         // Set enriched data to null on error to prevent rendering issues
         setEnrichedData(null);
       }
@@ -461,15 +477,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         const role = (user.app_metadata as Record<string, any> | null)?.role;
         const isUserAdmin = role === 'admin';
         setIsAdmin(isUserAdmin);
-        // Debug log (remove in production)
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[DestinationDrawer] Admin check:', { 
-            role, 
-            isUserAdmin, 
-            userId: user.id,
-            hasDestination: !!destination 
-          });
-        }
       } else {
         setIsAdmin(false);
       }
@@ -523,12 +530,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           },
         });
       }
-    } catch (error) {
-      // Revert on error
-      setIsSaved(previousState);
-      onSaveToggle?.(destination.slug, previousState);
-      console.error('Error toggling save:', error);
-    } finally {
+      } catch (error) {
+        // Revert on error
+        setIsSaved(previousState);
+        onSaveToggle?.(destination.slug, previousState);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error toggling save:', error);
+        }
+        toast.error('Failed to save destination');
+      } finally {
       setLoading(false);
     }
   };
@@ -587,12 +597,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           },
         });
       }
-    } catch (error) {
-      // Revert on error
-      setIsVisited(previousState);
-      onVisitToggle?.(destination.slug, previousState);
-      console.error('Error toggling visit:', error);
-    } finally {
+      } catch (error) {
+        // Revert on error
+        setIsVisited(previousState);
+        onVisitToggle?.(destination.slug, previousState);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error toggling visit:', error);
+        }
+        toast.error('Failed to update visit status');
+      } finally {
       setLoading(false);
     }
   };
@@ -627,11 +640,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       } catch (err: any) {
         // User cancelled or error occurred
         if (err.name !== 'AbortError') {
-          console.error('Error sharing:', err);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Error sharing:', err);
+          }
           // Fallback to clipboard
-          await navigator.clipboard.writeText(url);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
+          try {
+            await navigator.clipboard.writeText(url);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          } catch (clipboardError) {
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Failed to copy link', clipboardError);
+            }
+            toast.error('Failed to share link');
+          }
         }
       }
     } else {
@@ -641,7 +663,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch (err) {
-        console.error('Failed to copy link', err);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to copy link', err);
+        }
+        toast.error('Failed to copy link');
       }
     }
   };
@@ -675,7 +700,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       const listIds = new Set<string>((listItems || []).map((item: { list_id: string }) => item.list_id));
       setListsWithDestination(listIds);
     } catch (error) {
-      console.error('Error fetching lists:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching lists:', error);
+      }
+      toast.error('Failed to load lists');
     } finally {
       setLoadingLists(false);
     }
@@ -705,7 +733,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       if (error) {
         // Revert on error
         setListsWithDestination(new Set([...newListsWithDestination, listId]));
-        console.error('Error removing from list:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error removing from list:', error);
+        }
+        toast.error('Failed to remove from list');
       }
     } else {
       // Add to list
@@ -723,7 +754,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         // Revert on error
         newListsWithDestination.delete(listId);
         setListsWithDestination(newListsWithDestination);
-        console.error('Error adding to list:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error adding to list:', error);
+        }
+        toast.error('Failed to add to list');
       }
     }
   };
@@ -770,8 +804,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       setNewListPublic(true);
       setShowCreateListModal(false);
     } catch (error) {
-      console.error('Error creating list:', error);
-      alert('Failed to create list');
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error creating list:', error);
+      }
+      toast.error('Failed to create list');
     } finally {
       setCreatingList(false);
     }
@@ -852,8 +888,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       const data = await res.json();
       return data.url;
     } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error(`Image upload failed: ${error.message}`);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Upload error:', error);
+      }
+      toast.error(`Image upload failed: ${error?.message || 'Unknown error'}`);
       return null;
     } finally {
       setUploadingImage(false);
@@ -904,7 +942,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         toast.success('Place details loaded from Google');
       }
     } catch (error: any) {
-      console.error('Error fetching Google place:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching Google place:', error);
+      }
       toast.error('Failed to load place details');
     }
   };
@@ -976,8 +1016,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         window.location.reload();
       }
     } catch (error: any) {
-      console.error('Error updating destination:', error);
-      toast.error(error.message || 'Failed to update destination');
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error updating destination:', error);
+      }
+      toast.error(error?.message || 'Failed to update destination');
     } finally {
       setIsSaving(false);
     }
@@ -1011,8 +1053,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       setIsEditMode(false);
       onClose();
     } catch (error: any) {
-      console.error('Error deleting destination:', error);
-      toast.error(error.message || 'Failed to delete destination');
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error deleting destination:', error);
+      }
+      toast.error(error?.message || 'Failed to delete destination');
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -1048,8 +1092,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           setRecommendations(data.recommendations);
         }
       } catch (error) {
-        console.error('Error loading recommendations:', error);
         // Silently fail - recommendations are optional
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error loading recommendations:', error);
+        }
         setRecommendations([]);
       } finally {
         setLoadingRecommendations(false);
@@ -1322,7 +1368,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
                   {!imagePreview && (
                     <div className="flex items-center gap-2 mb-4">
-                      <label className="flex-1 cursor-pointer">
+                        <label className="flex-1 cursor-pointer">
                         <input
                           type="file"
                           accept="image/*"
@@ -1330,7 +1376,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           className="hidden"
                           id="edit-image-upload-button"
                         />
-                        <span className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 ease-in-out text-sm font-medium">
+                        <span className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 ease-in-out text-sm font-medium" role="button" aria-label="Choose image file">
                           📁 Choose File
                         </span>
                       </label>
@@ -1592,27 +1638,35 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
 
             {/* Rating & Price Level */}
-            {((enrichedData?.rating || enrichedData?.price_level) || (destination.rating || destination.price_level)) && (
-              <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
-                {(enrichedData?.rating || destination.rating) && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-yellow-500">⭐</span>
-                    <span className="font-semibold">{(enrichedData?.rating || destination.rating).toFixed(1)}</span>
-                    <span className="text-gray-500 dark:text-gray-400">
-                      Google Rating{enrichedData?.user_ratings_total ? ` (${enrichedData.user_ratings_total.toLocaleString()} reviews)` : ''}
-                    </span>
-                  </div>
-                )}
-                {(enrichedData?.price_level || destination.price_level) && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-green-600 dark:text-green-400 font-semibold">
-                      {'$'.repeat(enrichedData?.price_level || destination.price_level)}
-                    </span>
-                    <span className="text-gray-500 dark:text-gray-400">Price Level</span>
-                  </div>
-                )}
-              </div>
-            )}
+            {(() => {
+              const rating = enrichedData?.rating ?? destination?.rating;
+              const priceLevel = enrichedData?.price_level ?? destination?.price_level;
+              const userRatingsTotal = enrichedData?.user_ratings_total;
+              
+              if (!rating && !priceLevel) return null;
+              
+              return (
+                <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+                  {rating != null && typeof rating === 'number' && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-yellow-500">⭐</span>
+                      <span className="font-semibold">{rating.toFixed(1)}</span>
+                      <span className="text-gray-500 dark:text-gray-400">
+                        Google Rating{userRatingsTotal ? ` (${userRatingsTotal.toLocaleString()} reviews)` : ''}
+                      </span>
+                    </div>
+                  )}
+                  {priceLevel != null && typeof priceLevel === 'number' && priceLevel > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-green-600 dark:text-green-400 font-semibold">
+                        {'$'.repeat(Math.min(priceLevel, 4))}
+                      </span>
+                      <span className="text-gray-500 dark:text-gray-400">Price Level</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Editorial Summary */}
             {enrichedData?.editorial_summary && (
@@ -1667,10 +1721,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               const hours = enrichedData?.current_opening_hours || enrichedData?.opening_hours || (destination as any).opening_hours_json;
               // Only render if we have opening hours with weekday_text
               if (!hours || !hours.weekday_text || !Array.isArray(hours.weekday_text) || hours.weekday_text.length === 0) {
-                // Debug: log why opening hours aren't showing
-                if (hours && !hours.weekday_text) {
-                  console.log('Opening hours data exists but missing weekday_text:', hours);
-                }
                 return null;
               }
               
@@ -2188,6 +2238,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   onClick={() => setShowCreateListModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                   disabled={creatingList}
+                  aria-label="Cancel creating list"
                 >
                   Cancel
                 </button>
