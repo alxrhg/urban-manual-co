@@ -21,6 +21,7 @@ if (PLASMIC) {
     displayName: "Header",
     description: "Site header with navigation",
     importPath: "@/components/Header",
+    props: {},
   });
 
   // Register Footer component
@@ -29,6 +30,7 @@ if (PLASMIC) {
     displayName: "Footer",
     description: "Site footer",
     importPath: "@/components/Footer",
+    props: {},
   });
 
   // Register DestinationCard component
