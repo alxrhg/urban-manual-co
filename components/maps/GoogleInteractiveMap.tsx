@@ -131,6 +131,13 @@ export default function GoogleInteractiveMap({
   // Initialize map
   const initializeMap = useCallback(() => {
     if (!mapRef.current || !window.google?.maps) return;
+    
+    // Check if Map constructor is available
+    if (!window.google.maps.Map) {
+      console.warn('Google Maps Map constructor not available yet');
+      setError('Google Maps is still loading');
+      return;
+    }
 
     try {
       // When using mapId, styles should be configured in Google Cloud Console
@@ -289,11 +296,18 @@ export default function GoogleInteractiveMap({
     script.setAttribute('data-google-maps', 'true');
     
     script.onload = () => {
-      if (window.google?.maps) {
-        setIsLoading(false);
-        setError(null);
-        initializeMap();
-      }
+      // Wait for Map constructor to be available
+      const checkMapConstructor = () => {
+        if (window.google?.maps?.Map) {
+          setIsLoading(false);
+          setError(null);
+          initializeMap();
+        } else {
+          // Retry after a short delay
+          setTimeout(checkMapConstructor, 50);
+        }
+      };
+      checkMapConstructor();
     };
 
     script.onerror = () => {

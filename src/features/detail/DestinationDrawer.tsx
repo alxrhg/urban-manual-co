@@ -349,7 +349,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             architectural_significance,
             design_story,
             construction_year,
-            architect:architects(id, name, slug, bio, birth_year, death_year, nationality, design_philosophy, image_url),
+            architect:architects!architect_id(id, name, slug, bio, birth_year, death_year, nationality, design_philosophy, image_url),
             design_firm:design_firms(id, name, slug, description, founded_year, image_url),
             interior_designer:architects!interior_designer_id(id, name, slug, bio, birth_year, death_year, nationality, image_url),
             movement:design_movements(id, name, slug, description, period_start, period_end)
