@@ -1398,64 +1398,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
           </div>
 
-          {/* Info Block: Rating, Category, Tags */}
-          <div className="mb-6 space-y-3">
-            {/* Rating and Category Row */}
-            <div className="flex flex-wrap items-center gap-2">
-              {rating && (
-                <div className="flex items-center gap-1.5" style={{
-                  padding: '6px 14px',
-                  borderRadius: '24px',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.9)',
-                }}>
-                  <Star className="w-3.5 h-3.5 fill-current text-yellow-400" />
-                  <span>{rating.toFixed(1)}</span>
-                </div>
-              )}
-              {destination.category && (
-                <div style={{
-                  padding: '6px 14px',
-                  borderRadius: '24px',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.9)',
-                }}>
-                  {destination.category}
-                </div>
-              )}
-              {destination.crown && (
-                <div style={{
-                  padding: '6px 14px',
-                  borderRadius: '24px',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.9)',
-                }}>
-                  <Crown className="w-3.5 h-3.5 inline mr-1" />
-                  Crown
-                </div>
-              )}
-              {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <div style={{
-                  padding: '6px 14px',
-                  borderRadius: '24px',
-                  backgroundColor: 'rgba(255,255,255,0.08)',
-                  fontSize: '13px',
-                  fontWeight: 500,
-                  color: 'rgba(255,255,255,0.9)',
-                }}>
-                  ⭐ {destination.michelin_stars}
-                </div>
-              )}
-            </div>
-
-            {/* Action Row - Pill Buttons */}
-            <div className="flex items-center gap-2 mt-4 flex-wrap">
+          {/* Action Row - Pill Buttons */}
+          <div className="flex items-center gap-2 mt-4 flex-wrap">
               {/* Save Button with Dropdown */}
               {isMounted && (
                 <DropdownMenu open={showSaveDropdown} onOpenChange={setShowSaveDropdown}>
@@ -1800,7 +1744,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             })()}
 
             {/* Address */}
-            {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
+            {enrichedData?.formatted_address && (
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }} />
                 <div className="flex-1">
@@ -1812,23 +1756,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   }}>
                     Address
                   </div>
-                  {enrichedData?.formatted_address && (
-                    <div style={{
-                      fontSize: '14px',
-                      color: '#fff',
-                    }}>
-                      {enrichedData.formatted_address}
-                    </div>
-                  )}
-                  {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
-                    <div style={{
-                      fontSize: '13px',
-                      color: 'rgba(255,255,255,0.6)',
-                      marginTop: '4px',
-                    }}>
-                      {enrichedData.vicinity}
-                    </div>
-                  )}
+                  <div style={{
+                    fontSize: '14px',
+                    color: '#fff',
+                  }}>
+                    {enrichedData.formatted_address}
+                  </div>
                 </div>
               </div>
             )}
@@ -2178,21 +2111,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
+<<<<<<< HEAD
             {/* Real-Time Status */}
-            {destination.id && (
-              <div>
-                <RealtimeStatusBadge
+            {/* Realtime Report Form */}
+            {destination && (
+              <div className="mt-3">
+                <RealtimeReportForm
                   destinationId={destination.id}
-                  compact={false}
-                  showWaitTime={true}
-                  showAvailability={true}
+                  destinationName={destination.name}
                 />
-                <div className="mt-3">
-                  <RealtimeReportForm
-                    destinationId={destination.id}
-                    destinationName={destination.name}
-                  />
-                </div>
               </div>
             )}
           </div>
