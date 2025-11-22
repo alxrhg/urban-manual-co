@@ -10,9 +10,9 @@ function AuthCallbackContent() {
 
   useEffect(() => {
     const handleCallback = async () => {
-      const next = searchParams.get('next') || '/';
-      const error = searchParams.get('error');
-      const errorDescription = searchParams.get('error_description');
+      const next = searchParams?.get('next') || '/';
+      const error = searchParams?.get('error') || null;
+      const errorDescription = searchParams?.get('error_description') || null;
 
       // Handle OAuth errors from query params
       if (error) {
@@ -61,7 +61,7 @@ function AuthCallbackContent() {
       }
 
       // If we still don't have a session after waiting, try manual exchange
-      const code = searchParams.get('code');
+      const code = searchParams?.get('code') || null;
       if (code) {
         try {
           const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
