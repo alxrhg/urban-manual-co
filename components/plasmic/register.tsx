@@ -8,13 +8,15 @@
  * IMPORTANT: Start your dev server and visit /plasmic-host for components to register
  */
 
+"use client";
+
 import { PLASMIC } from "../../plasmic-init";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { DestinationCard } from "@/components/DestinationCard";
 
-// Register components with Plasmic
-if (PLASMIC) {
+// Register components with Plasmic (client-side only)
+if (typeof window !== "undefined" && PLASMIC) {
   // Register Header component
   PLASMIC.registerComponent(Header, {
     name: "Header",
