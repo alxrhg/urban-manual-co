@@ -76,12 +76,14 @@ const nextConfig: NextConfig = {
   // Enable compression
   compress: true,
 
-  // Skip static generation for 404 page to avoid _document error
-  skipTrailingSlashRedirect: true,
-
   // Optimize CSS
   experimental: {
     optimizeCss: true,
+  },
+
+  // Skip static generation for error pages to avoid _document error
+  generateBuildId: async () => {
+    return 'build-' + Date.now().toString()
   },
 
   // Optimize production builds (no source maps for smaller bundles)
