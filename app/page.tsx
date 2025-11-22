@@ -38,7 +38,7 @@ const DestinationDrawer = dynamic(
 import { useAuth } from "@/contexts/AuthContext";
 import { useDrawer } from "@/contexts/DrawerContext";
 import dynamic from "next/dynamic";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useSequenceTracker } from "@/hooks/useSequenceTracker";
 import Image from "next/image";
@@ -368,7 +368,7 @@ import { useDestinations } from "@/hooks/useDestinations";
 
 export default function Home() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const {
     isEditMode: adminEditMode,
     toggleEditMode,
@@ -506,6 +506,7 @@ export default function Home() {
     openNow?: boolean;
     nearMe?: boolean;
     nearMeRadius?: number;
+    excludeNested?: boolean; // Admin filter to exclude nested places
   }>({});
   // Near Me state
   const [userLocation, setUserLocation] = useState<{
@@ -1461,6 +1462,11 @@ export default function Home() {
               (d as any).utc_offset || undefined
             );
           });
+        }
+
+        // Exclude nested places filter (admin only)
+        if (currentAdvancedFilters.excludeNested) {
+          filtered = filtered.filter(d => !d.parent_destination_id);
         }
 
         // Filter popup search query - only filters grid locally, doesn't trigger top search
@@ -2866,6 +2872,19 @@ export default function Home() {
                                   setShowPOIDrawer(true);
                                 }}
                                 showEditAffordance={editModeActive}
+                                onParentClick={(parentDest) => {
+                                  openDrawer("destination", {
+                                    destination: parentDest,
+                                    onVisitToggle: (slug: string, visited: boolean) => {
+                                      setVisitedSlugs(prev => {
+                                        const newSet = new Set(prev);
+                                        if (visited) newSet.add(slug);
+                                        else newSet.delete(slug);
+                                        return newSet;
+                                      });
+                                    }
+                                  });
+                                }}
                                 onClick={() => {
                                   openDrawer("destination", {
                                     destination,

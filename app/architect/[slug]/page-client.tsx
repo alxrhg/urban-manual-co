@@ -32,7 +32,7 @@ export default function ArchitectPageClient() {
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const architectSlug = decodeURIComponent(params.slug as string);
+  const architectSlug = decodeURIComponent((params?.slug as string) || '');
   const architectName = slugToArchitectName(architectSlug);
 
   const [destinations, setDestinations] = useState<Destination[]>([]);

@@ -16,6 +16,7 @@ export interface SearchFilters {
   openNow?: boolean;
   nearMe?: boolean;
   nearMeRadius?: number;
+  excludeNested?: boolean; // Admin filter to exclude nested places
 }
 
 interface SearchFiltersProps {
