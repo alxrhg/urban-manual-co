@@ -2117,16 +2117,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
           </div>
-
-        {/* Realtime Report Form */}
-        {destination && (
-          <div className="mt-3" style={{ padding: '0 28px', maxWidth: '360px', margin: '0 auto' }}>
-                  <RealtimeReportForm
-                    destinationId={destination.id}
-                    destinationName={destination.name}
-                  />
-              </div>
-            )}
+        </div>
       </Drawer>
 
       {/* Save Destination Modal */}
