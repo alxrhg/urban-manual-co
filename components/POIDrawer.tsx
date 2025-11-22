@@ -630,11 +630,13 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
               >
                 {imagePreview ? (
                   <div className="relative w-full group">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full h-48 object-cover rounded-xl mb-3 border border-gray-200 dark:border-gray-800"
-                    />
+                    <div className="relative w-full aspect-video overflow-hidden rounded-xl mb-3 border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={(e) => {
