@@ -81,10 +81,9 @@ const nextConfig: NextConfig = {
     optimizeCss: true,
   },
 
-  // Skip static generation for error pages to avoid _document error
-  generateBuildId: async () => {
-    return 'build-' + Date.now().toString()
-  },
+  // Skip static generation for error pages
+  // This prevents the _document error during build
+  skipTrailingSlashRedirect: true,
 
   // Optimize production builds (no source maps for smaller bundles)
   productionBrowserSourceMaps: false,

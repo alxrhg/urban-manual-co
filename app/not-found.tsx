@@ -1,7 +1,11 @@
 import Link from 'next/link'
 
 // Disable static generation for 404 page
+// Note: This is a workaround for Next.js 16 App Router bug with error page generation
 export const dynamic = 'force-dynamic'
+export const dynamicParams = true
+export const revalidate = 0
+export const runtime = 'nodejs'
 
 export default function NotFound() {
   return (
