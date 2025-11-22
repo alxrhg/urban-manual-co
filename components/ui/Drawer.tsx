@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, ReactNode, useRef, useState } from 'react';
+import { useEffect, ReactNode, useRef, useState, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { DRAWER_STYLES } from '@/lib/drawer-styles';
 
@@ -37,6 +37,7 @@ export interface DrawerProps {
  * - Focus management for accessibility
  * - Performance optimizations
  * - Consistent behavior across all breakpoints
+ * - Fixed: Separate refs for each drawer variant to prevent conflicts
  */
 export function Drawer({
   isOpen,
@@ -60,12 +61,37 @@ export function Drawer({
   mobileExpanded = false,
   keepStateOnClose = false,
 }: DrawerProps) {
-  const drawerRef = useRef<HTMLDivElement>(null);
+  // Separate refs for each drawer variant to prevent conflicts
+  const mobileBottomRef = useRef<HTMLDivElement>(null);
+  const mobileSideRef = useRef<HTMLDivElement>(null);
+  const tabletRef = useRef<HTMLDivElement>(null);
+  const desktopRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
   const startYRef = useRef<number | null>(null);
   const scrollPositionRef = useRef<number>(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
+
+  // Get the currently visible drawer element - memoized to prevent stale closures
+  const getCurrentDrawer = useCallback((): HTMLDivElement | null => {
+    if (typeof window === 'undefined') return null;
+
+    if (mobileVariant === 'bottom' && mobileBottomRef.current) {
+      return mobileBottomRef.current;
+    }
+    if (mobileVariant === 'side' && mobileSideRef.current) {
+      return mobileSideRef.current;
+    }
+    const width = window.innerWidth;
+    if (tabletRef.current && width >= 768 && width < 1024) {
+      return tabletRef.current;
+    }
+    if (desktopRef.current && width >= 1024) {
+      return desktopRef.current;
+    }
+    // Fallback: return first available
+    return mobileBottomRef.current || mobileSideRef.current || tabletRef.current || desktopRef.current;
+  }, [mobileVariant]);
 
   // Improved body scroll locking (prevents layout shift)
   useEffect(() => {
@@ -108,26 +134,40 @@ export function Drawer({
 
   // Focus management for accessibility
   useEffect(() => {
-    if (isOpen && drawerRef.current) {
+    if (isOpen) {
       // Save previous focus
       previousActiveElementRef.current = document.activeElement as HTMLElement;
-      
-      // Focus the drawer
-      const focusableElement = drawerRef.current.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-      );
-      
-      if (focusableElement) {
-        focusableElement.focus();
-      } else {
-        drawerRef.current.focus();
-      }
-    } else if (!isOpen && previousActiveElementRef.current) {
+
+      // Use a timeout to ensure drawer is rendered
+      const timeoutId = setTimeout(() => {
+        const drawer = getCurrentDrawer();
+        if (drawer) {
+          // Focus the drawer
+          const focusableElement = drawer.querySelector<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+          );
+
+          if (focusableElement) {
+            focusableElement.focus();
+          } else {
+            drawer.focus();
+          }
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    } else if (previousActiveElementRef.current) {
       // Restore focus when closing
-      previousActiveElementRef.current.focus();
-      previousActiveElementRef.current = null;
+      const timeoutId = setTimeout(() => {
+        if (previousActiveElementRef.current) {
+          previousActiveElementRef.current.focus();
+          previousActiveElementRef.current = null;
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [isOpen]);
+  }, [isOpen, getCurrentDrawer]);
 
   // Close on escape key
   useEffect(() => {
@@ -143,9 +183,11 @@ export function Drawer({
 
   // Swipe gestures for mobile
   useEffect(() => {
-    if (!isOpen || !drawerRef.current) return;
+    if (!isOpen) return;
 
-    const drawer = drawerRef.current;
+    // Get drawer element - use a small delay to ensure refs are set
+    const getDrawer = () => getCurrentDrawer();
+
     let startX: number | null = null;
     let startY: number | null = null;
     let currentX: number | null = null;
@@ -159,7 +201,10 @@ export function Drawer({
 
     const handleTouchMove = (e: TouchEvent) => {
       if (startX === null || startY === null) return;
-      
+
+      const drawer = getDrawer();
+      if (!drawer) return;
+
       currentX = e.touches[0].clientX;
       const currentY = e.touches[0].clientY;
       const diffX = currentX - startX;
@@ -182,8 +227,8 @@ export function Drawer({
         const swipeDirection = position === 'right' ? diffX : -diffX;
         if (swipeDirection > 0) {
           const translateX = Math.min(swipeDirection, drawer.offsetWidth);
-          drawer.style.transform = position === 'right' 
-            ? `translateX(${translateX}px)` 
+          drawer.style.transform = position === 'right'
+            ? `translateX(${translateX}px)`
             : `translateX(-${translateX}px)`;
         }
       }
@@ -191,6 +236,14 @@ export function Drawer({
 
     const handleTouchEnd = (e: TouchEvent) => {
       if (!isDragging || startX === null || currentX === null) {
+        startX = null;
+        startY = null;
+        currentX = null;
+        return;
+      }
+
+      const drawer = getDrawer();
+      if (!drawer) {
         startX = null;
         startY = null;
         currentX = null;
@@ -227,16 +280,26 @@ export function Drawer({
       isDragging = false;
     };
 
-    drawer.addEventListener('touchstart', handleTouchStart, { passive: true });
-    drawer.addEventListener('touchmove', handleTouchMove, { passive: false });
-    drawer.addEventListener('touchend', handleTouchEnd);
+    // Attach listeners after a small delay to ensure drawer is rendered
+    const timeoutId = setTimeout(() => {
+      const drawer = getDrawer();
+      if (drawer) {
+        drawer.addEventListener('touchstart', handleTouchStart, { passive: true });
+        drawer.addEventListener('touchmove', handleTouchMove, { passive: false });
+        drawer.addEventListener('touchend', handleTouchEnd);
+      }
+    }, 100);
 
     return () => {
-      drawer.removeEventListener('touchstart', handleTouchStart);
-      drawer.removeEventListener('touchmove', handleTouchMove);
-      drawer.removeEventListener('touchend', handleTouchEnd);
+      clearTimeout(timeoutId);
+      const drawer = getDrawer();
+      if (drawer) {
+        drawer.removeEventListener('touchstart', handleTouchStart);
+        drawer.removeEventListener('touchmove', handleTouchMove);
+        drawer.removeEventListener('touchend', handleTouchEnd);
+      }
     };
-  }, [isOpen, mobileVariant, position, onClose]);
+  }, [isOpen, mobileVariant, position, onClose, getCurrentDrawer]);
 
   // Determine background classes based on style
   const backgroundClasses = style === 'glassy' 
@@ -317,7 +380,7 @@ export function Drawer({
       {/* Mobile Drawer - Bottom Sheet */}
       {mobileVariant === 'bottom' && (
         <div
-          ref={drawerRef}
+          ref={mobileBottomRef}
           className={`md:hidden fixed inset-x-[10px] bottom-[10px] transform transition-transform duration-300 ease-out will-change-transform flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-20px)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
             !isOpen ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'
           }`}
@@ -356,7 +419,7 @@ export function Drawer({
       {/* Mobile Drawer - Side Drawer */}
       {mobileVariant === 'side' && (
         <div
-          ref={drawerRef}
+          ref={mobileSideRef}
           className={`md:hidden fixed ${position === 'right' ? 'right-0' : 'left-0'} top-0 bottom-0 w-full ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-out ${
             isOpen 
               ? 'translate-x-0 opacity-100' 
@@ -386,7 +449,7 @@ export function Drawer({
 
       {/* Desktop Drawer - Tablet (md) */}
       <div
-        ref={drawerRef}
+        ref={tabletRef}
         className={`hidden md:flex lg:hidden fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-out ${
           isOpen 
             ? 'translate-x-0 opacity-100' 
@@ -419,7 +482,7 @@ export function Drawer({
 
       {/* Desktop Drawer - Large screens (lg+) */}
       <div
-        ref={drawerRef}
+        ref={desktopRef}
         className={`hidden lg:flex fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-out ${
           isOpen 
             ? 'translate-x-0 opacity-100' 

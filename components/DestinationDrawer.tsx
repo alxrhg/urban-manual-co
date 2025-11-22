@@ -31,6 +31,7 @@ import { CityAutocompleteInput } from './CityAutocompleteInput';
 import { CategoryAutocompleteInput } from './CategoryAutocompleteInput';
 import GooglePlacesAutocompleteNative from './GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
+import { Drawer } from '@/components/ui/Drawer';
 
 // Dynamically import GoogleMap to avoid SSR issues
 const GoogleMap = dynamic(() => import('@/components/GoogleMap'), { 
@@ -1060,53 +1061,52 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
   if (!destination) return null;
 
+  // Header content for the drawer
+  const headerContent = (
+    <div className="flex items-center justify-between w-full">
+      <h2 className="text-sm font-bold uppercase tracking-wide">Destination</h2>
+      <div className="flex items-center gap-2">
+        {destination?.slug && (
+          <Link
+            href={`/destination/${destination.slug}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
+            title="Open in new tab"
+            aria-label="Open destination in new tab"
+          >
+            <ExternalLink className="h-5 w-5" />
+          </Link>
+        )}
+        <button
+          onClick={onClose}
+          className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
+          aria-label="Close drawer"
+        >
+          <X className="h-5 w-5" />
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className={`fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-        }`}
-        onClick={onClose}
-      />
-
-      {/* Drawer */}
-      <div
-        className={`fixed right-0 top-0 h-full w-full sm:w-[480px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
-        } overflow-y-auto`}
+      <Drawer
+        isOpen={isOpen}
+        onClose={onClose}
+        headerContent={headerContent}
+        mobileVariant="side"
+        desktopWidth="480px"
+        desktopSpacing="right-0 top-0 bottom-0"
+        position="right"
+        style="solid"
+        zIndex={50}
+        backdropOpacity="50"
       >
-        {/* Header */}
-        <div className="sticky top-0 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-          <h2 className="text-sm font-bold uppercase tracking-wide">Destination</h2>
-          <div className="flex items-center gap-2">
-            {destination?.slug && (
-              <Link
-                href={`/destination/${destination.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-                className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
-                title="Open in new tab"
-                aria-label="Open destination in new tab"
-              >
-                <ExternalLink className="h-5 w-5" />
-              </Link>
-            )}
-            <button
-              onClick={onClose}
-              className="p-2.5 min-h-11 min-w-11 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors touch-manipulation"
-              aria-label="Close drawer"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Content */}
-        <div className="p-6">
+      <div className="p-6">
           {isEditMode ? (
             /* Edit Form */
             <form onSubmit={handleEditSubmit} className="space-y-6">
@@ -2054,7 +2054,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </>
           )}
         </div>
-      </div>
+      </Drawer>
 
       {/* Lists Modal */}
       {showListsModal && (
