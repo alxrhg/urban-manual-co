@@ -697,31 +697,61 @@ export function AccountDrawer() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading collections...</p>
         </div>
       ) : collections.length > 0 ? (
-        <div className="space-y-2">
-          {collections.map((collection) => (
-            <button
-              key={collection.id}
-              onClick={() => handleNavigateToFullPage(`/collection/${collection.id}`)}
-              className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-left shadow-sm transition hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-lg dark:bg-gray-800">
-                  <span>{collection.emoji || '📚'}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{collection.name}</p>
-                  {collection.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{collection.description}</p>
+        <div className="space-y-3">
+          {collections.map((collection) => {
+            const bgColor = collection.color || '#3B82F6';
+            const emoji = collection.emoji || '📚';
+
+            return (
+              <button
+                key={collection.id}
+                onClick={() => handleNavigateToFullPage(`/collection/${collection.id}`)}
+                className="w-full flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-950 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200 text-left"
+              >
+                {/* Cover Section with Emoji/Color */}
+                <div 
+                  className="relative w-full h-32 flex items-center justify-center"
+                  style={{ backgroundColor: bgColor + '20' }}
+                >
+                  <div 
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shadow-lg"
+                    style={{ backgroundColor: bgColor }}
+                  >
+                    {emoji}
+                  </div>
+                  {/* Public Badge */}
+                  {collection.is_public && (
+                    <div className="absolute top-3 right-3">
+                      <span className="px-2 py-1 rounded-lg text-xs font-medium bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300 backdrop-blur-sm">
+                        Public
+                      </span>
+                    </div>
                   )}
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    {(collection.destination_count || 0).toLocaleString()} places
-                    {collection.is_public && <span className="ml-1">• Public</span>}
-                  </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              </div>
-            </button>
-          ))}
+
+                {/* Content */}
+                <div className="p-3 space-y-1.5">
+                  {/* Collection Name */}
+                  <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2">
+                    {collection.name}
+                  </h3>
+
+                  {/* Description */}
+                  {collection.description && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                      {collection.description}
+                    </p>
+                  )}
+
+                  {/* Destination Count */}
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    <Folder className="w-3 h-3" />
+                    <span>{(collection.destination_count || 0).toLocaleString()} places</span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center dark:border-gray-800 dark:bg-gray-900/50">
