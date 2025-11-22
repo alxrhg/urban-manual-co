@@ -2121,6 +2121,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <button
                 onClick={() => setShowListsModal(false)}
                 className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                aria-label="Close add to list modal"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -2191,6 +2192,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <button
                 onClick={() => setShowCreateListModal(false)}
                 className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                aria-label="Close create list modal"
               >
                 <X className="h-5 w-5" />
               </button>
