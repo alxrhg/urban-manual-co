@@ -51,7 +51,7 @@ export default function CityPageClient() {
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const citySlug = decodeURIComponent(params.city as string);
+  const citySlug = params?.city ? decodeURIComponent(params.city as string) : '';
   const isAdmin = (user?.app_metadata as Record<string, any> | undefined)?.role === 'admin';
   const {
     isEditMode: adminEditMode,
