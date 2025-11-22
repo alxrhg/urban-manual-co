@@ -2,12 +2,14 @@
 
 import { useState, useRef, useEffect, memo } from 'react';
 import Image from 'next/image';
-import { MapPin, Check, Edit } from 'lucide-react';
+import { MapPin, Check, Edit, ArrowRight } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { getDestinationImageUrl } from '@/lib/destination-images';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
 import { DestinationBadges } from './DestinationBadges';
+import { createClient } from '@/lib/supabase/client';
+import { getParentDestination } from '@/lib/supabase/nested-destinations';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -19,6 +21,8 @@ interface DestinationCardProps {
   isAdmin?: boolean;
   onEdit?: (destination: Destination) => void;
   showEditAffordance?: boolean;
+  parentDestination?: Destination | null;
+  onParentClick?: (parentDestination: Destination) => void;
 }
 
 /**
@@ -35,12 +39,33 @@ export const DestinationCard = memo(function DestinationCard({
   isAdmin = false,
   onEdit,
   showEditAffordance = false,
+  parentDestination,
+  onParentClick,
 }: DestinationCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [parentDest, setParentDest] = useState<Destination | null>(parentDestination || null);
   const cardRef = useRef<HTMLButtonElement>(null);
   const displayImage = getDestinationImageUrl(destination);
+
+  // Fetch parent destination if not provided and destination has parent_destination_id
+  useEffect(() => {
+    if (parentDest || !destination.parent_destination_id || !destination.id) return;
+    
+    async function fetchParent() {
+      const supabase = createClient();
+      if (!supabase) return;
+      try {
+        const parent = await getParentDestination(supabase, destination.id!);
+        if (parent) setParentDest(parent);
+      } catch (error) {
+        // Silently fail - parent info is optional
+      }
+    }
+    
+    fetchParent();
+  }, [destination.parent_destination_id, destination.id, parentDest]);
 
   // Intersection Observer for progressive loading
   useEffect(() => {
@@ -234,6 +259,34 @@ export const DestinationCard = memo(function DestinationCard({
           )}
         </div>
       </div>
+
+      {/* Nested Location Pill Bar */}
+      {destination.parent_destination_id && (parentDest || destination.parent_destination_id) && (
+        <div className="mt-3 -mx-1 px-1">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              if (parentDest && onParentClick) {
+                onParentClick(parentDest);
+              }
+            }}
+            className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-full flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors cursor-pointer"
+            aria-label={`View ${parentDest?.name || 'parent location'}`}
+          >
+            <MapPin className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">
+              {parentDest ? (
+                <>Located in <span className="font-medium text-gray-900 dark:text-white">{parentDest.name}</span></>
+              ) : (
+                'Nested location'
+              )}
+            </span>
+            <ArrowRight className="h-3 w-3 flex-shrink-0 ml-auto opacity-50" />
+          </button>
+        </div>
+      )}
 
       {/* Focus Ring for Accessibility */}
       <div

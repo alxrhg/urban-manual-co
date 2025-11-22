@@ -378,6 +378,24 @@ export function ExpandableHomeControls({
                     >
                       Open Now
                     </button>
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newValue = !advancedFilters.excludeNested;
+                          onFiltersChange({ ...advancedFilters, excludeNested: newValue || undefined });
+                          onTrackFilterChange({ filterType: 'excludeNested', value: newValue });
+                        }}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                          advancedFilters.excludeNested
+                            ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
+                            : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
+                        }`}
+                        title="Hide nested places (e.g., restaurants in hotels)"
+                      >
+                        Exclude Nested
+                      </button>
+                    )}
                   </div>
                 </div>
 

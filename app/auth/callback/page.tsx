@@ -10,6 +10,7 @@ function AuthCallbackContent() {
 
   useEffect(() => {
     const handleCallback = async () => {
+      if (!searchParams) return;
       const next = searchParams.get('next') || '/';
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
@@ -104,7 +105,9 @@ function AuthCallbackContent() {
       router.push(`/auth/login?error=${encodeURIComponent('Authentication failed. Please try signing in again.')}`);
     };
 
-    handleCallback();
+    if (searchParams) {
+      handleCallback();
+    }
   }, [searchParams, router]);
 
   return (
