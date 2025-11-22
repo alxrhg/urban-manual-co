@@ -498,7 +498,7 @@ export default function Home() {
 
     const applyViewFromQuery = () => {
       const params = new URLSearchParams(window.location.search);
-      const viewParam = params.get("view");
+      const viewParam = params?.get("view") || null;
       if (viewParam === "map") {
         setViewMode(prev => (prev === "map" ? prev : "map"));
       } else if (viewParam === "grid") {

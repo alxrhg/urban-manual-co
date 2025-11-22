@@ -19,7 +19,7 @@ function capitalizeCity(city: string): string {
 export default function CollectionDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const collectionId = params.id as string;
+  const collectionId = params?.id ? (params.id as string) : '';
 
   const [user, setUser] = useState<any>(null);
   const [collection, setCollection] = useState<any>(null);
