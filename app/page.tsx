@@ -1343,10 +1343,17 @@ export default function Home() {
           currentAdvancedFilters.category || currentSelectedCategory;
         if (categoryFilter) {
           filtered = filtered.filter(d => {
+            const categoryLower = categoryFilter.toLowerCase().trim();
+            const destinationCategory = d.category?.toLowerCase().trim();
+            
+            // Merge Restaurant into Dining: if filter is "Dining", also match "Restaurant"
+            const isDiningFilter = categoryLower === 'dining';
+            const isRestaurantCategory = destinationCategory === 'restaurant';
+            
             const categoryMatch =
               d.category &&
-              d.category.toLowerCase().trim() ===
-              categoryFilter.toLowerCase().trim();
+              (destinationCategory === categoryLower ||
+               (isDiningFilter && isRestaurantCategory));
 
             // If category matches, include it
             if (categoryMatch) return true;
@@ -2044,7 +2051,7 @@ export default function Home() {
       />
       <main
         id="main-content"
-        className="relative min-h-screen dark:text-white"
+        className="relative min-h-screen text-black dark:text-white"
         role="main"
       >
         {/* SEO H1 - Visually hidden but accessible to search engines */}
@@ -2052,10 +2059,11 @@ export default function Home() {
           Discover the World's Best Hotels, Restaurants & Travel Destinations -
           The Urban Manual
         </h1>
-        {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
-          <div className="w-full flex md:justify-start flex-1 items-center">
-            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
+        {/* Hero Section - Lovably style full-screen hero */}
+        <section className="min-h-[800px] flex flex-col container-lovably py-12 pb-8 md:pb-10">
+          <div className="relative grid grid-cols-4 md:grid-cols-12 gap-x-[23px] md:gap-x-[22px] gap-y-[23px] md:gap-y-[22px] h-[800px] flex-1 items-center">
+            {/* Hero Content - Centered like Lovably */}
+            <div className="col-span-4 md:col-span-6 md:col-start-7 flex flex-col justify-center h-full">
               {/* Greeting - Always vertically centered */}
               <div className="flex-1 flex items-center">
                 <div className="w-full" suppressHydrationWarning>
@@ -2512,6 +2520,7 @@ export default function Home() {
                   </div>
                 </div>
               )}
+              </div>
             </div>
           </div>
         </section>

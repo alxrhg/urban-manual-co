@@ -3,8 +3,26 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+<<<<<<< HEAD
+import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe, Building2 } from 'lucide-react';
+
+// Helper function to extract domain from URL
+function extractDomain(url: string): string {
+  try {
+    // Remove protocol if present
+    let cleanUrl = url.replace(/^https?:\/\//, '').replace(/^www\./, '');
+    // Remove path and query params
+    cleanUrl = cleanUrl.split('/')[0].split('?')[0];
+    return cleanUrl;
+  } catch {
+    // If parsing fails, return original or a cleaned version
+    return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+  }
+}
+=======
 import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe } from 'lucide-react';
 import { useDestinationData } from './useDestinationData';
+>>>>>>> fix/build-errors-and-drawer-refactor
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -377,7 +395,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             architectural_significance,
             design_story,
             construction_year,
-            architect:architects(id, name, slug, bio, birth_year, death_year, nationality, design_philosophy, image_url),
+            architect:architects!architect_id(id, name, slug, bio, birth_year, death_year, nationality, design_philosophy, image_url),
             design_firm:design_firms(id, name, slug, description, founded_year, image_url),
             interior_designer:architects!interior_designer_id(id, name, slug, bio, birth_year, death_year, nationality, image_url),
             movement:design_movements(id, name, slug, description, period_start, period_end)
@@ -1057,9 +1075,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         onClose={onClose}
         mobileVariant="side"
         desktopSpacing="right-4 top-4 bottom-4"
-        desktopWidth="440px"
+        desktopWidth="420px"
         position="right"
-        style="solid"
+        style="glassy"
+        backdropOpacity="18"
         headerContent={
           <div className="flex items-center justify-between w-full">
             <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
@@ -1076,10 +1095,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     );
   }
 
+<<<<<<< HEAD
+  // Get rating and price level for display
+  const rating = enrichedData?.rating || destination.rating;
+  const priceLevel = enrichedData?.price_level || destination.price_level;
+=======
   const drawerImage = getDestinationImageUrl(destination) || getSafeImageUrl(enrichedData?.image);
 
   // Get rating for display (safely handle null/undefined)
   const rating = enrichedData?.rating ?? destination?.rating ?? null;
+>>>>>>> fix/build-errors-and-drawer-refactor
   const highlightTags: string[] = (
     Array.isArray(destination?.tags) && destination.tags.length > 0
       ? destination.tags
@@ -1101,6 +1126,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
   // Create custom header content - Place Drawer spec
   const headerContent = (
+<<<<<<< HEAD
+    <div className="flex items-center justify-between w-full gap-3">
+      <div className="flex items-center gap-2 flex-1 min-w-0">
+        <button
+          onClick={onClose}
+          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-900"
+          aria-label="Close drawer"
+=======
     <div className="flex items-center justify-between w-full relative">
       <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate flex-1">
         {destination?.name || 'Destination'}
@@ -1136,30 +1169,70 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           }}
           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           aria-label={isSaved ? 'Remove from saved' : 'Save destination'}
+>>>>>>> fix/build-errors-and-drawer-refactor
         >
-          <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} strokeWidth={1.5} />
+          <X className="h-4 w-4" />
         </button>
-        {/* Trip Action */}
-        <button
-          onClick={() => {
-            if (!user) {
-              router.push('/auth/login');
-              return;
-            }
-            if (isAddedToTrip) return;
-            setShowAddToTripModal(true);
-          }}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          aria-label="Add to trip"
-          disabled={isAddedToTrip}
-        >
-          {isAddedToTrip ? (
-            <Check className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={1.5} />
-          ) : (
-            <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
-          )}
-        </button>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+          {destination.name || 'Destination'}
+        </h2>
       </div>
+      {user && (
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Bookmark Action */}
+          <button
+            onClick={async () => {
+              if (!user) {
+                router.push('/auth/login');
+                return;
+              }
+              if (!isSaved) {
+                setShowSaveModal(true);
+              } else {
+                try {
+                  const supabaseClient = createClient();
+                  if (!supabaseClient) return;
+                  const { error } = await supabaseClient
+                    .from('saved_places')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('destination_slug', destination.slug);
+                  if (!error) {
+                    setIsSaved(false);
+                    if (onSaveToggle) onSaveToggle(destination.slug, false);
+                  }
+                } catch (error) {
+                  console.error('Error unsaving:', error);
+                }
+              }
+            }}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label={isSaved ? 'Remove from saved' : 'Save destination'}
+          >
+            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} strokeWidth={1.5} />
+          </button>
+          {/* Trip Action */}
+          <button
+            onClick={() => {
+              if (!user) {
+                router.push('/auth/login');
+                return;
+              }
+              if (isAddedToTrip) return;
+              setShowAddToTripModal(true);
+            }}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label="Add to trip"
+            disabled={isAddedToTrip}
+          >
+            {isAddedToTrip ? (
+              <Check className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={1.5} />
+            ) : (
+              <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -1364,7 +1437,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         desktopWidth="420px"
         position="right"
         style="glassy"
+<<<<<<< HEAD
+        backdropOpacity="18"
+=======
         backdropOpacity="0"
+>>>>>>> fix/build-errors-and-drawer-refactor
         keepStateOnClose={true}
         zIndex={1200}
         tier="tier3"
@@ -1398,6 +1475,297 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
           </div>
 
+<<<<<<< HEAD
+          {/* Identity Block */}
+          <div className="space-y-4 mt-6">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">Details</p>
+              <h1 className="mt-1 text-[26px] font-semibold leading-tight text-gray-900 dark:text-white">
+                {destination.name || 'Destination'}
+              </h1>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              {(destination.neighborhood || destination.city || destination.country) && (
+                <div className="flex items-start gap-1.5 text-sm">
+                  <MapPin className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    {destination.neighborhood && (
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {destination.neighborhood}
+                      </div>
+                    )}
+                    <div className="text-gray-600 dark:text-gray-400">
+                      {destination.city && capitalizeCity(destination.city)}
+                      {destination.city && destination.country && ', '}
+                      {destination.country && destination.country}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2">
+                {destination.category && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200">
+                    <Tag className="h-3.5 w-3.5" />
+                    {destination.category}
+                  </span>
+                )}
+                {destination.brand && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-900">
+                    <Building2 className="h-3.5 w-3.5" />
+                    {destination.brand}
+                  </span>
+                )}
+                {destination.crown && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-200/70 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
+                    <Crown className="h-3.5 w-3.5" />
+                    Crown
+                  </span>
+                )}
+                {rating && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-900 dark:text-gray-100">
+                    <Star className="h-3.5 w-3.5 fill-current text-yellow-500" />
+                    {rating.toFixed(1)}
+                    {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
+                      <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
+                        ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
+                      </span>
+                    )}
+                  </span>
+                )}
+                {priceLevel && priceLevel > 0 && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 dark:border-gray-800 px-3 py-1 text-xs font-medium text-gray-900 dark:text-gray-100">
+                    <span className="text-green-600 dark:text-green-400 font-semibold">
+                      {'$'.repeat(priceLevel)}
+                    </span>
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {destination.micro_description && (
+              <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">
+                {destination.micro_description}
+              </p>
+            )}
+
+            {highlightTags.length > 0 && (
+              <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
+                  Highlights
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {highlightTags.map(tag => (
+                    <span
+                      key={tag}
+                      className="px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-900 text-xs font-medium text-gray-700 dark:text-gray-200"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+              <div className="grid grid-cols-2 gap-3">
+                {user && (
+                  <button
+                    onClick={async () => {
+                      if (!user) {
+                        router.push('/auth/login');
+                        return;
+                      }
+                      if (!isSaved) {
+                        setShowSaveModal(true);
+                      } else {
+                        try {
+                          const supabaseClient = createClient();
+                          if (!supabaseClient) {
+                            alert('Failed to connect to database. Please try again.');
+                            return;
+                          }
+                          const { error } = await supabaseClient
+                            .from('saved_places')
+                            .delete()
+                            .eq('user_id', user.id)
+                            .eq('destination_slug', destination.slug);
+                          if (!error) {
+                            setIsSaved(false);
+                            if (onSaveToggle) onSaveToggle(destination.slug, false);
+                          }
+                        } catch (error) {
+                          console.error('Error unsaving:', error);
+                        }
+                      }
+                    }}
+                    className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
+                      isSaved
+                        ? 'border-gray-900 bg-gray-900 text-white'
+                        : 'border-gray-200 bg-gray-50 text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100'
+                    }`}
+                    aria-label={isSaved ? 'Remove from favorites' : 'Add to favorites'}
+                  >
+                    <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save'}
+                  </button>
+                )}
+
+                {user && (
+                  <button
+                    onClick={handleVisitToggle}
+                    className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
+                      isVisited
+                        ? 'border-green-500 bg-green-500 text-white'
+                        : 'border-gray-200 bg-gray-50 text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100'
+                    }`}
+                  >
+                    <Check className="h-4 w-4" />
+                    {isVisited ? 'Visited' : 'Mark Visited'}
+                  </button>
+                )}
+
+                <button
+                  onClick={handleShare}
+                  className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                >
+                  <Share2 className="h-4 w-4" />
+                  {copied ? 'Copied!' : 'Share'}
+                </button>
+
+                <a
+                  href={directionsUrl || undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-colors ${
+                    directionsUrl
+                      ? 'border-gray-200 bg-gray-50 text-gray-900 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100'
+                      : 'border-gray-100 bg-gray-50 text-gray-400 cursor-not-allowed'
+                  }`}
+                  onClick={(e) => {
+                    if (!directionsUrl) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  <Navigation className="h-4 w-4" />
+                  Directions
+                </a>
+
+                {/* Website Quick Action */}
+                {destination.website && (
+                  <a
+                    href={destination.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <Globe className="h-4 w-4" />
+                    Website
+                  </a>
+                )}
+
+                {/* Call Quick Action */}
+                {destination.phone_number && (
+                  <a
+                    href={`tel:${destination.phone_number}`}
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <Phone className="h-4 w-4" />
+                    Call
+                  </a>
+                )}
+
+                {isAdmin && destination && (
+                  <button
+                    onClick={() => setIsEditDrawerOpen(true)}
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-3 text-sm font-medium text-gray-900 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100 col-span-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit destination
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Sign in prompt */}
+          {!user && (
+            <div className="px-6 pb-4">
+              <button
+                onClick={() => router.push('/auth/login')}
+                className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                Sign in to save and track visits
+              </button>
+            </div>
+          )}
+          </div>
+
+          {/* Desktop Content */}
+          <div className="hidden md:block">
+          {/* Image */}
+          {destination.image && (
+            <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
+              <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
+              <Image
+                src={destination.image}
+                alt={destination.name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, 420px"
+                priority={false}
+                quality={85}
+              />
+              </div>
+            </div>
+          )}
+
+          {/* Identity Block */}
+          <div className="space-y-4 mt-6">
+            {/* Location Badge */}
+            <div>
+              <a
+                href={`/city/${destination.city}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push(`/city/${destination.city}`);
+                }}
+              >
+                <MapPin className="h-3 w-3" />
+                {destination.country ? `${capitalizeCity(destination.city)}, ${destination.country}` : capitalizeCity(destination.city)}
+              </a>
+            </div>
+
+          {/* Title */}
+            <div className="space-y-3">
+              <h1 className="text-2xl font-medium leading-tight text-black dark:text-white">
+                {destination.name}
+              </h1>
+
+              {/* Pills: Category, Brand, Crown, Michelin, Google Rating */}
+              <div className="flex flex-wrap gap-2">
+              {destination.category && (
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
+                    {destination.category}
+                    </span>
+                )}
+
+                {destination.brand && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
+                    <Building2 className="h-3.5 w-3.5" />
+                    {destination.brand}
+                  </span>
+                )}
+
+                {destination.crown && (
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400">
+                    Crown
+                </span>
+=======
           {/* Info Block: Rating, Category, Tags */}
           <div className="mb-6 space-y-3">
             {/* Rating and Category Row */}
@@ -1411,7 +1779,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   fontWeight: 500,
                   color: 'rgba(255,255,255,0.9)',
                 }}>
-                  <Star className="w-3.5 h-3.5 fill-current text-yellow-400" />
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12.25v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.83 3.28-8.29z" fill="#4285F4"/>
+                    <path d="M12.25 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12.25 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.15-.45-.24-.92-.24-1.41s.09-.96.24-1.41L2.18 8.64C.83 10.35 0 12.58 0 15s.83 4.65 2.18 6.36l3.66-2.27z" fill="#FBBC04"/>
+                    <path d="M12.25 5.75c1.77 0 3.35.61 4.6 1.79l3.42-3.42C17.72 2.09 15.23 1 12.25 1c-4.55 0-8.27 2.47-10.07 6.12l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
                   <span>{rating.toFixed(1)}</span>
                 </div>
               )}
@@ -1439,8 +1812,44 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <Crown className="w-3.5 h-3.5 inline mr-1" />
                   Crown
                 </div>
+>>>>>>> fix/build-errors-and-drawer-refactor
               )}
               {destination.michelin_stars && destination.michelin_stars > 0 && (
+<<<<<<< HEAD
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <img
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    className="h-3 w-3"
+                    loading="lazy"
+                    onError={(e) => {
+                      // Fallback to local file if external URL fails
+                      const target = e.currentTarget;
+                      if (target.src !== '/michelin-star.svg') {
+                        target.src = '/michelin-star.svg';
+                      }
+                    }}
+                  />
+                  {destination.michelin_stars} Michelin star{destination.michelin_stars > 1 ? 's' : ''}
+                  </span>
+            )}
+
+                {(enrichedData?.rating || destination.rating) && (
+                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
+                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                  </svg>
+                  {(enrichedData?.rating || destination.rating).toFixed(1)}
+                  {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
+                    <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
+                      ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
+                    </span>
+                  )}
+                    </span>
+=======
                 <div style={{
                   padding: '6px 14px',
                   borderRadius: '24px',
@@ -1451,6 +1860,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 }}>
                   ⭐ {destination.michelin_stars}
                 </div>
+>>>>>>> fix/build-errors-and-drawer-refactor
               )}
             </div>
 
@@ -1800,6 +2210,38 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             })()}
 
             {/* Address */}
+<<<<<<< HEAD
+            {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.neighborhood || destination.city || destination.country) && (
+              <div>
+                <div className="flex items-start gap-2">
+                  <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-black dark:text-white mb-2">Location</div>
+                    {/* Neighborhood, City, Country - Better organized */}
+                    {(destination.neighborhood || destination.city || destination.country) && (
+                      <div className="space-y-1 mb-2">
+                        {destination.neighborhood && (
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                            {destination.neighborhood}
+                          </div>
+                        )}
+                        {(destination.city || destination.country) && (
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {destination.city && capitalizeCity(destination.city)}
+                            {destination.city && destination.country && ', '}
+                            {destination.country && destination.country}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    {/* Full Address */}
+                    {enrichedData?.formatted_address && (
+                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{enrichedData.formatted_address}</div>
+                    )}
+                    {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
+                      <div className="text-xs text-gray-500 dark:text-gray-500">{enrichedData.vicinity}</div>
+                    )}
+=======
             {(enrichedData?.formatted_address || enrichedData?.vicinity) && (
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }} />
@@ -1830,6 +2272,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     </div>
                   )}
                 </div>
+>>>>>>> fix/build-errors-and-drawer-refactor
               </div>
             )}
 
@@ -2178,6 +2621,141 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             )}
 
+<<<<<<< HEAD
+          {/* Divider */}
+          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
+
+
+          {/* Description */}
+          {destination.description && (
+            <div>
+              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {stripHtmlTags(destination.description)}
+              </div>
+            </div>
+          )}
+
+          {/* Editorial Summary */}
+          {enrichedData?.editorial_summary && (
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">From Google</h3>
+              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                {stripHtmlTags(enrichedData.editorial_summary)}
+              </p>
+            </div>
+          )}
+
+          {/* Architecture & Design */}
+          {enhancedDestination && <ArchitectDesignInfo destination={enhancedDestination} />}
+
+          {/* Contact & Links */}
+          {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url || destination.opentable_url || destination.resy_url || destination.booking_url) && (
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Contact & Booking</h3>
+              <div className="flex flex-wrap gap-2">
+                {(enrichedData?.website || destination.website) && (() => {
+                  const websiteUrl = (enrichedData?.website || destination.website) || '';
+                  const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+                  const domain = extractDomain(websiteUrl);
+                  return (
+                    <a
+                      href={fullUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full text-sm text-gray-900 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <span>{domain}</span>
+                      <ExternalLink className="w-3.5 h-3.5 flex-shrink-0" />
+                    </a>
+                  );
+                })()}
+                {(enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone) && (
+                  <a
+                    href={`tel:${enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}`}
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    {enrichedData?.international_phone_number || destination.phone_number || destination.reservation_phone}
+                  </a>
+                )}
+                {destination.instagram_url && (
+                  <a
+                    href={destination.instagram_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    Instagram
+                  </a>
+                )}
+                {destination.opentable_url && (
+                  <a
+                    href={destination.opentable_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    OpenTable
+                  </a>
+                )}
+                {destination.resy_url && (
+                  <a
+                    href={destination.resy_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    Resy
+                  </a>
+                )}
+                {destination.booking_url && (
+                  <a
+                    href={destination.booking_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    Book Now
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* AI Review Summary */}
+          {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">What Reviewers Say</h3>
+              {loadingReviewSummary ? (
+                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-white"></div>
+                  <span>Summarizing reviews...</span>
+                        </div>
+              ) : reviewSummary ? (
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/50">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
+                      </div>
+              ) : null}
+            </div>
+          )}
+
+          {/* Map Section */}
+          {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
+              <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+                <MapView
+                  destinations={[{
+                    ...destination,
+                    latitude: destination.latitude || enrichedData?.latitude,
+                    longitude: destination.longitude || enrichedData?.longitude,
+                  }].filter(d => d.latitude && d.longitude) as Destination[]}
+                  center={{
+                    lat: destination.latitude || enrichedData?.latitude || 0,
+                    lng: destination.longitude || enrichedData?.longitude || 0,
+                  }}
+                  zoom={15}
+                  isDark={false}
+=======
             {/* Real-Time Status */}
             {destination.id && (
               <div>
@@ -2186,6 +2764,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   compact={false}
                   showWaitTime={true}
                   showAvailability={true}
+>>>>>>> fix/build-errors-and-drawer-refactor
                 />
                 <div className="mt-3">
                   <RealtimeReportForm

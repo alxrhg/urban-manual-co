@@ -140,9 +140,28 @@ export default function CityPageClient() {
       });
 
       // Filter out quiet categories (categories with less than 2 destinations)
-      const activeCategories = Array.from(categoryCounts.entries())
+      let activeCategories = Array.from(categoryCounts.entries())
         .filter(([_, count]) => count >= 2)
         .map(([category, _]) => category);
+
+      // Merge Restaurant into Dining: if both exist, remove Restaurant
+      const hasDining = activeCategories.some(c => c.toLowerCase() === 'dining');
+      const hasRestaurant = activeCategories.some(c => c.toLowerCase() === 'restaurant');
+      if (hasDining && hasRestaurant) {
+        activeCategories = activeCategories.filter(c => c.toLowerCase() !== 'restaurant');
+      }
+
+      // Sort so Others/Other is always last
+      activeCategories.sort((a, b) => {
+        const aLower = a.toLowerCase();
+        const bLower = b.toLowerCase();
+        const aIsOther = aLower === 'others' || aLower === 'other';
+        const bIsOther = bLower === 'others' || bLower === 'other';
+        
+        if (aIsOther && !bIsOther) return 1;
+        if (!aIsOther && bIsOther) return -1;
+        return a.localeCompare(b);
+      });
 
       setCategories(activeCategories);
 
@@ -161,7 +180,16 @@ export default function CityPageClient() {
 
     if (category) {
       filtered = filtered.filter(d => {
-        const categoryMatch = d.category && d.category.toLowerCase().trim() === category.toLowerCase().trim();
+        const categoryLower = category.toLowerCase().trim();
+        const destinationCategory = d.category?.toLowerCase().trim();
+        
+        // Merge Restaurant into Dining: if filter is "Dining", also match "Restaurant"
+        const isDiningFilter = categoryLower === 'dining';
+        const isRestaurantCategory = destinationCategory === 'restaurant';
+        
+        const categoryMatch = d.category &&
+          (destinationCategory === categoryLower ||
+           (isDiningFilter && isRestaurantCategory));
         
         // If category matches, include it
         if (categoryMatch) return true;

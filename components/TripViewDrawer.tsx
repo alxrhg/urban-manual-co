@@ -380,187 +380,81 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
     }
   };
 
-  // Build header with actions
+  // Build header with actions - Compact quickview design
   const headerContent = trip ? (
     <div className="flex items-center justify-between w-full">
       <div className="flex-1 min-w-0">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-white truncate">{trip.title}</h2>
-        {trip.description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{trip.description}</p>
-        )}
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate">{trip.title}</h2>
       </div>
       {trip.user_id === user?.id && (
-        <div className="flex items-center gap-2 ml-4">
-          {isEditMode ? (
-            <>
-              <button
-                onClick={handleSaveChanges}
-                disabled={savingChanges || !editedTitle.trim()}
-                className="px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
-              >
-                {savingChanges ? 'Saving...' : 'Save'}
-              </button>
-              <button
-                onClick={handleCancelEdit}
-                disabled={savingChanges}
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setIsEditMode(true)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                aria-label="Edit trip"
-              >
-                <Edit2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              </button>
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                aria-label="Delete trip"
-              >
-                <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
-              </button>
-            </>
-          )}
+        <div className="flex items-center gap-1.5 ml-4">
+          <button
+            onClick={() => {
+              onEdit?.();
+            }}
+            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            aria-label="Edit trip"
+          >
+            <Edit2 className="w-3.5 h-3.5 text-gray-600 dark:text-gray-400" />
+          </button>
         </div>
       )}
     </div>
   ) : undefined;
 
   const content = (
-    <div className="px-6 py-6">
+    <div className="px-5 py-5">
       {loading ? (
         <div className="text-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400 mb-4" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading trip...</p>
+          <Loader2 className="h-6 w-6 animate-spin mx-auto text-gray-400 mb-3" />
+          <p className="text-xs text-gray-500 dark:text-gray-400">Loading trip...</p>
         </div>
       ) : !trip ? (
         <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">Trip not found</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Trip not found</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Edit Mode Banner */}
-          {isEditMode && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3">
-              <p className="text-xs text-blue-700 dark:text-blue-300">
-                <strong>Edit Mode:</strong> You can now edit trip details, add/remove locations, and reorder items.
-              </p>
-            </div>
-          )}
-
-          {/* Trip Details - Edit Mode */}
-          {isEditMode ? (
-            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Trip Title
-                </label>
-                <input
-                  type="text"
-                  value={editedTitle}
-                  onChange={(e) => setEditedTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
-                  placeholder="Enter trip title"
-                />
+        <div className="space-y-4">
+          {/* Trip Metadata - Compact View */}
+          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+            {trip.destination && (
+              <div className="flex items-center gap-1.5">
+                <MapPin className="h-3 w-3" />
+                <span>{trip.destination}</span>
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Description (Optional)
-                </label>
-                <textarea
-                  value={editedDescription}
-                  onChange={(e) => setEditedDescription(e.target.value)}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm resize-none"
-                  placeholder="Describe your trip"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Cities Visiting (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={editedDestination}
-                  onChange={(e) => setEditedDestination(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
-                  placeholder="e.g., Paris, London, Rome"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Start Date (Optional)
-                  </label>
-                  <input
-                    type="date"
-                    value={formatDateForInput(editedStartDate)}
-                    onChange={(e) => setEditedStartDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    End Date (Optional)
-                  </label>
-                  <input
-                    type="date"
-                    value={formatDateForInput(editedEndDate)}
-                    onChange={(e) => setEditedEndDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* Trip Metadata - View Mode */
-            <div className="flex flex-wrap items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
-              {trip.destination && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span>{trip.destination}</span>
-                </div>
-              )}
-              {(trip.start_date || trip.end_date) && (
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5" />
-                  <span>
-                    {formatDate(trip.start_date)}
-                    {trip.end_date && ` – ${formatDate(trip.end_date)}`}
-                  </span>
-                </div>
-              )}
-              <div className="flex items-center gap-2">
-                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                  trip.status === 'planning' ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' :
-                  trip.status === 'upcoming' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
-                  trip.status === 'ongoing' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
-                  'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
-                }`}>
-                  {trip.status}
+            )}
+            {(trip.start_date || trip.end_date) && (
+              <div className="flex items-center gap-1.5">
+                <Calendar className="h-3 w-3" />
+                <span>
+                  {formatDate(trip.start_date)}
+                  {trip.end_date && ` – ${formatDate(trip.end_date)}`}
                 </span>
               </div>
+            )}
+            <div className="flex items-center gap-2">
+              <span className={`px-2 py-0.5 rounded-md text-xs font-medium ${
+                trip.status === 'planning' ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300' :
+                trip.status === 'upcoming' ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' :
+                trip.status === 'ongoing' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' :
+                'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+              }`}>
+                {trip.status}
+              </span>
             </div>
-          )}
+          </div>
 
-          {/* Itinerary by Day */}
+          {/* Itinerary by Day - Compact Quickview */}
           {Object.keys(itemsByDay).length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-300 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 px-6 py-12 text-center space-y-4">
-              <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700" />
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white">No items yet</h3>
+            <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 px-4 py-8 text-center space-y-3">
+              <MapPin className="h-10 w-10 mx-auto text-gray-300 dark:text-gray-700" />
+              <h3 className="text-xs font-medium text-gray-900 dark:text-white">No items yet</h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {isEditMode 
-                  ? 'Click "Add Location" to start building your itinerary.'
-                  : 'No locations added to this trip yet.'}
+                No locations added to this trip yet.
               </p>
             </div>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-4">
               {Object.entries(itemsByDay)
                 .sort(([a], [b]) => Number(a) - Number(b))
                 .map(([day, items]) => {
@@ -569,77 +463,39 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
                   const locations = transformItemsToLocations(items);
 
                   return (
-                    <TripDay
-                      key={day}
-                      dayNumber={dayNumber}
-                      date={dayDate}
-                      locations={locations}
-                      onAddLocation={isEditMode ? () => handleAddLocation(dayNumber) : undefined}
-                      onRemoveLocation={isEditMode ? handleRemoveLocation : undefined}
-                      onReorderLocations={isEditMode ? async (reorderedLocations) => {
-                        try {
-                          const supabaseClient = createClient();
-                          if (!supabaseClient || !user) return;
-
-                          await supabaseClient
-                            .from('itinerary_items')
-                            .delete()
-                            .eq('trip_id', tripId)
-                            .eq('day', dayNumber);
-
-                          const itemsToInsert = reorderedLocations.map((loc, idx) => {
-                            const originalItem = items.find(
-                              (item) => item.title === loc.name || item.destination_slug === loc.name.toLowerCase().replace(/\s+/g, '-')
-                            );
-                            
-                            let notesData: ItineraryItemNotes = {};
-                            if (originalItem?.notes) {
-                              try {
-                                notesData = JSON.parse(originalItem.notes) as ItineraryItemNotes;
-                              } catch {
-                                notesData = { raw: originalItem.notes };
-                              }
-                            }
-
-                            const updatedNotes = JSON.stringify({
-                              raw: loc.notes || notesData.raw || '',
-                              duration: loc.duration || notesData.duration,
-                              image: loc.image || notesData.image,
-                              city: loc.city || notesData.city,
-                              category: loc.category || notesData.category,
-                            });
-
-                            return {
-                              trip_id: tripId,
-                              destination_slug: originalItem?.destination_slug || loc.name.toLowerCase().replace(/\s+/g, '-'),
-                              day: dayNumber,
-                              order_index: idx,
-                              time: loc.time || originalItem?.time || null,
-                              title: loc.name,
-                              description: loc.category || originalItem?.description || '',
-                              notes: updatedNotes,
-                            };
-                          });
-
-                          if (itemsToInsert.length > 0) {
-                            await supabaseClient
-                              .from('itinerary_items')
-                              .insert(itemsToInsert);
-                          }
-
-                          await fetchTripDetails();
-                        } catch (error) {
-                          console.error('Error reordering locations:', error);
-                          alert('Failed to reorder locations. Please try again.');
-                        }
-                      } : undefined}
-                      onDuplicateDay={isEditMode ? async () => {
-                        alert('Duplicate day feature coming soon');
-                      } : undefined}
-                      onOptimizeRoute={isEditMode ? async () => {
-                        alert('Route optimization feature coming soon');
-                      } : undefined}
-                    />
+                    <div key={day} className="space-y-2">
+                      {/* Day Header */}
+                      <div className="flex items-center gap-2 pb-1 border-b border-gray-200 dark:border-gray-800">
+                        <h3 className="text-xs font-semibold text-gray-900 dark:text-white">
+                          Day {dayNumber}
+                        </h3>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {formatDate(dayDate)}
+                        </span>
+                      </div>
+                      
+                      {/* Locations List - Compact */}
+                      <div className="space-y-1.5 pl-2">
+                        {locations.map((location, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-start gap-2 py-1.5 text-xs"
+                          >
+                            <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-600 mt-1.5" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900 dark:text-white truncate">
+                                {location.name}
+                              </div>
+                              {location.time && (
+                                <div className="text-gray-500 dark:text-gray-400 text-[10px]">
+                                  {location.time}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   );
                 })}
             </div>
@@ -655,7 +511,11 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
         isOpen={isOpen}
         onClose={onClose}
         headerContent={headerContent}
-        desktopWidth="600px"
+        desktopWidth="480px"
+        position="right"
+        style="solid"
+        zIndex={60}
+        backdropOpacity="20"
       >
         {content}
       </Drawer>

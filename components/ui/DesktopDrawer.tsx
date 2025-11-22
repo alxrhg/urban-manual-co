@@ -34,10 +34,10 @@ export function DesktopDrawer({
 
   const shadowClasses = style === 'solid' ? 'shadow-2xl ring-1 ring-black/5' : '';
 
-  // Header background: blurred/translucent
+  // Header background: solid (no gradient)
   const headerBackground = style === 'glassy'
     ? DRAWER_STYLES.headerBackground
-    : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md';
+    : 'bg-white dark:bg-gray-950';
 
   return (
     <>
@@ -83,7 +83,7 @@ export function DesktopDrawer({
 
         {/* Footer */}
         {footerContent && (
-          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}>
+          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white dark:bg-gray-950'}`}>
             {footerContent}
           </div>
         )}
@@ -131,7 +131,7 @@ export function DesktopDrawer({
 
         {/* Footer */}
         {footerContent && (
-          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}>
+          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white dark:bg-gray-950'}`}>
             {footerContent}
           </div>
         )}

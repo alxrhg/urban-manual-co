@@ -86,10 +86,10 @@ export function MobileDrawer({
     ? (position === 'right' ? DRAWER_STYLES.glassyBorderLeft : DRAWER_STYLES.glassyBorderRight)
     : (position === 'right' ? 'border-l border-gray-200 dark:border-gray-800' : 'border-r border-gray-200 dark:border-gray-800');
 
-  // Header background: blurred/translucent
+  // Header background: solid (no gradient)
   const headerBackground = style === 'glassy'
     ? DRAWER_STYLES.headerBackground
-    : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md';
+    : 'bg-white dark:bg-gray-950';
 
   const computedMobileHeight =
     mobileHeight ?? 'calc(96vh - env(safe-area-inset-bottom) - 1rem)';
@@ -149,7 +149,7 @@ export function MobileDrawer({
 
           {/* Footer */}
           {footerContent && (
-            <div className={`flex-shrink-0 ${DRAWER_STYLES.glassyBorderTop} ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}>
+            <div className={`flex-shrink-0 ${DRAWER_STYLES.glassyBorderTop} ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white dark:bg-gray-950'}`}>
               {footerContent}
             </div>
           )}
@@ -195,7 +195,7 @@ export function MobileDrawer({
 
           {/* Footer */}
           {footerContent && (
-            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/80 dark:bg-gray-950/80 backdrop-blur-md'}`}>
+            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white dark:bg-gray-950'}`}>
               {footerContent}
             </div>
           )}

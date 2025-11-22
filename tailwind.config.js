@@ -4,6 +4,9 @@ module.exports = {
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         serif: ['Playfair Display', 'Georgia', 'serif'],
+        // Lovably-inspired font (Scto Grotesk A - Inter is used as primary fallback)
+        // Alternatives: Manrope, Work Sans, Space Grotesk (see docs/LOVABLY_FONT_ALTERNATIVES.md)
+        'scto_grotesk_a': ['Scto Grotesk A', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       maxWidth: {
         'um': 'var(--um-content-max)',

@@ -149,7 +149,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white" suppressHydrationWarning>
+      <body className="antialiased bg-zinc-100 dark:bg-zinc-950 text-black dark:text-white" suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

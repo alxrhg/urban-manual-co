@@ -310,179 +310,186 @@ export function ExpandableHomeControls({
                 >
                   All Categories
                 </button>
-                {categories.slice(0, 6).map((category) => {
-                  const IconComponent = getCategoryIconComponent(category);
-                  return (
-                    <button
-                      key={category}
-                      onClick={() => {
-                        const newCategory = category === selectedCategory ? '' : category;
-                        onCategoryChange(newCategory);
-                        onFiltersChange({ ...advancedFilters, category: newCategory || undefined });
-                        onTrackFilterChange({ filterType: 'category', value: newCategory || 'all' });
-                      }}
-                      className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full transition-all ${
-                        selectedCategory === category
-                          ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
-                          : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
-                      }`}
-                    >
-                      {IconComponent && <IconComponent className="h-3.5 w-3.5" />}
-                      {capitalizeCategory(category)}
-                    </button>
-                  );
-                })}
+                {(() => {
+                  // Process categories: merge Restaurant into Dining, and ensure Others/Other is last
+                  const processedCategories = [...categories]
+                    .filter(cat => {
+                      // Remove "Restaurant" if "Dining" exists (merge Restaurant into Dining)
+                      const lowerCat = cat.toLowerCase();
+                      const hasDining = categories.some(c => c.toLowerCase() === 'dining');
+                      const isRestaurant = lowerCat === 'restaurant';
+                      return !(hasDining && isRestaurant);
+                    })
+                    .sort((a, b) => {
+                      // Sort so Others/Other is always last
+                      const aLower = a.toLowerCase();
+                      const bLower = b.toLowerCase();
+                      const aIsOther = aLower === 'others' || aLower === 'other';
+                      const bIsOther = bLower === 'others' || bLower === 'other';
+                      
+                      if (aIsOther && !bIsOther) return 1;
+                      if (!aIsOther && bIsOther) return -1;
+                      return a.localeCompare(b);
+                    });
+                  
+                  return processedCategories.slice(0, 6).map((category) => {
+                    const IconComponent = getCategoryIconComponent(category);
+                    // Check if selected category is "Restaurant" but we're showing "Dining"
+                    const isSelected = selectedCategory === category || 
+                      (selectedCategory?.toLowerCase() === 'restaurant' && category.toLowerCase() === 'dining');
+                    
+                    return (
+                      <button
+                        key={category}
+                        onClick={() => {
+                          const newCategory = isSelected ? '' : category;
+                          onCategoryChange(newCategory);
+                          onFiltersChange({ ...advancedFilters, category: newCategory || undefined });
+                          onTrackFilterChange({ filterType: 'category', value: newCategory || 'all' });
+                        }}
+                        className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-full transition-all ${
+                          isSelected
+                            ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
+                            : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
+                        }`}
+                      >
+                        {IconComponent && <IconComponent className="h-3.5 w-3.5" />}
+                        {capitalizeCategory(category)}
+                      </button>
+                    );
+                  });
+                })()}
               </div>
             </div>
 
-            {/* Filters Section - Inline Form */}
-            <div className="bg-gray-50 dark:bg-[rgba(255,255,255,0.04)] rounded-2xl p-4 border border-gray-200 dark:border-[rgba(255,255,255,0.12)]">
-              <div className="space-y-4">
-                <div className="text-sm font-medium text-gray-900 dark:text-[#F7F7F7] mb-3">
-                  Advanced Filters
-                </div>
-                
-                {/* Special Filters */}
-                <div className="space-y-3">
-                  <div className="text-xs font-medium text-gray-600 dark:text-[rgba(255,255,255,0.52)] uppercase tracking-wide">
-                    Special
-                  </div>
-                  <div className="flex flex-wrap gap-2">
+            {/* Filters Section - Compact Layout */}
+            <div className="bg-gray-50 dark:bg-[rgba(255,255,255,0.04)] rounded-xl p-3 border border-gray-200 dark:border-[rgba(255,255,255,0.12)]">
+              <div className="space-y-2.5">
+                {/* Special Filters - Compact Row */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wide mr-1">Special:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newValue = !advancedFilters.michelin;
+                      onFiltersChange({ ...advancedFilters, michelin: newValue || undefined });
+                      onTrackFilterChange({ filterType: 'michelin', value: newValue });
+                    }}
+                    className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                      advancedFilters.michelin
+                        ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
+                        : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
+                    }`}
+                  >
+                    Michelin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newValue = !advancedFilters.openNow;
+                      onFiltersChange({ ...advancedFilters, openNow: newValue || undefined });
+                      onTrackFilterChange({ filterType: 'openNow', value: newValue });
+                    }}
+                    className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                      advancedFilters.openNow
+                        ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
+                        : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
+                    }`}
+                  >
+                    Open Now
+                  </button>
+                  {isAdmin && (
                     <button
                       type="button"
                       onClick={() => {
-                        const newValue = !advancedFilters.michelin;
-                        onFiltersChange({ ...advancedFilters, michelin: newValue || undefined });
-                        onTrackFilterChange({ filterType: 'michelin', value: newValue });
+                        const newValue = !advancedFilters.excludeNested;
+                        onFiltersChange({ ...advancedFilters, excludeNested: newValue || undefined });
+                        onTrackFilterChange({ filterType: 'excludeNested', value: newValue });
                       }}
-                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                        advancedFilters.michelin
+                      className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                        advancedFilters.excludeNested
                           ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
                           : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
                       }`}
+                      title="Hide nested places"
                     >
-                      Michelin
+                      Exclude Nested
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const newValue = !advancedFilters.openNow;
-                        onFiltersChange({ ...advancedFilters, openNow: newValue || undefined });
-                        onTrackFilterChange({ filterType: 'openNow', value: newValue });
-                      }}
-                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                        advancedFilters.openNow
-                          ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
-                          : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
-                      }`}
-                    >
-                      Open Now
-                    </button>
-                    {isAdmin && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newValue = !advancedFilters.excludeNested;
-                          onFiltersChange({ ...advancedFilters, excludeNested: newValue || undefined });
-                          onTrackFilterChange({ filterType: 'excludeNested', value: newValue });
-                        }}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                          advancedFilters.excludeNested
-                            ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
-                            : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
-                        }`}
-                        title="Hide nested places (e.g., restaurants in hotels)"
-                      >
-                        Exclude Nested
-                      </button>
-                    )}
-                  </div>
+                  )}
                 </div>
 
-                {/* Rating Filter */}
-                <div className="space-y-3">
-                  <div className="text-xs font-medium text-gray-600 dark:text-[rgba(255,255,255,0.52)] uppercase tracking-wide">
-                    Minimum Rating
-                  </div>
-                  <div className="flex flex-wrap gap-2">
+                {/* Rating & Price - Compact Row */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wide mr-1">Rating:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onFiltersChange({ ...advancedFilters, minRating: undefined });
+                      onTrackFilterChange({ filterType: 'minRating', value: null });
+                    }}
+                    className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                      !advancedFilters.minRating
+                        ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
+                        : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
+                    }`}
+                  >
+                    Any
+                  </button>
+                  {[4.5, 4.0, 3.5, 3.0].map((rating) => (
                     <button
+                      key={rating}
                       type="button"
                       onClick={() => {
-                        onFiltersChange({ ...advancedFilters, minRating: undefined });
-                        onTrackFilterChange({ filterType: 'minRating', value: null });
+                        const newValue = advancedFilters.minRating === rating ? undefined : rating;
+                        onFiltersChange({ ...advancedFilters, minRating: newValue });
+                        onTrackFilterChange({ filterType: 'minRating', value: newValue });
                       }}
-                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                        !advancedFilters.minRating
+                      className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                        advancedFilters.minRating === rating
                           ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
                           : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
                       }`}
                     >
-                      Any
+                      {rating}+
                     </button>
-                    {[4.5, 4.0, 3.5, 3.0].map((rating) => (
-                      <button
-                        key={rating}
-                        type="button"
-                        onClick={() => {
-                          const newValue = advancedFilters.minRating === rating ? undefined : rating;
-                          onFiltersChange({ ...advancedFilters, minRating: newValue });
-                          onTrackFilterChange({ filterType: 'minRating', value: newValue });
-                        }}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                          advancedFilters.minRating === rating
-                            ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
-                            : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
-                        }`}
-                      >
-                        {rating}+
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Price Filter */}
-                <div className="space-y-3">
-                  <div className="text-xs font-medium text-gray-600 dark:text-[rgba(255,255,255,0.52)] uppercase tracking-wide">
-                    Price Level
-                  </div>
-                  <div className="flex flex-wrap gap-2">
+                  ))}
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-[rgba(255,255,255,0.4)] uppercase tracking-wide ml-2 mr-1">Price:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onFiltersChange({ ...advancedFilters, minPrice: undefined, maxPrice: undefined });
+                      onTrackFilterChange({ filterType: 'price', value: null });
+                    }}
+                    className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                      !advancedFilters.minPrice && !advancedFilters.maxPrice
+                        ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
+                        : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
+                    }`}
+                  >
+                    Any
+                  </button>
+                  {[1, 2, 3, 4].map((level) => (
                     <button
+                      key={level}
                       type="button"
                       onClick={() => {
-                        onFiltersChange({ ...advancedFilters, minPrice: undefined, maxPrice: undefined });
-                        onTrackFilterChange({ filterType: 'price', value: null });
+                        const isActive = advancedFilters.minPrice === level && advancedFilters.maxPrice === level;
+                        onFiltersChange({ 
+                          ...advancedFilters, 
+                          minPrice: isActive ? undefined : level,
+                          maxPrice: isActive ? undefined : level
+                        });
+                        onTrackFilterChange({ filterType: 'price', value: isActive ? null : level });
                       }}
-                      className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                        !advancedFilters.minPrice && !advancedFilters.maxPrice
+                      className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                        advancedFilters.minPrice === level && advancedFilters.maxPrice === level
                           ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
                           : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
                       }`}
                     >
-                      Any
+                      {'$'.repeat(level)}
                     </button>
-                    {[1, 2, 3, 4].map((level) => (
-                      <button
-                        key={level}
-                        type="button"
-                        onClick={() => {
-                          const isActive = advancedFilters.minPrice === level && advancedFilters.maxPrice === level;
-                          onFiltersChange({ 
-                            ...advancedFilters, 
-                            minPrice: isActive ? undefined : level,
-                            maxPrice: isActive ? undefined : level
-                          });
-                          onTrackFilterChange({ filterType: 'price', value: isActive ? null : level });
-                        }}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-                          advancedFilters.minPrice === level && advancedFilters.maxPrice === level
-                            ? 'bg-gray-900 dark:bg-[rgba(255,255,255,0.12)] text-white dark:text-[#F7F7F7]'
-                            : 'bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] text-gray-700 dark:text-[rgba(255,255,255,0.52)] hover:bg-gray-200 dark:hover:bg-[rgba(255,255,255,0.08)]'
-                        }`}
-                      >
-                        {'$'.repeat(level)}
-                      </button>
-                    ))}
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>

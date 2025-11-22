@@ -183,8 +183,8 @@ export function SearchFiltersComponent({
         <>
           {fullWidthPanel ? (
             /* Full-width panel attached under top controls */
-            <div className="absolute left-0 right-0 top-full mt-2 w-screen bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-50 shadow-lg">
-              <div className="w-full px-6 md:px-10 py-8">
+            <div className="absolute left-0 right-0 top-full w-screen bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 z-50">
+              <div className="w-full px-4 py-6 sm:px-6 md:px-10 md:py-8">
                 <div className="max-w-[1800px] mx-auto">
                   <div className="space-y-8">
                     {/* Header */}

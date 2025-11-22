@@ -300,8 +300,30 @@ const extractFilterOptions = (
     }
   });
 
+  // Process categories: merge Restaurant into Dining, and ensure Others/Other is last
+  let categories = Array.from(categorySet);
+  
+  // Merge Restaurant into Dining: if both exist, remove Restaurant
+  const hasDining = categories.some(c => c.toLowerCase() === 'dining');
+  const hasRestaurant = categories.some(c => c.toLowerCase() === 'restaurant');
+  if (hasDining && hasRestaurant) {
+    categories = categories.filter(c => c.toLowerCase() !== 'restaurant');
+  }
+  
+  // Sort so Others/Other is always last
+  categories.sort((a, b) => {
+    const aLower = a.toLowerCase();
+    const bLower = b.toLowerCase();
+    const aIsOther = aLower === 'others' || aLower === 'other';
+    const bIsOther = bLower === 'others' || bLower === 'other';
+    
+    if (aIsOther && !bIsOther) return 1;
+    if (!aIsOther && bIsOther) return -1;
+    return a.localeCompare(b);
+  });
+
   return {
     cities: Array.from(citySet).sort(),
-    categories: Array.from(categorySet).sort(),
+    categories,
   };
 };

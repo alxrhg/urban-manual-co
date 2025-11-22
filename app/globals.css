@@ -71,6 +71,26 @@
 
     /* Ensure container uses 1280px max-width */
     --tw-container-max-width: 1280px;
+
+    /* Lovably-inspired design tokens (from exported code) */
+    --lovably-bg-primary: #F4F4F5; /* bg-zinc-100 */
+    --lovably-bg-nav: rgba(255, 255, 255, 0.5);
+    --lovably-text-primary: #000000;
+    --lovably-text-secondary: #A1A1AA; /* text-zinc-400 */
+    --lovably-text-hover: #EA580C; /* text-orange-600 */
+    --lovably-font-size-base: 14px; /* md:text-sm */
+    --lovably-font-size-mobile: 15px; /* text-[15px] */
+    --lovably-line-height-base: 22px; /* md:leading-[22px] */
+    --lovably-line-height-mobile: 23px; /* leading-[23px] */
+    --lovably-letter-spacing-base: 0.39px; /* md:tracking-[0.39px] */
+    --lovably-letter-spacing-mobile: 0.42px; /* tracking-[0.42px] */
+    --lovably-font-weight-base: 400;
+    --lovably-container-max-width: 1800px;
+    --lovably-container-padding-mobile: 15px;
+    --lovably-container-padding-desktop: 50px;
+    --lovably-grid-gap-mobile: 23px;
+    --lovably-grid-gap-desktop: 22px;
+    --lovably-section-spacing: 80px;
   }
 
   .dark {
@@ -93,6 +113,13 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
+
+    /* Lovably-inspired dark mode overrides */
+    --lovably-bg-primary: #0A0A0A;
+    --lovably-bg-nav: rgba(0, 0, 0, 0.5);
+    --lovably-text-primary: #FFFFFF;
+    --lovably-text-secondary: rgba(255, 255, 255, 0.6);
+    --lovably-text-hover: #EA580C; /* Keep orange for hover */
   }
 
   * {
@@ -105,6 +132,38 @@
     transition: background-color 0.2s ease, color 0.2s ease;
     max-width: 100%;
     overflow-x: hidden;
+    /* Lovably-inspired base typography (from exported code) */
+    font-size: var(--lovably-font-size-mobile);
+    line-height: var(--lovably-line-height-mobile);
+    font-weight: var(--lovably-font-weight-base);
+  }
+
+  @media (min-width: 768px) {
+    body {
+      font-size: var(--lovably-font-size-base);
+      line-height: var(--lovably-line-height-base);
+    }
+  }
+
+  /* Lovably-inspired light mode background (from exported code: bg-zinc-100) */
+  html:not(.dark) body {
+    background-color: var(--lovably-bg-primary);
+    color: var(--lovably-text-primary);
+  }
+
+  /* Lovably-inspired dark mode background */
+  html.dark body {
+    background-color: var(--lovably-bg-primary);
+    color: var(--lovably-text-primary);
+  }
+
+  /* Add Scto Grotesk A font (needs to be added manually - not included in export) */
+  @font-face {
+    font-family: 'Scto Grotesk A';
+    font-weight: 400;
+    font-style: normal;
+    /* Note: Font file needs to be added manually due to licensing */
+    /* Fallback to Inter if font is not available */
   }
 
   html.dark {
@@ -119,6 +178,83 @@
   /* Ensure container max-width is 1280px site-wide */
   .container {
     max-width: 1280px;
+  }
+
+  /* Lovably-inspired container system (from exported code) */
+  .container-lovably {
+    max-width: var(--lovably-container-max-width);
+    margin: 0 auto;
+    padding: 0 var(--lovably-container-padding-mobile);
+  }
+
+  @media (min-width: 768px) {
+    .container-lovably {
+      padding: 0 var(--lovably-container-padding-desktop);
+    }
+  }
+
+  /* Lovably-inspired typography utilities (from exported code) */
+  .text-lovably-base {
+    font-size: var(--lovably-font-size-mobile);
+    line-height: var(--lovably-line-height-mobile);
+    font-weight: var(--lovably-font-weight-base);
+  }
+
+  @media (min-width: 768px) {
+    .text-lovably-base {
+      font-size: var(--lovably-font-size-base);
+      line-height: var(--lovably-line-height-base);
+    }
+  }
+
+  .text-lovably-hero {
+    font-size: 14px; /* text-sm */
+    line-height: var(--lovably-line-height-mobile);
+    letter-spacing: var(--lovably-letter-spacing-mobile);
+    text-transform: uppercase;
+  }
+
+  @media (min-width: 768px) {
+    .text-lovably-hero {
+      font-size: 13px; /* md:text-[13px] */
+      line-height: var(--lovably-line-height-base);
+      letter-spacing: var(--lovably-letter-spacing-base);
+    }
+  }
+
+  /* Lovably-inspired link styles (from exported code) */
+  .link-lovably {
+    color: var(--lovably-text-secondary);
+    text-decoration: none;
+    transition: color 0.2s ease, border-color 0.2s ease;
+    display: block;
+  }
+
+  .link-lovably:hover {
+    color: var(--lovably-text-hover);
+    border-color: var(--lovably-text-hover);
+  }
+
+  .dark .link-lovably {
+    color: var(--lovably-text-secondary);
+  }
+
+  .dark .link-lovably:hover {
+    color: var(--lovably-text-hover);
+  }
+
+  /* Lovably-inspired grid system */
+  .grid-lovably {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--lovably-grid-gap-mobile);
+  }
+
+  @media (min-width: 768px) {
+    .grid-lovably {
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--lovably-grid-gap-desktop);
+    }
   }
 
   /* Safe area utilities for iPhone notches */

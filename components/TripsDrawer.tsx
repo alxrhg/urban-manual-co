@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
 import { TripPlanner } from '@/components/TripPlanner';
+import { TripViewDrawer } from '@/components/TripViewDrawer';
 import { Plus, MapPin, Calendar, ArrowRight, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -21,6 +22,7 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
   const [loading, setLoading] = useState(true);
   const [showTripDialog, setShowTripDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
+  const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
 
   const fetchTrips = useCallback(async () => {
     if (!user) {
@@ -184,7 +186,8 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
                 return (
                   <div
                     key={trip.id}
-                    className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-950 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                    onClick={() => setSelectedTripId(trip.id)}
+                    className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-950 hover:border-gray-300 dark:hover:border-gray-700 transition-colors cursor-pointer"
                   >
                     {/* Thumbnail */}
                     {imageUrl && (
@@ -230,11 +233,9 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
 
                       {/* Action - Arrow Right */}
                       <button
-                        onClick={() => {
-                          onClose();
-                          setTimeout(() => {
-                            router.push(`/trips/${trip.id}`);
-                          }, 200);
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedTripId(trip.id);
                         }}
                         className="w-full flex items-center justify-end gap-2 pt-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                       >
@@ -291,6 +292,20 @@ export function TripsDrawer({ isOpen, onClose }: TripsDrawerProps) {
         onClose={() => {
           setShowTripDialog(false);
           setEditingTripId(null);
+          fetchTrips();
+        }}
+      />
+      <TripViewDrawer
+        isOpen={selectedTripId !== null}
+        onClose={() => setSelectedTripId(null)}
+        tripId={selectedTripId || ''}
+        onEdit={() => {
+          setEditingTripId(selectedTripId);
+          setSelectedTripId(null);
+          setShowTripDialog(true);
+        }}
+        onDelete={() => {
+          setSelectedTripId(null);
           fetchTrips();
         }}
       />

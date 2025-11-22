@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { User } from "lucide-react";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
@@ -125,11 +126,11 @@ export function Header() {
       {user ? (
         <button
           onClick={() => openDrawer("account")}
-          className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+          className="text-lovably-base hover:opacity-70 transition-opacity focus:outline-none"
           aria-label="Open account drawer"
         >
           {avatarUrl ? (
-            <span className="w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+            <span className="w-6 h-6 rounded-full border border-black/10 dark:border-white/10 overflow-hidden inline-block">
               <img
                 src={avatarUrl}
                 alt="Profile"
@@ -139,16 +140,14 @@ export function Header() {
           ) : (
             <User className="w-4 h-4" />
           )}
-          <span>Account</span>
         </button>
       ) : (
         <button
           onClick={() => openDrawer("login")}
-          className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+          className="text-lovably-base hover:opacity-70 transition-opacity focus:outline-none"
           aria-label="Sign in"
         >
           <User className="w-4 h-4" />
-          <span>Sign In</span>
         </button>
       )}
     </>
@@ -157,24 +156,33 @@ export function Header() {
   return (
     <header
       id="top-header"
-      className="sticky top-0 w-full z-[400] transition-all duration-300 border-b border-transparent data-[scrolled=true]:bg-white/80 data-[scrolled=true]:dark:bg-gray-900/80 data-[scrolled=true]:backdrop-blur-md data-[scrolled=true]:border-gray-200 data-[scrolled=true]:dark:border-gray-800"
+      className="sticky top-0 w-full z-[400] bg-white/50 dark:bg-black/50 backdrop-blur-2xl border-b border-transparent"
       role="banner"
     >
-      {/* Primary Nav */}
-      <div className="w-full px-6 md:px-10">
+      {/* Primary Nav - Lovably style */}
+      <div className="container-lovably">
         <nav
-          className="flex items-center justify-between py-4"
+          className="flex items-center justify-between h-[50px] md:h-[90px]"
           aria-label="Main navigation"
         >
           <button
             onClick={() => navigate("/")}
-            className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
+            className="text-lovably-base hover:opacity-70 transition-opacity focus:outline-none shrink-0"
             aria-label="Go to homepage"
           >
-            Urban Manual®
+            Urban Manual
+            <span className="relative text-[11px] md:text-[10px] left-px bottom-[3px]">®</span>
           </button>
 
-          <div className="flex items-center gap-2">{actionButtons}</div>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/about"
+              className="text-lovably-base link-lovably"
+            >
+              Information
+            </Link>
+            {actionButtons}
+          </div>
         </nav>
       </div>
     </header>
