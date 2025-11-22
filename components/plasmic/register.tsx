@@ -8,53 +8,54 @@
  * IMPORTANT: Start your dev server and visit /plasmic-host for components to register
  */
 
+"use client";
+
 import { PLASMIC } from "./init";
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { DestinationCard } from "@/components/DestinationCard";
 
-// Only register if Plasmic is initialized
+// Only register if Plasmic is initialized (client-side only)
 if (typeof window !== "undefined" && PLASMIC) {
-  // Import components dynamically to avoid SSR issues
-  import("@/components/Header").then((mod) => {
-    PLASMIC.registerComponent(mod.Header, {
-      name: "Header",
-      displayName: "Header",
-      description: "Site header with navigation",
-      importPath: "@/components/Header",
-    });
-  }));
-
-  import("@/components/Footer").then((mod) => {
-    PLASMIC.registerComponent(mod.Footer, {
-      name: "Footer",
-      displayName: "Footer",
-      description: "Site footer",
-      importPath: "@/components/Footer",
-    });
+  // Register Header component
+  PLASMIC.registerComponent(Header, {
+    name: "Header",
+    displayName: "Header",
+    description: "Site header with navigation",
+    importPath: "@/components/Header",
   });
 
-  import("@/components/DestinationCard").then((mod) => {
-    PLASMIC.registerComponent(mod.DestinationCard, {
-      name: "DestinationCard",
-      displayName: "Destination Card",
-      description: "Card displaying a destination",
-      importPath: "@/components/DestinationCard",
-      props: {
-        destination: {
-          type: "object",
-          displayName: "Destination",
-          description: "Destination data object",
-        },
-        onClick: {
-          type: "eventHandler",
-          displayName: "On Click",
-          argTypes: [{ name: "destination", type: "object" }],
-        },
-        className: {
-          type: "string",
-          displayName: "Class Name",
-          description: "Additional CSS classes",
-        },
+  // Register Footer component
+  PLASMIC.registerComponent(Footer, {
+    name: "Footer",
+    displayName: "Footer",
+    description: "Site footer",
+    importPath: "@/components/Footer",
+  });
+
+  // Register DestinationCard component
+  PLASMIC.registerComponent(DestinationCard, {
+    name: "DestinationCard",
+    displayName: "Destination Card",
+    description: "Card displaying a destination",
+    importPath: "@/components/DestinationCard",
+    props: {
+      destination: {
+        type: "object",
+        displayName: "Destination",
+        description: "Destination data object",
       },
-    });
+      onClick: {
+        type: "eventHandler",
+        displayName: "On Click",
+        argTypes: [{ name: "destination", type: "object" }],
+      },
+      className: {
+        type: "string",
+        displayName: "Class Name",
+        description: "Additional CSS classes",
+      },
+    },
   });
 }
 
