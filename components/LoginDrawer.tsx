@@ -38,7 +38,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
       return;
     }
 
-    const redirect = searchParams.get('redirect') || searchParams.get('returnTo');
+    const redirect = searchParams?.get('redirect') || searchParams?.get('returnTo') || null;
     if (redirect) {
       setReturnTo(redirect);
     }
