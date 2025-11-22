@@ -1395,11 +1395,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-gray-600">
                 <MapPin className="h-10 w-10 opacity-40" />
               </div>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Action Row - Pill Buttons */}
-          <div className="flex items-center gap-2 mt-4 flex-wrap">
+            {/* Action Row - Pill Buttons */}
+            <div className="flex items-center gap-2 mt-4 flex-wrap">
               {/* Save Button with Dropdown */}
               {isMounted && (
                 <DropdownMenu open={showSaveDropdown} onOpenChange={setShowSaveDropdown}>
@@ -1764,7 +1764,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   </div>
                 </div>
               </div>
-            ) : null}
+            )}
 
             {/* Contact Info */}
             {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url) && (
@@ -2110,18 +2110,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 )}
               </div>
             )}
-          </div>
 
-          {/* Realtime Report Form */}
-          {destination && (
-            <div className="mt-3">
-              <RealtimeReportForm
-                destinationId={destination.id}
-                destinationName={destination.name}
-              />
-            </div>
-          )}
-        </div>
+        {/* Realtime Report Form */}
+        {destination && (
+          <div className="mt-3" style={{ padding: '0 28px', maxWidth: '360px', margin: '0 auto' }}>
+                  <RealtimeReportForm
+                    destinationId={destination.id}
+                    destinationName={destination.name}
+                  />
+              </div>
+            )}
       </Drawer>
 
       {/* Save Destination Modal */}
