@@ -2102,7 +2102,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       onDestinationClick={(nested) => {
                         if (nested.slug) {
                           onClose();
-                          setTimeout(() => router.push(`/destination/${nested.slug}`), 100);
+                          setTimeout(() => {
+                            openDrawer('destination', {
+                              destination: nested,
+                              onVisitToggle: onVisitToggle,
+                              onSaveToggle: onSaveToggle,
+                            });
+                          }, 100);
                         }
                       }}
                     />
@@ -2110,6 +2116,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 )}
               </div>
             )}
+          </div>
 
         {/* Realtime Report Form */}
         {destination && (
