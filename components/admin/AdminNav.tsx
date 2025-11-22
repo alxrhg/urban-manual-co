@@ -25,7 +25,7 @@ export function AdminNav() {
   return (
     <nav className="flex flex-wrap gap-2 text-xs">
       {NAV_LINKS.map((link) => {
-        const active = isActive(pathname, link.href);
+        const active = isActive(pathname || '', link.href);
         return (
           <Link
             key={link.href}
