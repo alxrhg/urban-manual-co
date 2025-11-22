@@ -1764,7 +1764,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   </div>
                 </div>
               </div>
-            )}
+            ) : null}
 
             {/* Contact Info */}
             {(enrichedData?.website || enrichedData?.international_phone_number || destination.website || destination.phone_number || destination.instagram_url) && (
@@ -2110,19 +2110,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 )}
               </div>
             )}
-
-<<<<<<< HEAD
-            {/* Real-Time Status */}
-            {/* Realtime Report Form */}
-            {destination && (
-              <div className="mt-3">
-                <RealtimeReportForm
-                  destinationId={destination.id}
-                  destinationName={destination.name}
-                />
-              </div>
-            )}
           </div>
+
+          {/* Realtime Report Form */}
+          {destination && (
+            <div className="mt-3">
+              <RealtimeReportForm
+                destinationId={destination.id}
+                destinationName={destination.name}
+              />
+            </div>
+          )}
         </div>
       </Drawer>
 
