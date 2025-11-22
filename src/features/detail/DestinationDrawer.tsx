@@ -1861,18 +1861,17 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </div>
               </div>
             )}
-          </div>
 
-          {/* Divider */}
-          <div style={{ 
-            height: '1px', 
-            backgroundColor: 'rgba(255,255,255,0.12)', 
-            margin: '28px 0' 
-          }} />
+            {/* Divider */}
+            <div style={{ 
+              height: '1px', 
+              backgroundColor: 'rgba(255,255,255,0.12)', 
+              margin: '28px 0' 
+            }} />
 
-          {/* Map Section */}
-          {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
-            <div className="mb-6">
+            {/* Map Section */}
+            {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
+              <div className="mb-6">
               <div style={{
                 fontSize: '14px',
                 fontWeight: 500,
@@ -1900,21 +1899,21 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   isDark={true}
                 />
               </div>
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Divider */}
-          {(loadingRecommendations || recommendations.length > 0) && (
-            <div style={{ 
-              height: '1px', 
-              backgroundColor: 'rgba(255,255,255,0.12)', 
-              margin: '28px 0' 
-            }} />
-          )}
+            {/* Divider */}
+            {(loadingRecommendations || recommendations.length > 0) && (
+              <div style={{ 
+                height: '1px', 
+                backgroundColor: 'rgba(255,255,255,0.12)', 
+                margin: '28px 0' 
+              }} />
+            )}
 
-          {/* Recommendations Section */}
-          {(loadingRecommendations || recommendations.length > 0) && (
-            <div>
+            {/* Recommendations Section */}
+            {(loadingRecommendations || recommendations.length > 0) && (
+              <div>
               <div style={{
                 fontSize: '14px',
                 fontWeight: 500,
@@ -2008,8 +2007,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   })}
                 </div>
               )}
-            </div>
-          )}
+              </div>
+            )}
+          </div>
 
           {/* Additional Info Sections */}
           <div className="space-y-6" style={{ marginTop: '28px', gap: '24px' }}>
@@ -2086,7 +2086,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 }}>
                   Venues located here
                 </div>
-                {loadingNested ? (
+                {loadingNested && (
                   <div className="flex items-center gap-2" style={{
                     fontSize: '13px',
                     color: 'rgba(255,255,255,0.6)',
@@ -2094,25 +2094,24 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     Loading venues…
                   </div>
-                ) : (
-                  nestedDestinations && nestedDestinations.length > 0 && (
-                    <NestedDestinations
-                      destinations={nestedDestinations}
-                      parentName={destination.name}
-                      onDestinationClick={(nested) => {
-                        if (nested.slug) {
-                          onClose();
-                          setTimeout(() => {
-                            openDrawer('destination', {
-                              destination: nested,
-                              onVisitToggle: onVisitToggle,
-                              onSaveToggle: onSaveToggle,
-                            });
-                          }, 100);
-                        }
-                      }}
-                    />
-                  )
+                )}
+                {!loadingNested && nestedDestinations && nestedDestinations.length > 0 && (
+                  <NestedDestinations
+                    destinations={nestedDestinations}
+                    parentName={destination.name}
+                    onDestinationClick={(nested) => {
+                      if (nested.slug) {
+                        onClose();
+                        setTimeout(() => {
+                          openDrawer('destination', {
+                            destination: nested,
+                            onVisitToggle: onVisitToggle,
+                            onSaveToggle: onSaveToggle,
+                          });
+                        }, 100);
+                      }
+                    }}
+                  />
                 )}
               </div>
             )}
