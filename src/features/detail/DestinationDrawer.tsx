@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDrawer } from '@/contexts/DrawerContext';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
@@ -195,6 +196,7 @@ function parseTime(timeStr: string): number {
 
 export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle }: DestinationDrawerProps) {
   const { user } = useAuth();
+  const { openDrawer } = useDrawer();
   const router = useRouter();
   const [isMounted, setIsMounted] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -1265,82 +1267,90 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     : undefined;
 
   // Render footer with action buttons (Tier 3 style)
-  const renderFooter = () => (
-    <div className="flex gap-2.5" style={{ gap: '10px' }}>
-      <button
-        onClick={async () => {
-          if (!user) {
-            router.push('/auth/login');
-            return;
-          }
-          if (!isSaved) {
-            setShowSaveModal(true);
-          } else {
-            try {
-              const supabaseClient = createClient();
-              if (!supabaseClient || !destination?.slug) return;
-              const { error } = await supabaseClient
-                .from('saved_places')
-                .delete()
-                .eq('user_id', user.id)
-                .eq('destination_slug', destination.slug);
-              if (!error) {
-                setIsSaved(false);
-                if (onSaveToggle) onSaveToggle(destination.slug, false);
+  const renderFooter = () => {
+    // Show sign in button if user is not authenticated
+    if (!user) {
+      return (
+        <button
+          onClick={() => {
+            openDrawer('login');
+          }}
+          className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+        >
+          Sign in to save and track visits
+        </button>
+      );
+    }
+
+    return (
+      <div className="flex gap-2.5" style={{ gap: '10px' }}>
+        <button
+          onClick={async () => {
+            if (!isSaved) {
+              setShowSaveModal(true);
+            } else {
+              try {
+                const supabaseClient = createClient();
+                if (!supabaseClient || !destination?.slug) return;
+                const { error } = await supabaseClient
+                  .from('saved_places')
+                  .delete()
+                  .eq('user_id', user.id)
+                  .eq('destination_slug', destination.slug);
+                if (!error) {
+                  setIsSaved(false);
+                  if (onSaveToggle) onSaveToggle(destination.slug, false);
+                }
+              } catch (error) {
+                console.error('Error unsaving:', error);
               }
-            } catch (error) {
-              console.error('Error unsaving:', error);
             }
-          }
-        }}
-        className="flex-1 flex items-center justify-center gap-2 transition-all"
-        style={{
-          height: '48px',
-          borderRadius: '24px',
-          fontSize: '15px',
-          fontWeight: 500,
-          backgroundColor: isSaved ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.08)',
-          color: isSaved ? '#000' : '#fff',
-        }}
-      >
-        <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
-        {isSaved ? 'Saved' : 'Save'}
-      </button>
-      <button
-        onClick={() => {
-          if (!user) {
-            router.push('/auth/login');
-            return;
-          }
-          if (isAddedToTrip) return;
-          setShowAddToTripModal(true);
-        }}
-        disabled={isAddedToTrip}
-        className="flex-1 flex items-center justify-center gap-2 transition-all"
-        style={{
-          height: '48px',
-          borderRadius: '24px',
-          fontSize: '15px',
-          fontWeight: 600,
-          backgroundColor: isAddedToTrip ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.92)',
-          color: isAddedToTrip ? 'rgba(34,197,94,1)' : '#000',
-          opacity: isAddedToTrip ? 0.8 : 1,
-        }}
-      >
-        {isAddedToTrip ? (
-          <>
-            <Check className="w-4 h-4" />
-            Added
-          </>
-        ) : (
-          <>
-            <Plus className="w-4 h-4" />
-            Add to Trip
-          </>
-        )}
-      </button>
-    </div>
-  );
+          }}
+          className="flex-1 flex items-center justify-center gap-2 transition-all"
+          style={{
+            height: '48px',
+            borderRadius: '24px',
+            fontSize: '15px',
+            fontWeight: 500,
+            backgroundColor: isSaved ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.08)',
+            color: isSaved ? '#000' : '#fff',
+          }}
+        >
+          <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+          {isSaved ? 'Saved' : 'Save'}
+        </button>
+        <button
+          onClick={() => {
+            if (isAddedToTrip) return;
+            setShowAddToTripModal(true);
+          }}
+          disabled={isAddedToTrip}
+          className="flex-1 flex items-center justify-center gap-2 transition-all"
+          style={{
+            height: '48px',
+            borderRadius: '24px',
+            fontSize: '15px',
+            fontWeight: 600,
+            backgroundColor: isAddedToTrip ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.92)',
+            color: isAddedToTrip ? 'rgba(34,197,94,1)' : '#000',
+            opacity: isAddedToTrip ? 0.8 : 1,
+          }}
+        >
+          {isAddedToTrip ? (
+            <>
+              <Check className="w-4 h-4" />
+              Added
+            </>
+          ) : (
+            <>
+              <Plus className="w-4 h-4" />
+              Add to Trip
+            </>
+          )}
+        </button>
+      </div>
+    );
+  };
 
   return (
     <>
