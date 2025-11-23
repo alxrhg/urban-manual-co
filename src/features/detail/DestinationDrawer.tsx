@@ -30,8 +30,6 @@ import { Drawer } from '@/components/ui/Drawer';
 import { createClient } from '@/lib/supabase/client';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { getDestinationImageUrl, getSafeImageUrl } from '@/lib/destination-images';
-import { useDestinationData } from './useDestinationData';
-import { Loader2, MapPin, Clock, Globe, Phone, Instagram, Bookmark, Share2, Check, ExternalLink, ChevronDown, List, Map, Plus, X, Navigation } from 'lucide-react';
 
 function extractDomain(url: string): string {
   try {

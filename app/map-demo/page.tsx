@@ -7,7 +7,7 @@ import { Destination } from '@/types/destination';
 // Sample destinations for demo
 const sampleDestinations: Destination[] = [
     {
-        id: '1',
+        id: 1,
         slug: 'narisawa',
         name: 'Narisawa',
         city: 'tokyo',
@@ -20,7 +20,7 @@ const sampleDestinations: Destination[] = [
         image: undefined,
     },
     {
-        id: '2',
+        id: 2,
         slug: 'blue-bottle-roppongi',
         name: 'Blue Bottle Coffee',
         city: 'tokyo',
@@ -33,7 +33,7 @@ const sampleDestinations: Destination[] = [
         image: undefined,
     },
     {
-        id: '3',
+        id: 3,
         slug: 'park-hyatt-tokyo',
         name: 'Park Hyatt Tokyo',
         city: 'tokyo',
