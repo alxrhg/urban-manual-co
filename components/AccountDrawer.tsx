@@ -501,33 +501,6 @@ export function AccountDrawer() {
             })}
           </div>
 
-          {/* Quick Actions */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-4 text-center shadow-sm transition hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                <Camera className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-900 dark:text-white">Add photo</p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Personalize</p>
-              </div>
-            </button>
-            <button
-              onClick={openChatDrawer}
-              className="flex flex-col items-center gap-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-4 text-center shadow-sm transition hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                <Share2 className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-gray-900 dark:text-white">Invite</p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">Share</p>
-              </div>
-            </button>
-          </div>
 
           {/* Your Manual Section */}
           <div className="space-y-3">
@@ -805,8 +778,14 @@ export function AccountDrawer() {
             return (
               <button
                 key={trip.id}
-                onClick={() => openTripQuickview(trip.id)}
-                className="w-full flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-950 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200 text-left"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  if (trip.id) {
+                    openTripQuickview(String(trip.id));
+                  }
+                }}
+                className="w-full flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-950 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200 text-left cursor-pointer"
               >
                 {/* Cover Image */}
                 {imageUrl ? (
@@ -1013,7 +992,6 @@ export function AccountDrawer() {
 
     return (
       <div className="relative flex h-full flex-col">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-gray-950/80 via-gray-950/50 to-transparent dark:from-black/80 dark:via-black/40" />
         {renderHeader()}
         <div className="flex-1 overflow-y-auto">{content}</div>
       </div>

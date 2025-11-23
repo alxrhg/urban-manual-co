@@ -128,8 +128,8 @@ export function CookieConsent() {
     personalization: false,
   });
 
+  // Check consent on mount (only once)
   useEffect(() => {
-    // Only check consent once on mount
     if (hasCheckedConsent) return;
 
     let consentTimer: NodeJS.Timeout | null = null;
@@ -155,8 +155,15 @@ export function CookieConsent() {
 
     // Small delay to ensure localStorage/cookies are accessible
     consentTimer = setTimeout(checkConsent, 100);
+    
+    return () => {
+      if (consentTimer) clearTimeout(consentTimer);
+      if (visibilityTimer) clearTimeout(visibilityTimer);
+    };
+  }, [hasCheckedConsent]);
 
-    // Listen for requests to open cookie settings
+  // Always listen for requests to open cookie settings (separate effect)
+  useEffect(() => {
     const handleOpenSettings = () => {
       setIsVisible(true);
       setShowDetails(true);
@@ -166,11 +173,9 @@ export function CookieConsent() {
     window.addEventListener('open-cookie-settings', handleOpenSettings);
     
     return () => {
-      if (consentTimer) clearTimeout(consentTimer);
-      if (visibilityTimer) clearTimeout(visibilityTimer);
       window.removeEventListener('open-cookie-settings', handleOpenSettings);
     };
-  }, [hasCheckedConsent]);
+  }, []); // Empty deps - always active
 
   const savePreferences = (prefs: CookiePreferences) => {
     persistConsent(prefs);

@@ -170,7 +170,7 @@ export function SearchFiltersComponent({
         ) : (
           <SlidersHorizontal className="h-4 w-4" />
         )}
-        <span>Filters</span>
+        <span className="hidden md:inline">Filters</span>
         {hasActiveFilters && (
           <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-black rounded-full">
             {Object.keys(filters).length}

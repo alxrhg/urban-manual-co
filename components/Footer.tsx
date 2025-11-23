@@ -101,20 +101,20 @@ export function Footer() {
 
       {/* Expandable Sitemap */}
       {isSitemapExpanded && (
-        <div className="w-full px-6 md:px-10 lg:px-12 py-8 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+        <div className="w-full px-6 md:px-10 lg:px-12 py-6 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
           <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
               {sitemapSections.map((section, index) => (
                 <div key={index}>
-                  <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-4">
+                  <h2 className="text-xs font-medium text-gray-900 dark:text-white mb-2">
                     {section.title}
                   </h2>
-                  <nav className="space-y-2">
+                  <nav className="space-y-1">
                     {section.links.map((link, linkIndex) => (
                       <Link
                         key={linkIndex}
                         href={link.href}
-                        className="block text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                        className="block text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                       >
                         {link.label}
                       </Link>

@@ -1,12 +1,24 @@
 "use client";
 
 import * as React from 'react';
-import { PlasmicCanvasHost } from '@plasmicapp/loader-nextjs';
-import { PLASMIC } from '../../plasmic-init';
-// Register components when this page loads
-import '@/components/plasmic/register';
+
+// Conditionally import Plasmic only if available
+let PlasmicCanvasHost: any = null;
+let PLASMIC: any = null;
+
+try {
+  const plasmicLoader = require('@plasmicapp/loader-nextjs');
+  PlasmicCanvasHost = plasmicLoader.PlasmicCanvasHost;
+  PLASMIC = require('../../plasmic-init').PLASMIC;
+  require('@/components/plasmic/register');
+} catch (e) {
+  // Plasmic not available, skip
+}
 
 export default function PlasmicHost() {
-  return PLASMIC && <PlasmicCanvasHost />;
+  if (!PLASMIC || !PlasmicCanvasHost) {
+    return null;
+  }
+  return <PlasmicCanvasHost />;
 }
 

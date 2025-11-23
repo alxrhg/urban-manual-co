@@ -2766,7 +2766,15 @@ export default function Home() {
                           />
                           Michelin
                         </button>
-                        {categories.map((category) => {
+                        {categories
+                          .slice()
+                          .sort((a, b) => {
+                            // Always put "others" at the end
+                            if (a.toLowerCase() === 'others') return 1;
+                            if (b.toLowerCase() === 'others') return -1;
+                            return 0;
+                          })
+                          .map((category) => {
                           const IconComponent = getCategoryIcon(category);
                           return (
                             <button

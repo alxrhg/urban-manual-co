@@ -351,7 +351,15 @@ export default function CityPageClient() {
                   >
                     All Categories
                   </button>
-                  {categories.map(category => (
+                  {categories
+                    .slice()
+                    .sort((a, b) => {
+                      // Always put "others" at the end
+                      if (a.toLowerCase() === 'others') return 1;
+                      if (b.toLowerCase() === 'others') return -1;
+                      return 0;
+                    })
+                    .map(category => (
                     <button
                       key={category}
                       onClick={() => handleCategorySelect(category)}

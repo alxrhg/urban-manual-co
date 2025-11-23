@@ -1065,10 +1065,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <button
           onClick={onClose}
-          className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-900"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           aria-label="Close drawer"
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4 text-gray-900 dark:text-white" />
         </button>
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
           {destination.name || 'Destination'}
