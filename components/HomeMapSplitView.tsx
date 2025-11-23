@@ -30,8 +30,9 @@ interface HomeMapSplitViewProps {
 }
 
 const DEFAULT_CENTER = { lat: 23.5, lng: 121.0 };
-const ITEMS_PER_PAGE = 5; // Fixed number of items visible in list
 const LIST_ITEM_HEIGHT = 88; // Approximate height of each list item (76px + gap)
+const MIN_ITEMS_PER_PAGE = 4; // Minimum items to show
+const MAX_ITEMS_PER_PAGE = 6; // Maximum items to show
 
 const formatCountLabel = (count: number) =>
   `${count} ${count === 1 ? 'place' : 'places'}`;
@@ -51,11 +52,52 @@ export default function HomeMapSplitView({
   const listContainerRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const [visibleItems, setVisibleItems] = useState<Set<string>>(new Set());
+  const [itemsPerPage, setItemsPerPage] = useState(MIN_ITEMS_PER_PAGE);
 
-  // Reset page when destinations change
+  // Calculate dynamic items per page based on available height
+  useEffect(() => {
+    const calculateItemsPerPage = () => {
+      if (!listContainerRef.current) return;
+      
+      // Get the container's available height
+      // Account for padding (py-4 = 16px top + 16px bottom = 32px total)
+      const containerHeight = listContainerRef.current.clientHeight - 32;
+      
+      // Calculate how many items can fit
+      const calculatedItems = Math.floor(containerHeight / LIST_ITEM_HEIGHT);
+      
+      // Clamp between min and max
+      const clampedItems = Math.max(
+        MIN_ITEMS_PER_PAGE,
+        Math.min(MAX_ITEMS_PER_PAGE, calculatedItems)
+      );
+      
+      setItemsPerPage(clampedItems);
+    };
+
+    // Calculate on mount and resize
+    calculateItemsPerPage();
+    window.addEventListener('resize', calculateItemsPerPage);
+    
+    // Also recalculate when panel visibility changes
+    const observer = new ResizeObserver(() => {
+      calculateItemsPerPage();
+    });
+    
+    if (listContainerRef.current) {
+      observer.observe(listContainerRef.current);
+    }
+
+    return () => {
+      window.removeEventListener('resize', calculateItemsPerPage);
+      observer.disconnect();
+    };
+  }, [isDesktopPanelCollapsed, isMobilePanelOpen]);
+
+  // Reset page when destinations change or items per page changes
   useEffect(() => {
     setListPage(1);
-  }, [destinations.length]);
+  }, [destinations.length, itemsPerPage]);
 
   // Filter destinations with coordinates for map
   const destinationsWithCoords = useMemo(
@@ -112,10 +154,10 @@ export default function HomeMapSplitView({
     return 8;
   }, [destinationsWithCoords]);
 
-  // Pagination for list
-  const totalListPages = Math.ceil(destinations.length / ITEMS_PER_PAGE);
-  const startIndex = (listPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
+  // Pagination for list - using dynamic items per page
+  const totalListPages = Math.ceil(destinations.length / itemsPerPage);
+  const startIndex = (listPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
   const paginatedDestinations = destinations.slice(startIndex, endIndex);
 
   // Lazy loading: Set up intersection observer for visible items
@@ -346,7 +388,7 @@ export default function HomeMapSplitView({
         <div
           ref={listContainerRef}
           className="flex-1 overflow-y-auto px-5 py-4 space-y-3"
-          style={{ maxHeight: `${ITEMS_PER_PAGE * LIST_ITEM_HEIGHT}px` }}
+          style={{ maxHeight: `${itemsPerPage * LIST_ITEM_HEIGHT}px` }}
         >
           {isLoading && destinations.length === 0 ? (
             <div className="flex items-center justify-center h-full">
