@@ -445,7 +445,7 @@ export default function HomeMapSplitView({
             ? '-translate-x-full opacity-0'
             : 'translate-x-0 opacity-100'
         }`}
-        style={{ zIndex: 10 }}
+        style={{ zIndex: 100, position: 'relative' }}
       >
         {selectedDestination ? (
           renderDestinationDetail()
@@ -494,6 +494,7 @@ export default function HomeMapSplitView({
             ? 'lg:left-[360px]'
             : 'lg:left-0'
         }`}
+        style={{ zIndex: 1 }}
       >
         <MapView
           destinations={destinationsWithCoords}
