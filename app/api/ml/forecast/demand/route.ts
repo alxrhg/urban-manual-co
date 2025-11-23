@@ -8,6 +8,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
+// Track if we've already warned about ML service configuration
+let hasWarnedAboutMLService = false;
+
 /**
  * Check if ML service URL is a localhost/development URL
  * These won't work in production
@@ -28,7 +31,11 @@ export async function GET(request: NextRequest) {
   try {
     // Check if ML service is configured and not localhost
     if (!ML_SERVICE_URL || isLocalhostUrl(ML_SERVICE_URL)) {
-      console.debug('[ML Forecast Demand] ML service not configured or using localhost, returning empty results');
+      // Only log once per process and only in development
+      if (!hasWarnedAboutMLService && process.env.NODE_ENV === 'development') {
+        console.info('[ML Forecast Demand] ML service not configured, using fallback (expected behavior)');
+        hasWarnedAboutMLService = true;
+      }
       return NextResponse.json(
         {
           error: 'ML forecast service is not configured',
