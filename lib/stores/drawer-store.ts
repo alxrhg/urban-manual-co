@@ -18,8 +18,10 @@ export const useDrawerStore = create<DrawerStore>((set) => ({
   props: {},
   openDrawer: (type: string, props = {}) =>
     set({ open: true, type, props, mode: "side" }),
-  openSide: (type: string, props = {}) =>
-    set({ open: true, type, props, mode: "side" }),
+  openSide: (type: string, props = {}) => {
+    console.log('[DrawerStore] openSide called:', { type, props });
+    set({ open: true, type, props, mode: "side" });
+  },
   openFullscreen: (type: string, props = {}) =>
     set({ open: true, type, props, mode: "fullscreen" }),
   closeDrawer: () =>
