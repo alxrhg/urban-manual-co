@@ -656,6 +656,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
         onClose={onClose}
         headerContent={headerContent}
         desktopWidth="600px"
+        zIndex={1200}
       >
         {content}
       </Drawer>
