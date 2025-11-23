@@ -2824,7 +2824,7 @@ export default function Home() {
         )}
 
               {/* Content Section - Grid directly below hero */}
-              <div className="w-full px-6 md:px-10 pb-12 mt-8">
+              <div className="w-full px-6 md:px-10 mt-8">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Mid Nav - Horizontal Row, Right Aligned */}
                 <div className="mb-6">
