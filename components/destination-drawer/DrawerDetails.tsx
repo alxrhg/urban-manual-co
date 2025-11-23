@@ -1,6 +1,6 @@
 'use client';
 
-import { MapPin, Clock, Phone, Globe, DollarSign } from 'lucide-react';
+import { MapPin, Clock, Phone, Globe, DollarSign, Star } from 'lucide-react';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 
 interface DrawerDetailsProps {
