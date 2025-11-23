@@ -3088,7 +3088,7 @@ export default function Home() {
               return (
                   <>
                     {viewMode === "map" ? (
-                      <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                      <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl border border-gray-200 dark:border-gray-800" style={{ overflow: 'visible' }}>
                         <HomeMapSplitView
                           destinations={displayDestinations}
                           selectedDestination={selectedDestination}

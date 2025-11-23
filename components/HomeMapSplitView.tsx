@@ -437,6 +437,7 @@ export default function HomeMapSplitView({
       className="relative h-full w-full"
       role="region"
       aria-label="Homepage map view with destination list"
+      style={{ overflow: 'visible' }}
     >
       {/* Desktop List Panel */}
       <div
