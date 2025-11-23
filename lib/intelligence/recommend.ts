@@ -8,7 +8,7 @@ interface Place {
   [key: string]: any;
 }
 
-interface Recommendation extends Place {
+export interface Recommendation extends Place {
   source: 'curated' | 'google';
   score: number;
 }
