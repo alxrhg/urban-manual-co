@@ -44,8 +44,8 @@ export default function GoogleInteractiveMap({
     const destinationsHash = JSON.stringify(
       destinations
         .filter(d => d.latitude && d.longitude)
-        .map(d => ({ id: d.id, lat: d.latitude, lng: d.longitude }))
-        .sort((a, b) => (a.id || '').localeCompare(b.id || ''))
+        .map(d => ({ id: String(d.id || ''), lat: d.latitude, lng: d.longitude }))
+        .sort((a, b) => a.id.localeCompare(b.id))
     );
 
     // Skip if destinations haven't changed
