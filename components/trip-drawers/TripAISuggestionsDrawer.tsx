@@ -6,8 +6,10 @@ import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
 import { applyAIActions } from '@/lib/intelligence/actionRouter';
 
 interface Suggestion {
-  id: string;
-  text: string;
+  id?: string;
+  text?: string;
+  title?: string;
+  detail?: string;
   actions?: Array<{
     type: 'setMeal' | 'addActivity' | 'assignHotel' | 'reorderDays';
     payload: any;
@@ -44,7 +46,7 @@ function AISuggestionList({ suggestions }: { suggestions?: Suggestion[] }) {
           key={s.id || i}
           className="rounded-xl border border-[var(--um-border)] p-4 space-y-1 bg-white dark:bg-gray-950"
         >
-          <p className="font-medium text-gray-900 dark:text-white">{s.text || s.title || 'Suggestion'}</p>
+          <p className="font-medium text-gray-900 dark:text-white">{s.title || s.text || 'Suggestion'}</p>
           {s.detail && (
             <p className="text-sm text-[var(--um-text-muted)] mt-1">{s.detail}</p>
           )}
