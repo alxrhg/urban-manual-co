@@ -3088,7 +3088,7 @@ export default function Home() {
               return (
                   <>
                     {viewMode === "map" ? (
-                      <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                      <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800" style={{ zIndex: 1 }}>
                         <HomeMapSplitView
                           destinations={displayDestinations}
                           selectedDestination={selectedDestination}
@@ -3102,7 +3102,8 @@ export default function Home() {
                           isLoading={isDestinationsLoading}
                         />
                       </div>
-                    ) : (
+                    ) : null}
+                    {viewMode !== "map" && (
                     (() => {
                   const startIndex = (currentPage - 1) * itemsPerPage;
                   const endIndex = startIndex + itemsPerPage;
