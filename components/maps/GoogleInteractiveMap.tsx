@@ -354,7 +354,7 @@ export default function GoogleInteractiveMap({
   }, [destinations, addMarkers, isLoading]);
 
   return (
-    <div className="w-full h-full relative">
+    <div className="absolute inset-0 w-full h-full">
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 z-10">
           <div className="text-center p-6">
@@ -372,8 +372,8 @@ export default function GoogleInteractiveMap({
       )}
       <div 
         ref={mapRef} 
-        className="w-full h-full"
-        style={{ minHeight: '600px', visibility: isLoading || error ? 'hidden' : 'visible' }}
+        className="absolute inset-0 w-full h-full"
+        style={{ visibility: isLoading || error ? 'hidden' : 'visible' }}
       />
     </div>
   );

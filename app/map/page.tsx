@@ -268,7 +268,7 @@ export default function MapPage() {
       </div>
 
       {/* Content Container - List Panel and Map */}
-      <div className="relative w-full" style={{ height: 'calc(100vh - 112px - 120px)', minHeight: '600px' }}>
+      <div className="relative w-full h-[calc(100vh-112px-120px)] min-h-[600px]">
         {/* List Panel - Left (Desktop) */}
         {showListPanel && (
           <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[380px] bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-10 overflow-y-auto">
@@ -314,7 +314,7 @@ export default function MapPage() {
       )}
 
         {/* Map - Full width with margin for list panel */}
-        <div className={`absolute top-0 bottom-0 right-0 ${showListPanel ? 'md:left-[380px]' : 'left-0'}`}>
+        <div className={`absolute inset-0 ${showListPanel ? 'md:left-[380px]' : 'left-0'}`}>
           <MapView
             destinations={filteredDestinations}
             onMarkerClick={handleMarkerClick}
