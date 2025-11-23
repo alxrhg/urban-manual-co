@@ -32,7 +32,6 @@ export default function TripPage() {
     <div className="max-w-3xl mx-auto px-6 py-14 space-y-16">
       <TripHeader
         trip={{
-          ...trip,
           name: trip.title,
           startDate: formatDate(trip.start_date),
           endDate: formatDate(trip.end_date),
