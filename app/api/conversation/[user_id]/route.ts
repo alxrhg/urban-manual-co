@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase-server';
 import { openai, OPENAI_MODEL } from '@/lib/openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { URBAN_MANUAL_EDITOR_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';
@@ -273,7 +273,16 @@ export async function POST(
 }
 
 /**
+ * Check if a string is a UUID (session ID format)
+ */
+function isUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
+/**
  * GET: Retrieve conversation history
+ * Supports both user_id and session_id (UUID) in the path parameter
  */
 export async function GET(
   _request: NextRequest,
@@ -287,6 +296,36 @@ export async function GET(
     const { data: { user } } = await supabase.auth.getUser();
     const params = await context.params;
     const { user_id } = params || {};
+
+    // Check if the parameter is a UUID (session ID) instead of user_id
+    if (user_id && isUUID(user_id)) {
+      // Try to get session directly by ID
+      const serviceClient = createServiceRoleClient();
+      if (serviceClient) {
+        const { data: session, error: sessionError } = await serviceClient
+          .from('conversation_sessions')
+          .select('id, context, context_summary, session_token, last_activity, user_id')
+          .eq('id', user_id)
+          .maybeSingle();
+
+        if (!sessionError && session) {
+          const messages = await getConversationMessages(session.id, 20);
+          return NextResponse.json({
+            messages,
+            context: session.context || {},
+            context_summary: session.context_summary,
+            session_id: session.id,
+            session_token: session.session_token,
+            last_activity: session.last_activity,
+            user_id: session.user_id,
+          });
+        }
+      }
+      // If session not found by ID, return 404
+      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 });
+    }
+
+    // Otherwise, treat as user_id (existing behavior)
     const userId = normalizeUserId(user?.id || user_id || undefined);
 
     const session = await getOrCreateSession(userId, session_token);
