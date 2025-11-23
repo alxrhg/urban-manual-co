@@ -18,12 +18,22 @@ declare global {
   }
 }
 
+interface GoogleInteractiveMapProps {
+  destinations: Destination[];
+  onMarkerClick?: (destination: Destination) => void;
+  center?: { lat: number; lng: number };
+  zoom?: number;
+  isDark?: boolean;
+  selectedDestination?: Destination | null;
+}
+
 export default function GoogleInteractiveMap({
   destinations,
   onMarkerClick,
   center = { lat: 23.5, lng: 121.0 },
   zoom = 8,
   isDark = true,
+  selectedDestination,
 }: GoogleInteractiveMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);

@@ -10,6 +10,7 @@ interface MapViewProps {
   center?: { lat: number; lng: number };
   zoom?: number;
   isDark?: boolean;
+  selectedDestination?: Destination | null;
 }
 
 export default function MapView({
@@ -18,6 +19,7 @@ export default function MapView({
   center = { lat: 23.5, lng: 121.0 },
   zoom = 8,
   isDark = true,
+  selectedDestination,
 }: MapViewProps) {
   const provider = getDefaultProvider();
 
@@ -39,6 +41,7 @@ export default function MapView({
       center={center}
       zoom={zoom}
       isDark={isDark}
+      selectedDestination={selectedDestination}
     />
   );
 }

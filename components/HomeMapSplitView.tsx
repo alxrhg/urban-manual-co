@@ -501,6 +501,7 @@ export default function HomeMapSplitView({
           }}
           center={mapCenter}
           zoom={mapZoom}
+          selectedDestination={selectedDestination}
         />
       </div>
 
