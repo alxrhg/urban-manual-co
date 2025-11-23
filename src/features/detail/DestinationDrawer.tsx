@@ -30,6 +30,8 @@ import { Drawer } from '@/components/ui/Drawer';
 import { createClient } from '@/lib/supabase/client';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { getDestinationImageUrl, getSafeImageUrl } from '@/lib/destination-images';
+import { useDestinationData } from './useDestinationData';
+import { Loader2, MapPin, Clock, Globe, Phone, Instagram, Bookmark, Share2, Check, ExternalLink, ChevronDown, List, Map, Plus, X, Navigation } from 'lucide-react';
 
 function extractDomain(url: string): string {
   try {
@@ -1352,6 +1354,51 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     );
   };
 
+  // Render nested destinations section
+  const renderNestedDestinations = () => {
+    const hasNestedData = loadingNested || (nestedDestinations && nestedDestinations.length > 0);
+    if (!hasNestedData) return null;
+    
+    return (
+      <div>
+        <div style={{
+          fontSize: '14px',
+          fontWeight: 500,
+          color: 'rgba(255,255,255,0.7)',
+          marginBottom: '12px',
+        }}>
+          Venues located here
+        </div>
+        {loadingNested ? (
+          <div className="flex items-center gap-2" style={{
+            fontSize: '13px',
+            color: 'rgba(255,255,255,0.6)',
+          }}>
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            Loading venues…
+          </div>
+        ) : nestedDestinations && nestedDestinations.length > 0 ? (
+          <NestedDestinations
+            destinations={nestedDestinations}
+            parentName={destination.name}
+            onDestinationClick={(nested) => {
+              if (nested.slug) {
+                onClose();
+                setTimeout(() => {
+                  openDrawer('destination', {
+                    destination: nested,
+                    onVisitToggle: onVisitToggle,
+                    onSaveToggle: onSaveToggle,
+                  });
+                }, 100);
+              }
+            }}
+          />
+        ) : null}
+      </div>
+    );
+  };
+
   return (
     <>
       <Drawer
@@ -1378,10 +1425,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         <div style={{ padding: '28px', maxWidth: '360px', margin: '0 auto' }}>
           {/* Image Gallery */}
           <div className="mb-6 rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100 dark:bg-gray-800 border border-white/5">
-            {drawerImage && !imageError ? (
+            {destination && getDestinationImageUrl(destination) && !imageError ? (
               <div className="relative w-full h-full">
                 <Image
-                  src={drawerImage}
+                  src={getDestinationImageUrl(destination) || ''}
                   alt={destination?.name || 'Destination'}
                   fill
                   className="object-cover"
@@ -2076,51 +2123,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             )}
 
             {/* Nested Destinations */}
-            {(() => {
-              const hasNestedData = loadingNested || (nestedDestinations && nestedDestinations.length > 0);
-              if (!hasNestedData) return null;
-              
-              return (
-                <div>
-                  <div style={{
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: 'rgba(255,255,255,0.7)',
-                    marginBottom: '12px',
-                  }}>
-                    Venues located here
-                  </div>
-                  {loadingNested ? (
-                    <div className="flex items-center gap-2" style={{
-                      fontSize: '13px',
-                      color: 'rgba(255,255,255,0.6)',
-                    }}>
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Loading venues…
-                    </div>
-                  ) : nestedDestinations && nestedDestinations.length > 0 ? (
-                    <NestedDestinations
-                      destinations={nestedDestinations}
-                      parentName={destination.name}
-                      onDestinationClick={(nested) => {
-                        if (nested.slug) {
-                          onClose();
-                          setTimeout(() => {
-                            openDrawer('destination', {
-                              destination: nested,
-                              onVisitToggle: onVisitToggle,
-                              onSaveToggle: onSaveToggle,
-                            });
-                          }, 100);
-                        }
-                      }}
-                    />
-                  ) : null}
-                </div>
-              );
-            })()}
+            {renderNestedDestinations()}
           </div>
-        </div>
       </Drawer>
 
       {/* Save Destination Modal */}

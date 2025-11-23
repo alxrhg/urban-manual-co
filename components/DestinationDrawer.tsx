@@ -481,7 +481,7 @@ export function DestinationDrawer({
               {/* Hero Image */}
               <div className="relative h-64 md:h-80 w-full -mt-4 mb-6">
                 <Image
-                  src={getDestinationImageUrl(destination)}
+                  src={getDestinationImageUrl(destination) || '/placeholder-image.jpg'}
                   alt={destination.name}
                   fill
                   className="object-cover"
@@ -621,7 +621,7 @@ export function DestinationDrawer({
                         <div>
                           <h3 className="font-medium mb-1">Address</h3>
                           <p className="text-gray-600 dark:text-gray-400 text-sm">
-                            {destination.address || `${destination.city}, ${destination.country}`}
+                            {`${destination.city}, ${destination.country || ''}`}
                           </p>
                         </div>
                       </div>
@@ -676,19 +676,13 @@ export function DestinationDrawer({
                   {activeTab === 'map' && (
                     <div className="h-64 md:h-80 rounded-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                       <GoogleMap
-                        center={{
-                          lat: destination.latitude || 0,
-                          lng: destination.longitude || 0
+                        latitude={destination.latitude || 0}
+                        longitude={destination.longitude || 0}
+                        infoWindowContent={{
+                          title: destination.name,
                         }}
-                        zoom={15}
-                        markers={[{
-                          id: destination.id,
-                          position: {
-                            lat: destination.latitude || 0,
-                            lng: destination.longitude || 0
-                          },
-                          title: destination.name
-                        }]}
+                        showInfoWindow={true}
+                        autoOpenInfoWindow={true}
                       />
                     </div>
                   )}
@@ -858,8 +852,9 @@ export function DestinationDrawer({
           <VisitModal
             isOpen={showVisitModal}
             onClose={() => setShowVisitModal(false)}
-            onConfirm={(rating, notes) => handleVisit(rating, notes)}
+            onConfirm={(rating, notes) => handleVisit(rating ?? undefined, notes)}
             destinationName={destination?.name || ''}
+            isCurrentlyVisited={isVisited}
           />
         </>
         );

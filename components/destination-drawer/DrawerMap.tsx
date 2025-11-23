@@ -35,8 +35,12 @@ export function DrawerMap({ latitude, longitude, name, address }: DrawerMapProps
                 <GoogleMap
                     latitude={latitude}
                     longitude={longitude}
-                    name={name}
-                    address={address}
+                    infoWindowContent={{
+                        title: name,
+                        address: address,
+                    }}
+                    showInfoWindow={true}
+                    autoOpenInfoWindow={true}
                 />
             </div>
         </div>

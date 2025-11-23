@@ -12,7 +12,7 @@ export default function UserProfilePage() {
   const params = useParams();
   const router = useRouter();
   const { user: currentUser } = useAuth();
-  const username = params.username as string;
+  const username = params?.username as string;
 
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);

@@ -407,6 +407,13 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [showTripSidebar, setShowTripSidebar] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [sortBy, setSortBy] = useState<"default" | "recent">("default");
+  const [searchTier, setSearchTier] = useState<string | null>(null);
+  const [showAllCities, setShowAllCities] = useState(false);
+  const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
+  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const isAIEnabled = true;
 
   const trackDestinationEngagement = useCallback(
@@ -1093,7 +1100,7 @@ export default function Home() {
       filterDestinations();
       setCurrentPage(1);
     }
-  }, [searchTerm]); // Only depend on searchTerm - checking searching inside effect
+  }, [searchTerm, searching]); // Depend on searchTerm and searching
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -2945,8 +2952,6 @@ export default function Home() {
                                     });
                                   }
                                 }}
-                                index={globalIndex}
-                                isVisited={isVisited}
                                 showBadges={true}
                               />
                             );

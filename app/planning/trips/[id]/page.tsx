@@ -32,7 +32,7 @@ export default function TripDetailPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const tripId = params.id as string;
+  const tripId = params?.id as string;
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [itineraryItems, setItineraryItems] = useState<ItineraryItem[]>([]);

@@ -233,7 +233,7 @@ export default function HomeMapSection({
 
         // Clear existing markers
         markersRef.current.forEach(m => {
-            m.map = null;
+            m.setMap(null);
         });
         markersRef.current = [];
 

@@ -46,7 +46,7 @@ export default function ListDetailPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
-  const listId = params.id as string;
+  const listId = params?.id as string;
 
   const [list, setList] = useState<List | null>(null);
   const [destinations, setDestinations] = useState<Destination[]>([]);

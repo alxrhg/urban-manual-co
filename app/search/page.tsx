@@ -51,7 +51,7 @@ interface SearchState {
 function SearchPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const query = searchParams.get('q') || '';
+  const query = searchParams?.get('q') || '';
   const { user } = useAuth();
 
   const [currentPage, setCurrentPage] = useState(1);

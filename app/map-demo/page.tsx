@@ -17,7 +17,7 @@ const sampleDestinations: Destination[] = [
         michelin_stars: 2,
         crown: true,
         description: 'Innovative Japanese cuisine',
-        image: null,
+        image: undefined,
     },
     {
         id: '2',
@@ -27,10 +27,10 @@ const sampleDestinations: Destination[] = [
         category: 'cafe',
         latitude: 35.6627,
         longitude: 139.7295,
-        michelin_stars: null,
+        michelin_stars: undefined,
         crown: false,
         description: 'Specialty coffee',
-        image: null,
+        image: undefined,
     },
     {
         id: '3',
@@ -40,10 +40,10 @@ const sampleDestinations: Destination[] = [
         category: 'hotel',
         latitude: 35.6852,
         longitude: 139.6917,
-        michelin_stars: null,
+        michelin_stars: undefined,
         crown: true,
         description: 'Luxury hotel in Shinjuku',
-        image: null,
+        image: undefined,
     },
 ];
 

@@ -37,13 +37,13 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
       return;
     }
 
-    const redirect = searchParams.get('redirect') || searchParams.get('returnTo');
+    const redirect = searchParams?.get('redirect') || searchParams?.get('returnTo');
     if (redirect) {
       setReturnTo(redirect);
     }
     
     // Check for OAuth errors from callback
-    const errorParam = searchParams.get('error');
+    const errorParam = searchParams?.get('error');
     if (errorParam) {
       setError(decodeURIComponent(errorParam));
     }
