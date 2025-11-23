@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import TripActions from './TripActions';
 
 interface Trip {
   name?: string;
@@ -15,10 +16,20 @@ interface Trip {
 interface TripHeaderProps {
   trip: Trip;
   onOverview?: () => void;
+  onSave?: () => void;
+  onShare?: () => void;
+  onPrint?: () => void;
   className?: string;
 }
 
-export default function TripHeader({ trip, onOverview, className }: TripHeaderProps) {
+export default function TripHeader({
+  trip,
+  onOverview,
+  onSave,
+  onShare,
+  onPrint,
+  className,
+}: TripHeaderProps) {
   const tripName = trip.name || trip.title || 'Untitled Trip';
   const startDate = trip.startDate || trip.start_date || '';
   const endDate = trip.endDate || trip.end_date || '';
@@ -39,23 +50,12 @@ export default function TripHeader({ trip, onOverview, className }: TripHeaderPr
         </p>
       )}
 
-      <div className="flex gap-2 mt-6">
-        <button className="border border-[var(--um-border)] rounded-full px-4 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors">
-          Save
-        </button>
-        <button className="border border-[var(--um-border)] rounded-full px-4 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors">
-          Share
-        </button>
-        <button className="border border-[var(--um-border)] rounded-full px-4 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors">
-          Print
-        </button>
-        <button
-          className="bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-1.5 text-sm font-medium hover:opacity-90 transition-opacity"
-          onClick={onOverview}
-        >
-          Overview
-        </button>
-      </div>
+      <TripActions
+        onSave={onSave}
+        onShare={onShare}
+        onPrint={onPrint}
+        onOverview={onOverview}
+      />
     </header>
   );
 }

@@ -37,6 +37,18 @@ export default function TripPage() {
           endDate: formatDate(trip.end_date),
         }}
         onOverview={() => openDrawer('trip-overview', { trip })}
+        onSave={() => {
+          // TODO: Implement save functionality
+          console.log('Save trip');
+        }}
+        onShare={() => {
+          // TODO: Implement share functionality
+          console.log('Share trip');
+        }}
+        onPrint={() => {
+          // TODO: Implement print functionality
+          window.print();
+        }}
       />
 
       <section className="space-y-3">
