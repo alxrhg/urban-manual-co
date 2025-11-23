@@ -25,6 +25,7 @@ export interface DrawerProps {
   mobileBorderRadius?: string;
   mobileExpanded?: boolean;
   keepStateOnClose?: boolean;
+  fullScreen?: boolean;
 }
 
 /**
@@ -60,6 +61,7 @@ export function Drawer({
   mobileBorderRadius,
   mobileExpanded = false,
   keepStateOnClose = false,
+  fullScreen = false,
 }: DrawerProps) {
   // Separate refs for each drawer variant to prevent conflicts
   const mobileBottomRef = useRef<HTMLDivElement>(null);
@@ -483,15 +485,21 @@ export function Drawer({
       {/* Desktop Drawer - Large screens (lg+) */}
       <div
         ref={desktopRef}
-        className={`hidden lg:flex fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-out ${
+        className={`hidden lg:flex fixed ${
+          fullScreen 
+            ? 'inset-0 rounded-none' 
+            : `${desktopSpacing} rounded-2xl`
+        } ${backgroundClasses} ${shadowClasses} ${!fullScreen ? borderClasses : ''} z-50 transform transition-transform duration-300 ease-out ${
           isOpen 
             ? 'translate-x-0 opacity-100' 
+            : fullScreen
+            ? 'opacity-0'
             : (position === 'right' ? 'translate-x-[calc(100%+2rem)] opacity-0' : '-translate-x-[calc(100%+2rem)] opacity-0')
         } overflow-hidden flex-col`}
         style={{ 
           zIndex, 
-          width: desktopWidth,
-          maxWidth: 'calc(100vw - 2rem)',
+          width: fullScreen ? '100%' : desktopWidth,
+          maxWidth: fullScreen ? '100%' : 'calc(100vw - 2rem)',
         }}
         role="dialog"
         aria-modal="true"

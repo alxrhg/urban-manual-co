@@ -4,6 +4,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDrawer } from "@/contexts/DrawerContext";
+import { useDrawerStore } from "@/lib/stores/drawer-store";
 import {
   Settings,
   MapPin,
@@ -52,6 +53,7 @@ export function AccountDrawer() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const openSide = useDrawerStore((s) => s.openSide);
   const isOpen = isDrawerOpen("account");
   const [currentSubpage, setCurrentSubpage] = useState<SubpageId>('main_drawer');
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
@@ -509,7 +511,7 @@ export function AccountDrawer() {
               {renderNavItem('Saved places', <Bookmark className="w-4 h-4" />, () => navigateToSubpage('saved_subpage'), `${stats.saved} items`)}
               {renderNavItem('Visited places', <MapPin className="w-4 h-4" />, () => navigateToSubpage('visited_subpage'), `${stats.visited} logged`)}
               {renderNavItem('Lists', <Folder className="w-4 h-4" />, () => navigateToSubpage('collections_subpage'), 'Organize favorites')}
-              {renderNavItem('Trips', <Compass className="w-4 h-4" />, () => navigateToSubpage('trips_subpage'), `${stats.trips} planned`)}
+              {renderNavItem('Trips', <Compass className="w-4 h-4" />, () => openSide('trip-list'), `${stats.trips} planned`)}
               {renderNavItem('Achievements', <Trophy className="w-4 h-4" />, () => navigateToSubpage('achievements_subpage'), 'Milestones and badges')}
             </div>
           </div>

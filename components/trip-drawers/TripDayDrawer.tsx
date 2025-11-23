@@ -36,10 +36,27 @@ export default function TripDayDrawer({ isOpen, onClose, day }: TripDayDrawerPro
   if (!day) return null;
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose}>
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      fullScreen={true}
+      desktopWidth="100vw"
+      desktopSpacing="inset-0"
+      mobileVariant="side"
+      mobileExpanded={true}
+      mobileHeight="100vh"
+    >
       <DrawerHeader
         title={day.date}
         subtitle={day.city}
+        leftAccessory={
+          <button
+            className="text-sm opacity-70 hover:opacity-100 transition-opacity"
+            onClick={onClose}
+          >
+            ←
+          </button>
+        }
       />
 
       <DrawerSection bordered>

@@ -63,8 +63,28 @@ export default function TripAISuggestionsDrawer({
   }
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose}>
-      <DrawerHeader title="AI Suggestions" subtitle="Based on your trip pattern" />
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      fullScreen={true}
+      desktopWidth="100vw"
+      desktopSpacing="inset-0"
+      mobileVariant="side"
+      mobileExpanded={true}
+      mobileHeight="100vh"
+    >
+      <DrawerHeader
+        title="AI Suggestions"
+        subtitle="Based on your trip pattern"
+        leftAccessory={
+          <button
+            className="text-sm opacity-70 hover:opacity-100 transition-opacity"
+            onClick={onClose}
+          >
+            ←
+          </button>
+        }
+      />
 
       <DrawerSection bordered>
         <AISuggestionList suggestions={suggestions} />
