@@ -23,6 +23,12 @@ interface TripCardProps {
 }
 
 export default function TripCard({ trip, onView, onEdit, onDelete }: TripCardProps) {
+  const dateDisplay = trip.startDate && trip.endDate 
+    ? `${trip.startDate} → ${trip.endDate}`
+    : trip.startDate || trip.endDate || null;
+  
+  const metaInfo = [trip.city, dateDisplay].filter(Boolean).join(' • ');
+
   return (
     <UMCard className="p-4 space-y-3">
       {trip.coverImage && (
@@ -37,9 +43,9 @@ export default function TripCard({ trip, onView, onEdit, onDelete }: TripCardPro
 
       <div className="space-y-1">
         <p className="text-[17px] font-semibold">{trip.name}</p>
-        <p className="text-[14px] text-neutral-500">
-          {trip.city} • {trip.startDate} → {trip.endDate}
-        </p>
+        {metaInfo && (
+          <p className="text-[14px] text-neutral-500">{metaInfo}</p>
+        )}
       </div>
 
       {/* ACTION PILL ROW */}
