@@ -5,6 +5,9 @@ import { getFeatureFlags, getABTestVariant } from '@/lib/discovery-engine/featur
 import { withCache, getDiscoveryEngineCache } from '@/lib/discovery-engine/cache';
 import { withPerformanceMonitoring } from '@/lib/discovery-engine/performance';
 
+// Track if we've already warned about Discovery Engine configuration
+let hasWarnedAboutDiscoveryEngine = false;
+
 /**
  * POST /api/search/discovery
  * Search destinations using Google Discovery Engine
@@ -43,14 +46,11 @@ export async function POST(request: NextRequest) {
     if (!isAvailable) {
       // Discovery Engine not configured - return empty results with fallback flag
       // This is expected behavior, not an error
-      console.debug('[Discovery Engine API] Status check:', {
-        isAvailable,
-        useDiscoveryEngine: flags.useDiscoveryEngine,
-        projectId: process.env.DISCOVERY_ENGINE_PROJECT_ID ? 'set' : 'missing',
-        location: process.env.DISCOVERY_ENGINE_LOCATION ? 'set' : 'missing',
-        dataStoreId: process.env.DISCOVERY_ENGINE_DATA_STORE_ID ? 'set' : 'missing',
-      });
-      console.debug('[Discovery Engine API] Discovery Engine is not available - returning empty results (expected fallback)');
+      // Only log once per process and only in development
+      if (!hasWarnedAboutDiscoveryEngine && process.env.NODE_ENV === 'development') {
+        console.info('[Discovery Engine API] Discovery Engine not configured, using fallback (expected behavior)');
+        hasWarnedAboutDiscoveryEngine = true;
+      }
       return NextResponse.json(
         { 
           results: [],
