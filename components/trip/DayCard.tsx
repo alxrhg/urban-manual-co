@@ -121,54 +121,64 @@ export default function DayCard({ day, index, openDrawer, className }: DayCardPr
 
   return (
     <div
-      className={`rounded-3xl border border-gray-200 dark:border-gray-800 p-5 bg-white dark:bg-gray-950 shadow-sm space-y-6 ${
+      className={`bg-white dark:bg-gray-950 rounded-[var(--um-radius-xl)] border border-[var(--um-border)] p-6 space-y-6 ${
         className || ''
       }`}
     >
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-start">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Day {index + 1}</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {day.date} · {day.city}
+          <p className="text-xs tracking-widest text-[var(--um-text-muted)] mb-1 uppercase">
+            DAY {index + 1}
           </p>
+          <h2 className="text-[20px] font-medium text-gray-900 dark:text-white">{day.date}</h2>
+          <p className="text-sm text-[var(--um-text-muted)]">{day.city}</p>
         </div>
 
         <button
-          className="text-sm text-gray-600 dark:text-gray-400 opacity-70 hover:opacity-100 transition-opacity"
+          className="text-xs text-[var(--um-text-muted)] hover:text-gray-900 dark:hover:text-white transition-colors"
           onClick={() => openDrawer('trip-day', { day, dayIndex: index })}
         >
-          Open
+          Edit
         </button>
       </div>
 
       {displayLocations.length > 0 && (
-        <div className="space-y-6">
+        <div className="space-y-10">
           {displayLocations.map((loc, i) => (
             <div key={i}>
-              {loc.image ? (
-                <div className="relative w-full h-44 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                  <Image
-                    src={loc.image}
-                    alt={loc.name || 'Location'}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 600px"
-                  />
-                </div>
-              ) : (
-                <div className="w-full h-44 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <span className="text-gray-400 dark:text-gray-500 text-sm">No image</span>
-                </div>
-              )}
-              <div className="mt-2">
-                <p className="font-medium text-gray-900 dark:text-white">{loc.name || 'Location'}</p>
-                {loc.type && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 capitalize">{loc.type}</p>
+              <div className="flex gap-4 items-center">
+                {loc.image ? (
+                  <div className="relative w-28 h-28 rounded-[20px] overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                    <Image
+                      src={loc.image}
+                      alt={loc.name || 'Location'}
+                      fill
+                      className="object-cover"
+                      sizes="112px"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-28 h-28 rounded-[20px] bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                    <span className="text-gray-400 dark:text-gray-500 text-xs">No image</span>
+                  </div>
                 )}
+
+                <div className="flex-1">
+                  <p className="font-medium text-[17px] leading-tight text-gray-900 dark:text-white">
+                    {loc.name || 'Location'}
+                  </p>
+                  {loc.type && (
+                    <p className="text-sm text-[var(--um-text-muted)] mt-1 capitalize">{loc.type}</p>
+                  )}
+                </div>
               </div>
 
               {i < displayLocations.length - 1 && loc.travelTime && (
-                <TravelBadge minutes={loc.travelTime} />
+                <div className="flex items-center justify-center my-6">
+                  <span className="px-3 py-1 text-xs bg-neutral-50 dark:bg-neutral-900 border border-[var(--um-border)] rounded-full text-[var(--um-text-muted)]">
+                    ⟶ {loc.travelTime} min
+                  </span>
+                </div>
               )}
             </div>
           ))}
@@ -176,13 +186,13 @@ export default function DayCard({ day, index, openDrawer, className }: DayCardPr
       )}
 
       {displayLocations.length === 0 && (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400 text-sm">
+        <div className="text-center py-8 text-[var(--um-text-muted)] text-sm">
           No locations added yet
         </div>
       )}
 
       <button
-        className="w-full border border-gray-200 dark:border-gray-800 rounded-full py-2 mt-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+        className="w-full border border-[var(--um-border)] rounded-full py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
         onClick={() => openDrawer('trip-add-place', { day, dayIndex: index })}
       >
         + Add Location

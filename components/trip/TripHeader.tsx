@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { cn } from '@/lib/utils';
 
 interface Trip {
   name?: string;
@@ -25,36 +24,37 @@ export default function TripHeader({ trip, onOverview, className }: TripHeaderPr
   const endDate = trip.endDate || trip.end_date || '';
 
   return (
-    <header className={cn('space-y-3 pb-6 border-b border-gray-200 dark:border-gray-800', className)}>
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
-            {tripName}
-          </h1>
-          {(startDate || endDate) && (
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {startDate} → {endDate}
-            </p>
-          )}
-        </div>
+    <header className={`pb-10 border-b border-[var(--um-border)] ${className || ''}`}>
+      <p className="text-xs tracking-widest text-[var(--um-text-muted)] mb-2 uppercase">
+        TRIP
+      </p>
 
-        <div className="flex gap-2">
-          <button className="rounded-full border border-gray-200 dark:border-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-            Save
-          </button>
-          <button className="rounded-full border border-gray-200 dark:border-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-            Share
-          </button>
-          <button className="rounded-full border border-gray-200 dark:border-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors">
-            Print
-          </button>
-          <button
-            className="rounded-full bg-black dark:bg-white text-white dark:text-black px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity"
-            onClick={onOverview}
-          >
-            Overview
-          </button>
-        </div>
+      <h1 className="text-[32px] font-[480] tracking-tight mb-1 text-gray-900 dark:text-white">
+        {tripName}
+      </h1>
+
+      {(startDate || endDate) && (
+        <p className="text-[var(--um-text-muted)] text-sm">
+          {startDate} – {endDate}
+        </p>
+      )}
+
+      <div className="flex gap-2 mt-6">
+        <button className="border border-[var(--um-border)] rounded-full px-4 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors">
+          Save
+        </button>
+        <button className="border border-[var(--um-border)] rounded-full px-4 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors">
+          Share
+        </button>
+        <button className="border border-[var(--um-border)] rounded-full px-4 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors">
+          Print
+        </button>
+        <button
+          className="bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-1.5 text-sm font-medium hover:opacity-90 transition-opacity"
+          onClick={onOverview}
+        >
+          Overview
+        </button>
       </div>
     </header>
   );

@@ -19,16 +19,16 @@ export default function SuggestionCard({
 }: SuggestionCardProps) {
   return (
     <div
-      className={`rounded-2xl border border-gray-200 dark:border-gray-800 p-4 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer ${
+      className={`rounded-[var(--um-radius-lg)] border border-[var(--um-border)] p-5 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer ${
         className || ''
       }`}
       onClick={onClick}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex gap-3 items-start">
         <div className="text-xl">{icon}</div>
         <div className="flex-1">
-          <h3 className="font-medium text-base text-gray-900 dark:text-white">{title}</h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{detail}</p>
+          <h3 className="font-[500] text-[16px] text-gray-900 dark:text-white">{title}</h3>
+          <p className="text-sm text-[var(--um-text-muted)] mt-1">{detail}</p>
         </div>
       </div>
     </div>
