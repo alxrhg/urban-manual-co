@@ -27,9 +27,31 @@ interface TripAISuggestionsDrawerProps {
   onApply?: (updatedTrip: Trip) => void;
 }
 
-// Placeholder component - to be implemented
+// AI Suggestion List Component
 function AISuggestionList({ suggestions }: { suggestions?: Suggestion[] }) {
-  return <div>AI Suggestions: {suggestions?.length || 0}</div>;
+  if (!suggestions || suggestions.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-sm text-[var(--um-text-muted)]">No suggestions available</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6 overflow-y-auto max-h-[calc(100vh-200px)]">
+      {suggestions.map((s, i) => (
+        <div
+          key={s.id || i}
+          className="rounded-xl border border-[var(--um-border)] p-4 space-y-1 bg-white dark:bg-gray-950"
+        >
+          <p className="font-medium text-gray-900 dark:text-white">{s.text || s.title || 'Suggestion'}</p>
+          {s.detail && (
+            <p className="text-sm text-[var(--um-text-muted)] mt-1">{s.detail}</p>
+          )}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function TripAISuggestionsDrawer({
@@ -75,7 +97,7 @@ export default function TripAISuggestionsDrawer({
     >
       <DrawerHeader
         title="AI Suggestions"
-        subtitle="Based on your trip pattern"
+        subtitle="Based on your trip activity"
         leftAccessory={
           <button
             className="text-sm opacity-70 hover:opacity-100 transition-opacity"
@@ -86,16 +108,14 @@ export default function TripAISuggestionsDrawer({
         }
       />
 
-      <DrawerSection bordered>
-        <AISuggestionList suggestions={suggestions} />
-      </DrawerSection>
+      <AISuggestionList suggestions={suggestions} />
 
       <DrawerActionBar>
         <button
-          className="bg-black text-white rounded-full px-4 py-2"
+          className="w-full bg-black dark:bg-white text-white dark:text-black rounded-xl py-3 font-medium text-sm hover:opacity-90 transition-opacity"
           onClick={handleApply}
         >
-          Apply Changes
+          Apply Suggestions
         </button>
       </DrawerActionBar>
     </Drawer>

@@ -44,7 +44,7 @@ export default function DrawerMount() {
         {...props}
       />
       <TripAddPlaceDrawer isOpen={type === 'trip-add-place'} onClose={closeDrawer} day={props.day || null} {...props} />
-      <PlaceSelectorDrawer isOpen={type === 'place-selector'} onClose={closeDrawer} day={props.day || null} trip={props.trip || null} />
+      <PlaceSelectorDrawer isOpen={type === 'place-selector'} onClose={closeDrawer} day={props.day || null} trip={props.trip || null} mealType={props.mealType} />
       <TripAddHotelDrawer isOpen={type === 'trip-add-hotel'} onClose={closeDrawer} day={props.day || null} {...props} />
       <TripAISuggestionsDrawer
         isOpen={type === 'trip-ai'}

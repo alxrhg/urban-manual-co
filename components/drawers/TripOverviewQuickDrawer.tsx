@@ -88,6 +88,7 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
       style="solid"
       backdropOpacity="15"
       keepStateOnClose={true}
+      fullScreen={false}
     >
       <DrawerHeader
         title={tripName}

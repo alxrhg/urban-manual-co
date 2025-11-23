@@ -72,7 +72,7 @@ export default function TripPage() {
         <div className="space-y-8">
           {trip.days && trip.days.length > 0 ? (
             trip.days.map((day, i) => (
-              <DayCard key={i} day={day} index={i} openDrawer={openDrawer} />
+              <DayCard key={i} day={day} index={i} openDrawer={openDrawer} trip={trip} />
             ))
           ) : (
             <div className="text-center py-12 text-[var(--um-text-muted)] text-sm">

@@ -33,10 +33,11 @@ interface DayCardProps {
   day: Day;
   index: number;
   openDrawer: (type: string, props: any) => void;
+  trip?: any;
   className?: string;
 }
 
-export default function DayCard({ day, index, openDrawer, className }: DayCardProps) {
+export default function DayCard({ day, index, openDrawer, trip, className }: DayCardProps) {
   // Combine meals and activities into locations array
   const locations: Location[] = [];
 
@@ -147,8 +148,8 @@ export default function DayCard({ day, index, openDrawer, className }: DayCardPr
         </div>
 
         <button
-          className="text-xs text-[var(--um-text-muted)] hover:text-gray-900 dark:hover:text-white transition-colors"
-          onClick={() => openDrawer('trip-day', { day, dayIndex: index })}
+          className="text-sm text-[var(--um-text-muted)] hover:text-gray-900 dark:hover:text-white transition-colors"
+          onClick={() => openDrawer('trip-day', { day, dayIndex: index, trip })}
         >
           Edit
         </button>

@@ -21,21 +21,22 @@ interface PlaceSelectorDrawerProps {
   onClose: () => void;
   day: Day | null;
   trip: Trip | null;
+  mealType?: string;
 }
 
 // Placeholder component - to be implemented
-function PlaceSelectorContent({ day, trip }: { day: Day; trip: Trip | null }) {
+function PlaceSelectorContent({ day, trip, mealType }: { day: Day; trip: Trip | null; mealType?: string }) {
   return (
     <DrawerSection>
       <p className="text-sm text-[var(--um-text-muted)]">
-        Place selector for {day.date} in {day.city}
+        {mealType ? `Add ${mealType}` : 'Add Place'} for {day.date} in {day.city}
       </p>
       {/* TODO: Implement place selector UI */}
     </DrawerSection>
   );
 }
 
-export default function PlaceSelectorDrawer({ isOpen, onClose, day, trip }: PlaceSelectorDrawerProps) {
+export default function PlaceSelectorDrawer({ isOpen, onClose, day, trip, mealType }: PlaceSelectorDrawerProps) {
   const isMobile = useIsMobile();
 
   if (!day) return null;
@@ -52,7 +53,7 @@ export default function PlaceSelectorDrawer({ isOpen, onClose, day, trip }: Plac
       mobileHeight={isMobile ? "100vh" : undefined}
     >
       <DrawerHeader
-        title="Add Place"
+        title={mealType ? `Add ${mealType}` : 'Add Place'}
         subtitle={day.date}
         leftAccessory={
           <button
@@ -64,7 +65,7 @@ export default function PlaceSelectorDrawer({ isOpen, onClose, day, trip }: Plac
         }
       />
 
-      <PlaceSelectorContent day={day} trip={trip} />
+      <PlaceSelectorContent day={day} trip={trip} mealType={mealType} />
     </Drawer>
   );
 }
