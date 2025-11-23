@@ -76,18 +76,34 @@ export default function GoogleInteractiveMap({
         content: pinElement,
       });
 
-      // Create info window content
+      // Create info window content with image
+      const imageUrl = dest.image_thumbnail || dest.image || '';
+      const imageHtml = imageUrl 
+        ? `<div style="width: 100%; height: 160px; overflow: hidden; border-radius: 8px 8px 0 0; margin: -12px -12px 12px -12px; background: #f5f5f5;">
+            <img src="${imageUrl}" alt="${dest.name || 'Destination'}" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+          </div>`
+        : '';
+      
       const infoWindow = new google.maps.InfoWindow({
         content: `
-          <div style="padding: 12px; min-width: 200px; font-family: system-ui, -apple-system, sans-serif;">
-            <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1a1a1a;">
-              ${dest.name || 'Destination'}
-            </h3>
-            ${dest.category ? `<p style="margin: 0 0 4px 0; font-size: 13px; color: #666;">${dest.category}</p>` : ''}
-            ${dest.city ? `<p style="margin: 4px 0; font-size: 12px; color: #888;">${dest.city}</p>` : ''}
-            ${dest.rating ? `<div style="margin: 6px 0 0 0; font-size: 12px; color: #666;">⭐ ${dest.rating.toFixed(1)}</div>` : ''}
+          <div style="min-width: 280px; max-width: 320px; font-family: system-ui, -apple-system, sans-serif; overflow: hidden;">
+            ${imageHtml}
+            <div style="padding: 0 12px 12px 12px;">
+              <h3 style="margin: 0 0 6px 0; font-size: 16px; font-weight: 600; color: #1a1a1a; line-height: 1.3;">
+                ${dest.name || 'Destination'}
+              </h3>
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap;">
+                ${dest.category ? `<span style="font-size: 12px; color: #666; background: #f5f5f5; padding: 4px 8px; border-radius: 4px; font-weight: 500;">${dest.category}</span>` : ''}
+                ${dest.city ? `<span style="font-size: 12px; color: #888;">${dest.city}</span>` : ''}
+              </div>
+              ${dest.rating ? `<div style="display: flex; align-items: center; gap: 4px; font-size: 13px; color: #1a1a1a; font-weight: 500;">
+                <span style="font-size: 14px;">⭐</span>
+                <span>${dest.rating.toFixed(1)}</span>
+              </div>` : ''}
+            </div>
           </div>
         `,
+        maxWidth: 320,
       });
 
       // Add click listener
