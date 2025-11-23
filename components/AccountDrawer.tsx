@@ -54,6 +54,8 @@ export function AccountDrawer() {
   const { user, signOut } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
   const openSide = useDrawerStore((s) => s.openSide);
+  // Get the store directly for debugging
+  const drawerStore = useDrawerStore.getState ? useDrawerStore : null;
   const isOpen = isDrawerOpen("account");
   const [currentSubpage, setCurrentSubpage] = useState<SubpageId>('main_drawer');
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
@@ -513,11 +515,18 @@ export function AccountDrawer() {
               {renderNavItem('Lists', <Folder className="w-4 h-4" />, () => navigateToSubpage('collections_subpage'), 'Organize favorites')}
               {renderNavItem('Trips', <Compass className="w-4 h-4" />, () => {
                 console.log('[AccountDrawer] Opening trip list drawer');
-                // Close Account Drawer (uses DrawerContext)
+                // Close Account Drawer (uses DrawerContext) first
                 closeDrawer();
-                // Open Trip List Drawer (uses drawer store) - no delay needed as they're independent
-                openSide('trip-list');
-                console.log('[AccountDrawer] Called openSide("trip-list")');
+                // Small delay to ensure Account Drawer closes before opening Trip List Drawer
+                setTimeout(() => {
+                  console.log('[AccountDrawer] Calling openSide("trip-list")');
+                  openSide('trip-list');
+                  // Double-check the store state after a brief moment
+                  setTimeout(() => {
+                    const store = useDrawerStore.getState();
+                    console.log('[AccountDrawer] Drawer store state after openSide:', store);
+                  }, 100);
+                }, 150);
               }, `${stats.trips} planned`)}
               {renderNavItem('Achievements', <Trophy className="w-4 h-4" />, () => navigateToSubpage('achievements_subpage'), 'Milestones and badges')}
             </div>
