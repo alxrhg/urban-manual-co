@@ -445,7 +445,7 @@ export default function HomeMapSplitView({
             ? '-translate-x-full opacity-0'
             : 'translate-x-0 opacity-100'
         }`}
-        style={{ zIndex: 100, position: 'relative' }}
+        style={{ zIndex: 100 }}
       >
         {selectedDestination ? (
           renderDestinationDetail()
