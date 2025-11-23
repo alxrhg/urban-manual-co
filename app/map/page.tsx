@@ -122,13 +122,17 @@ export default function MapPage() {
     return filtered;
   }, [destinations, filters]);
 
-  // Calculate map center from filtered destinations
+  // Calculate map center from filtered destinations, but only if there are destinations
+  // Otherwise keep Taiwan center
   useEffect(() => {
     const destinationsWithCoords = filteredDestinations.filter(d => d.latitude && d.longitude);
     if (destinationsWithCoords.length > 0) {
       const avgLat = destinationsWithCoords.reduce((sum, d) => sum + (d.latitude || 0), 0) / destinationsWithCoords.length;
       const avgLng = destinationsWithCoords.reduce((sum, d) => sum + (d.longitude || 0), 0) / destinationsWithCoords.length;
       setMapCenter({ lat: avgLat, lng: avgLng });
+    } else {
+      // Reset to Taiwan center if no destinations
+      setMapCenter({ lat: 23.5, lng: 121.0 });
     }
   }, [filteredDestinations]);
 

@@ -150,8 +150,24 @@ export default function GoogleInteractiveMap({
       if (markersRef.current.length === 1) {
         const listener = google.maps.event.addListener(mapInstanceRef.current, 'bounds_changed', () => {
           if (mapInstanceRef.current) {
-            if (mapInstanceRef.current.getZoom()! > 15) {
+            const currentZoom = mapInstanceRef.current.getZoom() || 8;
+            if (currentZoom > 15) {
               mapInstanceRef.current.setZoom(15);
+            }
+            // Ensure minimum zoom to prevent grey areas
+            if (currentZoom < 3) {
+              mapInstanceRef.current.setZoom(3);
+            }
+            google.maps.event.removeListener(listener);
+          }
+        });
+      } else {
+        // Ensure minimum zoom after fitBounds to prevent grey areas
+        const listener = google.maps.event.addListener(mapInstanceRef.current, 'bounds_changed', () => {
+          if (mapInstanceRef.current) {
+            const currentZoom = mapInstanceRef.current.getZoom() || 8;
+            if (currentZoom < 3) {
+              mapInstanceRef.current.setZoom(3);
             }
             google.maps.event.removeListener(listener);
           }
@@ -181,11 +197,22 @@ export default function GoogleInteractiveMap({
       const mapOptions: google.maps.MapOptions = {
         center: { lat: center.lat, lng: center.lng },
         zoom: zoom,
+        minZoom: 3, // Prevent zooming out too much to avoid grey areas
+        maxZoom: 20,
         disableDefaultUI: false,
         zoomControl: true,
         mapTypeControl: false,
         streetViewControl: false,
         fullscreenControl: true,
+        restriction: {
+          latLngBounds: {
+            north: 85,
+            south: -85,
+            east: 180,
+            west: -180,
+          },
+          strictBounds: false, // Allow slight overflow for better UX
+        },
       };
 
       // Only set mapId if available, otherwise use styles
