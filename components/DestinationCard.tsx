@@ -87,7 +87,7 @@ export const DestinationCard = memo(function DestinationCard({
             bg-gray-100 dark:bg-gray-800
             border border-gray-200 dark:border-gray-800
             transition-all duration-300 ease-out
-            mb-3
+            mb-4
             ${isLoaded ? 'opacity-100' : 'opacity-0'}
             ${showEditAffordance ? 'ring-1 ring-black/10 dark:ring-white/10' : ''}
           `}

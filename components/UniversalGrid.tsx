@@ -35,7 +35,7 @@ export const UniversalGrid = memo(function UniversalGrid<T>({
 }: UniversalGridProps<T>) {
   const gapClasses = {
     sm: 'gap-4 md:gap-5',
-    md: 'gap-5 md:gap-7 lg:gap-8',
+    md: 'gap-x-8 gap-y-10',
     lg: 'gap-6 md:gap-8 lg:gap-10',
   };
 

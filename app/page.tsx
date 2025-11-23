@@ -2332,7 +2332,7 @@ export default function Home() {
           The Urban Manual
         </h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
+        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-8">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
@@ -2631,14 +2631,14 @@ export default function Home() {
                     {/* City List - Only shows Taipei, Tokyo, New York, and London */}
                     <div className="mb-[50px]">
                       {/* City Buttons */}
-                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                      <div className="flex flex-wrap gap-x-3 gap-y-5 text-xs">
                         <button
                           onClick={() => {
                             setSelectedCity("");
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'city', value: 'all' });
                           }}
-                          className={`transition-all duration-200 ease-out ${
+                          className={`px-4 py-3 transition-all duration-200 ease-out ${
                             !selectedCity
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -2655,7 +2655,7 @@ export default function Home() {
                               setCurrentPage(1);
                               trackFilterChange({ filterType: 'city', value: newCity || 'all' });
                             }}
-                            className={`transition-all duration-200 ease-out ${
+                            className={`px-4 py-3 transition-all duration-200 ease-out ${
                               selectedCity === city
                                 ? "font-medium text-black dark:text-white"
                                 : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -2691,7 +2691,7 @@ export default function Home() {
                     
                     {/* Category List (including Michelin) */}
                     {categories.length > 0 && (
-                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                      <div className="flex flex-wrap gap-x-3 gap-y-5 text-xs mt-8">
                         <button
                           onClick={() => {
                             setSelectedCategory("");
@@ -2699,7 +2699,7 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'category', value: 'all' });
                           }}
-                          className={`transition-all duration-200 ease-out ${
+                          className={`px-4 py-3 transition-all duration-200 ease-out ${
                             !selectedCategory && !advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -2716,7 +2716,7 @@ export default function Home() {
                             setCurrentPage(1);
                             trackFilterChange({ filterType: 'michelin', value: newValue });
                           }}
-                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                          className={`px-4 py-3 flex items-center gap-1.5 transition-all duration-200 ease-out ${
                             advancedFilters.michelin
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -2751,7 +2751,7 @@ export default function Home() {
                                 setCurrentPage(1);
                                 trackFilterChange({ filterType: 'category', value: newCategory || 'all' });
                               }}
-                              className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                              className={`px-4 py-3 flex items-center gap-1.5 transition-all duration-200 ease-out ${
                                 selectedCategory === category && !advancedFilters.michelin
                                   ? "font-medium text-black dark:text-white"
                                   : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
@@ -3243,13 +3243,13 @@ export default function Home() {
                       if (totalPages <= 1) return null;
 
                       return (
-                        <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-2 mx-auto">
+                        <div className="mt-12 w-full flex flex-wrap items-center justify-center gap-6 mx-auto">
                           <button
                             onClick={() =>
                               setCurrentPage(prev => Math.max(1, prev - 1))
                             }
                             disabled={currentPage === 1}
-                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="px-[18px] py-3 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             aria-label="Previous page"
                           >
                             <svg
@@ -3288,7 +3288,7 @@ export default function Home() {
                                   <button
                                     key={pageNum}
                                     onClick={() => setCurrentPage(pageNum)}
-                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
+                                    className={`px-[18px] py-3 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
                                       isActive
                                         ? "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium"
                                         : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
@@ -3310,7 +3310,7 @@ export default function Home() {
                               )
                             }
                             disabled={currentPage === totalPages}
-                            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                            className="px-[18px] py-3 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                             aria-label="Next page"
                           >
                             <svg
