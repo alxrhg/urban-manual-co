@@ -191,7 +191,7 @@ export function SearchFiltersComponent({
                 createPortal(
                   <>
                     {/* Full-width panel attached under top controls, pushes content below */}
-                    <div className="mt-4 w-full overflow-hidden rounded-3xl bg-white shadow-[0_24px_70px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out animate-in fade-in slide-in-from-top-2 dark:bg-gray-900">
+                    <div className="mt-4 w-full overflow-hidden bg-white transition-all duration-300 ease-out animate-in fade-in slide-in-from-top-2 dark:bg-gray-900">
                   <div className="w-full px-4 py-4 sm:px-5 md:px-6 md:py-5">
                     <div className="mx-auto max-w-[1800px] space-y-4">
                       {/* Header */}
