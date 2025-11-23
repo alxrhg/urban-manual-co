@@ -1444,13 +1444,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
 
             {/* Action Row - Pill Buttons */}
-            <div className="flex items-center gap-2 mt-4 flex-wrap">
+            <div className="grid grid-cols-4 gap-3 mt-4">
               {/* Save Button with Dropdown */}
               {isMounted && (
                 <DropdownMenu open={showSaveDropdown} onOpenChange={setShowSaveDropdown}>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-center gap-1.5"
                       onClick={(e) => {
                         if (!user) {
                           e.preventDefault();
@@ -1526,20 +1526,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </DropdownMenu>
               )}
 
-              <button
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                onClick={handleShare}
-              >
-                <Share2 className="h-3 w-3" />
-                {copied ? 'Copied!' : 'Share'}
-              </button>
-
               {/* Visited Button with Dropdown */}
-              {user && isMounted && (
+              {user && isMounted ? (
                 <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                      className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 ${
                         isVisited
                           ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
                           : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -1553,7 +1545,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       }}
                     >
                       <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
-                      {isVisited ? 'Visited' : 'Mark Visited'}
+                      <span>{isVisited ? 'Visited' : 'Mark Visited'}</span>
                       {isVisited && <ChevronDown className="h-3 w-3 ml-0.5" />}
                     </button>
                   </DropdownMenuTrigger>
@@ -1576,22 +1568,41 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     </DropdownMenuContent>
                   )}
                 </DropdownMenu>
+              ) : (
+                <div className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-400 dark:text-gray-600 flex items-center justify-center gap-1.5 opacity-50">
+                  <Check className="h-3 w-3" />
+                  <span>Mark Visited</span>
+                </div>
               )}
 
-              {destination.slug && destination.slug.trim() ? (
-                <Link
-                  href={`/destination/${destination.slug}`}
+              <button
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-center gap-1.5"
+                onClick={handleShare}
+              >
+                <Share2 className="h-3 w-3" />
+                <span>{copied ? 'Copied!' : 'Share'}</span>
+              </button>
+
+              {/* Directions Button */}
+              {directionsUrl ? (
+                <a
+                  href={directionsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
+                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-center gap-1.5"
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
                 >
-                  <ExternalLink className="h-3 w-3" />
-                  View Full Page
-                </Link>
-              ) : null}
+                  <Navigation className="h-3 w-3" />
+                  <span>Directions</span>
+                </a>
+              ) : (
+                <div className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-400 dark:text-gray-600 flex items-center justify-center gap-1.5 opacity-50">
+                  <Navigation className="h-3 w-3" />
+                  <span>Directions</span>
+                </div>
+              )}
             </div>
 
             {/* Highlight Tags */}
