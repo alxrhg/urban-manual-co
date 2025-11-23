@@ -159,7 +159,7 @@ export default function GreetingHero({
       <div className="w-full relative">
         {/* Greeting above search - Step One spec: "GOOD MORNING, {{user_name}}" */}
         {showGreeting && (
-          <div className="text-left mb-8">
+          <div className="text-left mb-[50px]">
             <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
               {(() => {
                 const now = new Date();
@@ -175,7 +175,7 @@ export default function GreetingHero({
         )}
 
         {/* Borderless Text Input - Lovably style (no icon, no border, left-aligned) */}
-        <div className="relative mb-10">
+        <div className="relative mb-[50px]">
           {isSearching && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 z-10">
               <Loader2 className="w-4 h-4 animate-spin" />
