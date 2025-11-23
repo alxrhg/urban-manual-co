@@ -44,11 +44,11 @@ export async function POST(request: NextRequest) {
     const isAvailable = discoveryEngine.isAvailable();
     
     if (!isAvailable) {
-      // Discovery Engine not configured - return empty results with fallback flag
-      // This is expected behavior, not an error
-      // Only log once per process and only in development
-      if (!hasWarnedAboutDiscoveryEngine && process.env.NODE_ENV === 'development') {
-        console.info('[Discovery Engine API] Discovery Engine not configured, using fallback (expected behavior)');
+      // Discovery Engine is the primary search feature and must be configured
+      // Log error in all environments to ensure configuration is noticed
+      if (!hasWarnedAboutDiscoveryEngine) {
+        console.error('[Discovery Engine API] ERROR: Discovery Engine is not configured. This is the primary search feature and must be set up.');
+        console.error('[Discovery Engine API] Required environment variables: GOOGLE_CLOUD_PROJECT_ID, DISCOVERY_ENGINE_DATA_STORE_ID, and Google Cloud credentials');
         hasWarnedAboutDiscoveryEngine = true;
       }
       return NextResponse.json(
@@ -56,11 +56,12 @@ export async function POST(request: NextRequest) {
           results: [],
           totalSize: 0,
           query,
-          source: 'fallback',
+          source: 'error',
           fallback: true,
-          message: 'Discovery Engine is not configured. Please use Supabase search fallback.',
+          error: 'Discovery Engine not configured',
+          message: 'Discovery Engine is the primary search feature and must be configured. Please set up Google Cloud Discovery Engine.',
         },
-        { status: 200 }
+        { status: 503 }
       );
     }
 
@@ -160,7 +161,7 @@ export async function POST(request: NextRequest) {
         source: 'fallback',
         fallback: true,
         error: 'Search failed',
-        message: 'An error occurred while searching. Please try again or use the fallback search.',
+        message: 'Discovery Engine search failed. This is the primary search feature.',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
       { status: 200 }
@@ -195,18 +196,19 @@ export async function GET(request: NextRequest) {
     const discoveryEngine = getDiscoveryEngineService();
 
     if (!discoveryEngine.isAvailable()) {
-      // Discovery Engine not configured - return empty results with fallback flag
-      // This is expected behavior, not an error
+      // Discovery Engine is the primary search feature and must be configured
+      console.error('[Discovery Engine API] ERROR: Discovery Engine is not configured. This is the primary search feature and must be set up.');
       return NextResponse.json(
         { 
           results: [],
           totalSize: 0,
           query,
-          source: 'fallback',
+          source: 'error',
           fallback: true,
-          message: 'Discovery Engine is not configured. Please use Supabase search fallback.',
+          error: 'Discovery Engine not configured',
+          message: 'Discovery Engine is the primary search feature and must be configured. Please set up Google Cloud Discovery Engine.',
         },
-        { status: 200 }
+        { status: 503 }
       );
     }
 
@@ -273,7 +275,7 @@ export async function GET(request: NextRequest) {
         source: 'fallback',
         fallback: true,
         error: 'Search failed',
-        message: 'An error occurred while searching. Please try again or use the fallback search.',
+        message: 'Discovery Engine search failed. This is the primary search feature.',
         details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       },
       { status: 200 }
