@@ -986,7 +986,7 @@ async function processAIChatRequest(
 
                 // Enrich results with additional data (photos, weather, routes, events) BEFORE reranking
                 // Optimized: Only enrich top 3 results for better performance
-                const topResults = results.slice(0, 3); // Reduced from 10 to 3
+                const topResults = results.slice(0, 10); // Increased to 10 for better enrichment coverage
                 const slugsToEnrich = topResults.map((dest: any) => dest.slug);
 
                 let enrichmentDataMap = new Map();
@@ -1052,7 +1052,7 @@ async function processAIChatRequest(
 
                 // Combine reranked enriched results with remaining unenriched results
                 // This maintains performance while still showing all results
-                const remainingResults = results.slice(3); // Updated from 10 to 3
+                const remainingResults = results.slice(10); // Get remaining results after top 10 enriched ones
                 const limitedResults = [...rerankedResults, ...remainingResults];
 
                 // Generate intelligent response with enriched context

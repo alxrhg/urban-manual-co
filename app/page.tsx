@@ -2507,8 +2507,13 @@ export default function Home() {
                               <button
                                 key={idx}
                                 onClick={() => {
-                                  setSearchTerm(suggestion.text);
-                                  performAISearch(suggestion.text);
+                                  // Continue conversation by appending suggestion to existing query context
+                                  // This allows users to keep filtering down instead of starting fresh
+                                  const continuationQuery = submittedQuery 
+                                    ? `${submittedQuery} ${suggestion.text}`
+                                    : suggestion.text;
+                                  setSearchTerm(continuationQuery);
+                                  performAISearch(continuationQuery);
                                 }}
                                 className="px-3 py-1.5 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                               >
