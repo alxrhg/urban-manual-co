@@ -4,9 +4,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
-import { getConversationMessages } from '../utils/contextHandler';
 import { createServiceRoleClient } from '@/lib/supabase-server';
+import { getConversationMessages } from '../../utils/contextHandler';
 
 /**
  * GET: Retrieve conversation history by session ID
