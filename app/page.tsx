@@ -38,7 +38,7 @@ const DestinationDrawer = dynamic(
 import { useAuth } from "@/contexts/AuthContext";
 import { useDrawer } from "@/contexts/DrawerContext";
 import dynamic from "next/dynamic";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSequenceTracker } from "@/hooks/useSequenceTracker";
 import Image from "next/image";
@@ -399,7 +399,6 @@ export default function Home() {
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const { openDrawer } = useDrawer();
-  const searchParams = useSearchParams();
 
   // State
   const [displayDestinations, setDisplayDestinations] = useState<Destination[]>([]);
