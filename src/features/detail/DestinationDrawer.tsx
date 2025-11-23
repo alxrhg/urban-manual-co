@@ -1247,7 +1247,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         style="glassy"
         backdropOpacity="18"
         keepStateOnClose={true}
-        zIndex={100}
+        zIndex={9999}
         headerContent={headerContent}
         footerContent={
           <>
