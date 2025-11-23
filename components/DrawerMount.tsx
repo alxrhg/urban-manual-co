@@ -21,12 +21,14 @@ export default function DrawerMount() {
 
   return (
     <>
-      <AccountDrawer isOpen={type === 'account'} onClose={closeDrawer} {...props} />
-      <DestinationDrawer isOpen={type === 'destination'} onClose={closeDrawer} place={props.place || null} {...props} />
+      {/* Legacy drawers that use their own drawer context - no props needed */}
+      <AccountDrawer />
       <TripsDrawer />
       <SavedPlacesDrawer />
       <VisitedPlacesDrawer />
 
+      {/* New drawers that use the global drawer store */}
+      <DestinationDrawer isOpen={type === 'destination'} onClose={closeDrawer} place={props.place || null} {...props} />
       <TripOverviewDrawer isOpen={type === 'trip-overview'} onClose={closeDrawer} trip={props.trip || null} {...props} />
       <TripDayDrawer isOpen={type === 'trip-day'} onClose={closeDrawer} day={props.day || null} {...props} />
       <TripAddMealDrawer
