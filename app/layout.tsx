@@ -16,6 +16,7 @@ import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
+import DrawerMount from "@/components/DrawerMount";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -203,6 +204,7 @@ export default function RootLayout({
                         </main>
                         <Footer />
                         <CookieConsent />
+                        <DrawerMount />
                       </ItineraryProvider>
                     </AdminEditModeProvider>
                   </Suspense>
