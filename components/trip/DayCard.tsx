@@ -40,28 +40,56 @@ export default function DayCard({ day, index, openDrawer, className }: DayCardPr
   if (day.meals) {
     if (day.meals.breakfast) {
       const breakfast = day.meals.breakfast;
+      // Parse notes for image if available
+      let image = breakfast.image || breakfast.image_thumbnail || null;
+      if (!image && breakfast.notes) {
+        try {
+          const notesData = typeof breakfast.notes === 'string' ? JSON.parse(breakfast.notes) : breakfast.notes;
+          image = notesData.image || null;
+        } catch {
+          // Ignore parse errors
+        }
+      }
       locations.push({
         name: breakfast.title || breakfast.name || 'Breakfast',
         type: 'breakfast',
-        image: breakfast.image || breakfast.image_thumbnail || null,
+        image,
         travelTime: breakfast.travelTime,
       });
     }
     if (day.meals.lunch) {
       const lunch = day.meals.lunch;
+      let image = lunch.image || lunch.image_thumbnail || null;
+      if (!image && lunch.notes) {
+        try {
+          const notesData = typeof lunch.notes === 'string' ? JSON.parse(lunch.notes) : lunch.notes;
+          image = notesData.image || null;
+        } catch {
+          // Ignore parse errors
+        }
+      }
       locations.push({
         name: lunch.title || lunch.name || 'Lunch',
         type: 'lunch',
-        image: lunch.image || lunch.image_thumbnail || null,
+        image,
         travelTime: lunch.travelTime,
       });
     }
     if (day.meals.dinner) {
       const dinner = day.meals.dinner;
+      let image = dinner.image || dinner.image_thumbnail || null;
+      if (!image && dinner.notes) {
+        try {
+          const notesData = typeof dinner.notes === 'string' ? JSON.parse(dinner.notes) : dinner.notes;
+          image = notesData.image || null;
+        } catch {
+          // Ignore parse errors
+        }
+      }
       locations.push({
         name: dinner.title || dinner.name || 'Dinner',
         type: 'dinner',
-        image: dinner.image || dinner.image_thumbnail || null,
+        image,
         travelTime: dinner.travelTime,
       });
     }
@@ -70,10 +98,19 @@ export default function DayCard({ day, index, openDrawer, className }: DayCardPr
   // Add activities
   if (day.activities && day.activities.length > 0) {
     day.activities.forEach((activity: any) => {
+      let image = activity.image || activity.image_thumbnail || null;
+      if (!image && activity.notes) {
+        try {
+          const notesData = typeof activity.notes === 'string' ? JSON.parse(activity.notes) : activity.notes;
+          image = notesData.image || null;
+        } catch {
+          // Ignore parse errors
+        }
+      }
       locations.push({
         name: activity.title || activity.name || 'Activity',
-        type: activity.category || 'activity',
-        image: activity.image || activity.image_thumbnail || null,
+        type: activity.category || activity.description || 'activity',
+        image,
         travelTime: activity.travelTime,
       });
     });
