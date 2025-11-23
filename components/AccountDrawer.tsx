@@ -973,7 +973,7 @@ export function AccountDrawer() {
     }
 
     return (
-      <div className="sticky top-0 z-10 flex items-center gap-3 px-6 pb-4 pt-5">
+      <div className="sticky top-0 z-20 flex items-center gap-3 px-6 pb-4 pt-5 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-800/50">
         <button
           onClick={navigateBack}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900/80 text-white shadow-sm ring-1 ring-white/15 transition hover:bg-gray-800/90 dark:bg-white/10 dark:text-white"
@@ -981,7 +981,7 @@ export function AccountDrawer() {
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <h2 className="text-lg font-semibold text-white drop-shadow-sm dark:text-white flex-1">{getDrawerTitle()}</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex-1">{getDrawerTitle()}</h2>
         <div className="w-10" />
       </div>
     );
