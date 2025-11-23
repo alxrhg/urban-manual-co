@@ -42,6 +42,7 @@ import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nest
 import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { Drawer } from '@/components/ui/Drawer';
+import { architectNameToSlug } from '@/lib/architect-utils';
 
 // Dynamically import POIDrawer to avoid SSR issues
 const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
@@ -197,6 +198,9 @@ function parseTime(timeStr: string): number {
 }
 
 export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick }: DestinationDrawerProps) {
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isReviewersExpanded, setIsReviewersExpanded] = useState(false);
+  const [isContactExpanded, setIsContactExpanded] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
   const [isSaved, setIsSaved] = useState(false);
@@ -1256,9 +1260,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         <div className="p-6">
           {/* Mobile Content - Same as Desktop */}
           <div className="md:hidden">
-          {/* Image */}
+          {/* Hero Image - Full width rounded */}
           {destination.image && (
-            <div className="mt-[18px] rounded-[8px] overflow-hidden aspect-[4/3]">
+            <div className="mt-[18px] rounded-2xl overflow-hidden aspect-[4/3]">
               <div className="relative w-full h-full bg-gray-100 dark:bg-gray-800">
               <Image
                 src={destination.image}
@@ -1273,20 +1277,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Identity Block */}
+          {/* Primary Info Block */}
           <div className="space-y-4 mt-6">
-            {/* Location Badge */}
+            {/* City Link - Bold highlight, no arrows */}
             <div>
               <a
                 href={`/city/${destination.city}`}
-                className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                className="text-sm font-bold text-gray-900 dark:text-white hover:underline"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   router.push(`/city/${destination.city}`);
                 }}
               >
-                <MapPin className="h-3 w-3" />
                 {destination.country ? `${capitalizeCity(destination.city)}, ${destination.country}` : capitalizeCity(destination.city)}
               </a>
             </div>
@@ -1297,13 +1300,40 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {destination.name}
               </h1>
 
-              {/* Pills: Category, Brand, Crown, Michelin, Google Rating */}
-              <div className="flex flex-wrap gap-2">
+              {/* Category - Subtle caps */}
               {destination.category && (
-                  <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 capitalize">
-                    {destination.category}
+                <div className="text-xs uppercase tracking-[1.5px] text-gray-500 dark:text-gray-400 font-medium">
+                  {destination.category}
+                </div>
+              )}
+
+              {/* Rating - Bold rating, light review count */}
+              {(enrichedData?.rating || destination.rating) && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">
+                    {(enrichedData?.rating || destination.rating).toFixed(1)}
+                  </span>
+                  {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
+                    <span className="text-xs text-gray-400 dark:text-gray-500 font-light">
+                      ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
                     </span>
-                )}
+                  )}
+                </div>
+              )}
+
+              {/* Tags - Small pills */}
+              {destination.tags && Array.isArray(destination.tags) && destination.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {destination.tags.slice(0, 5).map((tag, idx) => (
+                    <span key={idx} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full text-[10px] text-gray-600 dark:text-gray-400">
+                      {formatHighlightTag(tag)}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Other Pills: Brand, Crown, Michelin */}
+              <div className="flex flex-wrap gap-2">
 
                 {destination.brand && (
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900">
