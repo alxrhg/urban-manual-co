@@ -2547,6 +2547,68 @@ export default function Home() {
                           );
                         })()}
 
+                      {/* Continue Chat Input - Step Two: allow users to continue conversation */}
+                      <div className="mt-6">
+                        <GreetingHero
+                          searchQuery={searchTerm}
+                          onSearchChange={value => {
+                            setSearchTerm(value);
+                          }}
+                          onSubmit={query => {
+                            if (query.trim() && !searching) {
+                              performAISearch(query);
+                            }
+                          }}
+                          userName={(function () {
+                            const raw = ((user?.user_metadata as any)?.name ||
+                              (user?.email
+                                ? user.email.split("@")[0]
+                                : undefined)) as string | undefined;
+                            if (!raw) return undefined;
+                            return raw
+                              .split(/[\s._-]+/)
+                              .filter(Boolean)
+                              .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                              .join(" ");
+                          })()}
+                          userProfile={userProfile}
+                          lastSession={lastSession}
+                          enrichedContext={enrichedGreetingContext}
+                          isAIEnabled={isAIEnabled}
+                          isSearching={searching}
+                          filters={advancedFilters}
+                          onFiltersChange={newFilters => {
+                            setAdvancedFilters(newFilters);
+                            if (newFilters.city !== undefined) {
+                              setSelectedCity(
+                                typeof newFilters.city === "string"
+                                  ? newFilters.city
+                                  : ""
+                              );
+                            }
+                            if (newFilters.category !== undefined) {
+                              setSelectedCategory(
+                                typeof newFilters.category === "string"
+                                  ? newFilters.category
+                                  : ""
+                              );
+                            }
+                            Object.entries(newFilters).forEach(([key, value]) => {
+                              if (
+                                value !== undefined &&
+                                value !== null &&
+                                value !== ""
+                              ) {
+                                trackFilterChange({ filterType: key, value });
+                              }
+                            });
+                          }}
+                          availableCities={cities}
+                          availableCategories={categories}
+                          showGreeting={false}
+                        />
+                      </div>
+
                     </div>
                   )}
 

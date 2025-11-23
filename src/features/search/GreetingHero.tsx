@@ -42,6 +42,7 @@ interface GreetingHeroProps {
   onFiltersChange?: (filters: Record<string, unknown>) => void;
   availableCities?: string[];
   availableCategories?: string[];
+  showGreeting?: boolean; // Optional prop to show/hide greeting
 }
 
 export default function GreetingHero({
@@ -54,6 +55,7 @@ export default function GreetingHero({
   enrichedContext,
   isAIEnabled = false,
   isSearching = false,
+  showGreeting = true,
 }: GreetingHeroProps) {
   const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
@@ -156,19 +158,21 @@ export default function GreetingHero({
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="w-full relative">
         {/* Greeting above search - Step One spec: "GOOD MORNING, {{user_name}}" */}
-        <div className="text-left mb-[50px]">
-          <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
-            {(() => {
-              const now = new Date();
-              const currentHour = now.getHours();
-              let timeGreeting = "GOOD EVENING";
-              if (currentHour < 12) timeGreeting = "GOOD MORNING";
-              else if (currentHour < 18) timeGreeting = "GOOD AFTERNOON";
-              
-              return userName ? `${timeGreeting}, ${userName.toUpperCase()}` : timeGreeting;
-            })()}
-          </h1>
-        </div>
+        {showGreeting && (
+          <div className="text-left mb-[50px]">
+            <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
+              {(() => {
+                const now = new Date();
+                const currentHour = now.getHours();
+                let timeGreeting = "GOOD EVENING";
+                if (currentHour < 12) timeGreeting = "GOOD MORNING";
+                else if (currentHour < 18) timeGreeting = "GOOD AFTERNOON";
+                
+                return userName ? `${timeGreeting}, ${userName.toUpperCase()}` : timeGreeting;
+              })()}
+            </h1>
+          </div>
+        )}
 
         {/* Borderless Text Input - Lovably style (no icon, no border, left-aligned) */}
         <div className="relative mb-[50px]">
