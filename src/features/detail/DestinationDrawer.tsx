@@ -36,7 +36,6 @@ import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
-import { RealtimeReportForm } from '@/components/RealtimeReportForm';
 import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
@@ -1649,10 +1648,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   showWaitTime={true}
                   showAvailability={true}
                 />
-                <RealtimeReportForm
-                  destinationId={destination.id}
-                  destinationName={destination.name}
-                />
               </div>
             )}
 
@@ -2386,10 +2381,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   compact={false}
                   showWaitTime={true}
                   showAvailability={true}
-                />
-                <RealtimeReportForm
-                  destinationId={destination.id}
-                  destinationName={destination.name}
                 />
               </div>
             )}
