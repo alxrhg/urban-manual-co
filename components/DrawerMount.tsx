@@ -49,6 +49,7 @@ export default function DrawerMount() {
       <TripAISuggestionsDrawer
         isOpen={type === 'trip-ai'}
         onClose={closeDrawer}
+        trip={props.trip || null}
         suggestions={props.suggestions || []}
         {...props}
       />

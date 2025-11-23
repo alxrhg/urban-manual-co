@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import Drawer from '@/components/ui/Drawer';
+import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
 import { DrawerSection } from '@/components/ui/DrawerSection';
 

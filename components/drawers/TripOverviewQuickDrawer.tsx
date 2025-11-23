@@ -6,7 +6,7 @@ import { DrawerHeader } from '@/components/ui/DrawerHeader';
 import { DrawerSection } from '@/components/ui/DrawerSection';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import Image from 'next/image';
-import useTrip from '@/hooks/useTrip';
+import { useTrip } from '@/hooks/useTrip';
 
 interface Trip {
   id?: string;
@@ -55,12 +55,12 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
 
   if (!displayTrip) return null;
 
-  const tripName = displayTrip.name || displayTrip.title || 'Untitled Trip';
-  const startDate = displayTrip.startDate || (displayTrip.start_date ? new Date(displayTrip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '');
-  const endDate = displayTrip.endDate || (displayTrip.end_date ? new Date(displayTrip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '');
-  const days = displayTrip.days || [];
-  const hotels = displayTrip.hotels || [];
-  const coverImage = displayTrip.coverImage || displayTrip.cover_image;
+  const tripName = (displayTrip as any).name || displayTrip.title || 'Untitled Trip';
+  const startDate = (displayTrip as any).startDate || (displayTrip.start_date ? new Date(displayTrip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '');
+  const endDate = (displayTrip as any).endDate || (displayTrip.end_date ? new Date(displayTrip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '');
+  const days = (displayTrip as any).days || [];
+  const hotels = (displayTrip as any).hotels || [];
+  const coverImage = (displayTrip as any).coverImage || displayTrip.cover_image;
 
   const handleDayClick = (day: any, index: number) => {
     openFullscreen('trip-day', { day, dayIndex: index, trip: displayTrip });
@@ -129,7 +129,7 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
             <h3 className="font-medium text-gray-900 dark:text-white mb-3">Days</h3>
             <div className="space-y-3">
               {days.length > 0 ? (
-                days.map((d, i) => (
+                days.map((d: any, i: number) => (
                   <div
                     key={i}
                     className="border border-[var(--um-border)] rounded-xl p-3 hover:bg-neutral-50 dark:hover:bg-neutral-900 cursor-pointer flex justify-between items-center bg-white dark:bg-gray-950 transition-colors"
@@ -152,7 +152,7 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
             <DrawerSection bordered>
               <h3 className="font-medium text-gray-900 dark:text-white mb-2">Hotels</h3>
               <div className="space-y-3">
-                {hotels.map((h, i) => (
+                {hotels.map((h: any, i: number) => (
                   <div
                     key={i}
                     className="border border-[var(--um-border)] rounded-xl p-3 bg-white dark:bg-gray-950"
