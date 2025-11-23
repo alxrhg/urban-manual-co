@@ -72,6 +72,25 @@ export function useTrip(tripId: string | null) {
 
         if (itemsError) throw itemsError;
 
+        // Fetch destination data for items that have destination_slug
+        const destinationSlugs = (items || [])
+          .map(item => item.destination_slug)
+          .filter((slug): slug is string => Boolean(slug));
+
+        const destinationsMap = new Map<string, any>();
+        if (destinationSlugs.length > 0) {
+          const { data: destinations, error: destError } = await supabaseClient
+            .from('destinations')
+            .select('slug, latitude, longitude, name, image, image_thumbnail')
+            .in('slug', destinationSlugs);
+
+          if (!destError && destinations) {
+            destinations.forEach(dest => {
+              destinationsMap.set(dest.slug, dest);
+            });
+          }
+        }
+
         // Group items by day and transform to Day format
         const itemsByDay = new Map<number, ItineraryItem[]>();
         (items || []).forEach((item) => {
@@ -96,15 +115,27 @@ export function useTrip(tripId: string | null) {
             ? new Date(startDate.getTime() + (dayNum - 1) * 24 * 60 * 60 * 1000)
             : new Date();
 
+          // Enrich items with destination data
+          const enrichedItems = dayItems.map(item => {
+            const dest = item.destination_slug ? destinationsMap.get(item.destination_slug) : null;
+            return {
+              ...item,
+              latitude: dest?.latitude || null,
+              longitude: dest?.longitude || null,
+              image: dest?.image || null,
+              image_thumbnail: dest?.image_thumbnail || null,
+            };
+          });
+
           // Group items by meal type (simplified - would need more logic for actual meal detection)
           const meals = {
-            breakfast: dayItems.find((item) => item.time?.includes('breakfast') || item.title.toLowerCase().includes('breakfast')) || null,
-            lunch: dayItems.find((item) => item.time?.includes('lunch') || item.title.toLowerCase().includes('lunch')) || null,
-            dinner: dayItems.find((item) => item.time?.includes('dinner') || item.title.toLowerCase().includes('dinner')) || null,
+            breakfast: enrichedItems.find((item) => item.time?.includes('breakfast') || item.title.toLowerCase().includes('breakfast')) || null,
+            lunch: enrichedItems.find((item) => item.time?.includes('lunch') || item.title.toLowerCase().includes('lunch')) || null,
+            dinner: enrichedItems.find((item) => item.time?.includes('dinner') || item.title.toLowerCase().includes('dinner')) || null,
           };
 
           // Activities are non-meal items
-          const activities = dayItems.filter(
+          const activities = enrichedItems.filter(
             (item) =>
               !item.time?.includes('breakfast') &&
               !item.time?.includes('lunch') &&

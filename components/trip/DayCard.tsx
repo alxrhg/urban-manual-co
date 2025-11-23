@@ -2,13 +2,17 @@
 
 import React from 'react';
 import Image from 'next/image';
-import TravelBadge from './TravelBadge';
+import TravelTimeBadge from './TravelTimeBadge';
 
 interface Location {
   name: string;
   type?: string;
   image?: string | null;
   travelTime?: number | string;
+  latitude?: number | null;
+  longitude?: number | null;
+  lat?: number | null;
+  lng?: number | null;
   [key: string]: any;
 }
 
@@ -55,6 +59,8 @@ export default function DayCard({ day, index, openDrawer, className }: DayCardPr
         type: 'breakfast',
         image,
         travelTime: breakfast.travelTime,
+        latitude: breakfast.latitude || null,
+        longitude: breakfast.longitude || null,
       });
     }
     if (day.meals.lunch) {
@@ -73,6 +79,8 @@ export default function DayCard({ day, index, openDrawer, className }: DayCardPr
         type: 'lunch',
         image,
         travelTime: lunch.travelTime,
+        latitude: lunch.latitude || null,
+        longitude: lunch.longitude || null,
       });
     }
     if (day.meals.dinner) {
@@ -91,6 +99,8 @@ export default function DayCard({ day, index, openDrawer, className }: DayCardPr
         type: 'dinner',
         image,
         travelTime: dinner.travelTime,
+        latitude: dinner.latitude || null,
+        longitude: dinner.longitude || null,
       });
     }
   }
@@ -112,6 +122,8 @@ export default function DayCard({ day, index, openDrawer, className }: DayCardPr
         type: activity.category || activity.description || 'activity',
         image,
         travelTime: activity.travelTime,
+        latitude: activity.latitude || null,
+        longitude: activity.longitude || null,
       });
     });
   }
@@ -173,12 +185,12 @@ export default function DayCard({ day, index, openDrawer, className }: DayCardPr
                 </div>
               </div>
 
-              {i < displayLocations.length - 1 && loc.travelTime && (
-                <div className="flex items-center justify-center my-6">
-                  <span className="px-3 py-1 text-xs bg-neutral-50 dark:bg-neutral-900 border border-[var(--um-border)] rounded-full text-[var(--um-text-muted)]">
-                    ⟶ {loc.travelTime} min
-                  </span>
-                </div>
+              {i < displayLocations.length - 1 && (
+                <TravelTimeBadge
+                  from={displayLocations[i]}
+                  to={displayLocations[i + 1]}
+                  mode="walking"
+                />
               )}
             </div>
           ))}

@@ -71,10 +71,12 @@ export function TripDay({
     return locations.reduce((total, loc) => total + (loc.duration || 60), 0);
   };
 
+  // Travel time calculation is now handled by TravelTimeBadge component
+  // This function is kept for backward compatibility but returns null
   const calculateTravelTime = (index: number) => {
     if (index === 0) return null;
-    // Mock calculation - in real app would use routing API
-    return Math.floor(Math.random() * 30) + 10;
+    // Travel time is now calculated via Google API in TravelTimeBadge
+    return null;
   };
 
   const getMealIcon = (mealType?: string) => {

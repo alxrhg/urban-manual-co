@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const { origins, destinations, mode = 'walking' } = body;
 
     // Check if Google Maps API key is available
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
     if (!apiKey) {
       console.warn('Google Maps API key not configured, using estimates');
