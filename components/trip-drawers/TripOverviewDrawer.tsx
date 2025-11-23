@@ -52,7 +52,17 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip }: TripOvervi
   const flights = trip.flights || [];
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose}>
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      desktopWidth="100vw"
+      desktopSpacing="inset-0"
+      mobileVariant="side"
+      mobileExpanded={true}
+      mobileHeight="100vh"
+      mobileMaxHeight="100vh"
+      mobileBorderRadius="rounded-none"
+    >
       <div className="h-full flex flex-col">
         <DrawerHeader
           title={tripName}
