@@ -1722,10 +1722,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
                       <div className="text-xs text-gray-500 dark:text-gray-500">{enrichedData.vicinity}</div>
                     )}
+                  </div>
+                </div>
               </div>
-              </div>
-            </div>
-          )}
+            )}
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2">
@@ -1745,7 +1745,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <Share2 className="h-3 w-3" />
                 {copied ? 'Copied!' : 'Share'}
               </button>
-            </div>
             </div>
 
             {/* Nested Destinations */}
