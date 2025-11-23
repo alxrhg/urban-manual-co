@@ -5,6 +5,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 export type FilterRow = { city: string | null; category: string | null };
 
+// Track if we've already warned about service role key
+let hasWarnedAboutServiceRoleKey = false;
+
 /**
  * Get Supabase client, preferring service role but falling back to public client
  * Returns null only if both fail
@@ -24,12 +27,26 @@ async function getSupabaseClient(): Promise<SupabaseClient | null> {
   if (isServiceRoleValid) {
     try {
       const serviceClient = createServiceRoleClient();
+      // If service client is valid, reset warning flag
+      if (serviceClient && !(serviceClient as any).url?.includes('placeholder')) {
+        hasWarnedAboutServiceRoleKey = false;
+      }
       return serviceClient;
     } catch (error: any) {
-      console.warn('[Homepage Loaders] Service role client creation failed, trying public client:', error?.message);
+      if (!hasWarnedAboutServiceRoleKey) {
+        console.warn('[Homepage Loaders] Service role client creation failed, trying public client:', error?.message);
+        hasWarnedAboutServiceRoleKey = true;
+      }
     }
   } else {
-    console.warn('[Homepage Loaders] Service role key invalid or missing, using public client');
+    // Only warn once per process
+    if (!hasWarnedAboutServiceRoleKey) {
+      // Only log in development to reduce noise in production
+      if (process.env.NODE_ENV === 'development') {
+        console.info('[Homepage Loaders] Service role key not configured, using public client (RLS-enabled)');
+      }
+      hasWarnedAboutServiceRoleKey = true;
+    }
   }
   
   // Fall back to public client
