@@ -887,7 +887,7 @@ async function processAIChatRequest(
           }
         }
       } else {
-        console.log('[AI Chat] Discovery Engine not available, using fallback search');
+        console.error('[AI Chat] ERROR: Discovery Engine not available. This is the primary search feature and must be configured.');
       }
     } catch (discoveryError: any) {
       console.debug('[AI Chat] Discovery Engine search failed (expected if not configured), falling back to Supabase:', discoveryError?.message || discoveryError);
