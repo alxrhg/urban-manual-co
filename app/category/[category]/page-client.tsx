@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { MapPin, SlidersHorizontal } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
@@ -188,6 +189,31 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
             onClose={() => {
               closeDrawer();
               setSelectedDestination(null);
+            }}
+            onDestinationClick={async (slug: string) => {
+              try {
+                const supabaseClient = createClient();
+                if (!supabaseClient) {
+                  console.error('Failed to create Supabase client');
+                  return;
+                }
+                
+                const { data: destination, error } = await supabaseClient
+                  .from('destinations')
+                  .select('*')
+                  .eq('slug', slug)
+                  .single();
+                
+                if (error || !destination) {
+                  console.error('Failed to fetch destination:', error);
+                  return;
+                }
+                
+                setSelectedDestination(destination as Destination);
+                openDrawer('destination');
+              } catch (error) {
+                console.error('Error fetching destination:', error);
+              }
             }}
           />
         )}

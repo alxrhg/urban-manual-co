@@ -77,6 +77,7 @@ interface DestinationDrawerProps {
   onClose: () => void;
   onSaveToggle?: (slug: string, saved: boolean) => void;
   onVisitToggle?: (slug: string, visited: boolean) => void;
+  onDestinationClick?: (slug: string) => void;
 }
 
 function capitalizeCity(city: string): string {
@@ -195,7 +196,7 @@ function parseTime(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
-export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle }: DestinationDrawerProps) {
+export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick }: DestinationDrawerProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [isSaved, setIsSaved] = useState(false);
@@ -1936,7 +1937,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       key={rec.slug}
                       onClick={() => {
                         if (rec.slug && rec.slug.trim()) {
-                        router.push(`/destination/${rec.slug}`);
+                          if (onDestinationClick) {
+                            onDestinationClick(rec.slug);
+                          } else {
+                            router.push(`/destination/${rec.slug}`);
+                          }
                         }
                       }}
                       className="group text-left flex-shrink-0 w-32 flex flex-col"
@@ -2675,7 +2680,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       key={rec.slug}
                       onClick={() => {
                         if (rec.slug && rec.slug.trim()) {
-                        router.push(`/destination/${rec.slug}`);
+                          if (onDestinationClick) {
+                            onDestinationClick(rec.slug);
+                          } else {
+                            router.push(`/destination/${rec.slug}`);
+                          }
                         }
                       }}
                       className="group text-left flex-shrink-0 w-32 flex flex-col"
@@ -2820,10 +2829,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           destinationName={destination.name}
           isOpen={showAddToTripModal}
           onClose={() => setShowAddToTripModal(false)}
-          onAdd={(tripId) => {
+          onAdd={(tripId, itemId) => {
             setIsAddedToTrip(true);
             setShowAddToTripModal(false);
             console.log(`Added ${destination.name} to trip ${tripId}`);
+            // Navigate to trip page and highlight the added item
+            onClose();
+            router.push(`/trips/${tripId}${itemId ? `?item=${itemId}` : ''}`);
           }}
         />
       )}

@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Building2 } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
@@ -338,6 +339,31 @@ export default function ArchitectPageClient() {
           onClose={() => {
             closeDrawer();
             setSelectedDestination(null);
+          }}
+          onDestinationClick={async (slug: string) => {
+            try {
+              const supabaseClient = createClient();
+              if (!supabaseClient) {
+                console.error('Failed to create Supabase client');
+                return;
+              }
+              
+              const { data: destination, error } = await supabaseClient
+                .from('destinations')
+                .select('*')
+                .eq('slug', slug)
+                .single();
+              
+              if (error || !destination) {
+                console.error('Failed to fetch destination:', error);
+                return;
+              }
+              
+              setSelectedDestination(destination as Destination);
+              openDrawer('destination');
+            } catch (error) {
+              console.error('Error fetching destination:', error);
+            }
           }}
         />
       )}

@@ -12,7 +12,7 @@ interface AddToTripModalProps {
   destinationName: string;
   isOpen: boolean;
   onClose: () => void;
-  onAdd?: (tripId: string) => void;
+  onAdd?: (tripId: string, itemId?: string) => void;
 }
 
 export function AddToTripModal({
@@ -180,7 +180,7 @@ export function AddToTripModal({
         throw new Error('Failed to add destination to trip. No data returned.');
       }
 
-      if (onAdd) onAdd(tripId);
+      if (onAdd) onAdd(tripId, insertedItem.id);
       onClose();
     } catch (error: any) {
       console.error('Error adding to trip:', error);

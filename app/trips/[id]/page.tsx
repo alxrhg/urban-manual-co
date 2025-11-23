@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
@@ -32,7 +32,9 @@ export default function TripDetailPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const tripId = params?.id ? (params.id as string) : '';
+  const highlightItemId = searchParams?.get('item');
 
   const [trip, setTrip] = useState<Trip | null>(null);
   const [itineraryItems, setItineraryItems] = useState<ItineraryItem[]>([]);
@@ -60,6 +62,32 @@ export default function TripDetailPage() {
       fetchTripDetails();
     }
   }, [authLoading, user, tripId]);
+
+  // Scroll to and highlight the item when itemId is in query params
+  useEffect(() => {
+    if (highlightItemId && itineraryItems.length > 0 && !loading) {
+      // Find the item
+      const item = itineraryItems.find(item => item.id === highlightItemId);
+      if (item) {
+        // Wait a bit for the DOM to render
+        setTimeout(() => {
+          // Find the element by day and scroll to it
+          const dayElement = document.querySelector(`[data-day="${item.day}"]`);
+          if (dayElement) {
+            dayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add highlight class
+            dayElement.classList.add('highlight-item');
+            // Remove highlight after animation
+            setTimeout(() => {
+              dayElement.classList.remove('highlight-item');
+            }, 2000);
+            // Remove query param after scrolling
+            router.replace(`/trips/${tripId}`);
+          }
+        }, 300);
+      }
+    }
+  }, [highlightItemId, itineraryItems, loading, tripId, router]);
 
   const fetchTripDetails = async () => {
     if (!tripId) return;
@@ -664,7 +692,9 @@ export default function TripDetailPage() {
                     return (
                       <div
                         key={day}
-                        className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6"
+                        data-day={day}
+                        data-item-ids={items.map(item => item.id).join(',')}
+                        className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 p-6 transition-all duration-500"
                       >
                         <TripDay
                           dayNumber={dayNumber}
