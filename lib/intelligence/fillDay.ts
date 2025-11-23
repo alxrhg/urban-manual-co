@@ -1,4 +1,5 @@
 import { recommendFromCurated, blendRecommendations } from './recommend';
+import type { Recommendation } from './recommend';
 
 interface Place {
   city: string;
@@ -32,7 +33,9 @@ export function generateDayPlan(
 
   for (const meal of meals) {
     const curatedMeal = recommendFromCurated(day.city, meal, curated);
-    const googleMeal = google.filter((p) => p.mealType === meal);
+    const googleMeal: Recommendation[] = google
+      .filter((p) => p.mealType === meal)
+      .map((p) => ({ ...p, source: 'google' as const, score: 0.65 }));
 
     const suggestions = blendRecommendations(curatedMeal, googleMeal);
     output[meal as keyof DayPlan] = suggestions[0] || null;
