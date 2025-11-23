@@ -511,7 +511,12 @@ export function AccountDrawer() {
               {renderNavItem('Saved places', <Bookmark className="w-4 h-4" />, () => navigateToSubpage('saved_subpage'), `${stats.saved} items`)}
               {renderNavItem('Visited places', <MapPin className="w-4 h-4" />, () => navigateToSubpage('visited_subpage'), `${stats.visited} logged`)}
               {renderNavItem('Lists', <Folder className="w-4 h-4" />, () => navigateToSubpage('collections_subpage'), 'Organize favorites')}
-              {renderNavItem('Trips', <Compass className="w-4 h-4" />, () => openSide('trip-list'), `${stats.trips} planned`)}
+              {renderNavItem('Trips', <Compass className="w-4 h-4" />, () => {
+                closeDrawer();
+                setTimeout(() => {
+                  openSide('trip-list');
+                }, 200);
+              }, `${stats.trips} planned`)}
               {renderNavItem('Achievements', <Trophy className="w-4 h-4" />, () => navigateToSubpage('achievements_subpage'), 'Milestones and badges')}
             </div>
           </div>
