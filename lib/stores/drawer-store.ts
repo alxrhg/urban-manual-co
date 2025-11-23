@@ -2,14 +2,22 @@
 
 import { create } from "zustand";
 
-export type DrawerType = string | null;
+export type DrawerType =
+  | "trip-overview"
+  | "trip-day"
+  | "trip-add-place"
+  | "trip-add-hotel"
+  | "trip-add-meal"
+  | "trip-reorder"
+  | "trip-ai-suggestions"
+  | null;
 export type DrawerProps = Record<string, unknown>;
 
 interface DrawerStore {
   open: boolean;
   type: DrawerType;
   props: DrawerProps;
-  openDrawer: (type: DrawerType, props?: DrawerProps) => void;
+  openDrawer: (type: Exclude<DrawerType, null>, props?: DrawerProps) => void;
   closeDrawer: () => void;
 }
 
