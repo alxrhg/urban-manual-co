@@ -890,10 +890,10 @@ async function processAIChatRequest(
         console.error('[AI Chat] ERROR: Discovery Engine not available. This is the primary search feature and must be configured.');
       }
     } catch (discoveryError: any) {
-      console.debug('[AI Chat] Discovery Engine search failed (expected if not configured), falling back to Supabase:', discoveryError?.message || discoveryError);
+      console.error('[AI Chat] Discovery Engine search failed. This is the primary search feature and must be configured. Falling back to Supabase:', discoveryError?.message || discoveryError);
     }
 
-    // Strategy 2: Fallback to Supabase vector search (if Discovery Engine didn't return results)
+    // Strategy 2: Secondary fallback to Supabase vector search (only if Discovery Engine didn't return results)
     if (results.length === 0 && queryEmbedding) {
       try {
         const { data, error } = await supabase.rpc('match_destinations', {
