@@ -32,30 +32,30 @@ export default function DrawerMount() {
       <VisitedPlacesDrawer />
 
       {/* New drawers that use the global drawer store */}
-      <AccountDrawerNew isOpen={type === 'account-new'} onClose={closeDrawer} />
-      <DestinationDrawer isOpen={type === 'destination'} onClose={closeDrawer} place={props.place || null} {...props} />
-      <TripOverviewDrawer isOpen={type === 'trip-overview'} onClose={closeDrawer} trip={props.trip || null} {...props} />
+      <AccountDrawerNew isOpen={open && type === 'account-new'} onClose={closeDrawer} />
+      <DestinationDrawer isOpen={open && type === 'destination'} onClose={closeDrawer} place={props.place || null} {...props} />
+      <TripOverviewDrawer isOpen={open && type === 'trip-overview'} onClose={closeDrawer} trip={props.trip || null} {...props} />
       <TripListDrawer isOpen={open && type === 'trip-list'} onClose={closeDrawer} />
-      <TripOverviewQuickDrawer isOpen={type === 'trip-overview-quick'} onClose={closeDrawer} trip={props.trip || null} />
-      <TripDayDrawer isOpen={type === 'trip-day'} onClose={closeDrawer} day={props.day || null} {...props} />
+      <TripOverviewQuickDrawer isOpen={open && type === 'trip-overview-quick'} onClose={closeDrawer} trip={props.trip || null} />
+      <TripDayDrawer isOpen={open && type === 'trip-day'} onClose={closeDrawer} day={props.day || null} {...props} />
       <TripAddMealDrawer
-        isOpen={type === 'trip-add-meal'}
+        isOpen={open && type === 'trip-add-meal'}
         onClose={closeDrawer}
         day={props.day || null}
         mealType={props.mealType || 'lunch'}
         {...props}
       />
-      <TripAddPlaceDrawer isOpen={type === 'trip-add-place'} onClose={closeDrawer} day={props.day || null} {...props} />
-      <PlaceSelectorDrawer isOpen={type === 'place-selector'} onClose={closeDrawer} day={props.day || null} trip={props.trip || null} mealType={props.mealType} />
-      <TripAddHotelDrawer isOpen={type === 'trip-add-hotel'} onClose={closeDrawer} day={props.day || null} {...props} />
+      <TripAddPlaceDrawer isOpen={open && type === 'trip-add-place'} onClose={closeDrawer} day={props.day || null} {...props} />
+      <PlaceSelectorDrawer isOpen={open && type === 'place-selector'} onClose={closeDrawer} day={props.day || null} trip={props.trip || null} mealType={props.mealType} />
+      <TripAddHotelDrawer isOpen={open && type === 'trip-add-hotel'} onClose={closeDrawer} day={props.day || null} {...props} />
       <TripAISuggestionsDrawer
-        isOpen={type === 'trip-ai'}
+        isOpen={open && type === 'trip-ai'}
         onClose={closeDrawer}
         trip={props.trip || null}
         suggestions={props.suggestions || []}
         {...props}
       />
-      <TripReorderDrawer isOpen={type === 'trip-reorder-days'} onClose={closeDrawer} days={props.days || []} {...props} />
+      <TripReorderDrawer isOpen={open && type === 'trip-reorder-days'} onClose={closeDrawer} days={props.days || []} {...props} />
     </>
   );
 }
