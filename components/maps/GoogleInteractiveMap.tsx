@@ -309,6 +309,23 @@ export default function GoogleInteractiveMap({
       lastCenterRef.current = { lat: center.lat, lng: center.lng };
       lastZoomRef.current = zoom;
 
+      // Ensure map is centered on Taiwan on first load
+      // This ensures Taiwan is shown even before destinations load
+      if (!lastCenterRef.current || (lastCenterRef.current.lat === 0 && lastCenterRef.current.lng === 0)) {
+        mapInstanceRef.current.setCenter({ lat: 23.5, lng: 121.0 });
+        mapInstanceRef.current.setZoom(8);
+      }
+
+      // Add zoom change listener to prevent zooming out too much
+      google.maps.event.addListener(mapInstanceRef.current, 'zoom_changed', () => {
+        if (mapInstanceRef.current) {
+          const currentZoom = mapInstanceRef.current.getZoom() || 8;
+          if (currentZoom < 3) {
+            mapInstanceRef.current.setZoom(3);
+          }
+        }
+      });
+
       // Add markers after map is initialized (with slight delay to ensure map is ready)
       setTimeout(() => {
         if (destinations.length > 0) {
