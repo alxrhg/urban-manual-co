@@ -19,15 +19,6 @@ declare global {
   }
 }
 
-interface GoogleInteractiveMapProps {
-  destinations: Destination[];
-  onMarkerClick?: (destination: Destination) => void;
-  center?: { lat: number; lng: number };
-  zoom?: number;
-  isDark?: boolean;
-  selectedDestination?: Destination | null;
-}
-
 export default function GoogleInteractiveMap({
   destinations,
   onMarkerClick,
