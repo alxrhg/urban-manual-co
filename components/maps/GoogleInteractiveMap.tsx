@@ -9,6 +9,7 @@ interface GoogleInteractiveMapProps {
   center?: { lat: number; lng: number };
   zoom?: number;
   isDark?: boolean;
+  selectedDestination?: Destination | null;
 }
 
 declare global {
@@ -418,9 +419,35 @@ export default function GoogleInteractiveMap({
     };
   }, [initializeMap]);
 
+  // Zoom to selected destination on desktop
+  useEffect(() => {
+    if (!mapInstanceRef.current || !isInitializedRef.current || isLoading) return;
+    if (!selectedDestination || !selectedDestination.latitude || !selectedDestination.longitude) return;
+
+    // Only zoom on desktop (lg breakpoint and above)
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+    if (!isDesktop) return;
+
+    const position = {
+      lat: selectedDestination.latitude,
+      lng: selectedDestination.longitude,
+    };
+
+    // Zoom to the selected destination with a smooth animation
+    mapInstanceRef.current.setCenter(position);
+    mapInstanceRef.current.setZoom(15); // Zoom level 15 for a close-up view
+  }, [selectedDestination?.id, selectedDestination?.latitude, selectedDestination?.longitude, isLoading]);
+
   // Update map center and zoom when props change (but only if map is already initialized)
   useEffect(() => {
     if (mapInstanceRef.current && isInitializedRef.current && !isLoading) {
+      // Skip if we just zoomed to a selected destination (prevent conflict)
+      if (selectedDestination?.latitude && selectedDestination?.longitude) {
+        // Check if we're on desktop - if so, let the selectedDestination effect handle it
+        const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+        if (isDesktop) return;
+      }
+
       // Only update if center/zoom actually changed (prevent unnecessary updates)
       const centerChanged = 
         !lastCenterRef.current ||
@@ -436,7 +463,7 @@ export default function GoogleInteractiveMap({
         lastZoomRef.current = zoom;
       }
     }
-  }, [center.lat, center.lng, zoom, isLoading]);
+  }, [center.lat, center.lng, zoom, isLoading, selectedDestination]);
 
   // Update markers when destinations change (but don't re-initialize map)
   useEffect(() => {
