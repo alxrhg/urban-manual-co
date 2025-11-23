@@ -2507,12 +2507,12 @@ export default function Home() {
                               <button
                                 key={idx}
                                 onClick={() => {
-                                  setSearchTerm(suggestion);
-                                  performAISearch(suggestion);
+                                  setSearchTerm(suggestion.text);
+                                  performAISearch(suggestion.text);
                                 }}
                                 className="px-3 py-1.5 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
                               >
-                                {suggestion}
+                                {suggestion.text}
                               </button>
                             ))}
                           </div>
