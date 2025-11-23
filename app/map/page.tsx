@@ -272,7 +272,7 @@ export default function MapPage() {
         {/* List Panel - Left (Desktop) */}
         {showListPanel && (
           <div className="hidden md:block absolute left-0 top-0 bottom-0 w-[380px] bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 z-10 overflow-y-auto">
-          <div className="p-6 space-y-3">
+          <div className="pt-6 px-6 pb-3 space-y-3">
             <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-4">
               {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
             </div>
@@ -357,7 +357,7 @@ export default function MapPage() {
             </div>
             {/* Scrollable list */}
             <div className="overflow-y-auto h-[calc(100%-65px)]">
-              <div className="p-6 space-y-3 pb-6">
+              <div className="pt-6 px-6 pb-3 space-y-3">
                 {sortedDestinations.map((dest) => (
                   <button
                     key={dest.slug}
