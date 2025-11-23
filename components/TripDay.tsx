@@ -14,6 +14,7 @@ import {
   SunriseIcon,
   SunsetIcon,
 } from 'lucide-react';
+import TravelTimeBadge from '@/components/trip/TravelTimeBadge';
 
 interface TripLocation {
   id: number;
@@ -177,16 +178,23 @@ export function TripDay({
         ) : (
           <>
             {locations.map((location, index) => {
-              const travelTime = calculateTravelTime(index);
+              const prevLocation = index > 0 ? locations[index - 1] : null;
               return (
                 <Fragment key={location.id}>
-                  {travelTime && (
+                  {index > 0 && prevLocation && (
                     <div className="flex items-center gap-3 px-4 py-2 bg-neutral-50 dark:bg-neutral-900/50 border-l-2 border-neutral-300 dark:border-neutral-700">
                       <MapPinIcon className="w-3 h-3 text-neutral-400 dark:text-neutral-500" />
-                      <span className="text-[10px] text-neutral-500 dark:text-neutral-400 tracking-wide">
-                        {travelTime} min travel
-                        {hotelLocation && index === 0 && ` from ${hotelLocation}`}
-                      </span>
+                      <TravelTimeBadge
+                        from={prevLocation}
+                        to={location}
+                        mode="walking"
+                        className="text-[10px] text-neutral-500 dark:text-neutral-400 tracking-wide"
+                      />
+                      {hotelLocation && index === 0 && (
+                        <span className="text-[10px] text-neutral-500 dark:text-neutral-400 tracking-wide">
+                          {' '}from {hotelLocation}
+                        </span>
+                      )}
                     </div>
                   )}
                   <div
