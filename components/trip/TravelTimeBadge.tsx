@@ -21,7 +21,13 @@ interface TravelTimeBadgeProps {
 export default function TravelTimeBadge({ from, to, mode = 'walking', className }: TravelTimeBadgeProps) {
   const { minutes, loading } = useTravelTime(from, to, mode);
 
+  // Check if className suggests inline rendering (used in TripDay component)
+  const isInline = className && (className.includes('text-') || className.includes('tracking-'));
+
   if (loading) {
+    if (isInline) {
+      return <span className={className}>Calculating...</span>;
+    }
     return (
       <div className={`flex items-center justify-center my-6 ${className || ''}`}>
         <span className="px-3 py-1 text-xs bg-neutral-50 dark:bg-neutral-900 border border-[var(--um-border)] rounded-full text-[var(--um-text-muted)]">
@@ -33,6 +39,10 @@ export default function TravelTimeBadge({ from, to, mode = 'walking', className 
 
   if (!minutes) {
     return null;
+  }
+
+  if (isInline) {
+    return <span className={className}>{minutes} min travel</span>;
   }
 
   return (
