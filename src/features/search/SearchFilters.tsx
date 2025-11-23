@@ -192,8 +192,8 @@ export function SearchFiltersComponent({
                   <>
                     {/* Full-width panel attached under top controls, pushes content below */}
                     <div className="mt-4 w-full overflow-hidden rounded-3xl bg-white shadow-[0_24px_70px_rgba(0,0,0,0.08)] transition-all duration-300 ease-out animate-in fade-in slide-in-from-top-2 dark:bg-gray-900">
-                  <div className="w-full px-4 py-6 sm:px-6 md:px-10 md:py-8">
-                    <div className="mx-auto max-w-[1800px] space-y-8">
+                  <div className="w-full px-4 py-4 sm:px-5 md:px-6 md:py-5">
+                    <div className="mx-auto max-w-[1800px] space-y-4">
                       {/* Header */}
                       <div className="flex items-center justify-between">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">Filters</div>
@@ -216,8 +216,8 @@ export function SearchFiltersComponent({
                         </div>
                       </div>
                     {/* Text Search - Only filters grid, doesn't trigger top search */}
-                    <fieldset className="space-y-3">
-                      <legend className="text-sm font-medium mb-4 text-gray-900 dark:text-white">Search</legend>
+                    <fieldset className="space-y-2">
+                      <legend className="text-sm font-medium mb-2 text-gray-900 dark:text-white">Search</legend>
                       <div className="relative">
                         <label htmlFor="search-filter-full" className="sr-only">
                           Filter destinations
@@ -248,7 +248,7 @@ export function SearchFiltersComponent({
 
                     {/* Special Filters */}
                     <fieldset>
-                      <legend className="text-sm font-medium mb-4 text-gray-900 dark:text-white">Special</legend>
+                      <legend className="text-sm font-medium mb-2 text-gray-900 dark:text-white">Special</legend>
                       <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
                         <button
                           type="button"
@@ -291,7 +291,7 @@ export function SearchFiltersComponent({
 
                     {/* Rating Filter */}
                     <fieldset>
-                      <legend className="text-sm font-medium mb-4 text-gray-900 dark:text-white">Minimum Rating</legend>
+                      <legend className="text-sm font-medium mb-2 text-gray-900 dark:text-white">Minimum Rating</legend>
                       <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
                         <button
                           type="button"
@@ -331,7 +331,7 @@ export function SearchFiltersComponent({
 
                     {/* Price Filter */}
                     <fieldset>
-                      <legend className="text-sm font-medium mb-4 text-gray-900 dark:text-white">Price Level</legend>
+                      <legend className="text-sm font-medium mb-2 text-gray-900 dark:text-white">Price Level</legend>
                       <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
                         <button
                           type="button"
@@ -376,8 +376,8 @@ export function SearchFiltersComponent({
 
                     {/* Sort Filter (Admin Only) */}
                     {isAdmin && onSortChange && (
-                      <fieldset className="pt-6 border-t border-gray-200 dark:border-gray-800">
-                        <legend className="text-sm font-medium mb-4 text-gray-900 dark:text-white">Sort</legend>
+                      <fieldset className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                        <legend className="text-sm font-medium mb-2 text-gray-900 dark:text-white">Sort</legend>
                         <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
                           <button
                             type="button"
