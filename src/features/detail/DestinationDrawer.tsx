@@ -1939,6 +1939,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   zoom={15}
                   height="192px"
                   className="rounded-2xl"
+                  showPin={true}
                 />
               </div>
             </div>
@@ -2674,6 +2675,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   zoom={15}
                   height="192px"
                   className="rounded-2xl"
+                  showPin={true}
                 />
               </div>
             </div>
