@@ -201,7 +201,10 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
             <div
               className="rounded-2xl border border-[var(--um-border)] p-4 space-y-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer bg-white dark:bg-gray-950"
-              onClick={() => openSide('trip-overview-quick', { trip: upcomingTrip })}
+              onClick={() => {
+                onClose();
+                openSide('trip-overview-quick', { trip: upcomingTrip });
+              }}
             >
               {upcomingTrip.coverImage && (
                 <div className="relative w-full h-40 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
