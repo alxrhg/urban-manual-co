@@ -21,7 +21,7 @@ import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
 import AccountDrawerNew from '@/components/drawers/AccountDrawer';
 
 export default function DrawerMount() {
-  const { type, props, closeDrawer } = useDrawerStore();
+  const { open, type, props, closeDrawer } = useDrawerStore();
 
   return (
     <>
@@ -35,7 +35,7 @@ export default function DrawerMount() {
       <AccountDrawerNew isOpen={type === 'account-new'} onClose={closeDrawer} />
       <DestinationDrawer isOpen={type === 'destination'} onClose={closeDrawer} place={props.place || null} {...props} />
       <TripOverviewDrawer isOpen={type === 'trip-overview'} onClose={closeDrawer} trip={props.trip || null} {...props} />
-      <TripListDrawer isOpen={type === 'trip-list'} onClose={closeDrawer} />
+      <TripListDrawer isOpen={open && type === 'trip-list'} onClose={closeDrawer} />
       <TripOverviewQuickDrawer isOpen={type === 'trip-overview-quick'} onClose={closeDrawer} trip={props.trip || null} />
       <TripDayDrawer isOpen={type === 'trip-day'} onClose={closeDrawer} day={props.day || null} {...props} />
       <TripAddMealDrawer
