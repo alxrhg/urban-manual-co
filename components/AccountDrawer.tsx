@@ -512,10 +512,10 @@ export function AccountDrawer() {
               {renderNavItem('Visited places', <MapPin className="w-4 h-4" />, () => navigateToSubpage('visited_subpage'), `${stats.visited} logged`)}
               {renderNavItem('Lists', <Folder className="w-4 h-4" />, () => navigateToSubpage('collections_subpage'), 'Organize favorites')}
               {renderNavItem('Trips', <Compass className="w-4 h-4" />, () => {
+                // Close Account Drawer (uses DrawerContext)
                 closeDrawer();
-                setTimeout(() => {
-                  openSide('trip-list');
-                }, 200);
+                // Open Trip List Drawer (uses drawer store) - no delay needed as they're independent
+                openSide('trip-list');
               }, `${stats.trips} planned`)}
               {renderNavItem('Achievements', <Trophy className="w-4 h-4" />, () => navigateToSubpage('achievements_subpage'), 'Milestones and badges')}
             </div>
