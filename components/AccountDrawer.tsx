@@ -54,8 +54,6 @@ export function AccountDrawer() {
   const { user, signOut } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
   const openSide = useDrawerStore((s) => s.openSide);
-  // Get the store directly for debugging
-  const drawerStore = useDrawerStore.getState ? useDrawerStore : null;
   const isOpen = isDrawerOpen("account");
   const [currentSubpage, setCurrentSubpage] = useState<SubpageId>('main_drawer');
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
@@ -524,7 +522,11 @@ export function AccountDrawer() {
                   // Double-check the store state after a brief moment
                   setTimeout(() => {
                     const store = useDrawerStore.getState();
-                    console.log('[AccountDrawer] Drawer store state after openSide:', store);
+                    console.log('[AccountDrawer] Drawer store state after openSide:', {
+                      open: store.open,
+                      type: store.type,
+                      mode: store.mode
+                    });
                   }, 100);
                 }, 150);
               }, `${stats.trips} planned`)}
