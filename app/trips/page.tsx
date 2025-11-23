@@ -8,6 +8,9 @@ import { Plus, Trash2, Edit2, Eye, Calendar, MapPin, Loader2, X } from 'lucide-r
 import { TripPlanner } from '@/components/TripPlanner';
 import type { Trip } from '@/types/trip';
 import Image from 'next/image';
+import UMFeaturePill from '@/components/ui/UMFeaturePill';
+import UMActionPill from '@/components/ui/UMActionPill';
+import TripCard from '@/components/trips/TripCard';
 
 interface TripWithImage extends Trip {
   firstLocationImage?: string | null;
@@ -21,7 +24,7 @@ export default function TripsPage() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [deleteConfirmTrip, setDeleteConfirmTrip] = useState<{ id: string; title: string } | null>(null);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'planning' | 'upcoming' | 'past'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'planning' | 'completed'>('all');
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -129,14 +132,13 @@ export default function TripsPage() {
     }
   };
 
-  // Group trips by status
-  const groupedTrips = useMemo(() => {
-    const planning = trips.filter(t => t.status === 'planning');
-    const upcoming = trips.filter(t => t.status === 'upcoming' || t.status === 'ongoing');
-    const past = trips.filter(t => t.status === 'completed');
-    
-    return { planning, upcoming, past };
-  }, [trips]);
+  // Filter trips based on active filter
+  const filteredTrips = useMemo(() => {
+    if (activeFilter === 'all') return trips;
+    if (activeFilter === 'planning') return trips.filter(t => t.status === 'planning');
+    if (activeFilter === 'completed') return trips.filter(t => t.status === 'completed');
+    return trips;
+  }, [trips, activeFilter]);
 
   const formatDateRange = (startDate: string | null, endDate: string | null) => {
     if (!startDate && !endDate) return null;
@@ -150,12 +152,16 @@ export default function TripsPage() {
       return `${formatDate(startDate)} → ${formatDate(endDate)}`;
     }
     if (startDate) {
-      return `From ${formatDate(startDate)}`;
+      return formatDate(startDate);
     }
     if (endDate) {
-      return `Until ${formatDate(endDate)}`;
+      return formatDate(endDate);
     }
     return null;
+  };
+
+  const getCityFromTrip = (trip: TripWithImage) => {
+    return trip.destination || trip.city || 'Unknown';
   };
 
   const getStatusBadgeColor = (status: string) => {
@@ -199,102 +205,57 @@ export default function TripsPage() {
     return null;
   }
 
-  const hasAnyTrips = trips.length > 0;
-
   return (
-    <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
-      <div className="w-full max-w-7xl mx-auto">
-        {/* Header - Editorial Style */}
-        <div className="mb-16 pb-8 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex-1">
-              <h1 className="text-4xl font-medium text-gray-900 dark:text-white tracking-tight mb-3">
-                Trips
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 font-light max-w-2xl">
-                Plan and revisit your journeys with clarity.
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                if (!user) {
-                  router.push('/auth/login');
-                } else {
-                  setShowCreateDialog(true);
-                }
-              }}
-              className="flex items-center gap-2 px-5 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-sm font-medium hover:opacity-90 transition-all duration-180 ease-out flex-shrink-0"
-            >
-              <Plus className="h-4 w-4" />
-              <span>{user ? "New Trip" : "Sign in to create trip"}</span>
-            </button>
-          </div>
+    <div className="max-w-2xl mx-auto px-6 py-12 space-y-10">
+      {/* HEADER */}
+      <div className="space-y-2">
+        <p className="text-xs tracking-widest text-neutral-400 uppercase">Trips</p>
+        <p className="text-neutral-500 text-sm">Plan and revisit your journeys with clarity.</p>
+      </div>
 
-          {/* Optional Filters */}
-          {hasAnyTrips && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setActiveFilter('all')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-180 ${
-                  activeFilter === 'all'
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                All
-              </button>
-              {groupedTrips.planning.length > 0 && (
-                <button
-                  onClick={() => setActiveFilter('planning')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-180 ${
-                    activeFilter === 'planning'
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  Planning
-                </button>
-              )}
-              {groupedTrips.upcoming.length > 0 && (
-                <button
-                  onClick={() => setActiveFilter('upcoming')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-180 ${
-                    activeFilter === 'upcoming'
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  Upcoming
-                </button>
-              )}
-              {groupedTrips.past.length > 0 && (
-                <button
-                  onClick={() => setActiveFilter('past')}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all duration-180 ${
-                    activeFilter === 'past'
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  Past
-                </button>
-              )}
-            </div>
-          )}
+      {/* PRIMARY CTA */}
+      <UMFeaturePill
+        onClick={() => {
+          if (!user) {
+            router.push('/auth/login');
+          } else {
+            setShowCreateDialog(true);
+          }
+        }}
+      >
+        + New Trip
+      </UMFeaturePill>
+
+      {/* FILTER PILLS */}
+      {trips.length > 0 && (
+        <div className="flex gap-2">
+          <UMActionPill
+            variant={activeFilter === 'all' ? 'primary' : 'default'}
+            onClick={() => setActiveFilter('all')}
+          >
+            All
+          </UMActionPill>
+          <UMActionPill
+            variant={activeFilter === 'planning' ? 'primary' : 'default'}
+            onClick={() => setActiveFilter('planning')}
+          >
+            Planning
+          </UMActionPill>
+          <UMActionPill
+            variant={activeFilter === 'completed' ? 'primary' : 'default'}
+            onClick={() => setActiveFilter('completed')}
+          >
+            Completed
+          </UMActionPill>
         </div>
+      )}
 
-        {/* Empty State */}
-        {!hasAnyTrips ? (
-          <div className="text-center py-24 space-y-6">
-            <div className="space-y-3">
-              <h2 className="text-xl font-medium text-gray-900 dark:text-white tracking-tight">
-                No trips yet
-              </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 font-light max-w-sm mx-auto">
-                Start planning your next adventure.
-              </p>
-            </div>
-            <button
+      {/* TRIP LIST */}
+      <div className="space-y-8">
+        {filteredTrips.length === 0 ? (
+          <div className="text-center space-y-3 py-20">
+            <p className="text-sm text-neutral-500">You have no trips yet.</p>
+            <UMFeaturePill
               onClick={() => {
                 if (!user) {
                   router.push('/auth/login');
@@ -302,107 +263,36 @@ export default function TripsPage() {
                   setShowCreateDialog(true);
                 }
               }}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
             >
-              <Plus className="h-4 w-4" />
-              {user ? "Create Trip" : "Sign in to create trip"}
-            </button>
+              Create Trip
+            </UMFeaturePill>
           </div>
         ) : (
-          <div className="space-y-16">
-            {/* In Planning */}
-            {groupedTrips.planning.length > 0 && (activeFilter === 'all' || activeFilter === 'planning') && (
-              <section>
-                <div className="flex items-center gap-3 mb-6">
-                  <h2 className="text-base font-medium text-gray-900 dark:text-white tracking-tight">
-                    In Planning
-                  </h2>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 font-light">
-                    {groupedTrips.planning.length}
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {groupedTrips.planning.map(trip => (
-                    <TripCard
-                      key={trip.id}
-                      trip={trip}
-                      onView={() => router.push(`/trips/${trip.id}`)}
-                      onEdit={() => {
-                        setEditingTripId(trip.id);
-                        setShowCreateDialog(true);
-                      }}
-                      onDelete={() => setDeleteConfirmTrip({ id: trip.id, title: trip.title })}
-                      formatDateRange={formatDateRange}
-                      getStatusBadgeColor={getStatusBadgeColor}
-                      getStatusLabel={getStatusLabel}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Upcoming Trips */}
-            {groupedTrips.upcoming.length > 0 && (activeFilter === 'all' || activeFilter === 'upcoming') && (
-              <section>
-                <div className="flex items-center gap-3 mb-6">
-                  <h2 className="text-base font-medium text-gray-900 dark:text-white tracking-tight">
-                    Upcoming Trips
-                  </h2>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 font-light">
-                    {groupedTrips.upcoming.length}
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {groupedTrips.upcoming.map(trip => (
-                    <TripCard
-                      key={trip.id}
-                      trip={trip}
-                      onView={() => router.push(`/trips/${trip.id}`)}
-                      onEdit={() => {
-                        setEditingTripId(trip.id);
-                        setShowCreateDialog(true);
-                      }}
-                      onDelete={() => setDeleteConfirmTrip({ id: trip.id, title: trip.title })}
-                      formatDateRange={formatDateRange}
-                      getStatusBadgeColor={getStatusBadgeColor}
-                      getStatusLabel={getStatusLabel}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* Past Trips */}
-            {groupedTrips.past.length > 0 && (activeFilter === 'all' || activeFilter === 'past') && (
-              <section>
-                <div className="flex items-center gap-3 mb-6">
-                  <h2 className="text-base font-medium text-gray-900 dark:text-white tracking-tight">
-                    Past Trips
-                  </h2>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 font-light">
-                    {groupedTrips.past.length}
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {groupedTrips.past.map(trip => (
-                    <TripCard
-                      key={trip.id}
-                      trip={trip}
-                      onView={() => router.push(`/trips/${trip.id}`)}
-                      onEdit={() => {
-                        setEditingTripId(trip.id);
-                        setShowCreateDialog(true);
-                      }}
-                      onDelete={() => setDeleteConfirmTrip({ id: trip.id, title: trip.title })}
-                      formatDateRange={formatDateRange}
-                      getStatusBadgeColor={getStatusBadgeColor}
-                      getStatusLabel={getStatusLabel}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-          </div>
+          filteredTrips.map((trip) => {
+            const dateRange = formatDateRange(trip.start_date, trip.end_date);
+            const [startDate, endDate] = dateRange ? dateRange.split(' → ') : [null, null];
+            
+            return (
+              <TripCard
+                key={trip.id}
+                trip={{
+                  id: trip.id,
+                  name: trip.title,
+                  coverImage: trip.cover_image || trip.firstLocationImage,
+                  city: getCityFromTrip(trip),
+                  startDate: startDate || undefined,
+                  endDate: endDate || undefined,
+                  status: trip.status,
+                }}
+                onView={() => router.push(`/trips/${trip.id}`)}
+                onEdit={() => {
+                  setEditingTripId(trip.id);
+                  setShowCreateDialog(true);
+                }}
+                onDelete={() => setDeleteConfirmTrip({ id: trip.id, title: trip.title })}
+              />
+            );
+          })
         )}
       </div>
 
@@ -452,100 +342,6 @@ export default function TripsPage() {
           </div>
         </div>
       )}
-    </main>
-  );
-}
-
-interface TripCardProps {
-  trip: TripWithImage;
-  onView: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-  formatDateRange: (start: string | null, end: string | null) => string | null;
-  getStatusBadgeColor: (status: string) => string;
-  getStatusLabel: (status: string) => string;
-}
-
-function TripCard({ trip, onView, onEdit, onDelete, formatDateRange, getStatusBadgeColor, getStatusLabel }: TripCardProps) {
-  const imageUrl = trip.cover_image || trip.firstLocationImage;
-  const dateRange = formatDateRange(trip.start_date, trip.end_date);
-
-  // Format meta info: {city} · {start_date} → {end_date}
-  const metaInfo = [trip.destination, dateRange].filter(Boolean).join(' · ');
-
-  return (
-    <div
-      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200/50 dark:border-gray-800/50 bg-white dark:bg-gray-950 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180 ease-out cursor-pointer"
-      onClick={onView}
-    >
-      {/* Image - 16:9 ratio */}
-      <div className="relative aspect-[16/9] bg-gray-100 dark:bg-gray-800 overflow-hidden">
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={trip.title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
-            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <MapPin className="w-12 h-12 text-gray-300 dark:text-gray-700" />
-          </div>
-        )}
-        {/* Status Badge */}
-        <div className="absolute top-4 right-4">
-          <span className={`px-2.5 py-1 rounded-lg text-xs font-medium ${getStatusBadgeColor(trip.status)}`}>
-            {getStatusLabel(trip.status)}
-          </span>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex flex-1 flex-col p-5 md:p-6">
-        {/* Title - Bold, premium */}
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 line-clamp-2 tracking-tight">
-          {trip.title}
-        </h3>
-
-        {/* Meta Info - {city} · {start_date} → {end_date} */}
-        {metaInfo && (
-          <div className="text-sm text-gray-500 dark:text-gray-400 mb-5 font-light">
-            {metaInfo}
-          </div>
-        )}
-
-        {/* Action Row - Inline text buttons */}
-        <div className="flex items-center gap-4 pt-4 mt-auto border-t border-gray-200/50 dark:border-gray-800/50">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onView();
-            }}
-            className="text-sm font-medium text-gray-900 dark:text-white hover:opacity-70 transition-opacity"
-          >
-            View
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            Edit
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="text-sm font-medium text-red-600 dark:text-red-400 hover:opacity-70 transition-opacity ml-auto"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
