@@ -1920,23 +1920,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Map Section */}
+          {/* Map Section - Small static map */}
           {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
-              <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-                <MapView
-                  destinations={[{
-                    ...destination,
-                    latitude: destination.latitude || enrichedData?.latitude,
-                    longitude: destination.longitude || enrichedData?.longitude,
-                  }].filter(d => d.latitude && d.longitude) as Destination[]}
+              <div className="w-full h-48 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+                <GoogleStaticMap
                   center={{
                     lat: destination.latitude || enrichedData?.latitude || 0,
                     lng: destination.longitude || enrichedData?.longitude || 0,
                   }}
                   zoom={15}
-                  isDark={false}
+                  height="192px"
+                  className="rounded-2xl"
                 />
               </div>
             </div>
@@ -2663,23 +2659,19 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* Map Section */}
+          {/* Map Section - Small static map */}
           {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
-              <div className="w-full h-64 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-                <MapView
-                  destinations={[{
-                    ...destination,
-                    latitude: destination.latitude || enrichedData?.latitude,
-                    longitude: destination.longitude || enrichedData?.longitude,
-                  }].filter(d => d.latitude && d.longitude) as Destination[]}
+              <div className="w-full h-48 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+                <GoogleStaticMap
                   center={{
                     lat: destination.latitude || enrichedData?.latitude || 0,
                     lng: destination.longitude || enrichedData?.longitude || 0,
                   }}
                   zoom={15}
-                  isDark={false}
+                  height="192px"
+                  className="rounded-2xl"
                 />
               </div>
             </div>
