@@ -83,37 +83,28 @@ export default function GreetingHero({
 
   const { greeting } = generateContextualGreeting(greetingContext);
 
-  // Rotating AI-powered travel intelligence cues
-  const contextualPlaceholder = generateContextualPlaceholder(greetingContext);
+  // Rotating placeholders - Step One spec
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const aiPlaceholders = [
-    contextualPlaceholder,
     "Ask me anything about travel",
-    "Where would you like to explore?",
-    "Find romantic hotels in Tokyo",
-    "Best time to visit Kyoto?",
-    "Show me Michelin restaurants",
-    "Vegetarian cafes in Paris",
-    "When do cherry blossoms bloom?",
-    "Hidden gems in Copenhagen",
-    "Compare hotels in Paris",
-    "Luxury stays with city views",
-    "What's trending in Tokyo?",
-    "Find places open late night",
+    "Where would you like to go?",
+    "Find hotels, restaurants, or hidden gems",
+    "Try: budget hotels in Tokyo",
+    "Try: best cafes near me",
   ];
 
-
-  // Rotate placeholder text every 3 seconds when input is empty
+  // Rotate placeholder text every 4 seconds when input is empty and not focused
   useEffect(() => {
-    if (!isAIEnabled || searchQuery.trim().length > 0) {
+    if (!isAIEnabled || searchQuery.trim().length > 0 || isInputFocused) {
       return;
     }
 
     const interval = setInterval(() => {
       setCurrentPlaceholderIndex((prev) => (prev + 1) % aiPlaceholders.length);
-    }, 3000);
+    }, 4000);
 
     return () => clearInterval(interval);
-  }, [searchQuery, isAIEnabled, aiPlaceholders.length]);
+  }, [searchQuery, isAIEnabled, isInputFocused, aiPlaceholders.length]);
 
   // Keyboard shortcut: Press '/' to focus search
   useEffect(() => {
@@ -164,10 +155,18 @@ export default function GreetingHero({
   return (
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="w-full relative">
-        {/* Greeting above search - Enhanced with context */}
+        {/* Greeting above search - Step One spec: "GOOD MORNING, {{user_name}}" */}
         <div className="text-left mb-[50px]">
           <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
-            {greeting}
+            {(() => {
+              const now = new Date();
+              const currentHour = now.getHours();
+              let timeGreeting = "GOOD EVENING";
+              if (currentHour < 12) timeGreeting = "GOOD MORNING";
+              else if (currentHour < 18) timeGreeting = "GOOD AFTERNOON";
+              
+              return userName ? `${timeGreeting}, ${userName.toUpperCase()}` : timeGreeting;
+            })()}
           </h1>
         </div>
 
@@ -178,13 +177,19 @@ export default function GreetingHero({
               <Loader2 className="w-4 h-4 animate-spin" />
             </div>
           )}
-          <div className="relative w-full">
+          <div className={`relative w-full ${!searchQuery ? 'search-input-shimmer' : ''}`}>
             <input
               ref={inputRef}
               placeholder={isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything"}
               value={searchQuery}
               onChange={(e) => {
                 handleInputChange(e.target.value);
+              }}
+              onFocus={() => {
+                setIsInputFocused(true);
+              }}
+              onBlur={() => {
+                setIsInputFocused(false);
               }}
               onKeyDown={(e) => {
                 handleKeyDown(e);
@@ -196,7 +201,7 @@ export default function GreetingHero({
                   }
                 }
               }}
-              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60 relative z-10"
               style={{
                 paddingLeft: isSearching ? '32px' : '0'
               }}

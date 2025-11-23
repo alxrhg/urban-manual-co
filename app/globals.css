@@ -54,6 +54,53 @@
   animation: highlightPulse 2s ease-in-out;
 }
 
+/* Shimmer animation for search input - subtle background shimmer */
+@keyframes inputShimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+.search-input-shimmer {
+  position: relative;
+}
+
+.search-input-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 45%,
+    rgba(0, 0, 0, 0.02) 50%,
+    transparent 55%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: inputShimmer 4s ease-in-out infinite;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+.dark .search-input-shimmer::before {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    transparent 45%,
+    rgba(255, 255, 255, 0.02) 50%,
+    transparent 55%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
