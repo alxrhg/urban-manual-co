@@ -140,24 +140,14 @@ export default function TripsPage() {
     return trips;
   }, [trips, activeFilter]);
 
-  const formatDateRange = (startDate: string | null, endDate: string | null) => {
-    if (!startDate && !endDate) return null;
-    
-    const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    try {
       const date = new Date(dateStr);
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    };
-
-    if (startDate && endDate) {
-      return `${formatDate(startDate)} → ${formatDate(endDate)}`;
+    } catch {
+      return null;
     }
-    if (startDate) {
-      return formatDate(startDate);
-    }
-    if (endDate) {
-      return formatDate(endDate);
-    }
-    return null;
   };
 
   const getCityFromTrip = (trip: TripWithImage) => {
@@ -268,31 +258,26 @@ export default function TripsPage() {
             </UMFeaturePill>
           </div>
         ) : (
-          filteredTrips.map((trip) => {
-            const dateRange = formatDateRange(trip.start_date, trip.end_date);
-            const [startDate, endDate] = dateRange ? dateRange.split(' → ') : [null, null];
-            
-            return (
-              <TripCard
-                key={trip.id}
-                trip={{
-                  id: trip.id,
-                  name: trip.title,
-                  coverImage: trip.cover_image || trip.firstLocationImage,
-                  city: getCityFromTrip(trip),
-                  startDate: startDate || undefined,
-                  endDate: endDate || undefined,
-                  status: trip.status,
-                }}
-                onView={() => router.push(`/trips/${trip.id}`)}
-                onEdit={() => {
-                  setEditingTripId(trip.id);
-                  setShowCreateDialog(true);
-                }}
-                onDelete={() => setDeleteConfirmTrip({ id: trip.id, title: trip.title })}
-              />
-            );
-          })
+          filteredTrips.map((trip) => (
+            <TripCard
+              key={trip.id}
+              trip={{
+                id: trip.id,
+                name: trip.title,
+                coverImage: trip.cover_image || trip.firstLocationImage,
+                city: getCityFromTrip(trip),
+                startDate: formatDate(trip.start_date) || undefined,
+                endDate: formatDate(trip.end_date) || undefined,
+                status: trip.status,
+              }}
+              onView={() => router.push(`/trips/${trip.id}`)}
+              onEdit={() => {
+                setEditingTripId(trip.id);
+                setShowCreateDialog(true);
+              }}
+              onDelete={() => setDeleteConfirmTrip({ id: trip.id, title: trip.title })}
+            />
+          ))
         )}
       </div>
 
