@@ -18,6 +18,7 @@ import TripReorderDrawer from '@/components/trip-drawers/TripReorderDrawer';
 import TripListDrawer from '@/components/drawers/TripListDrawer';
 import TripOverviewQuickDrawer from '@/components/drawers/TripOverviewQuickDrawer';
 import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
+import AccountDrawerNew from '@/components/drawers/AccountDrawer';
 
 export default function DrawerMount() {
   const { type, props, closeDrawer } = useDrawerStore();
@@ -31,6 +32,7 @@ export default function DrawerMount() {
       <VisitedPlacesDrawer />
 
       {/* New drawers that use the global drawer store */}
+      <AccountDrawerNew isOpen={type === 'account-new'} onClose={closeDrawer} />
       <DestinationDrawer isOpen={type === 'destination'} onClose={closeDrawer} place={props.place || null} {...props} />
       <TripOverviewDrawer isOpen={type === 'trip-overview'} onClose={closeDrawer} trip={props.trip || null} {...props} />
       <TripListDrawer isOpen={type === 'trip-list'} onClose={closeDrawer} />
