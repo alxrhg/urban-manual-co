@@ -893,7 +893,8 @@ async function processAIChatRequest(
       console.error('[AI Chat] Discovery Engine search failed. This is the primary search feature and must be configured. Falling back to Supabase:', discoveryError?.message || discoveryError);
     }
 
-    // Strategy 2: Secondary fallback to Supabase vector search (only if Discovery Engine didn't return results)
+    // Strategy 2: Secondary - OpenAI Embeddings (vector similarity search via Supabase)
+    // Only use if Discovery Engine didn't return results
     if (results.length === 0 && queryEmbedding) {
       try {
         const { data, error } = await supabase.rpc('match_destinations', {
@@ -911,14 +912,14 @@ async function processAIChatRequest(
         if (!error && data && data.length > 0) {
           results = data;
           searchTier = 'vector-search';
-          console.log(`[AI Chat] Vector search found ${results.length} results`);
+          console.log(`[AI Chat] OpenAI Embeddings (secondary) found ${results.length} results`);
         }
       } catch (error: any) {
-        console.error('[AI Chat] Vector search error:', error);
+        console.error('[AI Chat] OpenAI Embeddings search error:', error);
       }
     }
 
-    // Strategy 3: Fallback to keyword search (if still no results)
+    // Strategy 3: Last resort - Supabase keyword search (only if both Discovery Engine and Embeddings failed)
     if (results.length === 0) {
       try {
         let keywordQuery = supabase
@@ -957,7 +958,7 @@ async function processAIChatRequest(
         if (!error && data && data.length > 0) {
           results = data;
           searchTier = 'keyword-search';
-          console.log(`[AI Chat] Keyword search found ${results.length} results`);
+          console.log(`[AI Chat] Supabase keyword search (last resort) found ${results.length} results`);
         }
       } catch (error: any) {
         console.error('[AI Chat] Keyword search error:', error);
