@@ -32,12 +32,28 @@ export default function GoogleInteractiveMap({
   const isInitializedRef = useRef(false);
   const lastCenterRef = useRef<{ lat: number; lng: number } | null>(null);
   const lastZoomRef = useRef<number | null>(null);
+  const lastDestinationsHashRef = useRef<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Add markers
   const addMarkers = useCallback(() => {
     if (!mapInstanceRef.current || !window.google?.maps) return;
+
+    // Create hash of destinations to prevent unnecessary updates
+    const destinationsHash = JSON.stringify(
+      destinations
+        .filter(d => d.latitude && d.longitude)
+        .map(d => ({ id: d.id, lat: d.latitude, lng: d.longitude }))
+        .sort((a, b) => (a.id || '').localeCompare(b.id || ''))
+    );
+
+    // Skip if destinations haven't changed
+    if (destinationsHash === lastDestinationsHashRef.current) {
+      return;
+    }
+
+    lastDestinationsHashRef.current = destinationsHash;
 
     // Clear existing markers
     markersRef.current.forEach(marker => {
@@ -127,7 +143,7 @@ export default function GoogleInteractiveMap({
       infoWindowsRef.current.push(infoWindow);
     });
 
-    // Fit bounds if we have markers
+    // Fit bounds if we have markers, otherwise center on Taiwan
     if (hasValidMarkers && markersRef.current.length > 0) {
       mapInstanceRef.current.fitBounds(bounds);
       // Don't zoom in too much if only one marker
@@ -141,6 +157,10 @@ export default function GoogleInteractiveMap({
           }
         });
       }
+    } else {
+      // Center on Taiwan if no markers
+      mapInstanceRef.current.setCenter({ lat: 23.5, lng: 121.0 });
+      mapInstanceRef.current.setZoom(8);
     }
   }, [destinations, onMarkerClick]);
 
@@ -262,10 +282,12 @@ export default function GoogleInteractiveMap({
       lastCenterRef.current = { lat: center.lat, lng: center.lng };
       lastZoomRef.current = zoom;
 
-      // Add markers after map is initialized
-      if (destinations.length > 0) {
-        addMarkers();
-      }
+      // Add markers after map is initialized (with slight delay to ensure map is ready)
+      setTimeout(() => {
+        if (destinations.length > 0) {
+          addMarkers();
+        }
+      }, 100);
     } catch (err) {
       console.error('Error initializing Google Map:', err);
       setError('Failed to initialize map');
@@ -365,7 +387,11 @@ export default function GoogleInteractiveMap({
   // Update markers when destinations change (but don't re-initialize map)
   useEffect(() => {
     if (mapInstanceRef.current && window.google?.maps && isInitializedRef.current && !isLoading) {
-      addMarkers();
+      // Use requestAnimationFrame to batch marker updates and prevent flashing
+      const frameId = requestAnimationFrame(() => {
+        addMarkers();
+      });
+      return () => cancelAnimationFrame(frameId);
     }
   }, [destinations, addMarkers, isLoading]);
 
@@ -389,7 +415,12 @@ export default function GoogleInteractiveMap({
       <div 
         ref={mapRef} 
         className="absolute inset-0 w-full h-full"
-        style={{ visibility: isLoading || error ? 'hidden' : 'visible' }}
+        style={{ 
+          visibility: isLoading || error ? 'hidden' : 'visible',
+          padding: 0,
+          margin: 0,
+          border: 'none',
+        }}
       />
     </div>
   );
