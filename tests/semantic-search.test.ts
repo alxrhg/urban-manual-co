@@ -16,8 +16,6 @@ type TestContext = {
   embedMock: any;
   rpcMock: any;
   fromMock: any;
-  asimovSearchMock: any;
-  asimovMapMock: any;
   metricMock: any;
   enqueueResponse: (response: QueryResponse) => void;
 };
@@ -44,8 +42,6 @@ async function createTestContext(): Promise<TestContext> {
     const response = responses.shift() ?? { data: [] };
     return createQueryBuilder(response);
   });
-  const asimovSearchMock = mock.fn(async () => null as any);
-  const asimovMapMock = mock.fn((results: any[]) => results);
   const metricMock = mock.fn(async () => {});
 
   const { createSemanticBlendSearch } = await semanticModulePromise;
@@ -55,8 +51,6 @@ async function createTestContext(): Promise<TestContext> {
       rpc: rpcMock,
       from: fromMock,
     } as any,
-    asimovSearch: asimovSearchMock as any,
-    asimovMapper: asimovMapMock as any,
     metricTracker: metricMock as any,
   });
 
@@ -65,8 +59,6 @@ async function createTestContext(): Promise<TestContext> {
     embedMock,
     rpcMock,
     fromMock,
-    asimovSearchMock,
-    asimovMapMock,
     metricMock,
     enqueueResponse,
   };
@@ -99,29 +91,25 @@ test('invokes semantic RPC with filters and keeps RPC ranking order', async () =
   assert.equal(ctx.metricMock.mock.calls.length, 0);
 });
 
-test('falls back to Asimov when RPC errors and logs metrics', async () => {
+test('falls back to keyword search when RPC errors and logs metrics', async () => {
   const ctx = await createTestContext();
   ctx.embedMock.mock.mockImplementation(async () => [0.25, 0.5]);
   ctx.rpcMock.mock.mockImplementation(async () => ({ data: null, error: { message: 'rpc broke' } }));
-  ctx.asimovSearchMock.mock.mockImplementation(async () => ([{ title: 'Fallback', metadata: { slug: 'asimov' } }]));
-  ctx.asimovMapMock.mock.mockImplementation(() => ([{ slug: 'asimov', name: 'Fallback', _asimov_score: 0.8 }]));
-  ctx.enqueueResponse({ data: [{ slug: 'asimov', name: 'Fallback' }] });
+  ctx.enqueueResponse({ data: [{ slug: 'keyword', name: 'Keyword Result' }] });
 
   const results = await ctx.search('Museums in Paris', buildFilters({ city: 'Paris' }));
 
   assert.equal(results.length, 1);
-  assert.equal(results[0].slug, 'asimov');
+  assert.equal(results[0].slug, 'keyword');
   assert.equal(ctx.metricMock.mock.calls.length, 2);
   assert.equal(ctx.metricMock.mock.calls[0].arguments[0], 'vector_failure');
-  assert.equal(ctx.metricMock.mock.calls[1].arguments[1].strategy, 'asimov');
-  assert.equal(ctx.asimovSearchMock.mock.calls.length, 1);
+  assert.equal(ctx.metricMock.mock.calls[1].arguments[0], 'vector_fallback');
 });
 
-test('falls back to keyword search when Asimov has no data', async () => {
+test('logs fallback metric when RPC returns no results', async () => {
   const ctx = await createTestContext();
   ctx.embedMock.mock.mockImplementation(async () => [0.4, 0.2]);
-  ctx.rpcMock.mock.mockImplementation(async () => ({ data: null, error: { message: 'rpc broke' } }));
-  ctx.asimovSearchMock.mock.mockImplementation(async () => null);
+  ctx.rpcMock.mock.mockImplementation(async () => ({ data: [], error: null }));
   ctx.enqueueResponse({ data: [{ slug: 'keyword', name: 'Keyword Result', content: 'Match' }] });
 
   const results = await ctx.search('Hidden bars', buildFilters({ category: 'Bar', open_now: true }));
@@ -129,7 +117,6 @@ test('falls back to keyword search when Asimov has no data', async () => {
   assert.equal(results.length, 1);
   assert.equal(results[0].slug, 'keyword');
   assert.equal(ctx.metricMock.mock.calls.length, 2);
+  assert.equal(ctx.metricMock.mock.calls[0].arguments[0], 'vector_failure');
   assert.equal(ctx.metricMock.mock.calls[1].arguments[0], 'vector_fallback');
-  assert.equal(ctx.metricMock.mock.calls[1].arguments[1].strategy, 'keyword');
-  assert.equal(ctx.asimovSearchMock.mock.calls.length, 1);
 });

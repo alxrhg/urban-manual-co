@@ -2,14 +2,7 @@ import assert from 'node:assert/strict';
 import { NextRequest } from 'next/server';
 
 import { createCalculateRouteHandler } from '@/app/api/routes/calculate/route';
-
-type RouteShape = {
-  distanceMeters: number;
-  duration: string;
-  durationSeconds: number;
-  legs: Array<Record<string, unknown>>;
-  polyline?: string;
-};
+import type { Route } from '@/lib/enrichment/routes';
 
 const buildRequest = (body: Record<string, unknown>) =>
   new NextRequest(
@@ -21,7 +14,7 @@ const buildRequest = (body: Record<string, unknown>) =>
   );
 
 async function testSuccessContract() {
-  const mockRoute: RouteShape = {
+  const mockRoute: Route = {
     distanceMeters: 5000,
     duration: '20 mins',
     durationSeconds: 1200,
