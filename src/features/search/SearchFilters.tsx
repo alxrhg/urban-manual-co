@@ -296,7 +296,7 @@ export function SearchFiltersComponent({
                         <button
                           type="button"
                           onClick={() => clearFilter('minRating')}
-                          className={`transition-all ${
+                          className={`transition-all rounded-full md:rounded-none px-3 py-1.5 ${
                             !filters.minRating
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
@@ -316,7 +316,7 @@ export function SearchFiltersComponent({
                                 updateFilter('minRating', rating);
                               }
                             }}
-                            className={`transition-all ${
+                            className={`transition-all rounded-full md:rounded-none px-3 py-1.5 ${
                               filters.minRating === rating
                                 ? "font-medium text-black dark:text-white"
                                 : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
@@ -339,7 +339,7 @@ export function SearchFiltersComponent({
                             clearFilter('minPrice');
                             clearFilter('maxPrice');
                           }}
-                          className={`transition-all ${
+                          className={`transition-all rounded-full md:rounded-none px-3 py-1.5 ${
                             !filters.minPrice && !filters.maxPrice
                               ? "font-medium text-black dark:text-white"
                               : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
@@ -361,7 +361,7 @@ export function SearchFiltersComponent({
                                 updateFilter('maxPrice', level);
                               }
                             }}
-                            className={`transition-all ${
+                            className={`transition-all rounded-full md:rounded-none px-3 py-1.5 ${
                               filters.minPrice === level && filters.maxPrice === level
                                 ? "font-medium text-black dark:text-white"
                                 : "font-medium text-black/30 dark:text-gray-600 hover:text-black/60 dark:hover:text-gray-400"
