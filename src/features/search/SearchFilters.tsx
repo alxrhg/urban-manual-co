@@ -409,8 +409,8 @@ export function SearchFiltersComponent({
                     )}
 
                     {/* Near Me Filter */}
-                    <fieldset className="pt-6 border-t border-gray-200 dark:border-gray-800">
-                      <legend className="flex items-center gap-2 mb-4 text-sm font-medium text-gray-900 dark:text-white">
+                    <fieldset className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                      <legend className="flex items-center gap-2 mb-2 text-sm font-medium text-gray-900 dark:text-white">
                         <MapPin className="h-4 w-4 text-gray-400 dark:text-gray-600" />
                         Near Me
                       </legend>
