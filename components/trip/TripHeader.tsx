@@ -7,9 +7,9 @@ interface Trip {
   name?: string;
   title?: string;
   startDate?: string;
-  start_date?: string;
+  start_date?: string | null;
   endDate?: string;
-  end_date?: string;
+  end_date?: string | null;
   [key: string]: any;
 }
 

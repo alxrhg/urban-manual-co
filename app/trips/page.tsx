@@ -151,7 +151,7 @@ export default function TripsPage() {
   };
 
   const getCityFromTrip = (trip: TripWithImage) => {
-    return trip.destination || trip.city || 'Unknown';
+    return trip.destination || 'Unknown';
   };
 
   const getStatusBadgeColor = (status: string) => {
