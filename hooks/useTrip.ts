@@ -42,6 +42,12 @@ export function useTrip(tripId: string | null) {
         if (!supabaseClient) return;
 
         // Fetch trip
+        if (!user?.id) {
+          setTrip(null);
+          setLoading(false);
+          return;
+        }
+
         const { data: tripData, error: tripError } = await supabaseClient
           .from('trips')
           .select('*')
