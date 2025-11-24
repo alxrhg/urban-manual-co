@@ -118,6 +118,22 @@ export function TripPlanner({
   const toast = useToast();
 
   const draftStorageKey = 'tripPlannerDraft';
+  const hasSelectedDates = Boolean(startDate && endDate);
+  const hasChronologicalDates = !startDate || !endDate
+    ? true
+    : new Date(endDate) >= new Date(startDate);
+  const tripDurationDays = getTripDayCount(startDate, endDate);
+  const dateErrorMessage =
+    fieldErrors.startDate ||
+    fieldErrors.endDate ||
+    (hasSelectedDates && !hasChronologicalDates
+      ? 'End date must be on or after the start date.'
+      : '');
+  const dateHintMessage = !hasSelectedDates
+    ? 'Select start and end dates to calculate the trip length.'
+    : hasChronologicalDates
+      ? `Trip length: ${tripDurationDays} day${tripDurationDays === 1 ? '' : 's'}.`
+      : 'End date must be on or after the start date to calculate the trip length.';
 
   // Load existing trip if tripId is provided
   useEffect(() => {
@@ -316,7 +332,7 @@ export function TripPlanner({
         // Create days array
         const start = new Date(tripData.start_date || Date.now());
         const end = new Date(tripData.end_date || Date.now());
-        const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const dayCount = Math.max(getTripDayCount(tripData.start_date, tripData.end_date), 1);
 
         const newDays: DayItinerary[] = [];
         for (let i = 0; i < dayCount; i++) {
@@ -334,7 +350,7 @@ export function TripPlanner({
         // No items, create empty days
         const start = new Date(tripData.start_date || Date.now());
         const end = new Date(tripData.end_date || Date.now());
-        const dayCount = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const dayCount = Math.max(getTripDayCount(tripData.start_date, tripData.end_date), 1);
 
         const newDays: DayItinerary[] = [];
         for (let i = 0; i < dayCount; i++) {
@@ -355,6 +371,20 @@ export function TripPlanner({
     } finally {
       setLoading(false);
     }
+  };
+
+  const getTripDayCount = (start?: string | null, end?: string | null) => {
+    if (!start || !end) return 0;
+    const startObj = new Date(start);
+    const endObj = new Date(end);
+
+    if (isNaN(startObj.getTime()) || isNaN(endObj.getTime())) return 0;
+
+    const diffMs = endObj.getTime() - startObj.getTime();
+    if (diffMs < 0) return 0;
+
+    const msPerDay = 1000 * 60 * 60 * 24;
+    return Math.max(1, Math.floor(diffMs / msPerDay) + 1);
   };
 
   const validateRequiredFields = () => {
@@ -379,6 +409,15 @@ export function TripPlanner({
     if (!endDate) {
       errors.push('End date is required.');
       nextFieldErrors.endDate = 'Select when your trip ends.';
+    }
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      if (end < start) {
+        errors.push('End date cannot be before start date.');
+        nextFieldErrors.endDate = 'End date must be on or after the start date.';
+      }
     }
 
     setValidationErrors(errors);
@@ -482,8 +521,7 @@ export function TripPlanner({
       // Create days array
       const start = new Date(startDate);
       const end = new Date(endDate);
-      const dayCount =
-        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const dayCount = Math.max(getTripDayCount(startDate, endDate), 1);
 
       const newDays: DayItinerary[] = [];
 
@@ -1045,17 +1083,34 @@ export function TripPlanner({
             </div>
           </div>
 
-          {(fieldErrors.startDate || fieldErrors.endDate) && (
+          {dateErrorMessage && (
             <p className="text-xs text-red-600 dark:text-red-400">
-              {fieldErrors.startDate || fieldErrors.endDate}
+              {dateErrorMessage}
             </p>
           )}
+          <p
+            className={`text-xs ${
+              hasSelectedDates && hasChronologicalDates
+                ? 'text-neutral-500 dark:text-neutral-400'
+                : 'text-neutral-600 dark:text-neutral-300'
+            }`}
+          >
+            {dateHintMessage}
+          </p>
 
           <div className="pt-2 space-y-2.5">
             <UMActionPill
               onClick={handleCreateTrip}
               variant="primary"
-              disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
+              disabled={
+                !tripName ||
+                !destination ||
+                !startDate ||
+                !endDate ||
+                saving ||
+                !user ||
+                !hasChronologicalDates
+              }
               className="w-full justify-center"
             >
               {saving ? (
@@ -1247,11 +1302,20 @@ export function TripPlanner({
                       />
               </div>
                   </div>
-                  {(fieldErrors.startDate || fieldErrors.endDate) && (
+                  {dateErrorMessage && (
                     <p className="text-xs text-red-600 dark:text-red-400">
-                      {fieldErrors.startDate || fieldErrors.endDate}
+                      {dateErrorMessage}
                     </p>
                   )}
+                  <p
+                    className={`text-xs ${
+                      hasSelectedDates && hasChronologicalDates
+                        ? 'text-neutral-500 dark:text-neutral-400'
+                        : 'text-neutral-600 dark:text-neutral-300'
+                    }`}
+                  >
+                    {dateHintMessage}
+                  </p>
                   {currentTripId && (
                     <UMActionPill
                       onClick={handleSaveTrip}
