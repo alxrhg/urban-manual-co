@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useTrip } from '@/hooks/useTrip';
@@ -19,6 +19,20 @@ export default function TripPage() {
   const openDrawer = useDrawerStore((s) => s.openDrawer);
   const { trip, loading, error } = useTrip(tripId);
   const [mode, setMode] = useState<Mode>('view');
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+
+  useEffect(() => {
+    if (!trip?.days || trip.days.length === 0) {
+      setSelectedDayIndex(0);
+      return;
+    }
+    setSelectedDayIndex((prev) => {
+      if (prev >= trip.days.length) {
+        return trip.days.length - 1;
+      }
+      return prev;
+    });
+  }, [trip?.id, trip?.days?.length]);
 
   if (loading) return <div className="px-4 py-8">Loading...</div>;
   if (error) return <div className="px-4 py-8 text-red-600">Error: {error}</div>;
@@ -62,9 +76,19 @@ export default function TripPage() {
       </header>
 
       {mode === 'view' ? (
-        <ItineraryViewSection trip={trip} openDrawer={openDrawer} />
+        <ItineraryViewSection
+          trip={trip}
+          openDrawer={openDrawer}
+          selectedDayIndex={selectedDayIndex}
+          onSelectDay={setSelectedDayIndex}
+        />
       ) : (
-        <EditModeSection trip={trip} openDrawer={openDrawer} />
+        <EditModeSection
+          trip={trip}
+          openDrawer={openDrawer}
+          selectedDayIndex={selectedDayIndex}
+          onSelectDay={setSelectedDayIndex}
+        />
       )}
     </div>
   );
@@ -95,7 +119,17 @@ function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (mode: Mode) => 
   );
 }
 
-function ItineraryViewSection({ trip, openDrawer }: { trip: TripWithDays; openDrawer: DrawerOpener }) {
+function ItineraryViewSection({
+  trip,
+  openDrawer,
+  selectedDayIndex,
+  onSelectDay,
+}: {
+  trip: TripWithDays;
+  openDrawer: DrawerOpener;
+  selectedDayIndex: number;
+  onSelectDay: (index: number) => void;
+}) {
   const hasDays = trip.days && trip.days.length > 0;
 
   if (!hasDays) {
@@ -111,14 +145,32 @@ function ItineraryViewSection({ trip, openDrawer }: { trip: TripWithDays; openDr
 
   return (
     <div className="space-y-4">
-      {trip.days.map((day, index) => (
-        <DayCard key={`${day.date}-${index}`} day={day} index={index} trip={trip} openDrawer={openDrawer} mode="view" />
-      ))}
+      <DayTabs days={trip.days} selectedIndex={selectedDayIndex} onSelect={onSelectDay} />
+      {trip.days[selectedDayIndex] && (
+        <DayCard
+          key={`${trip.days[selectedDayIndex].date}-${selectedDayIndex}`}
+          day={trip.days[selectedDayIndex]}
+          index={selectedDayIndex}
+          trip={trip}
+          openDrawer={openDrawer}
+          mode="view"
+        />
+      )}
     </div>
   );
 }
 
-function EditModeSection({ trip, openDrawer }: { trip: TripWithDays; openDrawer: DrawerOpener }) {
+function EditModeSection({
+  trip,
+  openDrawer,
+  selectedDayIndex,
+  onSelectDay,
+}: {
+  trip: TripWithDays;
+  openDrawer: DrawerOpener;
+  selectedDayIndex: number;
+  onSelectDay: (index: number) => void;
+}) {
   const hasDays = trip.days && trip.days.length > 0;
 
   return (
@@ -162,9 +214,16 @@ function EditModeSection({ trip, openDrawer }: { trip: TripWithDays; openDrawer:
 
       {hasDays ? (
         <div className="space-y-4">
-          {trip.days.map((day, index) => (
-            <DayEditCard key={`${day.date}-${index}-edit`} day={day} dayIndex={index} trip={trip} openDrawer={openDrawer} />
-          ))}
+          <DayTabs days={trip.days} selectedIndex={selectedDayIndex} onSelect={onSelectDay} />
+          {trip.days[selectedDayIndex] && (
+            <DayEditCard
+              key={`${trip.days[selectedDayIndex].date}-${selectedDayIndex}-edit`}
+              day={trip.days[selectedDayIndex]}
+              dayIndex={selectedDayIndex}
+              trip={trip}
+              openDrawer={openDrawer}
+            />
+          )}
         </div>
       ) : (
         <EmptyItineraryState
@@ -292,5 +351,35 @@ function getMealSummary(day: TripDay): string {
     .filter(Boolean);
 
   return meals.length > 0 ? (meals as string[]).join(' • ') : 'Not set yet';
+}
+
+function DayTabs({
+  days,
+  selectedIndex,
+  onSelect,
+}: {
+  days: TripDay[];
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+}) {
+  return (
+    <div className="-mx-4 px-4 md:mx-0 md:px-0">
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
+        {days.map((day, index) => (
+          <button
+            key={`${day.date}-${index}-tab`}
+            onClick={() => onSelect(index)}
+            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition ${
+              selectedIndex === index
+                ? 'bg-black text-white dark:bg-white dark:text-black'
+                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
+            }`}
+          >
+            Day {index + 1}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
 
