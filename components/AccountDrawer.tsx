@@ -363,7 +363,7 @@ function SubpageHeader({
   onBack: () => void;
 }) {
   return (
-    <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm px-4 py-3">
+    <div className="sticky top-0 z-20 flex items-center gap-3 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm px-4 py-3">
       <button
         onClick={onBack}
         className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
