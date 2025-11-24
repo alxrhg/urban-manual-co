@@ -17,10 +17,10 @@ export function EditModeToggle({ active, onToggle, className = '', size = 'defau
       aria-pressed={active}
       className={`
         group relative inline-flex items-center gap-2 rounded-xl border
-        transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:ring-offset-2
-        dark:focus:ring-amber-400/30 dark:focus:ring-offset-gray-900
+        transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-gray-500/20 focus:ring-offset-2
+        dark:focus:ring-gray-400/30 dark:focus:ring-offset-gray-900
         ${active
-          ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/25 hover:bg-amber-600 hover:shadow-lg hover:shadow-amber-500/30'
+          ? 'bg-gray-900 text-white border-gray-900 shadow-md shadow-gray-900/25 hover:bg-gray-800 hover:shadow-lg hover:shadow-gray-900/30 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100 dark:hover:bg-gray-200'
           : 'bg-white text-gray-700 dark:bg-gray-900 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
         }
         ${size === 'compact' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}

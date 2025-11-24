@@ -310,25 +310,25 @@ export default function CityPageClient() {
             </div>
 
             {editModeActive && (
-              <div className="mb-8 rounded-2xl border border-amber-200/70 dark:border-amber-400/30 bg-amber-50/80 dark:bg-amber-400/10 px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div className="mb-8 rounded-2xl border border-gray-200/70 dark:border-gray-700/30 bg-gray-50/80 dark:bg-gray-800/10 px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-amber-900 dark:text-amber-50">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-50">
                     Editing {cityDisplayName}
                   </p>
-                  <p className="text-xs text-amber-800/80 dark:text-amber-100/80">
-                    Use the edit button on any card to update this city’s places instantly.
+                  <p className="text-xs text-gray-700/80 dark:text-gray-300/80">
+                    Use the edit button on any card to update this city's places instantly.
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button
                     onClick={handleAddNewPOI}
-                    className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-white text-amber-900 border border-amber-200 shadow-sm hover:bg-amber-100 transition-all"
+                    className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-white text-gray-900 border border-gray-200 shadow-sm hover:bg-gray-100 transition-all dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
                   >
                     Add Place
                   </button>
                   <button
                     onClick={() => disableEditMode()}
-                    className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-amber-900 text-white hover:bg-amber-800 transition-all"
+                    className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-all dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
                   >
                     Exit Edit Mode
                   </button>

@@ -2778,10 +2778,10 @@ export default function Home() {
         {editModeActive && (
           <div className="sticky top-0 z-40 w-full px-6 md:px-10 mb-4">
             <div className="max-w-[1800px] mx-auto">
-              <div className="rounded-xl border border-amber-200/60 dark:border-amber-700/40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-3 py-2 flex items-center justify-between gap-3 shadow-sm">
+              <div className="rounded-xl border border-gray-200/60 dark:border-gray-700/40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-3 py-2 flex items-center justify-between gap-3 shadow-sm">
                 <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                  <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse" />
-                  <p className="text-xs font-medium text-amber-900 dark:text-amber-100 truncate">
+                  <div className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-gray-900 dark:bg-gray-100 animate-pulse" />
+                  <p className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate">
                     Edit mode
                   </p>
                 </div>
@@ -2791,7 +2791,7 @@ export default function Home() {
                       setEditingDestination(null);
                       setShowPOIDrawer(true);
                     }}
-                    className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-amber-50 dark:bg-amber-900/30 text-amber-900 dark:text-amber-100 border border-amber-200/50 dark:border-amber-700/40 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-all"
+                    className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-50 dark:bg-gray-800/30 text-gray-900 dark:text-gray-100 border border-gray-200/50 dark:border-gray-700/40 hover:bg-gray-100 dark:hover:bg-gray-800/40 transition-all"
                     title="Add new place"
                   >
                     <Plus className="h-3.5 w-3.5" />
