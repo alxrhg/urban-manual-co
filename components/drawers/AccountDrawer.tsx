@@ -143,7 +143,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
   if (!user) {
     return (
-      <div className="px-6 py-8 space-y-10">
+      <div className="px-6 py-8 pb-24 space-y-10">
         {/* Header */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-6">
@@ -176,7 +176,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   }
 
   return (
-    <div className="px-6 py-8 space-y-10">
+    <div className="px-6 py-8 pb-24 space-y-10">
       {/* Header */}
       <div className="mb-12">
         <div className="flex items-center justify-between mb-6">
