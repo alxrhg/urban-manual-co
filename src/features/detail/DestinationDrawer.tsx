@@ -1434,16 +1434,38 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <DropdownMenuTrigger asChild>
                   <button
                     className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       if (!user) {
                         e.preventDefault();
                         router.push('/auth/login');
                         return;
                       }
-                      if (!isSaved) {
-                        // Quick save without opening dropdown
+                      if (!isSaved && destination?.slug) {
+                        // Quick save to saved_places immediately
                         e.preventDefault();
-                        setShowSaveModal(true);
+                        try {
+                          const supabaseClient = createClient();
+                          if (supabaseClient) {
+                            const { error } = await supabaseClient
+                              .from('saved_places')
+                              .upsert({
+                                user_id: user.id,
+                                destination_slug: destination.slug,
+                              });
+                            if (!error) {
+                              setIsSaved(true);
+                              if (onSaveToggle) onSaveToggle(destination.slug, true);
+                              // Also open modal to optionally save to collection
+                              setShowSaveModal(true);
+                            } else {
+                              console.error('Error saving place:', error);
+                              alert('Failed to save. Please try again.');
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Error saving place:', error);
+                          alert('Failed to save. Please try again.');
+                        }
                         setShowSaveDropdown(false);
                       }
                     }}
@@ -2169,16 +2191,38 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 <DropdownMenuTrigger asChild>
                   <button
                     className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                    onClick={(e) => {
+                    onClick={async (e) => {
                       if (!user) {
                         e.preventDefault();
                         router.push('/auth/login');
                         return;
                       }
-                      if (!isSaved) {
-                        // Quick save without opening dropdown
+                      if (!isSaved && destination?.slug) {
+                        // Quick save to saved_places immediately
                         e.preventDefault();
-                        setShowSaveModal(true);
+                        try {
+                          const supabaseClient = createClient();
+                          if (supabaseClient) {
+                            const { error } = await supabaseClient
+                              .from('saved_places')
+                              .upsert({
+                                user_id: user.id,
+                                destination_slug: destination.slug,
+                              });
+                            if (!error) {
+                              setIsSaved(true);
+                              if (onSaveToggle) onSaveToggle(destination.slug, true);
+                              // Also open modal to optionally save to collection
+                              setShowSaveModal(true);
+                            } else {
+                              console.error('Error saving place:', error);
+                              alert('Failed to save. Please try again.');
+                            }
+                          }
+                        } catch (error) {
+                          console.error('Error saving place:', error);
+                          alert('Failed to save. Please try again.');
+                        }
                         setShowSaveDropdown(false);
                       }
                     }}
