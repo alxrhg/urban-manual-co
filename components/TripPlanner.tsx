@@ -99,6 +99,13 @@ export function TripPlanner({
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [hotels, setHotels] = useState<Array<{
+    id?: string;
+    name: string;
+    checkInDate: string;
+    checkOutDate: string;
+    address?: string;
+  }>>([]);
   const toast = useToast();
 
   const draftStorageKey = 'tripPlannerDraft';
@@ -148,6 +155,7 @@ export function TripPlanner({
     setEndDate('');
     setDays([]);
     setHotelLocation('');
+    setHotels([]);
     setStep('create');
     setCurrentTripId(null);
     setCoverImage(prefilledDestination?.image || null);
@@ -218,10 +226,54 @@ export function TripPlanner({
         }
       }
 
-      // Group items by day
+      // Separate hotels from regular itinerary items
+      const hotelItems: ItineraryItem[] = [];
+      const locationItems: ItineraryItem[] = [];
+      
       if (items && items.length > 0) {
-        const daysMap = new Map<number, TripLocation[]>();
         (items as ItineraryItem[]).forEach((item) => {
+          let notesData: any = {};
+          if (item.notes) {
+            try {
+              notesData = JSON.parse(item.notes);
+            } catch {
+              notesData = { raw: item.notes };
+            }
+          }
+          
+          // Check if this is a hotel item
+          if (notesData.type === 'hotel') {
+            hotelItems.push(item);
+          } else {
+            locationItems.push(item);
+          }
+        });
+      }
+
+      // Load hotels
+      const loadedHotels = hotelItems.map((item) => {
+        let notesData: any = {};
+        if (item.notes) {
+          try {
+            notesData = JSON.parse(item.notes);
+          } catch {
+            notesData = {};
+          }
+        }
+        return {
+          id: item.id,
+          name: item.title,
+          checkInDate: notesData.checkInDate || notesData.startDate || tripData.start_date || '',
+          checkOutDate: notesData.checkOutDate || notesData.endDate || tripData.end_date || '',
+          address: notesData.address || item.description || '',
+        };
+      });
+      setHotels(loadedHotels);
+
+      // Group location items by day
+      if (locationItems.length > 0) {
+        const daysMap = new Map<number, TripLocation[]>();
+        locationItems.forEach((item) => {
           const day = item.day;
           if (!daysMap.has(day)) {
             daysMap.set(day, []);
@@ -545,15 +597,25 @@ export function TripPlanner({
 
       if (tripError) throw tripError;
 
-      // Delete all existing itinerary items
+      // Delete only non-hotel itinerary items (preserve hotels)
       const { error: deleteError } = await supabaseClient
         .from('itinerary_items')
         .delete()
-        .eq('trip_id', currentTripId);
+        .eq('trip_id', currentTripId)
+        .not('notes', 'like', '%"type":"hotel"%');
 
       if (deleteError) throw deleteError;
 
-      // Insert all itinerary items
+      // Delete existing hotels and re-insert them
+      const { error: deleteHotelsError } = await supabaseClient
+        .from('itinerary_items')
+        .delete()
+        .eq('trip_id', currentTripId)
+        .like('notes', '%"type":"hotel"%');
+
+      if (deleteHotelsError) throw deleteHotelsError;
+
+      // Insert all itinerary items (locations)
       const itemsToInsert: Array<{
         trip_id: string;
         destination_slug: string | null;
@@ -587,6 +649,25 @@ export function TripPlanner({
             description: location.category || null,
             notes: JSON.stringify(notesData),
           });
+        });
+      });
+
+      // Insert hotels
+      hotels.forEach((hotel, index) => {
+        itemsToInsert.push({
+          trip_id: currentTripId,
+          destination_slug: null,
+          day: 1, // Hotels span multiple days, store in day 1
+          order_index: index,
+          time: null,
+          title: hotel.name,
+          description: hotel.address || null,
+          notes: JSON.stringify({
+            type: 'hotel',
+            checkInDate: hotel.checkInDate,
+            checkOutDate: hotel.checkOutDate,
+            address: hotel.address || '',
+          }),
         });
       });
 
@@ -1130,6 +1211,111 @@ export function TripPlanner({
                       </li>
                     ))}
                   </ul>
+                </div>
+              </div>
+
+              {/* Hotels Section */}
+              <div className="mb-12 pb-8 border-b border-gray-200 dark:border-gray-800">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white">Hotels</h3>
+                  <button
+                    onClick={() => {
+                      setHotels([...hotels, {
+                        name: '',
+                        checkInDate: startDate || '',
+                        checkOutDate: endDate || '',
+                      }]);
+                    }}
+                    className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    + Add Hotel
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {hotels.length === 0 ? (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">No hotels added yet</p>
+                  ) : (
+                    hotels.map((hotel, index) => (
+                      <div key={index} className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Hotel Name
+                          </label>
+                          <input
+                            type="text"
+                            value={hotel.name}
+                            onChange={(e) => {
+                              const updated = [...hotels];
+                              updated[index] = { ...updated[index], name: e.target.value };
+                              setHotels(updated);
+                            }}
+                            placeholder="Hotel name"
+                            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Check-in
+                            </label>
+                            <input
+                              type="date"
+                              value={hotel.checkInDate}
+                              onChange={(e) => {
+                                const updated = [...hotels];
+                                updated[index] = { ...updated[index], checkInDate: e.target.value };
+                                setHotels(updated);
+                              }}
+                              min={startDate}
+                              max={endDate}
+                              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Check-out
+                            </label>
+                            <input
+                              type="date"
+                              value={hotel.checkOutDate}
+                              onChange={(e) => {
+                                const updated = [...hotels];
+                                updated[index] = { ...updated[index], checkOutDate: e.target.value };
+                                setHotels(updated);
+                              }}
+                              min={hotel.checkInDate || startDate}
+                              max={endDate}
+                              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Address (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={hotel.address || ''}
+                            onChange={(e) => {
+                              const updated = [...hotels];
+                              updated[index] = { ...updated[index], address: e.target.value };
+                              setHotels(updated);
+                            }}
+                            placeholder="Hotel address"
+                            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
+                          />
+                        </div>
+                        <button
+                          onClick={() => {
+                            setHotels(hotels.filter((_, i) => i !== index));
+                          }}
+                          className="text-xs text-red-600 dark:text-red-400 hover:underline"
+                        >
+                          Remove Hotel
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
