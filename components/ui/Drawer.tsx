@@ -27,6 +27,7 @@ export interface DrawerProps {
   mobileExpanded?: boolean;
   keepStateOnClose?: boolean;
   fullScreen?: boolean;
+  inlineDesktop?: boolean;
 }
 
 type ViewportSize = 'mobile' | 'tablet' | 'desktop';
@@ -75,14 +76,11 @@ export function Drawer({
   mobileExpanded = false,
   keepStateOnClose = false,
   fullScreen = false,
+  inlineDesktop = true,
 }: DrawerProps) {
-  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
-
-  useEffect(() => {
-    if (typeof document !== 'undefined') {
-      setPortalTarget(document.body);
-    }
-  }, []);
+  const [portalTarget] = useState<Element | null>(() =>
+    typeof document !== 'undefined' ? document.body : null
+  );
 
   // Separate refs for each drawer variant to prevent conflicts
   const mobileBottomRef = useRef<HTMLDivElement>(null);
@@ -96,7 +94,7 @@ export function Drawer({
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [viewport, setViewport] = useState<ViewportSize>(() => getViewportType());
-  const inlineSplitDesktop = viewport === 'desktop' && !fullScreen;
+  const inlineSplitDesktop = inlineDesktop && viewport === 'desktop' && !fullScreen;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -575,7 +573,7 @@ export function Drawer({
           fullScreen
             ? 'inset-0 rounded-none'
             : inlineSplitDesktop
-            ? `${position === 'right' ? 'right-0 rounded-l-[32px]' : 'left-0 rounded-r-[32px]'} top-4 bottom-4`
+            ? `${position === 'right' ? 'right-0 rounded-l-2xl' : 'left-0 rounded-r-2xl'} top-4 bottom-4`
             : `${desktopSpacing} rounded-2xl`
         } ${backgroundClasses} ${shadowClasses} ${!fullScreen ? borderClasses : ''} z-50 transform transition-transform duration-300 ease-out ${
           isOpen
