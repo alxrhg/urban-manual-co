@@ -235,26 +235,6 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               )}
             </div>
           </div>
-
-        <div className="flex gap-3 pt-1">
-          <UMActionPill
-            onClick={() => {
-              onClose();
-              router.push('/account?tab=settings');
-            }}
-          >
-              Edit Profile
-          </UMActionPill>
-          <UMActionPill
-            variant="primary"
-            onClick={() => {
-              onClose();
-              openLegacyDrawer('chat');
-            }}
-          >
-              Concierge
-          </UMActionPill>
-        </div>
       </UMCard>
 
         {/* UPCOMING TRIP */}
