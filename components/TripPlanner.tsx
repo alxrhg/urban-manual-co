@@ -156,6 +156,45 @@ export function TripPlanner({
     };
   };
 
+  const derivePrimaryDestination = useCallback(
+    (day: DayItinerary) => {
+      const cityCounts = day.locations.reduce<Record<string, number>>((acc, loc) => {
+        if (loc.city) {
+          acc[loc.city] = (acc[loc.city] || 0) + 1;
+        }
+        return acc;
+      }, {});
+
+      if (Object.keys(cityCounts).length === 0) return destination;
+
+      return Object.entries(cityCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || destination;
+    },
+    [destination]
+  );
+
+  const formatTravelDuration = (duration: number) => {
+    const hours = Math.floor(duration / 60);
+    const minutes = duration % 60;
+    if (hours === 0) return `${minutes} min`;
+    if (minutes === 0) return `${hours}h`;
+    return `${hours}h ${minutes}m`;
+  };
+
+  const getTravelDurationLabel = (day: DayItinerary) => {
+    const travelSegment = day.locations.find(
+      (loc) => loc.blockType === 'flight' || loc.blockType === 'train'
+    );
+
+    if (travelSegment?.duration) {
+      return formatTravelDuration(travelSegment.duration);
+    }
+
+    return null;
+  };
+
+  const isTravelDay = (day: DayItinerary) =>
+    day.locations.some((loc) => loc.blockType === 'flight' || loc.blockType === 'train');
+
   // Body scroll is handled by Drawer component
 
   const resetForm = () => {
@@ -1283,18 +1322,22 @@ export function TripPlanner({
                         Day {i + 1} – {day.date}
                       </h2>
                     </div>
-                  <TripDay
+                    <TripDay
                       dayNumber={i + 1}
-                    date={day.date}
-                    locations={day.locations}
+                      date={day.date}
+                      locations={day.locations}
                       hotelLocation=""
+                      primaryDestination={derivePrimaryDestination(day)}
+                      previousDestination={i > 0 ? derivePrimaryDestination(days[i - 1]) : undefined}
+                      travelDurationLabel={getTravelDurationLabel(day)}
+                      isTravelDay={isTravelDay(day)}
                       onAddLocation={() => setShowAddLocation(i)}
                       onRemoveLocation={(locationId) => handleRemoveLocation(i, locationId)}
                       onReorderLocations={(locations) => handleReorderLocations(i, locations)}
                       onDuplicateDay={() => handleDuplicateDay(i)}
                       onOptimizeRoute={() => handleOptimizeRoute(i)}
                     />
-              </div>
+                  </div>
                 ))
               ) : (
                 <div className="text-center py-12 text-neutral-500 dark:text-neutral-400 text-sm">
