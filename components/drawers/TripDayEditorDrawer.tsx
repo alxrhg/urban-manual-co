@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import UMCard from "@/components/ui/UMCard";
 import UMActionPill from "@/components/ui/UMActionPill";
@@ -45,11 +45,24 @@ interface TripDayEditorDrawerProps {
 export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEditorDrawerProps) {
   const { openDrawer } = useDrawerStore();
   const [selectedDayIndex, setSelectedDayIndex] = useState(index);
+  const [editorDays, setEditorDays] = useState<Day[]>(() => {
+    if (trip?.days?.length) return [...trip.days];
+    if (day) return [day];
+    return [];
+  });
 
-  // Get all days from trip
-  const allDays = trip?.days || (day ? [day] : []);
-  
-  // Get the currently selected day
+  useEffect(() => {
+    if (trip?.days?.length) {
+      setEditorDays([...trip.days]);
+      setSelectedDayIndex((prev) => Math.min(prev, trip.days.length - 1));
+    } else if (day) {
+      setEditorDays([day]);
+      setSelectedDayIndex(0);
+    }
+  }, [trip?.id, trip?.updated_at, trip?.days?.length, day]);
+
+  const allDays = editorDays.length ? editorDays : day ? [day] : [];
+
   const currentDay = allDays[selectedDayIndex] || day;
 
   if (!currentDay && !day) return null;
@@ -80,17 +93,25 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
     if (!target?.id) return;
     try {
       const supabaseClient = createClient();
-      await supabaseClient.from('itinerary_items').delete().eq('id', target.id).eq('trip_id', trip.id);
-      // Refresh locally
-      const updatedDays = [...allDays];
-      const updatedLocations = [...allLocations];
-      updatedLocations.splice(stopIndex, 1);
-      updatedDays[selectedDayIndex] = {
-        ...currentDay,
-        locations: updatedLocations,
-        activities: updatedLocations,
-      };
-      setSelectedDayIndex((idx) => Math.min(idx, updatedDays.length - 1));
+      const { error } = await supabaseClient
+        .from('itinerary_items')
+        .delete()
+        .eq('id', target.id)
+        .eq('trip_id', trip.id);
+      if (error) throw error;
+
+      setEditorDays((prev) =>
+        prev.map((d, idx) => {
+          if (idx !== selectedDayIndex) return d;
+          const filteredLocations = (d.locations || []).filter((loc) => loc.id !== target.id);
+          const filteredActivities = (d.activities || []).filter((loc) => loc.id !== target.id);
+          return {
+            ...d,
+            locations: filteredLocations,
+            activities: filteredActivities,
+          };
+        }),
+      );
     } catch (error) {
       console.error('Error removing stop', error);
       alert('Failed to remove this stop. Please try again.');
