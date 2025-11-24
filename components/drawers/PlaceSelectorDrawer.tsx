@@ -73,7 +73,7 @@ export default function PlaceSelectorDrawer({
           onChange={(e) => setQuery(e.target.value)}
           type="text"
           placeholder="Search restaurants, cafes, museums..."
-          className="w-full h-[42px] px-4 rounded-xl text-sm border border-neutral-300 dark:border-white/15 bg-white dark:bg-[#1A1C1F] placeholder:text-neutral-400 dark:placeholder:text-neutral-500 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-0"
+          className="w-full px-4 py-2.5 rounded-2xl text-sm border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-colors"
         />
       </div>
 
@@ -111,10 +111,10 @@ export default function PlaceSelectorDrawer({
               )}
 
               <div className="space-y-1">
-                <p className="font-semibold text-[17px] text-gray-900 dark:text-white">
+                <p className="font-medium text-sm text-gray-900 dark:text-white">
                   {place.name}
                 </p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {place.category} in {place.city}
                 </p>
               </div>

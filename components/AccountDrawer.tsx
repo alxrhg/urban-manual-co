@@ -394,27 +394,27 @@ export function AccountDrawer() {
   ) => (
     <button
       onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 text-left transition-all hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-sm ${
+      className={`flex w-full items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 text-left transition-all hover:border-gray-300 dark:hover:border-gray-700 ${
         isDanger ? 'hover:border-red-200 dark:hover:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/10' : ''
       }`}
     >
-      <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-        isDanger 
-          ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' 
-          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200'
+      <div className={`flex h-9 w-9 items-center justify-center rounded-2xl ${
+        isDanger
+          ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+          : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
       }`}>
         {icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className={`text-sm font-semibold ${
-          isDanger 
-            ? 'text-red-600 dark:text-red-400' 
+        <p className={`text-sm font-medium ${
+          isDanger
+            ? 'text-red-600 dark:text-red-400'
             : 'text-gray-900 dark:text-white'
         }`}>{label}</p>
         {description && (
           <p className={`text-xs mt-0.5 ${
-            isDanger 
-              ? 'text-red-500 dark:text-red-500' 
+            isDanger
+              ? 'text-red-500 dark:text-red-500'
               : 'text-gray-500 dark:text-gray-400'
           }`}>{description}</p>
         )}
@@ -456,7 +456,7 @@ export function AccountDrawer() {
             </div>
 
             <div className="space-y-2">
-              <p className="text-xl font-bold text-gray-900 dark:text-white">{displayUsername}</p>
+              <p className="text-lg font-light text-gray-900 dark:text-white">{displayUsername}</p>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
                 <span>@{displayUsername.toLowerCase().replace(/\s+/g, '')}</span>
@@ -469,13 +469,13 @@ export function AccountDrawer() {
             <div className="flex flex-wrap justify-center gap-2 w-full">
               <button
                 onClick={() => handleNavigateToFullPage("/account")}
-                className="flex-1 min-w-[120px] rounded-xl bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-gray-900 shadow-sm transition hover:bg-gray-800 dark:hover:bg-gray-100"
+                className="flex-1 min-w-[120px] rounded-2xl bg-black dark:bg-white px-4 py-2.5 text-xs font-medium text-white dark:text-black transition hover:opacity-90"
               >
                 Edit profile
               </button>
               <button
                 onClick={openChatDrawer}
-                className="flex-1 min-w-[120px] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 transition hover:bg-gray-50 dark:hover:bg-gray-800"
+                className="flex-1 min-w-[120px] rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-2.5 text-xs font-medium text-gray-700 dark:text-gray-200 transition hover:opacity-80"
               >
                 Message concierge
               </button>
@@ -485,18 +485,18 @@ export function AccountDrawer() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Visited', value: stats.visited, icon: MapPin, color: 'text-blue-600 dark:text-blue-400' },
-              { label: 'Saved', value: stats.saved, icon: Bookmark, color: 'text-amber-600 dark:text-amber-400' },
-              { label: 'Trips', value: stats.trips, icon: Compass, color: 'text-purple-600 dark:text-purple-400' }
+              { label: 'Visited', value: stats.visited, icon: MapPin, color: 'text-gray-500 dark:text-gray-400' },
+              { label: 'Saved', value: stats.saved, icon: Bookmark, color: 'text-gray-500 dark:text-gray-400' },
+              { label: 'Trips', value: stats.trips, icon: Compass, color: 'text-gray-500 dark:text-gray-400' }
             ].map((stat) => {
               const Icon = stat.icon;
               return (
                 <div
                   key={stat.label}
-                  className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-4 text-center shadow-sm hover:shadow-md transition-shadow"
+                  className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-4 text-center transition-all hover:border-gray-300 dark:hover:border-gray-700"
                 >
                   <Icon className={`w-4 h-4 mx-auto mb-2 ${stat.color}`} />
-                  <div className="text-xl font-bold text-gray-900 dark:text-white">{stat.value}</div>
+                  <div className="text-lg font-light text-gray-900 dark:text-white">{stat.value}</div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{stat.label}</p>
                 </div>
               );
@@ -506,7 +506,7 @@ export function AccountDrawer() {
 
           {/* Your Manual Section */}
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Your manual</h3>
+            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">Your Manual</h3>
             <div className="space-y-2">
               {renderNavItem('Saved places', <Bookmark className="w-4 h-4" />, () => navigateToSubpage('saved_subpage'), `${stats.saved} items`)}
               {renderNavItem('Visited places', <MapPin className="w-4 h-4" />, () => navigateToSubpage('visited_subpage'), `${stats.visited} logged`)}
@@ -536,7 +536,7 @@ export function AccountDrawer() {
 
           {/* Account & Settings Section */}
           <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-800">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Account & settings</h3>
+            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">Account & Settings</h3>
             <div className="space-y-2">
               {renderNavItem('Profile & preferences', <Settings className="w-4 h-4" />, () => navigateToSubpage('settings_subpage'), 'Notifications, privacy')}
               {renderNavItem('Sign out', <LogOut className="w-4 h-4" />, handleSignOut, 'Log out safely', true)}
@@ -545,16 +545,16 @@ export function AccountDrawer() {
         </>
       ) : (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-gray-200 bg-white p-5 text-center shadow-sm dark:border-gray-800 dark:bg-gray-900">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Welcome to Urban Manual</h3>
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 text-center">
+            <h3 className="text-lg font-light text-gray-900 dark:text-white">Welcome to Urban Manual</h3>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               Sign in to save places, build trips, and sync your travel profile across devices.
             </p>
           </div>
           <button
             type="button"
             onClick={() => handleNavigateToFullPage("/auth/login")}
-            className="w-full rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-gray-800 dark:bg-white dark:text-gray-900"
+            className="w-full rounded-2xl bg-black dark:bg-white px-4 py-3 text-xs font-medium text-white dark:text-black transition hover:opacity-90"
           >
             Sign in to continue
           </button>
@@ -616,7 +616,7 @@ export function AccountDrawer() {
       <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=visited")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
         >
           View All Visited
         </button>
@@ -673,7 +673,7 @@ export function AccountDrawer() {
       <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=saved")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
         >
           View Full Saved
         </button>
@@ -752,7 +752,7 @@ export function AccountDrawer() {
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Create lists to group your favorite places.</p>
           <button
             onClick={() => handleNavigateToFullPage('/account?tab=collections')}
-            className="mt-4 inline-flex items-center justify-center rounded-full bg-gray-900 px-4 py-2.5 text-xs font-semibold text-white shadow-sm transition hover:bg-gray-800 dark:bg-white dark:text-gray-900"
+            className="mt-4 inline-flex items-center justify-center rounded-2xl bg-black dark:bg-white px-4 py-2.5 text-xs font-medium text-white dark:text-black transition hover:opacity-90"
           >
             Start a collection
           </button>
@@ -761,7 +761,7 @@ export function AccountDrawer() {
       <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=collections")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
         >
           Manage Collections
         </button>
@@ -779,7 +779,7 @@ export function AccountDrawer() {
             router.push('/trips');
           }, 200);
         }}
-        className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium flex items-center justify-center gap-2"
+        className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium flex items-center justify-center gap-2"
       >
         <Plus className="w-4 h-4" />
         New Trip
@@ -871,7 +871,7 @@ export function AccountDrawer() {
       <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={() => handleNavigateToFullPage("/trips")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
         >
           View All Trips
         </button>
@@ -922,22 +922,22 @@ export function AccountDrawer() {
           </div>
         )}
         <div className="flex gap-2">
-          <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+          <button className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-2xl hover:opacity-80 transition-opacity text-xs font-medium flex items-center justify-center gap-2">
             <Share2 className="w-4 h-4" />
             Share
           </button>
-          <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+          <button className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-2xl hover:opacity-80 transition-opacity text-xs font-medium flex items-center justify-center gap-2">
             <Download className="w-4 h-4" />
             Export
           </button>
-          <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium flex items-center justify-center gap-2">
+          <button className="px-4 py-2 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-2xl hover:opacity-80 transition-opacity text-xs font-medium flex items-center justify-center gap-2">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
         <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
           <button
             onClick={() => handleNavigateToFullPage(`/trips/${selectedTrip.id}`)}
-            className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+            className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
           >
             Open Full Trip
           </button>
@@ -955,7 +955,7 @@ export function AccountDrawer() {
       <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=achievements")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
         >
           View All Achievements
         </button>
@@ -978,7 +978,7 @@ export function AccountDrawer() {
       <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-          className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg hover:opacity-90 transition-all duration-180 ease-out text-sm font-medium"
+          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
         >
           Open Full Settings
         </button>

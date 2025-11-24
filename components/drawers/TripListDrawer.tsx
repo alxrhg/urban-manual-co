@@ -225,12 +225,12 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
                     )}
 
                     <div className="p-4 space-y-1">
-                      <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {tripName}
                       </p>
 
                       {/* SUBTITLE */}
-                      <p className="text-[14px] text-neutral-500 dark:text-neutral-400">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {city} {dateRange && `• ${dateRange}`}
                       </p>
 
