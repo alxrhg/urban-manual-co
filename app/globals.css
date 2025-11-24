@@ -182,25 +182,34 @@
   }
 
   #app-shell {
-    transition: padding 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), margin 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   
   @media (min-width: 1024px) {
+    body.drawer-inline-open {
+      overflow-x: hidden;
+    }
+
     body.drawer-inline-open.drawer-inline-right #app-shell {
-      padding-right: var(--drawer-inline-width, 0px);
-      padding-left: 0;
+      width: calc(100% - var(--drawer-inline-width, 0px));
+      margin-right: 0;
+      margin-left: 0;
     }
   
     body.drawer-inline-open.drawer-inline-left #app-shell {
-      padding-left: var(--drawer-inline-width, 0px);
-      padding-right: 0;
+      width: calc(100% - var(--drawer-inline-width, 0px));
+      margin-left: 0;
+      margin-right: 0;
+      transform: translateX(var(--drawer-inline-width, 0px));
     }
   }
 
   @media (max-width: 1023px) {
     body.drawer-inline-open #app-shell {
-      padding-left: 0;
-      padding-right: 0;
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+      transform: translateX(0);
     }
   }
   
