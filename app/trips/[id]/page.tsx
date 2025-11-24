@@ -51,6 +51,7 @@ export default function TripPage() {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [hotelEditMode, setHotelEditMode] = useState(false);
+  const [inlineDayEditMode, setInlineDayEditMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dayScrollRef = useRef<HTMLDivElement>(null);
   const dayEditorRef = useRef<HTMLDivElement>(null);
@@ -583,11 +584,16 @@ export default function TripPage() {
                       {isOwner && (
                         <div className="flex flex-wrap gap-2">
                           <UMActionPill
-                            onClick={() =>
-                              dayEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                            }
+                            onClick={() => {
+                              if (!inlineDayEditMode) {
+                                setInlineDayEditMode(true);
+                                setTimeout(() => dayEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+                              } else {
+                                dayEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                              }
+                            }}
                           >
-                            Edit Day
+                            {inlineDayEditMode ? 'Editing…' : 'Edit Day'}
                           </UMActionPill>
                           <UMActionPill
                             variant="primary"
@@ -607,7 +613,7 @@ export default function TripPage() {
                       )}
                     </div>
                     <DayTimeline day={trip.days[selectedDayIndex]} fallbackCity={trip.destination || undefined} />
-                    {isOwner && (
+                    {isOwner && inlineDayEditMode && (
                       <section ref={dayEditorRef} className="space-y-4">
                         <div className="flex items-center justify-between">
                           <h3 className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
@@ -625,6 +631,11 @@ export default function TripPage() {
                             hideHeader
                             className="space-y-8"
                           />
+                        </div>
+                        <div className="flex justify-end">
+                          <UMActionPill onClick={() => setInlineDayEditMode(false)}>
+                            Done
+                          </UMActionPill>
                         </div>
                       </section>
                     )}
