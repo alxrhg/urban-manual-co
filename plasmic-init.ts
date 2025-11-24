@@ -2,17 +2,20 @@
 
 import { initPlasmicLoader } from "@plasmicapp/loader-nextjs";
 
-export const PLASMIC = typeof window !== "undefined"
+// Plasmic configuration - token should be set via NEXT_PUBLIC_PLASMIC_TOKEN env var
+const PLASMIC_PROJECT_ID = process.env.NEXT_PUBLIC_PLASMIC_PROJECT_ID || "pEZdPb88zvW8NfciQQQwSK";
+const PLASMIC_TOKEN = process.env.NEXT_PUBLIC_PLASMIC_TOKEN || "";
+
+export const PLASMIC = typeof window !== "undefined" && PLASMIC_TOKEN
   ? initPlasmicLoader({
       projects: [
         {
-          id: "pEZdPb88zvW8NfciQQQwSK",  // ID of a project you are using
-          token: "d0fi6cV4MQLTEGvTe2TT26wCj3TkMNfHBbzKMX46q6x2K81LIZYovDQq0rXPWN84FumgZihUdAqKoPztmgWKRQ"  // API token for that project
+          id: PLASMIC_PROJECT_ID,
+          token: PLASMIC_TOKEN,
         }
       ],
-      // Fetches the latest revisions, whether or not they were unpublished!
-      // Disable for production to ensure you render only published changes.
-      preview: true,
+      // Only enable preview mode in development - production renders published changes only
+      preview: process.env.NODE_ENV !== "production",
     })
   : null;
 
