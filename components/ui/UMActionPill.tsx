@@ -5,7 +5,7 @@ import { ReactNode } from "react";
 
 interface UMActionPillProps {
   children: ReactNode;
-  onClick?: () => void;
+  onClick?: (e?: React.MouseEvent<HTMLButtonElement>) => void;
   variant?: "default" | "primary";
   className?: string;
   type?: "button" | "submit" | "reset";

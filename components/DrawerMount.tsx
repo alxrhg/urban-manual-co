@@ -19,9 +19,12 @@ import TripListDrawer from '@/components/drawers/TripListDrawer';
 import TripOverviewQuickDrawer from '@/components/drawers/TripOverviewQuickDrawer';
 import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
 import AccountDrawerNew from '@/components/drawers/AccountDrawer';
+import { Drawer } from '@/components/ui/Drawer';
+import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 
 export default function DrawerMount() {
   const { open, type, props, closeDrawer } = useDrawerStore();
+  const drawerStyle = useDrawerStyle();
 
   return (
     <>
@@ -35,7 +38,18 @@ export default function DrawerMount() {
       <AccountDrawerNew isOpen={open && type === 'account-new'} onClose={closeDrawer} />
       <DestinationDrawer isOpen={open && type === 'destination'} onClose={closeDrawer} place={props.place || null} {...props} />
       <TripOverviewDrawer isOpen={open && type === 'trip-overview'} onClose={closeDrawer} trip={props.trip || null} {...props} />
-      <TripListDrawer isOpen={open && type === 'trip-list'} onClose={closeDrawer} />
+      {open && type === 'trip-list' && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          title="Your Trips"
+          style={drawerStyle}
+          position="right"
+          desktopWidth="640px"
+        >
+          <TripListDrawer {...props} />
+        </Drawer>
+      )}
       <TripOverviewQuickDrawer isOpen={open && type === 'trip-overview-quick'} onClose={closeDrawer} trip={props.trip || null} />
       <TripDayDrawer isOpen={open && type === 'trip-day'} onClose={closeDrawer} day={props.day || null} {...props} />
       <TripAddMealDrawer

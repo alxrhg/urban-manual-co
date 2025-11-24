@@ -1,28 +1,35 @@
-'use client';
+"use client";
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { Drawer } from '@/components/ui/Drawer';
-import { DrawerHeader } from '@/components/ui/DrawerHeader';
-import { DrawerSection } from '@/components/ui/DrawerSection';
+import UMCard from "@/components/ui/UMCard";
+import UMFeaturePill from "@/components/ui/UMFeaturePill";
+import UMActionPill from "@/components/ui/UMActionPill";
+import UMSectionTitle from "@/components/ui/UMSectionTitle";
+import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { TripPlanner } from '@/components/TripPlanner';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { useDrawerStore } from '@/lib/stores/drawer-store';
+import Image from 'next/image';
 
 const LOADING_TIMEOUT = 15000; // 15 seconds
 
 interface TripListDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
+  trips?: any[];
+  onNewTrip?: () => void;
 }
 
-export default function TripListDrawer({ isOpen, onClose }: TripListDrawerProps) {
+/**
+ * TripListDrawer
+ * Only the CONTENT that appears INSIDE <Drawer>.
+ * Drawer shell (header, borders, style) is handled in DrawerMount.
+ */
+export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripListDrawerProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const openSide = useDrawerStore((s) => s.openSide);
-  const [trips, setTrips] = useState<any[]>([]);
+  const openDrawer = useDrawerStore((s) => s.openDrawer);
+  const [trips, setTrips] = useState<any[]>(propsTrips || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showTripDialog, setShowTripDialog] = useState(false);
@@ -71,12 +78,12 @@ export default function TripListDrawer({ isOpen, onClose }: TripListDrawerProps)
   }, [user]);
 
   useEffect(() => {
-    if (isOpen) {
+    if (!propsTrips) {
       fetchTrips();
     } else {
-      setError(null);
+      setTrips(propsTrips);
     }
-  }, [isOpen, fetchTrips]);
+  }, [propsTrips, fetchTrips]);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
@@ -92,24 +99,15 @@ export default function TripListDrawer({ isOpen, onClose }: TripListDrawerProps)
     const startFormatted = formatDate(start);
     const endFormatted = formatDate(end);
     if (startFormatted && endFormatted) {
-      return `${startFormatted} – ${endFormatted}`;
+      return `${startFormatted} → ${endFormatted}`;
     }
     return startFormatted || endFormatted;
   };
 
-  const handleSelectTrip = (trip: any) => {
-    // Format trip data for TripOverviewQuickDrawer
-    const formattedTrip = {
-      ...trip,
-      name: trip.title || trip.name,
-      startDate: formatDate(trip.start_date),
-      endDate: formatDate(trip.end_date),
-    };
-    openSide('trip-overview-quick', { trip: formattedTrip });
-  };
-
   const handleNewTrip = () => {
-    if (!user) {
+    if (onNewTrip) {
+      onNewTrip();
+    } else if (!user) {
       router.push('/auth/login');
     } else {
       setEditingTripId(null);
@@ -117,103 +115,151 @@ export default function TripListDrawer({ isOpen, onClose }: TripListDrawerProps)
     }
   };
 
+  const handleDeleteTrip = async (tripId: string) => {
+    if (!confirm('Are you sure you want to delete this trip?')) return;
+    
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { error } = await supabaseClient
+        .from('trips')
+        .delete()
+        .eq('id', tripId);
+
+      if (error) throw error;
+      
+      setTrips(trips.filter(t => t.id !== tripId));
+    } catch (error) {
+      console.error('Error deleting trip:', error);
+      alert('Failed to delete trip');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="px-6 py-6">
+        <div className="flex flex-col items-center justify-center py-12 space-y-3">
+          <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
+          <p className="text-sm text-neutral-500">Loading trips...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="px-6 py-6">
+        <div className="text-center py-12 space-y-4">
+          <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">Failed to load</p>
+            <p className="text-xs text-neutral-500">{error}</p>
+          </div>
+          <UMActionPill onClick={fetchTrips}>
+            Try Again
+          </UMActionPill>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
-      <Drawer
-        isOpen={isOpen}
-        onClose={onClose}
-        desktopWidth="420px"
-        position="right"
-        style="solid"
-        backdropOpacity="15"
-        keepStateOnClose={true}
-      >
-        <DrawerHeader
-          title="Your Trips"
-          leftAccessory={
-            <button
-              className="text-sm opacity-70 hover:opacity-100 transition-opacity"
-              onClick={onClose}
-            >
-              ←
-            </button>
-          }
-        />
+      <div className="px-6 py-6 space-y-8">
+        {/* MAIN CTA */}
+        <UMFeaturePill onClick={handleNewTrip}>
+          + New Trip
+        </UMFeaturePill>
 
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-12 space-y-3">
-            <Loader2 className="w-6 h-6 animate-spin text-[var(--um-text-muted)]" />
-            <p className="text-sm text-[var(--um-text-muted)]">Loading trips...</p>
-          </div>
-        ) : error ? (
-          <DrawerSection>
-            <div className="text-center py-12 space-y-4">
-              <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Failed to load</p>
-                <p className="text-xs text-[var(--um-text-muted)]">{error}</p>
-              </div>
-              <button
-                onClick={fetchTrips}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-xl text-xs font-medium hover:opacity-90 transition-opacity"
-              >
-                Try Again
-              </button>
+        {/* LIST HEADER */}
+        <div>
+          <UMSectionTitle>All Trips</UMSectionTitle>
+        </div>
+
+        {/* TRIP LIST */}
+        <div className="space-y-6">
+          {trips.length === 0 ? (
+            <div className="text-center py-16 space-y-4">
+              <p className="text-neutral-500 text-sm">
+                You have no trips yet.
+              </p>
+              <UMFeaturePill onClick={handleNewTrip}>
+                Create Trip
+              </UMFeaturePill>
             </div>
-          </DrawerSection>
-        ) : (
-          <>
-            {/* NEW TRIP BUTTON */}
-            <DrawerSection bordered>
-              <button
-                onClick={handleNewTrip}
-                className="w-full bg-black dark:bg-white text-white dark:text-black rounded-xl py-3 font-medium text-sm hover:opacity-90 transition-opacity"
-              >
-                + New Trip
-              </button>
-            </DrawerSection>
+          ) : (
+            trips.map((trip) => {
+              const tripName = trip.name || trip.title || 'Untitled Trip';
+              const city = trip.destination || 'Unknown';
+              const dateRange = formatDateRange(trip.start_date, trip.end_date);
+              const coverImage = trip.cover_image || trip.coverImage;
 
-            {/* TRIP LIST */}
-            {trips.length === 0 ? (
-              <DrawerSection>
-                <div className="text-center py-12 border border-dashed border-[var(--um-border)] rounded-2xl">
-                  <p className="text-sm text-[var(--um-text-muted)] mb-4">You have no trips yet.</p>
+              return (
+                <UMCard key={trip.id}>
                   <button
-                    onClick={handleNewTrip}
-                    className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-xl text-xs font-medium hover:opacity-90 transition-opacity"
+                    onClick={() => openDrawer("trip-overview", { trip })}
+                    className="w-full text-left"
                   >
-                    Create Trip
-                  </button>
-                </div>
-              </DrawerSection>
-            ) : (
-              <DrawerSection className="space-y-4">
-                {trips.map((trip) => {
-                  const dateRange = formatDateRange(trip.start_date, trip.end_date);
-
-                  return (
-                    <div
-                      key={trip.id}
-                      onClick={() => handleSelectTrip(trip)}
-                      className="border border-[var(--um-border)] rounded-2xl p-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer space-y-1 bg-white dark:bg-gray-950"
-                    >
-                      <div className="flex justify-between items-center">
-                        <p className="font-medium text-gray-900 dark:text-white">{trip.title}</p>
-                        <p className="text-xs text-[var(--um-text-muted)]">
-                          {trip.status || 'Planning'}
-                        </p>
+                    {/* IMAGE */}
+                    {coverImage && (
+                      <div className="w-full h-40 relative overflow-hidden rounded-t-[16px]">
+                        <Image
+                          src={coverImage}
+                          alt={tripName}
+                          fill
+                          className="object-cover"
+                        />
                       </div>
-                      {dateRange && (
-                        <p className="text-xs text-[var(--um-text-muted)]">{dateRange}</p>
-                      )}
+                    )}
+
+                    <div className="p-4 space-y-1">
+                      <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
+                        {tripName}
+                      </p>
+
+                      {/* SUBTITLE */}
+                      <p className="text-[14px] text-neutral-500 dark:text-neutral-400">
+                        {city} {dateRange && `• ${dateRange}`}
+                      </p>
+
+                      {/* ACTION ROW */}
+                      <div className="flex gap-2 pt-3">
+                        <UMActionPill
+                          onClick={(e) => {
+                            e?.stopPropagation();
+                            openDrawer("trip-overview", { trip });
+                          }}
+                        >
+                          View
+                        </UMActionPill>
+
+                        <UMActionPill
+                          onClick={(e) => {
+                            e?.stopPropagation();
+                            openDrawer("trip-day-editor", { trip });
+                          }}
+                        >
+                          Edit
+                        </UMActionPill>
+
+                        <UMActionPill
+                          onClick={(e) => {
+                            e?.stopPropagation();
+                            handleDeleteTrip(trip.id);
+                          }}
+                        >
+                          Delete
+                        </UMActionPill>
+                      </div>
                     </div>
-                  );
-                })}
-              </DrawerSection>
-            )}
-          </>
-        )}
-      </Drawer>
+                  </button>
+                </UMCard>
+              );
+            })
+          )}
+        </div>
+      </div>
 
       {/* Trip Planner - Only render when open */}
       {showTripDialog && (
@@ -230,4 +276,3 @@ export default function TripListDrawer({ isOpen, onClose }: TripListDrawerProps)
     </>
   );
 }
-

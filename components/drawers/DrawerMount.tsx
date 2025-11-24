@@ -6,8 +6,8 @@ import { Drawer } from "@/components/ui/Drawer";
 
 // DRAWERS (to be implemented in Parts 3–8)
 import TripListDrawer from "@/components/drawers/TripListDrawer";
-import TripOverviewDrawer from "@/components/trip-drawers/TripOverviewDrawer";
-import TripDayDrawer from "@/components/trip-drawers/TripDayDrawer";
+import TripOverviewDrawer from "@/components/drawers/TripOverviewDrawer";
+import TripDayEditorDrawer from "@/components/drawers/TripDayEditorDrawer";
 import PlaceSelectorDrawer from "@/components/drawers/PlaceSelectorDrawer";
 import TripAddHotelDrawer from "@/components/trip-drawers/TripAddHotelDrawer";
 import TripAISuggestionsDrawer from "@/components/trip-drawers/TripAISuggestionsDrawer";
@@ -24,27 +24,47 @@ export default function DrawerMount() {
     <>
       {/* TRIP LIST */}
       {drawer === "trip-list" && (
-        <TripListDrawer isOpen={isOpen} onClose={closeDrawer} {...props} />
+        <Drawer
+          isOpen={isOpen}
+          onClose={closeDrawer}
+          title="Your Trips"
+          style={drawerStyle}
+          position="right"
+          desktopWidth="640px"
+        >
+          <TripListDrawer {...props} />
+        </Drawer>
       )}
 
       {/* TRIP OVERVIEW */}
       {drawer === "trip-overview" && (
-        <TripOverviewDrawer 
-          isOpen={isOpen} 
-          onClose={closeDrawer} 
-          trip={props?.trip ?? null}
-          {...props} 
-        />
+        <Drawer
+          isOpen={isOpen}
+          onClose={closeDrawer}
+          title={props?.trip?.name ?? props?.trip?.title ?? "Trip Overview"}
+          style={drawerStyle}
+          position="right"
+          desktopWidth="640px"
+        >
+          <TripOverviewDrawer trip={props?.trip ?? null} />
+        </Drawer>
       )}
 
       {/* DAY EDITOR (FULLSCREEN) */}
       {drawer === "trip-day-editor" && (
-        <TripDayDrawer 
-          isOpen={isOpen} 
-          onClose={closeDrawer} 
-          day={props?.day ?? null}
-          {...props} 
-        />
+        <Drawer
+          isOpen={isOpen}
+          onClose={closeDrawer}
+          fullScreen={true}
+          style={drawerStyle}
+          position="right"
+        >
+          <TripDayEditorDrawer
+            day={props?.day ?? null}
+            index={props?.index ?? 0}
+            trip={props?.trip ?? null}
+          />
+        </Drawer>
       )}
 
       {/* PLACE SELECTOR */}
