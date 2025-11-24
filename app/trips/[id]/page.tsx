@@ -37,6 +37,7 @@ export default function TripPage() {
   const { user } = useAuth();
   const openDrawer = useDrawerStore((s) => s.openDrawer);
   const [activeTab, setActiveTab] = useState<Tab>('details');
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
   const [saving, setSaving] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
   const [editedCity, setEditedCity] = useState('');
@@ -86,6 +87,7 @@ export default function TripPage() {
       setEditedStartDate(trip.start_date || '');
       setEditedEndDate(trip.end_date || '');
       setCoverImagePreview(trip.cover_image || null);
+      setSelectedDayIndex(0); // Reset to first day when trip changes
       loadHotels();
       loadRecommendations();
     }
@@ -745,23 +747,49 @@ export default function TripPage() {
       {activeTab === 'itinerary' && (
         <div className="space-y-8">
           {trip.days && trip.days.length > 0 ? (
-            trip.days.map((day, i) => (
-              <div key={i} className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Day {i + 1} – {day.date}
-                  </h2>
-                  {isOwner && (
-                    <UMActionPill
-                      onClick={() => openDrawer('trip-day-editor', { day, index: i, trip })}
+            <>
+              {/* Day Tabs */}
+              {trip.days.length > 1 && (
+                <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                  {trip.days.map((day, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedDayIndex(i)}
+                      className={`transition-all ${
+                        selectedDayIndex === i
+                          ? "font-medium text-black dark:text-white"
+                          : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                      }`}
                     >
-                      Edit Day
-                    </UMActionPill>
-                  )}
+                      Day {i + 1}
+                    </button>
+                  ))}
                 </div>
-                <DayCard day={day} index={i} openDrawer={openDrawer} trip={trip} />
-              </div>
-            ))
+              )}
+
+              {/* Selected Day Content */}
+              {trip.days[selectedDayIndex] && (() => {
+                const day = trip.days[selectedDayIndex];
+                const i = selectedDayIndex;
+                return (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Day {i + 1} – {day.date}
+                      </h2>
+                      {isOwner && (
+                        <UMActionPill
+                          onClick={() => openDrawer('trip-day-editor', { day, index: i, trip })}
+                        >
+                          Edit Day
+                        </UMActionPill>
+                      )}
+                    </div>
+                    <DayCard day={day} index={i} openDrawer={openDrawer} trip={trip} />
+                  </div>
+                );
+              })()}
+            </>
           ) : (
             <div className="text-center py-12 text-neutral-500 dark:text-neutral-400 text-sm">
               No days added yet
