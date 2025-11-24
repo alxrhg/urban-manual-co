@@ -1222,6 +1222,7 @@ export function TripPlanner({
                         type="date"
                         value={startDate}
                         onChange={(e) => setStartDate(e.target.value)}
+                        inputMode="none"
                         className={`w-full px-4 py-2 rounded-xl border bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white ${
                           fieldErrors.startDate
                             ? 'border-red-300 dark:border-red-700'
@@ -1237,6 +1238,7 @@ export function TripPlanner({
                         type="date"
                         value={endDate}
                         onChange={(e) => setEndDate(e.target.value)}
+                        inputMode="none"
                         className={`w-full px-4 py-2 rounded-xl border bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white ${
                           fieldErrors.endDate
                             ? 'border-red-300 dark:border-red-700'

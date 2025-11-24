@@ -611,6 +611,7 @@ export default function TripPage() {
                       type="date"
                       value={editedStartDate}
                       onChange={(e) => setEditedStartDate(e.target.value)}
+                      inputMode="none"
                       className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
                     />
                   </div>
@@ -622,6 +623,7 @@ export default function TripPage() {
                       type="date"
                       value={editedEndDate}
                       onChange={(e) => setEditedEndDate(e.target.value)}
+                      inputMode="none"
                       className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
                     />
                   </div>
