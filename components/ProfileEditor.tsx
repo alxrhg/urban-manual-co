@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Save, X, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { cityCountryMap, countryOrder } from '@/data/cityCountryMap';
@@ -40,6 +41,7 @@ interface ProfileData {
 }
 
 export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditorProps) {
+  const router = useRouter();
   const [profile, setProfile] = useState<ProfileData>({
     display_name: '',
     bio: '',
@@ -243,7 +245,13 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
                 <Label htmlFor="location">Main City</Label>
                 <Select
                   value={profile.location || undefined}
-                  onValueChange={(value) => setProfile({ ...profile, location: value })}
+                  onValueChange={(value) => {
+                    setProfile({ ...profile, location: value });
+                    // Navigate to city page for POI editing
+                    if (value) {
+                      router.push(`/city/${value}`);
+                    }
+                  }}
                 >
                   <SelectTrigger id="location" className="w-full">
                     <SelectValue placeholder="Select a city" />
