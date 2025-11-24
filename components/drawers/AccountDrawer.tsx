@@ -387,7 +387,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
           className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
               onClick={() => {
                 onClose();
-            router.push('/account?tab=settings');
+            router.push('/account');
               }}
         >
           <p className="font-medium text-[15px] text-gray-900 dark:text-white">
