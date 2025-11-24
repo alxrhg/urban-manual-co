@@ -181,42 +181,30 @@
     overscroll-behavior-y: none;
   }
 
-  #app-shell {
-    width: 100%;
-    transition:
-      margin 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-      transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-      padding 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  .drawer-inline-root {
+    display: none;
   }
   
   @media (min-width: 1024px) {
+    .drawer-inline-root {
+      display: flex;
+      flex-direction: column;
+      width: 0;
+      min-height: 100vh;
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
     body.drawer-inline-open {
       overflow-x: hidden;
     }
 
-    body.drawer-inline-open.drawer-inline-right {
-      padding-right: var(--drawer-inline-width, 0px);
-      box-sizing: border-box;
+    body.drawer-inline-open.drawer-inline-right .drawer-inline-root {
+      width: var(--drawer-inline-width, 0px);
     }
 
-    body.drawer-inline-open.drawer-inline-right #app-shell {
-      margin-right: var(--drawer-inline-width, 0px);
-    }
-  
-    body.drawer-inline-open.drawer-inline-left {
-      padding-left: var(--drawer-inline-width, 0px);
-      box-sizing: border-box;
-    }
-
-    body.drawer-inline-open.drawer-inline-left #app-shell {
-      margin-left: var(--drawer-inline-width, 0px);
-    }
-  }
-
-  @media (max-width: 1023px) {
-    body.drawer-inline-open {
-      padding-left: 0;
-      padding-right: 0;
+    body.drawer-inline-open.drawer-inline-left .drawer-inline-root {
+      width: var(--drawer-inline-width, 0px);
+      order: -1;
     }
   }
   

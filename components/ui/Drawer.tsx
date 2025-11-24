@@ -79,12 +79,21 @@ export function Drawer({
   inlineDesktop = true,
 }: DrawerProps) {
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
-
+  
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      setPortalTarget(document.body);
+    if (typeof document === 'undefined') return;
+
+    if (inlineSplitDesktop) {
+      const targetId = position === 'left' ? 'drawer-inline-root-left' : 'drawer-inline-root';
+      const inlineRoot = document.getElementById(targetId);
+      if (inlineRoot) {
+        setPortalTarget(inlineRoot);
+        return;
+      }
     }
-  }, []);
+
+    setPortalTarget(document.body);
+  }, [inlineSplitDesktop, position]);
 
   // Separate refs for each drawer variant to prevent conflicts
   const mobileBottomRef = useRef<HTMLDivElement>(null);
@@ -573,23 +582,37 @@ export function Drawer({
       {/* Desktop Drawer - Large screens (lg+) */}
       <div
         ref={desktopRef}
-        className={`hidden lg:flex fixed ${
-          fullScreen
-            ? 'inset-0 rounded-none'
-            : inlineSplitDesktop
-            ? `${position === 'right' ? 'right-0 rounded-l-2xl' : 'left-0 rounded-r-2xl'} top-4 bottom-4`
-            : `${desktopSpacing} rounded-2xl`
-        } ${backgroundClasses} ${shadowClasses} ${!fullScreen ? borderClasses : ''} z-50 transform transition-transform duration-300 ease-out ${
-          isOpen
-            ? 'translate-x-0 opacity-100'
-            : fullScreen
-            ? 'opacity-0'
-            : (position === 'right' ? 'translate-x-[calc(100%+2rem)] opacity-0' : '-translate-x-[calc(100%+2rem)] opacity-0')
-        } overflow-hidden flex-col`}
-        style={{ 
-          zIndex, 
-          width: fullScreen ? '100%' : desktopWidth,
-          maxWidth: fullScreen ? '100%' : 'calc(100vw - 2rem)',
+        className={`hidden lg:flex ${
+          inlineSplitDesktop
+            ? `w-full h-full flex-col ${
+                fullScreen
+                  ? 'rounded-none'
+                  : position === 'right'
+                  ? 'rounded-l-2xl'
+                  : 'rounded-r-2xl'
+              } transition-opacity duration-300 ease-out ${
+                isOpen ? 'opacity-100' : 'opacity-0'
+              }`
+            : `fixed ${
+                fullScreen
+                  ? 'inset-0 rounded-none'
+                  : `${desktopSpacing} rounded-2xl`
+              } ${'transform transition-transform duration-300 ease-out'} ${
+                isOpen
+                  ? 'translate-x-0 opacity-100'
+                  : fullScreen
+                  ? 'opacity-0'
+                  : position === 'right'
+                  ? 'translate-x-[calc(100%+2rem)] opacity-0'
+                  : '-translate-x-[calc(100%+2rem)] opacity-0'
+              }`
+        } ${backgroundClasses} ${shadowClasses} ${!fullScreen ? borderClasses : ''} ${
+          inlineSplitDesktop ? '' : 'z-50'
+        } overflow-hidden`}
+        style={{
+          zIndex: inlineSplitDesktop ? undefined : zIndex,
+          width: inlineSplitDesktop ? '100%' : fullScreen ? '100%' : desktopWidth,
+          maxWidth: inlineSplitDesktop ? '100%' : fullScreen ? '100%' : 'calc(100vw - 2rem)',
         }}
         role="dialog"
         aria-modal="true"
