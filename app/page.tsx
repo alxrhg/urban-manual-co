@@ -2933,13 +2933,7 @@ export default function Home() {
                 <SmartRecommendations
                   onCardClick={destination => {
                     setSelectedDestination(destination);
-                    // Preserve scroll position before opening drawer
-                    const savedScrollY = window.scrollY;
                     openDrawer('destination');
-                    // Ensure scroll position is maintained
-                    requestAnimationFrame(() => {
-                      window.scrollTo(0, savedScrollY);
-                    });
 
                     // Track destination click
                     trackDestinationClick({

@@ -118,7 +118,7 @@ export default function DrawerMount() {
       {open && type === 'trip-ai' && (
         <Drawer
           isOpen={open}
-          onClose={closeDrawer}
+        onClose={closeDrawer}
           title="AI Suggestions"
           fullScreen={true}
           position="right"
@@ -126,11 +126,11 @@ export default function DrawerMount() {
         >
           <AISuggestionsDrawer
             day={props.day || null}
-            trip={props.trip || null}
+        trip={props.trip || null}
             index={props.index}
             suggestions={props.suggestions}
             onApply={props.onApply}
-          />
+      />
         </Drawer>
       )}
       <TripReorderDrawer isOpen={open && type === 'trip-reorder-days'} onClose={closeDrawer} days={props.days || []} {...props} />

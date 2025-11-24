@@ -122,7 +122,7 @@ export default function TripDayDrawer({ isOpen, onClose, day }: TripDayDrawerPro
                         mealType,
                       })
                     }
-                  >
+          >
                     + Add {mealType}
                   </UMActionPill>
                 )}

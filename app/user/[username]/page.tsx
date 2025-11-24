@@ -195,36 +195,61 @@ export default function UserProfilePage() {
         </div>
 
         {/* Public Collections */}
-        <div>
-          <h2 className="text-lg font-light mb-6">
-            {isOwnProfile ? 'Your Public Collections' : 'Public Collections'}
-          </h2>
+        <div className="mt-12">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              {isOwnProfile ? 'Your Collections' : 'Collections'}
+            </h2>
+            {collections.length > 0 && (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {collections.length} {collections.length === 1 ? 'collection' : 'collections'}
+              </p>
+            )}
+          </div>
 
           {collections.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <p className="text-sm">No public collections yet</p>
+            <div className="text-center py-16 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50 dark:bg-gray-900">
+              <div className="text-5xl mb-4">📚</div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                {isOwnProfile ? 'No public collections yet' : 'No collections yet'}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {isOwnProfile 
+                  ? 'Create a collection and make it public to share with others'
+                  : 'This user hasn\'t shared any collections yet'}
+              </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {collections.map((collection) => (
                 <button
                   key={collection.id}
                   onClick={() => router.push(`/collection/${collection.id}`)}
-                  className="text-left p-6 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="text-left p-6 border border-gray-200 dark:border-gray-800 rounded-2xl hover:border-gray-300 dark:hover:border-gray-700 hover:shadow-md transition-all bg-white dark:bg-gray-900"
                 >
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="text-3xl">{collection.emoji || '📚'}</span>
-                    <h3 className="font-medium text-lg flex-1">{collection.name}</h3>
+                  <div className="flex items-start gap-4 mb-4">
+                    <span className="text-4xl flex-shrink-0">{collection.emoji || '📚'}</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg mb-1 line-clamp-1 text-gray-900 dark:text-white">
+                        {collection.name}
+                      </h3>
+                      {collection.description && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                          {collection.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  {collection.description && (
-                    <p className="text-sm text-gray-500 line-clamp-2 mb-3">
-                      {collection.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-4 text-xs text-gray-400">
-                    <span>{collection.destination_count || 0} places</span>
+                  <div className="flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500 pt-3 border-t border-gray-100 dark:border-gray-800">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      {collection.destination_count || 0} {collection.destination_count === 1 ? 'place' : 'places'}
+                    </span>
                     {collection.view_count > 0 && (
-                      <span>{collection.view_count} views</span>
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3 w-3" />
+                        {collection.view_count} {collection.view_count === 1 ? 'view' : 'views'}
+                      </span>
                     )}
                   </div>
                 </button>

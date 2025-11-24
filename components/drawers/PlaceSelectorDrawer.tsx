@@ -101,7 +101,7 @@ export default function PlaceSelectorDrawer({
               key={place.id}
               className="p-4 space-y-3 cursor-pointer hover:shadow-lg transition-shadow"
               onClick={() => handleSelect(place)}
-            >
+          >
               {place.image && (
                 <img
                   src={place.image}

@@ -12,7 +12,7 @@ import SuggestionCard from '@/components/trip/SuggestionCard';
 import UMCard from '@/components/ui/UMCard';
 import UMActionPill from '@/components/ui/UMActionPill';
 import UMSectionTitle from '@/components/ui/UMSectionTitle';
-import { Camera, Loader2, ChevronRight, Plus, Trash2, Calendar } from 'lucide-react';
+import { Camera, Loader2, Plus, Trash2, Calendar } from 'lucide-react';
 import Image from 'next/image';
 import { TripPlanner } from '@/components/TripPlanner';
 
@@ -327,39 +327,22 @@ export default function TripPage() {
       />
 
       {/* Tabs */}
-      <div className="flex gap-4 border-b border-neutral-200 dark:border-white/10">
-        <button
-          onClick={() => setActiveTab('details')}
-          className={`pb-3 px-1 text-sm font-medium transition-colors ${
-            activeTab === 'details'
-              ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
-              : 'text-neutral-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          Details
-        </button>
-        <button
-          onClick={() => setActiveTab('itinerary')}
-          className={`pb-3 px-1 text-sm font-medium transition-colors flex items-center gap-1 ${
-            activeTab === 'itinerary'
-              ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
-              : 'text-neutral-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          Itinerary
-          <ChevronRight className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => setActiveTab('hotels')}
-          className={`pb-3 px-1 text-sm font-medium transition-colors flex items-center gap-1 ${
-            activeTab === 'hotels'
-              ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
-              : 'text-neutral-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
-          }`}
-        >
-          Hotels
-          <ChevronRight className="w-4 h-4" />
-        </button>
+      <div className="mb-8">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+          {(['details', 'itinerary', 'hotels'] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`transition-all ${
+                activeTab === tab
+                  ? "font-medium text-black dark:text-white"
+                  : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+              }`}
+            >
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab Content */}

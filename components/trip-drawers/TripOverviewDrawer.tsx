@@ -58,8 +58,8 @@ export default function TripOverviewDrawer({ trip }: TripOverviewDrawerProps) {
         <UMSectionTitle>Trip Summary</UMSectionTitle>
         <UMCard className="p-4">
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {days.length} day{days.length !== 1 ? 's' : ''} · {cities.length > 0 ? cities.join(', ') : 'No cities'}
-          </p>
+              {days.length} day{days.length !== 1 ? 's' : ''} · {cities.length > 0 ? cities.join(', ') : 'No cities'}
+            </p>
         </UMCard>
       </section>
 
@@ -68,17 +68,17 @@ export default function TripOverviewDrawer({ trip }: TripOverviewDrawerProps) {
         <section className="space-y-4">
           <UMSectionTitle>Days</UMSectionTitle>
           <div className="space-y-4">
-            {days.map((d, i) => (
+              {days.map((d, i) => (
               <UMCard
-                key={i}
+                  key={i}
                 className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
-                onClick={() => {
+                  onClick={() => {
                   closeDrawer();
-                  if (trip.id) {
-                    window.location.assign(`/trips/${trip.id}?day=${i}`);
-                  }
-                }}
-              >
+                    if (trip.id) {
+                      window.location.assign(`/trips/${trip.id}?day=${i}`);
+                    }
+                  }}
+                >
                 <div className="flex justify-between items-center">
                   <p className="font-medium text-gray-900 dark:text-white">
                     Day {i + 1} – {d.date}
@@ -106,8 +106,8 @@ export default function TripOverviewDrawer({ trip }: TripOverviewDrawerProps) {
                 <p className="font-medium text-gray-900 dark:text-white">{h.name}</p>
                 <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{h.city}</p>
               </UMCard>
-            ))}
-          </div>
+              ))}
+            </div>
         </section>
       )}
 
@@ -126,9 +126,9 @@ export default function TripOverviewDrawer({ trip }: TripOverviewDrawerProps) {
                 </p>
               </UMCard>
             ))}
-          </div>
+        </div>
         </section>
       )}
-    </div>
+      </div>
   );
 }
