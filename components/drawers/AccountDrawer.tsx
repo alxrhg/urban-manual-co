@@ -398,6 +398,23 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
           </p>
         </UMCard>
 
+        {isAdmin && (
+          <UMCard
+            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            onClick={() => {
+              onClose();
+              router.push('/admin');
+            }}
+          >
+            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
+              Admin Panel
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Manage destinations, analytics
+            </p>
+          </UMCard>
+        )}
+
         <UMCard
           className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
               onClick={handleSignOut}
