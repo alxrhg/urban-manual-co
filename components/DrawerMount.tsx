@@ -35,7 +35,17 @@ export default function DrawerMount() {
       <VisitedPlacesDrawer />
 
       {/* New drawers that use the global drawer store */}
-      <AccountDrawerNew isOpen={open && type === 'account-new'} onClose={closeDrawer} />
+      {open && type === 'account-new' && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          desktopWidth="420px"
+          style={drawerStyle}
+          position="right"
+        >
+          <AccountDrawerNew isOpen={open} onClose={closeDrawer} />
+        </Drawer>
+      )}
       <DestinationDrawer isOpen={open && type === 'destination'} onClose={closeDrawer} place={props.place || null} {...props} />
       <TripOverviewDrawer isOpen={open && type === 'trip-overview'} onClose={closeDrawer} trip={props.trip || null} {...props} />
       {open && type === 'trip-list' && (

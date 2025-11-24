@@ -1,13 +1,15 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { Drawer } from '@/components/ui/Drawer';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useDrawer } from '@/contexts/DrawerContext';
 import Image from 'next/image';
+import UMCard from "@/components/ui/UMCard";
+import UMActionPill from "@/components/ui/UMActionPill";
+import UMSectionTitle from "@/components/ui/UMSectionTitle";
 
 interface UpcomingTrip {
   id?: string;
@@ -19,6 +21,8 @@ interface UpcomingTrip {
   end_date?: string | null;
   coverImage?: string;
   cover_image?: string;
+  city?: string;
+  destination?: string;
   [key: string]: any;
 }
 
@@ -30,8 +34,9 @@ interface AccountDrawerProps {
 export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { openDrawer } = useDrawer();
+  const openDrawer = useDrawerStore((s) => s.openDrawer);
   const openSide = useDrawerStore((s) => s.openSide);
+  const { openDrawer: openLegacyDrawer } = useDrawer();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [upcomingTrip, setUpcomingTrip] = useState<UpcomingTrip | null>(null);
@@ -101,6 +106,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
             startDate: formatDate(trip.start_date),
             endDate: formatDate(trip.end_date),
             coverImage: trip.cover_image,
+            city: trip.destination || trip.city,
           });
         } else {
           setUpcomingTrip(null);
@@ -118,7 +124,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   }, [user, isOpen]);
 
   const displayName = username || user?.email?.split('@')[0] || 'User';
-  const displayHandle = username ? `@${username}` : user?.email || '';
+  const displayHandle = username ? `@${username.toLowerCase().replace(/\s+/g, '')}` : '';
   const displayEmail = user?.email || '';
 
   const handleSignOut = async () => {
@@ -127,200 +133,251 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     router.push('/');
   };
 
-  return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={onClose}
-      desktopWidth="420px"
-      position="right"
-      style="solid"
-      backdropOpacity="15"
-      keepStateOnClose={true}
-    >
-      <div className="px-7 pt-10 pb-16 space-y-10">
-        {/* HEADER */}
-        <div className="space-y-4">
-          <button
-            onClick={onClose}
-            className="text-sm text-[var(--um-text-muted)] hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            ← Back
-          </button>
+  const handleOpenTrip = () => {
+    if (upcomingTrip) {
+      onClose();
+      openSide('trip-overview-quick', { trip: upcomingTrip });
+    }
+  };
 
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              {avatarUrl ? (
-                <div className="relative w-16 h-16 rounded-full overflow-hidden border border-[var(--um-border)]">
-                  <Image
-                    src={avatarUrl}
-                    alt={displayName}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
-                </div>
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-800 border border-[var(--um-border)] flex items-center justify-center">
-                  <span className="text-gray-400 dark:text-gray-500 text-lg">
-                    {displayName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
-              <div className="absolute bottom-0 right-0 w-5 h-5 bg-black dark:bg-white rounded-full flex items-center justify-center border-2 border-white dark:border-gray-950">
-                <span className="text-white dark:text-black text-[10px]">✎</span>
-              </div>
-            </div>
-
-            <div className="space-y-0.5">
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">{displayName}</p>
-              {displayHandle && (
-                <p className="text-sm text-[var(--um-text-muted)]">{displayHandle}</p>
-              )}
-              {displayEmail && (
-                <p className="text-sm text-[var(--um-text-muted)]">{displayEmail}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 pt-2">
-            <button className="px-4 py-2 rounded-full border border-[var(--um-border)] text-sm text-gray-700 dark:text-gray-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors">
-              Edit Profile
-            </button>
-            <button className="px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-sm hover:opacity-90 transition-opacity">
-              Concierge
-            </button>
-          </div>
-        </div>
-
-        {/* UPCOMING TRIP */}
-        {upcomingTrip && (
-          <div className="space-y-4">
-            <p className="text-xs tracking-widest text-[var(--um-text-muted)] uppercase">
-              UPCOMING TRIP
+  if (!user) {
+    return (
+      <div className="px-6 py-8 space-y-10">
+        <UMCard className="p-6 space-y-4">
+          <div className="space-y-2 text-center">
+            <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
+              Welcome to Urban Manual
             </p>
-
-            <div
-              className="rounded-2xl border border-[var(--um-border)] p-4 space-y-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer bg-white dark:bg-gray-950"
-              onClick={() => {
-                onClose();
-                openSide('trip-overview-quick', { trip: upcomingTrip });
-              }}
-            >
-              {upcomingTrip.coverImage && (
-                <div className="relative w-full h-40 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                  <Image
-                    src={upcomingTrip.coverImage}
-                    alt={upcomingTrip.name || 'Trip'}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 420px"
-                  />
-                </div>
-              )}
-
-              <div>
-                <p className="font-medium text-lg text-gray-900 dark:text-white">
-                  {upcomingTrip.name || upcomingTrip.title || 'Untitled Trip'}
-                </p>
-                {upcomingTrip.startDate && upcomingTrip.endDate && (
-                  <p className="text-sm text-[var(--um-text-muted)]">
-                    {upcomingTrip.startDate} – {upcomingTrip.endDate}
-                  </p>
-                )}
-              </div>
-
-              <p className="text-sm text-gray-600 dark:text-gray-400">View Trip →</p>
-            </div>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Sign in to save places, build trips, and sync your travel profile.
+            </p>
           </div>
-        )}
-
-        {/* YOUR MANUAL */}
-        <div className="space-y-4">
-          <p className="text-xs tracking-widest text-[var(--um-text-muted)] uppercase">
-            YOUR MANUAL
-          </p>
-
-          <div className="rounded-2xl border border-[var(--um-border)] divide-y divide-[var(--um-border)] bg-white dark:bg-gray-950">
-            <button
-              onClick={() => {
-                onClose();
-                openDrawer('saved-places');
-              }}
-              className="flex justify-between items-center w-full text-left py-4 px-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
-            >
-              <span className="text-gray-900 dark:text-white">Saved Places</span>
-              <span className="text-[var(--um-text-muted)] opacity-30">→</span>
-            </button>
-            <button
-              onClick={() => {
-                onClose();
-                openDrawer('visited-places');
-              }}
-              className="flex justify-between items-center w-full text-left py-4 px-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
-            >
-              <span className="text-gray-900 dark:text-white">Visited Places</span>
-              <span className="text-[var(--um-text-muted)] opacity-30">→</span>
-            </button>
-            <button
-              onClick={() => {
-                onClose();
-                // TODO: Implement lists drawer
-              }}
-              className="flex justify-between items-center w-full text-left py-4 px-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
-            >
-              <span className="text-gray-900 dark:text-white">Lists</span>
-              <span className="text-[var(--um-text-muted)] opacity-30">→</span>
-            </button>
-            <button
-              onClick={() => {
-                onClose();
-                openSide('trip-list');
-              }}
-              className="flex justify-between items-center w-full text-left py-4 px-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
-            >
-              <span className="text-gray-900 dark:text-white">Trips</span>
-              <span className="text-[var(--um-text-muted)] opacity-30">→</span>
-            </button>
-            <button
-              onClick={() => {
-                onClose();
-                // TODO: Implement achievements drawer
-              }}
-              className="flex justify-between items-center w-full text-left py-4 px-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
-            >
-              <span className="text-gray-900 dark:text-white">Achievements</span>
-              <span className="text-[var(--um-text-muted)] opacity-30">→</span>
-            </button>
-          </div>
-        </div>
-
-        {/* ACCOUNT SETTINGS */}
-        <div className="space-y-4">
-          <p className="text-xs tracking-widest text-[var(--um-text-muted)] uppercase">
-            ACCOUNT & SETTINGS
-          </p>
-
-          <div className="rounded-2xl border border-[var(--um-border)] divide-y divide-[var(--um-border)] bg-white dark:bg-gray-950">
-            <button
-              onClick={() => {
-                onClose();
-                openDrawer('settings');
-              }}
-              className="flex justify-between items-center w-full text-left py-4 px-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
-            >
-              <span className="text-gray-900 dark:text-white">Profile & Preferences</span>
-              <span className="text-[var(--um-text-muted)] opacity-30">→</span>
-            </button>
-            <button
-              onClick={handleSignOut}
-              className="flex justify-between items-center w-full text-left py-4 px-4 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors text-red-600 dark:text-red-400"
-            >
-              <span>Sign Out</span>
-            </button>
-          </div>
-        </div>
+          <UMActionPill
+            variant="primary"
+            className="w-full justify-center"
+            onClick={() => {
+              onClose();
+              router.push('/auth/login');
+            }}
+          >
+            Sign In
+          </UMActionPill>
+        </UMCard>
       </div>
-    </Drawer>
+    );
+  }
+
+  return (
+    <div className="px-6 py-8 space-y-10">
+      {/* PROFILE CARD */}
+      <UMCard className="p-6 space-y-4">
+        <div className="flex items-center gap-4">
+          {avatarUrl ? (
+            <div className="relative w-14 h-14 rounded-full overflow-hidden border border-neutral-200 dark:border-white/10">
+              <Image
+                src={avatarUrl}
+                alt={displayName}
+                fill
+                className="object-cover"
+                sizes="56px"
+              />
+            </div>
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-gray-200 dark:bg-gray-800 border border-neutral-200 dark:border-white/10 flex items-center justify-center">
+              <span className="text-gray-400 dark:text-gray-500 text-lg font-semibold">
+                {displayName.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
+
+          <div className="space-y-0.5 flex-1 min-w-0">
+            <p className="text-[17px] font-semibold text-gray-900 dark:text-white truncate">
+              {displayName}
+            </p>
+            {displayHandle && (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 truncate">
+                {displayHandle}
+              </p>
+            )}
+            {displayEmail && (
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 truncate">
+                {displayEmail}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-1">
+          <UMActionPill
+            onClick={() => {
+              onClose();
+              router.push('/account?tab=settings');
+            }}
+          >
+            Edit Profile
+          </UMActionPill>
+          <UMActionPill
+            variant="primary"
+            onClick={() => {
+              onClose();
+              openLegacyDrawer('chat');
+            }}
+          >
+            Concierge
+          </UMActionPill>
+        </div>
+      </UMCard>
+
+      {/* UPCOMING TRIP */}
+      {upcomingTrip && (
+        <section className="space-y-4">
+          <UMSectionTitle>Upcoming Trip</UMSectionTitle>
+
+          <UMCard
+            className="p-4 space-y-3 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            onClick={handleOpenTrip}
+          >
+            {upcomingTrip.coverImage && (
+              <div className="relative w-full h-40 rounded-[16px] overflow-hidden">
+                <Image
+                  src={upcomingTrip.coverImage}
+                  alt={upcomingTrip.name || 'Trip'}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 420px"
+                />
+              </div>
+            )}
+
+            <div className="space-y-1">
+              <p className="font-medium text-[17px] text-gray-900 dark:text-white">
+                {upcomingTrip.name || upcomingTrip.title || 'Untitled Trip'}
+              </p>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                {upcomingTrip.city || upcomingTrip.destination || ''}
+                {upcomingTrip.startDate && upcomingTrip.endDate && (
+                  <> • {upcomingTrip.startDate} → {upcomingTrip.endDate}</>
+                )}
+              </p>
+            </div>
+
+            <UMActionPill className="w-full justify-center">
+              View Trip →
+            </UMActionPill>
+          </UMCard>
+        </section>
+      )}
+
+      {/* YOUR MANUAL SECTIONS */}
+      <section className="space-y-4">
+        <UMSectionTitle>Your Manual</UMSectionTitle>
+
+        <div className="space-y-4">
+          <UMCard
+            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            onClick={() => {
+              onClose();
+              openLegacyDrawer('saved-places');
+            }}
+          >
+            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
+              Saved Places
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Your curated favorites
+            </p>
+          </UMCard>
+
+          <UMCard
+            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            onClick={() => {
+              onClose();
+              openLegacyDrawer('visited-places');
+            }}
+          >
+            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
+              Visited Places
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Your travel history
+            </p>
+          </UMCard>
+
+          <UMCard
+            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            onClick={() => {
+              onClose();
+              router.push('/account?tab=collections');
+            }}
+          >
+            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
+              Lists
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Organize destinations
+            </p>
+          </UMCard>
+
+          <UMCard
+            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            onClick={() => {
+              onClose();
+              openSide('trip-list');
+            }}
+          >
+            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
+              Trips
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Manage trip plans
+            </p>
+          </UMCard>
+
+          <UMCard
+            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            onClick={() => {
+              onClose();
+              router.push('/account?tab=achievements');
+            }}
+          >
+            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
+              Achievements
+            </p>
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Milestones & travel badges
+            </p>
+          </UMCard>
+        </div>
+      </section>
+
+      {/* ACCOUNT SETTINGS */}
+      <section className="space-y-4">
+        <UMSectionTitle>Account & Settings</UMSectionTitle>
+
+        <UMCard
+          className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+          onClick={() => {
+            onClose();
+            router.push('/account?tab=settings');
+          }}
+        >
+          <p className="font-medium text-[15px] text-gray-900 dark:text-white">
+            Profile & Preferences
+          </p>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            Notifications, privacy, theme
+          </p>
+        </UMCard>
+
+        <UMCard
+          className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+          onClick={handleSignOut}
+        >
+          <p className="font-medium text-[15px] text-red-600 dark:text-red-400">
+            Sign Out
+          </p>
+        </UMCard>
+      </section>
+    </div>
   );
 }
-
