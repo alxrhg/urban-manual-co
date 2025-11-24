@@ -50,6 +50,7 @@ export default function TripPage() {
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [hotelEditMode, setHotelEditMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dayScrollRef = useRef<HTMLDivElement>(null);
 
@@ -92,6 +93,12 @@ export default function TripPage() {
       loadRecommendations();
     }
   }, [trip]);
+
+  useEffect(() => {
+    if (activeTab !== 'hotels' && hotelEditMode) {
+      setHotelEditMode(false);
+    }
+  }, [activeTab, hotelEditMode]);
 
   // Load hotels from itinerary_items
   const loadHotels = async () => {
@@ -804,10 +811,23 @@ export default function TripPage() {
             <div className="flex items-center justify-between">
               <UMSectionTitle>Accommodations</UMSectionTitle>
               {isOwner && (
-                <UMActionPill onClick={handleAddHotel} variant="primary">
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Hotel
-                </UMActionPill>
+                <div className="flex flex-wrap gap-2">
+                  {hotelEditMode ? (
+                    <>
+                      <UMActionPill onClick={handleAddHotel} variant="primary">
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add Hotel
+                      </UMActionPill>
+                      <UMActionPill onClick={() => setHotelEditMode(false)}>
+                        Done
+                      </UMActionPill>
+                    </>
+                  ) : (
+                    <UMActionPill onClick={() => setHotelEditMode(true)}>
+                      Edit
+                    </UMActionPill>
+                  )}
+                </div>
               )}
             </div>
 
@@ -822,14 +842,19 @@ export default function TripPage() {
                 <p className="text-neutral-500 dark:text-neutral-400 mb-4">
                   No hotels added yet
                 </p>
-                {isOwner && (
+                {isOwner && !hotelEditMode && (
+                  <UMActionPill onClick={() => setHotelEditMode(true)} variant="primary">
+                    Start Adding
+                  </UMActionPill>
+                )}
+                {isOwner && hotelEditMode && (
                   <UMActionPill onClick={handleAddHotel} variant="primary">
                     <Plus className="w-4 h-4 mr-1" />
-                    Add Your First Hotel
+                    Add First Hotel
                   </UMActionPill>
                 )}
               </UMCard>
-            ) : (
+            ) : hotelEditMode ? (
               <div className="space-y-4">
                 {hotels.map((hotel, index) => (
                   <UMCard key={index} className="p-6">
@@ -907,6 +932,35 @@ export default function TripPage() {
                     )}
                   </UMActionPill>
                 )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {hotels.map((hotel, index) => (
+                  <UMCard key={`view-${index}`} className="p-5 space-y-2">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                          {hotel.name || 'Untitled hotel'}
+                        </p>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                          {hotel.address || 'Address not set'}
+                        </p>
+                      </div>
+                      <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                        {hotel.startDate
+                          ? formatDateLong(hotel.startDate)
+                          : 'Start date TBD'}{' '}
+                        –{' '}
+                        {hotel.endDate ? formatDateLong(hotel.endDate) : 'End date TBD'}
+                      </div>
+                    </div>
+                    {hotel.notes && (
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                        {hotel.notes}
+                      </p>
+                    )}
+                  </UMCard>
+                ))}
               </div>
             )}
           </div>
