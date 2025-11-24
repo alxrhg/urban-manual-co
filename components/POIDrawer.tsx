@@ -259,8 +259,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         image: imageUrl || null,
         michelin_stars: formData.michelin_stars || null,
         crown: formData.crown || false,
-        brand: formData.brand?.trim() || null,
-        architect: formData.architect?.trim() || null,
+        brand: formData.brand && formData.brand.trim() ? formData.brand.trim() : null,
+        architect: formData.architect && formData.architect.trim() ? formData.architect.trim() : null,
         parent_destination_id: formData.parent_destination_id || null,
       };
 
@@ -268,6 +268,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
       console.log('Updating destination with data:', {
         slug: destination?.slug,
         category: destinationData.category,
+        brand: destinationData.brand,
+        architect: destinationData.architect,
         fullData: destinationData
       });
 
@@ -333,9 +335,10 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         return;
       }
 
-      // Verify the update was successful, especially for category
+      // Verify the update was successful, especially for category and brand
       if (isEditing && result && result[0]) {
         const updatedCategory = result[0].category;
+        const updatedBrand = result[0].brand;
         if (updatedCategory !== destinationData.category) {
           console.error('Category update verification failed:', {
             expected: destinationData.category,
@@ -346,7 +349,18 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
           setIsSaving(false);
           return;
         }
+        if (updatedBrand !== destinationData.brand) {
+          console.error('Brand update verification failed:', {
+            expected: destinationData.brand,
+            actual: updatedBrand,
+            fullResult: result[0]
+          });
+          toast.error(`Brand update may have failed. Expected "${destinationData.brand}" but got "${updatedBrand}"`);
+          setIsSaving(false);
+          return;
+        }
         console.log('Category update verified successfully:', updatedCategory);
+        console.log('Brand update verified successfully:', updatedBrand);
       }
 
       toast.success(isEditing ? 'Destination updated successfully' : 'POI created successfully');
