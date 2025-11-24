@@ -566,7 +566,7 @@ export function Drawer({
           fullScreen
             ? 'inset-0 rounded-none'
             : inlineSplitDesktop
-            ? `${position === 'right' ? 'right-0' : 'left-0'} top-0 bottom-0 rounded-none`
+            ? `${position === 'right' ? 'right-0 rounded-l-[32px]' : 'left-0 rounded-r-[32px]'} top-4 bottom-4`
             : `${desktopSpacing} rounded-2xl`
         } ${backgroundClasses} ${shadowClasses} ${!fullScreen ? borderClasses : ''} z-50 transform transition-transform duration-300 ease-out ${
           isOpen

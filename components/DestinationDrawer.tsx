@@ -90,7 +90,16 @@ export default function DestinationDrawer({ isOpen, onClose, place }: Destinatio
   );
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose}>
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      mobileVariant="side"
+      desktopWidth="420px"
+      desktopSpacing="right-4 top-4 bottom-4"
+      position="right"
+      style="glassy"
+      backdropOpacity="18"
+    >
       <DrawerHeader
         title={name}
         subtitle={[category, neighborhood].filter(Boolean).join(' · ')}
