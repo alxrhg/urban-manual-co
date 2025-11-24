@@ -131,13 +131,13 @@ export function Header() {
 
   return (
     <header
-      className="mt-6 md:mt-8 relative z-30 bg-white dark:bg-gray-900"
+      className="mt-6 md:mt-8 relative z-30 bg-white dark:bg-gray-900 w-full"
       role="banner"
     >
       {/* Primary Nav */}
       <div className="w-full px-6 md:px-10">
         <nav
-          className="flex items-center justify-between py-4"
+          className="flex items-center justify-between py-4 w-full"
           aria-label="Main navigation"
         >
           <button
