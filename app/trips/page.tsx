@@ -205,84 +205,83 @@ export default function TripsPage() {
           </div>
         </div>
         
-        <div className="max-w-2xl mx-auto space-y-10">
-
-      {/* PRIMARY CTA */}
-      <UMFeaturePill
-        onClick={() => {
-          if (!user) {
-            router.push('/auth/login');
-          } else {
-            setShowCreateDialog(true);
-          }
-        }}
-      >
-        + New Trip
-      </UMFeaturePill>
-
-      {/* FILTER PILLS */}
-      {trips.length > 0 && (
-        <div className="flex gap-2">
-          <UMActionPill
-            variant={activeFilter === 'all' ? 'primary' : 'default'}
-            onClick={() => setActiveFilter('all')}
-          >
-            All
-          </UMActionPill>
-          <UMActionPill
-            variant={activeFilter === 'planning' ? 'primary' : 'default'}
-            onClick={() => setActiveFilter('planning')}
-          >
-            Planning
-          </UMActionPill>
-          <UMActionPill
-            variant={activeFilter === 'completed' ? 'primary' : 'default'}
-            onClick={() => setActiveFilter('completed')}
-          >
-            Completed
-          </UMActionPill>
-        </div>
-      )}
-
-      {/* TRIP LIST */}
-      <div className="space-y-8">
-        {filteredTrips.length === 0 ? (
-          <div className="text-center space-y-3 py-20">
-            <p className="text-sm text-neutral-500">You have no trips yet.</p>
-            <UMFeaturePill
-              onClick={() => {
-                if (!user) {
-                  router.push('/auth/login');
-                } else {
-                  setShowCreateDialog(true);
-                }
-              }}
-            >
-              Create Trip
-            </UMFeaturePill>
-          </div>
-        ) : (
-          filteredTrips.map((trip) => (
-            <TripCard
-              key={trip.id}
-              trip={{
-                id: trip.id,
-                name: trip.title,
-                coverImage: trip.cover_image || trip.firstLocationImage,
-                city: getCityFromTrip(trip),
-                startDate: formatDate(trip.start_date) || undefined,
-                endDate: formatDate(trip.end_date) || undefined,
-                status: trip.status,
-              }}
-              onView={() => router.push(`/trips/${trip.id}`)}
-              onEdit={() => {
-                setEditingTripId(trip.id);
+        <div className="w-full space-y-10">
+          {/* PRIMARY CTA */}
+          <UMFeaturePill
+            onClick={() => {
+              if (!user) {
+                router.push('/auth/login');
+              } else {
                 setShowCreateDialog(true);
-              }}
-            />
-          ))
-        )}
-      </div>
+              }
+            }}
+          >
+            + New Trip
+          </UMFeaturePill>
+
+          {/* FILTER PILLS */}
+          {trips.length > 0 && (
+            <div className="flex gap-2">
+              <UMActionPill
+                variant={activeFilter === 'all' ? 'primary' : 'default'}
+                onClick={() => setActiveFilter('all')}
+              >
+                All
+              </UMActionPill>
+              <UMActionPill
+                variant={activeFilter === 'planning' ? 'primary' : 'default'}
+                onClick={() => setActiveFilter('planning')}
+              >
+                Planning
+              </UMActionPill>
+              <UMActionPill
+                variant={activeFilter === 'completed' ? 'primary' : 'default'}
+                onClick={() => setActiveFilter('completed')}
+              >
+                Completed
+              </UMActionPill>
+            </div>
+          )}
+
+          {/* TRIP LIST */}
+          <div className="max-w-2xl mx-auto space-y-8">
+            {filteredTrips.length === 0 ? (
+              <div className="text-center space-y-3 py-20">
+                <p className="text-sm text-neutral-500">You have no trips yet.</p>
+                <UMFeaturePill
+                  onClick={() => {
+                    if (!user) {
+                      router.push('/auth/login');
+                    } else {
+                      setShowCreateDialog(true);
+                    }
+                  }}
+                >
+                  Create Trip
+                </UMFeaturePill>
+              </div>
+            ) : (
+              filteredTrips.map((trip) => (
+                <TripCard
+                  key={trip.id}
+                  trip={{
+                    id: trip.id,
+                    name: trip.title,
+                    coverImage: trip.cover_image || trip.firstLocationImage,
+                    city: getCityFromTrip(trip),
+                    startDate: formatDate(trip.start_date) || undefined,
+                    endDate: formatDate(trip.end_date) || undefined,
+                    status: trip.status,
+                  }}
+                  onView={() => router.push(`/trips/${trip.id}`)}
+                  onEdit={() => {
+                    setEditingTripId(trip.id);
+                    setShowCreateDialog(true);
+                  }}
+                />
+              ))
+            )}
+          </div>
 
       {/* Trip Planner Modal - Only render when open */}
       {showCreateDialog && (
