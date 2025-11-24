@@ -14,6 +14,15 @@ export function ThemeToggle() {
     setMounted(true);
   }, []);
 
+  // Use resolvedTheme if available, otherwise fall back to theme
+  const currentTheme = resolvedTheme || theme || "dark";
+  const isDark = currentTheme === "dark";
+
+  const handleToggle = (checked: boolean) => {
+    const newTheme = checked ? "dark" : "light";
+    setTheme(newTheme);
+  };
+
   if (!mounted) {
     return (
       <div className="flex items-center gap-2">
@@ -24,23 +33,23 @@ export function ThemeToggle() {
     );
   }
 
-  // Use resolvedTheme if available, otherwise fall back to theme
-  const currentTheme = resolvedTheme || theme;
-  const isDark = currentTheme === "dark";
-
-  const handleToggle = (checked: boolean) => {
-    setTheme(checked ? "dark" : "light");
-  };
-
   return (
     <div className="flex items-center gap-2">
-      <Sun className={`h-4 w-4 transition-colors ${isDark ? "text-gray-400" : "text-gray-900 dark:text-white"}`} />
+      <Sun 
+        className={`h-4 w-4 transition-colors ${
+          isDark ? "text-gray-400" : "text-gray-900 dark:text-white"
+        }`} 
+      />
       <Switch
         checked={isDark}
         onCheckedChange={handleToggle}
         aria-label="Toggle theme"
       />
-      <Moon className={`h-4 w-4 transition-colors ${isDark ? "text-gray-900 dark:text-white" : "text-gray-400"}`} />
+      <Moon 
+        className={`h-4 w-4 transition-colors ${
+          isDark ? "text-gray-900 dark:text-white" : "text-gray-400"
+        }`} 
+      />
     </div>
   );
 }
