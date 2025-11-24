@@ -79,21 +79,6 @@ export function Drawer({
   inlineDesktop = true,
 }: DrawerProps) {
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
-  
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-
-    if (inlineSplitDesktop) {
-      const targetId = position === 'left' ? 'drawer-inline-root-left' : 'drawer-inline-root';
-      const inlineRoot = document.getElementById(targetId);
-      if (inlineRoot) {
-        setPortalTarget(inlineRoot);
-        return;
-      }
-    }
-
-    setPortalTarget(document.body);
-  }, [inlineSplitDesktop, position]);
 
   // Separate refs for each drawer variant to prevent conflicts
   const mobileBottomRef = useRef<HTMLDivElement>(null);
@@ -108,6 +93,21 @@ export function Drawer({
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [viewport, setViewport] = useState<ViewportSize>(() => getViewportType());
   const inlineSplitDesktop = inlineDesktop && viewport === 'desktop' && !fullScreen;
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    if (inlineSplitDesktop) {
+      const targetId = position === 'left' ? 'drawer-inline-root-left' : 'drawer-inline-root';
+      const inlineRoot = document.getElementById(targetId);
+      if (inlineRoot) {
+        setPortalTarget(inlineRoot);
+        return;
+      }
+    }
+
+    setPortalTarget(document.body);
+  }, [inlineSplitDesktop, position]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
