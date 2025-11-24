@@ -1082,12 +1082,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {/* Admin Edit Button */}
           {isAdmin && (
             <button
-              onClick={() => setIsEditDrawerOpen(true)}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditDrawerOpen(true);
+              }}
+              className="p-2 hover:bg-neutral-50 dark:hover:bg-white/5 rounded-lg transition-colors"
               aria-label="Edit destination"
               title="Edit destination (Admin)"
             >
-              <Edit className="h-4 w-4 text-gray-900 dark:text-white" />
+              <Edit className="h-4 w-4 text-gray-900 dark:text-white/90" />
             </button>
           )}
           {/* Bookmark Action */}
