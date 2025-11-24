@@ -12,7 +12,7 @@ import SuggestionCard from '@/components/trip/SuggestionCard';
 import UMCard from '@/components/ui/UMCard';
 import UMActionPill from '@/components/ui/UMActionPill';
 import UMSectionTitle from '@/components/ui/UMSectionTitle';
-import { Camera, Loader2, Plus, Trash2, Calendar } from 'lucide-react';
+import { Camera, Loader2, Plus, Trash2, Calendar, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { TripPlanner } from '@/components/TripPlanner';
 import { HotelAutocompleteInput } from '@/components/HotelAutocompleteInput';
@@ -47,7 +47,35 @@ export default function TripPage() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loadingHotels, setLoadingHotels] = useState(false);
   const [showTripPlanner, setShowTripPlanner] = useState(false);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load recommendations based on trip destination
+  const loadRecommendations = async () => {
+    if (!trip?.destination || !user) return;
+
+    try {
+      setLoadingRecommendations(true);
+      const response = await fetch(`/api/recommendations?city=${trip.destination}&limit=6`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.recommendations && Array.isArray(data.recommendations)) {
+          setRecommendations(data.recommendations);
+        } else {
+          setRecommendations([]);
+        }
+      } else {
+        setRecommendations([]);
+      }
+    } catch (error) {
+      console.error('Error loading recommendations:', error);
+      setRecommendations([]);
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
 
   // Initialize form when trip loads
   useEffect(() => {
@@ -58,6 +86,7 @@ export default function TripPage() {
       setEditedEndDate(trip.end_date || '');
       setCoverImagePreview(trip.cover_image || null);
       loadHotels();
+      loadRecommendations();
     }
   }, [trip]);
 
@@ -641,6 +670,73 @@ export default function TripPage() {
           />
         </div>
       </section>
+
+          {/* Recommendations */}
+          {(loadingRecommendations || recommendations.length > 0) && (
+            <section className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
+              <div className="mb-4">
+                <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
+                  YOU MIGHT ALSO LIKE
+                </h3>
+              </div>
+
+              {loadingRecommendations ? (
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                  {[1, 2, 3, 4, 5, 6].map(i => (
+                    <div key={i} className="flex-shrink-0 w-32">
+                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl mb-2 animate-pulse" />
+                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
+                      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6">
+                  {recommendations.map(rec => (
+                    <button
+                      key={rec.slug}
+                      onClick={() => router.push(`/destination/${rec.slug}`)}
+                      className="group text-left flex-shrink-0 w-32 flex flex-col"
+                    >
+                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
+                        {rec.image ? (
+                          <Image
+                            src={rec.image}
+                            alt={rec.name}
+                            fill
+                            sizes="(max-width: 640px) 50vw, 200px"
+                            className="object-cover group-hover:opacity-90 transition-opacity"
+                            quality={85}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <MapPin className="h-8 w-8 opacity-20" />
+                          </div>
+                        )}
+                        {rec.michelin_stars && rec.michelin_stars > 0 && (
+                          <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
+                            <img
+                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                              alt="Michelin star"
+                              className="h-3 w-3"
+                              loading="lazy"
+                            />
+                            <span>{rec.michelin_stars}</span>
+                          </div>
+                        )}
+                      </div>
+                      <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1 text-black dark:text-white">
+                        {rec.name}
+                      </h4>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1">
+                        {rec.city && rec.city}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
         </div>
       )}
 
