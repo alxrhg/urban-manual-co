@@ -58,7 +58,7 @@ export function useGeolocation() {
             errorMessage = 'Location permission denied';
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage: 'Location information unavailable';
+            errorMessage = 'Location information unavailable';
             break;
           case error.TIMEOUT:
             errorMessage = 'Location request timed out';

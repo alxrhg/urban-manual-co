@@ -27,11 +27,12 @@ export function ScreenReaderAnnouncements({
       // Force screen reader to read the announcement
       announcementRef.current.textContent = message;
       // Clear after a short delay to allow re-announcement of the same message
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         if (announcementRef.current) {
           announcementRef.current.textContent = '';
         }
       }, 1000);
+      return () => clearTimeout(timer);
     }
   }, [message]);
 

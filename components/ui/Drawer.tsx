@@ -73,6 +73,16 @@ export function Drawer({
   const scrollPositionRef = useRef<number>(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup animation timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Get the currently visible drawer element - memoized to prevent stale closures
   const getCurrentDrawer = useCallback((): HTMLDivElement | null => {
@@ -259,14 +269,16 @@ export function Drawer({
         // Swiped down more than 25% - close
         setIsAnimating(true);
         onClose();
-        setTimeout(() => setIsAnimating(false), 300);
+        if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+        animationTimeoutRef.current = setTimeout(() => setIsAnimating(false), 300);
       } else if (mobileVariant === 'side') {
         const swipeDirection = position === 'right' ? diffX : -diffX;
         if (swipeDirection > drawer.offsetWidth * 0.25) {
           // Swiped more than 25% - close
           setIsAnimating(true);
           onClose();
-          setTimeout(() => setIsAnimating(false), 300);
+          if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
+          animationTimeoutRef.current = setTimeout(() => setIsAnimating(false), 300);
         } else {
           // Snap back
           drawer.style.transform = '';

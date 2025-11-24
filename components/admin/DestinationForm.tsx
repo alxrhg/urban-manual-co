@@ -73,12 +73,21 @@ export function DestinationForm({
         (async () => {
           try {
             const supabase = createClient({ skipValidation: true });
-            const { data } = await supabase
+            const { data, error } = await supabase
               .from('destinations')
-              .select('id, slug, name, city')
+              .select('id, slug, name, city, category')
               .eq('id', destination.parent_destination_id)
               .single();
-            if (data) setSelectedParent(data as unknown as Destination);
+            if (!error && data) {
+              // Map the database result to match Destination type for parent selection
+              setSelectedParent({
+                id: data.id,
+                slug: data.slug,
+                name: data.name,
+                city: data.city,
+                category: data.category,
+              } as Destination);
+            }
           } catch {
             setSelectedParent(null);
           }

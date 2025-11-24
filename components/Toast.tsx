@@ -21,15 +21,20 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Toas
 
   useEffect(() => {
     // Slide in animation
-    setTimeout(() => setIsVisible(true), 10);
+    const slideInTimer = setTimeout(() => setIsVisible(true), 10);
 
     // Auto-dismiss
-    const timer = setTimeout(() => {
+    let slideOutTimer: NodeJS.Timeout | null = null;
+    const dismissTimer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(onClose, 300); // Wait for slide-out animation
+      slideOutTimer = setTimeout(onClose, 300); // Wait for slide-out animation
     }, duration);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(slideInTimer);
+      clearTimeout(dismissTimer);
+      if (slideOutTimer) clearTimeout(slideOutTimer);
+    };
   }, [duration, onClose]);
 
   const icons = {

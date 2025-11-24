@@ -92,8 +92,12 @@ export default function GreetingHero({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query: searchQuery }),
         });
+        if (!response.ok) {
+          console.warn('Autocomplete API failed:', response.status);
+          return;
+        }
         const data = await response.json();
-        
+
         if (data.suggestions && Array.isArray(data.suggestions)) {
           setSuggestions(data.suggestions.slice(0, 5));
           setShowSuggestions(true);

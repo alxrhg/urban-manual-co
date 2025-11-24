@@ -95,11 +95,13 @@ function mapSanityToSupabase(sanityDoc: any): any {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify webhook secret if configured
+    let webhookData: { projectId?: string; dataset?: string; ids?: string[] };
+
+    // Verify webhook secret - required in production for security
     if (SANITY_WEBHOOK_SECRET) {
       const signature = request.headers.get('x-sanity-signature');
       const body = await request.text();
-      
+
       if (!verifyWebhookSignature(body, signature, SANITY_WEBHOOK_SECRET)) {
         console.error('Invalid webhook signature');
         return NextResponse.json(
@@ -107,11 +109,20 @@ export async function POST(request: NextRequest) {
           { status: 401 }
         );
       }
-      
-      var webhookData = JSON.parse(body);
+
+      webhookData = JSON.parse(body);
     } else {
-      // No secret configured, trust the request (not recommended for production)
-      var webhookData = await request.json();
+      // No secret configured - require it in production for security
+      const isProduction = process.env.NODE_ENV === 'production';
+      if (isProduction) {
+        console.error('[Sanity Webhook] SANITY_WEBHOOK_SECRET is required in production');
+        return NextResponse.json(
+          { error: 'Webhook signature verification required in production' },
+          { status: 401 }
+        );
+      }
+      console.warn('[Sanity Webhook] Running without signature verification - development mode only');
+      webhookData = await request.json();
     }
 
     const { projectId, dataset, ids } = webhookData;

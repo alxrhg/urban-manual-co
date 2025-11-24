@@ -35,6 +35,8 @@ export default function GoogleInteractiveMap({
   const lastCenterRef = useRef<{ lat: number; lng: number } | null>(null);
   const lastZoomRef = useRef<number | null>(null);
   const lastDestinationsHashRef = useRef<string>('');
+  const zoomListenerRef = useRef<google.maps.MapsEventListener | null>(null);
+  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -319,7 +321,8 @@ export default function GoogleInteractiveMap({
       }
 
       // Add zoom change listener to prevent zooming out too much
-      google.maps.event.addListener(mapInstanceRef.current, 'zoom_changed', () => {
+      // Store the listener so we can remove it on cleanup
+      zoomListenerRef.current = google.maps.event.addListener(mapInstanceRef.current, 'zoom_changed', () => {
         if (mapInstanceRef.current) {
           const currentZoom = mapInstanceRef.current.getZoom() || 8;
           if (currentZoom < 3) {
@@ -329,7 +332,7 @@ export default function GoogleInteractiveMap({
       });
 
       // Add markers after map is initialized (with slight delay to ensure map is ready)
-      setTimeout(() => {
+      initTimeoutRef.current = setTimeout(() => {
         if (destinations.length > 0) {
           addMarkers();
         }
@@ -407,6 +410,16 @@ export default function GoogleInteractiveMap({
       markersRef.current = [];
       infoWindowsRef.current.forEach(iw => iw.close());
       infoWindowsRef.current = [];
+      // Cleanup zoom listener
+      if (zoomListenerRef.current) {
+        google.maps.event.removeListener(zoomListenerRef.current);
+        zoomListenerRef.current = null;
+      }
+      // Cleanup init timeout
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current);
+        initTimeoutRef.current = null;
+      }
     };
   }, [initializeMap]);
 

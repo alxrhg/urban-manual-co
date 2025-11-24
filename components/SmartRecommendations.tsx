@@ -92,6 +92,10 @@ function SmartRecommendationsComponent({ onCardClick }: SmartRecommendationsProp
 
       // Fallback to smart recommendations
       const response = await fetch(`/api/recommendations/smart?context=${contextType}&userId=${user?.id}`);
+      if (!response.ok) {
+        console.warn('Smart recommendations API failed:', response.status);
+        return;
+      }
       const data = await response.json();
 
       setRecommendations(data.recommendations || []);

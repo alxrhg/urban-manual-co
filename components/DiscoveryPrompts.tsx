@@ -47,20 +47,22 @@ export default function DiscoveryPrompts({
       // Fetch base prompts
       const baseUrl = `/api/discovery-prompts?city=${encodeURIComponent(city)}${destinationSlug ? `&destination_slug=${encodeURIComponent(destinationSlug)}` : ''}`;
       const baseResponse = await fetch(baseUrl);
-      const baseData = await baseResponse.json();
-
-      if (baseData.prompts) {
-        setPrompts(baseData.prompts);
+      if (baseResponse.ok) {
+        const baseData = await baseResponse.json();
+        if (baseData.prompts) {
+          setPrompts(baseData.prompts);
+        }
       }
 
       // Fetch personalized prompt if enabled and user logged in
       if (showPersonalized && userId) {
         const personalizedUrl = `/api/discovery-prompts/personalized?city=${encodeURIComponent(city)}&user_id=${encodeURIComponent(userId)}${userName ? `&user_name=${encodeURIComponent(userName)}` : ''}`;
         const personalizedResponse = await fetch(personalizedUrl);
-        const personalizedData = await personalizedResponse.json();
-
-        if (personalizedData.personalized_prompt) {
-          setPersonalizedPrompt(personalizedData.personalized_prompt);
+        if (personalizedResponse.ok) {
+          const personalizedData = await personalizedResponse.json();
+          if (personalizedData.personalized_prompt) {
+            setPersonalizedPrompt(personalizedData.personalized_prompt);
+          }
         }
       }
 
@@ -68,10 +70,11 @@ export default function DiscoveryPrompts({
       if (showCrossCity && userId) {
         const crossCityUrl = `/api/discovery-prompts/cross-city?city=${encodeURIComponent(city)}&user_id=${encodeURIComponent(userId)}`;
         const crossCityResponse = await fetch(crossCityUrl);
-        const crossCityData = await crossCityResponse.json();
-
-        if (crossCityData.correlations && crossCityData.correlations.length > 0) {
-          setCrossCityCorrelations(crossCityData.correlations);
+        if (crossCityResponse.ok) {
+          const crossCityData = await crossCityResponse.json();
+          if (crossCityData.correlations && crossCityData.correlations.length > 0) {
+            setCrossCityCorrelations(crossCityData.correlations);
+          }
         }
       }
     } catch (error) {

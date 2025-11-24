@@ -64,6 +64,10 @@ export function Header() {
       if (!isAdmin) return;
       try {
         const versionRes = await fetch("/api/build-version");
+        if (!versionRes.ok) {
+          setBuildVersion(null);
+          return;
+        }
         const versionData = await versionRes.json();
         // Prioritize GitHub build number, then commit SHA, then version
         setBuildVersion(
