@@ -9,21 +9,21 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-gray-800 dark:bg-gray-700 text-white hover:bg-gray-700 dark:hover:bg-gray-600",
+        default: "border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-white/15 dark:bg-[#1A1C1F] dark:text-white/90 dark:hover:bg-white/5",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 rounded-xl",
         outline:
-          "border border-gray-300 dark:border-gray-600 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 dark:bg-transparent",
+          "border border-neutral-200 dark:border-white/15 bg-transparent hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-800 dark:text-white/90",
         secondary:
-          "bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700",
+          "border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-white/15 dark:bg-[#1A1C1F] dark:text-white/90 dark:hover:bg-white/5",
         ghost:
-          "hover:bg-accent dark:hover:bg-accent/50 hover:scale-[1.02]",
+          "hover:bg-neutral-50 dark:hover:bg-white/5",
         muted:
-          "border border-border/70 bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground dark:border-white/10",
+          "border border-neutral-200 dark:border-white/15 bg-white dark:bg-[#1A1C1F] text-neutral-800 dark:text-white/90 hover:bg-neutral-50 dark:hover:bg-white/5",
         subtle:
-          "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+          "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-white/90 hover:bg-neutral-50 dark:hover:bg-white/5",
         pill:
-          "rounded-full border border-border/80 bg-transparent text-xs font-medium tracking-wide text-foreground/70 hover:text-foreground hover:border-foreground/60 dark:border-white/20 dark:text-white/80 dark:hover:text-white",
+          "rounded-full border border-neutral-200 dark:border-white/15 bg-white dark:bg-[#1A1C1F] text-xs font-medium text-neutral-800 dark:text-white/90 hover:bg-neutral-50 dark:hover:bg-white/5",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

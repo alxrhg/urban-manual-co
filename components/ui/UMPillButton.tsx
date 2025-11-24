@@ -31,9 +31,9 @@ export default function UMPillButton({
         'inline-flex items-center gap-2 px-5 h-[40px] rounded-3xl border transition-all',
         'font-medium text-sm',
         variant === 'default' &&
-          'border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-neutral-800 dark:bg-gray-950 dark:text-neutral-200 dark:hover:bg-gray-900',
+          'border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-white/15 dark:bg-[#1A1C1F] dark:text-white/90 dark:hover:bg-white/5',
         variant === 'primary' &&
-          'bg-black text-white border-black hover:bg-neutral-900 dark:bg-white dark:text-black dark:border-white dark:hover:bg-neutral-100',
+          'border-black bg-black text-white hover:bg-neutral-900 dark:border-white dark:bg-white dark:text-black dark:hover:bg-neutral-200',
         disabled && 'opacity-50 cursor-not-allowed',
         className
       )}

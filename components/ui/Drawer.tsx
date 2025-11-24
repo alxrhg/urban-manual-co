@@ -344,10 +344,10 @@ export function Drawer({
           <>
             <button
               onClick={onClose}
-              className="p-2 flex items-center justify-center hover:opacity-70 transition-opacity touch-manipulation rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="p-2 flex items-center justify-center transition-opacity touch-manipulation rounded-lg hover:bg-neutral-50 dark:hover:bg-white/5"
               aria-label="Close drawer"
             >
-              <X className="h-5 w-5 text-gray-900 dark:text-gray-100" />
+              <X className="h-5 w-5 text-gray-900 dark:text-white/90" />
             </button>
             {title && (
               <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center px-2">

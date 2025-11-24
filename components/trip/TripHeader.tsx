@@ -78,14 +78,14 @@ export default function TripHeader({
             />
             <button
               onClick={handleSaveTitle}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+              className="p-1.5 hover:bg-neutral-50 dark:hover:bg-white/5 rounded transition-colors"
               aria-label="Save title"
             >
               <Check className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             </button>
             <button
               onClick={handleCancelEdit}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+              className="p-1.5 hover:bg-neutral-50 dark:hover:bg-white/5 rounded transition-colors"
               aria-label="Cancel editing"
             >
               <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
