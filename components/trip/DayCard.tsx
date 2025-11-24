@@ -138,21 +138,12 @@ export default function DayCard({ day, index, openDrawer, trip, className }: Day
         className || ''
       }`}
     >
-      <div className="flex justify-between items-start">
-        <div>
-          <p className="text-xs tracking-widest text-[var(--um-text-muted)] mb-1 uppercase">
-            DAY {index + 1}
-          </p>
-          <h2 className="text-[20px] font-medium text-gray-900 dark:text-white">{day.date}</h2>
-          <p className="text-sm text-[var(--um-text-muted)]">{day.city}</p>
-        </div>
-
-        <button
-          className="text-sm text-[var(--um-text-muted)] hover:text-gray-900 dark:hover:text-white transition-colors"
-          onClick={() => openDrawer('trip-day', { day, dayIndex: index, trip })}
-        >
-          Edit
-        </button>
+      <div>
+        <p className="text-xs tracking-widest text-[var(--um-text-muted)] mb-1 uppercase">
+          DAY {index + 1}
+        </p>
+        <h2 className="text-[20px] font-medium text-gray-900 dark:text-white">{day.date}</h2>
+        <p className="text-sm text-[var(--um-text-muted)]">{day.city}</p>
       </div>
 
       {displayLocations.length > 0 && (
