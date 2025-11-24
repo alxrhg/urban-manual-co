@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDrawer } from "@/contexts/DrawerContext";
@@ -22,10 +22,15 @@ import {
   Download,
   Trash2,
   Calendar,
+  User,
+  MessageCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { Drawer } from "@/components/ui/Drawer";
+import { DrawerHeader } from "@/components/ui/DrawerHeader";
+import { DrawerSection } from "@/components/ui/DrawerSection";
+import { DrawerActionBar } from "@/components/ui/DrawerActionBar";
 import { TripViewDrawer } from "@/components/TripViewDrawer";
 import type { Trip } from "@/types/trip";
 import type { Collection } from "@/types/common";
@@ -39,15 +44,374 @@ interface UserStats {
   explorationProgress: number;
 }
 
-type SubpageId = 
-  | 'main_drawer'
-  | 'visited_subpage'
-  | 'saved_subpage'
-  | 'collections_subpage'
-  | 'trips_subpage'
-  | 'trip_details_subpage'
-  | 'achievements_subpage'
-  | 'settings_subpage';
+type SubpageId =
+  | "main_drawer"
+  | "visited_subpage"
+  | "saved_subpage"
+  | "collections_subpage"
+  | "trips_subpage"
+  | "trip_details_subpage"
+  | "achievements_subpage"
+  | "settings_subpage";
+
+// Profile Avatar Component
+function ProfileAvatar({
+  avatarUrl,
+  displayUsername,
+  size = "lg",
+}: {
+  avatarUrl: string | null;
+  displayUsername: string;
+  size?: "sm" | "lg";
+}) {
+  const sizeClasses = size === "lg" ? "h-16 w-16 text-xl" : "h-10 w-10 text-sm";
+
+  return (
+    <div
+      className={`relative flex ${sizeClasses} items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gradient-to-br from-gray-100 to-gray-200 font-semibold text-gray-700 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200`}
+    >
+      {avatarUrl ? (
+        <Image
+          src={avatarUrl}
+          alt="Profile"
+          fill
+          className="object-cover"
+          sizes={size === "lg" ? "64px" : "40px"}
+        />
+      ) : (
+        displayUsername.charAt(0).toUpperCase()
+      )}
+    </div>
+  );
+}
+
+// Stats Card Component
+function StatCard({
+  icon: Icon,
+  value,
+  label,
+}: {
+  icon: React.ElementType;
+  value: number;
+  label: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-1 rounded-xl bg-gray-50 dark:bg-gray-900 px-3 py-3">
+      <Icon className="h-4 w-4 text-gray-400" />
+      <span className="text-lg font-medium text-gray-900 dark:text-white">
+        {value}
+      </span>
+      <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
+    </div>
+  );
+}
+
+// Navigation Item Component
+function NavItem({
+  icon: Icon,
+  label,
+  description,
+  onClick,
+  isDanger = false,
+}: {
+  icon: React.ElementType;
+  label: string;
+  description?: string;
+  onClick: () => void;
+  isDanger?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors ${
+        isDanger
+          ? "hover:bg-red-50 dark:hover:bg-red-900/10"
+          : "hover:bg-gray-50 dark:hover:bg-gray-900"
+      }`}
+    >
+      <div
+        className={`flex h-9 w-9 items-center justify-center rounded-full ${
+          isDanger
+            ? "bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400"
+            : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+        }`}
+      >
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p
+          className={`text-sm font-medium ${
+            isDanger
+              ? "text-red-600 dark:text-red-400"
+              : "text-gray-900 dark:text-white"
+          }`}
+        >
+          {label}
+        </p>
+        {description && (
+          <p
+            className={`text-xs ${
+              isDanger
+                ? "text-red-500/70 dark:text-red-400/70"
+                : "text-gray-500 dark:text-gray-400"
+            }`}
+          >
+            {description}
+          </p>
+        )}
+      </div>
+      <ChevronRight
+        className={`h-4 w-4 ${isDanger ? "text-red-400" : "text-gray-400"}`}
+      />
+    </button>
+  );
+}
+
+// Place Item Component
+function PlaceItem({
+  image,
+  name,
+  subtitle,
+  onClick,
+}: {
+  image?: string;
+  name: string;
+  subtitle?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-900"
+    >
+      <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+        {image ? (
+          <Image src={image} alt={name} fill className="object-cover" sizes="48px" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <MapPin className="h-5 w-5 text-gray-400" />
+          </div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+          {name}
+        </p>
+        {subtitle && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">{subtitle}</p>
+        )}
+      </div>
+      <ChevronRight className="h-4 w-4 text-gray-400" />
+    </button>
+  );
+}
+
+// Trip Card Component
+function TripCard({
+  trip,
+  onClick,
+}: {
+  trip: Trip;
+  onClick: () => void;
+}) {
+  const formatDate = (date: string | null) => {
+    if (!date) return null;
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const dateRange =
+    trip.start_date && trip.end_date
+      ? `${formatDate(trip.start_date)} – ${formatDate(trip.end_date)}`
+      : trip.start_date
+      ? formatDate(trip.start_date)
+      : null;
+
+  const getStatusBadge = (status: string | null | undefined) => {
+    const statusMap: Record<string, { label: string; classes: string }> = {
+      planning: {
+        label: "Planning",
+        classes: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+      },
+      upcoming: {
+        label: "Upcoming",
+        classes: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+      },
+      ongoing: {
+        label: "Ongoing",
+        classes: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+      },
+      completed: {
+        label: "Completed",
+        classes: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
+      },
+    };
+    return statusMap[status || "planning"] || statusMap.planning;
+  };
+
+  const statusBadge = getStatusBadge(trip.status);
+  const imageUrl = trip.cover_image || (trip as any).firstLocationImage;
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-left transition-all hover:border-gray-300 dark:hover:border-gray-700"
+    >
+      {/* Cover Image */}
+      <div className="relative h-28 w-full bg-gray-100 dark:bg-gray-800">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={trip.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 400px"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <MapPin className="h-8 w-8 text-gray-300 dark:text-gray-700" />
+          </div>
+        )}
+        <div className="absolute right-2 top-2">
+          <span
+            className={`rounded-md px-2 py-0.5 text-xs font-medium ${statusBadge.classes}`}
+          >
+            {statusBadge.label}
+          </span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-3 space-y-1">
+        <h3 className="font-medium text-sm text-gray-900 dark:text-white line-clamp-1">
+          {trip.title}
+        </h3>
+        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+          {dateRange && (
+            <span className="flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              {dateRange}
+            </span>
+          )}
+          {trip.destination && (
+            <span className="flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              {trip.destination}
+            </span>
+          )}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// Collection Card Component
+function CollectionCard({
+  collection,
+  onClick,
+}: {
+  collection: Collection;
+  onClick: () => void;
+}) {
+  const bgColor = collection.color || "#3B82F6";
+  const emoji = collection.emoji || "📚";
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-950 text-left transition-all hover:border-gray-300 dark:hover:border-gray-700"
+    >
+      {/* Cover */}
+      <div
+        className="relative flex h-24 w-full items-center justify-center"
+        style={{ backgroundColor: bgColor + "20" }}
+      >
+        <div
+          className="flex h-12 w-12 items-center justify-center rounded-xl text-2xl shadow-md"
+          style={{ backgroundColor: bgColor }}
+        >
+          {emoji}
+        </div>
+        {collection.is_public && (
+          <span className="absolute right-2 top-2 rounded-md bg-white/90 dark:bg-gray-900/90 px-2 py-0.5 text-xs font-medium text-gray-700 dark:text-gray-300">
+            Public
+          </span>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-3 space-y-1">
+        <h3 className="font-medium text-sm text-gray-900 dark:text-white line-clamp-1">
+          {collection.name}
+        </h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {collection.destination_count || 0} places
+        </p>
+      </div>
+    </button>
+  );
+}
+
+// Subpage Header Component
+function SubpageHeader({
+  title,
+  onBack,
+}: {
+  title: string;
+  onBack: () => void;
+}) {
+  return (
+    <div className="sticky top-0 z-20 flex items-center gap-3 border-b border-gray-200/50 dark:border-gray-800/50 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm px-4 py-3">
+      <button
+        onClick={onBack}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+        aria-label="Back"
+      >
+        <ArrowLeft className="h-4 w-4" />
+      </button>
+      <h2 className="text-base font-medium text-gray-900 dark:text-white">
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+// Loading State Component
+function LoadingState({ message = "Loading..." }: { message?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12">
+      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{message}</p>
+    </div>
+  );
+}
+
+// Empty State Component
+function EmptyState({
+  message,
+  action,
+  actionLabel,
+}: {
+  message: string;
+  action?: () => void;
+  actionLabel?: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <p className="text-sm text-gray-500 dark:text-gray-400">{message}</p>
+      {action && actionLabel && (
+        <button
+          onClick={action}
+          className="mt-4 rounded-full bg-gray-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-90"
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+}
 
 export function AccountDrawer() {
   const router = useRouter();
@@ -55,15 +419,15 @@ export function AccountDrawer() {
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
   const openSide = useDrawerStore((s) => s.openSide);
   const isOpen = isDrawerOpen("account");
-  const [currentSubpage, setCurrentSubpage] = useState<SubpageId>('main_drawer');
+  const [currentSubpage, setCurrentSubpage] = useState<SubpageId>("main_drawer");
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const [stats, setStats] = useState<UserStats>({ 
-    visited: 0, 
-    saved: 0, 
-    trips: 0, 
-    cities: 0, 
+  const [stats, setStats] = useState<UserStats>({
+    visited: 0,
+    saved: 0,
+    trips: 0,
+    cities: 0,
     countries: 0,
     explorationProgress: 0,
   });
@@ -79,7 +443,7 @@ export function AccountDrawer() {
   // Reset to main drawer when drawer closes
   useEffect(() => {
     if (!isOpen) {
-      setCurrentSubpage('main_drawer');
+      setCurrentSubpage("main_drawer");
       setSelectedTripId(null);
       setSelectedTrip(null);
       setShowTripViewDrawer(false);
@@ -87,20 +451,26 @@ export function AccountDrawer() {
     }
   }, [isOpen]);
 
-  // Fetch user profile, avatar, stats, and data
+  // Fetch user profile, avatar, stats
   useEffect(() => {
     async function fetchProfileAndStats() {
       if (!user?.id) {
         setAvatarUrl(null);
         setUsername(null);
-        setStats({ visited: 0, saved: 0, trips: 0, cities: 0, countries: 0, explorationProgress: 0 });
+        setStats({
+          visited: 0,
+          saved: 0,
+          trips: 0,
+          cities: 0,
+          countries: 0,
+          explorationProgress: 0,
+        });
         return;
       }
 
       try {
         const supabaseClient = createClient();
-        
-        // Fetch profile
+
         const { data: profileData } = await supabaseClient
           .from("profiles")
           .select("avatar_url, username")
@@ -123,17 +493,17 @@ export function AccountDrawer() {
           setAvatarUrl(null);
         }
 
-        // Fetch total destinations for progress calculation
         const { count: totalDest } = await supabaseClient
           .from("destinations")
           .select("*", { count: "exact", head: true });
         const totalDestinations = totalDest || 0;
 
-        // Fetch stats
         const [visitedResult, savedResult, tripsResult] = await Promise.all([
           supabaseClient
             .from("visited_places")
-            .select("destination_slug, destination:destinations(city, country)", { count: "exact" })
+            .select("destination_slug, destination:destinations(city, country)", {
+              count: "exact",
+            })
             .eq("user_id", user.id),
           supabaseClient
             .from("saved_places")
@@ -149,7 +519,6 @@ export function AccountDrawer() {
         const savedCount = savedResult.count || 0;
         const tripsCount = tripsResult.count || 0;
 
-        // Count unique cities and countries
         const citiesSet = new Set<string>();
         const countriesSet = new Set<string>();
         if (visitedResult.data) {
@@ -158,26 +527,22 @@ export function AccountDrawer() {
             if (item.destination?.country) countriesSet.add(item.destination.country);
           });
         }
-        const citiesCount = citiesSet.size;
-        const countriesCount = countriesSet.size;
 
-        // Calculate exploration progress
-        const explorationProgress = totalDestinations > 0
-          ? Math.round((visitedCount / totalDestinations) * 100)
-          : 0;
+        const explorationProgress =
+          totalDestinations > 0
+            ? Math.round((visitedCount / totalDestinations) * 100)
+            : 0;
 
         setStats({
           visited: visitedCount,
           saved: savedCount,
           trips: tripsCount,
-          cities: citiesCount,
-          countries: countriesCount,
+          cities: citiesSet.size,
+          countries: countriesSet.size,
           explorationProgress,
         });
-
       } catch (error) {
         console.error("Error fetching profile and stats:", error);
-      } finally {
       }
     }
 
@@ -195,77 +560,82 @@ export function AccountDrawer() {
       setLoading(true);
 
       try {
-        if (currentSubpage === 'visited_subpage') {
-          const { data: visitedResult } = await supabaseClient
-            .from('visited_places')
-            .select('destination_slug, visited_at, destination:destinations(name, image, city)')
-            .eq('user_id', user.id)
-            .order('visited_at', { ascending: false })
+        if (currentSubpage === "visited_subpage") {
+          const { data } = await supabaseClient
+            .from("visited_places")
+            .select("destination_slug, visited_at, destination:destinations(name, image, city)")
+            .eq("user_id", user.id)
+            .order("visited_at", { ascending: false })
             .limit(20);
 
-          if (visitedResult) {
-            const mapped = visitedResult.map((item: any) => ({
-              slug: item.destination_slug,
-              visited_at: item.visited_at,
-              destination: item.destination,
-            }));
-            setVisitedPlaces(mapped);
+          if (data) {
+            setVisitedPlaces(
+              data.map((item: any) => ({
+                slug: item.destination_slug,
+                visited_at: item.visited_at,
+                destination: item.destination,
+              }))
+            );
           }
-        } else if (currentSubpage === 'saved_subpage') {
-          const { data: savedResult } = await supabaseClient
-            .from('saved_places')
-            .select('destination_slug, destination:destinations(name, image, city)')
-            .eq('user_id', user.id)
+        } else if (currentSubpage === "saved_subpage") {
+          const { data } = await supabaseClient
+            .from("saved_places")
+            .select("destination_slug, destination:destinations(name, image, city)")
+            .eq("user_id", user.id)
             .limit(20);
 
-          if (savedResult) {
-            const mapped = savedResult.map((item: any) => ({
-              slug: item.destination_slug,
-              destination: item.destination,
-            }));
-            setSavedPlaces(mapped);
+          if (data) {
+            setSavedPlaces(
+              data.map((item: any) => ({
+                slug: item.destination_slug,
+                destination: item.destination,
+              }))
+            );
           }
-        } else if (currentSubpage === 'collections_subpage') {
-          const { data: collectionsResult } = await supabaseClient
-            .from('collections')
-            .select('id, name, description, emoji, color, destination_count, is_public, created_at')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false })
+        } else if (currentSubpage === "collections_subpage") {
+          const { data } = await supabaseClient
+            .from("collections")
+            .select("id, name, description, emoji, color, destination_count, is_public, created_at")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
             .limit(20);
 
-          setCollections((collectionsResult as Collection[]) || []);
-        } else if (currentSubpage === 'trips_subpage' || currentSubpage === 'trip_details_subpage') {
-          const { data: tripsData } = await supabaseClient
-            .from('trips')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
+          setCollections((data as Collection[]) || []);
+        } else if (
+          currentSubpage === "trips_subpage" ||
+          currentSubpage === "trip_details_subpage"
+        ) {
+          const { data } = await supabaseClient
+            .from("trips")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false });
 
-          setTrips((tripsData as Trip[]) || []);
+          setTrips((data as Trip[]) || []);
 
-          if (selectedTripId && currentSubpage === 'trip_details_subpage') {
-            const trip = tripsData?.find((t: Trip) => t.id === selectedTripId);
+          if (selectedTripId && currentSubpage === "trip_details_subpage") {
+            const trip = data?.find((t: Trip) => t.id === selectedTripId);
             setSelectedTrip(trip || null);
           }
         }
       } catch (error) {
-        console.error('Error fetching subpage data:', error);
+        console.error("Error fetching subpage data:", error);
       } finally {
         setLoading(false);
       }
     }
 
-      const shouldFetch = [
-        'visited_subpage',
-        'saved_subpage',
-        'collections_subpage',
-        'trips_subpage',
-        'trip_details_subpage'
-      ].includes(currentSubpage);
+    const shouldFetch = [
+      "visited_subpage",
+      "saved_subpage",
+      "collections_subpage",
+      "trips_subpage",
+      "trip_details_subpage",
+    ].includes(currentSubpage);
 
-      if (shouldFetch) {
-        fetchSubpageData();
-      }
+    if (shouldFetch) {
+      fetchSubpageData();
+    }
   }, [user, isOpen, currentSubpage, selectedTripId]);
 
   const handleSignOut = async () => {
@@ -276,841 +646,536 @@ export function AccountDrawer() {
 
   const handleNavigateToFullPage = (path: string) => {
     closeDrawer();
-    setTimeout(() => {
-      router.push(path);
-    }, 200);
+    setTimeout(() => router.push(path), 200);
   };
 
   const displayUsername = username || user?.email?.split("@")[0] || "user";
 
-  // Helper functions for trip formatting
-  const formatDate = (date: string | null) => {
-    if (!date) return null;
-    return new Date(date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric"
-    });
-  };
-
-  const formatDateRange = (start: string | null, end: string | null) => {
-    if (!start && !end) return null;
-    const startFormatted = formatDate(start);
-    const endFormatted = formatDate(end);
-    if (startFormatted && endFormatted) {
-      return `${startFormatted} – ${endFormatted}`;
-    }
-    return startFormatted || endFormatted;
-  };
-
-  const getStatusLabel = (status: string | null | undefined) => {
-    switch (status) {
-      case 'planning':
-        return 'Planning';
-      case 'upcoming':
-        return 'Upcoming';
-      case 'ongoing':
-        return 'Ongoing';
-      case 'completed':
-        return 'Completed';
-      default:
-        return 'Planning';
-    }
-  };
-
-  const getStatusConfig = (status: string | null | undefined) => {
-    switch (status) {
-      case 'planning':
-        return {
-          label: 'Planning',
-          bg: 'bg-blue-50 dark:bg-blue-900/30',
-          text: 'text-blue-700 dark:text-blue-300',
-          dot: 'bg-blue-500',
-        };
-      case 'upcoming':
-        return {
-          label: 'Upcoming',
-          bg: 'bg-amber-50 dark:bg-amber-900/30',
-          text: 'text-amber-700 dark:text-amber-300',
-          dot: 'bg-amber-500',
-        };
-      case 'ongoing':
-        return {
-          label: 'Ongoing',
-          bg: 'bg-green-50 dark:bg-green-900/30',
-          text: 'text-green-700 dark:text-green-300',
-          dot: 'bg-green-500 animate-pulse',
-        };
-      case 'completed':
-        return {
-          label: 'Completed',
-          bg: 'bg-neutral-100 dark:bg-neutral-800',
-          text: 'text-neutral-600 dark:text-neutral-400',
-          dot: 'bg-neutral-400',
-        };
-      default:
-        return {
-          label: 'Planning',
-          bg: 'bg-blue-50 dark:bg-blue-900/30',
-          text: 'text-blue-700 dark:text-blue-300',
-          dot: 'bg-blue-500',
-        };
-    }
-  };
-
-  // Navigation handler
   const navigateToSubpage = (subpage: SubpageId, tripId?: string) => {
-    if (tripId) {
-      setSelectedTripId(tripId);
-    }
+    if (tripId) setSelectedTripId(tripId);
     setCurrentSubpage(subpage);
   };
 
-  // Open trip quickview drawer
+  const navigateBack = () => {
+    if (currentSubpage === "trip_details_subpage") {
+      setCurrentSubpage("trips_subpage");
+      setSelectedTripId(null);
+    } else {
+      setCurrentSubpage("main_drawer");
+    }
+  };
+
   const openTripQuickview = (tripId: string) => {
     setViewingTripId(tripId);
     setShowTripViewDrawer(true);
   };
 
-  const openChatDrawer = () => {
-    openDrawer("chat");
-  };
+  const openChatDrawer = () => openDrawer("chat");
 
-  const navigateBack = () => {
-    if (currentSubpage === 'trip_details_subpage') {
-      setCurrentSubpage('trips_subpage');
-      setSelectedTripId(null);
-    } else {
-      setCurrentSubpage('main_drawer');
-    }
-  };
-
-  const handleDrawerClose = () => {
+  const handleOpenTrips = () => {
     closeDrawer();
+    setTimeout(() => {
+      openSide("trip-list");
+    }, 150);
   };
 
-  // Get drawer title based on current subpage
-  const getDrawerTitle = () => {
-    switch (currentSubpage) {
-      case 'visited_subpage':
-        return 'Visited';
-      case 'saved_subpage':
-        return 'Saved';
-      case 'collections_subpage':
-        return 'Collections';
-      case 'trips_subpage':
-        return 'Your Trips';
-      case 'trip_details_subpage':
-        return selectedTrip?.title || 'Trip Details';
-      case 'achievements_subpage':
-        return 'Achievements';
-      case 'settings_subpage':
-        return 'Settings';
-      default:
-        return 'Your Manual';
-    }
-  };
-
-  const renderNavItem = (
-    label: string,
-    icon: ReactNode,
-    onClick: () => void,
-    description?: string,
-    isDanger?: boolean
-  ) => (
-    <button
-      onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 text-left transition-all hover:border-gray-300 dark:hover:border-gray-700 ${
-        isDanger ? 'hover:border-red-200 dark:hover:border-red-900 hover:bg-red-50 dark:hover:bg-red-900/10' : ''
-      }`}
-    >
-      <div className={`flex h-9 w-9 items-center justify-center rounded-2xl ${
-        isDanger
-          ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-          : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
-      }`}>
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${
-          isDanger
-            ? 'text-red-600 dark:text-red-400'
-            : 'text-gray-900 dark:text-white'
-        }`}>{label}</p>
-        {description && (
-          <p className={`text-xs mt-0.5 ${
-            isDanger
-              ? 'text-red-500 dark:text-red-500'
-              : 'text-gray-500 dark:text-gray-400'
-          }`}>{description}</p>
-        )}
-      </div>
-      <ChevronRight className={`w-4 h-4 flex-shrink-0 ${
-        isDanger ? 'text-red-400' : 'text-gray-400'
-      }`} />
-    </button>
-  );
-
-  // Render main drawer content (Tier 1)
-  const renderMainDrawer = () => (
-    <div className="px-6 py-6 space-y-6">
-      {user ? (
+  // ============================================================
+  // MAIN DRAWER CONTENT
+  // ============================================================
+  const renderMainDrawer = () => {
+    if (!user) {
+      return (
         <>
-          {/* Profile Header */}
-          <div className="flex flex-col items-center text-center gap-4 pb-6 border-b border-gray-200 dark:border-gray-800">
-            <div className="relative">
-              <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border-2 border-gray-200 bg-gradient-to-br from-gray-100 to-gray-200 text-2xl font-semibold text-gray-700 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900 dark:text-gray-200">
-                {avatarUrl ? (
-                  <Image
-                    src={avatarUrl}
-                    alt="Profile"
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                  />
-                ) : (
-                  displayUsername.charAt(0).toUpperCase()
-                )}
+          <DrawerHeader
+            title="Welcome"
+            subtitle="Sign in to get started"
+            leftAccessory={
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                <User className="h-5 w-5 text-gray-500" />
               </div>
-              <button
-                onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-                className="absolute -right-1 -bottom-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-white dark:border-gray-900 bg-gray-900 dark:bg-white text-white dark:text-gray-900 shadow-md transition hover:scale-110 dark:hover:bg-gray-100"
-                aria-label="Update profile photo"
-              >
-                <Camera className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            }
+          />
+          <DrawerSection>
+            <p className="text-sm text-muted-foreground">
+              Sign in to save places, build trips, and sync your travel profile
+              across devices.
+            </p>
+          </DrawerSection>
+          <DrawerActionBar>
+            <button
+              onClick={() => handleNavigateToFullPage("/auth/login")}
+              className="w-full rounded-full bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-90"
+            >
+              Sign in
+            </button>
+          </DrawerActionBar>
+        </>
+      );
+    }
 
-            <div className="space-y-2">
-              <p className="text-lg font-light text-gray-900 dark:text-white">{displayUsername}</p>
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-                <span>@{displayUsername.toLowerCase().replace(/\s+/g, '')}</span>
-              </div>
-              {user.email && (
-                <p className="text-xs text-gray-500 dark:text-gray-500">{user.email}</p>
-              )}
-            </div>
+    const profileBadge = (
+      <button
+        onClick={() => handleNavigateToFullPage("/account?tab=settings")}
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+        aria-label="Edit profile photo"
+      >
+        <Camera className="h-3.5 w-3.5" />
+      </button>
+    );
 
-            <div className="flex flex-wrap justify-center gap-2 w-full">
+    return (
+      <>
+        {/* Profile Header */}
+        <DrawerHeader
+          title={displayUsername}
+          subtitle={user.email || undefined}
+          leftAccessory={
+            <ProfileAvatar avatarUrl={avatarUrl} displayUsername={displayUsername} />
+          }
+          rightAccessory={profileBadge}
+        />
+
+        <div className="overflow-y-auto flex-1 pb-20">
+          {/* Quick Actions */}
+          <DrawerSection bordered>
+            <div className="flex gap-2">
               <button
                 onClick={() => handleNavigateToFullPage("/account")}
-                className="flex-1 min-w-[120px] rounded-2xl bg-black dark:bg-white px-4 py-2.5 text-xs font-medium text-white dark:text-black transition hover:opacity-90"
+                className="flex-1 rounded-full bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-90"
               >
                 Edit profile
               </button>
               <button
                 onClick={openChatDrawer}
-                className="flex-1 min-w-[120px] rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-2.5 text-xs font-medium text-gray-700 dark:text-gray-200 transition hover:opacity-80"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 dark:border-gray-800 transition-colors hover:bg-gray-50 dark:hover:bg-gray-900"
+                aria-label="Message concierge"
               >
-                Message concierge
+                <MessageCircle className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               </button>
             </div>
-          </div>
+          </DrawerSection>
 
           {/* Stats */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { label: 'Visited', value: stats.visited, icon: MapPin, color: 'text-gray-500 dark:text-gray-400' },
-              { label: 'Saved', value: stats.saved, icon: Bookmark, color: 'text-gray-500 dark:text-gray-400' },
-              { label: 'Trips', value: stats.trips, icon: Compass, color: 'text-gray-500 dark:text-gray-400' }
-            ].map((stat) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={stat.label}
-                  className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 py-4 text-center transition-all hover:border-gray-300 dark:hover:border-gray-700"
-                >
-                  <Icon className={`w-4 h-4 mx-auto mb-2 ${stat.color}`} />
-                  <div className="text-lg font-light text-gray-900 dark:text-white">{stat.value}</div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{stat.label}</p>
-                </div>
-              );
-            })}
-          </div>
-
-
-          {/* Your Manual Section */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">Your Manual</h3>
-            <div className="space-y-2">
-              {renderNavItem('Saved places', <Bookmark className="w-4 h-4" />, () => navigateToSubpage('saved_subpage'), `${stats.saved} items`)}
-              {renderNavItem('Visited places', <MapPin className="w-4 h-4" />, () => navigateToSubpage('visited_subpage'), `${stats.visited} logged`)}
-              {renderNavItem('Lists', <Folder className="w-4 h-4" />, () => navigateToSubpage('collections_subpage'), 'Organize favorites')}
-              {renderNavItem('Trips', <Compass className="w-4 h-4" />, () => {
-                console.log('[AccountDrawer] Opening trip list drawer');
-                // Close Account Drawer (uses DrawerContext) first
-                closeDrawer();
-                // Small delay to ensure Account Drawer closes before opening Trip List Drawer
-                setTimeout(() => {
-                  console.log('[AccountDrawer] Calling openSide("trip-list")');
-                  openSide('trip-list');
-                  // Double-check the store state after a brief moment
-                  setTimeout(() => {
-                    const store = useDrawerStore.getState();
-                    console.log('[AccountDrawer] Drawer store state after openSide:', {
-                      open: store.open,
-                      type: store.type,
-                      mode: store.mode
-                    });
-                  }, 100);
-                }, 150);
-              }, `${stats.trips} planned`)}
-              {renderNavItem('Achievements', <Trophy className="w-4 h-4" />, () => navigateToSubpage('achievements_subpage'), 'Milestones and badges')}
+          <DrawerSection bordered>
+            <div className="grid grid-cols-3 gap-2">
+              <StatCard icon={MapPin} value={stats.visited} label="Visited" />
+              <StatCard icon={Bookmark} value={stats.saved} label="Saved" />
+              <StatCard icon={Compass} value={stats.trips} label="Trips" />
             </div>
-          </div>
+          </DrawerSection>
 
-          {/* Account & Settings Section */}
-          <div className="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-800">
-            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">Account & Settings</h3>
-            <div className="space-y-2">
-              {renderNavItem('Profile & preferences', <Settings className="w-4 h-4" />, () => navigateToSubpage('settings_subpage'), 'Notifications, privacy')}
-              {renderNavItem('Sign out', <LogOut className="w-4 h-4" />, handleSignOut, 'Log out safely', true)}
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="space-y-4">
-          <div className="rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 text-center">
-            <h3 className="text-lg font-light text-gray-900 dark:text-white">Welcome to Urban Manual</h3>
-            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-              Sign in to save places, build trips, and sync your travel profile across devices.
+          {/* Your Manual */}
+          <DrawerSection bordered>
+            <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
+              Your Manual
             </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => handleNavigateToFullPage("/auth/login")}
-            className="w-full rounded-2xl bg-black dark:bg-white px-4 py-3 text-xs font-medium text-white dark:text-black transition hover:opacity-90"
-          >
-            Sign in to continue
-          </button>
-        </div>
-      )}
-    </div>
-  );
+            <div className="-mx-3">
+              <NavItem
+                icon={Bookmark}
+                label="Saved places"
+                description={`${stats.saved} items`}
+                onClick={() => navigateToSubpage("saved_subpage")}
+              />
+              <NavItem
+                icon={MapPin}
+                label="Visited places"
+                description={`${stats.visited} logged`}
+                onClick={() => navigateToSubpage("visited_subpage")}
+              />
+              <NavItem
+                icon={Folder}
+                label="Lists"
+                description="Organize favorites"
+                onClick={() => navigateToSubpage("collections_subpage")}
+              />
+              <NavItem
+                icon={Compass}
+                label="Trips"
+                description={`${stats.trips} planned`}
+                onClick={handleOpenTrips}
+              />
+              <NavItem
+                icon={Trophy}
+                label="Achievements"
+                description="Milestones & badges"
+                onClick={() => navigateToSubpage("achievements_subpage")}
+              />
+            </div>
+          </DrawerSection>
 
-  // Render visited subpage
+          {/* Account & Settings */}
+          <DrawerSection>
+            <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
+              Account
+            </p>
+            <div className="-mx-3">
+              <NavItem
+                icon={Settings}
+                label="Settings"
+                description="Preferences & privacy"
+                onClick={() => navigateToSubpage("settings_subpage")}
+              />
+              <NavItem
+                icon={LogOut}
+                label="Sign out"
+                onClick={handleSignOut}
+                isDanger
+              />
+            </div>
+          </DrawerSection>
+        </div>
+      </>
+    );
+  };
+
+  // ============================================================
+  // VISITED SUBPAGE
+  // ============================================================
   const renderVisitedSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
-      {loading ? (
-        <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
-        </div>
-      ) : visitedPlaces.length > 0 ? (
-        <div className="space-y-2">
-          {visitedPlaces.map((visit, index) => (
-              <button
-                key={index}
-                onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
-            >
-              {visit.destination?.image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                  <Image
-                    src={visit.destination.image}
-                    alt={visit.destination.name}
-                    fill
-                    className="object-cover"
-                    sizes="48px"
-                  />
-                </div>
-              )}
-                <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {visit.destination?.name || visit.slug}
-                  </p>
-                  {visit.visited_at && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {new Date(visit.visited_at).toLocaleDateString("en-US", { 
-                      month: "short", 
-                      day: "numeric",
-                      year: "numeric"
-                      })}
-                    </p>
-                  )}
-                </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              </button>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No visited places yet</p>
-        </div>
-      )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+    <>
+      <SubpageHeader title="Visited" onBack={navigateBack} />
+      <div className="overflow-y-auto flex-1 pb-20">
+        <DrawerSection>
+          {loading ? (
+            <LoadingState />
+          ) : visitedPlaces.length > 0 ? (
+            <div className="-mx-3 space-y-0.5">
+              {visitedPlaces.map((visit, idx) => (
+                <PlaceItem
+                  key={idx}
+                  image={visit.destination?.image}
+                  name={visit.destination?.name || visit.slug}
+                  subtitle={
+                    visit.visited_at
+                      ? new Date(visit.visited_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : undefined
+                  }
+                  onClick={() => handleNavigateToFullPage(`/destination/${visit.slug}`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState message="No visited places yet" />
+          )}
+        </DrawerSection>
+      </div>
+      <DrawerActionBar>
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=visited")}
-          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
+          className="w-full rounded-full bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-90"
         >
-          View All Visited
+          View all visited
         </button>
-      </div>
-    </div>
+      </DrawerActionBar>
+    </>
   );
 
-  // Render saved subpage
+  // ============================================================
+  // SAVED SUBPAGE
+  // ============================================================
   const renderSavedSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
-      {loading ? (
-        <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
-        </div>
-      ) : savedPlaces.length > 0 ? (
-        <div className="space-y-2">
-          {savedPlaces.map((saved, index) => (
-              <button
-                key={index}
-                onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
-              className="w-full flex items-center gap-3 hover:opacity-70 transition-opacity text-left"
-            >
-              {saved.destination?.image && (
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                  <Image
-                    src={saved.destination.image}
-                    alt={saved.destination.name}
-                    fill
-                    className="object-cover"
-                    sizes="48px"
-                  />
-                </div>
-              )}
-                <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {saved.destination?.name || saved.slug}
-                  </p>
-                  {saved.destination?.city && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {saved.destination.city}
-                    </p>
-                  )}
-                </div>
-              <ChevronRight className="w-4 h-4 text-gray-400" />
-              </button>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No saved places yet</p>
-        </div>
-      )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+    <>
+      <SubpageHeader title="Saved" onBack={navigateBack} />
+      <div className="overflow-y-auto flex-1 pb-20">
+        <DrawerSection>
+          {loading ? (
+            <LoadingState />
+          ) : savedPlaces.length > 0 ? (
+            <div className="-mx-3 space-y-0.5">
+              {savedPlaces.map((saved, idx) => (
+                <PlaceItem
+                  key={idx}
+                  image={saved.destination?.image}
+                  name={saved.destination?.name || saved.slug}
+                  subtitle={saved.destination?.city}
+                  onClick={() => handleNavigateToFullPage(`/destination/${saved.slug}`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState message="No saved places yet" />
+          )}
+        </DrawerSection>
+      </div>
+      <DrawerActionBar>
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=saved")}
-          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
+          className="w-full rounded-full bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-90"
         >
-          View Full Saved
+          View all saved
         </button>
-      </div>
-    </div>
+      </DrawerActionBar>
+    </>
   );
 
-  // Render collections subpage
+  // ============================================================
+  // COLLECTIONS SUBPAGE
+  // ============================================================
   const renderCollectionsSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
-      {loading ? (
-        <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading collections...</p>
-        </div>
-      ) : collections.length > 0 ? (
-        <div className="space-y-3">
-          {collections.map((collection) => {
-            const bgColor = collection.color || '#3B82F6';
-            const emoji = collection.emoji || '📚';
-
-            return (
-              <button
-                key={collection.id}
-                onClick={() => handleNavigateToFullPage(`/collection/${collection.id}`)}
-                className="w-full flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-950 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200 text-left"
-              >
-                {/* Cover Section with Emoji/Color */}
-                <div 
-                  className="relative w-full h-32 flex items-center justify-center"
-                  style={{ backgroundColor: bgColor + '20' }}
-                >
-                  <div 
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl shadow-lg"
-                    style={{ backgroundColor: bgColor }}
-                  >
-                    {emoji}
-                  </div>
-                  {/* Public Badge */}
-                  {collection.is_public && (
-                    <div className="absolute top-3 right-3">
-                      <span className="px-2 py-1 rounded-lg text-xs font-medium bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300 backdrop-blur-sm">
-                        Public
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Content */}
-                <div className="p-3 space-y-1.5">
-                  {/* Collection Name */}
-                  <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2">
-                    {collection.name}
-                  </h3>
-
-                  {/* Description */}
-                  {collection.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                      {collection.description}
-                    </p>
-                  )}
-
-                  {/* Destination Count */}
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                    <Folder className="w-3 h-3" />
-                    <span>{(collection.destination_count || 0).toLocaleString()} places</span>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center dark:border-gray-800 dark:bg-gray-900/50">
-          <p className="text-sm font-semibold text-gray-900 dark:text-white">No collections yet</p>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Create lists to group your favorite places.</p>
-          <button
-            onClick={() => handleNavigateToFullPage('/account?tab=collections')}
-            className="mt-4 inline-flex items-center justify-center rounded-2xl bg-black dark:bg-white px-4 py-2.5 text-xs font-medium text-white dark:text-black transition hover:opacity-90"
-          >
-            Start a collection
-          </button>
-        </div>
-      )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+    <>
+      <SubpageHeader title="Lists" onBack={navigateBack} />
+      <div className="overflow-y-auto flex-1 pb-20">
+        <DrawerSection>
+          {loading ? (
+            <LoadingState message="Loading lists..." />
+          ) : collections.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3">
+              {collections.map((collection) => (
+                <CollectionCard
+                  key={collection.id}
+                  collection={collection}
+                  onClick={() => handleNavigateToFullPage(`/collection/${collection.id}`)}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              message="No lists yet"
+              action={() => handleNavigateToFullPage("/account?tab=collections")}
+              actionLabel="Create a list"
+            />
+          )}
+        </DrawerSection>
+      </div>
+      <DrawerActionBar>
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=collections")}
-          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
+          className="w-full rounded-full bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-90"
         >
-          Manage Collections
+          Manage lists
         </button>
-      </div>
-    </div>
+      </DrawerActionBar>
+    </>
   );
 
-  // Render trips subpage - Redesigned with cover images
+  // ============================================================
+  // TRIPS SUBPAGE
+  // ============================================================
   const renderTripsSubpage = () => (
-    <div className="px-6 py-6 space-y-6">
-      {/* New Trip Button */}
-      <button
-        onClick={() => {
-          closeDrawer();
-          setTimeout(() => {
-            router.push('/trips');
-          }, 200);
-        }}
-        className="w-full h-12 bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-90 transition-all text-sm font-medium flex items-center justify-center gap-2"
-      >
-        <Plus className="w-4 h-4" />
-        New Trip
-      </button>
-
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-12 space-y-3">
-          <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
-          <p className="text-sm text-neutral-500">Loading trips...</p>
-        </div>
-      ) : trips.length > 0 ? (
-        <div className="space-y-3">
-          {trips.map((trip) => {
-            const imageUrl = trip.cover_image || (trip as any).firstLocationImage;
-            const dateRange = formatDateRange(trip.start_date, trip.end_date);
-            const statusConfig = getStatusConfig(trip.status);
-
-            return (
-              <button
-                key={trip.id}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  if (trip.id) {
-                    openTripQuickview(String(trip.id));
-                  }
-                }}
-                className="w-full border border-neutral-200 dark:border-neutral-700 rounded-[16px] overflow-hidden bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors text-left group"
-              >
-                {/* Cover Image */}
-                <div className="relative w-full h-28 bg-neutral-100 dark:bg-neutral-800">
-                  {imageUrl ? (
-                    <>
-                      <Image
-                        src={imageUrl}
-                        alt={trip.title}
-                        fill
-                        className="object-cover"
-                        sizes="400px"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                    </>
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <MapPin className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
-                    </div>
-                  )}
-                  {/* Status Badge */}
-                  <div className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusConfig.bg} ${statusConfig.text} backdrop-blur-sm`}>
-                    <span className={`w-1 h-1 rounded-full ${statusConfig.dot}`} />
-                    {statusConfig.label}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="p-3 flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                      {trip.title}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
-                      {trip.destination && (
-                        <span className="flex items-center gap-1 truncate">
-                          <MapPin className="w-3 h-3 flex-shrink-0" />
-                          {trip.destination}
-                        </span>
-                      )}
-                      {dateRange && (
-                        <span className="flex items-center gap-1 flex-shrink-0">
-                          <Calendar className="w-3 h-3" />
-                          {dateRange}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <ChevronRight className="w-4 h-4 text-neutral-300 dark:text-neutral-600 group-hover:text-neutral-500 transition-colors flex-shrink-0" />
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-12 px-4 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-[16px] bg-neutral-50/50 dark:bg-neutral-900/50">
-          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-            <MapPin className="w-6 h-6 text-neutral-400 dark:text-neutral-500" />
-          </div>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-            No trips yet
-          </p>
+    <>
+      <SubpageHeader title="Trips" onBack={navigateBack} />
+      <div className="overflow-y-auto flex-1 pb-20">
+        <DrawerSection bordered>
           <button
             onClick={() => {
               closeDrawer();
-              setTimeout(() => router.push('/trips'), 200);
+              setTimeout(() => router.push("/trips"), 200);
             }}
-            className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-xl text-xs font-medium hover:opacity-90 transition-opacity"
+            className="flex w-full items-center justify-center gap-2 rounded-full bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-90"
           >
-            Create Trip
+            <Plus className="h-4 w-4" />
+            New trip
           </button>
-        </div>
-      )}
+        </DrawerSection>
 
-      {/* View All Button */}
-      {trips.length > 0 && (
+        <DrawerSection>
+          {loading ? (
+            <LoadingState />
+          ) : trips.length > 0 ? (
+            <div className="grid grid-cols-1 gap-3">
+              {trips.map((trip) => (
+                <TripCard
+                  key={trip.id}
+                  trip={trip}
+                  onClick={() => openTripQuickview(String(trip.id))}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState message="No trips yet" />
+          )}
+        </DrawerSection>
+      </div>
+      <DrawerActionBar>
         <button
           onClick={() => handleNavigateToFullPage("/trips")}
-          className="w-full h-11 border border-neutral-200 dark:border-neutral-700 rounded-xl font-medium text-sm bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors text-gray-900 dark:text-white"
+          className="w-full rounded-full bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-90"
         >
-          View All Trips
+          View all trips
         </button>
-      )}
-    </div>
+      </DrawerActionBar>
+    </>
   );
 
-  // Render trip details subpage
+  // ============================================================
+  // TRIP DETAILS SUBPAGE
+  // ============================================================
   const renderTripDetailsSubpage = () => {
     if (!selectedTrip) {
       return (
-        <div className="px-6 py-6">
-          <div className="text-center py-12">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Trip not found</p>
-          </div>
-        </div>
+        <>
+          <SubpageHeader title="Trip" onBack={navigateBack} />
+          <DrawerSection>
+            <EmptyState message="Trip not found" />
+          </DrawerSection>
+        </>
       );
     }
 
+    const formatDate = (date: string | null) => {
+      if (!date) return null;
+      return new Date(date).toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+    };
+
     return (
-      <div className="px-6 py-6 space-y-4">
-        {selectedTrip.cover_image && (
-          <div className="relative w-full h-48 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-            <Image
-              src={selectedTrip.cover_image}
-              alt={selectedTrip.title}
-              fill
-              className="object-cover"
-              sizes="100vw"
-            />
-          </div>
-        )}
-        {selectedTrip.start_date && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <Calendar className="w-4 h-4" />
-            <span>
-              {new Date(selectedTrip.start_date).toLocaleDateString("en-US", { 
-                month: "long", 
-                day: "numeric",
-                year: "numeric"
-              })}
-              {selectedTrip.end_date && ` - ${new Date(selectedTrip.end_date).toLocaleDateString("en-US", { 
-                month: "long", 
-                day: "numeric",
-                year: "numeric"
-              })}`}
-            </span>
-          </div>
-        )}
-        <div className="flex gap-2">
-          <button className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-2xl hover:opacity-80 transition-opacity text-xs font-medium flex items-center justify-center gap-2">
-            <Share2 className="w-4 h-4" />
-            Share
-          </button>
-          <button className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-2xl hover:opacity-80 transition-opacity text-xs font-medium flex items-center justify-center gap-2">
-            <Download className="w-4 h-4" />
-            Export
-          </button>
-          <button className="px-4 py-2 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white rounded-2xl hover:opacity-80 transition-opacity text-xs font-medium flex items-center justify-center gap-2">
-            <Trash2 className="w-4 h-4" />
-          </button>
+      <>
+        <SubpageHeader title={selectedTrip.title} onBack={navigateBack} />
+        <div className="overflow-y-auto flex-1 pb-20">
+          {/* Cover Image */}
+          {selectedTrip.cover_image && (
+            <DrawerSection>
+              <div className="relative h-44 w-full overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
+                <Image
+                  src={selectedTrip.cover_image}
+                  alt={selectedTrip.title}
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
+                />
+              </div>
+            </DrawerSection>
+          )}
+
+          {/* Date */}
+          {selectedTrip.start_date && (
+            <DrawerSection bordered>
+              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  {formatDate(selectedTrip.start_date)}
+                  {selectedTrip.end_date && ` – ${formatDate(selectedTrip.end_date)}`}
+                </span>
+              </div>
+            </DrawerSection>
+          )}
+
+          {/* Actions */}
+          <DrawerSection>
+            <div className="flex gap-2">
+              <button className="flex flex-1 items-center justify-center gap-2 rounded-full border border-gray-200 dark:border-gray-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors hover:bg-gray-50 dark:hover:bg-gray-900">
+                <Share2 className="h-4 w-4" />
+                Share
+              </button>
+              <button className="flex flex-1 items-center justify-center gap-2 rounded-full border border-gray-200 dark:border-gray-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors hover:bg-gray-50 dark:hover:bg-gray-900">
+                <Download className="h-4 w-4" />
+                Export
+              </button>
+              <button className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 transition-colors hover:bg-gray-50 dark:hover:bg-gray-900">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          </DrawerSection>
         </div>
-        <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+        <DrawerActionBar>
           <button
             onClick={() => handleNavigateToFullPage(`/trips/${selectedTrip.id}`)}
-            className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
+            className="w-full rounded-full bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-90"
           >
-            Open Full Trip
+            Open trip
           </button>
-        </div>
-      </div>
+        </DrawerActionBar>
+      </>
     );
   };
 
-  // Render achievements subpage
+  // ============================================================
+  // ACHIEVEMENTS SUBPAGE
+  // ============================================================
   const renderAchievementsSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
-      <div className="text-center py-12">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Achievements coming soon</p>
+    <>
+      <SubpageHeader title="Achievements" onBack={navigateBack} />
+      <div className="overflow-y-auto flex-1 pb-20">
+        <DrawerSection>
+          <EmptyState message="Achievements coming soon" />
+        </DrawerSection>
       </div>
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+      <DrawerActionBar>
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=achievements")}
-          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
+          className="w-full rounded-full bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-90"
         >
-          View All Achievements
+          View all achievements
         </button>
-      </div>
-    </div>
+      </DrawerActionBar>
+    </>
   );
 
-  // Render settings subpage
+  // ============================================================
+  // SETTINGS SUBPAGE
+  // ============================================================
   const renderSettingsSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
-      <div className="space-y-2">
+    <>
+      <SubpageHeader title="Settings" onBack={navigateBack} />
+      <div className="overflow-y-auto flex-1 pb-20">
+        <DrawerSection>
+          <div className="-mx-3">
+            <NavItem
+              icon={Settings}
+              label="Account settings"
+              description="Email, password, security"
+              onClick={() => handleNavigateToFullPage("/account?tab=settings")}
+            />
+          </div>
+        </DrawerSection>
+      </div>
+      <DrawerActionBar>
         <button
           onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-          className="w-full flex items-center justify-between px-0 py-2.5 h-11 text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-all rounded-lg"
+          className="w-full rounded-full bg-gray-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-gray-900 transition-opacity hover:opacity-90"
         >
-          <span>Settings</span>
-          <ChevronRight className="w-4 h-4 text-gray-400" />
+          Open full settings
         </button>
-      </div>
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <button
-          onClick={() => handleNavigateToFullPage("/account?tab=settings")}
-          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
-        >
-          Open Full Settings
-        </button>
-      </div>
-    </div>
+      </DrawerActionBar>
+    </>
   );
 
-  // Render header with back button for subpages (Tier 2)
-  const renderHeader = () => {
-    if (currentSubpage === 'main_drawer') {
-      return null;
-    }
-
-    return (
-      <div className="sticky top-0 z-20 flex items-center gap-3 px-6 pb-4 pt-5 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-200/50 dark:border-gray-800/50">
-        <button
-          onClick={navigateBack}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-900/80 text-white shadow-sm ring-1 ring-white/15 transition hover:bg-gray-800/90 dark:bg-white/10 dark:text-white"
-          aria-label="Back"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex-1">{getDrawerTitle()}</h2>
-        <div className="w-10" />
-      </div>
-    );
-  };
-
-  const wrapWithSubpageHeader = (content: ReactNode) => {
-    if (currentSubpage === 'main_drawer') return content;
-
-    return (
-      <div className="relative flex h-full flex-col">
-        {renderHeader()}
-        <div className="flex-1 overflow-y-auto">{content}</div>
-      </div>
-    );
-  };
-
-  // Render content based on current subpage
+  // ============================================================
+  // RENDER CONTENT BASED ON SUBPAGE
+  // ============================================================
   const renderContent = () => {
     switch (currentSubpage) {
-      case 'visited_subpage':
-        return wrapWithSubpageHeader(renderVisitedSubpage());
-      case 'saved_subpage':
-        return wrapWithSubpageHeader(renderSavedSubpage());
-      case 'collections_subpage':
-        return wrapWithSubpageHeader(renderCollectionsSubpage());
-      case 'trips_subpage':
-        return wrapWithSubpageHeader(renderTripsSubpage());
-      case 'trip_details_subpage':
-        return wrapWithSubpageHeader(renderTripDetailsSubpage());
-      case 'achievements_subpage':
-        return wrapWithSubpageHeader(renderAchievementsSubpage());
-      case 'settings_subpage':
-        return wrapWithSubpageHeader(renderSettingsSubpage());
+      case "visited_subpage":
+        return renderVisitedSubpage();
+      case "saved_subpage":
+        return renderSavedSubpage();
+      case "collections_subpage":
+        return renderCollectionsSubpage();
+      case "trips_subpage":
+        return renderTripsSubpage();
+      case "trip_details_subpage":
+        return renderTripDetailsSubpage();
+      case "achievements_subpage":
+        return renderAchievementsSubpage();
+      case "settings_subpage":
+        return renderSettingsSubpage();
       default:
         return renderMainDrawer();
     }
   };
 
-  // Determine z-index based on subpage tier
-  const getZIndex = () => {
-    if (currentSubpage === 'main_drawer') {
-      return 1000; // Tier 1
-    }
-    return 1100; // Tier 2
-  };
-
-  const isTier1 = currentSubpage === 'main_drawer';
-  const isTier2 = currentSubpage !== 'main_drawer';
-
   return (
     <>
       <Drawer
         isOpen={isOpen}
-        onClose={handleDrawerClose}
-        title={undefined}
-        headerContent={undefined}
+        onClose={closeDrawer}
         mobileVariant="bottom"
         desktopSpacing="right-4 top-4 bottom-4"
-        desktopWidth="420px"
+        desktopWidth="400px"
         position="right"
         style="glassy"
-        backdropOpacity={isTier1 ? "18" : "18"}
-        keepStateOnClose={true}
-        zIndex={getZIndex()}
+        backdropOpacity="18"
+        keepStateOnClose
+        zIndex={currentSubpage === "main_drawer" ? 1000 : 1100}
       >
-        <div className={`transition-opacity duration-200 ${currentSubpage !== 'main_drawer' ? 'opacity-100' : 'opacity-100'}`}>
-          {renderContent()}
-        </div>
+        <div className="flex h-full flex-col">{renderContent()}</div>
       </Drawer>
 
       {/* Trip Quickview Drawer */}
@@ -1126,21 +1191,18 @@ export function AccountDrawer() {
             setShowTripViewDrawer(false);
             setViewingTripId(null);
             closeDrawer();
-            setTimeout(() => {
-              router.push(`/trips/${viewingTripId}`);
-            }, 200);
+            setTimeout(() => router.push(`/trips/${viewingTripId}`), 200);
           }}
           onDelete={() => {
             setShowTripViewDrawer(false);
             setViewingTripId(null);
-            // Refresh trips list
             if (user?.id && isOpen) {
               const supabaseClient = createClient();
               supabaseClient
-                .from('trips')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false })
+                .from("trips")
+                .select("*")
+                .eq("user_id", user.id)
+                .order("created_at", { ascending: false })
                 .then(({ data }) => {
                   setTrips((data as Trip[]) || []);
                 });
