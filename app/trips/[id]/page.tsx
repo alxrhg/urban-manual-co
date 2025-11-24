@@ -16,6 +16,7 @@ import { Camera, Loader2, Plus, Trash2, Calendar, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { TripPlanner } from '@/components/TripPlanner';
 import { HotelAutocompleteInput } from '@/components/HotelAutocompleteInput';
+import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 
 type Tab = 'details' | 'itinerary' | 'hotels';
 
@@ -594,12 +595,11 @@ export default function TripPage() {
                   <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                     City
                   </label>
-                  <input
-                    type="text"
+                  <CityAutocompleteInput
                     value={editedCity}
-                    onChange={(e) => setEditedCity(e.target.value)}
+                    onChange={setEditedCity}
                     placeholder="e.g., Tokyo, Paris, New York"
-                    className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
+                    className="border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white rounded-xl"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">

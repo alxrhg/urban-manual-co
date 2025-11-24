@@ -112,10 +112,10 @@ export function CityAutocompleteInput({
         onFocus={handleInputFocus}
         placeholder={placeholder}
         required={required}
-        className={`w-full px-4 py-3 border rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 ${
+        className={`w-full px-4 py-2 border rounded-xl bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600 ${
           isNewCity
             ? 'border-orange-400 dark:border-orange-500 bg-orange-50 dark:bg-orange-950/20'
-            : 'border-gray-200 dark:border-gray-800'
+            : ''
         } ${className}`}
       />
       

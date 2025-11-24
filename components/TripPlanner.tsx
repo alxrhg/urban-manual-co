@@ -28,6 +28,7 @@ import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
 import { TripShareModal } from './TripShareModal';
 import { Drawer } from './ui/Drawer';
+import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 import UMCard from './ui/UMCard';
 import UMActionPill from './ui/UMActionPill';
 import UMSectionTitle from './ui/UMSectionTitle';
@@ -1196,17 +1197,18 @@ export function TripPlanner({
                     <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                       City
                     </label>
-                    <input
-                      type="text"
-                      value={destination}
-                      onChange={(e) => setDestination(e.target.value)}
-                      placeholder="e.g., Tokyo, Paris, New York"
-                      className={`w-full px-4 py-2 rounded-xl border bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white ${
-                        fieldErrors.destination
-                          ? 'border-red-300 dark:border-red-700'
-                          : 'border-neutral-200 dark:border-white/20'
-                      }`}
-                    />
+                    <div className={fieldErrors.destination ? 'relative' : ''}>
+                      <CityAutocompleteInput
+                        value={destination}
+                        onChange={setDestination}
+                        placeholder="e.g., Tokyo, Paris, New York"
+                        className={`${
+                          fieldErrors.destination
+                            ? 'border-red-300 dark:border-red-700'
+                            : 'border-neutral-200 dark:border-white/20'
+                        } bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white rounded-xl`}
+                      />
+                    </div>
                     {fieldErrors.destination && (
                       <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.destination}</p>
                     )}
