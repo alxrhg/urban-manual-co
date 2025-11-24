@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { useEffect, useState } from "react";
 
 export function ThemeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
   // Avoid hydration mismatch
@@ -24,14 +24,20 @@ export function ThemeToggle() {
     );
   }
 
-  const isDark = theme === "dark";
+  // Use resolvedTheme if available, otherwise fall back to theme
+  const currentTheme = resolvedTheme || theme;
+  const isDark = currentTheme === "dark";
+
+  const handleToggle = (checked: boolean) => {
+    setTheme(checked ? "dark" : "light");
+  };
 
   return (
     <div className="flex items-center gap-2">
       <Sun className={`h-4 w-4 transition-colors ${isDark ? "text-gray-400" : "text-gray-900 dark:text-white"}`} />
       <Switch
         checked={isDark}
-        onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+        onCheckedChange={handleToggle}
         aria-label="Toggle theme"
       />
       <Moon className={`h-4 w-4 transition-colors ${isDark ? "text-gray-900 dark:text-white" : "text-gray-400"}`} />
