@@ -146,6 +146,14 @@ export default function TripPage() {
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '';
     try {
+      // Parse date string as local date (YYYY-MM-DD format)
+      // Split to avoid timezone issues
+      const [year, month, day] = dateStr.split('-').map(Number);
+      if (year && month && day) {
+        const date = new Date(year, month - 1, day);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+      // Fallback to original parsing if format is different
       const date = new Date(dateStr);
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     } catch {

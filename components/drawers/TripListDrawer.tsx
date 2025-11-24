@@ -85,11 +85,27 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
+    try {
+      // Parse date string as local date (YYYY-MM-DD format)
+      // Split to avoid timezone issues
+      const [year, month, day] = dateString.split('-').map(Number);
+      if (year && month && day) {
+        const date = new Date(year, month - 1, day);
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        });
+      }
+      // Fallback to original parsing if format is different
+      return new Date(dateString).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    } catch {
+      return null;
+    }
   };
 
   const formatDateRange = (start: string | null, end: string | null) => {
