@@ -200,7 +200,7 @@
     }
 
     body.drawer-inline-open.drawer-inline-right #app-shell {
-      margin-right: 0;
+      margin-right: var(--drawer-inline-width, 0px);
     }
   
     body.drawer-inline-open.drawer-inline-left {
@@ -209,7 +209,7 @@
     }
 
     body.drawer-inline-open.drawer-inline-left #app-shell {
-      margin-left: 0;
+      margin-left: var(--drawer-inline-width, 0px);
     }
   }
 
