@@ -614,10 +614,9 @@ export default function TripPage() {
           {isOwner && hotels.length > 0 && (
             <div className="pt-4">
               <UMActionPill
-                onClick={handleSaveHotels}
+                onClick={() => !saving && handleSaveHotels()}
                 variant="primary"
-                className="w-full justify-center"
-                disabled={saving}
+                className={`w-full justify-center ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {saving ? (
                   <>
