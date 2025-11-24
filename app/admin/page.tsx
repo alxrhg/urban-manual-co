@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Loader2, Plus, X } from "lucide-react";
 import { useConfirmDialog } from "@/components/ConfirmDialog";
@@ -20,6 +21,7 @@ export const dynamic = 'force-dynamic';
 
 export default function AdminPage() {
   const toast = useToast();
+  const searchParams = useSearchParams();
   const {
     isEditMode: inlineEditModeEnabled,
     enableEditMode: enableInlineEditMode,
@@ -116,6 +118,24 @@ export default function AdminPage() {
   useEffect(() => {
     loadDestinationList();
   }, [loadDestinationList]);
+
+  // Auto-open editor when slug query parameter is present
+  useEffect(() => {
+    const slug = searchParams?.get('slug');
+    if (slug && destinationList.length > 0 && !showCreateModal) {
+      const destination = destinationList.find((d: any) => d.slug === slug);
+      if (destination) {
+        setEditingDestination(destination);
+        setShowCreateModal(true);
+        // Remove slug from URL without page reload
+        if (typeof window !== 'undefined') {
+          const url = new URL(window.location.href);
+          url.searchParams.delete('slug');
+          window.history.replaceState({}, '', url.toString());
+        }
+      }
+    }
+  }, [searchParams, destinationList, showCreateModal]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {

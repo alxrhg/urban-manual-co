@@ -43,10 +43,6 @@ import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { Drawer } from '@/components/ui/Drawer';
 import { architectNameToSlug } from '@/lib/architect-utils';
 
-// Dynamically import POIDrawer to avoid SSR issues
-const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
-  ssr: false,
-});
 
 // Dynamically import GoogleStaticMap for small map in drawer
 const GoogleStaticMap = dynamic(() => import('@/components/maps/GoogleStaticMap'), {
@@ -221,7 +217,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [reviewSummary, setReviewSummary] = useState<string | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
 
   // Generate AI summary of reviews
   const generateReviewSummary = async (reviews: any[], destinationName: string) => {
@@ -1080,11 +1075,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       {user && (
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Admin Edit Button */}
-          {isAdmin && (
+          {isAdmin && destination && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setIsEditDrawerOpen(true);
+                onClose(); // Close the destination drawer
+                router.push(`/admin?slug=${destination.slug}`);
               }}
               className="p-2 hover:bg-neutral-50 dark:hover:bg-white/5 rounded-lg transition-colors"
               aria-label="Edit destination"
@@ -2869,15 +2865,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           }}
         />
       )}
-      <POIDrawer
-        isOpen={isEditDrawerOpen}
-        onClose={() => setIsEditDrawerOpen(false)}
-        destination={destination}
-        onSave={() => {
-          setIsEditDrawerOpen(false);
-          // Optionally refresh destination data here if needed
-        }}
-      />
     </>
   );
 }
