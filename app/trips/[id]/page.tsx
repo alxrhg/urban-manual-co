@@ -306,6 +306,24 @@ export default function TripPage() {
         }}
         onOverview={() => openDrawer('trip-overview', { trip })}
         onEdit={isOwner ? () => setShowTripPlanner(true) : undefined}
+        onTitleChange={isOwner ? async (newTitle: string) => {
+          if (!trip || !user) return;
+          try {
+            const supabaseClient = createClient();
+            if (!supabaseClient) return;
+            const { error } = await supabaseClient
+              .from('trips')
+              .update({ title: newTitle })
+              .eq('id', trip.id)
+              .eq('user_id', user.id);
+            if (error) throw error;
+            router.refresh();
+          } catch (error: any) {
+            console.error('Error updating trip title:', error);
+            alert(`Failed to update title: ${error.message}`);
+          }
+        } : undefined}
+        canEdit={isOwner}
       />
 
       {/* Tabs */}
