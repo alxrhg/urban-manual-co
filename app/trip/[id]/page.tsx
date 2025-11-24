@@ -287,10 +287,11 @@ function DayEditCard({
           <button
             className="px-4 py-2 rounded-full border border-neutral-200 text-sm font-medium text-gray-900 hover:bg-neutral-50 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-900 flex items-center gap-2"
             onClick={() =>
-              openDrawer('trip-add-place', {
+              openDrawer('place-selector', {
                 day,
-                dayIndex,
                 trip,
+                index: dayIndex,
+                replaceIndex: null,
               })
             }
           >
@@ -382,10 +383,11 @@ function AddPlaceButton({
       <button
         className={`${baseClasses} ${styles}`}
         onClick={() =>
-          openDrawer('trip-add-place', {
+          openDrawer('place-selector', {
             day,
-            dayIndex: selectedDayIndex,
             trip,
+            index: selectedDayIndex,
+            replaceIndex: null,
           })
         }
       >

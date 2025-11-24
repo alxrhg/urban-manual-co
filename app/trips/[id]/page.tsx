@@ -594,10 +594,11 @@ export default function TripPage() {
                           <UMActionPill
                             variant="primary"
                             onClick={() =>
-                              openDrawer('trip-add-place', {
+                              openDrawer('place-selector', {
                                 day: trip.days[selectedDayIndex],
-                                dayIndex: selectedDayIndex,
                                 trip,
+                                index: selectedDayIndex,
+                                replaceIndex: null,
                               })
                             }
                           >
@@ -983,10 +984,14 @@ export default function TripPage() {
       {isOwner && activeTab === 'itinerary' && trip.days && trip.days.length > 0 && (
         <div className="fixed bottom-6 right-6 z-50 sm:hidden">
           <button
-            onClick={() => openDrawer('trip-add-place', {
-              day: trip.days[selectedDayIndex],
-              dayIndex: selectedDayIndex
-            })}
+            onClick={() =>
+              openDrawer('place-selector', {
+                day: trip.days[selectedDayIndex],
+                trip,
+                index: selectedDayIndex,
+                replaceIndex: null,
+              })
+            }
             className="w-14 h-14 rounded-full bg-black dark:bg-white text-white dark:text-black shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
           >
             <Plus className="w-6 h-6" />
