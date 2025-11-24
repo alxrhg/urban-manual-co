@@ -29,6 +29,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
   const router = useRouter();
   const { user } = useAuth();
   const openDrawer = useDrawerStore((s) => s.openDrawer);
+  const closeDrawer = useDrawerStore((s) => s.closeDrawer);
   const [trips, setTrips] = useState<any[]>(propsTrips || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -173,8 +174,18 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
         </UMFeaturePill>
 
         {/* LIST HEADER */}
-        <div>
+        <div className="flex items-center justify-between">
           <UMSectionTitle>All Trips</UMSectionTitle>
+          <UMActionPill
+            onClick={() => {
+              closeDrawer();
+              setTimeout(() => {
+                router.push('/trips');
+              }, 200);
+            }}
+          >
+            View All →
+          </UMActionPill>
         </div>
 
         {/* TRIP LIST */}
