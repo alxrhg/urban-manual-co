@@ -990,19 +990,18 @@ export function TripPlanner({
             <label htmlFor={`trip-planner-destination-${currentTripId || 'new'}`} className="block text-xs font-medium text-gray-700 dark:text-gray-300">
               Destination
             </label>
-            <input
-              id={`trip-planner-destination-${currentTripId || 'new'}`}
-              type="text"
+            <div className={fieldErrors.destination ? 'relative' : ''}>
+              <CityAutocompleteInput
               value={destination}
-              onChange={(e) => setDestination(e.target.value)}
+                onChange={setDestination}
               placeholder="Paris, France"
-              autoComplete="off"
-              className={`w-full px-3.5 py-2.5 border rounded-xl bg-white dark:bg-gray-900 focus:outline-none transition-colors text-sm ${
+                className={`${
                 fieldErrors.destination
-                  ? 'border-red-300 dark:border-red-700 focus:border-red-500 dark:focus:border-red-400'
-                  : 'border-gray-200 dark:border-gray-800 focus:border-gray-900 dark:focus:border-white'
-              }`}
-            />
+                    ? 'border-red-300 dark:border-red-700'
+                    : 'border-gray-200 dark:border-gray-800'
+                } bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-xl`}
+              />
+            </div>
             {fieldErrors.destination && (
               <p className="text-xs text-red-600 dark:text-red-400">{fieldErrors.destination}</p>
             )}
