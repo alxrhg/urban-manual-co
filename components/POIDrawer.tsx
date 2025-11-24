@@ -461,7 +461,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
   };
 
   const content = (
-    <div className="px-6 py-6">
+    <div className="px-6 py-6 pb-24">
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Google Places Autocomplete */}
         <div>
