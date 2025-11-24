@@ -147,14 +147,17 @@ function ItineraryViewSection({
     <div className="space-y-4">
       <DayTabs days={trip.days} selectedIndex={selectedDayIndex} onSelect={onSelectDay} />
       {trip.days[selectedDayIndex] && (
-        <DayCard
-          key={`${trip.days[selectedDayIndex].date}-${selectedDayIndex}`}
-          day={trip.days[selectedDayIndex]}
-          index={selectedDayIndex}
-          trip={trip}
-          openDrawer={openDrawer}
-          mode="view"
-        />
+        <>
+          <DayCard
+            key={`${trip.days[selectedDayIndex].date}-${selectedDayIndex}`}
+            day={trip.days[selectedDayIndex]}
+            index={selectedDayIndex}
+            trip={trip}
+            openDrawer={openDrawer}
+            mode="view"
+          />
+          <AddPlaceButton trip={trip} selectedDayIndex={selectedDayIndex} openDrawer={openDrawer} />
+        </>
       )}
     </div>
   );
@@ -224,6 +227,7 @@ function EditModeSection({
               openDrawer={openDrawer}
             />
           )}
+          <AddPlaceButton trip={trip} selectedDayIndex={selectedDayIndex} openDrawer={openDrawer} variant="outlined" />
         </div>
       ) : (
         <EmptyItineraryState
@@ -351,6 +355,45 @@ function getMealSummary(day: TripDay): string {
     .filter(Boolean);
 
   return meals.length > 0 ? (meals as string[]).join(' • ') : 'Not set yet';
+}
+
+function AddPlaceButton({
+  trip,
+  selectedDayIndex,
+  openDrawer,
+  variant = 'solid',
+}: {
+  trip: TripWithDays;
+  selectedDayIndex: number;
+  openDrawer: DrawerOpener;
+  variant?: 'solid' | 'outlined';
+}) {
+  const day = trip.days?.[selectedDayIndex];
+  if (!day) return null;
+
+  const baseClasses = 'w-full max-w-md mx-auto flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition';
+  const styles =
+    variant === 'outlined'
+      ? 'border border-neutral-300 text-neutral-800 dark:text-white dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900'
+      : 'bg-black text-white dark:bg-white dark:text-black hover:opacity-90';
+
+  return (
+    <div className="flex justify-center">
+      <button
+        className={`${baseClasses} ${styles}`}
+        onClick={() =>
+          openDrawer('trip-add-place', {
+            day,
+            dayIndex: selectedDayIndex,
+            trip,
+          })
+        }
+      >
+        <Plus className="w-4 h-4" />
+        Add place to Day {selectedDayIndex + 1}
+      </button>
+    </div>
+  );
 }
 
 function DayTabs({
