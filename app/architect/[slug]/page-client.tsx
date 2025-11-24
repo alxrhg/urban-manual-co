@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Building2 } from 'lucide-react';
 
@@ -9,19 +8,11 @@ import { supabase } from '@/lib/supabase';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDrawer } from '@/contexts/DrawerContext';
+import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { DestinationCard } from '@/components/DestinationCard';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { slugToArchitectName } from '@/lib/architect-utils';
-
-const DestinationDrawer = dynamic(
-  () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
 
 function capitalizeCategory(category: string): string {
   return category
@@ -51,8 +42,7 @@ export default function ArchitectPageClient() {
   const [currentPage, setCurrentPage] = useState(1);
 
   const itemsPerPage = useItemsPerPage(4);
-
-  const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
+  const openDestinationDrawerStore = useDrawerStore(state => state.openDrawer);
 
   useEffect(() => {
     setLoading(true);
@@ -175,9 +165,95 @@ export default function ArchitectPageClient() {
     }
   };
 
+  const handleDestinationSaveToggle = useCallback(
+    async (slug: string) => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('saved_places')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('destination_slug', slug)
+        .maybeSingle();
+
+      if (data) {
+        await supabase
+          .from('saved_places')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('destination_slug', slug);
+      } else {
+        await (supabase.from('saved_places').insert as any)({
+          user_id: user.id,
+          destination_slug: slug,
+        });
+      }
+    },
+    [user]
+  );
+
+  const handleDestinationVisitToggle = useCallback(
+    (slug: string, visited: boolean) => {
+      if (!user) return;
+      setVisitedSlugs(prev => {
+        const next = new Set(prev);
+        if (visited) {
+          next.add(slug);
+        } else {
+          next.delete(slug);
+        }
+        return next;
+      });
+    },
+    [user]
+  );
+
+  const buildDrawerPayload = useCallback(
+    (destination: Destination) => ({
+      destination,
+      onSaveToggle: handleDestinationSaveToggle,
+      onVisitToggle: handleDestinationVisitToggle,
+      onDestinationClick: async (slug: string) => {
+        try {
+          const supabaseClient = createClient();
+          if (!supabaseClient) {
+            console.error('Failed to create Supabase client');
+            return;
+          }
+
+          const { data: fetchedDestination, error } = await supabaseClient
+            .from('destinations')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+
+          if (error || !fetchedDestination) {
+            console.error('Failed to fetch destination:', error);
+            return;
+          }
+
+          const nextDestination = fetchedDestination as Destination;
+          setSelectedDestination(nextDestination);
+          openDestinationDrawerStore('destination-detail', buildDrawerPayload(nextDestination));
+        } catch (error) {
+          console.error('Error fetching destination:', error);
+        }
+      },
+      onAfterClose: () => setSelectedDestination(null),
+    }),
+    [handleDestinationSaveToggle, handleDestinationVisitToggle, openDestinationDrawerStore]
+  );
+
+  const openDestinationDrawer = useCallback(
+    (destination: Destination) => {
+      setSelectedDestination(destination);
+      openDestinationDrawerStore('destination-detail', buildDrawerPayload(destination));
+    },
+    [buildDrawerPayload, openDestinationDrawerStore]
+  );
+
   const handleDestinationClick = (destination: Destination) => {
-    setSelectedDestination(destination);
-    openDrawer('destination');
+    openDestinationDrawer(destination);
   };
 
   const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
@@ -338,43 +414,6 @@ export default function ArchitectPageClient() {
           )}
         </div>
       </main>
-
-      {/* Destination Drawer */}
-      {isDrawerTypeOpen('destination') && selectedDestination && (
-        <DestinationDrawer
-          destination={selectedDestination}
-          isOpen={true}
-          onClose={() => {
-            closeDrawer();
-            setSelectedDestination(null);
-          }}
-          onDestinationClick={async (slug: string) => {
-            try {
-              const supabaseClient = createClient();
-              if (!supabaseClient) {
-                console.error('Failed to create Supabase client');
-                return;
-              }
-              
-              const { data: destination, error } = await supabaseClient
-                .from('destinations')
-                .select('*')
-                .eq('slug', slug)
-                .single();
-              
-              if (error || !destination) {
-                console.error('Failed to fetch destination:', error);
-                return;
-              }
-              
-              setSelectedDestination(destination as Destination);
-              openDrawer('destination');
-            } catch (error) {
-              console.error('Error fetching destination:', error);
-            }
-          }}
-        />
-      )}
     </>
   );
 }

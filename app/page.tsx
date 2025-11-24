@@ -24,20 +24,9 @@ import {
   Funnel,
 } from "lucide-react";
 import { getCategoryIconComponent } from "@/lib/icons/category-icons";
-// Lazy load drawer (only when opened)
-const DestinationDrawer = dynamic(
-  () =>
-    import("@/src/features/detail/DestinationDrawer").then(mod => ({
-      default: mod.DestinationDrawer,
-    })),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
 import { useAuth } from "@/contexts/AuthContext";
-import { useDrawer } from "@/contexts/DrawerContext";
 import dynamic from "next/dynamic";
+import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -422,7 +411,7 @@ export default function Home() {
   const [searchTier, setSearchTier] = useState<string | null>(null);
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
-  const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const openDestinationDrawerStore = useDrawerStore(state => state.openDrawer);
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [plannerPrefill, setPlannerPrefill] = useState<{
@@ -492,6 +481,110 @@ export default function Home() {
       }
     },
     [user?.id]
+  );
+
+  const handleDestinationVisitToggle = useCallback(
+    (slug: string, visited: boolean) => {
+      setVisitedSlugs(prev => {
+        const next = new Set(prev);
+        if (visited) {
+          next.add(slug);
+        } else {
+          next.delete(slug);
+        }
+        return next;
+      });
+
+      setFilteredDestinations(prev => {
+        const sorted = [...prev].sort((a, b) => {
+          const aVisited =
+            user &&
+            (visitedSlugs.has(a.slug) || (visited && a.slug === slug));
+          const bVisited =
+            user &&
+            (visitedSlugs.has(b.slug) || (visited && b.slug === slug));
+          if (aVisited && !bVisited) return 1;
+          if (!aVisited && bVisited) return -1;
+          return 0;
+        });
+        return sorted;
+      });
+    },
+    [user, visitedSlugs]
+  );
+
+  const handleDestinationEdit = useCallback((destination: Destination) => {
+    setEditingDestination(destination);
+    setShowPOIDrawer(true);
+  }, []);
+
+  const handleDrawerAfterClose = useCallback(() => {
+    setFilteredDestinations(prev => {
+      const sorted = [...prev].sort((a, b) => {
+        const aVisited = user && visitedSlugs.has(a.slug);
+        const bVisited = user && visitedSlugs.has(b.slug);
+        if (aVisited && !bVisited) return 1;
+        if (!aVisited && bVisited) return -1;
+        return 0;
+      });
+      return sorted;
+    });
+    setTimeout(() => setSelectedDestination(null), 300);
+  }, [user, visitedSlugs]);
+
+  const buildDestinationDrawerPayload = useCallback(
+    (destination: Destination) => ({
+      destination,
+      onVisitToggle: handleDestinationVisitToggle,
+      onDestinationClick: async (slug: string) => {
+        try {
+          const supabaseClient = createClient();
+          if (!supabaseClient) {
+            console.error("Failed to create Supabase client");
+            return;
+          }
+
+          const { data: fetchedDestination, error } = await supabaseClient
+            .from("destinations")
+            .select("*")
+            .eq("slug", slug)
+            .single();
+
+          if (error || !fetchedDestination) {
+            console.error("Failed to fetch destination:", error);
+            return;
+          }
+
+          const nextDestination = fetchedDestination as Destination;
+          setSelectedDestination(nextDestination);
+          openDestinationDrawerStore(
+            "destination-detail",
+            buildDestinationDrawerPayload(nextDestination)
+          );
+        } catch (error) {
+          console.error("Error fetching destination:", error);
+        }
+      },
+      onEdit: handleDestinationEdit,
+      onAfterClose: handleDrawerAfterClose,
+    }),
+    [
+      handleDestinationVisitToggle,
+      handleDestinationEdit,
+      handleDrawerAfterClose,
+      openDestinationDrawerStore,
+    ]
+  );
+
+  const openDestinationDrawer = useCallback(
+    (destination: Destination) => {
+      setSelectedDestination(destination);
+      openDestinationDrawerStore(
+        "destination-detail",
+        buildDestinationDrawerPayload(destination)
+      );
+    },
+    [buildDestinationDrawerPayload, openDestinationDrawerStore]
   );
 
   useEffect(() => {
@@ -2932,8 +3025,7 @@ export default function Home() {
               <div className="mb-12 md:mb-16">
                 <SmartRecommendations
                   onCardClick={destination => {
-                    setSelectedDestination(destination);
-                    openDrawer('destination');
+                    openDestinationDrawer(destination);
 
                     // Track destination click
                     trackDestinationClick({
@@ -3205,8 +3297,7 @@ export default function Home() {
                               }}
                               showEditAffordance={editModeActive}
                               onClick={() => {
-                                setSelectedDestination(destination);
-                                openDrawer('destination');
+                                openDestinationDrawer(destination);
                                 trackDestinationEngagement(
                                   destination,
                                   "grid",
@@ -3343,88 +3434,6 @@ export default function Home() {
             })()}
               </div>
             </div>
-
-        {/* Destination Drawer - Only render when open and NOT in map view */}
-        {isDrawerOpen('destination') && selectedDestination && viewMode !== 'map' && (
-          <DestinationDrawer
-            destination={selectedDestination}
-            isOpen={true}
-            onClose={() => {
-              // Sort visited items to the back when closing
-              setFilteredDestinations(prev => {
-                const sorted = [...prev].sort((a, b) => {
-                  const aVisited = user && visitedSlugs.has(a.slug);
-                  const bVisited = user && visitedSlugs.has(b.slug);
-                  if (aVisited && !bVisited) return 1;
-                  if (!aVisited && bVisited) return -1;
-                  return 0;
-                });
-                return sorted;
-              });
-              closeDrawer();
-              setTimeout(() => setSelectedDestination(null), 300);
-            }}
-            onVisitToggle={(slug, visited) => {
-              // Update visited slugs
-              setVisitedSlugs(prev => {
-                const newSet = new Set(prev);
-                if (visited) {
-                  newSet.add(slug);
-                } else {
-                  newSet.delete(slug);
-                }
-                return newSet;
-              });
-
-              // Sort visited items to the back
-              setFilteredDestinations(prev => {
-                const sorted = [...prev].sort((a, b) => {
-                  const aVisited =
-                    user &&
-                    (visitedSlugs.has(a.slug) || (visited && a.slug === slug));
-                  const bVisited =
-                    user &&
-                    (visitedSlugs.has(b.slug) || (visited && b.slug === slug));
-                  if (aVisited && !bVisited) return 1;
-                  if (!aVisited && bVisited) return -1;
-                  return 0;
-                });
-                return sorted;
-              });
-            }}
-            onEdit={(destination) => {
-              setEditingDestination(destination);
-              setShowPOIDrawer(true);
-            }}
-            onDestinationClick={async (slug: string) => {
-              try {
-                // Fetch destination by slug using Supabase client
-                const supabaseClient = createClient();
-                if (!supabaseClient) {
-                  console.error('Failed to create Supabase client');
-                  return;
-                }
-                
-                const { data: destination, error } = await supabaseClient
-                  .from('destinations')
-                  .select('*')
-                  .eq('slug', slug)
-                  .single();
-                
-                if (error || !destination) {
-                  console.error('Failed to fetch destination:', error);
-                  return;
-                }
-                
-                setSelectedDestination(destination as Destination);
-                openDrawer('destination');
-              } catch (error) {
-                console.error('Error fetching destination:', error);
-              }
-            }}
-          />
-        )}
-
         {/* Trip Planner Modal - Only render when open */}
         {showTripPlanner && (
         <TripPlanner

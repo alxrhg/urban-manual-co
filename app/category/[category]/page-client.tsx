@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@/lib/supabase/client';
@@ -9,13 +9,7 @@ import { MapPin, SlidersHorizontal } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import Image from 'next/image';
 import { SearchFiltersComponent, SearchFilters } from '@/src/features/search/SearchFilters';
-import dynamic from 'next/dynamic';
-import { useDrawer } from '@/contexts/DrawerContext';
-
-const DestinationDrawer = dynamic(
-  () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
-  { ssr: false, loading: () => null }
-);
+import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 interface CategoryPageClientProps {
   category: string;
@@ -30,7 +24,7 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
   const [filters, setFilters] = useState<SearchFilters>({});
   const [cities, setCities] = useState<string[]>([]);
   const [categories] = useState<string[]>(['Hotels', 'Restaurants', 'Cafes', 'Bars', 'Shops', 'Museums']);
-  const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
+  const openDestinationDrawerStore = useDrawerStore(state => state.openDrawer);
 
   const categoryName = category.split('-').map(w => 
     w.charAt(0).toUpperCase() + w.slice(1)
@@ -43,6 +37,48 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
   useEffect(() => {
     applyFilters();
   }, [filters, destinations]);
+
+  const buildDrawerPayload = useCallback(
+    (destination: Destination) => ({
+      destination,
+      onDestinationClick: async (slug: string) => {
+        try {
+          const supabaseClient = createClient();
+          if (!supabaseClient) {
+            console.error('Failed to create Supabase client');
+            return;
+          }
+
+          const { data: fetchedDestination, error } = await supabaseClient
+            .from('destinations')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+
+          if (error || !fetchedDestination) {
+            console.error('Failed to fetch destination:', error);
+            return;
+          }
+
+          const nextDestination = fetchedDestination as Destination;
+          setSelectedDestination(nextDestination);
+          openDestinationDrawerStore('destination-detail', buildDrawerPayload(nextDestination));
+        } catch (error) {
+          console.error('Error fetching destination:', error);
+        }
+      },
+      onAfterClose: () => setSelectedDestination(null),
+    }),
+    [openDestinationDrawerStore]
+  );
+
+  const openDestinationDrawer = useCallback(
+    (destination: Destination) => {
+      setSelectedDestination(destination);
+      openDestinationDrawerStore('destination-detail', buildDrawerPayload(destination));
+    },
+    [buildDrawerPayload, openDestinationDrawerStore]
+  );
 
   async function fetchDestinations() {
     try {
@@ -140,10 +176,7 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
             {filteredDestinations.map((destination, index) => (
               <button
                 key={destination.slug}
-                  onClick={() => {
-                    setSelectedDestination(destination);
-                    openDrawer('destination');
-                  }}
+                onClick={() => openDestinationDrawer(destination)}
                 className={`${CARD_WRAPPER} group text-left`}
               >
                 <div className={`${CARD_MEDIA} mb-2 relative overflow-hidden`}>
@@ -181,42 +214,6 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
           </div>
         )}
 
-        {/* Destination Drawer - Only render when open */}
-        {isDrawerTypeOpen('destination') && selectedDestination && (
-          <DestinationDrawer
-            destination={selectedDestination}
-            isOpen={true}
-            onClose={() => {
-              closeDrawer();
-              setSelectedDestination(null);
-            }}
-            onDestinationClick={async (slug: string) => {
-              try {
-                const supabaseClient = createClient();
-                if (!supabaseClient) {
-                  console.error('Failed to create Supabase client');
-                  return;
-                }
-                
-                const { data: destination, error } = await supabaseClient
-                  .from('destinations')
-                  .select('*')
-                  .eq('slug', slug)
-                  .single();
-                
-                if (error || !destination) {
-                  console.error('Failed to fetch destination:', error);
-                  return;
-                }
-                
-                setSelectedDestination(destination as Destination);
-                openDrawer('destination');
-              } catch (error) {
-                console.error('Error fetching destination:', error);
-              }
-            }}
-          />
-        )}
       </main>
     </div>
   );

@@ -3,7 +3,7 @@
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 import { AccountDrawer } from '@/components/AccountDrawer';
-import DestinationDrawer from '@/components/DestinationDrawer';
+import dynamic from 'next/dynamic';
 import { TripsDrawer } from '@/components/TripsDrawer';
 import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
@@ -21,6 +21,13 @@ import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
 import AccountDrawerNew from '@/components/drawers/AccountDrawer';
 import { Drawer } from '@/components/ui/Drawer';
 import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
+
+const DestinationDetailDrawer = dynamic(() =>
+  import('@/src/features/detail/DestinationDrawer').then(mod => ({
+    default: mod.DestinationDrawer,
+  })),
+  { ssr: false }
+);
 
 export default function DrawerMount() {
   const { open, type, props, closeDrawer } = useDrawerStore();
@@ -46,7 +53,20 @@ export default function DrawerMount() {
           <AccountDrawerNew isOpen={open} onClose={closeDrawer} />
         </Drawer>
       )}
-      <DestinationDrawer isOpen={open && type === 'destination'} onClose={closeDrawer} place={props.place || null} {...props} />
+      {open && type === 'destination-detail' && (
+        <DestinationDetailDrawer
+          isOpen={open}
+          destination={props.destination ?? null}
+          onClose={() => {
+            props?.onAfterClose?.();
+            closeDrawer();
+          }}
+          onSaveToggle={props?.onSaveToggle}
+          onVisitToggle={props?.onVisitToggle}
+          onDestinationClick={props?.onDestinationClick}
+          onEdit={props?.onEdit}
+        />
+      )}
       {open && type === 'trip-overview' && (
         <Drawer
           isOpen={open}

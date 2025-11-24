@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
@@ -10,7 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDrawer } from '@/contexts/DrawerContext';
+import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { DestinationCard } from '@/components/DestinationCard';
 import { EditModeToggle } from '@/components/EditModeToggle';
 import { UniversalGrid } from '@/components/UniversalGrid';
@@ -18,14 +18,6 @@ import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
-
-const DestinationDrawer = dynamic(
-  () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
 
 const POIDrawer = dynamic(
   () => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })),
@@ -83,8 +75,7 @@ export default function CityPageClient() {
   const [isCreatingNewPOI, setIsCreatingNewPOI] = useState(false);
 
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
-
-  const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
+  const openDestinationDrawerStore = useDrawerStore(state => state.openDrawer);
 
   const handleAdminEdit = (destination: Destination) => {
     if (!isAdmin) return;
@@ -99,6 +90,94 @@ export default function CityPageClient() {
     setIsCreatingNewPOI(true);
     setShowPOIDrawer(true);
   };
+
+  const handleDestinationSaveToggle = useCallback(
+    async (slug: string) => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('saved_places')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('destination_slug', slug)
+        .maybeSingle();
+
+      if (data) {
+        await supabase
+          .from('saved_places')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('destination_slug', slug);
+      } else {
+        await (supabase.from('saved_places').insert as any)({
+          user_id: user.id,
+          destination_slug: slug,
+        });
+      }
+    },
+    [user]
+  );
+
+  const handleDestinationVisitToggle = useCallback(
+    (slug: string, visited: boolean) => {
+      if (!user) return;
+      setVisitedSlugs(prev => {
+        const next = new Set(prev);
+        if (visited) {
+          next.add(slug);
+        } else {
+          next.delete(slug);
+        }
+        return next;
+      });
+    },
+    [user]
+  );
+
+  const buildDrawerPayload = useCallback(
+    (destination: Destination) => ({
+      destination,
+      onSaveToggle: handleDestinationSaveToggle,
+      onVisitToggle: handleDestinationVisitToggle,
+      onDestinationClick: async (slug: string) => {
+        try {
+          const supabaseClient = createClient();
+          if (!supabaseClient) {
+            console.error('Failed to create Supabase client');
+            return;
+          }
+
+          const { data: fetchedDestination, error } = await supabaseClient
+            .from('destinations')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+
+          if (error || !fetchedDestination) {
+            console.error('Failed to fetch destination:', error);
+            return;
+          }
+
+          const nextDestination = fetchedDestination as Destination;
+          setSelectedDestination(nextDestination);
+          openDestinationDrawerStore('destination-detail', buildDrawerPayload(nextDestination));
+        } catch (error) {
+          console.error('Error fetching destination:', error);
+        }
+      },
+      onEdit: handleAdminEdit,
+      onAfterClose: () => setSelectedDestination(null),
+    }),
+    [handleDestinationSaveToggle, handleDestinationVisitToggle, handleAdminEdit, openDestinationDrawerStore]
+  );
+
+  const openDestinationDrawer = useCallback(
+    (destination: Destination) => {
+      setSelectedDestination(destination);
+      openDestinationDrawerStore('destination-detail', buildDrawerPayload(destination));
+    },
+    [buildDrawerPayload, openDestinationDrawerStore]
+  );
 
   useEffect(() => {
     setLoading(true);
@@ -432,10 +511,7 @@ export default function CityPageClient() {
                       <DestinationCard
                         key={destination.slug}
                         destination={destination}
-                        onClick={() => {
-                          setSelectedDestination(destination);
-                          openDrawer('destination');
-                        }}
+                        onClick={() => openDestinationDrawer(destination)}
                         index={globalIndex}
                         isVisited={isVisited}
                         showBadges={true}
@@ -521,79 +597,6 @@ export default function CityPageClient() {
           )}
         </div>
       </main>
-
-      {/* Destination Drawer - Only render when open */}
-      {isDrawerTypeOpen('destination') && selectedDestination && (
-        <DestinationDrawer
-          destination={selectedDestination}
-          isOpen={true}
-          onClose={() => {
-            closeDrawer();
-            setSelectedDestination(null);
-          }}
-        onSaveToggle={async (slug: string) => {
-          if (!user) return;
-
-          const { data } = await supabase
-            .from('saved_places')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('destination_slug', slug)
-            .single();
-
-          if (data) {
-            await supabase.from('saved_places').delete().eq('user_id', user.id).eq('destination_slug', slug);
-          } else {
-            await (supabase.from('saved_places').insert as any)({ user_id: user.id, destination_slug: slug });
-          }
-        }}
-        onVisitToggle={async (slug: string, visited: boolean) => {
-          if (!user) return;
-
-          // Update local state based on the visited parameter
-          setVisitedSlugs(prev => {
-            const next = new Set(prev);
-            if (visited) {
-              next.add(slug);
-            } else {
-              next.delete(slug);
-            }
-            return next;
-          });
-
-          // The DestinationDrawer already handles the database update,
-          // so we just need to sync our local state
-        }}
-        onEdit={(destination) => {
-          handleAdminEdit(destination);
-        }}
-        onDestinationClick={async (slug: string) => {
-          try {
-            const supabaseClient = createClient();
-            if (!supabaseClient) {
-              console.error('Failed to create Supabase client');
-              return;
-            }
-            
-            const { data: destination, error } = await supabaseClient
-              .from('destinations')
-              .select('*')
-              .eq('slug', slug)
-              .single();
-            
-            if (error || !destination) {
-              console.error('Failed to fetch destination:', error);
-              return;
-            }
-            
-            setSelectedDestination(destination as Destination);
-            openDrawer('destination');
-          } catch (error) {
-            console.error('Error fetching destination:', error);
-          }
-        }}
-        />
-      )}
 
       {isAdmin && (
         <POIDrawer

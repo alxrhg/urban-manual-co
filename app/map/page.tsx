@@ -3,19 +3,12 @@
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDrawer } from '@/contexts/DrawerContext';
+import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
-import dynamic from 'next/dynamic';
 import MapView from '@/components/MapView';
 import { Search, X, List, ChevronRight, SlidersHorizontal, Globe2, LayoutGrid, Map, Plus, Filter } from 'lucide-react';
 import Image from 'next/image';
-
-// Lazy load components
-const DestinationDrawer = dynamic(
-  () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
-  { ssr: false, loading: () => null }
-);
 
 interface FilterState {
   categories: Set<string>;
@@ -39,7 +32,7 @@ export default function MapPage() {
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>({ lat: 23.5, lng: 121.0 }); // Taiwan center
   const [mapZoom, setMapZoom] = useState(8);
   const [showFilters, setShowFilters] = useState(false);
-  const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
+  const openDestinationDrawerStore = useDrawerStore(state => state.openDrawer);
 
   // Fetch destinations and categories
   useEffect(() => {
@@ -148,15 +141,55 @@ export default function MapPage() {
     });
   };
 
+  const buildDrawerPayload = useCallback(
+    (destination: Destination) => ({
+      destination,
+      onDestinationClick: async (slug: string) => {
+        try {
+          const supabaseClient = createClient();
+          if (!supabaseClient) {
+            console.error('Failed to create Supabase client');
+            return;
+          }
+
+          const { data: fetchedDestination, error } = await supabaseClient
+            .from('destinations')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+
+          if (error || !fetchedDestination) {
+            console.error('Failed to fetch destination:', error);
+            return;
+          }
+
+          const nextDestination = fetchedDestination as Destination;
+          setSelectedDestination(nextDestination);
+          openDestinationDrawerStore('destination-detail', buildDrawerPayload(nextDestination));
+        } catch (error) {
+          console.error('Error fetching destination:', error);
+        }
+      },
+      onAfterClose: () => setTimeout(() => setSelectedDestination(null), 300),
+    }),
+    [openDestinationDrawerStore]
+  );
+
+  const openDestinationDrawer = useCallback(
+    (destination: Destination) => {
+      setSelectedDestination(destination);
+      openDestinationDrawerStore('destination-detail', buildDrawerPayload(destination));
+    },
+    [buildDrawerPayload, openDestinationDrawerStore]
+  );
+
   const handleMarkerClick = useCallback((dest: Destination) => {
-    setSelectedDestination(dest);
-    openDrawer('destination');
-  }, [openDrawer]);
+    openDestinationDrawer(dest);
+  }, [openDestinationDrawer]);
 
   const handleListItemClick = useCallback((dest: Destination) => {
-    setSelectedDestination(dest);
-    openDrawer('destination');
-  }, [openDrawer]);
+    openDestinationDrawer(dest);
+  }, [openDestinationDrawer]);
 
   // Calculate distance from map center (simplified)
   const getDistanceFromCenter = (dest: Destination): number => {
@@ -398,43 +431,6 @@ export default function MapPage() {
             </div>
           </div>
         </div>
-
-      {/* Destination Drawer - Only render when open */}
-      {isDrawerTypeOpen('destination') && selectedDestination && (
-        <DestinationDrawer
-          destination={selectedDestination}
-          isOpen={true}
-          onClose={() => {
-            closeDrawer();
-            setTimeout(() => setSelectedDestination(null), 300);
-          }}
-          onDestinationClick={async (slug: string) => {
-            try {
-              const supabaseClient = createClient();
-              if (!supabaseClient) {
-                console.error('Failed to create Supabase client');
-                return;
-              }
-              
-              const { data: destination, error } = await supabaseClient
-                .from('destinations')
-                .select('*')
-                .eq('slug', slug)
-                .single();
-              
-              if (error || !destination) {
-                console.error('Failed to fetch destination:', error);
-                return;
-              }
-              
-              setSelectedDestination(destination as Destination);
-              openDrawer('destination');
-            } catch (error) {
-              console.error('Error fetching destination:', error);
-            }
-          }}
-        />
-      )}
     </div>
   );
 }
