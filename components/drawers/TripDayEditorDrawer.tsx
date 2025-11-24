@@ -99,15 +99,15 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
     <div className="px-6 py-6 space-y-10">
       {/* DAY TABS */}
       {allDays.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 border-b border-neutral-200 dark:border-white/10">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 border-b border-gray-200 dark:border-gray-800">
           {allDays.map((d: Day, i: number) => (
             <button
               key={i}
               onClick={() => setSelectedDayIndex(i)}
-              className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
                 selectedDayIndex === i
-                  ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
-                  : 'text-neutral-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'text-black dark:text-white border-b-2 border-black dark:border-white'
+                  : 'text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
               }`}
             >
               Day {i + 1}
@@ -118,10 +118,10 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
 
       {/* TITLE */}
       <div className="space-y-1">
-        <h1 className="text-[20px] font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-light text-gray-900 dark:text-white">
           Day {selectedDayIndex + 1}
         </h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {currentDay.city || 'Unknown'} • {currentDay.date || ''}
         </p>
       </div>
@@ -153,11 +153,11 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
 
                   {/* STOP DETAILS */}
                   <div className="space-y-1">
-                    <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       {locationName}
                     </p>
                     {locationType && (
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400 capitalize">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                         {locationType}
                       </p>
                     )}
@@ -222,7 +222,7 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
 
           return (
             <UMCard key={meal} className="p-4 space-y-3">
-              <p className="font-medium capitalize text-[15px] text-gray-900 dark:text-white">
+              <p className="text-sm font-medium capitalize text-gray-900 dark:text-white">
                 {meal}
               </p>
 
@@ -239,11 +239,11 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
                     </div>
                   )}
 
-                  <p className="text-[16px] font-medium text-gray-900 dark:text-white">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {mealName}
                   </p>
                   {mealCategory && (
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 capitalize">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                       {mealCategory}
                     </p>
                   )}
@@ -304,17 +304,17 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
       </section>
 
       {/* DUPLICATE / DELETE */}
-      <section className="pt-4 border-t border-neutral-200 dark:border-white/10">
+      <section className="pt-4 border-t border-gray-200 dark:border-gray-800">
         <div className="flex justify-between pt-4">
           <button
             onClick={handleDuplicateDay}
-            className="text-sm text-neutral-500 dark:text-neutral-400 hover:underline"
+            className="text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
           >
             Duplicate Day
           </button>
           <button
             onClick={handleDeleteDay}
-            className="text-sm text-red-500 hover:underline"
+            className="text-xs text-red-500 hover:text-red-600 transition-colors"
           >
             Delete Day
           </button>

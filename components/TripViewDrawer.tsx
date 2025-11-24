@@ -396,14 +396,14 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
               <button
                 onClick={handleSaveChanges}
                 disabled={savingChanges || !editedTitle.trim()}
-                className="px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
+                className="px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {savingChanges ? 'Saving...' : 'Save'}
               </button>
               <button
                 onClick={handleCancelEdit}
                 disabled={savingChanges}
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-lg text-xs font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -412,14 +412,14 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
             <>
               <button
                 onClick={() => setIsEditMode(true)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors"
                 aria-label="Edit trip"
               >
                 <Edit2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
               </button>
               <button
                 onClick={() => setShowDeleteConfirm(true)}
-                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-colors"
                 aria-label="Delete trip"
               >
                 <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -446,7 +446,7 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
         <div className="space-y-6">
           {/* Edit Mode Banner */}
           {isEditMode && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-2xl px-4 py-3">
               <p className="text-xs text-blue-700 dark:text-blue-300">
                 <strong>Edit Mode:</strong> You can now edit trip details, add/remove locations, and reorder items.
               </p>
@@ -455,64 +455,64 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
 
           {/* Trip Details - Edit Mode */}
           {isEditMode ? (
-            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-800">
+            <div className="space-y-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-200 dark:border-gray-800">
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                   Trip Title
                 </label>
                 <input
                   type="text"
                   value={editedTitle}
                   onChange={(e) => setEditedTitle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
                   placeholder="Enter trip title"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                   Description (Optional)
                 </label>
                 <textarea
                   value={editedDescription}
                   onChange={(e) => setEditedDescription(e.target.value)}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm resize-none"
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm resize-none"
                   placeholder="Describe your trip"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                   Cities Visiting (Optional)
                 </label>
                 <input
                   type="text"
                   value={editedDestination}
                   onChange={(e) => setEditedDestination(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
                   placeholder="e.g., Paris, London, Rome"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                     Start Date (Optional)
                   </label>
                   <input
                     type="date"
                     value={formatDateForInput(editedStartDate)}
                     onChange={(e) => setEditedStartDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                     End Date (Optional)
                   </label>
                   <input
                     type="date"
                     value={formatDateForInput(editedEndDate)}
                     onChange={(e) => setEditedEndDate(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
+                    className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
                   />
                 </div>
               </div>

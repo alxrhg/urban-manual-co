@@ -248,18 +248,18 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="w-full px-6 md:px-10 lg:px-12 py-8">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+    <div className="min-h-screen">
+      <div className="w-full px-6 md:px-10 py-20">
+          <div className="mb-12">
+            <h1 className="text-2xl font-light mb-2">
               Travel Chat
             </h1>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Ask me anything about restaurants, hotels, cities, and travel destinations.
             </p>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col h-[calc(100vh-12rem)]">
+          <div className="bg-white dark:bg-[#1A1C1F] rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden flex flex-col h-[calc(100vh-16rem)]">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
               <div className="flex items-center gap-2">

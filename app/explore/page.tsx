@@ -100,11 +100,11 @@ export default function ExplorePage() {
 
   if (loading) {
     return (
-      <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
-        <div className="max-w-7xl mx-auto">
+      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+        <div className="w-full">
           <div className="animate-pulse">
-            <div className="h-10 w-48 bg-gray-200 dark:bg-gray-800 rounded mb-4" />
-            <div className="h-6 w-96 bg-gray-200 dark:bg-gray-800 rounded mb-8" />
+            <div className="h-8 w-32 bg-gray-200 dark:bg-gray-800 rounded mb-4" />
+            <div className="h-4 w-64 bg-gray-200 dark:bg-gray-800 rounded mb-12" />
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="h-32 bg-gray-200 dark:bg-gray-800 rounded-2xl" />
@@ -117,22 +117,19 @@ export default function ExplorePage() {
   }
 
   return (
-    <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
-      <div className="max-w-7xl mx-auto">
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <div className="w-full">
         {/* Hero Section */}
         <div className="mb-12 animate-in fade-in slide-in-from-bottom-4">
-          <div className="flex items-center gap-3 mb-4">
-            <Sparkles className="h-8 w-8" />
-            <h1 className="text-4xl md:text-5xl font-bold">Explore</h1>
-          </div>
-          <span className="text-base md:text-lg text-gray-600 dark:text-gray-400">
+          <h1 className="text-2xl font-light mb-2">Explore</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Discover destinations by category, city, or browse our curated collections
-          </span>
+          </p>
         </div>
 
         {/* Categories Grid */}
         <section className="mb-16">
-          <h2 className="text-2xl font-bold mb-6">Browse by Category</h2>
+          <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-6">Browse by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {categoryStats.map((stat, index) => (
               <button
@@ -157,8 +154,8 @@ export default function ExplorePage() {
         {featuredDestinations.length > 0 && (
           <section className="mb-16">
             <div className="flex items-center gap-2 mb-6">
-              <Crown className="h-6 w-6 text-yellow-500" />
-              <h2 className="text-2xl font-bold">Featured Destinations</h2>
+              <Crown className="h-4 w-4 text-yellow-500" />
+              <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Featured Destinations</h2>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
               {featuredDestinations.map((dest, index) => (
@@ -213,15 +210,15 @@ export default function ExplorePage() {
         <section>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-6 w-6" />
-              <h2 className="text-2xl font-bold">Popular Cities</h2>
+              <TrendingUp className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+              <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Popular Cities</h2>
             </div>
             <button
               onClick={() => router.push('/cities')}
-              className="text-sm font-bold hover:opacity-60 transition-opacity flex items-center gap-1"
+              className="text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1"
             >
               View All
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3 w-3" />
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

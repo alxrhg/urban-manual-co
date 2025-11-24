@@ -19,8 +19,8 @@ export default function FeedPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+      <div className="w-full px-6 md:px-10 py-20 min-h-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
       </div>
     );
   }
@@ -30,44 +30,40 @@ export default function FeedPage() {
   }
 
   return (
-    <main className="px-4 md:px-6 lg:px-10 py-8 dark:text-white min-h-screen">
-      <div className="max-w-4xl mx-auto">
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <div className="w-full max-w-4xl">
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Activity Feed</h1>
-          <span className="text-base text-gray-600 dark:text-gray-400">
+        <div className="mb-12">
+          <h1 className="text-2xl font-light mb-2">Activity Feed</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             See what's happening in the travel community
-          </span>
+          </p>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-1 mb-8 border-b border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`px-6 py-3 text-sm font-medium transition-colors relative ${
-              activeTab === 'all'
-                ? 'text-black dark:text-white'
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            All Activity
-            {activeTab === 'all' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white" />
-            )}
-          </button>
-          <button
-            onClick={() => setActiveTab('following')}
-            className={`px-6 py-3 text-sm font-medium transition-colors relative ${
-              activeTab === 'following'
-                ? 'text-black dark:text-white'
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white'
-            }`}
-          >
-            Following
-            {activeTab === 'following' && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black dark:bg-white" />
-            )}
-          </button>
+        <div className="mb-12">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`transition-all ${
+                activeTab === 'all'
+                  ? "font-medium text-black dark:text-white"
+                  : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+              }`}
+            >
+              All Activity
+            </button>
+            <button
+              onClick={() => setActiveTab('following')}
+              className={`transition-all ${
+                activeTab === 'following'
+                  ? "font-medium text-black dark:text-white"
+                  : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+              }`}
+            >
+              Following
+            </button>
+          </div>
         </div>
 
         {/* Activity Feed */}

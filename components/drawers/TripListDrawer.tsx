@@ -156,8 +156,8 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
     return (
       <div className="px-6 py-6">
         <div className="flex flex-col items-center justify-center py-12 space-y-3">
-          <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
-          <p className="text-sm text-neutral-500">Loading trips...</p>
+          <Loader2 className="w-6 h-6 animate-spin text-gray-500" />
+          <p className="text-xs text-gray-500 dark:text-gray-400">Loading trips...</p>
         </div>
       </div>
     );
@@ -170,7 +170,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
           <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
           <div className="space-y-2">
             <p className="text-sm font-medium text-gray-900 dark:text-white">Failed to load</p>
-            <p className="text-xs text-neutral-500">{error}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{error}</p>
           </div>
           <UMActionPill onClick={fetchTrips}>
             Try Again
@@ -207,7 +207,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
         <div className="space-y-6">
           {trips.length === 0 ? (
             <div className="text-center py-16 space-y-4">
-              <p className="text-neutral-500 text-sm">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 You have no trips yet.
               </p>
               <UMFeaturePill onClick={handleNewTrip}>
@@ -240,12 +240,12 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
                     )}
 
                     <div className="p-4 space-y-1">
-                      <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {tripName}
                       </p>
 
                       {/* SUBTITLE */}
-                      <p className="text-[14px] text-neutral-500 dark:text-neutral-400">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {city} {dateRange && `• ${dateRange}`}
                       </p>
 

@@ -62,10 +62,10 @@ export default function TripDayDrawer({ isOpen, onClose, day }: TripDayDrawerPro
       <div className="px-6 py-8 space-y-10">
         {/* TITLE */}
         <div className="space-y-1">
-          <h1 className="text-[20px] font-semibold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-light text-gray-900 dark:text-white">
             {day.date}
           </h1>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             {day.city || 'Unknown'}
           </p>
         </div>
@@ -81,7 +81,7 @@ export default function TripDayDrawer({ isOpen, onClose, day }: TripDayDrawerPro
 
             return (
               <UMCard key={mealType} className="p-4 space-y-3">
-                <p className="font-medium capitalize text-[15px] text-gray-900 dark:text-white">
+                <p className="text-sm font-medium capitalize text-gray-900 dark:text-white">
                   {mealType}
                 </p>
 
@@ -98,7 +98,7 @@ export default function TripDayDrawer({ isOpen, onClose, day }: TripDayDrawerPro
                       </div>
                     )}
 
-                    <p className="text-[16px] font-medium text-gray-900 dark:text-white">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       {mealName}
                     </p>
 
@@ -153,7 +153,7 @@ export default function TripDayDrawer({ isOpen, onClose, day }: TripDayDrawerPro
                       </div>
                     )}
 
-                    <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       {activityName}
                     </p>
 
@@ -186,7 +186,7 @@ export default function TripDayDrawer({ isOpen, onClose, day }: TripDayDrawerPro
                 </div>
               )}
 
-              <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {day.hotel.name || day.hotel.title}
               </p>
 
