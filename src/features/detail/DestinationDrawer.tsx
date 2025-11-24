@@ -1452,11 +1452,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Primary Info Block */}
           <div className="space-y-4 mt-6">
-            {/* City Link - Bold highlight, no arrows */}
+            {/* City Link - Pill style */}
             <div>
               <a
                 href={`/city/${destination.city}`}
-                className="text-sm font-bold text-gray-900 dark:text-white hover:underline"
+                className="inline-flex items-center px-3 h-[28px] rounded-lg border border-neutral-200 dark:border-white/20 text-xs font-medium text-neutral-600 dark:text-neutral-300 bg-white dark:bg-[#1A1C1F] cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
