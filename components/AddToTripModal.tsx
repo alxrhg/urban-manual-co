@@ -12,7 +12,7 @@ interface AddToTripModalProps {
   destinationName: string;
   isOpen: boolean;
   onClose: () => void;
-  onAdd?: (tripId: string, itemId?: string) => void;
+  onAdd?: (tripId: string, tripTitle: string, day: number, itemId?: string) => void;
 }
 
 export function AddToTripModal({
@@ -75,7 +75,7 @@ export function AddToTripModal({
       // First verify the trip exists and belongs to the user
       const { data: trip, error: tripError } = await supabaseClient
         .from('trips')
-        .select('id')
+        .select('id, title')
         .eq('id', tripId)
         .eq('user_id', user.id)
         .single();
@@ -180,7 +180,7 @@ export function AddToTripModal({
         throw new Error('Failed to add destination to trip. No data returned.');
       }
 
-      if (onAdd) onAdd(tripId, insertedItem.id);
+      if (onAdd) onAdd(tripId, trip?.title || 'Trip', nextDay, insertedItem.id);
       onClose();
     } catch (error: any) {
       console.error('Error adding to trip:', error);
