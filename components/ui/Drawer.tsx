@@ -26,6 +26,7 @@ export interface DrawerProps {
   mobileExpanded?: boolean;
   keepStateOnClose?: boolean;
   fullScreen?: boolean;
+  showBorder?: boolean;
 }
 
 /**
@@ -62,6 +63,7 @@ export function Drawer({
   mobileExpanded = false,
   keepStateOnClose = false,
   fullScreen = false,
+  showBorder = true,
 }: DrawerProps) {
   // Separate refs for each drawer variant to prevent conflicts
   const mobileBottomRef = useRef<HTMLDivElement>(null);
@@ -316,13 +318,23 @@ export function Drawer({
   }, [isOpen, mobileVariant, position, onClose, getCurrentDrawer]);
 
   // Determine background classes based on style
-  const backgroundClasses = style === 'glassy' 
-    ? `${DRAWER_STYLES.glassyBackground} ${position === 'right' ? DRAWER_STYLES.glassyBorderLeft : DRAWER_STYLES.glassyBorderRight}`
-    : 'bg-white dark:bg-gray-950';
+  const glassySideBorderClass =
+    position === 'right' ? DRAWER_STYLES.glassyBorderLeft : DRAWER_STYLES.glassyBorderRight;
+
+  const backgroundClasses =
+    style === 'glassy'
+      ? `${DRAWER_STYLES.glassyBackground}${
+          showBorder ? ` ${glassySideBorderClass}` : ''
+        }`
+      : 'bg-white dark:bg-gray-950';
   
-  const borderClasses = style === 'glassy'
-    ? (position === 'right' ? DRAWER_STYLES.glassyBorderLeft : DRAWER_STYLES.glassyBorderRight)
-    : (position === 'right' ? 'border-l border-gray-200 dark:border-gray-800' : 'border-r border-gray-200 dark:border-gray-800');
+  const borderClasses = !showBorder
+    ? ''
+    : style === 'glassy'
+      ? glassySideBorderClass
+      : (position === 'right'
+        ? 'border-l border-gray-200 dark:border-gray-800'
+        : 'border-r border-gray-200 dark:border-gray-800');
 
   const shadowClasses = style === 'solid' ? 'shadow-2xl ring-1 ring-black/5 dark:ring-white/5' : '';
 

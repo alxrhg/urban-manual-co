@@ -42,6 +42,7 @@ export default function DrawerMount() {
           desktopWidth="420px"
           style={drawerStyle}
           position="right"
+          showBorder={false}
         >
           <AccountDrawerNew isOpen={open} onClose={closeDrawer} />
         </Drawer>
