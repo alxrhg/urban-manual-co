@@ -6,7 +6,6 @@ import { User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
-import { AccountDrawer } from "@/components/AccountDrawer";
 import { ChatDrawer } from "@/components/ChatDrawer";
 import { LoginDrawer } from "@/components/LoginDrawer";
 
@@ -150,11 +149,6 @@ export function Header() {
           <div className="flex items-center gap-2">{actionButtons}</div>
         </nav>
       </div>
-      {/* Account Drawer - Only render when open */}
-      {isDrawerOpen('account') && (
-        <AccountDrawer />
-      )}
-
       {/* Chat Drawer - Only render when open */}
       {isDrawerOpen('chat') && (
         <ChatDrawer
