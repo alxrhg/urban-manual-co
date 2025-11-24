@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, ReactNode, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { DRAWER_STYLES } from '@/lib/drawer-styles';
 
@@ -75,6 +76,14 @@ export function Drawer({
   keepStateOnClose = false,
   fullScreen = false,
 }: DrawerProps) {
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      setPortalTarget(document.body);
+    }
+  }, []);
+
   // Separate refs for each drawer variant to prevent conflicts
   const mobileBottomRef = useRef<HTMLDivElement>(null);
   const mobileSideRef = useRef<HTMLDivElement>(null);
@@ -438,7 +447,7 @@ export function Drawer({
     );
   };
 
-  return (
+  const drawerMarkup = (
     <>
       {/* Backdrop */}
       {showBackdrop && !inlineSplitDesktop && (
@@ -601,4 +610,10 @@ export function Drawer({
       </div>
     </>
   );
+
+  if (portalTarget) {
+    return createPortal(drawerMarkup, portalTarget);
+  }
+
+  return drawerMarkup;
 }
