@@ -65,8 +65,10 @@ export function Header() {
       try {
         const versionRes = await fetch("/api/build-version");
         const versionData = await versionRes.json();
+        // Prioritize GitHub build number, then commit SHA, then version
         setBuildVersion(
-          versionData.shortSha ||
+          versionData.buildNumber ||
+            versionData.shortSha ||
             versionData.commitSha?.substring(0, 7) ||
             versionData.version ||
             null
