@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from 'react';
 import UMCard from "@/components/ui/UMCard";
 import UMActionPill from "@/components/ui/UMActionPill";
 import UMSectionTitle from "@/components/ui/UMSectionTitle";
@@ -42,13 +43,20 @@ interface TripDayEditorDrawerProps {
 
 export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEditorDrawerProps) {
   const { openDrawer } = useDrawerStore();
+  const [selectedDayIndex, setSelectedDayIndex] = useState(index);
 
-  if (!day) return null;
+  // Get all days from trip
+  const allDays = trip?.days || (day ? [day] : []);
+  
+  // Get the currently selected day
+  const currentDay = allDays[selectedDayIndex] || day;
+
+  if (!currentDay && !day) return null;
 
   // Combine locations and activities for display
   const allLocations = [
-    ...(day.locations || []),
-    ...(day.activities || []),
+    ...(currentDay.locations || []),
+    ...(currentDay.activities || []),
   ];
 
   const getLocationImage = (loc: Location) => {
@@ -89,13 +97,32 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
 
   return (
     <div className="px-6 py-6 space-y-10">
+      {/* DAY TABS */}
+      {allDays.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 border-b border-neutral-200 dark:border-white/10">
+          {allDays.map((d: Day, i: number) => (
+            <button
+              key={i}
+              onClick={() => setSelectedDayIndex(i)}
+              className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                selectedDayIndex === i
+                  ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
+                  : 'text-neutral-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              Day {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* TITLE */}
       <div className="space-y-1">
         <h1 className="text-[20px] font-semibold text-gray-900 dark:text-white">
-          Day {index + 1}
+          Day {selectedDayIndex + 1}
         </h1>
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          {day.city} • {day.date}
+          {currentDay.city || 'Unknown'} • {currentDay.date || ''}
         </p>
       </div>
 
@@ -141,9 +168,9 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
                     <UMActionPill
                       onClick={() =>
                         openDrawer("place-selector", {
-                          day,
+                          day: currentDay,
                           trip,
-                          index,
+                          index: selectedDayIndex,
                           replaceIndex: i,
                         })
                       }
@@ -172,9 +199,9 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
           className="w-full justify-center"
           onClick={() =>
             openDrawer("place-selector", {
-              day,
+              day: currentDay,
               trip,
-              index,
+              index: selectedDayIndex,
               replaceIndex: null,
             })
           }
@@ -188,7 +215,7 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
         <UMSectionTitle>Meals</UMSectionTitle>
 
         {(["breakfast", "lunch", "dinner"] as const).map((meal) => {
-          const mealData = day.meals?.[meal];
+          const mealData = currentDay.meals?.[meal];
           const mealImage = mealData ? getLocationImage(mealData) : null;
           const mealName = mealData?.name || mealData?.title || '';
           const mealCategory = mealData?.category || mealData?.type || '';
@@ -225,9 +252,9 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
                     <UMActionPill
                       onClick={() =>
                         openDrawer("place-selector", {
-                          day,
+                          day: currentDay,
                           trip,
-                          index,
+                          index: selectedDayIndex,
                           mealType: meal,
                           replaceIndex: null,
                         })
@@ -248,9 +275,9 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
                   variant="primary"
                   onClick={() =>
                     openDrawer("place-selector", {
-                      day,
+                      day: currentDay,
                       trip,
-                      index,
+                      index: selectedDayIndex,
                       mealType: meal,
                     })
                   }
@@ -269,7 +296,7 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
           variant="primary"
           className="w-full justify-center"
           onClick={() =>
-            openDrawer("ai-suggestions", { day, index, trip })
+            openDrawer("ai-suggestions", { day: currentDay, index: selectedDayIndex, trip })
           }
         >
           Get AI Suggestions
