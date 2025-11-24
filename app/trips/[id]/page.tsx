@@ -751,20 +751,6 @@ export default function TripPage() {
                           />
                         </div>
                       </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-                          Address (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          value={hotel.address || ''}
-                          onChange={(e) => handleUpdateHotel(index, 'address', e.target.value)}
-                          placeholder="123 Main Street, City, Country"
-                          disabled={!isOwner}
-                          className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
-                      </div>
                     </div>
 
                     {isOwner && (
