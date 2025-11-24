@@ -47,7 +47,18 @@ export default function DrawerMount() {
         </Drawer>
       )}
       <DestinationDrawer isOpen={open && type === 'destination'} onClose={closeDrawer} place={props.place || null} {...props} />
-      <TripOverviewDrawer isOpen={open && type === 'trip-overview'} onClose={closeDrawer} trip={props.trip || null} {...props} />
+      {open && type === 'trip-overview' && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          title={props?.trip?.name ?? props?.trip?.title ?? "Trip Overview"}
+          style={drawerStyle}
+          position="right"
+          desktopWidth="640px"
+        >
+          <TripOverviewDrawer trip={props?.trip ?? null} />
+        </Drawer>
+      )}
       {open && type === 'trip-list' && (
         <Drawer
           isOpen={open}
