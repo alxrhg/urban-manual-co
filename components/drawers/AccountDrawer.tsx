@@ -126,6 +126,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const displayName = username || user?.email?.split('@')[0] || 'User';
   const displayHandle = username ? `@${username.toLowerCase().replace(/\s+/g, '')}` : '';
   const displayEmail = user?.email || '';
+  const isAdmin = (user?.app_metadata as Record<string, any> | null)?.role === 'admin';
 
   const handleSignOut = async () => {
     await signOut();
@@ -212,9 +213,16 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               )}
 
           <div className="space-y-0.5 flex-1 min-w-0">
-            <p className="text-[17px] font-semibold text-gray-900 dark:text-white truncate">
-              {displayName}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-[17px] font-semibold text-gray-900 dark:text-white truncate">
+                {displayName}
+              </p>
+              {isAdmin && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+                  Admin
+                </span>
+              )}
+            </div>
               {displayHandle && (
               <p className="text-sm text-neutral-500 dark:text-neutral-400 truncate">
                 {displayHandle}
