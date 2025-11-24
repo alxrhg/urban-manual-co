@@ -53,7 +53,7 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
   
   // If trip has an ID, fetch full trip data with days
   const { trip: fullTrip, loading } = useTrip(initialTrip?.id || null);
-  const displayTrip = fullTrip || initialTrip;
+  const displayTrip = (fullTrip || initialTrip) as Trip | null;
 
   if (!displayTrip) {
     if (loading) {
@@ -66,7 +66,7 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
     return null;
   }
 
-  const tripName = displayTrip.name || displayTrip.title || 'Untitled Trip';
+  const tripName = (displayTrip as any).name || displayTrip.title || 'Untitled Trip';
   const city = displayTrip.destination || 'Unknown';
   const coverImage = displayTrip.coverImage || displayTrip.cover_image;
   
