@@ -111,12 +111,16 @@ export async function GET(request: NextRequest) {
     // Fetch full destination data
     if (result.data?.suggestions && result.data.suggestions.length > 0) {
       const destinationIds = result.data.suggestions.map((s: any) => s.destination_id);
-      const { data: destinations } = await supabase
+      const { data: destinations, error: destError } = await supabase
         .from('destinations')
         .select('*')
         .in('id', destinationIds);
 
-      if (destinations) {
+      if (destError) {
+        console.error('[Proactive Recommendation Agent] Error fetching destinations:', destError);
+      }
+
+      if (!destError && destinations) {
         const enriched = result.data.suggestions.map((suggestion: any) => {
           const destination = destinations.find((d: any) => d.id === suggestion.destination_id);
           return {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Check, X } from 'lucide-react';
 
 interface SwipeableChipProps {
@@ -17,6 +17,16 @@ export function SwipeableChip({ suggestion, onAccept, onDismiss, children }: Swi
   const [isAccepted, setIsAccepted] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const chipRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   // Minimum swipe distance (in px) to be considered a swipe
   const minSwipeDistance = 50;
@@ -50,13 +60,13 @@ export function SwipeableChip({ suggestion, onAccept, onDismiss, children }: Swi
     if (isRightSwipe) {
       // Swipe right = Accept
       setIsAccepted(true);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         onAccept();
       }, 300);
     } else if (isLeftSwipe) {
       // Swipe left = Dismiss
       setIsDismissed(true);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         onDismiss();
       }, 300);
     } else {
