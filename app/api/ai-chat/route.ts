@@ -98,6 +98,11 @@ function getCacheKey(query: string, intent: any): string {
   return `${query.toLowerCase()}_${intent.city || ''}_${intent.category || ''}`;
 }
 
+// SSE helper for streaming responses
+function createSSEMessage(data: any): string {
+  return `data: ${JSON.stringify(data)}\n\n`;
+}
+
 // Category synonym mapping
 const CATEGORY_SYNONYMS: Record<string, string> = {
   'restaurant': 'Restaurant',
@@ -690,6 +695,114 @@ Generate a natural, helpful response that incorporates relevant context (weather
   return generateResponse(results.length, intent.city, intent.category);
 }
 
+// Streaming version of response generation
+async function* generateStreamingResponse(
+  results: any[],
+  query: string,
+  intent: any,
+  userId?: string
+): AsyncGenerator<string, void, unknown> {
+  if (results.length === 0) {
+    yield "I couldn't find any places matching your search. Try adjusting your filters or search terms.";
+    return;
+  }
+
+  const topResults = results.slice(0, 5);
+  const hasWeather = topResults.some((r: any) => r.currentWeather);
+
+  let contextInfo = '';
+  if (hasWeather && topResults[0]?.currentWeather) {
+    const weather = topResults[0].currentWeather;
+    contextInfo += `\nCurrent weather: ${weather.temperature}°C, ${weather.weatherDescription}`;
+  }
+
+  const systemPrompt = `You are Urban Manual's intelligent travel assistant. Be concise (2-3 sentences max).${contextInfo}`;
+
+  const userPrompt = `User searched: "${query}"
+Found ${results.length} results.
+Top results:
+${topResults.map((r: any, i: number) => `${i + 1}. ${r.name} (${r.city}) - ${r.category || 'Place'}`).join('\n')}
+
+Generate a brief, helpful response.`;
+
+  // Try OpenAI streaming first
+  if (openai?.chat) {
+    try {
+      const model = getModelForQuery(query, []);
+      const stream = await openai.chat.completions.create({
+        model: model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 150,
+        stream: true,
+      });
+
+      let fullResponse = '';
+      for await (const chunk of stream) {
+        const content = chunk.choices?.[0]?.delta?.content || '';
+        if (content) {
+          fullResponse += content;
+          yield content;
+        }
+      }
+
+      // Track usage after streaming completes (estimate tokens)
+      trackUsage({
+        model,
+        inputTokens: estimateTokens(systemPrompt + userPrompt),
+        outputTokens: estimateTokens(fullResponse),
+        endpoint: '/api/ai-chat/stream-response',
+        userId,
+      });
+      return;
+    } catch (error) {
+      console.error('[AI Chat] OpenAI streaming error:', error);
+    }
+  }
+
+  // Fallback to Gemini streaming
+  if (genAI) {
+    try {
+      const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+      const geminiModel = genAI.getGenerativeModel({
+        model: GEMINI_MODEL,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 150,
+        }
+      });
+      const result = await geminiModel.generateContentStream(fullPrompt);
+
+      let fullResponse = '';
+      for await (const chunk of result.stream) {
+        const content = chunk.text();
+        if (content) {
+          fullResponse += content;
+          yield content;
+        }
+      }
+
+      // Track Gemini usage
+      trackUsage({
+        model: GEMINI_MODEL,
+        inputTokens: estimateTokens(fullPrompt),
+        outputTokens: estimateTokens(fullResponse),
+        endpoint: '/api/ai-chat/stream-response',
+        userId,
+      });
+      return;
+    } catch (error) {
+      console.error('[AI Chat] Gemini streaming error:', error);
+    }
+  }
+
+  // Final fallback - non-streaming
+  yield generateResponse(results.length, intent.city, intent.category);
+}
+
 function generateResponse(count: number, city?: string, category?: string): string {
   const location = city ? ` in ${city}` : '';
   const categoryText = category ? ` ${category}` : ' place';
@@ -706,10 +819,12 @@ function generateResponse(count: number, city?: string, category?: string): stri
 }
 
 export async function POST(request: NextRequest) {
+  const encoder = new TextEncoder();
+
   try {
     const supabase = await createServerClient();
     const body = await request.json();
-    const { query, userId, conversationHistory = [] } = body;
+    const { query, userId, conversationHistory = [], stream: useStreaming = false } = body;
 
     // Rate limiting: 5 requests per 10 seconds for AI chat (same as conversation endpoint)
     const identifier = getIdentifier(request, userId);
@@ -717,6 +832,25 @@ export async function POST(request: NextRequest) {
     const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
 
     if (!success) {
+      if (useStreaming) {
+        return new Response(
+          encoder.encode(createSSEMessage({
+            type: 'error',
+            error: 'Too many AI chat requests. Please wait a moment.',
+            limit,
+            remaining,
+            reset
+          })),
+          {
+            status: 429,
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+            },
+          }
+        );
+      }
       return createRateLimitResponse(
         'Too many AI chat requests. Please wait a moment.',
         limit,
@@ -726,13 +860,34 @@ export async function POST(request: NextRequest) {
     }
 
     if (!query || query.trim().length < 2) {
+      if (useStreaming) {
+        return new Response(
+          encoder.encode(createSSEMessage({
+            type: 'complete',
+            content: 'What are you looking for? Try searching for a place, city, or experience.',
+            destinations: []
+          })),
+          {
+            headers: {
+              'Content-Type': 'text/event-stream',
+              'Cache-Control': 'no-cache',
+              'Connection': 'keep-alive',
+            },
+          }
+        );
+      }
       return NextResponse.json({
         content: 'What are you looking for? Try searching for a place, city, or experience.',
         destinations: []
       });
     }
 
-    // Request deduplication: prevent duplicate in-flight requests
+    // For streaming requests, use the streaming handler
+    if (useStreaming) {
+      return await processStreamingAIChatRequest(query, userId, conversationHistory, encoder);
+    }
+
+    // Request deduplication: prevent duplicate in-flight requests (non-streaming only)
     const requestKey = `${query.toLowerCase().trim()}_${userId || 'anon'}_${conversationHistory.length}`;
     const existingRequest = pendingRequests.get(requestKey);
 
@@ -767,6 +922,152 @@ export async function POST(request: NextRequest) {
       destinations: []
     }, { status: 500 });
   }
+}
+
+// Streaming version of the AI chat request handler
+async function processStreamingAIChatRequest(
+  query: string,
+  userId: string | undefined,
+  conversationHistory: Array<{role: string, content: string}>,
+  encoder: TextEncoder
+): Promise<Response> {
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        // Send initial status
+        controller.enqueue(encoder.encode(createSSEMessage({ type: 'status', status: 'processing' })));
+
+        const supabase = await createServerClient();
+
+        // Parallelize intent understanding and embedding generation
+        const [intent, queryEmbedding] = await Promise.all([
+          understandQuery(query, conversationHistory, userId),
+          generateEmbedding(query)
+        ]);
+
+        // Normalize category
+        if (intent.category) {
+          const normalized = CATEGORY_SYNONYMS[intent.category.toLowerCase()];
+          if (normalized) {
+            intent.category = normalized;
+          }
+        }
+
+        // Send intent update
+        controller.enqueue(encoder.encode(createSSEMessage({ type: 'intent', intent })));
+
+        let results: any[] = [];
+        let searchTier = 'ai-chat';
+
+        // Try Discovery Engine first
+        try {
+          const discoveryEngine = getDiscoveryEngineService();
+          if (discoveryEngine.isAvailable()) {
+            const discoveryResult = await unifiedSearch({
+              query: query,
+              userId: userId,
+              city: intent.city,
+              category: intent.category,
+              priceLevel: intent.filters?.priceLevel,
+              minRating: intent.filters?.rating,
+              pageSize: 100,
+              useCache: true,
+            });
+
+            if (discoveryResult && discoveryResult.source === 'discovery_engine' && discoveryResult.results.length > 0) {
+              results = discoveryResult.results.map((result: any) => ({
+                ...result,
+                id: result.id || result.slug,
+                name: result.name,
+                description: result.description,
+                city: result.city,
+                category: result.category,
+                rating: result.rating || 0,
+                price_level: result.priceLevel || result.price_level || 0,
+                slug: result.slug || result.id,
+              }));
+              searchTier = 'discovery-engine';
+            }
+          }
+        } catch (error) {
+          console.error('[AI Chat Streaming] Discovery Engine error:', error);
+        }
+
+        // Fallback to vector search
+        if (results.length === 0 && queryEmbedding) {
+          try {
+            const { data, error } = await supabase.rpc('match_destinations', {
+              query_embedding: queryEmbedding,
+              match_threshold: 0.6,
+              match_count: 100,
+              filter_city: intent.city || null,
+              filter_category: intent.category || null,
+              filter_michelin_stars: intent.filters?.michelinStar || null,
+              filter_min_rating: intent.filters?.rating || null,
+              filter_max_price_level: intent.filters?.priceLevel || null,
+              search_query: query
+            });
+            if (!error && data && data.length > 0) {
+              results = data;
+              searchTier = 'vector-search';
+            }
+          } catch (error) {
+            console.error('[AI Chat Streaming] Vector search error:', error);
+          }
+        }
+
+        // Send destinations immediately
+        controller.enqueue(encoder.encode(createSSEMessage({
+          type: 'destinations',
+          destinations: results.slice(0, 20),
+          searchTier
+        })));
+
+        // Stream the AI response
+        controller.enqueue(encoder.encode(createSSEMessage({ type: 'response_start' })));
+
+        let fullContent = '';
+        for await (const chunk of generateStreamingResponse(results, query, intent, userId)) {
+          fullContent += chunk;
+          controller.enqueue(encoder.encode(createSSEMessage({
+            type: 'chunk',
+            content: chunk
+          })));
+        }
+
+        // Send completion with full data
+        controller.enqueue(encoder.encode(createSSEMessage({
+          type: 'complete',
+          content: fullContent,
+          destinations: results,
+          searchTier,
+          intent: {
+            ...intent,
+            resultCount: results.length,
+            hasResults: results.length > 0
+          }
+        })));
+
+        controller.close();
+      } catch (error: any) {
+        console.error('[AI Chat Streaming] Error:', error);
+        controller.enqueue(encoder.encode(createSSEMessage({
+          type: 'error',
+          error: 'Failed to process request',
+          details: error.message
+        })));
+        controller.close();
+      }
+    }
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
 }
 
 // Extract main logic into separate function for cleaner deduplication
