@@ -22,7 +22,8 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
-  // Note: userScalable and maximumScale removed to allow zooming for accessibility (WCAG 1.4.4)
+  // Pinch-to-zoom enabled for accessibility (WCAG 1.4.4)
+  // Double-tap zoom and overscroll prevented via CSS (globals.css)
 };
 
 export const metadata: Metadata = {
