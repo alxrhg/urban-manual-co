@@ -671,6 +671,139 @@ export default function TripPage() {
         </div>
       )}
 
+      {activeTab === 'hotels' && (
+        <div className="space-y-6">
+          {isOwner && (
+            <div className="flex items-center justify-between">
+              <UMSectionTitle>Hotels</UMSectionTitle>
+              <UMActionPill onClick={handleAddHotel} variant="primary">
+                <Plus className="w-4 h-4" />
+                Add Hotel
+              </UMActionPill>
+            </div>
+          )}
+
+          {loadingHotels ? (
+            <div className="text-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-neutral-400" />
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">Loading hotels...</p>
+            </div>
+          ) : hotels.length === 0 ? (
+            <UMCard className="p-8 text-center">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+                No hotels added yet
+              </p>
+              {isOwner && (
+                <UMActionPill onClick={handleAddHotel} variant="primary">
+                  <Plus className="w-4 h-4" />
+                  Add Your First Hotel
+                </UMActionPill>
+              )}
+            </UMCard>
+          ) : (
+            <div className="space-y-4">
+              {hotels.map((hotel, index) => (
+                <UMCard key={index} className="p-6 space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                          Hotel Name
+                        </label>
+                        <input
+                          type="text"
+                          value={hotel.name}
+                          onChange={(e) => handleUpdateHotel(index, 'name', e.target.value)}
+                          placeholder="Hotel Le Marais"
+                          disabled={!isOwner}
+                          className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                            <Calendar className="w-4 h-4" />
+                            Check-in Date
+                          </label>
+                          <input
+                            type="date"
+                            value={hotel.startDate}
+                            onChange={(e) => handleUpdateHotel(index, 'startDate', e.target.value)}
+                            min={trip?.start_date || ''}
+                            max={trip?.end_date || ''}
+                            disabled={!isOwner}
+                            className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                            <Calendar className="w-4 h-4" />
+                            Check-out Date
+                          </label>
+                          <input
+                            type="date"
+                            value={hotel.endDate}
+                            onChange={(e) => handleUpdateHotel(index, 'endDate', e.target.value)}
+                            min={hotel.startDate || trip?.start_date || ''}
+                            max={trip?.end_date || ''}
+                            disabled={!isOwner}
+                            className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                          Address (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={hotel.address || ''}
+                          onChange={(e) => handleUpdateHotel(index, 'address', e.target.value)}
+                          placeholder="123 Main Street, City, Country"
+                          disabled={!isOwner}
+                          className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+
+                    {isOwner && (
+                      <button
+                        onClick={() => handleRemoveHotel(index)}
+                        className="ml-4 p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
+                        title="Remove hotel"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                </UMCard>
+              ))}
+            </div>
+          )}
+
+          {isOwner && hotels.length > 0 && (
+            <div className="pt-4">
+              <UMActionPill
+                onClick={() => !saving && handleSaveHotels()}
+                variant="primary"
+                className={`w-full justify-center ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  'Save Hotels'
+                )}
+              </UMActionPill>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Save Button (Fixed at bottom) */}
       {isOwner && activeTab !== 'hotels' && (
         <div className="fixed bottom-6 right-6 z-50">
