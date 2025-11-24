@@ -134,18 +134,6 @@ export default function TripDayEditorDrawer({
     // TODO: Implement clear meal functionality
   };
 
-  const handleDuplicateDay = () => {
-    console.log("Duplicate day", index);
-    // TODO: Implement duplicate day functionality
-  };
-
-  const handleDeleteDay = () => {
-    if (confirm('Are you sure you want to delete this day?')) {
-      console.log("Delete day", index);
-      // TODO: Implement delete day functionality
-    }
-  };
-
   const containerClass =
     className ?? (hideHeader ? 'space-y-10' : 'px-6 py-6 space-y-10');
 
@@ -357,24 +345,6 @@ export default function TripDayEditorDrawer({
         >
           Get AI Suggestions
         </UMActionPill>
-      </section>
-
-      {/* DUPLICATE / DELETE */}
-      <section className="pt-4 border-t border-gray-200 dark:border-gray-800">
-        <div className="flex justify-between pt-4">
-          <button
-            onClick={handleDuplicateDay}
-            className="text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-          >
-            Duplicate Day
-          </button>
-          <button
-            onClick={handleDeleteDay}
-            className="text-xs text-red-500 hover:text-red-600 transition-colors"
-          >
-            Delete Day
-          </button>
-        </div>
       </section>
     </div>
   );
