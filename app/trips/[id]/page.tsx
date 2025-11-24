@@ -434,83 +434,86 @@ export default function TripPage() {
   ];
 
   return (
-    <div className="w-full min-h-screen">
-      {/* Cover Hero */}
-      <div className="relative h-56 sm:h-72 bg-neutral-100 dark:bg-neutral-900">
-        {coverImagePreview ? (
-          <>
-            <Image
-              src={coverImagePreview}
-              alt={trip.title}
-              fill
-              className="object-cover"
-              sizes="100vw"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
-          </>
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-800 dark:to-neutral-900">
-            <MapPin className="w-16 h-16 text-neutral-400 dark:text-neutral-600" />
-          </div>
-        )}
-
-        {/* Back Button */}
-        <button
-          onClick={() => router.push('/trips')}
-          className="absolute top-4 left-4 sm:top-6 sm:left-6 p-2 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors z-10"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-
-        {/* Action Buttons */}
-        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex gap-2 z-10">
-          {isOwner && (
-            <button
-              onClick={() => setShowTripPlanner(true)}
-              className="p-2 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
-              title="Edit trip"
-            >
-              <Camera className="w-5 h-5" />
-            </button>
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+        {/* Cover Hero */}
+        <section className="relative overflow-hidden rounded-[32px] border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-900 min-h-[260px]">
+          {coverImagePreview ? (
+            <>
+              <Image
+                src={coverImagePreview}
+                alt={trip.title}
+                fill
+                className="object-cover"
+                sizes="100vw"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/20 to-transparent" />
+            </>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-800 dark:to-neutral-900">
+              <MapPin className="w-16 h-16 text-neutral-400 dark:text-neutral-600" />
+            </div>
           )}
-          <button
-            className="p-2 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
-            title="Share trip"
-          >
-            <Share2 className="w-5 h-5" />
-          </button>
-        </div>
 
-        {/* Trip Info Overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-white drop-shadow-lg mb-2">
-            {trip.title}
-          </h1>
-          <div className="flex flex-wrap items-center gap-3 text-white/90 text-sm">
-            {trip.destination && (
-              <span className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                {trip.destination}
-              </span>
-            )}
-            {trip.start_date && trip.end_date && (
-              <span className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                {formatDate(trip.start_date)} – {formatDate(trip.end_date)}
-              </span>
-            )}
-            {tripDuration && (
-              <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-xs">
-                {tripDuration} {tripDuration === 1 ? 'day' : 'days'}
-              </span>
-            )}
+          <div className="relative z-10 flex h-full flex-col justify-between p-6 sm:p-8">
+            <div className="flex items-center justify-between gap-4">
+              <button
+                onClick={() => router.push('/trips')}
+                className="inline-flex items-center gap-2 rounded-full border border-white/40 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Trips
+              </button>
+              <div className="flex items-center gap-2">
+                {isOwner && (
+                  <button
+                    onClick={() => setShowTripPlanner(true)}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white hover:bg-white/10 transition"
+                    title="Edit trip"
+                  >
+                    <Camera className="w-5 h-5" />
+                  </button>
+                )}
+                <button
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white hover:bg-white/10 transition"
+                  title="Share trip"
+                >
+                  <Share2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-white">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/80 backdrop-blur-sm">
+                Trip
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-semibold">{trip.title}</h1>
+              <div className="flex flex-wrap items-center gap-4 text-sm text-white/90">
+                {trip.destination && (
+                  <span className="inline-flex items-center gap-2">
+                    <MapPin className="w-4 h-4" />
+                    {trip.destination}
+                  </span>
+                )}
+                {trip.start_date && trip.end_date && (
+                  <span className="inline-flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    {formatDate(trip.start_date)} – {formatDate(trip.end_date)}
+                  </span>
+                )}
+                {tripDuration && (
+                  <span className="rounded-full bg-black/30 px-3 py-1 text-xs font-medium backdrop-blur">
+                    {tripDuration} {tripDuration === 1 ? 'day' : 'days'}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Main Content */}
-      <div className="w-full px-6 md:px-10 py-8 space-y-8">
+        {/* Main Content */}
+        <section className="space-y-8">
         {/* Tab Navigation - Match account page style */}
         <div className="border-b border-neutral-200 dark:border-neutral-800 -mx-6 px-6 md:-mx-10 md:px-10">
           <div className="flex gap-6 text-sm">
