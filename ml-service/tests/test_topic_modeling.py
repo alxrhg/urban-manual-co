@@ -11,6 +11,7 @@ class DummySentenceTransformer:
     """Lightweight stand-in for the transformer model."""
 
     def __init__(self, *_, **__):
+        """Mark the dummy transformer as loaded without heavy initialization."""
         self.model_loaded = True
 
 
@@ -18,6 +19,7 @@ class DummyBERTopic:
     """Deterministic BERTopic replacement for tests."""
 
     def __init__(self, *_, **__):
+        """Prime fake topic keywords and reset stored topics."""
         self.topic_words = {
             0: [("food", 0.8), ("market", 0.6)],
             1: [("art", 0.7), ("gallery", 0.5)],
@@ -25,11 +27,13 @@ class DummyBERTopic:
         self._topics = []
 
     def fit_transform(self, texts):
+        """Generate deterministic topic assignments and probabilities."""
         self._topics = [0 if "food" in text else 1 for text in texts]
         probs = [0.99] * len(texts)
         return self._topics, probs
 
     def get_topic_info(self):
+        """Return basic topic counts when topics have been assigned."""
         if not self._topics:
             return []
         return [
@@ -38,6 +42,7 @@ class DummyBERTopic:
         ]
 
     def get_topic(self, topic_id):
+        """Expose keyword tuples for the requested topic identifier."""
         return self.topic_words.get(topic_id, [])
 
 

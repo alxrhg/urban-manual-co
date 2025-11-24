@@ -139,8 +139,11 @@ def cache_result(ttl_seconds: int = 3600, max_size: int = 1000):
     cache = LRUCache(max_size=max_size, ttl_seconds=ttl_seconds)
 
     def decorator(func: Callable) -> Callable:
+        """Wrap a function with memoization backed by the LRU cache."""
+
         @wraps(func)
         async def wrapper(*args, **kwargs):
+            """Return cached values when present and store fresh results on miss."""
             # Create cache key from function name and arguments
             cache_key = _create_cache_key(func.__name__, args, kwargs)
 
@@ -226,8 +229,11 @@ def timing_decorator(monitor: PerformanceMonitor):
         monitor: PerformanceMonitor instance
     """
     def decorator(func: Callable) -> Callable:
+        """Wrap a callable to record its runtime using the provided monitor."""
+
         @wraps(func)
         async def async_wrapper(*args, **kwargs):
+            """Measure coroutine execution duration and report it to the monitor."""
             start = datetime.utcnow()
             try:
                 result = await func(*args, **kwargs)
@@ -238,6 +244,7 @@ def timing_decorator(monitor: PerformanceMonitor):
 
         @wraps(func)
         def sync_wrapper(*args, **kwargs):
+            """Track synchronous execution time for the wrapped callable."""
             start = datetime.utcnow()
             try:
                 result = func(*args, **kwargs)
