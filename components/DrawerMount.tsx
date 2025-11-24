@@ -12,8 +12,8 @@ import TripOverviewDrawer from '@/components/trip-drawers/TripOverviewDrawer';
 import TripDayDrawer from '@/components/trip-drawers/TripDayDrawer';
 import TripAddMealDrawer from '@/components/trip-drawers/TripAddMealDrawer';
 import TripAddPlaceDrawer from '@/components/trip-drawers/TripAddPlaceDrawer';
-import TripAddHotelDrawer from '@/components/trip-drawers/TripAddHotelDrawer';
-import TripAISuggestionsDrawer from '@/components/trip-drawers/TripAISuggestionsDrawer';
+import AddHotelDrawer from '@/components/drawers/AddHotelDrawer';
+import AISuggestionsDrawer from '@/components/drawers/AISuggestionsDrawer';
 import TripReorderDrawer from '@/components/trip-drawers/TripReorderDrawer';
 import TripListDrawer from '@/components/drawers/TripListDrawer';
 import TripOverviewQuickDrawer from '@/components/drawers/TripOverviewQuickDrawer';
@@ -60,15 +60,58 @@ export default function DrawerMount() {
         {...props}
       />
       <TripAddPlaceDrawer isOpen={open && type === 'trip-add-place'} onClose={closeDrawer} day={props.day || null} {...props} />
-      <PlaceSelectorDrawer isOpen={open && type === 'place-selector'} onClose={closeDrawer} day={props.day || null} trip={props.trip || null} mealType={props.mealType} />
-      <TripAddHotelDrawer isOpen={open && type === 'trip-add-hotel'} onClose={closeDrawer} day={props.day || null} {...props} />
-      <TripAISuggestionsDrawer
-        isOpen={open && type === 'trip-ai'}
-        onClose={closeDrawer}
-        trip={props.trip || null}
-        suggestions={props.suggestions || []}
-        {...props}
-      />
+      {open && type === 'place-selector' && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          title={props.mealType ? `Add ${props.mealType}` : "Add Place"}
+          style={drawerStyle}
+          position="right"
+          desktopWidth="640px"
+        >
+          <PlaceSelectorDrawer
+            day={props.day || null}
+            trip={props.trip || null}
+            index={props.index}
+            mealType={props.mealType || null}
+            replaceIndex={props.replaceIndex || null}
+          />
+        </Drawer>
+      )}
+      {open && type === 'trip-add-hotel' && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          title="Select Hotel"
+          style={drawerStyle}
+          position="right"
+          desktopWidth="640px"
+        >
+          <AddHotelDrawer
+            trip={props.trip || null}
+            day={props.day || null}
+            index={props.index}
+          />
+        </Drawer>
+      )}
+      {open && type === 'trip-ai' && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          title="AI Suggestions"
+          fullScreen={true}
+          position="right"
+          style={drawerStyle}
+        >
+          <AISuggestionsDrawer
+            day={props.day || null}
+            trip={props.trip || null}
+            index={props.index}
+            suggestions={props.suggestions}
+            onApply={props.onApply}
+          />
+        </Drawer>
+      )}
       <TripReorderDrawer isOpen={open && type === 'trip-reorder-days'} onClose={closeDrawer} days={props.days || []} {...props} />
     </>
   );

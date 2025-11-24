@@ -9,8 +9,8 @@ import TripListDrawer from "@/components/drawers/TripListDrawer";
 import TripOverviewDrawer from "@/components/drawers/TripOverviewDrawer";
 import TripDayEditorDrawer from "@/components/drawers/TripDayEditorDrawer";
 import PlaceSelectorDrawer from "@/components/drawers/PlaceSelectorDrawer";
-import TripAddHotelDrawer from "@/components/trip-drawers/TripAddHotelDrawer";
-import TripAISuggestionsDrawer from "@/components/trip-drawers/TripAISuggestionsDrawer";
+import AddHotelDrawer from "@/components/drawers/AddHotelDrawer";
+import AISuggestionsDrawer from "@/components/drawers/AISuggestionsDrawer";
 
 /**
  * DrawerMount:
@@ -69,35 +69,60 @@ export default function DrawerMount() {
 
       {/* PLACE SELECTOR */}
       {drawer === "place-selector" && (
-        <PlaceSelectorDrawer 
-          isOpen={isOpen} 
-          onClose={closeDrawer} 
-          day={props?.day ?? null}
-          trip={props?.trip ?? null}
-          mealType={props?.mealType}
-          {...props} 
-        />
+        <Drawer
+          isOpen={isOpen}
+          onClose={closeDrawer}
+          title={props?.mealType ? `Add ${props.mealType}` : "Add Place"}
+          style={drawerStyle}
+          position="right"
+          desktopWidth="640px"
+        >
+          <PlaceSelectorDrawer
+            day={props?.day ?? null}
+            trip={props?.trip ?? null}
+            index={props?.index}
+            mealType={props?.mealType ?? null}
+            replaceIndex={props?.replaceIndex ?? null}
+          />
+        </Drawer>
       )}
 
       {/* ADD HOTEL */}
       {drawer === "add-hotel" && (
-        <TripAddHotelDrawer 
-          isOpen={isOpen} 
-          onClose={closeDrawer} 
-          day={props?.day ?? null}
-          {...props} 
-        />
+        <Drawer
+          isOpen={isOpen}
+          onClose={closeDrawer}
+          title="Select Hotel"
+          style={drawerStyle}
+          position="right"
+          desktopWidth="640px"
+        >
+          <AddHotelDrawer
+            trip={props?.trip ?? null}
+            day={props?.day ?? null}
+            index={props?.index}
+          />
+        </Drawer>
       )}
 
       {/* AI SUGGESTIONS */}
       {drawer === "ai-suggestions" && (
-        <TripAISuggestionsDrawer 
-          isOpen={isOpen} 
-          onClose={closeDrawer} 
-          trip={props?.trip ?? null}
-          suggestions={props?.suggestions ?? []}
-          {...props} 
-        />
+        <Drawer
+          isOpen={isOpen}
+          onClose={closeDrawer}
+          title="AI Suggestions"
+          fullScreen={true}
+          position="right"
+          style={drawerStyle}
+        >
+          <AISuggestionsDrawer
+            day={props?.day ?? null}
+            trip={props?.trip ?? null}
+            index={props?.index}
+            suggestions={props?.suggestions}
+            onApply={props?.onApply}
+          />
+        </Drawer>
       )}
     </>
   );
