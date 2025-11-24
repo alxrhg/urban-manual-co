@@ -21,10 +21,9 @@ import DrawerMount from "@/components/DrawerMount";
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  minimumScale: 1,
-  userScalable: false,
   viewportFit: 'cover',
+  // Pinch-to-zoom enabled for accessibility (WCAG 1.4.4)
+  // Double-tap zoom and overscroll prevented via CSS (globals.css)
 };
 
 export const metadata: Metadata = {
@@ -201,7 +200,7 @@ export default function RootLayout({
                     <AdminEditModeProvider>
                       <ItineraryProvider>
                         <Header />
-                        <main className="min-h-screen page-transition">
+                        <main id="main-content" className="min-h-screen page-transition" role="main">
                           {children}
                         </main>
                         <Footer />

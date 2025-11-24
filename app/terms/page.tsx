@@ -7,9 +7,9 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <div className="w-full px-6 md:px-10 lg:px-12 py-20">
-        <h1 className="text-4xl font-bold mb-8">Terms of Service</h1>
+    <article className="min-h-screen bg-white dark:bg-gray-900" aria-labelledby="terms-title">
+      <div className="w-full px-6 md:px-10 lg:px-12 py-20 max-w-4xl mx-auto">
+        <h1 id="terms-title" className="text-4xl font-bold mb-8">Terms of Service</h1>
         
         <div className="prose prose-gray dark:prose-invert max-w-none">
           <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -72,7 +72,7 @@ export default function TermsPage() {
           </section>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 
