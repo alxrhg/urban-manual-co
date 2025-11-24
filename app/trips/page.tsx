@@ -244,9 +244,9 @@ export default function TripsPage() {
           )}
 
           {/* TRIP LIST */}
-          <div className="max-w-2xl mx-auto space-y-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredTrips.length === 0 ? (
-              <div className="text-center space-y-3 py-20">
+              <div className="col-span-full text-center space-y-3 py-20">
                 <p className="text-sm text-neutral-500">You have no trips yet.</p>
                 <UMFeaturePill
                   onClick={() => {
