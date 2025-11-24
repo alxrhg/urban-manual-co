@@ -81,7 +81,7 @@ export default function TripDayDrawer({ isOpen, onClose, day }: TripDayDrawerPro
 
             return (
               <UMCard key={mealType} className="p-4 space-y-3">
-                <p className="font-medium capitalize text-[15px] text-gray-900 dark:text-white">
+                <p className="text-sm font-medium capitalize text-gray-900 dark:text-white">
                   {mealType}
                 </p>
 

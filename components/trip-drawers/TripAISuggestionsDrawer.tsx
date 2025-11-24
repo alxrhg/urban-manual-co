@@ -44,11 +44,11 @@ function AISuggestionList({ suggestions }: { suggestions?: Suggestion[] }) {
       {suggestions.map((s, i) => (
         <div
           key={s.id || i}
-          className="rounded-xl border border-[var(--um-border)] p-4 space-y-1 bg-white dark:bg-gray-950"
+          className="rounded-2xl border border-gray-200 dark:border-gray-800 p-4 space-y-1 bg-white dark:bg-gray-950"
         >
-          <p className="font-medium text-gray-900 dark:text-white">{s.title || s.text || 'Suggestion'}</p>
+          <p className="text-sm font-medium text-gray-900 dark:text-white">{s.title || s.text || 'Suggestion'}</p>
           {s.detail && (
-            <p className="text-sm text-[var(--um-text-muted)] mt-1">{s.detail}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{s.detail}</p>
           )}
         </div>
       ))}
@@ -114,7 +114,7 @@ export default function TripAISuggestionsDrawer({
 
       <DrawerActionBar>
         <button
-          className="w-full bg-black dark:bg-white text-white dark:text-black rounded-xl py-3 font-medium text-sm hover:opacity-90 transition-opacity"
+          className="w-full bg-black dark:bg-white text-white dark:text-black rounded-2xl py-3 font-medium text-xs hover:opacity-90 transition-opacity"
           onClick={handleApply}
         >
           Apply Suggestions

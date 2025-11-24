@@ -59,7 +59,7 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
     if (loading) {
       return (
         <div className="px-6 py-8 flex items-center justify-center">
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">Loading trip...</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Loading trip...</p>
         </div>
       );
     }
@@ -154,10 +154,10 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
 
       {/* TITLE + METADATA */}
       <div className="space-y-1">
-        <h1 className="text-[20px] font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-light text-gray-900 dark:text-white">
           {tripName}
         </h1>
-        <p className="text-neutral-500 dark:text-neutral-400 text-sm">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {city} {dateRange && `• ${dateRange}`}
         </p>
       </div>
@@ -166,7 +166,7 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
       <section className="space-y-4">
         <UMSectionTitle>Trip Summary</UMSectionTitle>
         <UMCard className="p-4 space-y-3">
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             {days.length} day{days.length !== 1 ? 's' : ''} · {cities.length > 0 ? cities.join(', ') : 'No cities'}
           </p>
           
@@ -187,11 +187,11 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {dest.name}
                     </p>
                     {dest.city && (
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                         {dest.city}
                       </p>
                     )}
@@ -199,7 +199,7 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
                 </div>
               ))}
               {allDestinations.length > 10 && (
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 pt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 pt-1">
                   +{allDestinations.length - 10} more
                 </p>
               )}
@@ -244,10 +244,10 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
                   )}
 
                   <div className="space-y-1">
-                    <p className="font-medium text-gray-900 dark:text-white">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       Day {i + 1}
                     </p>
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {dayCity} {dayDate && `• ${dayDate}`}
                     </p>
                   </div>
@@ -265,10 +265,10 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
           <div className="space-y-4">
             {hotels.map((hotel, idx) => (
               <UMCard key={idx} className="p-4">
-                <p className="font-medium text-gray-900 dark:text-white">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {hotel.name}
                 </p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {hotel.city}
                 </p>
               </UMCard>
@@ -288,14 +288,14 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
 
               return (
                 <UMCard key={idx} className="p-4 space-y-1">
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {flight.airline}
                   </p>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {depart && arrive ? `${depart} → ${arrive}` : depart || arrive}
                   </p>
                   {flight.flightNumber && (
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {flight.flightNumber}
                     </p>
                   )}
@@ -309,11 +309,11 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
       {/* VIEW FULL TRIP BUTTON */}
       {displayTrip.id && (
         <div className="pt-4">
-          <UMCard 
-            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+          <UMCard
+            className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/10 transition"
             onClick={handleViewTrip}
           >
-            <p className="font-medium text-gray-900 dark:text-white text-center">
+            <p className="text-sm font-medium text-gray-900 dark:text-white text-center">
               View Full Trip →
             </p>
           </UMCard>

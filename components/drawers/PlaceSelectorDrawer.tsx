@@ -92,7 +92,7 @@ export default function PlaceSelectorDrawer({
         <UMSectionTitle>Curated Picks</UMSectionTitle>
 
         {results.length === 0 ? (
-          <div className="text-center py-12 text-sm text-neutral-500 dark:text-neutral-400">
+          <div className="text-center py-12 text-xs text-gray-500 dark:text-gray-400">
             No places found. Try a different search.
           </div>
         ) : (

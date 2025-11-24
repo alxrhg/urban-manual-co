@@ -57,7 +57,7 @@ export default function TripOverviewDrawer({ trip }: TripOverviewDrawerProps) {
       <section className="space-y-4">
         <UMSectionTitle>Trip Summary</UMSectionTitle>
         <UMCard className="p-4">
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
               {days.length} day{days.length !== 1 ? 's' : ''} · {cities.length > 0 ? cities.join(', ') : 'No cities'}
             </p>
         </UMCard>
@@ -80,13 +80,13 @@ export default function TripOverviewDrawer({ trip }: TripOverviewDrawerProps) {
                   }}
                 >
                 <div className="flex justify-between items-center">
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     Day {i + 1} – {d.date}
                   </p>
-                  <span className="text-sm text-neutral-500 dark:text-neutral-400">→</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">→</span>
                 </div>
                 {d.city && (
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {d.city}
                   </p>
                 )}
@@ -103,8 +103,8 @@ export default function TripOverviewDrawer({ trip }: TripOverviewDrawerProps) {
           <div className="space-y-4">
             {hotels.map((h, i) => (
               <UMCard key={i} className="p-4">
-                <p className="font-medium text-gray-900 dark:text-white">{h.name}</p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{h.city}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white">{h.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{h.city}</p>
               </UMCard>
               ))}
             </div>
@@ -118,10 +118,10 @@ export default function TripOverviewDrawer({ trip }: TripOverviewDrawerProps) {
           <div className="space-y-4">
             {flights.map((f, i) => (
               <UMCard key={i} className="p-4">
-                <p className="font-medium text-gray-900 dark:text-white">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {f.airline} · {f.flightNumber}
                 </p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   {f.departure} → {f.arrival}
                 </p>
               </UMCard>
