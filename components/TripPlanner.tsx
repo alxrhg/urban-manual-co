@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   CalendarIcon,
   MapPinIcon,
@@ -108,6 +108,7 @@ export function TripPlanner({
   const [coverImagePreview, setCoverImagePreview] = useState<string | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [hotels, setHotels] = useState<Array<{
     id?: string;
     name: string;
@@ -118,6 +119,7 @@ export function TripPlanner({
   const toast = useToast();
 
   const draftStorageKey = 'tripPlannerDraft';
+  const autosaveTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Load existing trip if tripId is provided
   useEffect(() => {
@@ -173,6 +175,7 @@ export function TripPlanner({
     setValidationErrors([]);
     setFieldErrors({});
     setDraftRestored(false);
+    setDraftStatus('idle');
   };
 
   const loadTrip = async (id: string) => {
@@ -427,6 +430,7 @@ export function TripPlanner({
         if (parsedDraft.coverImage) {
           setCoverImagePreview(parsedDraft.coverImage);
         }
+        setDraftStatus('saved');
       } catch (error) {
         console.error('Error parsing trip planner draft', error);
       }
@@ -436,13 +440,42 @@ export function TripPlanner({
   }, [draftRestored, draftStorageKey, isOpen, tripId, currentTripId]);
 
   useEffect(() => {
-    if (!currentTripId) {
-      persistDraft();
+    if (!isOpen || currentTripId || typeof window === 'undefined') return;
+
+    if (autosaveTimeout.current) {
+      clearTimeout(autosaveTimeout.current);
     }
-  }, [destination, endDate, hotels, persistDraft, startDate, tripName, coverImagePreview, currentTripId]);
+
+    if (
+      !tripName &&
+      !destination &&
+      !startDate &&
+      !endDate &&
+      hotels.length === 0 &&
+      !coverImagePreview &&
+      !coverImage
+    ) {
+      setDraftStatus('idle');
+      return;
+    }
+
+    setDraftStatus('saving');
+
+    autosaveTimeout.current = setTimeout(() => {
+      persistDraft();
+      setDraftStatus('saved');
+    }, 800);
+
+    return () => {
+      if (autosaveTimeout.current) {
+        clearTimeout(autosaveTimeout.current);
+      }
+    };
+  }, [coverImage, coverImagePreview, currentTripId, destination, endDate, hotels, isOpen, persistDraft, startDate, tripName]);
 
   const handleSaveDraft = () => {
     persistDraft();
+    setDraftStatus('saved');
     toast.success('Draft saved locally.');
   };
 
@@ -1075,6 +1108,11 @@ export function TripPlanner({
             >
               Save draft locally
             </UMActionPill>
+            {draftStatus !== 'idle' && (
+              <div className="text-right text-xs text-neutral-500 dark:text-neutral-400">
+                {draftStatus === 'saving' ? 'Saving…' : 'Saved'}
+              </div>
+            )}
           </div>
         </div>
       ) : (
