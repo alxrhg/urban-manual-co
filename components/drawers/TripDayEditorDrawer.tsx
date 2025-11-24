@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import UMCard from "@/components/ui/UMCard";
 import UMActionPill from "@/components/ui/UMActionPill";
 import UMSectionTitle from "@/components/ui/UMSectionTitle";
@@ -73,9 +74,27 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
     return null;
   };
 
-  const handleRemoveStop = (stopIndex: number) => {
-    console.log("Remove stop", stopIndex);
-    // TODO: Implement remove stop functionality
+  const handleRemoveStop = async (stopIndex: number) => {
+    if (!trip?.id || !currentDay) return;
+    const target = allLocations[stopIndex];
+    if (!target?.id) return;
+    try {
+      const supabaseClient = createClient();
+      await supabaseClient.from('itinerary_items').delete().eq('id', target.id).eq('trip_id', trip.id);
+      // Refresh locally
+      const updatedDays = [...allDays];
+      const updatedLocations = [...allLocations];
+      updatedLocations.splice(stopIndex, 1);
+      updatedDays[selectedDayIndex] = {
+        ...currentDay,
+        locations: updatedLocations,
+        activities: updatedLocations,
+      };
+      setSelectedDayIndex((idx) => Math.min(idx, updatedDays.length - 1));
+    } catch (error) {
+      console.error('Error removing stop', error);
+      alert('Failed to remove this stop. Please try again.');
+    }
   };
 
   const handleClearMeal = (mealType: string) => {
