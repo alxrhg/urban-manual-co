@@ -9,6 +9,7 @@ interface UMActionPillProps {
   variant?: "default" | "primary";
   className?: string;
   type?: "button" | "submit" | "reset";
+  disabled?: boolean;
 }
 
 /**
@@ -20,11 +21,13 @@ export default function UMActionPill({
   variant = "default",
   className,
   type = "button",
+  disabled = false,
 }: UMActionPillProps) {
   return (
     <button
       type={type}
       onClick={onClick}
+      disabled={disabled}
       className={cn(
         "inline-flex items-center justify-center px-4 h-[38px]",
         "rounded-xl border text-sm font-medium transition",
@@ -39,6 +42,7 @@ export default function UMActionPill({
           "border-black bg-black text-white hover:bg-neutral-900",
         variant === "primary" &&
           "dark:border-white dark:bg-white dark:text-black dark:hover:bg-neutral-200",
+        disabled && "opacity-50 cursor-not-allowed",
         className
       )}
     >

@@ -15,6 +15,9 @@ import {
   Camera,
   Image as ImageIcon,
   AlertCircle,
+  Plus,
+  Trash2,
+  Calendar,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useToast } from '@/hooks/useToast';
@@ -25,7 +28,13 @@ import { TripDay } from './TripDay';
 import { AddLocationToTrip } from './AddLocationToTrip';
 import { TripShareModal } from './TripShareModal';
 import { Drawer } from './ui/Drawer';
+import UMCard from './ui/UMCard';
+import UMActionPill from './ui/UMActionPill';
+import UMSectionTitle from './ui/UMSectionTitle';
+import { HotelAutocompleteInput } from './HotelAutocompleteInput';
 import type { Trip as TripSchema, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
+
+type Tab = 'details' | 'itinerary' | 'hotels';
 
 interface TripPlannerProps {
   isOpen: boolean;
@@ -81,9 +90,8 @@ export function TripPlanner({
   const [endDate, setEndDate] = useState('');
   const [days, setDays] = useState<DayItinerary[]>([]);
   const [showAddLocation, setShowAddLocation] = useState<number | null>(null);
-  const [step, setStep] = useState<'create' | 'plan'>('create');
+  const [activeTab, setActiveTab] = useState<Tab>('details');
   const [showShare, setShowShare] = useState(false);
-  const [hotelLocation, setHotelLocation] = useState('');
   const [currentTripId, setCurrentTripId] = useState<string | null>(tripId || null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -102,8 +110,8 @@ export function TripPlanner({
   const [hotels, setHotels] = useState<Array<{
     id?: string;
     name: string;
-    checkInDate: string;
-    checkOutDate: string;
+    startDate: string;
+    endDate: string;
     address?: string;
   }>>([]);
   const toast = useToast();
@@ -154,9 +162,8 @@ export function TripPlanner({
     setStartDate('');
     setEndDate('');
     setDays([]);
-    setHotelLocation('');
     setHotels([]);
-    setStep('create');
+    setActiveTab('details');
     setCurrentTripId(null);
     setCoverImage(prefilledDestination?.image || null);
     setCoverImageFile(null);
@@ -192,9 +199,9 @@ export function TripPlanner({
       setDestination(tripData.destination || '');
       setStartDate(tripData.start_date || '');
       setEndDate(tripData.end_date || '');
-      setHotelLocation(tripData.description || ''); // Using description for hotel location
       setCurrentTripId(tripData.id);
       setCoverImage(tripData.cover_image || null);
+      setCoverImagePreview(tripData.cover_image || null);
 
       // Load itinerary items
       // First verify trip ownership to avoid RLS recursion
@@ -263,8 +270,8 @@ export function TripPlanner({
         return {
           id: item.id,
           name: item.title,
-          checkInDate: notesData.checkInDate || notesData.startDate || tripData.start_date || '',
-          checkOutDate: notesData.checkOutDate || notesData.endDate || tripData.end_date || '',
+          startDate: notesData.startDate || notesData.checkInDate || tripData.start_date || '',
+          endDate: notesData.endDate || notesData.checkOutDate || tripData.end_date || '',
           address: notesData.address || item.description || '',
         };
       });
@@ -339,7 +346,7 @@ export function TripPlanner({
         setDays(newDays);
       }
 
-      setStep('plan');
+      setActiveTab('itinerary');
     } catch (error) {
       console.error('Error loading trip:', error);
       alert('Failed to load trip');
@@ -379,22 +386,22 @@ export function TripPlanner({
   };
 
   const persistDraft = useCallback(() => {
-    if (typeof window === 'undefined' || step !== 'create' || !isOpen) return;
+    if (typeof window === 'undefined' || currentTripId || !isOpen) return;
 
     const draft = {
       tripName,
       destination,
       startDate,
       endDate,
-      hotelLocation,
+      hotels,
       coverImage: coverImagePreview || coverImage,
     };
 
     localStorage.setItem(draftStorageKey, JSON.stringify(draft));
-  }, [coverImage, coverImagePreview, destination, endDate, hotelLocation, isOpen, startDate, step, tripName]);
+  }, [coverImage, coverImagePreview, destination, endDate, hotels, isOpen, startDate, tripName, currentTripId]);
 
   useEffect(() => {
-    if (!isOpen || tripId || step !== 'create' || draftRestored) return;
+    if (!isOpen || tripId || currentTripId || draftRestored) return;
 
     if (typeof window === 'undefined') return;
 
@@ -406,7 +413,7 @@ export function TripPlanner({
           destination?: string;
           startDate?: string;
           endDate?: string;
-          hotelLocation?: string;
+          hotels?: Array<{ id?: string; name: string; startDate: string; endDate: string; address?: string }>;
           coverImage?: string | null;
         };
 
@@ -414,7 +421,7 @@ export function TripPlanner({
         setDestination(parsedDraft.destination || '');
         setStartDate(parsedDraft.startDate || '');
         setEndDate(parsedDraft.endDate || '');
-        setHotelLocation(parsedDraft.hotelLocation || '');
+        setHotels(parsedDraft.hotels || []);
         if (parsedDraft.coverImage) {
           setCoverImagePreview(parsedDraft.coverImage);
         }
@@ -424,13 +431,13 @@ export function TripPlanner({
     }
 
     setDraftRestored(true);
-  }, [draftRestored, draftStorageKey, isOpen, step, tripId]);
+  }, [draftRestored, draftStorageKey, isOpen, tripId, currentTripId]);
 
   useEffect(() => {
-    if (step === 'create') {
+    if (!currentTripId) {
       persistDraft();
     }
-  }, [destination, endDate, hotelLocation, persistDraft, startDate, step, tripName, coverImagePreview]);
+  }, [destination, endDate, hotels, persistDraft, startDate, tripName, coverImagePreview, currentTripId]);
 
   const handleSaveDraft = () => {
     persistDraft();
@@ -457,7 +464,6 @@ export function TripPlanner({
         .from('trips')
         .insert({
           title: tripName,
-          description: hotelLocation || null,
           destination: destination,
           start_date: startDate,
           end_date: endDate,
@@ -511,7 +517,7 @@ export function TripPlanner({
       }
 
       setDays(newDays);
-      setStep('plan');
+      setActiveTab('itinerary');
       setValidationErrors([]);
       setFieldErrors({});
       if (typeof window !== 'undefined') {
@@ -586,7 +592,6 @@ export function TripPlanner({
         .from('trips')
         .update({
           title: tripName,
-          description: hotelLocation || null,
           destination: destination || null,
           start_date: startDate || null,
           end_date: endDate || null,
@@ -664,8 +669,8 @@ export function TripPlanner({
           description: hotel.address || null,
           notes: JSON.stringify({
             type: 'hotel',
-            checkInDate: hotel.checkInDate,
-            checkOutDate: hotel.checkOutDate,
+            startDate: hotel.startDate,
+            endDate: hotel.endDate,
             address: hotel.address || '',
           }),
         });
@@ -845,107 +850,104 @@ export function TripPlanner({
     ];
   };
 
-  const progressHeader = (
-    <div className="mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className={`text-xs font-medium transition-colors ${
-            step === 'create'
-              ? 'text-gray-900 dark:text-white'
-              : 'text-gray-400 dark:text-gray-500'
-          }`}>
-            Details
-          </span>
-          <span className="text-gray-300 dark:text-gray-700 text-xs">→</span>
-          <span className={`text-xs font-medium transition-colors ${
-            step === 'plan'
-              ? 'text-gray-900 dark:text-white'
-              : 'text-gray-400 dark:text-gray-500'
-          }`}>
-            Itinerary
-          </span>
-        </div>
-        {(saving || uploadingCover) && (
-          <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-medium">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            <span>Saving...</span>
-          </div>
-        )}
-      </div>
-      <div className="h-0.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gray-900 dark:bg-white transition-all duration-300 ease-out"
-          style={{ width: step === 'plan' ? '100%' : '50%' }}
-        />
-      </div>
-    </div>
-  );
+  // Helper to check for hotel conflicts (only one hotel per night)
+  const getNightsInRange = (startDate: string, endDate: string) => {
+    const nights: string[] = [];
+    let current = new Date(startDate);
+    const end = new Date(endDate);
+    while (current.getTime() < end.getTime()) {
+      nights.push(current.toISOString().split('T')[0]);
+      current.setDate(current.getDate() + 1);
+    }
+    return nights;
+  };
 
-  // Build custom header with tabs and actions
-  const headerContent = step === 'plan' ? (
-    <div className="flex items-center justify-between w-full">
-      <div className="flex items-center gap-4">
-        <h2 className="text-sm font-medium text-gray-900 dark:text-white">{tripName}</h2>
-      </div>
-      <div className="flex items-center gap-2">
-        {currentTripId && (
-          <button
-            onClick={handleSaveTrip}
-            disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Save trip"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-3 h-3 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <SaveIcon className="w-3 h-3" />
-                Save
-              </>
-            )}
-          </button>
-        )}
+  const hasHotelConflict = (allHotels: typeof hotels, currentIndex: number, newStartDate: string, newEndDate: string) => {
+    const newNights = getNightsInRange(newStartDate, newEndDate);
+    for (let i = 0; i < allHotels.length; i++) {
+      if (i === currentIndex) continue;
+      const existingHotel = allHotels[i];
+      const existingNights = getNightsInRange(existingHotel.startDate, existingHotel.endDate);
+      for (const newNight of newNights) {
+        if (existingNights.includes(newNight)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+
+  const handleAddHotel = () => {
+    const newHotel = {
+      name: '',
+      startDate: startDate || '',
+      endDate: endDate || '',
+    };
+    setHotels([...hotels, newHotel]);
+  };
+
+  const handleUpdateHotel = (index: number, field: keyof typeof hotels[0], value: string) => {
+    const updated = [...hotels];
+    const newHotel = { ...updated[index], [field]: value };
+
+    if (field === 'startDate' && newHotel.endDate && new Date(newHotel.startDate) > new Date(newHotel.endDate)) {
+      toast.error('Check-in date cannot be after check-out date.');
+      return;
+    }
+    if (field === 'endDate' && newHotel.startDate && new Date(newHotel.endDate) < new Date(newHotel.startDate)) {
+      toast.error('Check-out date cannot be before check-in date.');
+      return;
+    }
+
+    if (startDate && new Date(newHotel.startDate) < new Date(startDate)) {
+      toast.error('Check-in date cannot be before trip start date.');
+      return;
+    }
+    if (endDate && new Date(newHotel.endDate) > new Date(endDate)) {
+      toast.error('Check-out date cannot be after trip end date.');
+      return;
+    }
+
+    if (field === 'startDate' || field === 'endDate') {
+      if (hasHotelConflict(updated, index, newHotel.startDate, newHotel.endDate)) {
+        toast.error('This hotel conflicts with another hotel. Only one hotel per night is allowed.');
+        return;
+      }
+    }
+
+    updated[index] = newHotel;
+    setHotels(updated);
+  };
+
+  const handleRemoveHotel = (index: number) => {
+    setHotels(hotels.filter((_, i) => i !== index));
+  };
+
+  // Build header
+  const headerContent = currentTripId ? (
+    <div className="mb-12">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-light">{tripName || 'Trip Planner'}</h1>
         <button
-          onClick={() => setShowShare(true)}
+          onClick={handleSaveTrip}
           disabled={saving}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Share trip"
+          className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors disabled:opacity-50"
         >
-          <ShareIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-        </button>
-        <button
-          onClick={handleExportToCalendar}
-          disabled={saving}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Export to calendar"
-        >
-          <DownloadIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-        </button>
-        <button
-          onClick={handlePrint}
-          disabled={saving}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          title="Print itinerary"
-        >
-          <PrinterIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          {saving ? 'Saving...' : 'Save'}
         </button>
       </div>
     </div>
   ) : undefined;
 
-  // Build content based on step and tab
+  // Build content based on tabs
   const content = (
-    <div className="px-6 py-6">
-      {progressHeader}
+    <div className="px-6 py-8 space-y-8">
       {loading ? (
         <div className="text-center py-12">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-400 mb-4" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Loading trip...</p>
         </div>
-      ) : step === 'create' ? (
+      ) : !currentTripId ? (
         <div className="space-y-6">
           {validationErrors.length > 0 && (
             <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3 flex gap-2.5 text-xs text-red-800 dark:text-red-200">
@@ -1004,21 +1006,6 @@ export function TripPlanner({
             )}
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor={`trip-planner-hotel-${currentTripId || 'new'}`} className="block text-xs font-medium text-gray-700 dark:text-gray-300">
-              Hotel / Base Location
-            </label>
-            <input
-              id={`trip-planner-hotel-${currentTripId || 'new'}`}
-              type="text"
-              value={hotelLocation}
-              onChange={(e) => setHotelLocation(e.target.value)}
-              placeholder="Hotel Le Marais"
-              autoComplete="off"
-              className="w-full px-3.5 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 focus:outline-none focus:border-gray-900 dark:focus:border-white transition-colors text-sm"
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
               <label htmlFor={`trip-planner-start-date-${currentTripId || 'new'}`} className="block text-xs font-medium text-gray-700 dark:text-gray-300">
@@ -1064,10 +1051,11 @@ export function TripPlanner({
           )}
 
           <div className="pt-2 space-y-2.5">
-            <button
+            <UMActionPill
               onClick={handleCreateTrip}
+              variant="primary"
               disabled={!tripName || !destination || !startDate || !endDate || saving || !user}
-              className="w-full px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
+              className="w-full justify-center"
             >
               {saving ? (
                 <>
@@ -1077,62 +1065,68 @@ export function TripPlanner({
               ) : (
                 'Create Trip'
               )}
-            </button>
+            </UMActionPill>
 
-            <button
-              type="button"
+            <UMActionPill
               onClick={handleSaveDraft}
               disabled={saving}
-              className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              className="w-full justify-center"
             >
               Save draft locally
-            </button>
+            </UMActionPill>
           </div>
         </div>
       ) : (
         <>
-          <div className="space-y-8">
-            {validationErrors.length > 0 && (
-              <div className="rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-4 flex gap-3 text-sm text-red-800 dark:text-red-200">
-                <AlertCircle className="h-5 w-5 shrink-0" />
-                <div>
-                  <p className="font-semibold mb-2">Please fix the required fields before saving:</p>
-                  <ul className="list-disc list-inside space-y-1">
-                    {validationErrors.map((error, index) => (
-                      <li key={index}>{error}</li>
-                    ))}
-                  </ul>
-                </div>
+          {/* Tabs */}
+          <div className="mb-12">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+              {(['details', 'itinerary', 'hotels'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`transition-all ${
+                    activeTab === tab
+                      ? "font-medium text-black dark:text-white"
+                      : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {validationErrors.length > 0 && (
+            <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3 flex gap-2.5 text-xs text-red-800 dark:text-red-200">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium mb-1.5">Please fix the required fields:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  {validationErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
               </div>
-            )}
-            {/* Cover Image Upload */}
-              <div className="mb-6">
-                <label className="block text-xs font-medium mb-2 text-gray-700 dark:text-gray-300">
-                  Cover Image
-                </label>
-                <div className="space-y-3">
-                  {(coverImage || coverImagePreview) && (
-                    <div className="relative w-full h-48 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+            </div>
+          )}
+
+          {/* Tab Content */}
+          {activeTab === 'details' && (
+            <div className="space-y-10">
+              {/* Cover Image Upload */}
+              <section className="space-y-4">
+                <UMSectionTitle>Cover Image</UMSectionTitle>
+                <UMCard className="p-6 space-y-4">
+                  {coverImagePreview && (
+                    <div className="relative w-full h-64 rounded-[16px] overflow-hidden">
                       <Image
-                        src={coverImagePreview || coverImage || ''}
-                        alt="Cover preview"
+                        src={coverImagePreview}
+                        alt="Cover"
                         fill
                         className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 600px"
+                        sizes="(max-width: 768px) 100vw, 420px"
                       />
-                      <button
-                        onClick={() => {
-                          setCoverImage(null);
-                          setCoverImageFile(null);
-                          setCoverImagePreview(null);
-                          const input = document.getElementById('cover-image-input') as HTMLInputElement;
-                          if (input) input.value = '';
-                        }}
-                        className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                        aria-label="Remove cover image"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
                     </div>
                   )}
                   <div>
@@ -1153,9 +1147,9 @@ export function TripPlanner({
                       }}
                       className="hidden"
                     />
-                    <label
-                      htmlFor="cover-image-input"
-                      className="flex items-center justify-center gap-2 w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer text-sm font-medium"
+                    <UMActionPill
+                      onClick={() => !uploadingCover && document.getElementById('cover-image-input')?.click()}
+                      className="w-full justify-center"
                     >
                       {uploadingCover ? (
                         <>
@@ -1165,183 +1159,250 @@ export function TripPlanner({
                       ) : (
                         <>
                           <Camera className="w-4 h-4" />
-                          {coverImage || coverImagePreview ? 'Change Cover Image' : 'Upload Cover Image'}
+                          {coverImagePreview ? 'Change Cover Image' : 'Upload Cover Image'}
                         </>
                       )}
-                    </label>
+                    </UMActionPill>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
                     Upload a custom cover image, or we'll use the first location's image
                   </p>
+                </UMCard>
+              </section>
+
+              {/* Trip Information */}
+              <section className="space-y-4">
+                <UMSectionTitle>Trip Information</UMSectionTitle>
+                <UMCard className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                      Trip Name
+                    </label>
+                    <input
+                      type="text"
+                      value={tripName}
+                      onChange={(e) => setTripName(e.target.value)}
+                      className={`w-full px-4 py-2 rounded-xl border bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white ${
+                        fieldErrors.tripName
+                          ? 'border-red-300 dark:border-red-700'
+                          : 'border-neutral-200 dark:border-white/20'
+                      }`}
+                    />
+                    {fieldErrors.tripName && (
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.tripName}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
+                      placeholder="e.g., Tokyo, Paris, New York"
+                      className={`w-full px-4 py-2 rounded-xl border bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white ${
+                        fieldErrors.destination
+                          ? 'border-red-300 dark:border-red-700'
+                          : 'border-neutral-200 dark:border-white/20'
+                      }`}
+                    />
+                    {fieldErrors.destination && (
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.destination}</p>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className={`w-full px-4 py-2 rounded-xl border bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white ${
+                          fieldErrors.startDate
+                            ? 'border-red-300 dark:border-red-700'
+                            : 'border-neutral-200 dark:border-white/20'
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className={`w-full px-4 py-2 rounded-xl border bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white ${
+                          fieldErrors.endDate
+                            ? 'border-red-300 dark:border-red-700'
+                            : 'border-neutral-200 dark:border-white/20'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                  {(fieldErrors.startDate || fieldErrors.endDate) && (
+                    <p className="text-xs text-red-600 dark:text-red-400">
+                      {fieldErrors.startDate || fieldErrors.endDate}
+                    </p>
+                  )}
+                  {currentTripId && (
+                    <UMActionPill
+                      onClick={handleSaveTrip}
+                      variant="primary"
+                      className={`w-full justify-center ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {saving ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        'Save Trip Information'
+                      )}
+                    </UMActionPill>
+                  )}
+                </UMCard>
+              </section>
+            </div>
+          )}
+
+          {activeTab === 'itinerary' && (
+            <div className="space-y-8">
+              {days.length > 0 ? (
+                days.map((day, i) => (
+                  <div key={i} className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        Day {i + 1} – {day.date}
+                      </h2>
+                    </div>
+                    <TripDay
+                      dayNumber={i + 1}
+                      date={day.date}
+                      locations={day.locations}
+                      hotelLocation=""
+                      onAddLocation={() => setShowAddLocation(i)}
+                      onRemoveLocation={(locationId) => handleRemoveLocation(i, locationId)}
+                      onReorderLocations={(locations) => handleReorderLocations(i, locations)}
+                      onDuplicateDay={() => handleDuplicateDay(i)}
+                      onOptimizeRoute={() => handleOptimizeRoute(i)}
+                    />
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-12 text-neutral-500 dark:text-neutral-400 text-sm">
+                  No days added yet. Create a trip first.
                 </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'hotels' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <UMSectionTitle>Hotels</UMSectionTitle>
+                <UMActionPill onClick={handleAddHotel} variant="primary">
+                  <Plus className="w-4 h-4" />
+                  Add Hotel
+                </UMActionPill>
               </div>
 
-              {/* Trip Overview */}
-              <div className="mb-8 pb-8 border-b border-gray-200 dark:border-gray-800">
-                <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400 mb-6">
-                  <MapPinIcon className="w-4 h-4" />
-                  <span>{destination}</span>
-                  <span className="text-gray-300 dark:text-gray-600">•</span>
-                  <CalendarIcon className="w-4 h-4" />
-                  <span>
-                    {new Date(startDate).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                    })}{' '}
-                    –{' '}
-                    {new Date(endDate).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </span>
-                </div>
-                {/* AI Suggestions */}
-                <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-                  <h4 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-4">
-                    Smart Suggestions
-                  </h4>
-                  <ul className="space-y-2">
-                    {getAISuggestions().map((suggestion, index) => (
-                      <li
-                        key={index}
-                        className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed"
-                      >
-                        • {suggestion}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Hotels Section */}
-              <div className="mb-12 pb-8 border-b border-gray-200 dark:border-gray-800">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-white">Hotels</h3>
-                  <button
-                    onClick={() => {
-                      setHotels([...hotels, {
-                        name: '',
-                        checkInDate: startDate || '',
-                        checkOutDate: endDate || '',
-                      }]);
-                    }}
-                    className="text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                  >
-                    + Add Hotel
-                  </button>
-                </div>
+              {hotels.length === 0 ? (
+                <UMCard className="p-8 text-center">
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+                    No hotels added yet
+                  </p>
+                  <UMActionPill onClick={handleAddHotel} variant="primary">
+                    <Plus className="w-4 h-4" />
+                    Add Your First Hotel
+                  </UMActionPill>
+                </UMCard>
+              ) : (
                 <div className="space-y-4">
-                  {hotels.length === 0 ? (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">No hotels added yet</p>
-                  ) : (
-                    hotels.map((hotel, index) => (
-                      <div key={index} className="p-4 border border-gray-200 dark:border-gray-800 rounded-xl space-y-3">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Hotel Name
-                          </label>
-                          <input
-                            type="text"
-                            value={hotel.name}
-                            onChange={(e) => {
-                              const updated = [...hotels];
-                              updated[index] = { ...updated[index], name: e.target.value };
-                              setHotels(updated);
-                            }}
-                            placeholder="Hotel name"
-                            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
+                  {hotels.map((hotel, index) => (
+                    <UMCard key={index} className="p-6 space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 space-y-4">
                           <div>
-                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              Check-in
+                            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                              Hotel Name
                             </label>
-                            <input
-                              type="date"
-                              value={hotel.checkInDate}
-                              onChange={(e) => {
-                                const updated = [...hotels];
-                                updated[index] = { ...updated[index], checkInDate: e.target.value };
-                                setHotels(updated);
-                              }}
-                              min={startDate}
-                              max={endDate}
-                              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
+                            <HotelAutocompleteInput
+                              value={hotel.name}
+                              onChange={(name) => handleUpdateHotel(index, 'name', name)}
+                              placeholder="Hotel Le Marais"
+                              className="w-full"
                             />
                           </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                              Check-out
-                            </label>
-                            <input
-                              type="date"
-                              value={hotel.checkOutDate}
-                              onChange={(e) => {
-                                const updated = [...hotels];
-                                updated[index] = { ...updated[index], checkOutDate: e.target.value };
-                                setHotels(updated);
-                              }}
-                              min={hotel.checkInDate || startDate}
-                              max={endDate}
-                              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
-                            />
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                Check-in Date
+                              </label>
+                              <input
+                                type="date"
+                                value={hotel.startDate}
+                                onChange={(e) => handleUpdateHotel(index, 'startDate', e.target.value)}
+                                min={startDate || ''}
+                                max={endDate || ''}
+                                className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                Check-out Date
+                              </label>
+                              <input
+                                type="date"
+                                value={hotel.endDate}
+                                onChange={(e) => handleUpdateHotel(index, 'endDate', e.target.value)}
+                                min={hotel.startDate || startDate || ''}
+                                max={endDate || ''}
+                                className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
+                              />
+                            </div>
                           </div>
                         </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Address (Optional)
-                          </label>
-                          <input
-                            type="text"
-                            value={hotel.address || ''}
-                            onChange={(e) => {
-                              const updated = [...hotels];
-                              updated[index] = { ...updated[index], address: e.target.value };
-                              setHotels(updated);
-                            }}
-                            placeholder="Hotel address"
-                            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 text-sm"
-                          />
-                        </div>
+
                         <button
-                          onClick={() => {
-                            setHotels(hotels.filter((_, i) => i !== index));
-                          }}
-                          className="text-xs text-red-600 dark:text-red-400 hover:underline"
+                          onClick={() => handleRemoveHotel(index)}
+                          className="ml-4 p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
+                          title="Remove hotel"
                         >
-                          Remove Hotel
+                          <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
-                    ))
-                  )}
+                    </UMCard>
+                  ))}
                 </div>
-              </div>
+              )}
 
-              {/* Days */}
-              <div className="space-y-12">
-                {days.map((day, index) => (
-                  <TripDay
-                    key={day.date}
-                    dayNumber={index + 1}
-                    date={day.date}
-                    locations={day.locations}
-                    hotelLocation={hotelLocation}
-                    onAddLocation={() => setShowAddLocation(index)}
-                    onRemoveLocation={(locationId) =>
-                      handleRemoveLocation(index, locationId)
-                    }
-                    onReorderLocations={(locations) =>
-                      handleReorderLocations(index, locations)
-                    }
-                    onDuplicateDay={() => handleDuplicateDay(index)}
-                    onOptimizeRoute={() => handleOptimizeRoute(index)}
-                  />
-                ))}
-              </div>
+              {currentTripId && hotels.length > 0 && (
+                <div className="pt-4">
+                  <UMActionPill
+                    onClick={() => !saving && handleSaveTrip()}
+                    variant="primary"
+                    className={`w-full justify-center ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Hotels'
+                    )}
+                  </UMActionPill>
+                </div>
+              )}
             </div>
-
+          )}
         </>
       )}
     </div>
@@ -1352,9 +1413,9 @@ export function TripPlanner({
       <Drawer
         isOpen={isOpen}
         onClose={onClose}
-        title={step === 'create' ? 'Create Trip' : undefined}
+        title={currentTripId ? undefined : 'Create Trip'}
         headerContent={headerContent}
-        desktopWidth="600px"
+        desktopWidth="420px"
       >
         {content}
       </Drawer>
