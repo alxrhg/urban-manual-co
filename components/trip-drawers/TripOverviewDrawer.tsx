@@ -3,7 +3,9 @@
 import React from 'react';
 import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
-import { DrawerSection } from '@/components/ui/DrawerSection';
+import UMCard from '@/components/ui/UMCard';
+import UMSectionTitle from '@/components/ui/UMSectionTitle';
+import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 interface Trip {
   id?: string;
@@ -41,6 +43,8 @@ interface TripOverviewDrawerProps {
 }
 
 export default function TripOverviewDrawer({ isOpen, onClose, trip }: TripOverviewDrawerProps) {
+  const { openDrawer } = useDrawerStore();
+  
   if (!trip) return null;
 
   const tripName = trip.name || trip.title || 'Untitled Trip';
@@ -77,78 +81,83 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip }: TripOvervi
           }
         />
 
-        <div className="overflow-y-auto flex-1 space-y-10 pb-20 px-4">
-          {/* SUMMARY */}
-          <DrawerSection bordered>
-            <h3 className="font-medium text-gray-900 dark:text-white">Trip Summary</h3>
-            <p className="text-sm text-[var(--um-text-muted)] mt-1">
-              {days.length} day{days.length !== 1 ? 's' : ''} · {cities.length > 0 ? cities.join(', ') : 'No cities'}
-            </p>
-          </DrawerSection>
+        <div className="overflow-y-auto flex-1 space-y-10 pb-20 px-6 py-8">
+          {/* TRIP SUMMARY */}
+          <section className="space-y-4">
+            <UMSectionTitle>Trip Summary</UMSectionTitle>
+            <UMCard className="p-4">
+              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                {days.length} day{days.length !== 1 ? 's' : ''} · {cities.length > 0 ? cities.join(', ') : 'No cities'}
+              </p>
+            </UMCard>
+          </section>
 
-          {/* HOTELS */}
-          {hotels.length > 0 && (
-            <DrawerSection bordered>
-              <h3 className="font-medium mb-2 text-gray-900 dark:text-white">Hotels</h3>
-              <div className="space-y-3">
-                {hotels.map((h, i) => (
-                  <div
+          {/* DAYS SECTION */}
+          {days.length > 0 && (
+            <section className="space-y-4">
+              <UMSectionTitle>Days</UMSectionTitle>
+              <div className="space-y-4">
+                {days.map((d, i) => (
+                  <UMCard
                     key={i}
-                    className="border border-[var(--um-border)] rounded-xl p-4 bg-white dark:bg-gray-950"
+                    className="p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => {
+                      onClose();
+                      if (trip.id) {
+                        window.location.assign(`/trips/${trip.id}?day=${i}`);
+                      }
+                    }}
                   >
-                    <p className="font-medium text-gray-900 dark:text-white">{h.name}</p>
-                    <p className="text-xs text-[var(--um-text-muted)]">{h.city}</p>
-                  </div>
+                    <div className="flex justify-between items-center">
+                      <p className="font-medium text-gray-900 dark:text-white">
+                        Day {i + 1} – {d.date}
+                      </p>
+                      <span className="text-sm text-neutral-500 dark:text-neutral-400">→</span>
+                    </div>
+                    {d.city && (
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                        {d.city}
+                      </p>
+                    )}
+                  </UMCard>
                 ))}
               </div>
-            </DrawerSection>
+            </section>
           )}
 
-          {/* FLIGHTS */}
+          {/* HOTELS SECTION */}
+          {hotels.length > 0 && (
+            <section className="space-y-4">
+              <UMSectionTitle>Hotels</UMSectionTitle>
+              <div className="space-y-4">
+                {hotels.map((h, i) => (
+                  <UMCard key={i} className="p-4">
+                    <p className="font-medium text-gray-900 dark:text-white">{h.name}</p>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{h.city}</p>
+                  </UMCard>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* FLIGHTS SECTION */}
           {flights.length > 0 && (
-            <DrawerSection bordered>
-              <h3 className="font-medium mb-2 text-gray-900 dark:text-white">Flights</h3>
-              <div className="space-y-3">
+            <section className="space-y-4">
+              <UMSectionTitle>Flights</UMSectionTitle>
+              <div className="space-y-4">
                 {flights.map((f, i) => (
-                  <div
-                    key={i}
-                    className="border border-[var(--um-border)] rounded-xl p-4 bg-white dark:bg-gray-950"
-                  >
+                  <UMCard key={i} className="p-4">
                     <p className="font-medium text-gray-900 dark:text-white">
                       {f.airline} · {f.flightNumber}
                     </p>
-                    <p className="text-xs text-[var(--um-text-muted)]">
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
                       {f.departure} → {f.arrival}
                     </p>
-                  </div>
+                  </UMCard>
                 ))}
               </div>
-            </DrawerSection>
+            </section>
           )}
-
-          {/* DAYS */}
-          <DrawerSection>
-            <h3 className="font-medium mb-3 text-gray-900 dark:text-white">Days</h3>
-            <div className="space-y-3">
-              {days.map((d, i) => (
-                <div
-                  key={i}
-                  className="border border-[var(--um-border)] rounded-xl p-4 flex justify-between items-center cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors bg-white dark:bg-gray-950"
-                  onClick={() => {
-                    onClose();
-                    if (trip.id) {
-                      window.location.assign(`/trips/${trip.id}?day=${i}`);
-                    }
-                  }}
-                >
-                  <p className="font-medium text-gray-900 dark:text-white">
-                    Day {i + 1} – {d.date}
-                  </p>
-                  <span className="text-sm text-[var(--um-text-muted)]">→</span>
-                </div>
-              ))}
-            </div>
-          </DrawerSection>
         </div>
       </div>
     </Drawer>
