@@ -694,6 +694,7 @@ export function AccountDrawer() {
                 <User className="h-5 w-5 text-gray-500" />
               </div>
             }
+            bordered={false}
           />
           <DrawerSection>
             <p className="text-sm text-muted-foreground">
@@ -733,6 +734,7 @@ export function AccountDrawer() {
             <ProfileAvatar avatarUrl={avatarUrl} displayUsername={displayUsername} />
           }
           rightAccessory={profileBadge}
+          bordered={false}
         />
 
         <div className="overflow-y-auto flex-1 pb-20">
