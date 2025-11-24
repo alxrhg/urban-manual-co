@@ -3,10 +3,10 @@
 import { initPlasmicLoader } from "@plasmicapp/loader-nextjs";
 
 // Plasmic configuration - token should be set via NEXT_PUBLIC_PLASMIC_TOKEN env var
-const PLASMIC_PROJECT_ID = process.env.NEXT_PUBLIC_PLASMIC_PROJECT_ID || "pEZdPb88zvW8NfciQQQwSK";
-const PLASMIC_TOKEN = process.env.NEXT_PUBLIC_PLASMIC_TOKEN || "";
+const PLASMIC_PROJECT_ID = process.env.NEXT_PUBLIC_PLASMIC_PROJECT_ID;
+const PLASMIC_TOKEN = process.env.NEXT_PUBLIC_PLASMIC_TOKEN;
 
-export const PLASMIC = typeof window !== "undefined" && PLASMIC_TOKEN
+export const PLASMIC = typeof window !== "undefined" && PLASMIC_PROJECT_ID && PLASMIC_TOKEN
   ? initPlasmicLoader({
       projects: [
         {
