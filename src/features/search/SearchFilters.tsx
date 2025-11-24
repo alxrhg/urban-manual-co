@@ -192,10 +192,10 @@ export function SearchFiltersComponent({
                   <>
                     {/* Full-width panel attached under top controls, pushes content below */}
                     <div className="mt-4 w-full overflow-hidden bg-white transition-all duration-300 ease-out animate-in fade-in slide-in-from-top-2 dark:bg-gray-900">
-                  <div className="w-full px-4 py-4 sm:px-5 md:px-6 md:py-5">
+                  <div className="w-full">
                     <div className="w-full space-y-4">
                       {/* Header */}
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between w-full">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">Filters</div>
                         <div className="flex items-center gap-3">
                           {hasActiveFilters && (
