@@ -19,10 +19,9 @@ interface TripCardProps {
   trip: Trip;
   onView?: () => void;
   onEdit?: () => void;
-  onDelete?: () => void;
 }
 
-export default function TripCard({ trip, onView, onEdit, onDelete }: TripCardProps) {
+export default function TripCard({ trip, onView, onEdit }: TripCardProps) {
   const dateDisplay = trip.startDate && trip.endDate 
     ? `${trip.startDate} → ${trip.endDate}`
     : trip.startDate || trip.endDate || null;
@@ -52,7 +51,6 @@ export default function TripCard({ trip, onView, onEdit, onDelete }: TripCardPro
       <div className="flex gap-2 pt-2">
         {onView && <UMActionPill onClick={onView}>View Trip</UMActionPill>}
         {onEdit && <UMActionPill onClick={onEdit}>Edit</UMActionPill>}
-        {onDelete && <UMActionPill onClick={onDelete}>Delete</UMActionPill>}
       </div>
     </UMCard>
   );

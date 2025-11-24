@@ -275,7 +275,6 @@ export default function TripsPage() {
                 setEditingTripId(trip.id);
                 setShowCreateDialog(true);
               }}
-              onDelete={() => setDeleteConfirmTrip({ id: trip.id, title: trip.title })}
             />
           ))
         )}
