@@ -10,6 +10,7 @@ import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
 
 import TripOverviewDrawer from '@/components/trip-drawers/TripOverviewDrawer';
 import TripDayDrawer from '@/components/trip-drawers/TripDayDrawer';
+import TripDayEditorDrawer from '@/components/drawers/TripDayEditorDrawer';
 import TripAddMealDrawer from '@/components/trip-drawers/TripAddMealDrawer';
 import TripAddPlaceDrawer from '@/components/trip-drawers/TripAddPlaceDrawer';
 import AddHotelDrawer from '@/components/drawers/AddHotelDrawer';
@@ -73,6 +74,21 @@ export default function DrawerMount() {
       )}
       <TripOverviewQuickDrawer isOpen={open && type === 'trip-overview-quick'} onClose={closeDrawer} trip={props.trip || null} />
       <TripDayDrawer isOpen={open && type === 'trip-day'} onClose={closeDrawer} day={props.day || null} {...props} />
+      {open && type === 'trip-day-editor' && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          fullScreen={true}
+          style={drawerStyle}
+          position="right"
+        >
+          <TripDayEditorDrawer
+            day={props.day || null}
+            index={props.index || 0}
+            trip={props.trip || null}
+          />
+        </Drawer>
+      )}
       <TripAddMealDrawer
         isOpen={open && type === 'trip-add-meal'}
         onClose={closeDrawer}
