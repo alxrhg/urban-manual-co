@@ -318,17 +318,43 @@ export function AccountDrawer() {
     }
   };
 
-  const getStatusColor = (status: string | null | undefined) => {
+  const getStatusConfig = (status: string | null | undefined) => {
     switch (status) {
       case 'planning':
-        return 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300';
+        return {
+          label: 'Planning',
+          bg: 'bg-blue-50 dark:bg-blue-900/30',
+          text: 'text-blue-700 dark:text-blue-300',
+          dot: 'bg-blue-500',
+        };
       case 'upcoming':
+        return {
+          label: 'Upcoming',
+          bg: 'bg-amber-50 dark:bg-amber-900/30',
+          text: 'text-amber-700 dark:text-amber-300',
+          dot: 'bg-amber-500',
+        };
       case 'ongoing':
-        return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300';
+        return {
+          label: 'Ongoing',
+          bg: 'bg-green-50 dark:bg-green-900/30',
+          text: 'text-green-700 dark:text-green-300',
+          dot: 'bg-green-500 animate-pulse',
+        };
       case 'completed':
-        return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300';
+        return {
+          label: 'Completed',
+          bg: 'bg-neutral-100 dark:bg-neutral-800',
+          text: 'text-neutral-600 dark:text-neutral-400',
+          dot: 'bg-neutral-400',
+        };
       default:
-        return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300';
+        return {
+          label: 'Planning',
+          bg: 'bg-blue-50 dark:bg-blue-900/30',
+          text: 'text-blue-700 dark:text-blue-300',
+          dot: 'bg-blue-500',
+        };
     }
   };
 
@@ -771,7 +797,8 @@ export function AccountDrawer() {
 
   // Render trips subpage - Redesigned with cover images
   const renderTripsSubpage = () => (
-    <div className="px-6 py-6 space-y-4">
+    <div className="px-6 py-6 space-y-6">
+      {/* New Trip Button */}
       <button
         onClick={() => {
           closeDrawer();
@@ -779,21 +806,23 @@ export function AccountDrawer() {
             router.push('/trips');
           }, 200);
         }}
-        className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium flex items-center justify-center gap-2"
+        className="w-full h-12 bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-90 transition-all text-sm font-medium flex items-center justify-center gap-2"
       >
         <Plus className="w-4 h-4" />
         New Trip
       </button>
+
       {loading ? (
-        <div className="text-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading...</p>
+        <div className="flex flex-col items-center justify-center py-12 space-y-3">
+          <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+          <p className="text-sm text-neutral-500">Loading trips...</p>
         </div>
       ) : trips.length > 0 ? (
         <div className="space-y-3">
           {trips.map((trip) => {
             const imageUrl = trip.cover_image || (trip as any).firstLocationImage;
             const dateRange = formatDateRange(trip.start_date, trip.end_date);
+            const statusConfig = getStatusConfig(trip.status);
 
             return (
               <button
@@ -805,77 +834,89 @@ export function AccountDrawer() {
                     openTripQuickview(String(trip.id));
                   }
                 }}
-                className="w-full flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-950 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200 text-left cursor-pointer"
+                className="w-full border border-neutral-200 dark:border-neutral-700 rounded-[16px] overflow-hidden bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors text-left group"
               >
                 {/* Cover Image */}
-                {imageUrl ? (
-                  <div className="relative w-full h-32 bg-gray-200 dark:bg-gray-800">
-                    <Image
-                      src={imageUrl}
-                      alt={trip.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 420px"
-                    />
-                    {/* Status Badge */}
-                    <div className="absolute top-3 right-3">
-                      <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(trip.status)}`}>
-                        {getStatusLabel(trip.status)}
-                      </span>
+                <div className="relative w-full h-28 bg-neutral-100 dark:bg-neutral-800">
+                  {imageUrl ? (
+                    <>
+                      <Image
+                        src={imageUrl}
+                        alt={trip.title}
+                        fill
+                        className="object-cover"
+                        sizes="400px"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <MapPin className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
                     </div>
+                  )}
+                  {/* Status Badge */}
+                  <div className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusConfig.bg} ${statusConfig.text} backdrop-blur-sm`}>
+                    <span className={`w-1 h-1 rounded-full ${statusConfig.dot}`} />
+                    {statusConfig.label}
                   </div>
-                ) : (
-                  <div className="relative w-full h-32 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <MapPin className="w-8 h-8 text-gray-300 dark:text-gray-700" />
-                    {/* Status Badge */}
-                    <div className="absolute top-3 right-3">
-                      <span className={`px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(trip.status)}`}>
-                        {getStatusLabel(trip.status)}
-                      </span>
-                    </div>
-                  </div>
-                )}
+                </div>
 
                 {/* Content */}
-                <div className="p-3 space-y-1.5">
-                  {/* Trip Title */}
-                  <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2">
-                    {trip.title}
-                  </h3>
-
-                  {/* Date Range */}
-                  {dateRange && (
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                      <Calendar className="w-3 h-3" />
-                      <span>{dateRange}</span>
+                <div className="p-3 flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                      {trip.title}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                      {trip.destination && (
+                        <span className="flex items-center gap-1 truncate">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          {trip.destination}
+                        </span>
+                      )}
+                      {dateRange && (
+                        <span className="flex items-center gap-1 flex-shrink-0">
+                          <Calendar className="w-3 h-3" />
+                          {dateRange}
+                        </span>
+                      )}
                     </div>
-                  )}
-
-                  {/* Destination */}
-                  {trip.destination && (
-                    <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-                      <MapPin className="w-3 h-3" />
-                      <span>{trip.destination}</span>
-                    </div>
-                  )}
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-neutral-300 dark:text-neutral-600 group-hover:text-neutral-500 transition-colors flex-shrink-0" />
                 </div>
               </button>
             );
           })}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <p className="text-sm text-gray-500 dark:text-gray-400">No trips yet</p>
+        <div className="text-center py-12 px-4 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-[16px] bg-neutral-50/50 dark:bg-neutral-900/50">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+            <MapPin className="w-6 h-6 text-neutral-400 dark:text-neutral-500" />
+          </div>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+            No trips yet
+          </p>
+          <button
+            onClick={() => {
+              closeDrawer();
+              setTimeout(() => router.push('/trips'), 200);
+            }}
+            className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-xl text-xs font-medium hover:opacity-90 transition-opacity"
+          >
+            Create Trip
+          </button>
         </div>
       )}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+
+      {/* View All Button */}
+      {trips.length > 0 && (
         <button
           onClick={() => handleNavigateToFullPage("/trips")}
-          className="w-full px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-90 transition-all text-xs font-medium"
+          className="w-full h-11 border border-neutral-200 dark:border-neutral-700 rounded-xl font-medium text-sm bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors text-gray-900 dark:text-white"
         >
           View All Trips
         </button>
-      </div>
+      )}
     </div>
   );
 

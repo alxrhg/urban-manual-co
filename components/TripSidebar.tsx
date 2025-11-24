@@ -9,9 +9,11 @@ import {
   TrendingUp,
   AlertCircle,
   ChevronRight,
+  Plane,
 } from 'lucide-react';
 import { useTrip } from '@/contexts/TripContext';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface TripSidebarProps {
   isOpen: boolean;
@@ -74,19 +76,19 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
         className="fixed inset-0 bg-black/20 z-40"
         onClick={onClose}
       />
-      
+
       {/* Sidebar */}
-      <div className="fixed right-0 top-0 bottom-0 w-96 bg-white dark:bg-gray-950 border-l border-neutral-200 dark:border-neutral-800 shadow-xl z-50 flex flex-col animate-in slide-in-from-right">
+      <div className="fixed right-0 top-0 bottom-0 w-96 bg-white dark:bg-neutral-900 border-l border-neutral-200 dark:border-neutral-800 shadow-xl z-50 flex flex-col animate-in slide-in-from-right">
         {/* Header */}
         <div className="border-b border-neutral-200 dark:border-neutral-800 px-6 py-5 flex items-center justify-between flex-shrink-0">
-          <h2 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.2em] uppercase">
+          <h2 className="text-sm font-medium text-gray-900 dark:text-white">
             Your Trips
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors rounded-lg"
+            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors rounded-xl"
           >
-            <X className="w-4 h-4 text-neutral-900 dark:text-neutral-100" />
+            <X className="w-4 h-4 text-neutral-500" />
           </button>
         </div>
 
@@ -95,9 +97,9 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
           {trips.length === 0 && !showNewTrip ? (
             <div className="p-8 text-center">
               <div className="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin className="w-6 h-6 text-neutral-400 dark:text-neutral-500" />
+                <Plane className="w-7 h-7 text-neutral-400 dark:text-neutral-500" />
               </div>
-              <h3 className="text-sm font-normal text-neutral-900 dark:text-neutral-100 mb-2">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
                 No trips yet
               </h3>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed mb-6">
@@ -105,7 +107,7 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
               </p>
               <button
                 onClick={() => setShowNewTrip(true)}
-                className="px-6 py-3 border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs tracking-wide hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all rounded-lg"
+                className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-90 transition-all rounded-xl"
               >
                 Create First Trip
               </button>
@@ -114,13 +116,13 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
             <div className="p-6 space-y-4">
               {/* New Trip Form */}
               {showNewTrip && (
-                <div className="p-4 border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-gray-900 space-y-4 rounded-lg">
+                <div className="p-4 border border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50 space-y-4 rounded-[16px]">
                   <input
                     type="text"
                     value={newTripName}
                     onChange={(e) => setNewTripName(e.target.value)}
                     placeholder="Trip name..."
-                    className="w-full px-0 py-2 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                    className="w-full px-4 py-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-sm text-gray-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/10 rounded-xl"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         handleCreateTrip();
@@ -132,7 +134,7 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
                     value={newTripDestination}
                     onChange={(e) => setNewTripDestination(e.target.value)}
                     placeholder="Destination..."
-                    className="w-full px-0 py-2 bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-sm text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors"
+                    className="w-full px-4 py-3 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 text-sm text-gray-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/10 rounded-xl"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         handleCreateTrip();
@@ -142,7 +144,7 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
                   <div className="flex gap-2">
                     <button
                       onClick={handleCreateTrip}
-                      className="flex-1 px-4 py-2 border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs tracking-wide hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all rounded-lg"
+                      className="flex-1 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-90 transition-all rounded-xl"
                     >
                       Create
                     </button>
@@ -152,7 +154,7 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
                         setNewTripName('');
                         setNewTripDestination('');
                       }}
-                      className="flex-1 px-4 py-2 border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 text-xs tracking-wide hover:border-neutral-900 dark:hover:border-neutral-100 transition-all rounded-lg"
+                      className="flex-1 px-4 py-2.5 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all rounded-xl"
                     >
                       Cancel
                     </button>
@@ -165,22 +167,23 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
                 <button
                   key={trip.id}
                   onClick={() => setActiveTrip(trip.id)}
-                  className={`w-full p-4 border text-left transition-all rounded-lg ${
+                  className={`w-full p-4 border text-left transition-all rounded-[16px] group ${
                     activeTrip?.id === trip.id
-                      ? 'border-neutral-900 dark:border-neutral-100 bg-neutral-50 dark:bg-gray-900'
-                      : 'border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600'
+                      ? 'border-black dark:border-white bg-neutral-50 dark:bg-neutral-800'
+                      : 'border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800/50'
                   }`}
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="text-sm font-normal text-neutral-900 dark:text-neutral-100 mb-1">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-1 truncate">
                         {trip.name}
                       </h3>
-                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
                         {trip.destination}
                       </p>
                     </div>
-                    <span className="text-xs text-neutral-400 dark:text-neutral-500">
+                    <span className="text-xs text-neutral-400 dark:text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
                       {trip.locations.length}
                     </span>
                   </div>
@@ -189,17 +192,25 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
                       {trip.locations.slice(0, 4).map((location) => (
                         <div
                           key={location.id}
-                          className="w-8 h-8 border-2 border-white dark:border-gray-950 overflow-hidden bg-neutral-100 dark:bg-neutral-800 rounded-full"
+                          className="w-8 h-8 border-2 border-white dark:border-neutral-900 overflow-hidden bg-neutral-100 dark:bg-neutral-800 rounded-full"
                         >
-                          <img
-                            src={location.image}
-                            alt={location.name}
-                            className="w-full h-full object-cover grayscale-[20%]"
-                          />
+                          {location.image ? (
+                            <Image
+                              src={location.image}
+                              alt={location.name}
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <MapPin className="w-3 h-3 text-neutral-400" />
+                            </div>
+                          )}
                         </div>
                       ))}
                       {trip.locations.length > 4 && (
-                        <div className="w-8 h-8 border-2 border-white dark:border-gray-950 bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center rounded-full">
+                        <div className="w-8 h-8 border-2 border-white dark:border-neutral-900 bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center rounded-full">
                           <span className="text-[10px] text-neutral-500 dark:text-neutral-400">
                             +{trip.locations.length - 4}
                           </span>
@@ -214,10 +225,10 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
               {!showNewTrip && (
                 <button
                   onClick={() => setShowNewTrip(true)}
-                  className="w-full p-4 border-2 border-dashed border-neutral-200 dark:border-neutral-800 hover:border-neutral-400 dark:hover:border-neutral-600 transition-colors flex items-center justify-center gap-2 rounded-lg"
+                  className="w-full p-4 border-2 border-dashed border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500 transition-colors flex items-center justify-center gap-2 rounded-[16px]"
                 >
                   <Plus className="w-4 h-4 text-neutral-400 dark:text-neutral-500" />
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400 tracking-wide">
+                  <span className="text-sm text-neutral-500 dark:text-neutral-400">
                     New Trip
                   </span>
                 </button>
@@ -229,7 +240,7 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
           {activeTrip && (
             <div className="border-t border-neutral-200 dark:border-neutral-800 p-6 space-y-6">
               <div>
-                <h4 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-4">
+                <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-4">
                   Intelligence
                 </h4>
                 <div className="space-y-3">
@@ -238,7 +249,7 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
                     return (
                       <div
                         key={index}
-                        className="flex items-start gap-3 p-3 bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-neutral-800 rounded-lg"
+                        className="flex items-start gap-3 p-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl"
                       >
                         <Icon className="w-4 h-4 text-neutral-400 dark:text-neutral-500 mt-0.5 flex-shrink-0" />
                         <p className="text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed">
@@ -258,24 +269,32 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
               {/* Locations */}
               {activeTrip.locations.length > 0 && (
                 <div>
-                  <h4 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-4">
+                  <h4 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-4">
                     Locations ({activeTrip.locations.length})
                   </h4>
                   <div className="space-y-2">
                     {activeTrip.locations.map((location) => (
                       <div
                         key={location.id}
-                        className="flex items-center gap-3 p-3 border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-50 dark:hover:bg-gray-900 transition-colors"
+                        className="flex items-center gap-3 p-3 border border-neutral-200 dark:border-neutral-700 rounded-xl hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
                       >
-                        <div className="w-10 h-10 flex-shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800 rounded-lg">
-                          <img
-                            src={location.image}
-                            alt={location.name}
-                            className="w-full h-full object-cover grayscale-[20%]"
-                          />
+                        <div className="w-10 h-10 flex-shrink-0 overflow-hidden bg-neutral-100 dark:bg-neutral-800 rounded-xl">
+                          {location.image ? (
+                            <Image
+                              src={location.image}
+                              alt={location.name}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <MapPin className="w-4 h-4 text-neutral-400" />
+                            </div>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h5 className="text-xs font-normal text-neutral-900 dark:text-neutral-100 truncate">
+                          <h5 className="text-xs font-medium text-gray-900 dark:text-white truncate">
                             {location.name}
                           </h5>
                           <p className="text-[10px] text-neutral-500 dark:text-neutral-400">
@@ -295,9 +314,9 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
                     router.push(`/trips/${activeTrip.id}`);
                     onClose();
                   }}
-                  className="w-full px-4 py-3 border border-neutral-900 dark:border-neutral-100 bg-neutral-900 dark:bg-neutral-100 text-white dark:text-neutral-900 text-xs tracking-wide hover:bg-neutral-800 dark:hover:bg-neutral-200 transition-all flex items-center justify-center gap-2 rounded-lg"
+                  className="w-full px-4 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-90 transition-all flex items-center justify-center gap-2 rounded-xl"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-4 h-4" />
                   View Full Itinerary
                 </button>
                 <button
@@ -311,7 +330,7 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
                       }
                     }
                   }}
-                  className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 text-xs tracking-wide hover:border-red-500 dark:hover:border-red-500 hover:text-red-500 dark:hover:text-red-400 transition-all rounded-lg"
+                  className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400 text-sm font-medium hover:border-red-500 dark:hover:border-red-500 hover:text-red-500 dark:hover:text-red-400 transition-all rounded-xl"
                 >
                   Delete Trip
                 </button>
@@ -323,6 +342,3 @@ export function TripSidebar({ isOpen, onClose }: TripSidebarProps) {
     </>
   );
 }
-
-
-
