@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import {
   XIcon,
   SearchIcon,
-  DollarSignIcon,
   ClockIcon,
   Loader2,
   Plane,

@@ -120,17 +120,6 @@ export function TripWeatherForecast({
           );
         })}
       </div>
-
-      <div className="mt-8 p-6 bg-neutral-50 dark:bg-neutral-900/50 border border-neutral-200 dark:border-neutral-800">
-        <h4 className="text-[11px] text-neutral-400 dark:text-neutral-500 tracking-[0.15em] uppercase mb-4">
-          Packing Suggestions
-        </h4>
-        <ul className="space-y-2 text-sm text-neutral-600 dark:text-neutral-400">
-          <li>• Light jacket recommended for cooler evenings</li>
-          <li>• Umbrella advised for Day 3 (80% chance of rain)</li>
-          <li>• Sunscreen and sunglasses for sunny days</li>
-        </ul>
-      </div>
     </div>
   );
 }

@@ -7,7 +7,6 @@ import {
   ShareIcon,
   DownloadIcon,
   SparklesIcon,
-  WalletIcon,
   PrinterIcon,
   SaveIcon,
   Loader2,

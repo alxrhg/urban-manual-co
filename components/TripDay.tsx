@@ -5,7 +5,6 @@ import {
   PlusIcon,
   XIcon,
   ClockIcon,
-  DollarSignIcon,
   MapPinIcon,
   AlertCircleIcon,
   GripVerticalIcon,
@@ -24,7 +23,6 @@ interface TripLocation {
   image: string;
   time?: string;
   notes?: string;
-  cost?: number;
   duration?: number;
   mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack';
 }
@@ -62,10 +60,6 @@ export function TripDay({
       month: 'long',
       day: 'numeric',
     });
-  };
-
-  const getTotalCost = () => {
-    return locations.reduce((total, loc) => total + (loc.cost || 0), 0);
   };
 
   const getTotalDuration = () => {
@@ -122,11 +116,6 @@ export function TripDay({
           </p>
           {locations.length > 0 && (
             <div className="flex items-center gap-4 text-[10px] text-neutral-400 dark:text-neutral-500 tracking-wide">
-              {getTotalCost() > 0 && (
-                <span className="flex items-center gap-1">
-                  <DollarSignIcon className="w-3 h-3" />${getTotalCost()}
-                </span>
-              )}
               <span className="flex items-center gap-1">
                 <ClockIcon className="w-3 h-3" />
                 {Math.floor(getTotalDuration() / 60)}h{' '}
@@ -249,12 +238,6 @@ export function TripDay({
                         )}
                         {location.duration && (
                           <span>{location.duration} min</span>
-                        )}
-                        {location.cost && (
-                          <span className="flex items-center gap-1">
-                            <DollarSignIcon className="w-3 h-3" />$
-                            {location.cost}
-                          </span>
                         )}
                       </div>
                       {location.notes && (
