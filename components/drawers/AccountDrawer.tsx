@@ -145,30 +145,35 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     return (
       <div className="px-6 py-8 pb-24 space-y-10">
         {/* Header */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-light">Account</h1>
-          </div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
+            Account
+          </h1>
         </div>
-        
-        <UMCard className="p-6 space-y-4">
-          <div className="space-y-2 text-center">
-            <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
+
+        <UMCard className="p-8 space-y-5 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-900/50 border-2 border-gray-100 dark:border-gray-800 shadow-lg">
+          <div className="flex justify-center mb-4">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 flex items-center justify-center text-4xl shadow-xl">
+              👋
+            </div>
+          </div>
+          <div className="space-y-3 text-center">
+            <p className="text-xl font-bold text-gray-900 dark:text-white">
               Welcome to Urban Manual
             </p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Sign in to save places, build trips, and sync your travel profile.
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+              Sign in to save places, build trips, and sync your travel profile across all your devices.
             </p>
           </div>
           <UMActionPill
             variant="primary"
-            className="w-full justify-center"
+            className="w-full justify-center font-bold py-3 shadow-lg hover:scale-[1.02] transition-transform"
             onClick={() => {
               onClose();
               router.push('/auth/login');
             }}
           >
-            Sign In
+            Sign In to Continue
           </UMActionPill>
         </UMCard>
       </div>
@@ -178,70 +183,62 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   return (
     <div className="px-6 py-8 pb-24 space-y-10">
       {/* Header */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-light">Account</h1>
-          <button
-            onClick={handleSignOut}
-            className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-          >
-            Sign Out
-          </button>
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 bg-clip-text text-transparent">
+            Account
+          </h1>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{displayEmail}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{displayEmail}</p>
       </div>
 
       {/* PROFILE CARD */}
-      <UMCard className="p-6 space-y-4">
+      <UMCard className="p-6 space-y-5 bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-900 dark:to-gray-900/50 border-2 border-gray-100 dark:border-gray-800 shadow-lg">
           <div className="flex items-center gap-4">
               {avatarUrl ? (
-            <div className="relative w-14 h-14 rounded-full overflow-hidden border border-neutral-200 dark:border-white/10">
+            <div className="relative w-16 h-16 rounded-2xl overflow-hidden border-2 border-white dark:border-gray-800 shadow-xl ring-2 ring-gray-100 dark:ring-gray-800">
                   <Image
                     src={avatarUrl}
                     alt={displayName}
                     fill
                     className="object-cover"
-                sizes="56px"
+                sizes="64px"
                   />
                 </div>
               ) : (
-            <div className="w-14 h-14 rounded-full bg-gray-200 dark:bg-gray-800 border border-neutral-200 dark:border-white/10 flex items-center justify-center">
-              <span className="text-gray-400 dark:text-gray-500 text-lg font-semibold">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700 border-2 border-white dark:border-gray-800 shadow-xl ring-2 ring-gray-100 dark:ring-gray-800 flex items-center justify-center">
+              <span className="text-white text-xl font-bold">
                     {displayName.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
 
-          <div className="space-y-0.5 flex-1 min-w-0">
+          <div className="space-y-1 flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <p className="text-[17px] font-semibold text-gray-900 dark:text-white truncate">
+              <p className="text-lg font-bold text-gray-900 dark:text-white truncate">
                 {displayName}
               </p>
               {isAdmin && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                  Admin
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-sm">
+                  ADMIN
                 </span>
               )}
             </div>
               {displayHandle && (
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 truncate">
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate font-medium">
                 {displayHandle}
-              </p>
-              )}
-              {displayEmail && (
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 truncate">
-                {displayEmail}
               </p>
               )}
             </div>
           </div>
 
-        <div className="flex gap-3 pt-1">
+        <div className="flex gap-3 pt-2">
           <UMActionPill
             onClick={() => {
               onClose();
               router.push('/account?tab=settings');
             }}
+            className="flex-1 justify-center font-semibold hover:scale-[1.02] transition-transform"
           >
               Edit Profile
           </UMActionPill>
@@ -251,6 +248,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               onClose();
               openLegacyDrawer('chat');
             }}
+            className="flex-1 justify-center font-semibold hover:scale-[1.02] transition-transform shadow-md"
           >
               Concierge
           </UMActionPill>
@@ -260,169 +258,253 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         {/* UPCOMING TRIP */}
         {upcomingTrip && (
         <section className="space-y-4">
-          <UMSectionTitle>Upcoming Trip</UMSectionTitle>
+          <UMSectionTitle className="flex items-center gap-2">
+            <span className="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">Upcoming Trip</span>
+            <span className="h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent dark:from-gray-700"></span>
+          </UMSectionTitle>
 
           <UMCard
-            className="p-4 space-y-3 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            className="p-0 space-y-0 cursor-pointer overflow-hidden group hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-2 border-gray-100 dark:border-gray-800"
             onClick={handleOpenTrip}
             >
               {upcomingTrip.coverImage && (
-              <div className="relative w-full h-40 rounded-[16px] overflow-hidden">
+              <div className="relative w-full h-48 overflow-hidden">
                   <Image
                     src={upcomingTrip.coverImage}
                     alt={upcomingTrip.name || 'Trip'}
                     fill
-                    className="object-cover"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                     sizes="(max-width: 768px) 100vw, 420px"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                    <p className="font-bold text-lg drop-shadow-lg">
+                      {upcomingTrip.name || upcomingTrip.title || 'Untitled Trip'}
+                    </p>
+                  </div>
                 </div>
               )}
 
-            <div className="space-y-1">
-              <p className="font-medium text-[17px] text-gray-900 dark:text-white">
+            <div className="p-4 space-y-3 bg-white dark:bg-gray-900">
+              {!upcomingTrip.coverImage && (
+                <p className="font-bold text-lg text-gray-900 dark:text-white">
                   {upcomingTrip.name || upcomingTrip.title || 'Untitled Trip'}
                 </p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                {upcomingTrip.city || upcomingTrip.destination || ''}
-                {upcomingTrip.startDate && upcomingTrip.endDate && (
-                  <> • {upcomingTrip.startDate} → {upcomingTrip.endDate}</>
+              )}
+              <div className="space-y-1.5">
+                {(upcomingTrip.city || upcomingTrip.destination) && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    📍 {upcomingTrip.city || upcomingTrip.destination}
+                  </p>
                 )}
-              </p>
-            </div>
+                {upcomingTrip.startDate && upcomingTrip.endDate && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                    🗓️ {upcomingTrip.startDate} → {upcomingTrip.endDate}
+                  </p>
+                )}
+              </div>
 
-            <UMActionPill className="w-full justify-center">
-              View Trip →
-            </UMActionPill>
+              <UMActionPill className="w-full justify-center font-semibold group-hover:scale-[1.05] transition-transform shadow-sm">
+                View Trip Details →
+              </UMActionPill>
+            </div>
           </UMCard>
         </section>
         )}
 
       {/* YOUR MANUAL SECTIONS */}
       <section className="space-y-4">
-        <UMSectionTitle>Your Manual</UMSectionTitle>
+        <UMSectionTitle className="flex items-center gap-2">
+          <span className="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">Your Manual</span>
+          <span className="h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent dark:from-gray-700"></span>
+        </UMSectionTitle>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
           <UMCard
-            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            className="p-4 cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all duration-200 border-2 border-gray-100 dark:border-gray-800 group"
               onClick={() => {
                 onClose();
               openLegacyDrawer('saved-places');
               }}
           >
-            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-              Saved Places
-            </p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Your curated favorites
-            </p>
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-600 flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform">
+                ⭐
+              </div>
+              <div>
+                <p className="font-bold text-sm text-gray-900 dark:text-white">
+                  Saved Places
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Curated favorites
+                </p>
+              </div>
+            </div>
           </UMCard>
 
           <UMCard
-            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            className="p-4 cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all duration-200 border-2 border-gray-100 dark:border-gray-800 group"
               onClick={() => {
                 onClose();
               openLegacyDrawer('visited-places');
               }}
           >
-            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-              Visited Places
-            </p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Your travel history
-            </p>
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 dark:from-green-500 dark:to-emerald-600 flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform">
+                ✓
+              </div>
+              <div>
+                <p className="font-bold text-sm text-gray-900 dark:text-white">
+                  Visited
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Travel history
+                </p>
+              </div>
+            </div>
           </UMCard>
 
           <UMCard
-            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            className="p-4 cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all duration-200 border-2 border-gray-100 dark:border-gray-800 group"
               onClick={() => {
                 onClose();
               router.push('/account?tab=collections');
             }}
           >
-            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-              Lists
-            </p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Organize destinations
-            </p>
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 dark:from-blue-500 dark:to-indigo-600 flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform">
+                📚
+              </div>
+              <div>
+                <p className="font-bold text-sm text-gray-900 dark:text-white">
+                  Lists
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Collections
+                </p>
+              </div>
+            </div>
           </UMCard>
 
           <UMCard
-            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            className="p-4 cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all duration-200 border-2 border-gray-100 dark:border-gray-800 group"
               onClick={() => {
                 onClose();
                 openSide('trip-list');
               }}
           >
-            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-              Trips
-            </p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Manage trip plans
-            </p>
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-400 to-pink-500 dark:from-purple-500 dark:to-pink-600 flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform">
+                ✈️
+              </div>
+              <div>
+                <p className="font-bold text-sm text-gray-900 dark:text-white">
+                  Trips
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  Trip plans
+                </p>
+              </div>
+            </div>
           </UMCard>
 
           <UMCard
-            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            className="p-4 cursor-pointer hover:shadow-lg hover:scale-[1.03] transition-all duration-200 border-2 border-gray-100 dark:border-gray-800 group col-span-2"
               onClick={() => {
                 onClose();
               router.push('/account?tab=achievements');
               }}
           >
-            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-              Achievements
-            </p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Milestones & travel badges
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 dark:from-yellow-500 dark:to-amber-600 flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform flex-shrink-0">
+                🏆
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-sm text-gray-900 dark:text-white">
+                  Achievements
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Milestones & travel badges
+                </p>
+              </div>
+            </div>
           </UMCard>
         </div>
       </section>
 
         {/* ACCOUNT SETTINGS */}
       <section className="space-y-4">
-        <UMSectionTitle>Account & Settings</UMSectionTitle>
+        <UMSectionTitle className="flex items-center gap-2">
+          <span className="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">Account & Settings</span>
+          <span className="h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent dark:from-gray-700"></span>
+        </UMSectionTitle>
 
-        <UMCard
-          className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+        <div className="space-y-3">
+          <UMCard
+            className="p-4 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border-2 border-gray-100 dark:border-gray-800 group"
+                onClick={() => {
+                  onClose();
+              router.push('/account?tab=settings');
+                }}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-400 to-gray-600 dark:from-gray-500 dark:to-gray-700 flex items-center justify-center text-xl shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
+                ⚙️
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-sm text-gray-900 dark:text-white">
+                  Profile & Preferences
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Notifications, privacy, theme
+                </p>
+              </div>
+            </div>
+          </UMCard>
+
+          {isAdmin && (
+            <UMCard
+              className="p-4 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border-2 border-blue-100 dark:border-blue-900 group bg-gradient-to-br from-blue-50/50 to-indigo-50/50 dark:from-blue-950/30 dark:to-indigo-950/30"
               onClick={() => {
                 onClose();
-            router.push('/account?tab=settings');
+                router.push('/admin');
               }}
-        >
-          <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-            Profile & Preferences
-          </p>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            Notifications, privacy, theme
-          </p>
-        </UMCard>
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 dark:from-blue-600 dark:to-indigo-700 flex items-center justify-center text-xl shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
+                  👑
+                </div>
+                <div className="flex-1">
+                  <p className="font-bold text-sm text-gray-900 dark:text-white">
+                    Admin Panel
+                  </p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    Manage destinations, analytics
+                  </p>
+                </div>
+              </div>
+            </UMCard>
+          )}
 
-        {isAdmin && (
           <UMCard
-            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
-            onClick={() => {
-              onClose();
-              router.push('/admin');
-            }}
+            className="p-4 cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200 border-2 border-red-100 dark:border-red-900 group bg-gradient-to-br from-red-50/50 to-rose-50/50 dark:from-red-950/30 dark:to-rose-950/30"
+                onClick={handleSignOut}
           >
-            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-              Admin Panel
-            </p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Manage destinations, analytics
-            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 dark:from-red-600 dark:to-rose-700 flex items-center justify-center text-xl shadow-md group-hover:scale-110 transition-transform flex-shrink-0">
+                🚪
+              </div>
+              <div className="flex-1">
+                <p className="font-bold text-sm text-red-600 dark:text-red-400">
+                  Sign Out
+                </p>
+                <p className="text-xs text-red-500 dark:text-red-500">
+                  Log out of your account
+                </p>
+              </div>
+            </div>
           </UMCard>
-        )}
-
-        <UMCard
-          className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
-              onClick={handleSignOut}
-        >
-          <p className="font-medium text-[15px] text-red-600 dark:text-red-400">
-            Sign Out
-          </p>
-        </UMCard>
+        </div>
       </section>
       </div>
   );
