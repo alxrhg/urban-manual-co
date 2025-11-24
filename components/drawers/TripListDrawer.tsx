@@ -243,15 +243,6 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
                         >
                           Edit
                         </UMActionPill>
-
-                        <UMActionPill
-                          onClick={(e) => {
-                            e?.stopPropagation();
-                            handleDeleteTrip(trip.id);
-                          }}
-                        >
-                          Delete
-                        </UMActionPill>
                       </div>
                     </div>
                   </button>
