@@ -7,7 +7,6 @@ import { createClient } from '@/lib/supabase/client';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useDrawer } from '@/contexts/DrawerContext';
 import Image from 'next/image';
-import { MapPin, Bookmark, Calendar, Settings, LogOut } from 'lucide-react';
 
 interface UpcomingTrip {
   id?: string;
@@ -149,24 +148,27 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
           </h1>
         </div>
 
-        {/* Welcome Card */}
-        <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-8 text-center">
-          <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+        {/* Welcome Message */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-light mb-2 text-gray-900 dark:text-white">
             Welcome to Urban Manual
           </h2>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Sign in to save places, build trips, and sync your profile.
           </p>
-          <button
-            onClick={() => {
-              onClose();
-              router.push('/auth/login');
-            }}
-            className="w-full px-4 py-2.5 text-xs font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-opacity"
-          >
-            Sign In
-          </button>
         </div>
+
+        {/* Sign In Button - Pill Style */}
+        <button
+          onClick={() => {
+            onClose();
+            router.push('/auth/login');
+          }}
+          className="flex h-[44px] items-center justify-center rounded-full bg-black px-5 text-sm font-medium text-white transition-all duration-200 hover:opacity-90 dark:bg-white dark:text-black"
+          style={{ borderRadius: '9999px' }}
+        >
+          Sign In
+        </button>
       </div>
     );
   }
@@ -174,7 +176,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   return (
     <div className="min-h-screen flex flex-col px-6 py-12">
       {/* Header */}
-      <div className="mb-16">
+      <div className="mb-12">
         <h1 className="text-xs uppercase tracking-[2px] font-medium text-gray-500 mb-2">
           Account
         </h1>
@@ -185,7 +187,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       <div className="mb-12">
         <div className="flex items-center gap-4 mb-6">
           {avatarUrl ? (
-            <div className="relative w-16 h-16 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+            <div className="relative w-16 h-16 rounded-full overflow-hidden border border-gray-200 dark:border-gray-800">
               <Image
                 src={avatarUrl}
                 alt={displayName}
@@ -195,7 +197,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               />
             </div>
           ) : (
-            <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 flex items-center justify-center">
               <span className="text-gray-400 dark:text-gray-600 text-lg font-medium">
                 {displayName.charAt(0).toUpperCase()}
               </span>
@@ -208,7 +210,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                 {displayName}
               </p>
               {isAdmin && (
-                <span className="text-[10px] font-medium px-2 py-0.5 border border-gray-200 dark:border-gray-800 rounded-md text-gray-600 dark:text-gray-400">
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400">
                   ADMIN
                 </span>
               )}
@@ -221,13 +223,15 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
           </div>
         </div>
 
-        <div className="flex gap-3">
+        {/* Action Buttons - Pill Style */}
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => {
               onClose();
               router.push('/account?tab=settings');
             }}
-            className="flex-1 px-4 py-2.5 text-xs font-medium text-gray-900 dark:text-white border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+            className="flex h-[44px] items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
+            style={{ borderRadius: '9999px' }}
           >
             Edit Profile
           </button>
@@ -236,7 +240,8 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               onClose();
               openLegacyDrawer('chat');
             }}
-            className="flex-1 px-4 py-2.5 text-xs font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-opacity"
+            className="flex h-[44px] items-center justify-center rounded-full bg-black px-5 text-sm font-medium text-white transition-all duration-200 hover:opacity-90 dark:bg-white dark:text-black"
+            style={{ borderRadius: '9999px' }}
           >
             Concierge
           </button>
@@ -254,7 +259,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
             className="w-full border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:border-gray-300 dark:hover:border-gray-700 transition-colors text-left"
           >
             {upcomingTrip.coverImage && (
-              <div className="relative w-full h-48">
+              <div className="relative w-full h-32">
                 <Image
                   src={upcomingTrip.coverImage}
                   alt={upcomingTrip.name || 'Trip'}
@@ -265,48 +270,35 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               </div>
             )}
             <div className="p-4">
-              <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+              <p className="text-sm font-medium text-gray-900 dark:text-white mb-1">
                 {upcomingTrip.name || upcomingTrip.title || 'Untitled Trip'}
               </p>
-              <div className="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
-                {(upcomingTrip.city || upcomingTrip.destination) && (
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="w-3 h-3" />
-                    <span>{upcomingTrip.city || upcomingTrip.destination}</span>
-                  </div>
-                )}
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {upcomingTrip.city || upcomingTrip.destination}
                 {upcomingTrip.startDate && upcomingTrip.endDate && (
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-3 h-3" />
-                    <span>{upcomingTrip.startDate} → {upcomingTrip.endDate}</span>
-                  </div>
+                  <> • {upcomingTrip.startDate} → {upcomingTrip.endDate}</>
                 )}
-              </div>
+              </p>
             </div>
           </button>
         </div>
       )}
 
-      {/* Your Manual */}
+      {/* Your Manual - Pill Buttons */}
       <div className="mb-12">
         <h2 className="text-xs uppercase tracking-[2px] font-medium text-gray-500 mb-4">
           Your Manual
         </h2>
-        <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => {
               onClose();
               openLegacyDrawer('saved-places');
             }}
-            className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+            className="flex h-[44px] items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
+            style={{ borderRadius: '9999px' }}
           >
-            <div className="flex items-center gap-3">
-              <Bookmark className="w-4 h-4 text-gray-400" />
-              <div>
-                <p className="text-xs font-medium text-gray-900 dark:text-white">Saved Places</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Your curated favorites</p>
-              </div>
-            </div>
+            Saved Places
           </button>
 
           <button
@@ -314,15 +306,10 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               onClose();
               openLegacyDrawer('visited-places');
             }}
-            className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+            className="flex h-[44px] items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
+            style={{ borderRadius: '9999px' }}
           >
-            <div className="flex items-center gap-3">
-              <MapPin className="w-4 h-4 text-gray-400" />
-              <div>
-                <p className="text-xs font-medium text-gray-900 dark:text-white">Visited Places</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Your travel history</p>
-              </div>
-            </div>
+            Visited Places
           </button>
 
           <button
@@ -330,17 +317,10 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               onClose();
               router.push('/account?tab=collections');
             }}
-            className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+            className="flex h-[44px] items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
+            style={{ borderRadius: '9999px' }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 text-gray-400 flex items-center justify-center">
-                <div className="w-3 h-3 border border-current rounded" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-900 dark:text-white">Lists</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Organize destinations</p>
-              </div>
-            </div>
+            Lists
           </button>
 
           <button
@@ -348,15 +328,10 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               onClose();
               openSide('trip-list');
             }}
-            className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+            className="flex h-[44px] items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
+            style={{ borderRadius: '9999px' }}
           >
-            <div className="flex items-center gap-3">
-              <Calendar className="w-4 h-4 text-gray-400" />
-              <div>
-                <p className="text-xs font-medium text-gray-900 dark:text-white">Trips</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Manage trip plans</p>
-              </div>
-            </div>
+            Trips
           </button>
 
           <button
@@ -364,41 +339,29 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               onClose();
               router.push('/account?tab=achievements');
             }}
-            className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+            className="flex h-[44px] items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
+            style={{ borderRadius: '9999px' }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-4 h-4 text-gray-400 flex items-center justify-center">
-                <div className="w-3 h-3 border border-current" style={{ clipPath: 'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)' }} />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-gray-900 dark:text-white">Achievements</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Milestones & badges</p>
-              </div>
-            </div>
+            Achievements
           </button>
         </div>
       </div>
 
-      {/* Account & Settings */}
+      {/* Account & Settings - Pill Buttons */}
       <div className="mb-12">
         <h2 className="text-xs uppercase tracking-[2px] font-medium text-gray-500 mb-4">
           Account & Settings
         </h2>
-        <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => {
               onClose();
               router.push('/account?tab=settings');
             }}
-            className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+            className="flex h-[44px] items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
+            style={{ borderRadius: '9999px' }}
           >
-            <div className="flex items-center gap-3">
-              <Settings className="w-4 h-4 text-gray-400" />
-              <div>
-                <p className="text-xs font-medium text-gray-900 dark:text-white">Profile & Preferences</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Notifications, privacy, theme</p>
-              </div>
-            </div>
+            Settings
           </button>
 
           {isAdmin && (
@@ -407,29 +370,19 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
                 onClose();
                 router.push('/admin');
               }}
-              className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+              className="flex h-[44px] items-center justify-center rounded-full border border-gray-200 bg-white px-5 text-sm font-medium text-gray-900 transition-all duration-200 hover:bg-gray-50 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.15)]"
+              style={{ borderRadius: '9999px' }}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-4 h-4 text-gray-400" />
-                <div>
-                  <p className="text-xs font-medium text-gray-900 dark:text-white">Admin Panel</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Manage destinations, analytics</p>
-                </div>
-              </div>
+              Admin Panel
             </button>
           )}
 
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+            className="flex h-[44px] items-center justify-center rounded-full border border-red-200 bg-white px-5 text-sm font-medium text-red-600 transition-all duration-200 hover:bg-red-50 dark:border-red-900/30 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/40"
+            style={{ borderRadius: '9999px' }}
           >
-            <div className="flex items-center gap-3">
-              <LogOut className="w-4 h-4 text-gray-400" />
-              <div>
-                <p className="text-xs font-medium text-red-600 dark:text-red-400">Sign Out</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Log out of your account</p>
-              </div>
-            </div>
+            Sign Out
           </button>
         </div>
       </div>
