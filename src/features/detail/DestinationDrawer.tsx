@@ -30,7 +30,6 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Destination } from '@/types/destination';
 import type { ItineraryItemNotes } from '@/types/trip';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/useToast';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
@@ -202,7 +201,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [isReviewersExpanded, setIsReviewersExpanded] = useState(false);
   const [isContactExpanded, setIsContactExpanded] = useState(false);
   const { user } = useAuth();
-  const toast = useToast();
   const router = useRouter();
   const toast = useToast();
   const [isSaved, setIsSaved] = useState(false);
