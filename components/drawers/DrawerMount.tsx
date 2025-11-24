@@ -30,7 +30,7 @@ export default function DrawerMount() {
           title="Your Trips"
           style={drawerStyle}
           position="right"
-          desktopWidth="640px"
+          desktopWidth="420px"
         >
           <TripListDrawer {...props} />
         </Drawer>
@@ -44,7 +44,7 @@ export default function DrawerMount() {
           title={props?.trip?.name ?? props?.trip?.title ?? "Trip Overview"}
           style={drawerStyle}
           position="right"
-          desktopWidth="640px"
+          desktopWidth="420px"
         >
           <TripOverviewDrawer trip={props?.trip ?? null} />
         </Drawer>
@@ -75,7 +75,7 @@ export default function DrawerMount() {
           title={props?.mealType ? `Add ${props.mealType}` : "Add Place"}
           style={drawerStyle}
           position="right"
-          desktopWidth="640px"
+          desktopWidth="420px"
         >
           <PlaceSelectorDrawer
             day={props?.day ?? null}
@@ -95,7 +95,7 @@ export default function DrawerMount() {
           title="Select Hotel"
           style={drawerStyle}
           position="right"
-          desktopWidth="640px"
+          desktopWidth="420px"
         >
           <AddHotelDrawer
             trip={props?.trip ?? null}

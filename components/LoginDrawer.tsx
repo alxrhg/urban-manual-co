@@ -249,7 +249,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
       title={isSignUp ? 'Create Account' : 'Sign In'}
       mobileVariant="bottom"
       desktopSpacing="right-4 top-4 bottom-4"
-      desktopWidth="440px"
+      desktopWidth="420px"
       position="right"
       style="solid"
     >
