@@ -474,9 +474,43 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
     }
   };
 
+  // Create header content with save button for mobile
+  const headerContent = (
+    <div className="flex items-center justify-between w-full gap-3">
+      <button
+        onClick={onClose}
+        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors md:hidden"
+        aria-label="Close drawer"
+      >
+        <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
+      </button>
+      <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center md:text-left md:ml-0">
+        {destination ? "Edit Destination" : "Add New POI"}
+      </h2>
+      {/* Save button for mobile - shown in header */}
+      <button
+        type="submit"
+        form="poi-form"
+        disabled={isSaving || isDeleting || !formData.name || !formData.city || !formData.category}
+        className="md:hidden px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
+      >
+        {isSaving ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {destination ? 'Updating...' : 'Creating...'}
+          </>
+        ) : (
+          destination ? 'Update' : 'Save'
+        )}
+      </button>
+      {/* Spacer for desktop to maintain centering */}
+      <div className="hidden md:block w-9" />
+    </div>
+  );
+
   const content = (
     <div className="px-6 py-6 pb-24">
-      <form onSubmit={handleSubmit} className="space-y-8">
+      <form id="poi-form" onSubmit={handleSubmit} className="space-y-8">
         {/* Google Places Autocomplete */}
         <div>
           <label className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
@@ -795,8 +829,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
           </div>
         </div>
 
-        {/* Submit Button */}
-        <div className="space-y-4 pt-6 border-t border-gray-200 dark:border-gray-800">
+        {/* Submit Button - Desktop only (mobile button is in header) */}
+        <div className="hidden md:block space-y-4 pt-6 border-t border-gray-200 dark:border-gray-800">
           <div className="flex gap-3">
             <button
               type="button"
@@ -886,7 +920,8 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      title={destination ? "Edit Destination" : "Add New POI"}
+      title={undefined}
+      headerContent={headerContent}
       desktopWidth="600px"
     >
       {content}
