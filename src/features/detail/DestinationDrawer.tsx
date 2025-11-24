@@ -1481,17 +1481,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </div>
               )}
 
-              {/* Rating - Bold rating, light review count */}
+              {/* Rating - Bold rating */}
               {(enrichedData?.rating || destination.rating) && (
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-gray-900 dark:text-white">
                     {(enrichedData?.rating || destination.rating).toFixed(1)}
                   </span>
-                  {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500 font-light">
-                      ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
-                    </span>
-                  )}
                 </div>
               )}
 
@@ -1550,11 +1545,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                   </svg>
                   {(enrichedData?.rating || destination.rating).toFixed(1)}
-                  {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
-                    <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
-                      ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
-                    </span>
-                  )}
                     </span>
               )}
 
@@ -2310,11 +2300,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
                   </svg>
                   {(enrichedData?.rating || destination.rating).toFixed(1)}
-                  {(enrichedData?.user_ratings_total || (destination as any).user_ratings_total) && (
-                    <span className="text-gray-500 dark:text-gray-400 text-[10px] ml-0.5">
-                      ({(enrichedData?.user_ratings_total || (destination as any).user_ratings_total).toLocaleString()})
-                    </span>
-                  )}
                     </span>
               )}
 
