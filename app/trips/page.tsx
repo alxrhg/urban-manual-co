@@ -196,7 +196,7 @@ export default function TripsPage() {
   }
 
   return (
-    <div className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
+    <div className="w-full px-6 md:px-10 py-20 min-h-screen">
       <div className="w-full">
         {/* Header */}
         <div className="mb-12">

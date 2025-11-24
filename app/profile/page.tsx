@@ -103,35 +103,33 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="w-full px-6 md:px-10 py-20 min-h-screen flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="mb-6">
+    <div className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <div className="max-w-3xl">
+        <div className="mb-12">
           <button
             onClick={() => router.back()}
-            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors mb-4"
+            className="mb-6 text-xs text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
             aria-label="Back"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            ← Back
           </button>
-          <h1 className="text-3xl font-bold">Profile & Preferences</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
+          <h1 className="text-2xl font-light mb-2">Profile & Preferences</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Customize your travel preferences to get better recommendations
           </p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Travel Style */}
-          <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Travel Style</h2>
+          <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Travel Style</h2>
             <div className="flex flex-wrap gap-2">
               {TRAVEL_STYLES.map(style => (
                 <button
@@ -150,8 +148,8 @@ export default function ProfilePage() {
           </section>
 
           {/* Favorite Cities */}
-          <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Favorite Cities</h2>
+          <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Favorite Cities</h2>
             <div className="flex flex-wrap gap-2">
               {ALL_CITIES.slice(0, 30).map(city => (
                 <button
@@ -173,8 +171,8 @@ export default function ProfilePage() {
           </section>
 
           {/* Favorite Categories */}
-          <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Favorite Categories</h2>
+          <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Favorite Categories</h2>
             <div className="flex flex-wrap gap-2">
               {CATEGORIES.map(category => (
                 <button
@@ -196,8 +194,8 @@ export default function ProfilePage() {
           </section>
 
           {/* Price Preference */}
-          <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Price Preference</h2>
+          <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Price Preference</h2>
             <div className="flex gap-2">
               {[1, 2, 3, 4].map(level => (
                 <button
@@ -216,8 +214,8 @@ export default function ProfilePage() {
           </section>
 
           {/* Dietary Preferences */}
-          <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Dietary Preferences</h2>
+          <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Dietary Preferences</h2>
             <div className="flex flex-wrap gap-2">
               {DIETARY_PREFERENCES.map(pref => (
                 <button
@@ -239,8 +237,8 @@ export default function ProfilePage() {
           </section>
 
           {/* Interests */}
-          <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Interests</h2>
+          <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Interests</h2>
             <div className="flex flex-wrap gap-2">
               {INTERESTS.map(interest => (
                 <button
@@ -262,8 +260,8 @@ export default function ProfilePage() {
           </section>
 
           {/* Settings */}
-          <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Privacy & Settings</h2>
+          <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+            <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Privacy & Settings</h2>
             <div className="space-y-4">
               <label className="flex items-center justify-between cursor-pointer">
                 <div>
@@ -315,23 +313,23 @@ export default function ProfilePage() {
             <button
               onClick={saveProfile}
               disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-xs font-medium"
             >
               {saving ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <Save className="h-5 w-5" />
+                  <Save className="h-4 w-4" />
                   Save Preferences
                 </>
               )}
             </button>
             <button
               onClick={() => router.back()}
-              className="px-6 py-3 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              className="px-4 py-2 border border-gray-200 dark:border-gray-800 hover:opacity-80 rounded-2xl transition-opacity text-xs font-medium"
             >
               Cancel
             </button>

@@ -230,9 +230,9 @@ export default function CitiesPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-white dark:bg-gray-900">
+      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Loading cities…</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Loading cities…</div>
         </div>
       </main>
     );
@@ -243,15 +243,13 @@ export default function CitiesPage() {
 
   return (
     <>
-      <main className="relative min-h-screen bg-white dark:bg-gray-900">
+      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
       {/* Hero Section */}
-      <section className="px-6 md:px-10 py-12 md:py-16">
-        <div className="max-w-[1800px] mx-auto">
+      <section>
+        <div className="w-full">
           {/* Header */}
           <div className="mb-12">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className="text-2xl font-light">Discover by Cities</h1>
-            </div>
+            <h1 className="text-2xl font-light mb-2">Discover by Cities</h1>
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {cityStats.length} cities • {countries.length} countries
             </p>
@@ -261,8 +259,8 @@ export default function CitiesPage() {
           {featuredCities.length > 0 && (
             <div className="mb-12">
               <div className="mb-6">
-                <h2 className="text-2xl md:text-3xl font-bold mb-2 text-black dark:text-white">Featured Cities</h2>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
+                <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Featured Cities</h2>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Most explored destinations this month
                 </p>
               </div>
@@ -340,8 +338,8 @@ export default function CitiesPage() {
       </section>
 
       {/* Grid Section */}
-      <div className="pb-12 px-6 md:px-10">
-        <div className="max-w-[1800px] mx-auto">
+      <div className="pb-12">
+        <div className="w-full">
           {filteredCities.length === 0 ? (
             <div className="text-center py-16">
               <span className="text-sm text-gray-600 dark:text-gray-400">No cities found</span>

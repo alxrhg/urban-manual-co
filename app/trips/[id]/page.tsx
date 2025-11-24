@@ -470,14 +470,14 @@ export default function TripPage() {
     }
   };
 
-  if (tripLoading) return <div className="p-10">Loading…</div>;
-  if (error) return <div className="p-10 text-red-600">Error: {error}</div>;
-  if (!trip) return <div className="p-10">Trip not found</div>;
+  if (tripLoading) return <div className="w-full px-6 md:px-10 py-20 min-h-screen">Loading…</div>;
+  if (error) return <div className="w-full px-6 md:px-10 py-20 min-h-screen text-red-600">Error: {error}</div>;
+  if (!trip) return <div className="w-full px-6 md:px-10 py-20 min-h-screen">Trip not found</div>;
 
   const isOwner = trip.user_id === user?.id;
 
   return (
-    <div className="w-full px-6 py-8 space-y-8">
+    <div className="w-full px-6 md:px-10 py-20 min-h-screen space-y-8">
       {/* Header */}
       <TripHeader
         trip={{
