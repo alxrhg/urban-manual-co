@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     topic_preprocess_batch_size: int = 500
 
     class Config:
+        """Configure environment variable parsing for settings."""
+
         env_file = ".env"
         case_sensitive = False
 

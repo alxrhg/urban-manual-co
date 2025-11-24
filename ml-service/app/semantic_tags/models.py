@@ -46,6 +46,7 @@ class TagDecision:
     reasons: List[TagReason] = field(default_factory=list)
 
     def add_reason(self, sentence: str, keyword: str) -> None:
+        """Attach an explainability record for why a tag was applied or skipped."""
         self.reasons.append(TagReason(sentence=sentence.strip(), keyword=keyword))
 
 
@@ -62,9 +63,11 @@ class TagEngine:
     """Simple keyword driven semantic tag evaluator."""
 
     def __init__(self, tags: Iterable[SemanticTag]):
+        """Store available tags indexed by identifier for fast lookup."""
         self.tags = {tag.id: tag for tag in tags}
 
     def _split_sentences(self, text: str) -> List[str]:
+        """Split text into normalized sentences to support keyword matching."""
         return [sentence.strip() for sentence in _SENTENCE_SPLIT_RE.split(text) if sentence and sentence.strip()]
 
     def evaluate(
