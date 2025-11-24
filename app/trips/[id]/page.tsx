@@ -132,6 +132,55 @@ export default function TripPage() {
     }
   };
 
+  const handleSaveTripInfo = async () => {
+    if (!trip || !user) return;
+
+    try {
+      setSaving(true);
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const updates: any = {};
+      
+      if (editedTitle !== trip.title) {
+        updates.title = editedTitle;
+      }
+      
+      if (editedCity !== (trip.destination || '')) {
+        updates.destination = editedCity || null;
+      }
+      
+      if (editedStartDate !== (trip.start_date || '')) {
+        updates.start_date = editedStartDate || null;
+      }
+      
+      if (editedEndDate !== (trip.end_date || '')) {
+        updates.end_date = editedEndDate || null;
+      }
+
+      if (Object.keys(updates).length > 0) {
+        const { error } = await supabaseClient
+          .from('trips')
+          .update(updates)
+          .eq('id', trip.id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+
+        // Refresh the page to show updated data
+        router.refresh();
+        alert('Trip information saved successfully!');
+      } else {
+        alert('No changes to save.');
+      }
+    } catch (error: any) {
+      console.error('Error saving trip information:', error);
+      alert(`Failed to save trip information: ${error.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!trip || !user) return;
 
@@ -546,6 +595,22 @@ export default function TripPage() {
                       className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
                     />
                   </div>
+                </div>
+                <div className="pt-4">
+                  <UMActionPill
+                    onClick={saving ? undefined : handleSaveTripInfo}
+                    variant="primary"
+                    className={`w-full justify-center ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Trip Information'
+                    )}
+                  </UMActionPill>
                 </div>
               </UMCard>
             </section>
