@@ -16,7 +16,7 @@ import { Camera, Loader2, Plus, Trash2, Calendar } from 'lucide-react';
 import Image from 'next/image';
 import { TripPlanner } from '@/components/TripPlanner';
 
-type Tab = 'details' | 'itinerary' | 'hotels';
+type Tab = 'details' | 'itinerary';
 
 interface Hotel {
   id?: string;
@@ -37,6 +37,7 @@ export default function TripPage() {
   const [activeTab, setActiveTab] = useState<Tab>('details');
   const [saving, setSaving] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
+  const [editedCity, setEditedCity] = useState('');
   const [editedStartDate, setEditedStartDate] = useState('');
   const [editedEndDate, setEditedEndDate] = useState('');
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
@@ -51,6 +52,7 @@ export default function TripPage() {
   useEffect(() => {
     if (trip) {
       setEditedTitle(trip.title || '');
+      setEditedCity(trip.destination || '');
       setEditedStartDate(trip.start_date || '');
       setEditedEndDate(trip.end_date || '');
       setCoverImagePreview(trip.cover_image || null);
@@ -144,6 +146,10 @@ export default function TripPage() {
         updates.title = editedTitle;
       }
       
+      if (editedCity !== (trip.destination || '')) {
+        updates.destination = editedCity || null;
+      }
+      
       if (editedStartDate !== (trip.start_date || '')) {
         updates.start_date = editedStartDate || null;
       }
@@ -204,6 +210,56 @@ export default function TripPage() {
     }
   };
 
+  // Helper function to check if two date ranges overlap
+  const datesOverlap = (start1: string, end1: string, start2: string, end2: string): boolean => {
+    if (!start1 || !end1 || !start2 || !end2) return false;
+    const s1 = new Date(start1);
+    const e1 = new Date(end1);
+    const s2 = new Date(start2);
+    const e2 = new Date(end2);
+    // Check if ranges overlap (excluding the end date of first range)
+    return s1 < e2 && s2 < e1;
+  };
+
+  // Helper function to get all nights in a date range
+  const getNightsInRange = (startDate: string, endDate: string): string[] => {
+    if (!startDate || !endDate) return [];
+    const nights: string[] = [];
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const current = new Date(start);
+    
+    while (current < end) {
+      nights.push(current.toISOString().split('T')[0]);
+      current.setDate(current.getDate() + 1);
+    }
+    return nights;
+  };
+
+  // Check if a hotel conflicts with existing hotels (only one hotel per night)
+  const hasHotelConflict = (hotels: Hotel[], currentIndex: number, newStartDate: string, newEndDate: string): boolean => {
+    if (!newStartDate || !newEndDate) return false;
+    
+    const newNights = getNightsInRange(newStartDate, newEndDate);
+    
+    for (let i = 0; i < hotels.length; i++) {
+      if (i === currentIndex) continue; // Skip the current hotel being edited
+      
+      const hotel = hotels[i];
+      if (!hotel.startDate || !hotel.endDate) continue;
+      
+      const existingNights = getNightsInRange(hotel.startDate, hotel.endDate);
+      
+      // Check if any night overlaps
+      const hasOverlap = newNights.some(night => existingNights.includes(night));
+      if (hasOverlap) {
+        return true;
+      }
+    }
+    
+    return false;
+  };
+
   const handleAddHotel = () => {
     const newHotel: Hotel = {
       name: '',
@@ -215,7 +271,24 @@ export default function TripPage() {
 
   const handleUpdateHotel = (index: number, field: keyof Hotel, value: string) => {
     const updated = [...hotels];
-    updated[index] = { ...updated[index], [field]: value };
+    const hotel = updated[index];
+    const newHotel = { ...hotel, [field]: value };
+    
+    // If updating dates, check for conflicts
+    if ((field === 'startDate' || field === 'endDate') && newHotel.startDate && newHotel.endDate) {
+      if (hasHotelConflict(updated, index, newHotel.startDate, newHotel.endDate)) {
+        alert('This hotel conflicts with another hotel. Only one hotel per night is allowed.');
+        return;
+      }
+      
+      // Ensure end date is after start date
+      if (new Date(newHotel.endDate) <= new Date(newHotel.startDate)) {
+        alert('Check-out date must be after check-in date.');
+        return;
+      }
+    }
+    
+    updated[index] = newHotel;
     setHotels(updated);
   };
 
@@ -240,6 +313,32 @@ export default function TripPage() {
 
   const handleSaveHotels = async () => {
     if (!tripId || !user || !trip) return;
+
+    // Validate all hotels before saving
+    for (let i = 0; i < hotels.length; i++) {
+      const hotel = hotels[i];
+      
+      if (!hotel.name.trim()) {
+        alert(`Hotel ${i + 1} must have a name.`);
+        return;
+      }
+      
+      if (!hotel.startDate || !hotel.endDate) {
+        alert(`Hotel ${i + 1} must have both check-in and check-out dates.`);
+        return;
+      }
+      
+      if (new Date(hotel.endDate) <= new Date(hotel.startDate)) {
+        alert(`Hotel ${i + 1}: Check-out date must be after check-in date.`);
+        return;
+      }
+      
+      // Check for conflicts with other hotels
+      if (hasHotelConflict(hotels, i, hotel.startDate, hotel.endDate)) {
+        alert(`Hotel ${i + 1} conflicts with another hotel. Only one hotel per night is allowed.`);
+        return;
+      }
+    }
 
     try {
       setSaving(true);
@@ -329,7 +428,7 @@ export default function TripPage() {
       {/* Tabs */}
       <div className="mb-8">
         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-          {(['details', 'itinerary', 'hotels'] as const).map((tab) => (
+          {(['details', 'itinerary'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -412,6 +511,18 @@ export default function TripPage() {
                     className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    value={editedCity}
+                    onChange={(e) => setEditedCity(e.target.value)}
+                    placeholder="e.g., Tokyo, Paris, New York"
+                    className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
@@ -437,6 +548,130 @@ export default function TripPage() {
                   </div>
                 </div>
               </UMCard>
+            </section>
+          )}
+
+          {/* Hotels Section */}
+          {isOwner && (
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <UMSectionTitle>Hotels</UMSectionTitle>
+                <UMActionPill onClick={handleAddHotel} variant="primary">
+                  <Plus className="w-4 h-4" />
+                  Add Hotel
+                </UMActionPill>
+              </div>
+
+              {loadingHotels ? (
+                <div className="text-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-neutral-400" />
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Loading hotels...</p>
+                </div>
+              ) : hotels.length === 0 ? (
+                <UMCard className="p-8 text-center">
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+                    No hotels added yet
+                  </p>
+                  <UMActionPill onClick={handleAddHotel} variant="primary">
+                    <Plus className="w-4 h-4" />
+                    Add Your First Hotel
+                  </UMActionPill>
+                </UMCard>
+              ) : (
+                <div className="space-y-4">
+                  {hotels.map((hotel, index) => (
+                    <UMCard key={index} className="p-6 space-y-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                              Hotel Name
+                            </label>
+                            <input
+                              type="text"
+                              value={hotel.name}
+                              onChange={(e) => handleUpdateHotel(index, 'name', e.target.value)}
+                              placeholder="Hotel Le Marais"
+                              className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                Check-in Date
+                              </label>
+                              <input
+                                type="date"
+                                value={hotel.startDate}
+                                onChange={(e) => handleUpdateHotel(index, 'startDate', e.target.value)}
+                                min={trip?.start_date || ''}
+                                max={trip?.end_date || ''}
+                                className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                                <Calendar className="w-4 h-4" />
+                                Check-out Date
+                              </label>
+                              <input
+                                type="date"
+                                value={hotel.endDate}
+                                onChange={(e) => handleUpdateHotel(index, 'endDate', e.target.value)}
+                                min={hotel.startDate || trip?.start_date || ''}
+                                max={trip?.end_date || ''}
+                                className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                              Address (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={hotel.address || ''}
+                              onChange={(e) => handleUpdateHotel(index, 'address', e.target.value)}
+                              placeholder="123 Main Street, City, Country"
+                              className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
+                            />
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleRemoveHotel(index)}
+                          className="ml-4 p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
+                          title="Remove hotel"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </UMCard>
+                  ))}
+                </div>
+              )}
+
+              {hotels.length > 0 && (
+                <div className="pt-4">
+                  <UMActionPill
+                    onClick={() => !saving && handleSaveHotels()}
+                    variant="primary"
+                    className={`w-full justify-center ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Hotels'
+                    )}
+                  </UMActionPill>
+                </div>
+              )}
             </section>
           )}
 
@@ -495,141 +730,8 @@ export default function TripPage() {
         </div>
       )}
 
-      {activeTab === 'hotels' && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <UMSectionTitle>Hotels</UMSectionTitle>
-            {isOwner && (
-              <UMActionPill onClick={handleAddHotel} variant="primary">
-                <Plus className="w-4 h-4" />
-                Add Hotel
-              </UMActionPill>
-            )}
-          </div>
-
-          {loadingHotels ? (
-            <div className="text-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-neutral-400" />
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">Loading hotels...</p>
-            </div>
-          ) : hotels.length === 0 ? (
-            <UMCard className="p-8 text-center">
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
-                No hotels added yet
-              </p>
-              {isOwner && (
-                <UMActionPill onClick={handleAddHotel} variant="primary">
-                  <Plus className="w-4 h-4" />
-                  Add Your First Hotel
-                </UMActionPill>
-              )}
-            </UMCard>
-          ) : (
-            <div className="space-y-4">
-              {hotels.map((hotel, index) => (
-                <UMCard key={index} className="p-6 space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-                          Hotel Name
-                        </label>
-                        <input
-                          type="text"
-                          value={hotel.name}
-                          onChange={(e) => handleUpdateHotel(index, 'name', e.target.value)}
-                          placeholder="Hotel Le Marais"
-                          disabled={!isOwner}
-                          className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            Check-in Date
-                          </label>
-                          <input
-                            type="date"
-                            value={hotel.startDate}
-                            onChange={(e) => handleUpdateHotel(index, 'startDate', e.target.value)}
-                            min={trip?.start_date || ''}
-                            max={trip?.end_date || ''}
-                            disabled={!isOwner}
-                            className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            Check-out Date
-                          </label>
-                          <input
-                            type="date"
-                            value={hotel.endDate}
-                            onChange={(e) => handleUpdateHotel(index, 'endDate', e.target.value)}
-                            min={hotel.startDate || trip?.start_date || ''}
-                            max={trip?.end_date || ''}
-                            disabled={!isOwner}
-                            className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-                          Address (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          value={hotel.address || ''}
-                          onChange={(e) => handleUpdateHotel(index, 'address', e.target.value)}
-                          placeholder="123 Main Street, City, Country"
-                          disabled={!isOwner}
-                          className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
-                      </div>
-                    </div>
-
-                    {isOwner && (
-                      <button
-                        onClick={() => handleRemoveHotel(index)}
-                        className="ml-4 p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
-                        title="Remove hotel"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    )}
-                  </div>
-                </UMCard>
-              ))}
-            </div>
-          )}
-
-          {isOwner && hotels.length > 0 && (
-            <div className="pt-4">
-              <UMActionPill
-                onClick={() => !saving && handleSaveHotels()}
-                variant="primary"
-                className={`w-full justify-center ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Hotels'
-                )}
-              </UMActionPill>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Save Button (Fixed at bottom) */}
-      {isOwner && activeTab !== 'hotels' && (
+      {isOwner && (
         <div className="fixed bottom-6 right-6 z-50">
           <button
             onClick={handleSave}
