@@ -78,9 +78,13 @@ export function Drawer({
   fullScreen = false,
   inlineDesktop = true,
 }: DrawerProps) {
-  const [portalTarget] = useState<Element | null>(() =>
-    typeof document !== 'undefined' ? document.body : null
-  );
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      setPortalTarget(document.body);
+    }
+  }, []);
 
   // Separate refs for each drawer variant to prevent conflicts
   const mobileBottomRef = useRef<HTMLDivElement>(null);
