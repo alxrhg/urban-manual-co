@@ -10,7 +10,7 @@ import { DestinationBadges } from './DestinationBadges';
 
 interface DestinationCardProps {
   destination: Destination;
-  onClick: () => void;
+  onClick?: () => void;
   index?: number;
   isVisited?: boolean;
   showBadges?: boolean;
@@ -66,10 +66,23 @@ export const DestinationCard = memo(function DestinationCard({
     };
   }, []);
 
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Preserve scroll position before calling onClick
+    const savedScrollY = window.scrollY;
+    onClick?.();
+    // Ensure scroll position is maintained after drawer opens
+    requestAnimationFrame(() => {
+      window.scrollTo(0, savedScrollY);
+    });
+  };
+
   return (
     <button
       ref={cardRef}
-      onClick={onClick}
+      onClick={handleClick}
+      type="button"
       className={`
         group relative w-full flex flex-col transition-all duration-300 ease-out
         cursor-pointer text-left focus-ring
