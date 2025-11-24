@@ -254,6 +254,28 @@ export function AddLocationToTrip({
   const handleAddLocation = () => {
     let location: TripLocation;
 
+    const computeDurationMinutes = (departure: string, arrival: string) => {
+      if (!departure || !arrival) return undefined;
+
+      const [depHours, depMinutes] = departure.split(':').map(Number);
+      const [arrHours, arrMinutes] = arrival.split(':').map(Number);
+
+      if (
+        [depHours, depMinutes, arrHours, arrMinutes].some(
+          (value) => Number.isNaN(value) || value < 0
+        )
+      ) {
+        return undefined;
+      }
+
+      const departureTotal = depHours * 60 + depMinutes;
+      const arrivalTotal = arrHours * 60 + arrMinutes;
+      const diff = arrivalTotal - departureTotal;
+
+      // Handle overnight trips by adding 24h when arrival is earlier than departure
+      return diff >= 0 ? diff : diff + 24 * 60;
+    };
+
     if (blockType === 'destination') {
       if (!selectedDestination) return;
       location = {
@@ -280,6 +302,7 @@ export function AddLocationToTrip({
         category: 'Flight',
         image: '/placeholder-image.jpg',
         time: flightDepartureTime, // Store departure time in time field
+        duration: computeDurationMinutes(flightDepartureTime, flightArrivalTime),
         notes: JSON.stringify({
           from: flightFrom,
           to: flightTo,
@@ -302,6 +325,7 @@ export function AddLocationToTrip({
         category: 'Train',
         image: '/placeholder-image.jpg',
         time: trainDepartureTime, // Store departure time in time field
+        duration: computeDurationMinutes(trainDepartureTime, trainArrivalTime),
         notes: JSON.stringify({
           from: trainFrom,
           to: trainTo,
