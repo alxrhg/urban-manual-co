@@ -70,7 +70,7 @@ export default function AddHotelDrawer({
         {filtered.map((hotel) => (
           <UMCard
             key={hotel.id}
-            className="p-4 space-y-3 cursor-pointer hover:shadow-lg transition-shadow"
+            className="p-4 space-y-3 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition-colors"
             onClick={() => handleSelectHotel(hotel)}
           >
             {hotel.image && (
