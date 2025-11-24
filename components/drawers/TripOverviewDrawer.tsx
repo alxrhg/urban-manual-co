@@ -93,6 +93,41 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
   const hotels = displayTrip.hotels || [];
   const flights = displayTrip.flights || [];
 
+  // Extract all destinations/places from days activities
+  const allDestinations: Array<{ name: string; city?: string; image?: string }> = [];
+  if (days.length > 0) {
+    days.forEach(day => {
+      // Extract from activities
+      if (day.activities && Array.isArray(day.activities)) {
+        day.activities.forEach((activity: any) => {
+          const name = activity.title || activity.name || '';
+          if (name && !name.toLowerCase().includes('hotel') && !allDestinations.find(d => d.name === name)) {
+            allDestinations.push({
+              name,
+              city: activity.city || day.city || '',
+              image: activity.image || activity.image_thumbnail || null,
+            });
+          }
+        });
+      }
+      // Also check meals for destinations
+      if (day.meals) {
+        Object.values(day.meals).forEach((meal: any) => {
+          if (meal && meal.title) {
+            const name = meal.title;
+            if (name && !allDestinations.find(d => d.name === name)) {
+              allDestinations.push({
+                name,
+                city: meal.city || day.city || '',
+                image: meal.image || meal.image_thumbnail || null,
+              });
+            }
+          }
+        });
+      }
+    });
+  }
+
   const handleViewTrip = () => {
     closeDrawer();
     if (displayTrip.id) {
@@ -130,10 +165,46 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
       {/* TRIP SUMMARY */}
       <section className="space-y-4">
         <UMSectionTitle>Trip Summary</UMSectionTitle>
-        <UMCard className="p-4">
+        <UMCard className="p-4 space-y-3">
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
             {days.length} day{days.length !== 1 ? 's' : ''} · {cities.length > 0 ? cities.join(', ') : 'No cities'}
           </p>
+          
+          {/* Compact list of destinations */}
+          {allDestinations.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-800">
+              {allDestinations.slice(0, 10).map((dest, idx) => (
+                <div key={idx} className="flex items-center gap-3 text-sm">
+                  {dest.image && (
+                    <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
+                      <Image
+                        src={dest.image}
+                        alt={dest.name}
+                        fill
+                        className="object-cover"
+                        sizes="40px"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 dark:text-white truncate">
+                      {dest.name}
+                    </p>
+                    {dest.city && (
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                        {dest.city}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {allDestinations.length > 10 && (
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 pt-1">
+                  +{allDestinations.length - 10} more
+                </p>
+              )}
+            </div>
+          )}
         </UMCard>
       </section>
 
