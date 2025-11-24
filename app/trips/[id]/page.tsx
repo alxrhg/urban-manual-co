@@ -6,19 +6,18 @@ import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useTrip } from '@/hooks/useTrip';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import TripHeader from '@/components/trip/TripHeader';
 import DayCard from '@/components/trip/DayCard';
 import SuggestionCard from '@/components/trip/SuggestionCard';
 import UMCard from '@/components/ui/UMCard';
 import UMActionPill from '@/components/ui/UMActionPill';
 import UMSectionTitle from '@/components/ui/UMSectionTitle';
-import { Camera, Loader2, Plus, Trash2, Calendar, MapPin } from 'lucide-react';
+import { Camera, Loader2, Plus, Trash2, Calendar, MapPin, ArrowLeft, Share2, Building2 } from 'lucide-react';
 import Image from 'next/image';
 import { TripPlanner } from '@/components/TripPlanner';
 import { HotelAutocompleteInput } from '@/components/HotelAutocompleteInput';
 import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 
-type Tab = 'details' | 'itinerary' | 'hotels';
+type Tab = 'itinerary' | 'details' | 'hotels';
 
 interface Hotel {
   id?: string;
@@ -36,7 +35,7 @@ export default function TripPage() {
   const { trip, loading: tripLoading, error } = useTrip(tripId);
   const { user } = useAuth();
   const openDrawer = useDrawerStore((s) => s.openDrawer);
-  const [activeTab, setActiveTab] = useState<Tab>('details');
+  const [activeTab, setActiveTab] = useState<Tab>('itinerary');
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
   const [saving, setSaving] = useState(false);
   const [editedTitle, setEditedTitle] = useState('');
@@ -52,6 +51,7 @@ export default function TripPage() {
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dayScrollRef = useRef<HTMLDivElement>(null);
 
   // Load recommendations based on trip destination
   const loadRecommendations = async () => {
@@ -60,7 +60,7 @@ export default function TripPage() {
     try {
       setLoadingRecommendations(true);
       const response = await fetch(`/api/recommendations?city=${trip.destination}&limit=6`);
-      
+
       if (response.ok) {
         const data = await response.json();
         if (data.recommendations && Array.isArray(data.recommendations)) {
@@ -87,13 +87,13 @@ export default function TripPage() {
       setEditedStartDate(trip.start_date || '');
       setEditedEndDate(trip.end_date || '');
       setCoverImagePreview(trip.cover_image || null);
-      setSelectedDayIndex(0); // Reset to first day when trip changes
+      setSelectedDayIndex(0);
       loadHotels();
       loadRecommendations();
     }
   }, [trip]);
 
-  // Load hotels from itinerary_items (stored as hotel type)
+  // Load hotels from itinerary_items
   const loadHotels = async () => {
     if (!tripId || !user) return;
 
@@ -102,7 +102,6 @@ export default function TripPage() {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
 
-      // Fetch hotel items (stored as itinerary_items with type='hotel' in notes)
       const { data: items, error } = await supabaseClient
         .from('itinerary_items')
         .select('*')
@@ -112,7 +111,6 @@ export default function TripPage() {
 
       if (error) throw error;
 
-      // Parse hotels from items
       const parsedHotels: Hotel[] = (items || []).map((item) => {
         try {
           const notes = typeof item.notes === 'string' ? JSON.parse(item.notes) : item.notes || {};
@@ -146,18 +144,44 @@ export default function TripPage() {
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '';
     try {
-      // Parse date string as local date (YYYY-MM-DD format)
-      // Split to avoid timezone issues
+      const [year, month, day] = dateStr.split('-').map(Number);
+      if (year && month && day) {
+        const date = new Date(year, month - 1, day);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatDateLong = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '';
+    try {
       const [year, month, day] = dateStr.split('-').map(Number);
       if (year && month && day) {
         const date = new Date(year, month - 1, day);
         return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       }
-      // Fallback to original parsing if format is different
       const date = new Date(dateStr);
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     } catch {
       return dateStr;
+    }
+  };
+
+  // Calculate trip duration
+  const getTripDuration = () => {
+    if (!trip?.start_date || !trip?.end_date) return null;
+    try {
+      const start = new Date(trip.start_date);
+      const end = new Date(trip.end_date);
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      return diffDays;
+    } catch {
+      return null;
     }
   };
 
@@ -182,71 +206,11 @@ export default function TripPage() {
       if (!supabaseClient) return;
 
       const updates: any = {};
-      
-      if (editedTitle !== trip.title) {
-        updates.title = editedTitle;
-      }
-      
-      if (editedCity !== (trip.destination || '')) {
-        updates.destination = editedCity || null;
-      }
-      
-      if (editedStartDate !== (trip.start_date || '')) {
-        updates.start_date = editedStartDate || null;
-      }
-      
-      if (editedEndDate !== (trip.end_date || '')) {
-        updates.end_date = editedEndDate || null;
-      }
 
-      if (Object.keys(updates).length > 0) {
-        const { error } = await supabaseClient
-          .from('trips')
-          .update(updates)
-          .eq('id', trip.id)
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        // Refresh the page to show updated data
-        router.refresh();
-        alert('Trip information saved successfully!');
-      } else {
-        alert('No changes to save.');
-      }
-    } catch (error: any) {
-      console.error('Error saving trip information:', error);
-      alert(`Failed to save trip information: ${error.message}`);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!trip || !user) return;
-
-    try {
-      setSaving(true);
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
-
-      const updates: any = {};
-      
-      if (editedTitle !== trip.title) {
-        updates.title = editedTitle;
-      }
-      
-      if (editedCity !== (trip.destination || '')) {
-        updates.destination = editedCity || null;
-      }
-      
-      if (editedStartDate !== (trip.start_date || '')) {
-        updates.start_date = editedStartDate || null;
-      }
-      
-      if (editedEndDate !== (trip.end_date || '')) {
-        updates.end_date = editedEndDate || null;
-      }
+      if (editedTitle !== trip.title) updates.title = editedTitle;
+      if (editedCity !== (trip.destination || '')) updates.destination = editedCity || null;
+      if (editedStartDate !== (trip.start_date || '')) updates.start_date = editedStartDate || null;
+      if (editedEndDate !== (trip.end_date || '')) updates.end_date = editedEndDate || null;
 
       // Handle cover image upload
       if (coverImageFile) {
@@ -258,16 +222,14 @@ export default function TripPage() {
 
           const { error: uploadError } = await supabaseClient.storage
             .from('trip-covers')
-            .upload(filePath, coverImageFile, {
-              upsert: true,
-            });
+            .upload(filePath, coverImageFile, { upsert: true });
 
           if (uploadError) throw uploadError;
 
           const { data: { publicUrl } } = supabaseClient.storage
             .from('trip-covers')
             .getPublicUrl(filePath);
-          
+
           updates.cover_image = publicUrl;
         } catch (error: any) {
           console.error('Cover image upload error:', error);
@@ -287,38 +249,23 @@ export default function TripPage() {
           .eq('user_id', user.id);
 
         if (error) throw error;
-
-        // Refresh the page to show updated data
         router.refresh();
-        alert('Trip saved successfully!');
       }
     } catch (error: any) {
       console.error('Error saving trip:', error);
-      alert(`Failed to save trip: ${error.message}`);
+      alert(`Failed to save: ${error.message}`);
     } finally {
       setSaving(false);
     }
   };
 
-  // Helper function to check if two date ranges overlap
-  const datesOverlap = (start1: string, end1: string, start2: string, end2: string): boolean => {
-    if (!start1 || !end1 || !start2 || !end2) return false;
-    const s1 = new Date(start1);
-    const e1 = new Date(end1);
-    const s2 = new Date(start2);
-    const e2 = new Date(end2);
-    // Check if ranges overlap (excluding the end date of first range)
-    return s1 < e2 && s2 < e1;
-  };
-
-  // Helper function to get all nights in a date range
+  // Hotel conflict helpers
   const getNightsInRange = (startDate: string, endDate: string): string[] => {
     if (!startDate || !endDate) return [];
     const nights: string[] = [];
     const start = new Date(startDate);
     const end = new Date(endDate);
     const current = new Date(start);
-    
     while (current < end) {
       nights.push(current.toISOString().split('T')[0]);
       current.setDate(current.getDate() + 1);
@@ -326,27 +273,17 @@ export default function TripPage() {
     return nights;
   };
 
-  // Check if a hotel conflicts with existing hotels (only one hotel per night)
   const hasHotelConflict = (hotels: Hotel[], currentIndex: number, newStartDate: string, newEndDate: string): boolean => {
     if (!newStartDate || !newEndDate) return false;
-    
     const newNights = getNightsInRange(newStartDate, newEndDate);
-    
     for (let i = 0; i < hotels.length; i++) {
-      if (i === currentIndex) continue; // Skip the current hotel being edited
-      
+      if (i === currentIndex) continue;
       const hotel = hotels[i];
       if (!hotel.startDate || !hotel.endDate) continue;
-      
       const existingNights = getNightsInRange(hotel.startDate, hotel.endDate);
-      
-      // Check if any night overlaps
       const hasOverlap = newNights.some(night => existingNights.includes(night));
-      if (hasOverlap) {
-        return true;
-      }
+      if (hasOverlap) return true;
     }
-    
     return false;
   };
 
@@ -363,21 +300,18 @@ export default function TripPage() {
     const updated = [...hotels];
     const hotel = updated[index];
     const newHotel = { ...hotel, [field]: value };
-    
-    // If updating dates, check for conflicts
+
     if ((field === 'startDate' || field === 'endDate') && newHotel.startDate && newHotel.endDate) {
       if (hasHotelConflict(updated, index, newHotel.startDate, newHotel.endDate)) {
         alert('This hotel conflicts with another hotel. Only one hotel per night is allowed.');
         return;
       }
-      
-      // Ensure end date is after start date
       if (new Date(newHotel.endDate) <= new Date(newHotel.startDate)) {
         alert('Check-out date must be after check-in date.');
         return;
       }
     }
-    
+
     updated[index] = newHotel;
     setHotels(updated);
   };
@@ -388,12 +322,7 @@ export default function TripPage() {
       try {
         const supabaseClient = createClient();
         if (!supabaseClient) return;
-
-        await supabaseClient
-          .from('itinerary_items')
-          .delete()
-          .eq('id', hotel.id)
-          .eq('trip_id', tripId);
+        await supabaseClient.from('itinerary_items').delete().eq('id', hotel.id).eq('trip_id', tripId);
       } catch (error) {
         console.error('Error removing hotel:', error);
       }
@@ -404,28 +333,22 @@ export default function TripPage() {
   const handleSaveHotels = async () => {
     if (!tripId || !user || !trip) return;
 
-    // Validate all hotels before saving
     for (let i = 0; i < hotels.length; i++) {
       const hotel = hotels[i];
-      
       if (!hotel.name.trim()) {
         alert(`Hotel ${i + 1} must have a name.`);
         return;
       }
-      
       if (!hotel.startDate || !hotel.endDate) {
         alert(`Hotel ${i + 1} must have both check-in and check-out dates.`);
         return;
       }
-      
       if (new Date(hotel.endDate) <= new Date(hotel.startDate)) {
         alert(`Hotel ${i + 1}: Check-out date must be after check-in date.`);
         return;
       }
-      
-      // Check for conflicts with other hotels
       if (hasHotelConflict(hotels, i, hotel.startDate, hotel.endDate)) {
-        alert(`Hotel ${i + 1} conflicts with another hotel. Only one hotel per night is allowed.`);
+        alert(`Hotel ${i + 1} conflicts with another hotel.`);
         return;
       }
     }
@@ -435,18 +358,12 @@ export default function TripPage() {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
 
-      // Delete existing hotel items
-      await supabaseClient
-        .from('itinerary_items')
-        .delete()
-        .eq('trip_id', tripId)
-        .like('notes', '%"type":"hotel"%');
+      await supabaseClient.from('itinerary_items').delete().eq('trip_id', tripId).like('notes', '%"type":"hotel"%');
 
-      // Insert new hotel items
       const itemsToInsert = hotels.map((hotel, index) => ({
         trip_id: tripId,
         destination_slug: null,
-        day: 1, // Hotels span multiple days, store in day 1
+        day: 1,
         order_index: index,
         time: null,
         title: hotel.name,
@@ -461,14 +378,10 @@ export default function TripPage() {
       }));
 
       if (itemsToInsert.length > 0) {
-        const { error } = await supabaseClient
-          .from('itinerary_items')
-          .insert(itemsToInsert);
-
+        const { error } = await supabaseClient.from('itinerary_items').insert(itemsToInsert);
         if (error) throw error;
       }
 
-      alert('Hotels saved successfully!');
       router.refresh();
     } catch (error: any) {
       console.error('Error saving hotels:', error);
@@ -478,78 +391,308 @@ export default function TripPage() {
     }
   };
 
-  if (tripLoading) return <div className="w-full px-6 md:px-10 py-20 min-h-screen">Loading…</div>;
-  if (error) return <div className="w-full px-6 md:px-10 py-20 min-h-screen text-red-600">Error: {error}</div>;
-  if (!trip) return <div className="w-full px-6 md:px-10 py-20 min-h-screen">Trip not found</div>;
+  if (tripLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="w-full px-6 md:px-10 py-20 min-h-screen">
+        <div className="text-center py-12">
+          <p className="text-red-600 dark:text-red-400">Error: {error}</p>
+          <UMActionPill onClick={() => router.push('/trips')} className="mt-4">
+            Back to Trips
+          </UMActionPill>
+        </div>
+      </div>
+    );
+  }
+
+  if (!trip) {
+    return (
+      <div className="w-full px-6 md:px-10 py-20 min-h-screen">
+        <div className="text-center py-12">
+          <p className="text-neutral-500">Trip not found</p>
+          <UMActionPill onClick={() => router.push('/trips')} className="mt-4">
+            Back to Trips
+          </UMActionPill>
+        </div>
+      </div>
+    );
+  }
 
   const isOwner = trip.user_id === user?.id;
+  const tripDuration = getTripDuration();
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'itinerary', label: 'Itinerary' },
+    { key: 'details', label: 'Details' },
+    { key: 'hotels', label: 'Hotels' },
+  ];
 
   return (
-    <div className="w-full px-6 md:px-10 py-20 min-h-screen space-y-8">
-      {/* Header */}
-      <TripHeader
-        trip={{
-          name: trip.title,
-          startDate: formatDate(trip.start_date),
-          endDate: formatDate(trip.end_date),
-        }}
-        onOverview={() => openDrawer('trip-overview', { trip })}
-        onEdit={isOwner ? () => setShowTripPlanner(true) : undefined}
-        onTitleChange={isOwner ? async (newTitle: string) => {
-          if (!trip || !user) return;
-          try {
-            const supabaseClient = createClient();
-            if (!supabaseClient) return;
-            const { error } = await supabaseClient
-              .from('trips')
-              .update({ title: newTitle })
-              .eq('id', trip.id)
-              .eq('user_id', user.id);
-            if (error) throw error;
-            router.refresh();
-          } catch (error: any) {
-            console.error('Error updating trip title:', error);
-            alert(`Failed to update title: ${error.message}`);
-          }
-        } : undefined}
-        canEdit={isOwner}
-      />
+    <div className="w-full min-h-screen">
+      {/* Cover Hero */}
+      <div className="relative h-56 sm:h-72 bg-neutral-100 dark:bg-neutral-900">
+        {coverImagePreview ? (
+          <>
+            <Image
+              src={coverImagePreview}
+              alt={trip.title}
+              fill
+              className="object-cover"
+              sizes="100vw"
+              priority
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/10" />
+          </>
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-200 to-neutral-300 dark:from-neutral-800 dark:to-neutral-900">
+            <MapPin className="w-16 h-16 text-neutral-400 dark:text-neutral-600" />
+          </div>
+        )}
 
-      {/* Tabs */}
-      <div className="mb-12">
-        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-          {(['details', 'itinerary', 'hotels'] as const).map((tab) => (
+        {/* Back Button */}
+        <button
+          onClick={() => router.push('/trips')}
+          className="absolute top-4 left-4 sm:top-6 sm:left-6 p-2 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors z-10"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
+        {/* Action Buttons */}
+        <div className="absolute top-4 right-4 sm:top-6 sm:right-6 flex gap-2 z-10">
+          {isOwner && (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`transition-all ${
-                activeTab === tab
-                  ? "font-medium text-black dark:text-white"
-                  : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-              }`}
+              onClick={() => setShowTripPlanner(true)}
+              className="p-2 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+              title="Edit trip"
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              <Camera className="w-5 h-5" />
             </button>
-          ))}
+          )}
+          <button
+            className="p-2 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+            title="Share trip"
+          >
+            <Share2 className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Trip Info Overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
+          <h1 className="text-2xl sm:text-3xl font-semibold text-white drop-shadow-lg mb-2">
+            {trip.title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-3 text-white/90 text-sm">
+            {trip.destination && (
+              <span className="flex items-center gap-1">
+                <MapPin className="w-4 h-4" />
+                {trip.destination}
+              </span>
+            )}
+            {trip.start_date && trip.end_date && (
+              <span className="flex items-center gap-1">
+                <Calendar className="w-4 h-4" />
+                {formatDate(trip.start_date)} – {formatDate(trip.end_date)}
+              </span>
+            )}
+            {tripDuration && (
+              <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-xs">
+                {tripDuration} {tripDuration === 1 ? 'day' : 'days'}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Tab Content */}
-      {activeTab === 'details' && (
-        <div className="space-y-10">
-          {/* Cover Image Upload */}
-          {isOwner && (
+      {/* Main Content */}
+      <div className="w-full px-6 md:px-10 py-8 space-y-8">
+        {/* Tab Navigation - Match account page style */}
+        <div className="border-b border-neutral-200 dark:border-neutral-800 -mx-6 px-6 md:-mx-10 md:px-10">
+          <div className="flex gap-6 text-sm">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`pb-3 border-b-2 transition-all ${
+                  activeTab === tab.key
+                    ? 'border-black dark:border-white text-black dark:text-white font-medium'
+                    : 'border-transparent text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Itinerary Tab */}
+        {activeTab === 'itinerary' && (
+          <div className="space-y-6">
+            {trip.days && trip.days.length > 0 ? (
+              <>
+                {/* Horizontal Scrollable Day Pills */}
+                <div
+                  ref={dayScrollRef}
+                  className="overflow-x-auto -mx-6 px-6 scrollbar-hide"
+                >
+                  <div className="flex gap-2 min-w-max pb-2">
+                    {trip.days.map((day, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedDayIndex(i)}
+                        className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                          selectedDayIndex === i
+                            ? 'bg-black dark:bg-white text-white dark:text-black'
+                            : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                        }`}
+                      >
+                        Day {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Selected Day Content */}
+                {trip.days[selectedDayIndex] && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          Day {selectedDayIndex + 1}
+                        </h2>
+                        <p className="text-sm text-neutral-500">
+                          {trip.days[selectedDayIndex].date}
+                        </p>
+                      </div>
+                      {isOwner && (
+                        <UMActionPill
+                          onClick={() => openDrawer('trip-day-editor', {
+                            day: trip.days[selectedDayIndex],
+                            index: selectedDayIndex,
+                            trip
+                          })}
+                        >
+                          Edit Day
+                        </UMActionPill>
+                      )}
+                    </div>
+                    <DayCard
+                      day={trip.days[selectedDayIndex]}
+                      index={selectedDayIndex}
+                      openDrawer={openDrawer}
+                      trip={trip}
+                    />
+                  </div>
+                )}
+              </>
+            ) : (
+              <UMCard className="p-8 text-center">
+                <Calendar className="w-12 h-12 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" />
+                <p className="text-neutral-500 dark:text-neutral-400 mb-4">
+                  No itinerary yet. Add dates to your trip to start planning.
+                </p>
+                {isOwner && (
+                  <UMActionPill variant="primary" onClick={() => setShowTripPlanner(true)}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Set Trip Dates
+                  </UMActionPill>
+                )}
+              </UMCard>
+            )}
+
+            {/* Smart Suggestions */}
+            {trip.days && trip.days.length > 0 && (
+              <section className="space-y-4 pt-4">
+                <UMSectionTitle>Smart Suggestions</UMSectionTitle>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <SuggestionCard
+                    icon="🍳"
+                    title="Add a morning cafe"
+                    detail="3 curated options near your first stop"
+                    onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
+                  />
+                  <SuggestionCard
+                    icon="🖼️"
+                    title="Museum recommendation"
+                    detail="2 top picks within 10 min walk"
+                    onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
+                  />
+                </div>
+              </section>
+            )}
+
+            {/* Recommendations */}
+            {(loadingRecommendations || recommendations.length > 0) && (
+              <section className="space-y-4 pt-4 border-t border-neutral-200 dark:border-neutral-800">
+                <h3 className="text-xs font-bold uppercase text-neutral-500 tracking-wider">
+                  You Might Also Like
+                </h3>
+                {loadingRecommendations ? (
+                  <div className="flex gap-4 overflow-x-auto pb-2">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="flex-shrink-0 w-32">
+                        <div className="aspect-square bg-neutral-200 dark:bg-neutral-800 rounded-[16px] mb-2 animate-pulse" />
+                        <div className="h-4 bg-neutral-200 dark:bg-neutral-800 rounded mb-1 animate-pulse" />
+                        <div className="h-3 bg-neutral-200 dark:bg-neutral-800 rounded w-2/3 animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6">
+                    {recommendations.map(rec => (
+                      <button
+                        key={rec.slug}
+                        onClick={() => router.push(`/destination/${rec.slug}`)}
+                        className="group text-left flex-shrink-0 w-32"
+                      >
+                        <div className="relative aspect-square bg-neutral-100 dark:bg-neutral-800 rounded-[16px] overflow-hidden mb-2 border border-neutral-200 dark:border-neutral-700">
+                          {rec.image ? (
+                            <Image
+                              src={rec.image}
+                              alt={rec.name}
+                              fill
+                              sizes="128px"
+                              className="object-cover group-hover:scale-105 transition-transform"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <MapPin className="h-8 w-8 text-neutral-300" />
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="font-medium text-xs leading-tight line-clamp-2 text-gray-900 dark:text-white">
+                          {rec.name}
+                        </h4>
+                        <p className="text-[10px] text-neutral-500 mt-0.5">{rec.city}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </section>
+            )}
+          </div>
+        )}
+
+        {/* Details Tab */}
+        {activeTab === 'details' && isOwner && (
+          <div className="space-y-8 max-w-2xl">
+            {/* Cover Image */}
             <section className="space-y-4">
               <UMSectionTitle>Cover Image</UMSectionTitle>
               <UMCard className="p-6 space-y-4">
                 {coverImagePreview && (
-                  <div className="relative w-full h-64 rounded-[16px] overflow-hidden">
+                  <div className="relative w-full h-48 rounded-[16px] overflow-hidden">
                     <Image
                       src={coverImagePreview}
                       alt="Cover"
                       fill
                       className="object-cover"
-                      sizes="(max-width: 768px) 100vw, 800px"
+                      sizes="(max-width: 768px) 100vw, 600px"
                     />
                   </div>
                 )}
@@ -567,26 +710,21 @@ export default function TripPage() {
                   >
                     {uploadingCover ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
                         Uploading...
                       </>
                     ) : (
                       <>
-                        <Camera className="w-4 h-4" />
-                        {coverImagePreview ? 'Change Cover Image' : 'Upload Cover Image'}
+                        <Camera className="w-4 h-4 mr-2" />
+                        {coverImagePreview ? 'Change Cover' : 'Upload Cover'}
                       </>
                     )}
                   </UMActionPill>
                 </div>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                  Upload a custom cover image, or we'll use the first location's image
-                </p>
               </UMCard>
             </section>
-          )}
 
-          {/* Trip Details */}
-          {isOwner && (
+            {/* Trip Information */}
             <section className="space-y-4">
               <UMSectionTitle>Trip Information</UMSectionTitle>
               <UMCard className="p-6 space-y-4">
@@ -598,18 +736,18 @@ export default function TripPage() {
                     type="text"
                     value={editedTitle}
                     onChange={(e) => setEditedTitle(e.target.value)}
-                    className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
+                    className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/10"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-                    City
+                    Destination
                   </label>
                   <CityAutocompleteInput
                     value={editedCity}
                     onChange={setEditedCity}
                     placeholder="e.g., Tokyo, Paris, New York"
-                    className="border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white rounded-xl"
+                    className="border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] rounded-xl"
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -621,8 +759,7 @@ export default function TripPage() {
                       type="date"
                       value={editedStartDate}
                       onChange={(e) => setEditedStartDate(e.target.value)}
-                      inputMode="none"
-                      className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
+                      className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white focus:outline-none"
                     />
                   </div>
                   <div>
@@ -633,313 +770,157 @@ export default function TripPage() {
                       type="date"
                       value={editedEndDate}
                       onChange={(e) => setEditedEndDate(e.target.value)}
-                      inputMode="none"
-                      className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white"
+                      className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white focus:outline-none"
                     />
                   </div>
                 </div>
-                <div className="pt-4">
+                <div className="pt-2">
                   <UMActionPill
                     onClick={saving ? undefined : handleSaveTripInfo}
                     variant="primary"
-                    className={`w-full justify-center ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`w-full justify-center ${saving ? 'opacity-50' : ''}`}
                   >
                     {saving ? (
                       <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
                         Saving...
                       </>
                     ) : (
-                      'Save Trip Information'
+                      'Save Changes'
                     )}
                   </UMActionPill>
                 </div>
               </UMCard>
             </section>
-          )}
+          </div>
+        )}
 
-          {/* Smart Suggestions */}
-          <section className="space-y-4">
-            <UMSectionTitle>Smart Suggestions</UMSectionTitle>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <SuggestionCard
-            icon="🍳"
-                title="Consider adding a morning cafe visit"
-                detail="3 curated options very close to your first location"
-            onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
-          />
-          <SuggestionCard
-            icon="🖼️"
-            title="Museum for Day 2"
-                detail="2 top options within 10 minutes"
-            onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
-          />
-          <SuggestionCard
-            icon="🌅"
-                title="Sunset dinner at the waterfront"
-            detail="Perfect timing between 5–7 PM"
-            onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
-          />
-        </div>
-      </section>
-
-          {/* Recommendations */}
-          {(loadingRecommendations || recommendations.length > 0) && (
-            <section className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <div className="mb-4">
-                <h3 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">
-                  YOU MIGHT ALSO LIKE
-                </h3>
-              </div>
-
-              {loadingRecommendations ? (
-                <div className="flex gap-4 overflow-x-auto pb-2">
-                  {[1, 2, 3, 4, 5, 6].map(i => (
-                    <div key={i} className="flex-shrink-0 w-32">
-                      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl mb-2 animate-pulse" />
-                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded mb-1 animate-pulse" />
-                      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6">
-                  {recommendations.map(rec => (
-                    <button
-                      key={rec.slug}
-                      onClick={() => router.push(`/destination/${rec.slug}`)}
-                      className="group text-left flex-shrink-0 w-32 flex flex-col"
-                    >
-                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
-                        {rec.image ? (
-                          <Image
-                            src={rec.image}
-                            alt={rec.name}
-                            fill
-                            sizes="(max-width: 640px) 50vw, 200px"
-                            className="object-cover group-hover:opacity-90 transition-opacity"
-                            quality={85}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <MapPin className="h-8 w-8 opacity-20" />
-                          </div>
-                        )}
-                        {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
-                            <img
-                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                              alt="Michelin star"
-                              className="h-3 w-3"
-                              loading="lazy"
-                            />
-                            <span>{rec.michelin_stars}</span>
-                          </div>
-                        )}
-                      </div>
-                      <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1 text-black dark:text-white">
-                        {rec.name}
-                      </h4>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1">
-                        {rec.city && rec.city}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'itinerary' && (
-        <div className="space-y-8">
-          {trip.days && trip.days.length > 0 ? (
-            <>
-              {/* Day Tabs */}
-              {trip.days.length > 1 && (
-                <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                  {trip.days.map((day, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setSelectedDayIndex(i)}
-                      className={`transition-all ${
-                        selectedDayIndex === i
-                          ? "font-medium text-black dark:text-white"
-                          : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
-                      }`}
-                    >
-                      Day {i + 1}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Selected Day Content */}
-              {trip.days[selectedDayIndex] && (() => {
-                const day = trip.days[selectedDayIndex];
-                const i = selectedDayIndex;
-                return (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Day {i + 1} – {day.date}
-                      </h2>
-                      {isOwner && (
-                        <UMActionPill
-                          onClick={() => openDrawer('trip-day-editor', { day, index: i, trip })}
-                        >
-                          Edit Day
-                        </UMActionPill>
-                      )}
-                    </div>
-                    <DayCard day={day} index={i} openDrawer={openDrawer} trip={trip} />
-                  </div>
-                );
-              })()}
-            </>
-          ) : (
-            <div className="text-center py-12 text-neutral-500 dark:text-neutral-400 text-sm">
-              No days added yet
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'hotels' && (
-        <div className="space-y-6">
-          {isOwner && (
+        {/* Hotels Tab */}
+        {activeTab === 'hotels' && (
+          <div className="space-y-6 max-w-2xl">
             <div className="flex items-center justify-between">
-              <UMSectionTitle>Hotels</UMSectionTitle>
-              <UMActionPill onClick={handleAddHotel} variant="primary">
-                <Plus className="w-4 h-4" />
-                Add Hotel
-              </UMActionPill>
-            </div>
-          )}
-
-          {loadingHotels ? (
-            <div className="text-center py-12">
-              <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-neutral-400" />
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">Loading hotels...</p>
-            </div>
-          ) : hotels.length === 0 ? (
-            <UMCard className="p-8 text-center">
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
-                No hotels added yet
-              </p>
+              <UMSectionTitle>Accommodations</UMSectionTitle>
               {isOwner && (
                 <UMActionPill onClick={handleAddHotel} variant="primary">
-                  <Plus className="w-4 h-4" />
-                  Add Your First Hotel
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Hotel
                 </UMActionPill>
               )}
-            </UMCard>
-          ) : (
-            <div className="space-y-4">
-              {hotels.map((hotel, index) => (
-                <UMCard key={index} className="p-6 space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
-                          Hotel Name
-                        </label>
-                        <HotelAutocompleteInput
-                          value={hotel.name}
-                          onChange={(value) => handleUpdateHotel(index, 'name', value)}
-                          placeholder="Hotel Le Marais"
-                          disabled={!isOwner}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            Check-in Date
-                          </label>
-                          <input
-                            type="date"
-                            value={hotel.startDate}
-                            onChange={(e) => handleUpdateHotel(index, 'startDate', e.target.value)}
-                            min={trip?.start_date || ''}
-                            max={trip?.end_date || ''}
-                            disabled={!isOwner}
-                            className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            Check-out Date
-                          </label>
-                          <input
-                            type="date"
-                            value={hotel.endDate}
-                            onChange={(e) => handleUpdateHotel(index, 'endDate', e.target.value)}
-                            min={hotel.startDate || trip?.start_date || ''}
-                            max={trip?.end_date || ''}
-                            disabled={!isOwner}
-                            className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {isOwner && (
-                      <button
-                        onClick={() => handleRemoveHotel(index)}
-                        className="ml-4 p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
-                        title="Remove hotel"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    )}
-                  </div>
-                </UMCard>
-              ))}
             </div>
-          )}
 
-          {isOwner && hotels.length > 0 && (
-            <div className="pt-4">
-              <UMActionPill
-                onClick={() => !saving && handleSaveHotels()}
-                variant="primary"
-                className={`w-full justify-center ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  'Save Hotels'
+            {loadingHotels ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-neutral-400" />
+                <p className="text-sm text-neutral-500">Loading hotels...</p>
+              </div>
+            ) : hotels.length === 0 ? (
+              <UMCard className="p-8 text-center">
+                <Building2 className="w-12 h-12 mx-auto mb-4 text-neutral-300 dark:text-neutral-600" />
+                <p className="text-neutral-500 dark:text-neutral-400 mb-4">
+                  No hotels added yet
+                </p>
+                {isOwner && (
+                  <UMActionPill onClick={handleAddHotel} variant="primary">
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Your First Hotel
+                  </UMActionPill>
                 )}
-              </UMActionPill>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Save Button (Fixed at bottom) */}
-      {isOwner && activeTab !== 'hotels' && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <button
-            onClick={handleSave}
-            disabled={saving || uploadingCover}
-            className="flex items-center gap-2 px-4 py-2 text-xs font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Save trip"
-          >
-            {saving ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Saving...
-              </>
+              </UMCard>
             ) : (
-              'Save'
+              <div className="space-y-4">
+                {hotels.map((hotel, index) => (
+                  <UMCard key={index} className="p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+                            Hotel Name
+                          </label>
+                          <HotelAutocompleteInput
+                            value={hotel.name}
+                            onChange={(value) => handleUpdateHotel(index, 'name', value)}
+                            placeholder="Hotel Le Marais"
+                            disabled={!isOwner}
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              Check-in
+                            </label>
+                            <input
+                              type="date"
+                              value={hotel.startDate}
+                              onChange={(e) => handleUpdateHotel(index, 'startDate', e.target.value)}
+                              min={trip?.start_date || ''}
+                              max={trip?.end_date || ''}
+                              disabled={!isOwner}
+                              className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                              <Calendar className="w-4 h-4" />
+                              Check-out
+                            </label>
+                            <input
+                              type="date"
+                              value={hotel.endDate}
+                              onChange={(e) => handleUpdateHotel(index, 'endDate', e.target.value)}
+                              min={hotel.startDate || trip?.start_date || ''}
+                              max={trip?.end_date || ''}
+                              disabled={!isOwner}
+                              className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      {isOwner && (
+                        <button
+                          onClick={() => handleRemoveHotel(index)}
+                          className="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
+                  </UMCard>
+                ))}
+
+                {isOwner && hotels.length > 0 && (
+                  <UMActionPill
+                    onClick={saving ? undefined : handleSaveHotels}
+                    variant="primary"
+                    className={`w-full justify-center ${saving ? 'opacity-50' : ''}`}
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Hotels'
+                    )}
+                  </UMActionPill>
+                )}
+              </div>
             )}
+          </div>
+        )}
+      </div>
+
+      {/* Floating Add Button (Mobile) */}
+      {isOwner && activeTab === 'itinerary' && trip.days && trip.days.length > 0 && (
+        <div className="fixed bottom-6 right-6 z-50 sm:hidden">
+          <button
+            onClick={() => openDrawer('trip-add-place', {
+              day: trip.days[selectedDayIndex],
+              dayIndex: selectedDayIndex
+            })}
+            className="w-14 h-14 rounded-full bg-black dark:bg-white text-white dark:text-black shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
+          >
+            <Plus className="w-6 h-6" />
           </button>
         </div>
       )}
@@ -951,7 +932,6 @@ export default function TripPage() {
           tripId={tripId || undefined}
           onClose={() => {
             setShowTripPlanner(false);
-            // Refresh trip data after editing
             if (tripId) {
               window.location.reload();
             }
