@@ -737,7 +737,7 @@ export function AccountDrawer() {
 
         <div className="overflow-y-auto flex-1 pb-20">
           {/* Quick Actions */}
-          <DrawerSection bordered>
+          <DrawerSection>
             <div className="flex gap-2">
               <button
                 onClick={() => handleNavigateToFullPage("/account")}
@@ -756,7 +756,7 @@ export function AccountDrawer() {
           </DrawerSection>
 
           {/* Stats */}
-          <DrawerSection bordered>
+          <DrawerSection>
             <div className="grid grid-cols-3 gap-2">
               <StatCard icon={MapPin} value={stats.visited} label="Visited" />
               <StatCard icon={Bookmark} value={stats.saved} label="Saved" />
@@ -765,7 +765,7 @@ export function AccountDrawer() {
           </DrawerSection>
 
           {/* Your Manual */}
-          <DrawerSection bordered>
+          <DrawerSection>
             <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-1">
               Your Manual
             </p>
@@ -959,7 +959,7 @@ export function AccountDrawer() {
     <>
       <SubpageHeader title="Trips" onBack={navigateBack} />
       <div className="overflow-y-auto flex-1 pb-20">
-        <DrawerSection bordered>
+        <DrawerSection>
           <button
             onClick={() => {
               closeDrawer();
@@ -1046,7 +1046,7 @@ export function AccountDrawer() {
 
           {/* Date */}
           {selectedTrip.start_date && (
-            <DrawerSection bordered>
+            <DrawerSection>
               <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <Calendar className="h-4 w-4" />
                 <span>
