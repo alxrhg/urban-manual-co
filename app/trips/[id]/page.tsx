@@ -965,6 +965,7 @@ export default function TripPage() {
             )}
           </div>
         )}
+        </section>
       </div>
 
       {/* Floating Add Button (Mobile) */}
