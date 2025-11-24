@@ -75,6 +75,7 @@ interface DestinationDrawerProps {
   onSaveToggle?: (slug: string, saved: boolean) => void;
   onVisitToggle?: (slug: string, visited: boolean) => void;
   onDestinationClick?: (slug: string) => void;
+  onEdit?: (destination: Destination) => void; // Callback for editing destination
 }
 
 function capitalizeCity(city: string): string {
@@ -193,7 +194,7 @@ function parseTime(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
-export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick }: DestinationDrawerProps) {
+export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick, onEdit }: DestinationDrawerProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isReviewersExpanded, setIsReviewersExpanded] = useState(false);
   const [isContactExpanded, setIsContactExpanded] = useState(false);
@@ -1174,8 +1175,14 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onClose(); // Close the destination drawer
-                router.push(`/admin?slug=${destination.slug}`);
+                if (onEdit) {
+                  onClose(); // Close the destination drawer
+                  onEdit(destination);
+                } else {
+                  // Fallback to admin page if no onEdit callback
+                  onClose();
+                  router.push(`/admin?slug=${destination.slug}`);
+                }
               }}
               className="p-2 hover:bg-neutral-50 dark:hover:bg-white/5 rounded-lg transition-colors"
               aria-label="Edit destination"

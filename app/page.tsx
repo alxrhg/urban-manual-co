@@ -3392,6 +3392,10 @@ export default function Home() {
                 return sorted;
               });
             }}
+            onEdit={(destination) => {
+              setEditingDestination(destination);
+              setShowPOIDrawer(true);
+            }}
             onDestinationClick={async (slug: string) => {
               try {
                 // Fetch destination by slug using Supabase client

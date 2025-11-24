@@ -564,6 +564,9 @@ export default function CityPageClient() {
           // The DestinationDrawer already handles the database update,
           // so we just need to sync our local state
         }}
+        onEdit={(destination) => {
+          handleAdminEdit(destination);
+        }}
         onDestinationClick={async (slug: string) => {
           try {
             const supabaseClient = createClient();
