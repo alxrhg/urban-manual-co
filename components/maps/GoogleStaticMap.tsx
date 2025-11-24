@@ -66,23 +66,7 @@ export default function GoogleStaticMap({
       />
       {showPin && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
-          <svg
-            width="32"
-            height="40"
-            viewBox="0 0 32 40"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="drop-shadow-lg"
-          >
-            <path
-              d="M16 0C7.163 0 0 7.163 0 16C0 24.837 16 40 16 40C16 40 32 24.837 32 16C32 7.163 24.837 0 16 0Z"
-              fill="#EA4335"
-            />
-            <path
-              d="M16 8C12.686 8 10 10.686 10 14C10 17.314 12.686 20 16 20C19.314 20 22 17.314 22 14C22 10.686 19.314 8 16 8Z"
-              fill="white"
-            />
-          </svg>
+          <div className="w-3 h-3 rounded-full bg-black dark:bg-white border-2 border-white dark:border-black shadow-lg" />
         </div>
       )}
       {infoWindowContent && (
