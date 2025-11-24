@@ -141,8 +141,15 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   };
 
   if (!user) {
-  return (
+    return (
       <div className="px-6 py-8 space-y-10">
+        {/* Header */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-light">Account</h1>
+          </div>
+        </div>
+        
         <UMCard className="p-6 space-y-4">
           <div className="space-y-2 text-center">
             <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
@@ -169,6 +176,20 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
   return (
     <div className="px-6 py-8 space-y-10">
+      {/* Header */}
+      <div className="mb-12">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-light">Account</h1>
+          <button
+            onClick={handleSignOut}
+            className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+          >
+            Sign Out
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 dark:text-gray-400">{displayEmail}</p>
+      </div>
+
       {/* PROFILE CARD */}
       <UMCard className="p-6 space-y-4">
           <div className="flex items-center gap-4">

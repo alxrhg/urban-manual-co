@@ -196,12 +196,16 @@ export default function TripsPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-12 space-y-10">
-      {/* HEADER */}
-      <div className="space-y-2">
-        <p className="text-xs tracking-widest text-neutral-400 uppercase">Trips</p>
-        <p className="text-neutral-500 text-sm">Plan and revisit your journeys with clarity.</p>
-      </div>
+    <div className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
+      <div className="w-full">
+        {/* Header */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-light">Trips</h1>
+          </div>
+        </div>
+        
+        <div className="max-w-2xl mx-auto space-y-10">
 
       {/* PRIMARY CTA */}
       <UMFeaturePill
@@ -326,6 +330,8 @@ export default function TripsPage() {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

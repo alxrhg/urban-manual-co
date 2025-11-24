@@ -247,24 +247,12 @@ export default function CitiesPage() {
       {/* Hero Section */}
       <section className="px-6 md:px-10 py-12 md:py-16">
         <div className="max-w-[1800px] mx-auto">
-          {/* Back Button */}
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-200 ease-out mb-8"
-          >
-            <ArrowLeft className="h-3 w-3" />
-            <span>Back to Discovery</span>
-          </button>
-
-          {/* Hero Content */}
-          <div className="space-y-4 mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold leading-tight text-black dark:text-white">
-              Cities Around the World
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
-              Explore destinations curated by locals and travelers. Each city tells a story through its places—from hidden cafes to celebrated landmarks.
-            </p>
-            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+          {/* Header */}
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-2xl font-light">Discover by Cities</h1>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {cityStats.length} cities • {countries.length} countries
             </p>
           </div>

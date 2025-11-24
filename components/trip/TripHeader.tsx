@@ -58,12 +58,8 @@ export default function TripHeader({
   };
 
   return (
-    <header className={`pb-10 border-b border-[var(--um-border)] group ${className || ''}`}>
-      <p className="text-xs tracking-widest text-[var(--um-text-muted)] mb-2 uppercase">
-        TRIP
-      </p>
-
-      <div className="flex items-center gap-2 mb-1">
+    <header className={`mb-12 group ${className || ''}`}>
+      <div className="flex items-center justify-between mb-6">
         {isEditingTitle ? (
           <div className="flex items-center gap-2 flex-1">
             <input
@@ -77,7 +73,7 @@ export default function TripHeader({
                   handleCancelEdit();
                 }
               }}
-              className="text-[32px] font-[480] tracking-tight text-gray-900 dark:text-white bg-transparent border-b-2 border-gray-900 dark:border-white focus:outline-none flex-1"
+              className="text-2xl font-light text-gray-900 dark:text-white bg-transparent border-b-2 border-gray-900 dark:border-white focus:outline-none flex-1"
               autoFocus
             />
             <button
@@ -96,33 +92,29 @@ export default function TripHeader({
             </button>
           </div>
         ) : (
-          <>
-            <h1 className="text-[32px] font-[480] tracking-tight text-gray-900 dark:text-white">
-              {tripName}
-            </h1>
+          <h1 className="text-2xl font-light text-gray-900 dark:text-white">
+            {tripName}
             {canEdit && onTitleChange && (
               <button
                 onClick={() => setIsEditingTitle(true)}
-                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                className="ml-2 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
                 aria-label="Edit title"
               >
                 <Pencil className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               </button>
             )}
-          </>
+          </h1>
         )}
+        <TripActions
+          onEdit={onEdit}
+          onOverview={onOverview}
+        />
       </div>
-
       {(startDate || endDate) && (
-        <p className="text-[var(--um-text-muted)] text-sm">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {startDate} – {endDate}
         </p>
       )}
-
-      <TripActions
-        onEdit={onEdit}
-        onOverview={onOverview}
-      />
     </header>
   );
 }
