@@ -6,6 +6,7 @@ interface DrawerHeaderProps {
   subtitle?: string;
   leftAccessory?: React.ReactNode;
   rightAccessory?: React.ReactNode;
+  bordered?: boolean;
   className?: string;
 }
 
@@ -14,10 +15,17 @@ export function DrawerHeader({
   subtitle,
   leftAccessory,
   rightAccessory,
+  bordered = true,
   className,
 }: DrawerHeaderProps) {
   return (
-    <header className={cn("px-4 pt-4 pb-3 border-b border-border", className)}>
+    <header
+      className={cn(
+        "px-4 pt-4 pb-3",
+        bordered && "border-b border-border",
+        className
+      )}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2">
           {leftAccessory && <div className="mt-0.5">{leftAccessory}</div>}
