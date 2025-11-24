@@ -1163,7 +1163,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
           aria-label="Close drawer"
         >
-          <X className="h-4 w-4 text-gray-900 dark:text-white" />
+          <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
         </button>
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
           {destination.name || 'Destination'}
@@ -1189,7 +1189,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               aria-label="Edit destination"
               title="Edit destination (Admin)"
             >
-              <Edit className="h-4 w-4 text-gray-900 dark:text-white/90" />
+              <Edit className="h-4 w-4 text-gray-900 dark:text-white/90" strokeWidth={1.5} />
             </button>
           )}
           {/* Bookmark Action */}
