@@ -50,14 +50,15 @@ export default function DrawerMount() {
         </Drawer>
       )}
 
-      {/* DAY EDITOR (FULLSCREEN) */}
+      {/* DAY EDITOR */}
       {drawer === "trip-day-editor" && (
         <Drawer
           isOpen={isOpen}
           onClose={closeDrawer}
-          fullScreen={true}
+          title={`Edit Day ${typeof props?.index === "number" ? props.index + 1 : ""}`.trim()}
           style={drawerStyle}
           position="right"
+          desktopWidth="720px"
         >
           <TripDayEditorDrawer
             day={props?.day ?? null}
