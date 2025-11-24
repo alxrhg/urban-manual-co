@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import UMCard from "@/components/ui/UMCard";
-import UMActionPill from "@/components/ui/UMActionPill";
-import UMSectionTitle from "@/components/ui/UMSectionTitle";
-import { useDrawerStore } from "@/lib/stores/drawer-store";
+import UMCard from '@/components/ui/UMCard';
+import UMActionPill from '@/components/ui/UMActionPill';
+import UMSectionTitle from '@/components/ui/UMSectionTitle';
+import { useDrawerStore } from '@/lib/stores/drawer-store';
 import Image from 'next/image';
 
 interface Location {
@@ -40,10 +41,19 @@ interface TripDayEditorDrawerProps {
   day: Day | null;
   index?: number;
   trip?: Trip | null;
+  hideHeader?: boolean;
+  className?: string;
 }
 
-export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEditorDrawerProps) {
+export default function TripDayEditorDrawer({
+  day,
+  index = 0,
+  trip,
+  hideHeader = false,
+  className,
+}: TripDayEditorDrawerProps) {
   const { openDrawer } = useDrawerStore();
+  const router = useRouter();
   const [selectedDayIndex, setSelectedDayIndex] = useState(index);
   const [editorDays, setEditorDays] = useState<Day[]>(() => {
     if (trip?.days?.length) return [...trip.days];
@@ -112,6 +122,7 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
           };
         }),
       );
+      router.refresh();
     } catch (error) {
       console.error('Error removing stop', error);
       alert('Failed to remove this stop. Please try again.');
@@ -135,8 +146,11 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
     }
   };
 
+  const containerClass =
+    className ?? (hideHeader ? 'space-y-10' : 'px-6 py-6 space-y-10');
+
   return (
-    <div className="px-6 py-6 space-y-10">
+    <div className={containerClass}>
       {/* DAY TABS */}
       {allDays.length > 1 && (
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 border-b border-gray-200 dark:border-gray-800">
@@ -157,14 +171,16 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
       )}
 
       {/* TITLE */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-light text-gray-900 dark:text-white">
-          Day {selectedDayIndex + 1}
-        </h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {currentDay.city || 'Unknown'} • {currentDay.date || ''}
-        </p>
-      </div>
+      {!hideHeader && (
+        <div className="space-y-1">
+          <h1 className="text-2xl font-light text-gray-900 dark:text-white">
+            Day {selectedDayIndex + 1}
+          </h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {currentDay.city || 'Unknown'} • {currentDay.date || ''}
+          </p>
+        </div>
+      )}
 
       {/* STOPS LIST */}
       {allLocations.length > 0 && (

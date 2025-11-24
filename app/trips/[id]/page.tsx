@@ -15,6 +15,7 @@ import Image from 'next/image';
 import { TripPlanner } from '@/components/TripPlanner';
 import { HotelAutocompleteInput } from '@/components/HotelAutocompleteInput';
 import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
+import TripDayEditorDrawer from '@/components/drawers/TripDayEditorDrawer';
 
 type Tab = 'itinerary' | 'details' | 'hotels';
 
@@ -52,6 +53,7 @@ export default function TripPage() {
   const [hotelEditMode, setHotelEditMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dayScrollRef = useRef<HTMLDivElement>(null);
+  const dayEditorRef = useRef<HTMLDivElement>(null);
 
   // Load recommendations based on trip destination
   const loadRecommendations = async () => {
@@ -582,11 +584,7 @@ export default function TripPage() {
                         <div className="flex flex-wrap gap-2">
                           <UMActionPill
                             onClick={() =>
-                              openDrawer('trip-day-editor', {
-                                day: trip.days[selectedDayIndex],
-                                index: selectedDayIndex,
-                                trip,
-                              })
+                              dayEditorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
                             }
                           >
                             Edit Day
@@ -609,6 +607,27 @@ export default function TripPage() {
                       )}
                     </div>
                     <DayTimeline day={trip.days[selectedDayIndex]} fallbackCity={trip.destination || undefined} />
+                    {isOwner && (
+                      <section ref={dayEditorRef} className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-neutral-600 dark:text-neutral-300">
+                            Edit itinerary
+                          </h3>
+                          <p className="text-xs text-neutral-400 dark:text-neutral-500">
+                            Inline editor (auto-syncs when you save)
+                          </p>
+                        </div>
+                        <div className="rounded-[32px] border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#0f1012] p-4 sm:p-6">
+                          <TripDayEditorDrawer
+                            day={trip.days[selectedDayIndex]}
+                            index={selectedDayIndex}
+                            trip={trip}
+                            hideHeader
+                            className="space-y-8"
+                          />
+                        </div>
+                      </section>
+                    )}
                   </div>
                 )}
               </>

@@ -7,7 +7,6 @@ import { Drawer } from "@/components/ui/Drawer";
 // DRAWERS (to be implemented in Parts 3–8)
 import TripListDrawer from "@/components/drawers/TripListDrawer";
 import TripOverviewDrawer from "@/components/drawers/TripOverviewDrawer";
-import TripDayEditorDrawer from "@/components/drawers/TripDayEditorDrawer";
 import PlaceSelectorDrawer from "@/components/drawers/PlaceSelectorDrawer";
 import AddHotelDrawer from "@/components/drawers/AddHotelDrawer";
 import AISuggestionsDrawer from "@/components/drawers/AISuggestionsDrawer";
@@ -47,23 +46,6 @@ export default function DrawerMount() {
           desktopWidth="420px"
         >
           <TripOverviewDrawer trip={props?.trip ?? null} />
-        </Drawer>
-      )}
-
-      {/* DAY EDITOR (FULLSCREEN) */}
-      {drawer === "trip-day-editor" && (
-        <Drawer
-          isOpen={isOpen}
-          onClose={closeDrawer}
-          fullScreen={true}
-          style={drawerStyle}
-          position="right"
-        >
-          <TripDayEditorDrawer
-            day={props?.day ?? null}
-            index={props?.index ?? 0}
-            trip={props?.trip ?? null}
-          />
         </Drawer>
       )}
 
