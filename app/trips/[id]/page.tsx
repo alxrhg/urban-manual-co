@@ -296,7 +296,7 @@ export default function TripPage() {
   const isOwner = trip.user_id === user?.id;
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 space-y-8">
+    <div className="w-full px-6 py-8 space-y-8">
       {/* Header */}
       <TripHeader
         trip={{
