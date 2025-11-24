@@ -1873,26 +1873,33 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               }
               
               return (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    {openStatus.todayHours && (
-                      <>
-                        <span className="text-sm font-medium text-black dark:text-white">
-                        {openStatus.isOpen ? 'Open now' : 'Closed'}
-                      </span>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        · {openStatus.todayHours}
-                      </span>
-                      </>
-                    )}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                      {openStatus.todayHours && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`inline-flex items-center px-2.5 h-6 rounded-lg text-xs font-medium ${
+                            openStatus.isOpen 
+                              ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800' 
+                              : 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
+                          }`}>
+                            {openStatus.isOpen ? 'Open now' : 'Closed'}
+                          </span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {openStatus.todayHours}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {hours.weekday_text && (
-                    <details className="text-sm">
-                      <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                    <details className="group">
+                      <summary className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                        <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
                         View all hours
                       </summary>
-                      <div className="mt-2 space-y-1 pl-6">
+                      <div className="mt-3 space-y-2 pl-5">
                         {hours.weekday_text.map((day: string, index: number) => {
                           const [dayName, hoursText] = day.split(': ');
                           const dayOfWeek = now.getDay();
@@ -1900,9 +1907,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           const isToday = index === googleDayIndex;
 
                           return (
-                            <div key={index} className={`flex justify-between ${isToday ? 'font-medium text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
-                              <span>{dayName}</span>
-                              <span>{hoursText}</span>
+                            <div key={index} className={`flex justify-between items-center text-sm ${
+                              isToday 
+                                ? 'font-medium text-black dark:text-white' 
+                                : 'text-gray-600 dark:text-gray-400'
+                            }`}>
+                              <span className={isToday ? 'text-black dark:text-white' : ''}>{dayName}</span>
+                              <span className={isToday ? 'text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}>{hoursText}</span>
                             </div>
                           );
                         })}
@@ -2630,26 +2641,33 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               }
               
               return (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                    {openStatus.todayHours && (
-                      <>
-                        <span className="text-sm font-medium text-black dark:text-white">
-                        {openStatus.isOpen ? 'Open now' : 'Closed'}
-                      </span>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        · {openStatus.todayHours}
-                      </span>
-                      </>
-                    )}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                      {openStatus.todayHours && (
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`inline-flex items-center px-2.5 h-6 rounded-lg text-xs font-medium ${
+                            openStatus.isOpen 
+                              ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400 border border-green-200 dark:border-green-800' 
+                              : 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
+                          }`}>
+                            {openStatus.isOpen ? 'Open now' : 'Closed'}
+                          </span>
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {openStatus.todayHours}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {hours.weekday_text && (
-                    <details className="text-sm">
-                      <summary className="cursor-pointer text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                    <details className="group">
+                      <summary className="cursor-pointer inline-flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors">
+                        <ChevronDown className="h-3.5 w-3.5 transition-transform group-open:rotate-180" />
                         View all hours
                       </summary>
-                      <div className="mt-2 space-y-1 pl-6">
+                      <div className="mt-3 space-y-2 pl-5">
                         {hours.weekday_text.map((day: string, index: number) => {
                           const [dayName, hoursText] = day.split(': ');
                           const dayOfWeek = now.getDay();
@@ -2657,9 +2675,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           const isToday = index === googleDayIndex;
 
                           return (
-                            <div key={index} className={`flex justify-between ${isToday ? 'font-medium text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
-                              <span>{dayName}</span>
-                              <span>{hoursText}</span>
+                            <div key={index} className={`flex justify-between items-center text-sm ${
+                              isToday 
+                                ? 'font-medium text-black dark:text-white' 
+                                : 'text-gray-600 dark:text-gray-400'
+                            }`}>
+                              <span className={isToday ? 'text-black dark:text-white' : ''}>{dayName}</span>
+                              <span className={isToday ? 'text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}>{hoursText}</span>
                             </div>
                           );
                         })}
