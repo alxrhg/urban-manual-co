@@ -6,7 +6,12 @@ import { unifiedSearch } from '@/lib/discovery-engine/integration';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase/server';
 import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  genAI,
+  GEMINI_MODEL,
+  getGeminiModel,
+  isGeminiAvailable,
+} from '@/lib/gemini';
 import {
   conversationRatelimit,
   memoryConversationRatelimit,
@@ -14,23 +19,69 @@ import {
   isUpstashConfigured,
   createRateLimitResponse,
 } from '@/lib/rate-limit';
+import {
+  trackOpenAIResponse,
+  trackEmbeddingUsage,
+  trackUsage,
+  estimateTokens,
+} from '@/lib/ai/cost-tracking';
 
-// Initialize Gemini as fallback
-const GOOGLE_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
-const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
+// LRU Cache implementation with TTL support
+class LRUCache<T> {
+  private cache = new Map<string, { data: T; timestamp: number }>();
+  private maxSize: number;
+  private ttl: number;
 
-// Simple in-memory cache for search results
-interface CacheEntry {
-  data: any;
-  timestamp: number;
+  constructor(maxSize: number, ttlMs: number) {
+    this.maxSize = maxSize;
+    this.ttl = ttlMs;
+  }
+
+  get(key: string): T | null {
+    const entry = this.cache.get(key);
+    if (!entry) return null;
+
+    // Check if expired
+    if (Date.now() - entry.timestamp > this.ttl) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    // Move to end (most recently used) by deleting and re-inserting
+    this.cache.delete(key);
+    this.cache.set(key, entry);
+
+    return entry.data;
+  }
+
+  set(key: string, data: T): void {
+    // If key exists, delete it first (will be re-added at end)
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    }
+
+    // Evict least recently used (first entry) if at capacity
+    if (this.cache.size >= this.maxSize) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey) this.cache.delete(firstKey);
+    }
+
+    this.cache.set(key, { data, timestamp: Date.now() });
+  }
+
+  get size(): number {
+    return this.cache.size;
+  }
 }
 
-const searchCache = new Map<string, CacheEntry>();
-const embeddingCache = new Map<string, { embedding: number[], timestamp: number }>();
-const intentCache = new Map<string, { intent: any, timestamp: number }>();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
-const MAX_CACHE_SIZE = 100; // Limit cache size to prevent memory issues
+// Cache configuration
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const MAX_CACHE_SIZE = 100;
+
+// Initialize LRU caches
+const searchCache = new LRUCache<any>(MAX_CACHE_SIZE, CACHE_TTL);
+const embeddingCache = new LRUCache<number[]>(MAX_CACHE_SIZE, CACHE_TTL);
+const intentCache = new LRUCache<any>(MAX_CACHE_SIZE, CACHE_TTL);
 
 // Request deduplication map
 const pendingRequests = new Map<string, Promise<any>>();
@@ -45,32 +96,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T
 
 function getCacheKey(query: string, intent: any): string {
   return `${query.toLowerCase()}_${intent.city || ''}_${intent.category || ''}`;
-}
-
-function getFromCache(key: string): any | null {
-  const entry = searchCache.get(key);
-  if (!entry) return null;
-
-  // Check if cache entry is still valid
-  if (Date.now() - entry.timestamp > CACHE_TTL) {
-    searchCache.delete(key);
-    return null;
-  }
-
-  return entry.data;
-}
-
-function setInCache(key: string, data: any): void {
-  // Implement simple LRU by removing oldest entry if cache is full
-  if (searchCache.size >= MAX_CACHE_SIZE) {
-    const firstKey = searchCache.keys().next().value;
-    if (firstKey) searchCache.delete(firstKey);
-  }
-
-  searchCache.set(key, {
-    data,
-    timestamp: Date.now(),
-  });
 }
 
 // Category synonym mapping
@@ -103,12 +128,12 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
     return null;
   }
 
-  // Check cache first
+  // Check LRU cache first (handles TTL internally)
   const cacheKey = text.toLowerCase().trim();
   const cached = embeddingCache.get(cacheKey);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+  if (cached) {
     console.log('[AI Chat] Using cached embedding');
-    return cached.embedding;
+    return cached;
   }
 
   try {
@@ -119,12 +144,10 @@ async function generateEmbedding(text: string): Promise<number[] | null> {
     );
 
     if (embedding) {
-      // Cache the embedding
-      if (embeddingCache.size >= MAX_CACHE_SIZE) {
-        const firstKey = embeddingCache.keys().next().value;
-        if (firstKey) embeddingCache.delete(firstKey);
-      }
-      embeddingCache.set(cacheKey, { embedding, timestamp: Date.now() });
+      // Cache the embedding (LRU handles eviction)
+      embeddingCache.set(cacheKey, embedding);
+      // Track embedding cost
+      trackEmbeddingUsage(text, OPENAI_EMBEDDING_MODEL, '/api/ai-chat/embedding');
     }
 
     return embedding;
@@ -167,9 +190,9 @@ async function understandQuery(
   if (conversationHistory.length === 0) {
     const cacheKey = `${query.toLowerCase()}_${userId || 'anon'}`;
     const cached = intentCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    if (cached) {
       console.log('[AI Chat] Using cached intent');
-      return cached.intent;
+      return cached;
     }
   }
 
@@ -275,6 +298,8 @@ Return only the JSON, no other text.`;
 
         if (response) {
           text = response.choices?.[0]?.message?.content || '';
+          // Track cost for intent parsing
+          trackOpenAIResponse(response, model, '/api/ai-chat/intent', userId);
         }
       } catch (error) {
         console.error('[AI Chat] OpenAI intent parsing error, falling back to Gemini:', error);
@@ -338,11 +363,7 @@ Return only the JSON, no other text.`;
         // Cache the parsed intent (only for non-conversational queries)
         if (conversationHistory.length === 0) {
           const cacheKey = `${query.toLowerCase()}_${userId || 'anon'}`;
-          if (intentCache.size >= MAX_CACHE_SIZE) {
-            const firstKey = intentCache.keys().next().value;
-            if (firstKey) intentCache.delete(firstKey);
-          }
-          intentCache.set(cacheKey, { intent: parsed, timestamp: Date.now() });
+          intentCache.set(cacheKey, parsed);
         }
 
         return parsed;
@@ -618,6 +639,10 @@ Generate a natural, helpful response that incorporates relevant context (weather
       ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
 
       const aiResponse = response?.choices?.[0]?.message?.content || '';
+      if (response) {
+        // Track cost for response generation
+        trackOpenAIResponse(response, model, '/api/ai-chat/response', userId);
+      }
       if (aiResponse) {
         return aiResponse.trim();
       }
@@ -630,7 +655,7 @@ Generate a natural, helpful response that incorporates relevant context (weather
   if (genAI) {
     try {
       const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
-      const geminiModel = genAI.getGenerativeModel({ 
+      const geminiModel = genAI.getGenerativeModel({
         model: GEMINI_MODEL,
         generationConfig: {
           temperature: 0.7,
@@ -644,6 +669,14 @@ Generate a natural, helpful response that incorporates relevant context (weather
       );
       if (result) {
         const aiResponse = result.response.text();
+        // Track Gemini usage (estimate tokens)
+        trackUsage({
+          model: GEMINI_MODEL,
+          inputTokens: estimateTokens(fullPrompt),
+          outputTokens: estimateTokens(aiResponse),
+          endpoint: '/api/ai-chat/response',
+          userId,
+        });
         if (aiResponse) {
           return aiResponse.trim();
         }
@@ -764,7 +797,7 @@ async function processAIChatRequest(
     // Check cache for non-personalized searches
     if (!userId) {
       const cacheKey = getCacheKey(query, intent);
-      const cachedResult = getFromCache(cacheKey);
+      const cachedResult = searchCache.get(cacheKey);
       if (cachedResult) {
         console.log('[AI Chat] Returning cached results for:', query);
         return NextResponse.json(cachedResult);
@@ -1202,7 +1235,7 @@ async function processAIChatRequest(
                 // Cache non-personalized results
                 if (!userId) {
                   const cacheKey = getCacheKey(query, intent);
-                  setInCache(cacheKey, responseData);
+                  searchCache.set(cacheKey, responseData);
                 }
 
                 return NextResponse.json(responseData);
