@@ -16,18 +16,14 @@ interface Trip {
 interface TripHeaderProps {
   trip: Trip;
   onOverview?: () => void;
-  onSave?: () => void;
-  onShare?: () => void;
-  onPrint?: () => void;
+  onEdit?: () => void;
   className?: string;
 }
 
 export default function TripHeader({
   trip,
   onOverview,
-  onSave,
-  onShare,
-  onPrint,
+  onEdit,
   className,
 }: TripHeaderProps) {
   const tripName = trip.name || trip.title || 'Untitled Trip';
@@ -51,9 +47,7 @@ export default function TripHeader({
       )}
 
       <TripActions
-        onSave={onSave}
-        onShare={onShare}
-        onPrint={onPrint}
+        onEdit={onEdit}
         onOverview={onOverview}
       />
     </header>

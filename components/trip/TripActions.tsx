@@ -3,28 +3,18 @@
 import UMPillButton from '@/components/ui/UMPillButton';
 
 interface TripActionsProps {
-  onSave?: () => void;
-  onShare?: () => void;
-  onPrint?: () => void;
+  onEdit?: () => void;
   onOverview?: () => void;
 }
 
 export default function TripActions({
-  onSave,
-  onShare,
-  onPrint,
+  onEdit,
   onOverview,
 }: TripActionsProps) {
   return (
     <div className="flex flex-wrap gap-3 py-4">
-      {onSave && (
-        <UMPillButton onClick={onSave}>Save</UMPillButton>
-      )}
-      {onShare && (
-        <UMPillButton onClick={onShare}>Share</UMPillButton>
-      )}
-      {onPrint && (
-        <UMPillButton onClick={onPrint}>Print</UMPillButton>
+      {onEdit && (
+        <UMPillButton onClick={onEdit}>Edit</UMPillButton>
       )}
       {onOverview && (
         <UMPillButton variant="primary" onClick={onOverview}>

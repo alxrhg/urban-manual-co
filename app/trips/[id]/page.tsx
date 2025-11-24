@@ -14,6 +14,7 @@ import UMActionPill from '@/components/ui/UMActionPill';
 import UMSectionTitle from '@/components/ui/UMSectionTitle';
 import { Camera, Loader2, ChevronRight, Plus, Trash2, Calendar } from 'lucide-react';
 import Image from 'next/image';
+import { TripPlanner } from '@/components/TripPlanner';
 
 type Tab = 'details' | 'itinerary' | 'hotels';
 
@@ -43,6 +44,7 @@ export default function TripPage() {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loadingHotels, setLoadingHotels] = useState(false);
+  const [showTripPlanner, setShowTripPlanner] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Initialize form when trip loads
@@ -303,14 +305,7 @@ export default function TripPage() {
           endDate: formatDate(trip.end_date),
         }}
         onOverview={() => openDrawer('trip-overview', { trip })}
-        onSave={isOwner ? handleSave : undefined}
-        onShare={() => {
-          // TODO: Implement share functionality
-          console.log('Share trip');
-        }}
-        onPrint={() => {
-          window.print();
-        }}
+        onEdit={isOwner ? () => setShowTripPlanner(true) : undefined}
       />
 
       {/* Tabs */}
@@ -447,27 +442,27 @@ export default function TripPage() {
           {/* Smart Suggestions */}
           <section className="space-y-4">
             <UMSectionTitle>Smart Suggestions</UMSectionTitle>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <SuggestionCard
-                icon="🍳"
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <SuggestionCard
+            icon="🍳"
                 title="Consider adding a morning cafe visit"
                 detail="3 curated options very close to your first location"
-                onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
-              />
-              <SuggestionCard
-                icon="🖼️"
-                title="Museum for Day 2"
+            onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
+          />
+          <SuggestionCard
+            icon="🖼️"
+            title="Museum for Day 2"
                 detail="2 top options within 10 minutes"
-                onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
-              />
-              <SuggestionCard
-                icon="🌅"
+            onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
+          />
+          <SuggestionCard
+            icon="🌅"
                 title="Sunset dinner at the waterfront"
-                detail="Perfect timing between 5–7 PM"
-                onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
-              />
-            </div>
-          </section>
+            detail="Perfect timing between 5–7 PM"
+            onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
+          />
+        </div>
+      </section>
         </div>
       )}
 
@@ -651,6 +646,21 @@ export default function TripPage() {
             )}
           </button>
         </div>
+      )}
+
+      {/* Trip Planner Modal */}
+      {showTripPlanner && (
+        <TripPlanner
+          isOpen={true}
+          tripId={tripId || undefined}
+          onClose={() => {
+            setShowTripPlanner(false);
+            // Refresh trip data after editing
+            if (tripId) {
+              window.location.reload();
+            }
+          }}
+        />
       )}
     </div>
   );
