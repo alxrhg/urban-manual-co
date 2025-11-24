@@ -28,6 +28,18 @@ export interface DrawerProps {
   fullScreen?: boolean;
 }
 
+type ViewportSize = 'mobile' | 'tablet' | 'desktop';
+
+const getViewportType = (): ViewportSize => {
+  if (typeof window === 'undefined') {
+    return 'desktop';
+  }
+  const width = window.innerWidth;
+  if (width >= 1024) return 'desktop';
+  if (width >= 768) return 'tablet';
+  return 'mobile';
+};
+
 /**
  * Universal Drawer Component - Redesigned
  * 
@@ -74,6 +86,15 @@ export function Drawer({
   const [isAnimating, setIsAnimating] = useState(false);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [viewport, setViewport] = useState<ViewportSize>(() => getViewportType());
+  const inlineSplitDesktop = viewport === 'desktop' && !fullScreen;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handleResize = () => setViewport(getViewportType());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Cleanup animation timeout on unmount
   useEffect(() => {
@@ -107,42 +128,56 @@ export function Drawer({
 
   // Improved body scroll locking (prevents layout shift)
   useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const body = document.body;
+
+    if (inlineSplitDesktop) {
+      body.style.position = '';
+      body.style.top = '';
+      body.style.width = '';
+      body.style.overflow = '';
+      body.style.touchAction = '';
+      return;
+    }
+
     if (isOpen) {
       // Save current scroll position
-      scrollPositionRef.current = window.scrollY;
+      scrollPositionRef.current = typeof window !== 'undefined' ? window.scrollY : 0;
       
       // Lock scroll without layout shift
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollPositionRef.current}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
+      body.style.position = 'fixed';
+      body.style.top = `-${scrollPositionRef.current}px`;
+      body.style.width = '100%';
+      body.style.overflow = 'hidden';
       
       // Prevent iOS bounce
-      document.body.style.touchAction = 'none';
+      body.style.touchAction = 'none';
     } else {
       // Restore scroll position
       const scrollY = scrollPositionRef.current;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
+      body.style.position = '';
+      body.style.top = '';
+      body.style.width = '';
+      body.style.overflow = '';
+      body.style.touchAction = '';
       
       // Restore scroll position after a brief delay
-      requestAnimationFrame(() => {
-        window.scrollTo(0, scrollY);
-      });
+      if (typeof window !== 'undefined') {
+        requestAnimationFrame(() => {
+          window.scrollTo(0, scrollY);
+        });
+      }
     }
     
     return () => {
       // Cleanup
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
+      body.style.position = '';
+      body.style.top = '';
+      body.style.width = '';
+      body.style.overflow = '';
+      body.style.touchAction = '';
     };
-  }, [isOpen]);
+  }, [isOpen, inlineSplitDesktop]);
 
   // Focus management for accessibility
   useEffect(() => {
@@ -180,6 +215,36 @@ export function Drawer({
       return () => clearTimeout(timeoutId);
     }
   }, [isOpen, getCurrentDrawer]);
+
+  // Inline split-pane body adjustments for desktop
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const body = document.body;
+    const docEl = document.documentElement;
+
+    if (!inlineSplitDesktop) {
+      body.classList.remove('drawer-inline-open', 'drawer-inline-right', 'drawer-inline-left');
+      docEl.style.setProperty('--drawer-inline-width', '0px');
+      return;
+    }
+
+    if (isOpen) {
+      const sideClass = position === 'right' ? 'drawer-inline-right' : 'drawer-inline-left';
+      const oppositeClass = position === 'right' ? 'drawer-inline-left' : 'drawer-inline-right';
+      docEl.style.setProperty('--drawer-inline-width', desktopWidth);
+      body.classList.add('drawer-inline-open');
+      body.classList.add(sideClass);
+      body.classList.remove(oppositeClass);
+    } else {
+      body.classList.remove('drawer-inline-open', 'drawer-inline-right', 'drawer-inline-left');
+      docEl.style.setProperty('--drawer-inline-width', '0px');
+    }
+
+    return () => {
+      body.classList.remove('drawer-inline-open', 'drawer-inline-right', 'drawer-inline-left');
+      docEl.style.setProperty('--drawer-inline-width', '0px');
+    };
+  }, [desktopWidth, inlineSplitDesktop, isOpen, position]);
 
   // Close on escape key
   useEffect(() => {
@@ -376,7 +441,7 @@ export function Drawer({
   return (
     <>
       {/* Backdrop */}
-      {showBackdrop && (
+      {showBackdrop && !inlineSplitDesktop && (
         <div
           className={`fixed inset-0 transition-opacity duration-300 ease-out ${
             isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -498,12 +563,14 @@ export function Drawer({
       <div
         ref={desktopRef}
         className={`hidden lg:flex fixed ${
-          fullScreen 
-            ? 'inset-0 rounded-none' 
+          fullScreen
+            ? 'inset-0 rounded-none'
+            : inlineSplitDesktop
+            ? `${position === 'right' ? 'right-0' : 'left-0'} top-0 bottom-0 rounded-none`
             : `${desktopSpacing} rounded-2xl`
         } ${backgroundClasses} ${shadowClasses} ${!fullScreen ? borderClasses : ''} z-50 transform transition-transform duration-300 ease-out ${
-          isOpen 
-            ? 'translate-x-0 opacity-100' 
+          isOpen
+            ? 'translate-x-0 opacity-100'
             : fullScreen
             ? 'opacity-0'
             : (position === 'right' ? 'translate-x-[calc(100%+2rem)] opacity-0' : '-translate-x-[calc(100%+2rem)] opacity-0')

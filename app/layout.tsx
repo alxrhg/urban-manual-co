@@ -199,12 +199,17 @@ export default function RootLayout({
                   <Suspense fallback={null}>
                     <AdminEditModeProvider>
                       <ItineraryProvider>
-                        <Header />
-                        <main id="main-content" className="min-h-screen page-transition" role="main">
-                          {children}
-                        </main>
-                        <Footer />
-                        <CookieConsent />
+                        <div
+                          id="app-shell"
+                          className="flex min-h-screen flex-col transition-[margin-left,margin-right] duration-300 ease-out"
+                        >
+                          <Header />
+                          <main id="main-content" className="min-h-screen page-transition" role="main">
+                            {children}
+                          </main>
+                          <Footer />
+                          <CookieConsent />
+                        </div>
                         <DrawerMount />
                       </ItineraryProvider>
                     </AdminEditModeProvider>

@@ -135,6 +135,7 @@
     
     /* Ensure container uses 1280px max-width */
     --tw-container-max-width: 1280px;
+    --drawer-inline-width: 0px;
   }
 
   .dark {
@@ -178,6 +179,29 @@
     overflow-x: hidden;
     /* Prevent pull-to-refresh and overscroll effects */
     overscroll-behavior-y: none;
+  }
+
+  #app-shell {
+    transition: margin 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  @media (min-width: 1024px) {
+    body.drawer-inline-open.drawer-inline-right #app-shell {
+      margin-right: var(--drawer-inline-width, 0px);
+      margin-left: 0;
+    }
+  
+    body.drawer-inline-open.drawer-inline-left #app-shell {
+      margin-left: var(--drawer-inline-width, 0px);
+      margin-right: 0;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    body.drawer-inline-open #app-shell {
+      margin-left: 0;
+      margin-right: 0;
+    }
   }
   
   html.dark {
