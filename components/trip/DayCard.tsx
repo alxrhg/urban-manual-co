@@ -32,12 +32,15 @@ interface Day {
   [key: string]: any;
 }
 
+type DayCardMode = 'view' | 'edit';
+
 interface DayCardProps {
   day: Day;
   index: number;
   openDrawer: (type: string, props: any) => void;
   trip?: any;
   className?: string;
+  mode?: DayCardMode;
 }
 
 // Get icon for location type
@@ -68,7 +71,15 @@ function getTypeBadge(type?: string) {
   }
 }
 
-export default function DayCard({ day, index, openDrawer, trip, className }: DayCardProps) {
+export default function DayCard({
+  day,
+  index,
+  openDrawer,
+  trip,
+  className,
+  mode = 'edit',
+}: DayCardProps) {
+  const isViewMode = mode === 'view';
   // Combine meals and activities into locations array
   const locations: Location[] = [];
 
@@ -234,15 +245,17 @@ export default function DayCard({ day, index, openDrawer, trip, className }: Day
       )}
 
       {/* Add Location Button */}
-      <div className="border-t border-neutral-100 dark:border-neutral-800 p-4">
-        <button
-          className="w-full h-[44px] flex items-center justify-center gap-2 border border-neutral-200 dark:border-neutral-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 active:scale-[0.98] transition-all"
-          onClick={() => openDrawer('trip-add-place', { day, dayIndex: index })}
-        >
-          <span className="text-lg leading-none">+</span>
-          Add Location
-        </button>
-      </div>
+      {!isViewMode && (
+        <div className="border-t border-neutral-100 dark:border-neutral-800 p-4">
+          <button
+            className="w-full h-[44px] flex items-center justify-center gap-2 border border-neutral-200 dark:border-neutral-700 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 active:scale-[0.98] transition-all"
+            onClick={() => openDrawer('trip-add-place', { day, dayIndex: index })}
+          >
+            <span className="text-lg leading-none">+</span>
+            Add Location
+          </button>
+        </div>
+      )}
     </UMCard>
   );
 }
