@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Destination } from '@/types/destination';
+import type { ItineraryItemNotes } from '@/types/trip';
 import { useAuth } from '@/contexts/AuthContext';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
@@ -217,6 +218,100 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [reviewSummary, setReviewSummary] = useState<string | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Function to add destination to trip directly
+  async function addDestinationToTrip(tripId: string) {
+    if (!destination?.slug || !user) return;
+    
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      // Verify trip exists and belongs to user
+      const { data: trip, error: tripError } = await supabaseClient
+        .from('trips')
+        .select('id')
+        .eq('id', tripId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (tripError || !trip) {
+        throw new Error('Trip not found or you do not have permission');
+      }
+
+      // Get the next day and order_index for this trip
+      let nextDay = 1;
+      let nextOrder = 0;
+
+      try {
+        const { data: orderData, error: functionError } = await supabaseClient
+          .rpc('get_next_itinerary_order', { p_trip_id: tripId });
+
+        if (!functionError && orderData) {
+          const result = Array.isArray(orderData) ? orderData[0] : orderData;
+          if (result && typeof result === 'object') {
+            nextDay = result.next_day ?? 1;
+            nextOrder = result.next_order ?? 0;
+          }
+        }
+        
+        if (functionError || !orderData || (Array.isArray(orderData) && orderData.length === 0)) {
+          const { data: existingItems, error: queryError } = await supabaseClient
+            .from('itinerary_items')
+            .select('day, order_index')
+            .eq('trip_id', tripId)
+            .order('day', { ascending: false })
+            .order('order_index', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (!queryError && existingItems) {
+            nextDay = existingItems.day ?? 1;
+            nextOrder = (existingItems.order_index ?? -1) + 1;
+          }
+        }
+      } catch (queryErr: any) {
+        console.warn('Error getting next order, using defaults:', queryErr);
+        nextDay = 1;
+        nextOrder = 0;
+      }
+
+      // Prepare notes data
+      const notesData: ItineraryItemNotes = {
+        raw: '',
+      };
+
+      // Add destination to itinerary
+      const { data: insertedItem, error: insertError } = await supabaseClient
+        .from('itinerary_items')
+        .insert({
+          trip_id: tripId,
+          destination_slug: destination.slug,
+          day: nextDay,
+          order_index: nextOrder,
+          title: destination.name,
+          description: null,
+          notes: JSON.stringify(notesData),
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        throw new Error(insertError.message || 'Failed to add destination to trip');
+      }
+
+      if (insertedItem) {
+        setIsAddedToTrip(true);
+        onClose();
+        router.push(`/trips/${tripId}${insertedItem.id ? `?item=${insertedItem.id}` : ''}`);
+      }
+    } catch (error: any) {
+      console.error('Error adding to trip:', error);
+      alert(error?.message || 'Failed to add destination to trip. Please try again.');
+      // Fallback to showing modal
+      setShowAddToTripModal(true);
+    }
+  }
 
   // Generate AI summary of reviews
   const generateReviewSummary = async (reviews: any[], destinationName: string) => {
@@ -1123,13 +1218,43 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </button>
           {/* Trip Action */}
           <button
-            onClick={() => {
+            onClick={async () => {
               if (!user) {
                 router.push('/auth/login');
                 return;
               }
               if (isAddedToTrip) return;
-              setShowAddToTripModal(true);
+              
+              // Try to add directly to most recent trip, or show modal if multiple trips
+              try {
+                const supabaseClient = createClient();
+                if (!supabaseClient) return;
+                
+                const { data: trips, error } = await supabaseClient
+                  .from('trips')
+                  .select('id')
+                  .eq('user_id', user.id)
+                  .order('created_at', { ascending: false })
+                  .limit(2);
+                
+                if (error) throw error;
+                
+                if (trips && trips.length === 1) {
+                  // Only one trip - add directly
+                  const tripId = trips[0].id;
+                  await addDestinationToTrip(tripId);
+                } else if (trips && trips.length > 1) {
+                  // Multiple trips - show modal to select
+                  setShowAddToTripModal(true);
+                } else {
+                  // No trips - show modal to create a new trip
+                  setShowAddToTripModal(true);
+                }
+              } catch (error) {
+                console.error('Error checking trips:', error);
+                // Fallback to showing modal
+                setShowAddToTripModal(true);
+              }
             }}
             className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Add to trip"
@@ -1164,13 +1289,44 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         )}
 
         <button
-          onClick={() => {
+          onClick={async () => {
             if (!user) {
               router.push('/auth/login');
               return;
             }
             if (isAddedToTrip) return;
-            setShowAddToTripModal(true);
+            
+            // Try to add directly to most recent trip, or show modal if multiple trips
+            try {
+              const supabaseClient = createClient();
+              if (!supabaseClient) return;
+              
+              const { data: trips, error } = await supabaseClient
+                .from('trips')
+                .select('id')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(2);
+              
+              if (error) throw error;
+              
+              if (trips && trips.length === 1) {
+                // Only one trip - add directly
+                const tripId = trips[0].id;
+                await addDestinationToTrip(tripId);
+              } else if (trips && trips.length > 1) {
+                // Multiple trips - show modal to select
+                setShowAddToTripModal(true);
+              } else {
+                // No trips - open trip planner with this destination pre-filled
+                onClose();
+                router.push(`/trips?prefill=${encodeURIComponent(destination?.slug || '')}`);
+              }
+            } catch (error) {
+              console.error('Error checking trips:', error);
+              // Fallback to showing modal
+              setShowAddToTripModal(true);
+            }
           }}
           className={`flex items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-sm font-semibold transition-colors ${
             isAddedToTrip
