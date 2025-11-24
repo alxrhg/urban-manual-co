@@ -237,7 +237,8 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
                         <UMActionPill
                           onClick={(e) => {
                             e?.stopPropagation();
-                            openDrawer("trip-day-editor", { trip });
+                            setEditingTripId(trip.id);
+                            setShowTripDialog(true);
                           }}
                         >
                           Edit
