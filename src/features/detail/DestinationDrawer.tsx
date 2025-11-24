@@ -29,6 +29,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Destination } from '@/types/destination';
 import type { ItineraryItemNotes } from '@/types/trip';
 import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/useToast';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
@@ -200,6 +201,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [isReviewersExpanded, setIsReviewersExpanded] = useState(false);
   const [isContactExpanded, setIsContactExpanded] = useState(false);
   const { user } = useAuth();
+  const toast = useToast();
   const router = useRouter();
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
@@ -221,6 +223,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  const handleAddSuccess = (tripTitle: string, day?: number) => {
+    setIsAddedToTrip(true);
+    setShowAddToTripModal(false);
+    const daySuffix = day ? ` · Day ${day}` : '';
+    toast.success(`Added to ${tripTitle}${daySuffix}`);
+  };
+
   // Function to add destination to trip directly
   async function addDestinationToTrip(tripId: string) {
     if (!destination?.slug || !user) return;
@@ -232,7 +241,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       // Verify trip exists and belongs to user
       const { data: trip, error: tripError } = await supabaseClient
         .from('trips')
-        .select('id')
+        .select('id, title')
         .eq('id', tripId)
         .eq('user_id', user.id)
         .single();
@@ -303,9 +312,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       }
 
       if (insertedItem) {
-        setIsAddedToTrip(true);
-        onClose();
-        router.push(`/trips/${tripId}${insertedItem.id ? `?item=${insertedItem.id}` : ''}`);
+        handleAddSuccess(trip?.title || 'Trip', nextDay);
       }
     } catch (error: any) {
       console.error('Error adding to trip:', error);
@@ -3054,13 +3061,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           destinationName={destination.name}
           isOpen={showAddToTripModal}
           onClose={() => setShowAddToTripModal(false)}
-          onAdd={(tripId, itemId) => {
-            setIsAddedToTrip(true);
-            setShowAddToTripModal(false);
+          onAdd={(tripId, tripTitle, day) => {
+            handleAddSuccess(tripTitle, day);
             console.log(`Added ${destination.name} to trip ${tripId}`);
-            // Navigate to trip page and highlight the added item
-            onClose();
-            router.push(`/trips/${tripId}${itemId ? `?item=${itemId}` : ''}`);
           }}
         />
       )}
