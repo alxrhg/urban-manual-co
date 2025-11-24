@@ -1,11 +1,12 @@
 /**
  * ML Service Embedding Client
- * 
+ *
  * Provides functions to generate embeddings via the ml-service.
  * Falls back to OpenAI if ml-service is unavailable.
  */
 
 import OpenAI from 'openai';
+import { OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 const ML_SERVICE_API_KEY = process.env.ML_SERVICE_API_KEY;
@@ -109,17 +110,18 @@ export async function generateDestinationEmbedding(destination: {
 
 /**
  * Fallback: Generate embedding using OpenAI directly
+ * Uses the same model as lib/llm.ts for consistency (text-embedding-3-large by default)
  */
 async function generateTextEmbeddingOpenAI(text: string): Promise<EmbeddingResult> {
   const openai = getOpenAIClient();
   const response = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
+    model: OPENAI_EMBEDDING_MODEL,
     input: text,
   });
 
   return {
     embedding: response.data[0].embedding,
-    model: 'text-embedding-3-small',
+    model: OPENAI_EMBEDDING_MODEL,
     source: 'openai',
   };
 }
