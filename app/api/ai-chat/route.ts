@@ -7,6 +7,13 @@ import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase/server';
 import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  conversationRatelimit,
+  memoryConversationRatelimit,
+  getIdentifier,
+  isUpstashConfigured,
+  createRateLimitResponse,
+} from '@/lib/rate-limit';
 
 // Initialize Gemini as fallback
 const GOOGLE_API_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
@@ -670,6 +677,20 @@ export async function POST(request: NextRequest) {
     const supabase = await createServerClient();
     const body = await request.json();
     const { query, userId, conversationHistory = [] } = body;
+
+    // Rate limiting: 5 requests per 10 seconds for AI chat (same as conversation endpoint)
+    const identifier = getIdentifier(request, userId);
+    const ratelimit = isUpstashConfigured() ? conversationRatelimit : memoryConversationRatelimit;
+    const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse(
+        'Too many AI chat requests. Please wait a moment.',
+        limit,
+        remaining,
+        reset
+      );
+    }
 
     if (!query || query.trim().length < 2) {
       return NextResponse.json({
