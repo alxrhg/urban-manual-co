@@ -6,12 +6,11 @@ import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useTrip } from '@/hooks/useTrip';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import DayCard from '@/components/trip/DayCard';
 import SuggestionCard from '@/components/trip/SuggestionCard';
 import UMCard from '@/components/ui/UMCard';
 import UMActionPill from '@/components/ui/UMActionPill';
 import UMSectionTitle from '@/components/ui/UMSectionTitle';
-import { Camera, Loader2, Plus, Trash2, Calendar, MapPin, ArrowLeft, Share2, Building2 } from 'lucide-react';
+import { Camera, Loader2, Plus, Trash2, Calendar, MapPin, ArrowLeft, Share2, Building2, Clock, Utensils } from 'lucide-react';
 import Image from 'next/image';
 import { TripPlanner } from '@/components/TripPlanner';
 import { HotelAutocompleteInput } from '@/components/HotelAutocompleteInput';
@@ -569,8 +568,8 @@ export default function TripPage() {
 
                 {/* Selected Day Content */}
                 {trip.days[selectedDayIndex] && (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                  <div className="space-y-6">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                           Day {selectedDayIndex + 1}
@@ -580,23 +579,35 @@ export default function TripPage() {
                         </p>
                       </div>
                       {isOwner && (
-                        <UMActionPill
-                          onClick={() => openDrawer('trip-day-editor', {
-                            day: trip.days[selectedDayIndex],
-                            index: selectedDayIndex,
-                            trip
-                          })}
-                        >
-                          Edit Day
-                        </UMActionPill>
+                        <div className="flex flex-wrap gap-2">
+                          <UMActionPill
+                            onClick={() =>
+                              openDrawer('trip-day-editor', {
+                                day: trip.days[selectedDayIndex],
+                                index: selectedDayIndex,
+                                trip,
+                              })
+                            }
+                          >
+                            Edit Day
+                          </UMActionPill>
+                          <UMActionPill
+                            variant="primary"
+                            onClick={() =>
+                              openDrawer('trip-add-place', {
+                                day: trip.days[selectedDayIndex],
+                                dayIndex: selectedDayIndex,
+                                trip,
+                              })
+                            }
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Add Place
+                          </UMActionPill>
+                        </div>
                       )}
                     </div>
-                    <DayCard
-                      day={trip.days[selectedDayIndex]}
-                      index={selectedDayIndex}
-                      openDrawer={openDrawer}
-                      trip={trip}
-                    />
+                    <DayTimeline day={trip.days[selectedDayIndex]} fallbackCity={trip.destination || undefined} />
                   </div>
                 )}
               </>
@@ -998,4 +1009,166 @@ export default function TripPage() {
       )}
     </div>
   );
+}
+
+type TimelineEntryType = 'meal' | 'activity';
+
+interface TimelineEntry {
+  id: string;
+  title: string;
+  type: TimelineEntryType;
+  meta?: string;
+  time?: string | null;
+  description?: string | null;
+  duration?: string | null;
+  image?: string | null;
+  sortOrder: number;
+}
+
+function DayTimeline({ day, fallbackCity }: { day: any; fallbackCity?: string }) {
+  const entries = buildTimelineEntries(day, fallbackCity);
+
+  if (!entries.length) {
+    return (
+      <UMCard className="p-10 text-center">
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          No itinerary items for this day yet. Add a place to start building the plan.
+        </p>
+      </UMCard>
+    );
+  }
+
+  return (
+    <div className="rounded-[32px] border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#0f1012] p-5 sm:p-7">
+      <div className="space-y-6">
+        {entries.map((entry, index) => (
+          <div key={entry.id} className="flex gap-4">
+            <div className="flex flex-col items-center">
+              <span
+                className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                  entry.type === 'meal'
+                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-400/10 dark:text-amber-200'
+                    : 'bg-neutral-900 text-white dark:bg-white/20'
+                }`}
+              >
+                {entry.type === 'meal' ? <Utensils className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
+              </span>
+              {index < entries.length - 1 && (
+                <span className="w-0.5 flex-1 bg-neutral-200 dark:bg-neutral-800 mt-2 mb-1" />
+              )}
+            </div>
+            <div className="flex-1 space-y-2">
+              <div className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+                {entry.time && <span>{entry.time}</span>}
+                {entry.duration && (
+                  <span className="inline-flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {entry.duration}
+                  </span>
+                )}
+                {entry.meta && <span className="text-neutral-400">{entry.meta}</span>}
+              </div>
+              <p className="text-base font-semibold text-gray-900 dark:text-white">{entry.title}</p>
+              {entry.description && (
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">{entry.description}</p>
+              )}
+            </div>
+            {entry.image && (
+              <div className="relative w-24 h-24 rounded-2xl overflow-hidden hidden sm:block flex-shrink-0">
+                <Image src={entry.image} alt={entry.title} fill className="object-cover" sizes="96px" />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function buildTimelineEntries(day: any, fallbackCity?: string): TimelineEntry[] {
+  const entries: TimelineEntry[] = [];
+  const mealOrder: Array<{ key: 'breakfast' | 'lunch' | 'dinner'; baseSort: number }> = [
+    { key: 'breakfast', baseSort: 360 },
+    { key: 'lunch', baseSort: 780 },
+    { key: 'dinner', baseSort: 1140 },
+  ];
+
+  const addEntry = (
+    item: any,
+    type: TimelineEntryType,
+    fallbackTitle: string,
+    fallbackMeta: string,
+    baseSort: number,
+    idx: number,
+  ) => {
+    if (!item) return;
+    const notes = parseNotes(item);
+    const time = item.time || notes?.time || null;
+    const duration = notes?.duration ? `${notes.duration} min` : null;
+    const meta = item.description || notes?.category || item.city || notes?.city || fallbackMeta || fallbackCity || '';
+    const sortOrder = timeToSortValue(time) ?? baseSort + idx * 5;
+
+    entries.push({
+      id: item.id || `${type}-${fallbackTitle}-${idx}`,
+      title: item.title || item.name || fallbackTitle,
+      type,
+      meta,
+      time,
+      description: notes?.raw || item.notes || null,
+      duration,
+      image: getImageFromItem(item),
+      sortOrder,
+    });
+  };
+
+  mealOrder.forEach(({ key, baseSort }) =>
+    addEntry(day?.meals?.[key], 'meal', key.charAt(0).toUpperCase() + key.slice(1), 'Meal', baseSort, 0),
+  );
+
+  (day?.activities || []).forEach((activity: any, idx: number) => {
+    addEntry(activity, 'activity', activity.title || 'Activity', activity.category || 'Activity', 600, idx);
+  });
+
+  return entries.sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function parseNotes(value: any) {
+  if (!value?.notes) return null;
+  try {
+    if (typeof value.notes === 'string') {
+      return JSON.parse(value.notes);
+    }
+    return value.notes;
+  } catch {
+    return null;
+  }
+}
+
+function getImageFromItem(item: any): string | null {
+  if (item?.image) return item.image;
+  if (item?.image_thumbnail) return item.image_thumbnail;
+  const notes = parseNotes(item);
+  if (notes?.image) return notes.image;
+  return null;
+}
+
+function timeToSortValue(time?: string | null): number | null {
+  if (!time) return null;
+  const trimmed = time.trim().toLowerCase();
+  const ampmMatch = trimmed.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/);
+  if (ampmMatch) {
+    let hours = parseInt(ampmMatch[1], 10);
+    const minutes = parseInt(ampmMatch[2] ?? '0', 10);
+    const meridiem = ampmMatch[3];
+    if (meridiem === 'pm' && hours !== 12) hours += 12;
+    if (meridiem === 'am' && hours === 12) hours = 0;
+    return hours * 60 + minutes;
+  }
+  const twentyFourHourMatch = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+  if (twentyFourHourMatch) {
+    const hours = parseInt(twentyFourHourMatch[1], 10);
+    const minutes = parseInt(twentyFourHourMatch[2], 10);
+    return hours * 60 + minutes;
+  }
+  return null;
 }
