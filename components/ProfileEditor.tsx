@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { capitalizeCity } from '@/lib/utils';
 
 interface ProfileEditorProps {
   userId: string;
@@ -151,15 +152,7 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
     );
   }
 
-  // Helper function to capitalize city names for display
-  const capitalizeCity = (city: string): string => {
-    return city
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  // Get cities grouped by country
+// Get cities grouped by country
   const citiesByCountry = countryOrder.reduce((acc, country) => {
     const cities = Object.entries(cityCountryMap)
       .filter(([_, c]) => c === country)

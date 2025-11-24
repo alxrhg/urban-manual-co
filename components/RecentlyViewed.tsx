@@ -8,13 +8,7 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useAuth } from '@/contexts/AuthContext';
 import { Destination } from '@/types/destination';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
-
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
+import { capitalizeCity } from '@/lib/utils';
 
 interface RecentlyViewedProps {
   onCardClick?: (destination: Destination) => void;

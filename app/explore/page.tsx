@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { Sparkles, MapPin, TrendingUp, Crown, Star, ChevronRight } from 'lucide-react';
+import { capitalizeCity } from '@/lib/utils';
 
 interface CategoryStat {
   category: string;
@@ -25,13 +26,6 @@ const CATEGORY_ICONS: Record<string, string> = {
   shop: '🛍️',
   bakery: '🥐',
 };
-
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
 
 export default function ExplorePage() {
   const router = useRouter();

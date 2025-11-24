@@ -30,6 +30,7 @@ import { useSequenceTracker } from '@/hooks/useSequenceTracker';
 import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { PRICE_LEVEL } from '@/lib/constants';
+import { capitalizeCity } from '@/lib/utils';
 
 interface Recommendation {
   slug: string;
@@ -40,13 +41,6 @@ interface Recommendation {
   michelin_stars?: number;
   crown?: boolean;
   rating?: number;
-}
-
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 function formatLabel(value: string): string {

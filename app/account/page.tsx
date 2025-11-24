@@ -20,17 +20,10 @@ import { openCookieSettings } from "@/components/CookieConsent";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
 import type { Trip } from "@/types/trip";
 import type { User } from "@supabase/supabase-js";
+import { capitalizeCity } from "@/lib/utils";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
-
-// Helper function to capitalize city names
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
 
 export default function Account() {
   const router = useRouter();

@@ -6,16 +6,10 @@ import Image from 'next/image';
 import { Heart, Grid3x3, List } from 'lucide-react';
 import { NoSavedPlacesEmptyState, NoResultsEmptyState } from './EmptyStates';
 import type { SavedPlace } from '@/types/common';
+import { capitalizeCity } from '@/lib/utils';
 
 interface EnhancedSavedTabProps {
   savedPlaces: SavedPlace[];
-}
-
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 export function EnhancedSavedTab({ savedPlaces }: EnhancedSavedTabProps) {

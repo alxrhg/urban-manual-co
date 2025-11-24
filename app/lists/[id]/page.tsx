@@ -21,6 +21,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE } from '@/components/CardStyles';
+import { capitalizeCity } from '@/lib/utils';
 
 interface List {
   id: string;
@@ -242,10 +243,6 @@ export default function ListDetailPage() {
     const url = `${window.location.origin}/lists/${list?.id}`;
     navigator.clipboard.writeText(url);
     alert('Link copied to clipboard!');
-  };
-
-  const capitalizeCity = (city: string) => {
-    return city.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
   };
 
   if (authLoading || loading) {

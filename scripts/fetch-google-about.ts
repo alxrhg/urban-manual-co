@@ -14,6 +14,7 @@ import { resolve } from 'path';
 dotenv.config({ path: resolve(process.cwd(), '.env.local') });
 
 import { createClient } from '@supabase/supabase-js';
+import { stripHtmlTags } from '../lib/stripHtmlTags';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -30,15 +31,6 @@ if (!GOOGLE_API_KEY) {
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-function stripHtmlTags(text: string | null | undefined): string {
-  if (!text) return '';
-  return text
-    .replace(/<p[^>]*>/gi, '')
-    .replace(/<\/p>/gi, '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .trim();
-}
 
 async function findPlaceId(query: string, name?: string, city?: string): Promise<string | null> {
   const searchQueries = [];

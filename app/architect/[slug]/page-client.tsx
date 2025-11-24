@@ -14,6 +14,7 @@ import { DestinationCard } from '@/components/DestinationCard';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { slugToArchitectName } from '@/lib/architect-utils';
+import { capitalizeCategory } from '@/lib/utils';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -22,13 +23,6 @@ const DestinationDrawer = dynamic(
     loading: () => null,
   }
 );
-
-function capitalizeCategory(category: string): string {
-  return category
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-}
 
 export default function ArchitectPageClient() {
   const { user } = useAuth();

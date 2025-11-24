@@ -1,5 +1,6 @@
 import { extractLocation } from './extractLocation';
 import { expandNearbyLocations } from './expandLocations';
+import { capitalizeCategory } from '@/lib/utils';
 
 interface SuggestionInput {
   query: string;
@@ -279,7 +280,3 @@ function capitalizeLocation(location: string): string {
   return parts.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
 }
 
-function capitalizeCategory(category: string): string {
-  // Capitalize category names
-  return category.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-}

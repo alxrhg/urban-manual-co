@@ -44,6 +44,7 @@ import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { Drawer } from '@/components/ui/Drawer';
 import { architectNameToSlug } from '@/lib/architect-utils';
 import { DestinationCard } from '@/components/DestinationCard';
+import { capitalizeCity } from '@/lib/utils';
 
 
 // Dynamically import GoogleStaticMap for small map in drawer
@@ -77,13 +78,6 @@ interface DestinationDrawerProps {
   onVisitToggle?: (slug: string, visited: boolean) => void;
   onDestinationClick?: (slug: string) => void;
   onEdit?: (destination: Destination) => void; // Callback for editing destination
-}
-
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 function formatHighlightTag(tag: string): string {

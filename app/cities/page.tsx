@@ -11,6 +11,7 @@ import { DestinationCard } from '@/components/DestinationCard';
 import Image from 'next/image';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useToast } from '@/hooks/useToast';
+import { capitalizeCity } from '@/lib/utils';
 
 interface CityStats {
   city: string;
@@ -25,13 +26,6 @@ interface CityEditDrawerProps {
   isSaving: boolean;
   onClose: () => void;
   onSave: (country: string) => Promise<void>;
-}
-
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 function normalizeCityKey(city: string): string {

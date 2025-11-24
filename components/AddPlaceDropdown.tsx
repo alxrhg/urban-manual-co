@@ -6,6 +6,7 @@ import { Search, Plus, Check } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
+import { capitalizeCity } from '@/lib/utils';
 
 interface AddPlaceDropdownProps {
   onPlaceAdded?: () => void;
@@ -106,13 +107,6 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
     } finally {
       setAdding(null);
     }
-  };
-
-  const capitalizeCity = (city: string) => {
-    return city
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
   };
 
   return (

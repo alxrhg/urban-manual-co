@@ -7,14 +7,7 @@ import { ArrowLeft, Plus, Trash2, Edit2, Globe, Lock } from 'lucide-react';
 import Image from 'next/image';
 import { PageLoader } from '@/components/LoadingStates';
 import { EmptyState } from '@/components/EmptyStates';
-
-// Helper function to capitalize city names
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
+import { capitalizeCity } from '@/lib/utils';
 
 export default function CollectionDetailPage() {
   const router = useRouter();

@@ -7,17 +7,11 @@ import { Check, Grid3x3, List, Star } from 'lucide-react';
 import { NoVisitedPlacesEmptyState, NoResultsEmptyState } from './EmptyStates';
 import { AddPlaceDropdown } from './AddPlaceDropdown';
 import type { VisitedPlace } from '@/types/common';
+import { capitalizeCity } from '@/lib/utils';
 
 interface EnhancedVisitedTabProps {
   visitedPlaces: VisitedPlace[];
   onPlaceAdded?: () => void;
-}
-
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 export function EnhancedVisitedTab({ visitedPlaces, onPlaceAdded }: EnhancedVisitedTabProps) {

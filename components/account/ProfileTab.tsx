@@ -6,6 +6,7 @@ import { WorldMapVisualization } from '@/components/WorldMapVisualization';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getDestinationImageUrl } from '@/lib/destination-images';
+import { capitalizeCity } from '@/lib/utils';
 
 interface ProfileTabProps {
   stats: {
@@ -24,13 +25,6 @@ interface ProfileTabProps {
     }>;
   };
   visitedPlaces: VisitedPlace[];
-}
-
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 export default function ProfileTab({ stats, visitedPlaces }: ProfileTabProps) {

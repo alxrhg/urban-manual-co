@@ -1,17 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, AuthError } from '@/lib/adminAuth';
+import { stripHtmlTags } from '@/lib/stripHtmlTags';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-
-function stripHtmlTags(text: string | null | undefined): string {
-  if (!text) return '';
-  
-  return text
-    .replace(/<p[^>]*>/gi, '') // Remove opening <p> tags
-    .replace(/<\/p>/gi, '')    // Remove closing </p> tags
-    .replace(/<br\s*\/?>/gi, '\n') // Convert <br> to newlines
-    .trim();
-}
 
 async function findPlaceId(query: string, name?: string, city?: string): Promise<string | null> {
   if (!GOOGLE_API_KEY) return null;

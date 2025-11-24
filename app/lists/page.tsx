@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Plus, Lock, Globe, Trash2, Loader2, Heart, MapPin, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { capitalizeCity } from "@/lib/utils";
 
 interface List {
   id: string;
@@ -20,14 +21,6 @@ interface List {
   item_count?: number;
   like_count?: number;
   cities?: string[];
-}
-
-// Helper function to capitalize city names
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 export default function ListsPage() {

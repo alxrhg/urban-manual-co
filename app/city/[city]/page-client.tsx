@@ -18,6 +18,7 @@ import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
+import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -33,20 +34,6 @@ const POIDrawer = dynamic(
     ssr: false,
   }
 );
-
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-function capitalizeCategory(category: string): string {
-  return category
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-}
 
 export default function CityPageClient() {
   const { user } = useAuth();
