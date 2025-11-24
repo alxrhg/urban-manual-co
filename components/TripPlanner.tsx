@@ -194,7 +194,9 @@ export function TripPlanner({
 
       if (tripError || !trip) {
         console.error('Error loading trip:', tripError);
-        alert('Failed to load trip');
+        const message = 'Failed to load trip. Please try again.';
+        setFormError(message);
+        toast.error(message);
         return;
       }
 
@@ -219,7 +221,9 @@ export function TripPlanner({
 
       if (tripCheckError || !tripCheck) {
         console.error('Error verifying trip ownership:', tripCheckError);
-        alert('Trip not found or access denied');
+        const message = 'Trip not found or access denied.';
+        setFormError(message);
+        toast.error(message);
         return;
       }
 
@@ -351,10 +355,13 @@ export function TripPlanner({
         setDays(newDays);
       }
 
+      setFormError(null);
       setActiveTab('itinerary');
     } catch (error) {
       console.error('Error loading trip:', error);
-      alert('Failed to load trip');
+      const message = 'Failed to load trip. Please try again.';
+      setFormError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -553,6 +560,7 @@ export function TripPlanner({
 
       setDays(newDays);
       setActiveTab('itinerary');
+      setFormError(null);
       setValidationErrors([]);
       setFieldErrors({});
       if (typeof window !== 'undefined') {
@@ -560,7 +568,9 @@ export function TripPlanner({
       }
     } catch (error: any) {
       console.error('Error creating trip:', error);
-      alert(error?.message || 'Failed to create trip. Please try again.');
+      const message = error?.message || 'Failed to create trip. Please try again.';
+      setFormError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -572,7 +582,9 @@ export function TripPlanner({
     }
 
     if (!currentTripId || !user) {
-      alert('No trip to save');
+      const message = 'No trip to save';
+      setFormError(message);
+      toast.error(message);
       return;
     }
 
@@ -734,9 +746,12 @@ export function TripPlanner({
           saveButton.disabled = false;
         }, 2000);
       }
+      setFormError(null);
     } catch (error: any) {
       console.error('Error saving trip:', error);
-      alert(error?.message || 'Failed to save trip. Please try again.');
+      const message = error?.message || 'Failed to save trip. Please try again.';
+      setFormError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -1135,6 +1150,16 @@ export function TripPlanner({
               ))}
             </div>
           </div>
+
+            {formError && (
+              <div className="mb-6 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3 flex gap-2.5 text-xs text-red-800 dark:text-red-200">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">{formError}</p>
+                  <p className="text-[11px] text-red-700/80 dark:text-red-200/80">Please review your trip details and try again.</p>
+                </div>
+              </div>
+            )}
 
             {validationErrors.length > 0 && (
             <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3 flex gap-2.5 text-xs text-red-800 dark:text-red-200">

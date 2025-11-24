@@ -26,6 +26,7 @@ from app.models import sequence_models  # noqa: E402
 
 @pytest.fixture
 def analyzer(tmp_path):
+    """Provide a BrowsingPatternAnalyzer instance with a temporary state file."""
     instance = sequence_models.BrowsingPatternAnalyzer()
     instance.model_state_path = tmp_path / "sequence_model_state.json"
     sequence_models._browsing_analyzer_instance = instance
@@ -34,11 +35,13 @@ def analyzer(tmp_path):
 
 @pytest.fixture
 def client(analyzer):
+    """Create a TestClient bound to the FastAPI application for sequence tests."""
     with TestClient(app) as test_client:
         yield test_client
 
 
 def test_analyze_session_with_empty_actions(client):
+    """Session analysis should return empty patterns for empty input."""
     payload = {"user_id": "user-1", "session_actions": []}
     response = client.post("/api/sequence/analyze-session", json=payload)
     assert response.status_code == 200
@@ -49,6 +52,7 @@ def test_analyze_session_with_empty_actions(client):
 
 
 def test_analyze_session_with_actions(client):
+    """Session analysis should summarize action frequencies and transitions."""
     payload = {
         "user_id": "user-2",
         "session_actions": [
@@ -66,7 +70,9 @@ def test_analyze_session_with_actions(client):
 
 
 def test_train_sequence_model_with_no_sequences(client, monkeypatch):
+    """Training should report no data when browsing sequences are empty."""
     def fake_fetch(self, days):
+        """Return an empty dataset to simulate missing browsing history."""
         assert days == 30
         return []
 
@@ -86,12 +92,14 @@ def test_train_sequence_model_with_no_sequences(client, monkeypatch):
 
 
 def test_train_sequence_model_with_sequences(client, monkeypatch, analyzer):
+    """Training should persist state when sequences are available."""
     sequences = [
         ["view", "view", "click", "save"],
         ["view", "click", "click"],
     ]
 
     def fake_fetch(self, days):
+        """Return deterministic sequences to drive training logic."""
         assert days == 14
         return sequences
 

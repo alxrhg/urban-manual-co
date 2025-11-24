@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe, Building2 } from 'lucide-react';
+import { AlertCircle, X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe, Building2 } from 'lucide-react';
+import { useToast } from '@/hooks/useToast';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -201,12 +202,15 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [isContactExpanded, setIsContactExpanded] = useState(false);
   const { user } = useAuth();
   const router = useRouter();
+  const toast = useToast();
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [isAddedToTrip, setIsAddedToTrip] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [showAddToTripModal, setShowAddToTripModal] = useState(false);
+  const [addToTripError, setAddToTripError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
   const [showVisitedDropdown, setShowVisitedDropdown] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -224,7 +228,10 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   // Function to add destination to trip directly
   async function addDestinationToTrip(tripId: string) {
     if (!destination?.slug || !user) return;
-    
+
+    setAddToTripError(null);
+    setActionError(null);
+
     try {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
@@ -309,7 +316,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       }
     } catch (error: any) {
       console.error('Error adding to trip:', error);
-      alert(error?.message || 'Failed to add destination to trip. Please try again.');
+      const message = error?.message || 'Failed to add destination to trip. Please try again.';
+      setAddToTripError(message);
+      toast.error(message);
       // Fallback to showing modal
       setShowAddToTripModal(true);
     }
@@ -811,6 +820,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       return;
     }
 
+    setActionError(null);
+
     try {
       const supabaseClient = createClient();
       if (!supabaseClient) {
@@ -832,10 +843,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
         setIsVisited(false);
         if (onVisitToggle) onVisitToggle(destination.slug, false);
-    } else {
+      } else {
         // Add visit with current date (no modal needed - just mark as visited)
         if (!destination.slug) {
-          alert('Invalid destination. Please try again.');
+          const message = 'Invalid destination. Please try again.';
+          setActionError(message);
+          toast.error(message);
           return;
         }
 
@@ -1002,7 +1015,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     } catch (error: any) {
       console.error('Error toggling visit:', error);
       const errorMessage = error?.message || 'Failed to update visit status. Please try again.';
-      alert(errorMessage);
+      setActionError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
@@ -1432,6 +1446,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         }
       >
         <div className="p-6">
+          {(addToTripError || actionError) && (
+            <div className="mb-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3 flex gap-2 text-xs text-red-800 dark:text-red-200">
+              <AlertCircle className="h-4 w-4 mt-0.5" />
+              <div className="space-y-0.5">
+                {addToTripError && <p className="font-medium">{addToTripError}</p>}
+                {actionError && <p className="font-medium">{actionError}</p>}
+                <p className="text-[11px] text-red-700/80 dark:text-red-200/80">You can retry without closing the drawer.</p>
+              </div>
+            </div>
+          )}
           {/* Mobile Content - Same as Desktop */}
           <div className="md:hidden">
           {/* Hero Image - Full width rounded */}
@@ -1613,12 +1637,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                               setShowSaveModal(true);
                             } else {
                               console.error('Error saving place:', error);
-                              alert('Failed to save. Please try again.');
+                              const message = 'Failed to save. Please try again.';
+                              setActionError(message);
+                              toast.error(message);
                             }
                           }
                         } catch (error) {
                           console.error('Error saving place:', error);
-                          alert('Failed to save. Please try again.');
+                          const message = 'Failed to save. Please try again.';
+                          setActionError(message);
+                          toast.error(message);
                         }
                         setShowSaveDropdown(false);
                       }
@@ -1672,7 +1700,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           }
                         } catch (error) {
                           console.error('Error unsaving:', error);
-                          alert('Failed to unsave. Please try again.');
+                          const message = 'Failed to unsave. Please try again.';
+                          setActionError(message);
+                          toast.error(message);
                         }
                       }
                       setShowSaveDropdown(false);
@@ -2368,12 +2398,16 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                               setShowSaveModal(true);
                             } else {
                               console.error('Error saving place:', error);
-                              alert('Failed to save. Please try again.');
+                              const message = 'Failed to save. Please try again.';
+                              setActionError(message);
+                              toast.error(message);
                             }
                           }
                         } catch (error) {
                           console.error('Error saving place:', error);
-                          alert('Failed to save. Please try again.');
+                          const message = 'Failed to save. Please try again.';
+                          setActionError(message);
+                          toast.error(message);
                         }
                         setShowSaveDropdown(false);
                       }
@@ -2427,7 +2461,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                           }
                         } catch (error) {
                           console.error('Error unsaving:', error);
-                          alert('Failed to unsave. Please try again.');
+                          const message = 'Failed to unsave. Please try again.';
+                          setActionError(message);
+                          toast.error(message);
                         }
                       }
                       setShowSaveDropdown(false);

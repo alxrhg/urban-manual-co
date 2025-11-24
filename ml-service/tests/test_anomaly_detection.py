@@ -16,6 +16,7 @@ from app.models.anomaly_detection import AnomalyDetectionModel  # noqa: E402
 
 
 def _build_daily_records(days: int, base_value: float, spike_index: int, spike_multiplier: float, keys: List[str]):
+    """Create synthetic daily metric records with an optional spike at a given index."""
     start_date = datetime.utcnow().date() - timedelta(days=days - 1)
     records = []
     for i in range(days):
@@ -29,6 +30,7 @@ def _build_daily_records(days: int, base_value: float, spike_index: int, spike_m
 
 
 def test_detect_traffic_anomalies_detects_spike(monkeypatch):
+    """Ensure the anomaly detector flags large spikes in traffic metrics."""
     model = AnomalyDetectionModel()
     metrics = _build_daily_records(
         days=14,
@@ -47,6 +49,7 @@ def test_detect_traffic_anomalies_detects_spike(monkeypatch):
 
 
 def test_detect_sentiment_anomalies_detects_drop(monkeypatch):
+    """Verify negative sentiment drops are surfaced as anomalies."""
     model = AnomalyDetectionModel()
     history = _build_daily_records(
         days=14,
@@ -65,6 +68,7 @@ def test_detect_sentiment_anomalies_detects_drop(monkeypatch):
 
 
 def test_detect_city_anomalies_detects_citywide_surge(monkeypatch):
+    """Check that sudden city-wide surges are marked as anomalies."""
     model = AnomalyDetectionModel()
     metrics = _build_daily_records(
         days=20,
