@@ -126,20 +126,21 @@ export function TripPlanner({
     } else if (isOpen && !tripId) {
       // Reset form for new trip
       resetForm();
-    }
-  }, [isOpen, tripId, user]);
-
-  useEffect(() => {
-    if (isOpen && !tripId && prefilledDestination) {
-      setDestination((prev) => prev || prefilledDestination.city || prefilledDestination.name);
-      setTripName((prev) => prev || `${prefilledDestination.name} Trip`);
-
-      if (!coverImage && prefilledDestination.image) {
+      // Only set prefilled values if prefilledDestination exists
+      if (prefilledDestination) {
+        setDestination(prefilledDestination.city || prefilledDestination.name || '');
+        setTripName(`${prefilledDestination.name} Trip`);
+        if (prefilledDestination.image) {
         setCoverImage(prefilledDestination.image);
         setCoverImagePreview(prefilledDestination.image);
       }
+      } else {
+        // Ensure empty state when no prefilled destination
+        setTripName('');
+        setDestination('');
     }
-  }, [isOpen, tripId, prefilledDestination, coverImage]);
+    }
+  }, [isOpen, tripId, user, prefilledDestination]);
 
   const createPrefilledLocation = (): TripLocation | null => {
     if (!prefilledDestination) return null;
@@ -159,16 +160,16 @@ export function TripPlanner({
 
   const resetForm = () => {
     setTripName('');
-    setDestination(prefilledDestination?.city || prefilledDestination?.name || '');
+    setDestination('');
     setStartDate('');
     setEndDate('');
     setDays([]);
     setHotels([]);
     setActiveTab('details');
     setCurrentTripId(null);
-    setCoverImage(prefilledDestination?.image || null);
+    setCoverImage(null);
     setCoverImageFile(null);
-    setCoverImagePreview(prefilledDestination?.image || null);
+    setCoverImagePreview(null);
     setValidationErrors([]);
     setFieldErrors({});
     setDraftRestored(false);
@@ -929,9 +930,9 @@ export function TripPlanner({
     <div className="mb-12">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-light">{tripName || 'Trip Planner'}</h1>
-        <button
-          onClick={handleSaveTrip}
-          disabled={saving}
+          <button
+            onClick={handleSaveTrip}
+            disabled={saving}
           className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save'}
@@ -1098,24 +1099,24 @@ export function TripPlanner({
             </div>
           </div>
 
-          {validationErrors.length > 0 && (
+            {validationErrors.length > 0 && (
             <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3 flex gap-2.5 text-xs text-red-800 dark:text-red-200">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-              <div>
+                <div>
                 <p className="font-medium mb-1.5">Please fix the required fields:</p>
                 <ul className="list-disc list-inside space-y-0.5">
-                  {validationErrors.map((error, index) => (
-                    <li key={index}>{error}</li>
-                  ))}
-                </ul>
+                    {validationErrors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Tab Content */}
           {activeTab === 'details' && (
             <div className="space-y-10">
-              {/* Cover Image Upload */}
+            {/* Cover Image Upload */}
               <section className="space-y-4">
                 <UMSectionTitle>Cover Image</UMSectionTitle>
                 <UMCard className="p-6 space-y-4">
@@ -1192,7 +1193,7 @@ export function TripPlanner({
                     {fieldErrors.tripName && (
                       <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.tripName}</p>
                     )}
-                  </div>
+                </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                       City
@@ -1208,11 +1209,11 @@ export function TripPlanner({
                             : 'border-neutral-200 dark:border-white/20'
                         } bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white rounded-xl`}
                       />
-                    </div>
+              </div>
                     {fieldErrors.destination && (
                       <p className="text-xs text-red-600 dark:text-red-400 mt-1">{fieldErrors.destination}</p>
                     )}
-                  </div>
+                </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
@@ -1229,7 +1230,7 @@ export function TripPlanner({
                             : 'border-neutral-200 dark:border-white/20'
                         }`}
                       />
-                    </div>
+                </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                         End Date
@@ -1245,7 +1246,7 @@ export function TripPlanner({
                             : 'border-neutral-200 dark:border-white/20'
                         }`}
                       />
-                    </div>
+              </div>
                   </div>
                   {(fieldErrors.startDate || fieldErrors.endDate) && (
                     <p className="text-xs text-red-600 dark:text-red-400">
@@ -1283,10 +1284,10 @@ export function TripPlanner({
                         Day {i + 1} – {day.date}
                       </h2>
                     </div>
-                    <TripDay
+                  <TripDay
                       dayNumber={i + 1}
-                      date={day.date}
-                      locations={day.locations}
+                    date={day.date}
+                    locations={day.locations}
                       hotelLocation=""
                       onAddLocation={() => setShowAddLocation(i)}
                       onRemoveLocation={(locationId) => handleRemoveLocation(i, locationId)}
@@ -1294,12 +1295,12 @@ export function TripPlanner({
                       onDuplicateDay={() => handleDuplicateDay(i)}
                       onOptimizeRoute={() => handleOptimizeRoute(i)}
                     />
-                  </div>
+              </div>
                 ))
               ) : (
                 <div className="text-center py-12 text-neutral-500 dark:text-neutral-400 text-sm">
                   No days added yet. Create a trip first.
-                </div>
+            </div>
               )}
             </div>
           )}
