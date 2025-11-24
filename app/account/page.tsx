@@ -191,7 +191,8 @@ export default function Account() {
                   name: dest.name,
                   city: dest.city,
                   category: dest.category,
-                  image: dest.image
+                  image: dest.image,
+                  country: dest.country
                 }
               } as SavedPlace : null;
             }).filter((item): item is SavedPlace => item !== null));
@@ -326,8 +327,8 @@ export default function Account() {
 
     // Get countries from destination.country field first, fallback to cityCountryMap
     const countriesFromDestinations = new Set([
-      ...savedPlaces.map(p => p.destination?.country).filter((country): country is string => typeof country === 'string'),
-      ...visitedPlaces.filter(p => p.destination?.country).map(p => p.destination!.country!)
+      ...savedPlaces.map(p => p.destination?.country).filter((country): country is string => typeof country === 'string' && country.trim().length > 0),
+      ...visitedPlaces.filter(p => p.destination?.country).map(p => p.destination!.country!).filter((country): country is string => typeof country === 'string' && country.trim().length > 0)
     ]);
     
     // Also get countries from city mapping for destinations without country field
@@ -379,6 +380,7 @@ export default function Account() {
     console.log('[Account] Unique cities:', Array.from(uniqueCities));
     console.log('[Account] Visited places count:', visitedPlaces.length);
     console.log('[Account] Visited destinations with coords:', visitedDestinationsWithCoords.length);
+    console.log('[Account] Visited places with country field:', visitedPlaces.filter(p => p.destination?.country).map(p => ({ slug: p.destination_slug, country: p.destination?.country, city: p.destination?.city })));
 
     const curationCompletionPercentage = totalDestinations > 0
       ? Math.round((visitedPlaces.length / totalDestinations) * 100)
