@@ -9,7 +9,6 @@ import UMFeaturePill from "@/components/ui/UMFeaturePill";
 import UMActionPill from "@/components/ui/UMActionPill";
 import UMSectionTitle from "@/components/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
-import { TripPlanner } from '@/components/TripPlanner';
 import { Loader2, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 
@@ -33,8 +32,6 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
   const [trips, setTrips] = useState<any[]>(propsTrips || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showTripDialog, setShowTripDialog] = useState(false);
-  const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
   const fetchTrips = useCallback(async () => {
     if (!user) {
@@ -111,8 +108,10 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
     } else if (!user) {
       router.push('/auth/login');
     } else {
-      setEditingTripId(null);
-      setShowTripDialog(true);
+      closeDrawer();
+      setTimeout(() => {
+        router.push('/trips');
+      }, 200);
     }
   };
 
@@ -248,8 +247,10 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
                         <UMActionPill
                           onClick={(e) => {
                             e?.stopPropagation();
-                            setEditingTripId(trip.id);
-                            setShowTripDialog(true);
+                            closeDrawer();
+                            setTimeout(() => {
+                              router.push(`/trips/${trip.id}`);
+                            }, 200);
                           }}
                         >
                           Edit
@@ -263,19 +264,6 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
           )}
         </div>
       </div>
-
-      {/* Trip Planner - Only render when open */}
-      {showTripDialog && (
-        <TripPlanner
-          isOpen={true}
-          tripId={editingTripId || undefined}
-          onClose={() => {
-            setShowTripDialog(false);
-            setEditingTripId(null);
-            fetchTrips();
-          }}
-        />
-      )}
     </>
   );
 }
