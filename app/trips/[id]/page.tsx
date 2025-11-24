@@ -15,6 +15,7 @@ import UMSectionTitle from '@/components/ui/UMSectionTitle';
 import { Camera, Loader2, Plus, Trash2, Calendar } from 'lucide-react';
 import Image from 'next/image';
 import { TripPlanner } from '@/components/TripPlanner';
+import { HotelAutocompleteInput } from '@/components/HotelAutocompleteInput';
 
 type Tab = 'details' | 'itinerary' | 'hotels';
 
@@ -710,13 +711,11 @@ export default function TripPage() {
                         <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
                           Hotel Name
                         </label>
-                        <input
-                          type="text"
+                        <HotelAutocompleteInput
                           value={hotel.name}
-                          onChange={(e) => handleUpdateHotel(index, 'name', e.target.value)}
+                          onChange={(value) => handleUpdateHotel(index, 'name', value)}
                           placeholder="Hotel Le Marais"
                           disabled={!isOwner}
-                          className="w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                         />
                       </div>
 
