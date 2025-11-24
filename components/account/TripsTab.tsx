@@ -3,13 +3,27 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Trip } from '@/types/trip';
-import { MapPin, Plus, Calendar, Edit2, Trash2 } from 'lucide-react';
+import { Plane, Plus } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { TripPlanner } from '@/components/TripPlanner';
+import TripCard from '@/components/trips/TripCard';
+import UMActionPill from '@/components/ui/UMActionPill';
+import UMFeaturePill from '@/components/ui/UMFeaturePill';
 
 interface TripsTabProps {
   trips: Trip[];
   onTripsUpdated: () => Promise<void>;
+}
+
+// Format date helper
+function formatDate(dateStr: string | null | undefined): string | undefined {
+  if (!dateStr) return undefined;
+  try {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  } catch {
+    return undefined;
+  }
 }
 
 export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
@@ -17,120 +31,65 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
   const [showTripDialog, setShowTripDialog] = useState(false);
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
+  const handleNewTrip = () => {
+    setEditingTripId(null);
+    setShowTripDialog(true);
+  };
+
+  const handleEditTrip = (tripId: string) => {
+    setEditingTripId(tripId);
+    setShowTripDialog(true);
+  };
+
   return (
-    <div className="fade-in">
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={() => {
-            setEditingTripId(null);
-            setShowTripDialog(true);
-          }}
-          className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity flex items-center gap-2"
-        >
-          <Plus className="h-3 w-3" />
+    <div className="fade-in space-y-6">
+      {/* Header with New Trip button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+            {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
+          </p>
+        </div>
+        <UMActionPill variant="primary" onClick={handleNewTrip}>
+          <Plus className="w-4 h-4 mr-1" />
           New Trip
-        </button>
+        </UMActionPill>
       </div>
 
+      {/* Trips Grid */}
       {trips.length === 0 ? (
-        <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-          <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
-          <button
-            onClick={() => {
-              setEditingTripId(null);
-              setShowTripDialog(true);
-            }}
-            className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
-          >
-            Create your first trip
-          </button>
+        <div className="text-center py-16 px-6 rounded-[16px] border border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
+          <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+            <Plane className="w-8 h-8 text-neutral-400 dark:text-neutral-500" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            No trips yet
+          </h3>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6 max-w-sm mx-auto">
+            Start planning your next adventure by creating your first trip.
+          </p>
+          <UMFeaturePill onClick={handleNewTrip}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Trip
+          </UMFeaturePill>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {trips.map((trip) => (
-            <div
+            <TripCard
               key={trip.id}
-              className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              <button
-                onClick={() => router.push(`/trips/${trip.id}`)}
-                className="text-left p-4 flex-1"
-              >
-                <h3 className="font-medium text-sm mb-2 line-clamp-2">{trip.title}</h3>
-                {trip.description && (
-                  <p className="text-xs text-gray-500 line-clamp-2 mb-2">{trip.description}</p>
-                )}
-                <div className="space-y-1 text-xs text-gray-400">
-                  {trip.destination && (
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-3 w-3" />
-                      <span>{trip.destination}</span>
-                    </div>
-                  )}
-                  {(trip.start_date || trip.end_date) && (
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-3 w-3" />
-                      <span>
-                        {trip.start_date ? new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-                        {trip.end_date && ` – ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
-                      </span>
-                    </div>
-                  )}
-                  {trip.status && (
-                    <div>
-                      <span className="capitalize text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800">
-                        {trip.status}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </button>
-              <div className="flex items-center gap-2 p-4 pt-0 border-t border-gray-200 dark:border-gray-800">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push(`/trips/${trip.id}`);
-                  }}
-                  className="flex-1 text-xs font-medium py-2 px-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  View
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setEditingTripId(trip.id);
-                    setShowTripDialog(true);
-                  }}
-                  className="p-2 rounded-xl text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                  aria-label={`Edit ${trip.title}`}
-                >
-                  <Edit2 className="h-3 w-3" />
-                </button>
-                <button
-                  onClick={async (e) => {
-                    e.stopPropagation();
-                    if (confirm(`Are you sure you want to delete "${trip.title}"?`)) {
-                      try {
-                        const { error } = await supabase
-                          .from('trips')
-                          .delete()
-                          .eq('id', trip.id);
-                        if (error) throw error;
-                        await onTripsUpdated();
-                      } catch (error) {
-                        console.error('Error deleting trip:', error);
-                        alert('Failed to delete trip');
-                      }
-                    }
-                  }}
-                  className="p-2 rounded-xl text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-                  aria-label={`Delete ${trip.title}`}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
+              trip={{
+                id: trip.id,
+                name: trip.title,
+                coverImage: trip.cover_image,
+                city: trip.destination || undefined,
+                startDate: formatDate(trip.start_date),
+                endDate: formatDate(trip.end_date),
+                status: trip.status,
+              }}
+              onView={() => router.push(`/trips/${trip.id}`)}
+              onEdit={() => handleEditTrip(trip.id)}
+            />
           ))}
         </div>
       )}
@@ -150,4 +109,3 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
     </div>
   );
 }
-
