@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { JourneyGoal } from "@/components/journey/GoalPicker";
+import { cn } from "@/lib/utils";
 
 interface JourneyContextRailProps {
   intents: JourneyGoal[];
