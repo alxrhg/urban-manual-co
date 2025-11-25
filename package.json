@@ -25,6 +25,8 @@
     "discovery:export": "tsx scripts/discovery-engine-export.ts",
     "discovery:import": "tsx scripts/discovery-engine-import.ts",
     "fetch:categories": "tsx scripts/fetch-categories-from-google.ts",
+    "cleanup:categories": "tsx scripts/cleanup-categories.ts",
+    "cleanup:categories:apply": "tsx scripts/cleanup-categories.ts --apply",
     "generate:micro-descriptions": "tsx scripts/generate_micro_descriptions.ts",
     "test:route-contracts": "tsx tests/routes-calculate-contract.test.ts",
     "enrich:exa": "tsx scripts/enrich-with-exa.ts",
