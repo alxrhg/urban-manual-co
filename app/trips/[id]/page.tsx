@@ -86,14 +86,16 @@ export default function TripPage() {
         .map((i) => i.destination_slug)
         .filter((s): s is string => Boolean(s));
 
-      let destinationsMap = new Map<string, Destination>();
+      const destinationsMap: Record<string, Destination> = {};
       if (slugs.length > 0) {
         const { data: destinations } = await supabase
           .from('destinations')
           .select('slug, name, city, category, image, image_thumbnail, latitude, longitude')
           .in('slug', slugs);
 
-        destinations?.forEach((d) => destinationsMap.set(d.slug, d));
+        destinations?.forEach((d) => {
+          destinationsMap[d.slug] = d;
+        });
       }
 
       const numDays = calculateDays(tripData.start_date, tripData.end_date);
@@ -105,7 +107,7 @@ export default function TripPage() {
           .map((item) => ({
             ...item,
             destination: item.destination_slug
-              ? destinationsMap.get(item.destination_slug)
+              ? destinationsMap[item.destination_slug]
               : undefined,
             parsedNotes: parseItineraryNotes(item.notes),
           }));
