@@ -4,8 +4,8 @@ import { Sparkles, MapPin, Filter, Lightbulb, TrendingUp, Calendar, HelpCircle }
 import { useEffect, useState } from 'react';
 
 interface IntentData {
-  city?: string;
-  category?: string;
+  city?: string | null;
+  category?: string | null;
   filters?: any;
   intent?: string;
   confidence?: number;
