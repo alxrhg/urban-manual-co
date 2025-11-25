@@ -131,8 +131,7 @@ export default function PrivacyPage() {
             </div>
           </aside>
 
-          <div className="flex-1 max-w-3xl">
-            <div className="space-y-10 md:space-y-12">
+          <div className="flex-1 max-w-3xl space-y-10 md:space-y-12">
                 {/* Introduction */}
                 <section
                   id="introduction"
@@ -484,11 +483,9 @@ export default function PrivacyPage() {
                     })}
                   </p>
                 </div>
-              </div>
             </div>
           </div>
         </div>
-      </div>
     </main>
   );
 }
