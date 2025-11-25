@@ -23,23 +23,23 @@ export function SplitPaneLayout({ children }: SplitPaneLayoutProps) {
 
   return (
     <div className="w-full">
-      <div className={clsx(
-        'lg:grid lg:grid-cols-[minmax(0,1fr)_auto]',
-        isPaneOpen ? 'lg:gap-8' : 'lg:gap-0'
-      )}>
-        <div className="min-w-0">{children}</div>
-        <div className="hidden lg:block">
+      <div
+        className={clsx(
+          'lg:flex lg:items-start',
+          isPaneOpen ? 'lg:gap-8' : 'lg:gap-0'
+        )}
+      >
+        <div className="flex-1 min-w-0">{children}</div>
+        <div className="hidden lg:block flex-none">
           <div
             ref={paneRef}
             className={clsx(
-              'sticky top-28 flex flex-col transition-[width,opacity,transform] duration-300 ease-out',
+              'transition-[width,opacity,transform] duration-300 ease-out',
               isPaneOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-6 pointer-events-none'
             )}
             style={{
               width: isPaneOpen ? paneWidth : 0,
               maxWidth: paneWidth,
-              minHeight: isPaneOpen ? '60vh' : 0,
-              height: isPaneOpen ? 'calc(100vh - 7rem)' : 0,
             }}
           />
         </div>

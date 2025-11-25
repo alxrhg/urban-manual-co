@@ -508,7 +508,8 @@ export function Drawer({
       {shouldUseSplitPane && panelNode && createPortal(
         <div
           ref={splitPaneRef}
-          className={`flex h-[calc(100vh-7rem)] max-h-[calc(100vh-4rem)] flex-col ${backgroundClasses} ${shadowClasses} ${borderClasses} rounded-[32px] overflow-hidden transition-all duration-300 ease-out`}
+          className={`flex flex-col w-full ${backgroundClasses} ${shadowClasses} ${borderClasses} rounded-[32px] overflow-hidden transition-all duration-300 ease-out`}
+          style={{ maxHeight: 'calc(100vh - 4rem)' }}
           role="dialog"
           aria-modal="false"
           aria-labelledby={title ? `drawer-title-${title}` : undefined}
@@ -516,7 +517,10 @@ export function Drawer({
         >
           {renderHeader()}
 
-          <div className="flex-1 overflow-y-auto overscroll-contain">
+          <div
+            className="flex-1 overflow-y-auto overscroll-contain"
+            style={{ maxHeight: 'calc(100vh - 8rem)' }}
+          >
             {children}
           </div>
 
