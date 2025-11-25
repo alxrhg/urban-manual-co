@@ -1,23 +1,45 @@
 'use client';
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, X, Minimize2, MapPin } from "lucide-react";
+import { Send, Sparkles, X, Minimize2, MapPin, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface Destination {
   slug: string;
   name: string;
   city: string;
+  neighborhood?: string;
   category: string;
   image: string | null;
   michelin_stars: number | null;
   crown: boolean;
+  rating?: number;
+  price_level?: number;
+  micro_description?: string;
+}
+
+interface TravelContext {
+  city?: string;
+  neighborhood?: string;
+  category?: string;
+  occasion?: string;
+  timeOfDay?: string;
+  vibes?: string[];
+  pricePreference?: string;
+}
+
+interface Suggestion {
+  text: string;
+  type: 'refine' | 'expand' | 'related' | 'next-step';
 }
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   destinations?: Destination[];
+  mode?: string;
+  context?: TravelContext;
+  suggestions?: Suggestion[];
 }
 
 export function ChatGPTStyleAI() {
@@ -25,6 +47,8 @@ export function ChatGPTStyleAI() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [currentContext, setCurrentContext] = useState<TravelContext>({});
+  const [currentMode, setCurrentMode] = useState<string>('discover');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useAuth();
@@ -54,44 +78,72 @@ export function ChatGPTStyleAI() {
       // Build conversation history from messages
       const conversationHistory = messages.map(msg => ({
         role: msg.role,
-        content: msg.content
+        content: msg.content,
+        destinations: msg.destinations,
+        context: msg.context,
       }));
 
-      // Call the same /api/ai-chat endpoint as homepage
-      const response = await fetch('/api/ai-chat', {
+      // Call the new Travel Intelligence API
+      const response = await fetch('/api/travel-intelligence', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query: userMessage.trim(),
+          message: userMessage,
           userId: user?.id,
-          conversationHistory: conversationHistory,
+          conversationHistory,
+          context: currentContext,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('AI chat failed');
+        throw new Error('Travel Intelligence request failed');
       }
 
       const data = await response.json();
 
+      // Update current context and mode
+      if (data.context) {
+        setCurrentContext(prev => ({ ...prev, ...data.context }));
+      }
+      if (data.mode) {
+        setCurrentMode(data.mode);
+      }
+
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: data.content || '',
-        destinations: data.destinations
+        content: data.response || '',
+        destinations: data.destinations,
+        mode: data.mode,
+        context: data.context,
+        suggestions: data.suggestions,
       }]);
     } catch (error) {
-      console.error("AI error:", error);
+      console.error("Travel Intelligence error:", error);
       setMessages(prev => [...prev, {
         role: "assistant",
-        content: "Sorry, I encountered an error. Please try again."
+        content: "I'm having trouble connecting right now. Please try again.",
       }]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleSuggestionClick = (suggestion: string) => {
+    setInput(suggestion);
+    inputRef.current?.focus();
+  };
+
+  // Mode indicator colors
+  const modeColors: Record<string, string> = {
+    discover: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
+    plan: 'bg-green-500/20 text-green-600 dark:text-green-400',
+    compare: 'bg-amber-500/20 text-amber-600 dark:text-amber-400',
+    insight: 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
+    recommend: 'bg-rose-500/20 text-rose-600 dark:text-rose-400',
+    navigate: 'bg-gray-500/20 text-gray-600 dark:text-gray-400',
+  };
 
   if (!isOpen) {
     return (
@@ -104,7 +156,7 @@ export function ChatGPTStyleAI() {
         }}
       >
         <Sparkles className="h-5 w-5" />
-        <span className="font-medium">AI</span>
+        <span className="font-medium">Travel Intelligence</span>
       </button>
     );
   }
@@ -126,7 +178,7 @@ export function ChatGPTStyleAI() {
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                    className={`max-w-[85%] rounded-2xl px-4 py-3 ${
                       message.role === 'user'
                         ? 'bg-black/90 dark:bg-white/90 text-white dark:text-black backdrop-blur-sm'
                         : 'bg-white/60 dark:bg-gray-800/60 text-black dark:text-white backdrop-blur-sm border border-white/20 dark:border-gray-700/50'
@@ -135,7 +187,12 @@ export function ChatGPTStyleAI() {
                     {message.role === 'assistant' && (
                       <div className="flex items-center gap-2 mb-2">
                         <Sparkles className="h-4 w-4" />
-                        <span className="text-xs font-medium opacity-70">AI Assistant</span>
+                        <span className="text-xs font-medium opacity-70">Travel Intelligence</span>
+                        {message.mode && (
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${modeColors[message.mode] || modeColors.discover}`}>
+                            {message.mode}
+                          </span>
+                        )}
                       </div>
                     )}
                     <div className="text-sm whitespace-pre-wrap leading-relaxed">
@@ -157,18 +214,18 @@ export function ChatGPTStyleAI() {
 
                     {/* Destination Cards */}
                     {message.destinations && message.destinations.length > 0 && (
-                      <div className="mt-3 grid grid-cols-2 gap-3">
-                        {message.destinations.map((dest) => (
+                      <div className="mt-3 space-y-2">
+                        {message.destinations.slice(0, 4).map((dest) => (
                           <a
                             key={dest.slug}
                             href={`/destination/${dest.slug}`}
-                            className="group block"
+                            className="group flex items-start gap-3 p-2 -mx-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                             onClick={(e) => {
                               e.preventDefault();
                               window.location.href = `/destination/${dest.slug}`;
                             }}
                           >
-                            <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
+                            <div className="relative w-16 h-16 flex-shrink-0 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
                               {dest.image ? (
                                 <img
                                   src={dest.image}
@@ -177,31 +234,55 @@ export function ChatGPTStyleAI() {
                                 />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                  <MapPin className="h-8 w-8 opacity-20" />
+                                  <MapPin className="h-5 w-5 opacity-30" />
                                 </div>
                               )}
-                              {dest.crown && (
-                                <div className="absolute top-2 left-2 text-lg">👑</div>
-                              )}
                               {dest.michelin_stars && dest.michelin_stars > 0 && (
-                                <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                                  <img
-                                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                                    alt="Michelin star"
-                                    className="h-3 w-3"
-                                  />
+                                <div className="absolute bottom-1 left-1 bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5">
+                                  <span className="text-red-500">*</span>
                                   <span>{dest.michelin_stars}</span>
                                 </div>
                               )}
                             </div>
-                            <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1 text-black dark:text-white">
-                              {dest.name}
-                            </h4>
-                            <span className="text-xs text-gray-500 capitalize">
-                              {dest.city.replace(/-/g, ' ')} · {dest.category}
-                            </span>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-medium text-sm leading-tight line-clamp-1 text-black dark:text-white group-hover:underline">
+                                {dest.name}
+                              </h4>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                {dest.neighborhood || dest.city} · {dest.category}
+                                {dest.rating && <span className="ml-1">· {dest.rating}</span>}
+                              </p>
+                              {dest.micro_description && (
+                                <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+                                  {dest.micro_description}
+                                </p>
+                              )}
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                           </a>
                         ))}
+                        {message.destinations.length > 4 && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-1">
+                            +{message.destinations.length - 4} more places
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Follow-up Suggestions */}
+                    {message.suggestions && message.suggestions.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-200/50 dark:border-gray-700/50">
+                        <div className="flex flex-wrap gap-2">
+                          {message.suggestions.map((suggestion, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => handleSuggestionClick(suggestion.text)}
+                              className="px-3 py-1.5 text-xs bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-black dark:text-white rounded-full transition-colors"
+                            >
+                              {suggestion.text}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -216,6 +297,7 @@ export function ChatGPTStyleAI() {
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                       </div>
+                      <span className="text-xs text-gray-500">Thinking...</span>
                     </div>
                   </div>
                 </div>
@@ -233,6 +315,37 @@ export function ChatGPTStyleAI() {
             boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
           }}
         >
+          {/* Context indicator */}
+          {(currentContext.city || currentContext.category) && messages.length > 0 && (
+            <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200/50 dark:border-gray-700/50">
+              <span className="text-xs text-gray-500">Context:</span>
+              {currentContext.city && (
+                <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+                  {currentContext.city}
+                </span>
+              )}
+              {currentContext.category && (
+                <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+                  {currentContext.category}
+                </span>
+              )}
+              {currentContext.occasion && (
+                <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+                  {currentContext.occasion}
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  setCurrentContext({});
+                  setMessages([]);
+                }}
+                className="ml-auto text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="flex items-end gap-3">
             <div className="flex-1">
               <textarea
@@ -245,7 +358,7 @@ export function ChatGPTStyleAI() {
                     handleSubmit(e);
                   }
                 }}
-                placeholder="Ask about destinations, cities, or restaurants..."
+                placeholder="Ask about restaurants, hotels, neighborhoods..."
                 rows={1}
                 className="w-full resize-none bg-transparent border-none outline-none text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-base"
                 style={{ maxHeight: '120px' }}
@@ -264,6 +377,7 @@ export function ChatGPTStyleAI() {
                 onClick={() => {
                   setIsOpen(false);
                   setMessages([]);
+                  setCurrentContext({});
                 }}
                 className="p-2 bg-gray-100 dark:bg-gray-800 text-black dark:text-white rounded-lg hover:scale-105 transition-transform"
               >
@@ -277,13 +391,14 @@ export function ChatGPTStyleAI() {
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Try asking:</div>
               <div className="flex flex-wrap gap-2">
                 {[
-                  "Best restaurants in Tokyo",
-                  "Michelin-starred restaurants",
-                  "Cafes in Paris"
+                  "Best restaurants in Tokyo for a romantic dinner",
+                  "Where to have coffee in Paris near Le Marais",
+                  "Michelin-starred spots with great atmosphere",
+                  "Plan a food day in London"
                 ].map((suggestion, index) => (
                   <button
                     key={index}
-                    onClick={() => setInput(suggestion)}
+                    onClick={() => handleSuggestionClick(suggestion)}
                     className="px-3 py-1.5 text-xs bg-white/40 dark:bg-gray-800/40 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 text-black dark:text-white rounded-full hover:bg-white/60 dark:hover:bg-gray-700/60 transition-all"
                   >
                     {suggestion}
