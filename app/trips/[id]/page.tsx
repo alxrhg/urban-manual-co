@@ -148,7 +148,7 @@ export default function TripPage() {
       if (slugs.length > 0) {
         const { data: destinations } = await supabase
           .from('destinations')
-          .select('slug, name, city, category, image, image_thumbnail, latitude, longitude')
+          .select('slug, name, city, neighborhood, category, description, image, image_thumbnail, latitude, longitude, rating, user_ratings_total, michelin_stars, price_level, formatted_address, website')
           .in('slug', slugs);
 
         destinations?.forEach((d) => {
@@ -388,6 +388,7 @@ export default function TripPage() {
           name: dest.name,
           category: dest.category,
           neighborhood: dest.neighborhood ?? undefined,
+          city: dest.city ?? undefined,
           michelinRating: dest.michelin_stars ?? undefined,
           hasMichelin: !!dest.michelin_stars,
           googleRating: dest.rating ?? undefined,
@@ -398,6 +399,8 @@ export default function TripPage() {
           image_thumbnail: dest.image_thumbnail ?? undefined,
           latitude: dest.latitude ?? undefined,
           longitude: dest.longitude ?? undefined,
+          address: dest.formatted_address ?? undefined,
+          website: dest.website ?? undefined,
         },
         hideAddToTrip: true,
       });
