@@ -10,6 +10,7 @@ import TripOverviewDrawer from "@/components/drawers/TripOverviewDrawer";
 import TripSettingsDrawer from "@/components/drawers/TripSettingsDrawer";
 import PlaceSelectorDrawer from "@/components/drawers/PlaceSelectorDrawer";
 import AddHotelDrawer from "@/components/drawers/AddHotelDrawer";
+import AddFlightDrawer from "@/components/drawers/AddFlightDrawer";
 import AISuggestionsDrawer from "@/components/drawers/AISuggestionsDrawer";
 import POIEditorDrawer from "@/components/drawers/POIEditorDrawer";
 
@@ -107,6 +108,24 @@ export default function DrawerMount() {
             trip={props?.trip ?? null}
             day={props?.day ?? null}
             index={props?.index}
+          />
+        </Drawer>
+      )}
+
+      {/* ADD FLIGHT */}
+      {drawer === "add-flight" && (
+        <Drawer
+          isOpen={isOpen}
+          onClose={closeDrawer}
+          title="Add Flight"
+          style={drawerStyle}
+          position="right"
+          desktopWidth="420px"
+        >
+          <AddFlightDrawer
+            tripId={props?.tripId}
+            dayNumber={props?.dayNumber}
+            onAdd={props?.onAdd}
           />
         </Drawer>
       )}
