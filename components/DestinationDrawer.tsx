@@ -29,6 +29,7 @@ interface DestinationDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   place: Place | null;
+  hideAddToTrip?: boolean;
 }
 
 // Placeholder components - to be implemented with full functionality
@@ -65,7 +66,7 @@ function DestinationActions({ place }: { place: Place }) {
   );
 }
 
-export default function DestinationDrawer({ isOpen, onClose, place }: DestinationDrawerProps) {
+export default function DestinationDrawer({ isOpen, onClose, place, hideAddToTrip }: DestinationDrawerProps) {
   if (!place) return null;
 
   const {
@@ -131,11 +132,13 @@ export default function DestinationDrawer({ isOpen, onClose, place }: Destinatio
         </DrawerSection>
       </div>
 
-      <DrawerActionBar>
-        <button className="bg-black text-white rounded-full px-4 py-2">
-          Add to trip
-        </button>
-      </DrawerActionBar>
+      {!hideAddToTrip && (
+        <DrawerActionBar>
+          <button className="bg-black text-white rounded-full px-4 py-2">
+            Add to trip
+          </button>
+        </DrawerActionBar>
+      )}
     </Drawer>
   );
 }

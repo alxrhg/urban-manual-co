@@ -41,7 +41,7 @@ export interface UpdateTrip {
   cover_image?: string | null;
 }
 
-export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'custom';
+export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'custom';
 
 export interface ItineraryItem {
   id: string; // UUID
@@ -118,6 +118,12 @@ export interface ItineraryItemNotes {
   // Train-specific fields
   trainNumber?: string;
   trainLine?: string;
+  // Hotel-specific fields
+  isHotel?: boolean; // Marks this as the hotel for the night
+  breakfastIncluded?: boolean; // If true, shows breakfast at top of next day
+  checkInTime?: string;
+  checkOutTime?: string;
+  hotelConfirmation?: string;
   // Travel time to next item
   travelTimeToNext?: number; // in minutes
   travelDistanceToNext?: number; // in km

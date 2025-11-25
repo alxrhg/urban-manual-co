@@ -48,7 +48,6 @@ import TripSafetyAlerts from '@/components/trips/TripSafetyAlerts';
 import NearbyDiscoveries from '@/components/trips/NearbyDiscoveries';
 import FlightStatusCard from '@/components/trips/FlightStatusCard';
 import OpeningHoursIndicator from '@/components/trips/OpeningHoursIndicator';
-import DestinationDrawer from '@/components/DestinationDrawer';
 import { formatTripDate, parseDateString } from '@/lib/utils';
 import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData } from '@/types/trip';
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
@@ -96,7 +95,6 @@ export default function TripPage() {
   const [selectedDay, setSelectedDay] = useState(1);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
   // DnD sensors
@@ -380,10 +378,29 @@ export default function TripPage() {
     }
   };
 
-  // Open destination drawer for a place
+  // Open destination drawer for a place (uses global drawer system)
   const openDestinationDrawer = (item: ItineraryItem & { destination?: Destination }) => {
     if (item.destination) {
-      setSelectedDestination(item.destination);
+      const dest = item.destination;
+      // Map Destination fields to Place interface for the drawer
+      openDrawer('destination', {
+        place: {
+          name: dest.name,
+          category: dest.category,
+          neighborhood: dest.neighborhood ?? undefined,
+          michelinRating: dest.michelin_stars ?? undefined,
+          hasMichelin: !!dest.michelin_stars,
+          googleRating: dest.rating ?? undefined,
+          googleReviews: dest.user_ratings_total ?? undefined,
+          priceLevel: dest.price_level ?? undefined,
+          description: dest.description ?? undefined,
+          image: dest.image ?? undefined,
+          image_thumbnail: dest.image_thumbnail ?? undefined,
+          latitude: dest.latitude ?? undefined,
+          longitude: dest.longitude ?? undefined,
+        },
+        hideAddToTrip: true, // Hide "Add to Trip" since already in trip
+      });
     }
   };
 
@@ -439,7 +456,6 @@ export default function TripPage() {
   }
 
   const currentDay = days.find((d) => d.dayNumber === selectedDay) || days[0];
-  const totalPlaces = days.reduce((acc, d) => acc + d.items.length, 0);
 
   return (
     <main className="w-full px-6 md:px-10 py-20 min-h-screen">
@@ -491,21 +507,6 @@ export default function TripPage() {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
-          <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-            <div className="text-2xl font-light mb-1">{days.length}</div>
-            <div className="text-xs text-gray-500">Days</div>
-          </div>
-          <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-            <div className="text-2xl font-light mb-1">{totalPlaces}</div>
-            <div className="text-xs text-gray-500">Places</div>
-          </div>
-          <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-            <div className="text-2xl font-light mb-1 capitalize">{trip.status}</div>
-            <div className="text-xs text-gray-500">Status</div>
-          </div>
-        </div>
 
         {/* Weather Forecast */}
         <div className="mb-8">
@@ -809,27 +810,6 @@ export default function TripPage() {
           </div>
         )}
       </div>
-
-      {/* Destination Drawer - opens when clicking on a place */}
-      <DestinationDrawer
-        isOpen={selectedDestination !== null}
-        onClose={() => setSelectedDestination(null)}
-        place={selectedDestination ? {
-          name: selectedDestination.name,
-          category: selectedDestination.category,
-          neighborhood: selectedDestination.neighborhood ?? undefined,
-          michelinRating: selectedDestination.michelin_stars ?? undefined,
-          hasMichelin: !!selectedDestination.michelin_stars,
-          googleRating: selectedDestination.rating ?? undefined,
-          googleReviews: selectedDestination.user_ratings_total ?? undefined,
-          priceLevel: selectedDestination.price_level ?? undefined,
-          description: selectedDestination.description ?? undefined,
-          image: selectedDestination.image ?? undefined,
-          image_thumbnail: selectedDestination.image_thumbnail ?? undefined,
-          latitude: selectedDestination.latitude ?? undefined,
-          longitude: selectedDestination.longitude ?? undefined,
-        } : null}
-      />
     </main>
   );
 }
