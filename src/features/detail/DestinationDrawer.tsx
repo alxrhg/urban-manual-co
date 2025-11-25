@@ -1018,13 +1018,24 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
         // Load nested destinations if this is a parent
         if (destination.id) {
+          console.log('[DestinationDrawer] Loading nested destinations for destination:', {
+            id: destination.id,
+            name: destination.name,
+            slug: destination.slug
+          });
           const nested = await getNestedDestinations(supabaseClient, destination.id, false);
-          setNestedDestinations(nested);
+          console.log('[DestinationDrawer] Loaded nested destinations:', {
+            count: nested?.length || 0,
+            destinations: nested?.map(d => ({ id: d.id, name: d.name, slug: d.slug })) || []
+          });
+          setNestedDestinations(nested || []);
       } else {
+          console.warn('[DestinationDrawer] No destination ID, cannot load nested destinations');
           setNestedDestinations([]);
       }
     } catch (error) {
-        console.warn('[DestinationDrawer] Error loading nested data:', error);
+        console.error('[DestinationDrawer] Error loading nested data:', error);
+        setNestedDestinations([]);
     } finally {
         setLoadingNested(false);
     }

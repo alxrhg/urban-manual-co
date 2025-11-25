@@ -63,13 +63,8 @@ export const DestinationCard = memo(function DestinationCard({
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    // Preserve scroll position before calling onClick
-    const savedScrollY = window.scrollY;
+    // Simply call onClick - Drawer component handles scroll locking without layout shift
     onClick?.();
-    // Ensure scroll position is maintained after drawer opens
-    requestAnimationFrame(() => {
-      window.scrollTo(0, savedScrollY);
-    });
   };
 
   return (

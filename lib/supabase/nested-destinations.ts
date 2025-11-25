@@ -42,7 +42,7 @@ export async function getNestedDestinations(
 
     return destinations;
   } catch (error) {
-    console.warn('[Nested Destinations] Error fetching nested destinations:', error);
+    console.error('[Nested Destinations] Error fetching nested destinations:', error);
     return [];
   }
 }

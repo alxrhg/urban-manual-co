@@ -106,40 +106,32 @@ export function Drawer({
   }, [mobileVariant]);
 
   // Improved body scroll locking (prevents layout shift)
+  // Uses overflow: hidden instead of position: fixed to avoid visual "refresh"
   useEffect(() => {
     if (isOpen) {
-      // Save current scroll position
+      // Save current scroll position for reference (not used for restoration with this approach)
       scrollPositionRef.current = window.scrollY;
-      
-      // Lock scroll without layout shift
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollPositionRef.current}px`;
-      document.body.style.width = '100%';
+
+      // Calculate scrollbar width to prevent layout shift
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+
+      // Lock scroll without layout shift - just hide overflow
       document.body.style.overflow = 'hidden';
-      
-      // Prevent iOS bounce
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+
+      // Prevent iOS bounce on the body
       document.body.style.touchAction = 'none';
     } else {
-      // Restore scroll position
-      const scrollY = scrollPositionRef.current;
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
+      // Simply restore body styles - scroll position is maintained naturally
       document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
       document.body.style.touchAction = '';
-      
-      // Restore scroll position after a brief delay
-      requestAnimationFrame(() => {
-        window.scrollTo(0, scrollY);
-      });
     }
-    
+
     return () => {
       // Cleanup
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
       document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
       document.body.style.touchAction = '';
     };
   }, [isOpen]);
