@@ -17,41 +17,15 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import type { Destination } from '@/types/destination';
+import {
+  PlannerDayInput,
+  FlightDraft,
+  HotelDraft,
+  saveTripDraft,
+  createTripPlannerRepository,
+} from '@/lib/trip-planner/saveTripDraft';
 
-interface PlannerStop {
-  id: string;
-  title: string;
-  slug?: string;
-  city?: string;
-  category?: string;
-  image?: string;
-  source: 'saved' | 'search';
-}
-
-interface PlannerDay {
-  dayNumber: number;
-  date: string | null;
-  items: PlannerStop[];
-}
-
-interface FlightDraft {
-  airline: string;
-  flightNumber: string;
-  from: string;
-  to: string;
-  departureDate: string;
-  departureTime: string;
-  arrivalDate: string;
-  arrivalTime: string;
-}
-
-interface HotelDraft {
-  name: string;
-  checkIn: string;
-  checkOut: string;
-}
-
-const INITIAL_DAY: PlannerDay = { dayNumber: 1, date: null, items: [] };
+const INITIAL_DAY: PlannerDayInput = { dayNumber: 1, date: null, items: [] };
 
 function formatHumanDate(date: string | null) {
   if (!date) return '';
@@ -76,7 +50,7 @@ export default function HomeTripPlanner() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedDay, setSelectedDay] = useState(1);
-  const [days, setDays] = useState<PlannerDay[]>([INITIAL_DAY]);
+  const [days, setDays] = useState<PlannerDayInput[]>([INITIAL_DAY]);
   const [hotel, setHotel] = useState<HotelDraft>({ name: '', checkIn: '', checkOut: '' });
   const [flight, setFlight] = useState<FlightDraft>({
     airline: '',
@@ -242,89 +216,21 @@ export default function HomeTripPlanner() {
 
     try {
       const supabase = createClient();
-      if (!supabase) throw new Error('Supabase client missing');
+      const repo = createTripPlannerRepository(supabase);
 
-      const { data: tripRecord, error: tripError } = await supabase
-        .from('trips')
-        .insert({
-          user_id: user.id,
-          title: tripName.trim() || `Trip to ${tripCity || 'New Trip'}`,
-          destination: tripCity || null,
-          start_date: startDate,
-          end_date: endDate || startDate,
-          status: 'planning',
-          is_public: false,
-        })
-        .select()
-        .single();
-
-      if (tripError || !tripRecord) {
-        throw tripError || new Error('Trip not created');
-      }
-
-      const payload: any[] = [];
-
-      days.forEach((day) => {
-        day.items.forEach((item, index) => {
-          payload.push({
-            trip_id: tripRecord.id,
-            destination_slug: item.slug || null,
-            day: day.dayNumber,
-            order_index: index,
-            title: item.title,
-            description: item.city || tripCity || null,
-            notes: JSON.stringify({
-              type: 'place',
-              image: item.image,
-              city: item.city,
-              category: item.category,
-              slug: item.slug,
-            }),
-          });
-        });
+      const result = await saveTripDraft({
+        repo,
+        userId: user.id,
+        tripName,
+        tripCity,
+        startDate,
+        endDate,
+        days,
+        hotel,
+        flight,
       });
 
-      if (hotel.name.trim()) {
-        payload.push({
-          trip_id: tripRecord.id,
-          destination_slug: null,
-          day: 1,
-          order_index: 0,
-          title: hotel.name.trim(),
-          description: tripCity || '',
-          notes: JSON.stringify({ type: 'hotel', checkInTime: hotel.checkIn, checkOutTime: hotel.checkOut }),
-        });
-      }
-
-      if (flight.airline.trim() && flight.from.trim() && flight.to.trim()) {
-        payload.push({
-          trip_id: tripRecord.id,
-          destination_slug: null,
-          day: 1,
-          order_index: 0,
-          title: `${flight.airline} ${flight.flightNumber || ''}`.trim(),
-          description: `${flight.from} → ${flight.to}`,
-          time: flight.departureTime || null,
-          notes: JSON.stringify({
-            type: 'flight',
-            airline: flight.airline,
-            flightNumber: flight.flightNumber,
-            from: flight.from,
-            to: flight.to,
-            departureDate: flight.departureDate,
-            departureTime: flight.departureTime,
-            arrivalDate: flight.arrivalDate,
-            arrivalTime: flight.arrivalTime,
-          }),
-        });
-      }
-
-      if (payload.length > 0) {
-        const { error: itemsError } = await supabase.from('itinerary_items').insert(payload);
-        if (itemsError) throw itemsError;
-      }
-
-      router.push(`/trips/${tripRecord.id}`);
+      router.push(`/trips/${result.tripId}`);
     } catch (error) {
       console.error('Error saving trip plan', error);
       setSaveError('Something went wrong while saving your trip.');
