@@ -152,8 +152,9 @@ export default function GreetingHero({
       <div className="w-full relative">
         {/* Greeting above search - Keep this */}
         <div className="text-left mb-8">
-          <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
-            {greeting}{userName ? `, ${userName}` : ''}
+          <h1 className="um-eyebrow">
+            {greeting}
+            {userName ? `, ${userName}` : ''}
           </h1>
         </div>
 

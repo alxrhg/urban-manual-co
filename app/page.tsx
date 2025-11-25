@@ -2321,8 +2321,8 @@ export default function Home() {
           The Urban Manual
         </h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
-          <div className="w-full flex md:justify-start flex-1 items-center">
+        <section className="um-hero">
+          <div className="um-shell flex md:justify-start flex-1 items-center w-full">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
               <div className="flex-1 flex items-center">
@@ -2426,7 +2426,7 @@ export default function Home() {
                     <div className="w-full">
                       {/* User Intent Label - Step Two spec */}
                       <div className="text-left mb-4">
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-[1.5px] font-medium">
+                        <div className="um-eyebrow">
                           You asked: "{submittedQuery}"
                         </div>
                       </div>

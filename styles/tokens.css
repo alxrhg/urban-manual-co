@@ -47,7 +47,7 @@
    Usage: <div class="um-page">...</div>
 */
 .um-page {
-  @apply w-full px-6 md:px-10 py-20 min-h-screen;
+  @apply w-full px-6 md:px-12 py-16 md:py-20 min-h-screen;
 }
 
 /* PAGE HEADING
@@ -152,5 +152,40 @@
 */
 .um-icon-box {
   @apply flex h-9 w-9 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400;
+}
+
+/* EYEBROW / SECTION LABEL */
+.um-eyebrow {
+  @apply text-[11px] uppercase tracking-[0.35em] font-semibold text-gray-400 dark:text-gray-500;
+}
+
+/* DIVIDER */
+.um-divider {
+  @apply w-full h-px bg-black/5 dark:bg-white/10 rounded-full;
+}
+
+/* SOFT CARD SURFACE */
+.um-card-soft {
+  @apply rounded-[24px] border border-black/5 dark:border-white/10 bg-white dark:bg-white/[0.04] shadow-[0_20px_60px_rgba(15,23,42,0.08)];
+}
+
+/* GLASS SURFACE */
+.um-glass {
+  @apply rounded-[28px] border border-black/5 dark:border-white/10 bg-white/90 dark:bg-[#060606]/80 backdrop-blur-xl shadow-[0_25px_80px_rgba(15,23,42,0.12)];
+}
+
+/* ACTION PILL */
+.um-pill {
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-white/10;
+}
+
+/* HERO SECTION */
+.um-hero {
+  @apply min-h-[65vh] flex flex-col px-6 md:px-16 pt-16 pb-12 bg-gradient-to-b from-white via-white to-transparent dark:from-[#070707] dark:via-transparent;
+}
+
+/* PAGE SHELL WITH CENTERED CONTENT */
+.um-shell {
+  @apply max-w-5xl w-full mx-auto;
 }
 

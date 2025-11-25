@@ -1442,119 +1442,41 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
   // Create custom header content - Place Drawer spec
   const headerContent = (
-    <div className="flex items-center justify-between w-full gap-3">
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          aria-label="Close drawer"
-        >
-          <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
-        </button>
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-          {isEditMode ? 'Edit Destination' : (destination.name || 'Destination')}
-        </h2>
+    <div className="flex items-center justify-between w-full gap-2">
+      <button
+        onClick={onClose}
+        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+        aria-label="Close drawer"
+      >
+        <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
+      </button>
+      <div className="flex-1 text-center min-w-0">
+        <span className="um-eyebrow text-[10px] tracking-[0.4em] text-gray-500 dark:text-gray-400 block">
+          {isEditMode ? 'Editing' : 'Destination'}
+        </span>
+        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate mt-1">
+          {destination.name || 'Destination'}
+        </p>
       </div>
-      {user && (
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {/* Admin Edit Button */}
-          {isAdmin && destination && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditMode(!isEditMode);
-              }}
-              className={`p-2 rounded-lg transition-colors ${isEditMode ? 'bg-black dark:bg-white text-white dark:text-black' : 'hover:bg-neutral-50 dark:hover:bg-white/5'}`}
-              aria-label={isEditMode ? 'Exit edit mode' : 'Edit destination'}
-              title={isEditMode ? 'Exit edit mode' : 'Edit destination (Admin)'}
-            >
-              <Edit className={`h-4 w-4 ${isEditMode ? '' : 'text-gray-900 dark:text-white/90'}`} strokeWidth={1.5} />
-            </button>
-          )}
-          {/* Bookmark Action */}
+      <div className="flex items-center justify-end gap-2 min-w-[60px]">
+        {isAdmin && destination && (
           <button
-            onClick={async () => {
-              if (!user) {
-                router.push('/auth/login');
-                return;
-              }
-              if (!isSaved) {
-                setShowSaveModal(true);
-              } else {
-                try {
-                  const supabaseClient = createClient();
-                  if (!supabaseClient) return;
-                  const { error } = await supabaseClient
-                    .from('saved_places')
-                    .delete()
-                    .eq('user_id', user.id)
-                    .eq('destination_slug', destination.slug);
-                  if (!error) {
-                    setIsSaved(false);
-                    if (onSaveToggle) onSaveToggle(destination.slug, false);
-                  }
-                } catch (error) {
-                  console.error('Error unsaving:', error);
-                }
-              }
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditMode(!isEditMode);
             }}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label={isSaved ? 'Remove from saved' : 'Save destination'}
+            className={`px-3 py-1.5 text-[11px] font-medium rounded-full transition-colors ${
+              isEditMode
+                ? 'bg-black text-white dark:bg-white dark:text-black'
+                : 'border border-black/10 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10'
+            }`}
+            aria-label={isEditMode ? 'Exit edit mode' : 'Edit destination'}
+            title={isEditMode ? 'Exit edit mode' : 'Edit destination (Admin)'}
           >
-            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} strokeWidth={1.5} />
+            {isEditMode ? 'Done' : 'Edit'}
           </button>
-          {/* Trip Action */}
-          <button
-            onClick={async () => {
-              if (!user) {
-                router.push('/auth/login');
-                return;
-              }
-              if (isAddedToTrip) return;
-              
-              // Try to add directly to most recent trip, or show modal if multiple trips
-              try {
-                const supabaseClient = createClient();
-                if (!supabaseClient) return;
-                
-                const { data: trips, error } = await supabaseClient
-                  .from('trips')
-                  .select('id')
-                  .eq('user_id', user.id)
-                  .order('created_at', { ascending: false })
-                  .limit(2);
-                
-                if (error) throw error;
-                
-                if (trips && trips.length === 1) {
-                  // Only one trip - add directly
-                  const tripId = trips[0].id;
-                  await addDestinationToTrip(tripId);
-                } else if (trips && trips.length > 1) {
-                  // Multiple trips - show modal to select
-                  setShowAddToTripModal(true);
-                } else {
-                  // No trips - show modal to create a new trip
-                  setShowAddToTripModal(true);
-                }
-              } catch (error) {
-                console.error('Error checking trips:', error);
-                // Fallback to showing modal
-                setShowAddToTripModal(true);
-              }
-            }}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label="Add to trip"
-            disabled={isAddedToTrip}
-          >
-            {isAddedToTrip ? (
-              <Check className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={1.5} />
-            ) : (
-              <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
-            )}
-          </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 
@@ -2390,7 +2312,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           {/* Divider */}
-          <div className="border-t border-gray-200 dark:border-gray-800 my-6" />
+          <div className="um-divider my-6" />
 
           {/* Meta & Info Section - Same as Desktop */}
           <div className="space-y-6">

@@ -84,9 +84,9 @@ export const DestinationCard = memo(function DestinationCard({
         {/* Image Container with Progressive Loading */}
         <div
           className={`
-            relative aspect-video overflow-hidden rounded-2xl
+            relative aspect-square overflow-hidden rounded-[22px]
             bg-gray-100 dark:bg-gray-800
-            border border-gray-200 dark:border-gray-800
+            border border-black/5 dark:border-white/10
             transition-all duration-300 ease-out
             mb-3
             ${isLoaded ? 'opacity-100' : 'opacity-0'}

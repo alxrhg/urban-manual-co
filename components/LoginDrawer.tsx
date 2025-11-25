@@ -93,7 +93,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
       <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-24">
         <div className="px-5 sm:px-6 py-6 space-y-6">
-          <div className="rounded-3xl border border-black/5 dark:border-white/10 bg-white/90 dark:bg-white/[0.08] shadow-[0_15px_80px_rgba(15,23,42,0.08)] dark:shadow-[0_25px_90px_rgba(2,6,23,0.6)] p-6">
+          <div className="um-glass p-6">
             <p className="text-[15px] font-semibold text-gray-900 dark:text-white">
               Sign in to sync saved places, trips, and AI recommendations across every device.
             </p>
@@ -121,10 +121,16 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
               Continue with Apple
             </button>
 
-            <div className="flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.35em] text-gray-400 dark:text-gray-500">
-              <span className="h-px flex-1 bg-gray-200 dark:bg-white/10" />
-              <span>Email</span>
-              <span className="h-px flex-1 bg-gray-200 dark:bg-white/10" />
+            <div className="flex items-center gap-3">
+              <span className="flex-1">
+                <span className="um-divider block" />
+              </span>
+              <span className="um-eyebrow tracking-[0.4em] text-gray-400 dark:text-gray-500">
+                Email
+              </span>
+              <span className="flex-1">
+                <span className="um-divider block" />
+              </span>
             </div>
           </div>
 

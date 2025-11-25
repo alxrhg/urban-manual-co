@@ -21,8 +21,8 @@ export function DrawerHeader({
   return (
     <header
       className={cn(
-        "px-4 pt-4 pb-3",
-        bordered && "border-b border-border",
+        "px-5 pt-5 pb-4",
+        bordered && "border-b border-black/5 dark:border-white/10",
         className
       )}
     >
@@ -30,9 +30,9 @@ export function DrawerHeader({
         <div className="flex items-start gap-2">
           {leftAccessory && <div className="mt-0.5">{leftAccessory}</div>}
           <div>
-            <h2 className="text-xl font-medium">{title}</h2>
+            <h2 className="text-xl font-medium text-gray-900 dark:text-white leading-snug">{title}</h2>
             {subtitle && (
-              <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
             )}
           </div>
         </div>

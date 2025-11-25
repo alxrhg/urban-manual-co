@@ -25,10 +25,11 @@ export default function UMCard({ className, children, onClick }: UMCardProps) {
     <Component
       onClick={onClick}
       className={cn(
-        "rounded-[16px] border border-neutral-200 dark:border-white/10",
-        "bg-white dark:bg-[#1A1C1F]",
-        "overflow-hidden",
-        onClick && "cursor-pointer text-left w-full",
+        "rounded-[20px] border border-black/5 dark:border-white/10",
+        "bg-white/95 dark:bg-white/[0.04]",
+        "shadow-[0_18px_50px_rgba(15,23,42,0.08)]",
+        "transition-shadow duration-300",
+        onClick && "cursor-pointer text-left w-full hover:shadow-[0_25px_65px_rgba(15,23,42,0.12)]",
         className
       )}
     >

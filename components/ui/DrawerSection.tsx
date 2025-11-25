@@ -11,8 +11,8 @@ export function DrawerSection({ children, bordered = false, className }: DrawerS
   return (
     <section
       className={cn(
-        "px-4 py-5 space-y-3",
-        bordered && "border-b border-border",
+        "px-5 py-5 space-y-3",
+        bordered && "border-b border-black/5 dark:border-white/10",
         className
       )}
     >

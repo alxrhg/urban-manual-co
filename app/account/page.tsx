@@ -400,7 +400,7 @@ export default function Account() {
   // Show loading
   if (!authChecked || isLoadingData) {
     return (
-      <main className="w-full px-6 md:px-10 py-20">
+      <main className="um-page">
         <PageLoader />
       </main>
     );
@@ -409,7 +409,7 @@ export default function Account() {
   // Show sign in screen
   if (!user) {
     return (
-      <main className="w-full px-6 md:px-10 py-20">
+      <main className="um-page">
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="w-full max-w-sm">
             <h1 className="text-2xl font-light mb-8">Account</h1>
@@ -429,12 +429,15 @@ export default function Account() {
   }
 
   return (
-    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
-      <div className="w-full">
+    <main className="um-page">
+      <div className="um-shell space-y-12">
         {/* Header - Matches homepage spacing and style */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-light">Account</h1>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="um-eyebrow mb-2">Account</p>
+              <h1 className="text-2xl font-light leading-tight">{user.email}</h1>
+            </div>
             <button
               onClick={handleSignOut}
               className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
@@ -442,7 +445,7 @@ export default function Account() {
               Sign Out
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+          <div className="um-divider" />
         </div>
 
         {/* Tab Navigation - Minimal, matches homepage city/category style */}
@@ -468,7 +471,7 @@ export default function Account() {
         {activeTab === 'profile' && (
           <div className="space-y-12 fade-in">
             {/* Curation Completion - Prominent gamification stat */}
-            <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
+            <div className="um-card-soft p-6 bg-gradient-to-br from-gray-50 via-white to-white dark:from-gray-900 dark:via-gray-950 dark:to-gray-950">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <div className="text-4xl font-light mb-1">{stats.curationCompletionPercentage}%</div>
@@ -507,19 +510,19 @@ export default function Account() {
 
             {/* Stats Grid - Minimal, like homepage cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+              <div className="rounded-2xl border border-black/5 dark:border-white/10 bg-white/95 dark:bg-white/[0.04] p-4">
                 <div className="text-2xl font-light mb-1">{stats.visitedCount}</div>
                 <div className="text-xs text-gray-500">Visited</div>
               </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+              <div className="rounded-2xl border border-black/5 dark:border-white/10 bg-white/95 dark:bg-white/[0.04] p-4">
                 <div className="text-2xl font-light mb-1">{stats.savedCount}</div>
                 <div className="text-xs text-gray-500">Saved</div>
               </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+              <div className="rounded-2xl border border-black/5 dark:border-white/10 bg-white/95 dark:bg-white/[0.04] p-4">
                 <div className="text-2xl font-light mb-1">{stats.uniqueCities.size}</div>
                 <div className="text-xs text-gray-500">Cities</div>
               </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+              <div className="rounded-2xl border border-black/5 dark:border-white/10 bg-white/95 dark:bg-white/[0.04] p-4">
                 <div className="text-2xl font-light mb-1">{stats.uniqueCountries.size}</div>
                 <div className="text-xs text-gray-500">Countries</div>
               </div>
