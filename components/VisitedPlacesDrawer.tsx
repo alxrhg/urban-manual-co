@@ -9,51 +9,14 @@ import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
 import { DrawerSection } from '@/components/ui/DrawerSection';
 import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
-import { Loader2, MapPin, ChevronRight, ChevronLeft } from 'lucide-react';
-import Image from 'next/image';
+import { Loader2, MapPin, ChevronLeft } from 'lucide-react';
+import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
+import type { Destination } from '@/types/destination';
 
 interface VisitedPlace {
   destination_slug: string;
   visited_at?: string;
-  destination: {
-    name: string;
-    city?: string;
-    category?: string;
-    image?: string;
-  } | null;
-}
-
-function PlaceItem({ place, onClick }: { place: VisitedPlace; onClick: () => void }) {
-  const formatDate = (date: string | undefined) => {
-    if (!date) return null;
-    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-900"
-    >
-      <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
-        {place.destination?.image ? (
-          <Image src={place.destination.image} alt={place.destination?.name || ''} fill className="object-cover" sizes="48px" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <MapPin className="h-5 w-5 text-gray-400" />
-          </div>
-        )}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-          {place.destination?.name || place.destination_slug}
-        </p>
-        {place.visited_at && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">{formatDate(place.visited_at)}</p>
-        )}
-      </div>
-      <ChevronRight className="h-4 w-4 text-gray-400" />
-    </button>
-  );
+  destination: Destination | null;
 }
 
 export function VisitedPlacesDrawer() {
@@ -83,7 +46,7 @@ export function VisitedPlacesDrawer() {
         const slugs = visitedResult.map((item: any) => item.destination_slug);
         const { data: destData } = await supabaseClient
           .from('destinations')
-          .select('slug, name, city, category, image')
+          .select('*') // Fetch full destination details
           .in('slug', slugs);
 
         if (destData) {
@@ -92,7 +55,7 @@ export function VisitedPlacesDrawer() {
             return {
               destination_slug: item.destination_slug,
               visited_at: item.visited_at,
-              destination: dest ? { name: dest.name, city: dest.city, category: dest.category, image: dest.image } : null,
+              destination: dest as Destination,
             };
           });
           setVisitedPlaces(mapped);
@@ -126,18 +89,21 @@ export function VisitedPlacesDrawer() {
       <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
     </button>
   ) : (
-    <MapPin className="h-5 w-5 text-gray-500" />
+    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+      <MapPin className="h-4 w-4 text-gray-500" />
+    </div>
   );
 
   return (
-    <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer}>
+    <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer} position="right">
       <DrawerHeader
         title="Visited Places"
         subtitle={`${visitedPlaces.length} places`}
         leftAccessory={backButton}
+        bordered={false}
       />
 
-      <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
+      <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-24 custom-scrollbar">
         {loading ? (
           <DrawerSection>
             <div className="flex flex-col items-center justify-center py-12">
@@ -147,24 +113,33 @@ export function VisitedPlacesDrawer() {
           </DrawerSection>
         ) : visitedPlaces.length === 0 ? (
           <DrawerSection>
-            <div className="text-center py-12 px-4 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+            <div className="text-center py-12 px-4 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-900/50">
               <MapPin className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm text-gray-500 dark:text-gray-400">No visited places yet</p>
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Mark places as visited to track them</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">No visited places yet</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Track everywhere you&apos;ve been
+              </p>
             </div>
           </DrawerSection>
         ) : (
-          <DrawerSection>
-            <div className="-mx-3 space-y-0.5">
-              {visitedPlaces.map((place) => (
-                <PlaceItem
-                  key={place.destination_slug}
-                  place={place}
-                  onClick={() => handleSelectPlace(place.destination_slug)}
-                />
-              ))}
-            </div>
-          </DrawerSection>
+          <div className="px-4 space-y-3">
+            {visitedPlaces.map((place) => (
+              place.destination && (
+                <div key={place.destination_slug} className="relative">
+                  <HorizontalDestinationCard
+                    destination={place.destination}
+                    onClick={() => handleSelectPlace(place.destination_slug)}
+                    showBadges={true}
+                  />
+                  {place.visited_at && (
+                    <div className="absolute top-3 right-3 text-[10px] text-gray-400 font-medium bg-white/80 dark:bg-black/50 backdrop-blur-sm px-1.5 py-0.5 rounded-md">
+                      {new Date(place.visited_at).getFullYear()}
+                    </div>
+                  )}
+                </div>
+              )
+            ))}
+          </div>
         )}
       </div>
 
@@ -174,9 +149,9 @@ export function VisitedPlacesDrawer() {
             closeDrawer();
             router.push('/account?tab=visited');
           }}
-          className="w-full bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium"
+          className="w-full bg-black dark:bg-white text-white dark:text-black rounded-xl px-4 py-3 text-sm font-medium hover:opacity-90 transition-opacity"
         >
-          View all visited
+          View Full History
         </button>
       </DrawerActionBar>
     </Drawer>
