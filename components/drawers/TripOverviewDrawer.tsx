@@ -7,6 +7,7 @@ import UMSectionTitle from "@/components/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { useTrip } from '@/hooks/useTrip';
 import Image from 'next/image';
+import { formatTripDateWithYear } from '@/lib/utils';
 
 interface Trip {
   id?: string;
@@ -69,34 +70,9 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
   const tripName = (displayTrip as any).name || displayTrip.title || 'Untitled Trip';
   const city = displayTrip.destination || 'Unknown';
   const coverImage = displayTrip.coverImage || displayTrip.cover_image;
-  
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return '';
-    try {
-      // Parse date string as local date (YYYY-MM-DD format)
-      // Split to avoid timezone issues
-      const [year, month, day] = dateString.split('-').map(Number);
-      if (year && month && day) {
-        const date = new Date(year, month - 1, day);
-        return date.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        });
-      }
-      // Fallback to original parsing if format is different
-      return new Date(dateString).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return dateString;
-    }
-  };
 
-  const startDate = formatDate(displayTrip.startDate || displayTrip.start_date);
-  const endDate = formatDate(displayTrip.endDate || displayTrip.end_date);
+  const startDate = formatTripDateWithYear(displayTrip.startDate || displayTrip.start_date);
+  const endDate = formatTripDateWithYear(displayTrip.endDate || displayTrip.end_date);
   const dateRange = startDate && endDate ? `${startDate} → ${endDate}` : startDate || endDate || '';
 
   // Extract cities from days if cities array is empty

@@ -13,16 +13,6 @@ interface TripsTabProps {
   onTripsUpdated: () => Promise<void>;
 }
 
-function formatDate(dateStr: string | null | undefined): string | undefined {
-  if (!dateStr) return undefined;
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  } catch {
-    return undefined;
-  }
-}
-
 export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
   const router = useRouter();
 
@@ -70,8 +60,8 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
                 name: trip.title,
                 coverImage: trip.cover_image,
                 city: trip.destination || undefined,
-                startDate: formatDate(trip.start_date),
-                endDate: formatDate(trip.end_date),
+                startDate: trip.start_date || undefined,
+                endDate: trip.end_date || undefined,
                 status: trip.status,
               }}
               onView={() => router.push(`/trips/${trip.id}`)}

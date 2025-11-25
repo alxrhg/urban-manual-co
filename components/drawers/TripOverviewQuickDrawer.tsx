@@ -7,6 +7,7 @@ import { DrawerSection } from '@/components/ui/DrawerSection';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import Image from 'next/image';
 import { useTrip } from '@/hooks/useTrip';
+import { formatTripDateWithYear } from '@/lib/utils';
 
 interface Trip {
   id?: string;
@@ -56,29 +57,9 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
   if (!displayTrip) return null;
 
   const tripName = (displayTrip as any).name || displayTrip.title || 'Untitled Trip';
-  
-  // Format date avoiding timezone issues
-  const formatDate = (dateString: string | null | undefined) => {
-    if (!dateString) return '';
-    try {
-      // Parse date string directly to avoid timezone issues
-      const parts = dateString.split('-');
-      if (parts.length === 3) {
-        const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
-        const day = parseInt(parts[2], 10);
-        const date = new Date(year, month, day);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      }
-      // Fallback
-      return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch {
-      return dateString;
-    }
-  };
-  
-  const startDate = (displayTrip as any).startDate || formatDate(displayTrip.start_date);
-  const endDate = (displayTrip as any).endDate || formatDate(displayTrip.end_date);
+
+  const startDate = formatTripDateWithYear((displayTrip as any).startDate || displayTrip.start_date);
+  const endDate = formatTripDateWithYear((displayTrip as any).endDate || displayTrip.end_date);
   const days = (displayTrip as any).days || [];
   const hotels = (displayTrip as any).hotels || [];
   const coverImage = (displayTrip as any).coverImage || displayTrip.cover_image;
