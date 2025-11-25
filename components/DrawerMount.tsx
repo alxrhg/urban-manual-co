@@ -2,7 +2,6 @@
 
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
-import { AccountDrawer } from '@/components/AccountDrawer';
 import DestinationDrawer from '@/components/DestinationDrawer';
 import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
@@ -14,7 +13,7 @@ import TripOverviewDrawer from '@/components/drawers/TripOverviewDrawer';
 import TripOverviewQuickDrawer from '@/components/drawers/TripOverviewQuickDrawer';
 import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
 import TripSettingsDrawer from '@/components/drawers/TripSettingsDrawer';
-import AccountDrawerNew from '@/components/drawers/AccountDrawer';
+import AccountDrawerContent from '@/components/drawers/AccountDrawer';
 import { Drawer } from '@/components/ui/Drawer';
 import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 
@@ -25,12 +24,11 @@ export default function DrawerMount() {
   return (
     <>
       {/* Legacy drawers that use their own drawer context */}
-      <AccountDrawer />
       <SavedPlacesDrawer />
       <VisitedPlacesDrawer />
 
       {/* New drawers that use the global drawer store */}
-      {open && type === 'account-new' && (
+      {open && type === 'account' && (
         <Drawer
           isOpen={open}
           onClose={closeDrawer}
@@ -38,7 +36,7 @@ export default function DrawerMount() {
           style={drawerStyle}
           position="right"
         >
-          <AccountDrawerNew isOpen={open} onClose={closeDrawer} />
+          <AccountDrawerContent isOpen={open} onClose={closeDrawer} />
         </Drawer>
       )}
 

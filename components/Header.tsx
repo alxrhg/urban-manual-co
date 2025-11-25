@@ -6,13 +6,15 @@ import { User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
+import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { ChatDrawer } from "@/components/ChatDrawer";
 import { LoginDrawer } from "@/components/LoginDrawer";
 
 export function Header() {
   const router = useRouter();
   const { user } = useAuth();
-  const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const { openDrawer: openLegacyDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const { openDrawer: openStoreDrawer } = useDrawerStore();
   const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -103,7 +105,7 @@ export function Header() {
 
       {user ? (
         <button
-          onClick={() => openDrawer('account')}
+          onClick={() => openStoreDrawer('account')}
           className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
           aria-label="Open account drawer"
         >
@@ -122,7 +124,7 @@ export function Header() {
         </button>
       ) : (
         <button
-          onClick={() => openDrawer('login')}
+          onClick={() => openLegacyDrawer('login')}
           className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
           aria-label="Sign in"
         >

@@ -9,25 +9,19 @@ Complete list of all drawers in the codebase with their configurations.
 ---
 
 ## 1. AccountDrawer
-- **Location:** `components/AccountDrawer.tsx`
+- **Location:** `components/drawers/AccountDrawer.tsx`
 - **Type:** `account`
 - **Configuration:**
-  - `mobileVariant`: `"bottom"`
+  - Rendered via `DrawerMount` using the global drawer store
   - `desktopWidth`: `"420px"`
-  - `desktopSpacing`: `"right-4 top-4 bottom-4"`
   - `position`: `"right"`
   - `style`: `"glassy"`
-  - `backdropOpacity`: `"18"` (varies by tier)
   - `keepStateOnClose`: `true`
-  - `zIndex`: Dynamic via `getZIndex()` function
-  - `title`: `undefined`
-  - `headerContent`: `undefined`
+  - Custom header/action bar built inside component
 - **Special Features:**
-  - **Tier System:** Has tier1 (main drawer) and tier2 (subpages) with different z-index
-  - **Custom z-index logic:** Uses `getZIndex()` function for dynamic z-index (1000 for tier1, 1100 for tier2)
-  - **Sub-drawers:** Contains nested subpages (saved, visited, collections, trips, settings)
-  - **No title/header:** Unlike other drawers, sets `title={undefined}` and `headerContent={undefined}`
-  - **Different from others:** Most complex drawer with tier system and custom z-index management
+  - Fetches Supabase profile + next trip preview when opened
+  - Provides quick links to Saved Places, Trips, Lists, Achievements
+  - Uses legacy drawers (Saved/Visited) for deep links via `DrawerContext`
 
 ---
 
