@@ -104,12 +104,20 @@ export function useTrip(tripId: string | null) {
         // Calculate date range
         const startDate = tripData.start_date ? new Date(tripData.start_date) : null;
         const endDate = tripData.end_date ? new Date(tripData.end_date) : null;
+        let dateRangeDays = 0;
+        if (startDate && endDate) {
+          const diffTime = endDate.getTime() - startDate.getTime();
+          dateRangeDays = Math.max(1, Math.round(diffTime / (1000 * 60 * 60 * 24)) + 1);
+        } else if (startDate) {
+          dateRangeDays = 1;
+        }
 
         // Create days array
         const days: Day[] = [];
         const maxDay = Math.max(...Array.from(itemsByDay.keys()), 0);
-        
-        for (let dayNum = 1; dayNum <= Math.max(maxDay, 1); dayNum++) {
+        const totalDays = Math.max(maxDay, dateRangeDays, 1);
+
+        for (let dayNum = 1; dayNum <= totalDays; dayNum++) {
           const dayItems = itemsByDay.get(dayNum) || [];
           const dayDate = startDate
             ? new Date(startDate.getTime() + (dayNum - 1) * 24 * 60 * 60 * 1000)

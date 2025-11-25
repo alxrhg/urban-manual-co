@@ -14,7 +14,6 @@ import { AchievementsDisplay } from "@/components/AchievementsDisplay";
 import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
-import { TripPlanner } from "@/components/TripPlanner";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
 import { PreferencesTab } from "@/components/account/PreferencesTab";
 import { openCookieSettings } from "@/components/CookieConsent";
@@ -900,18 +899,6 @@ export default function Account() {
         </div>
       )}
 
-      {/* Trip Planner Modal */}
-      {showTripDialog && (
-        <TripPlanner
-          isOpen={true}
-          tripId={editingTripId ?? undefined}
-          onClose={() => {
-            setShowTripDialog(false);
-            setEditingTripId(null);
-            loadUserData();
-          }}
-        />
-      )}
     </main>
   );
 }
