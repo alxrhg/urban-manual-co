@@ -79,7 +79,7 @@ export default function HomeTripPlanner() {
 
     setDays((prev) => {
       const map = new Map(prev.map((day) => [day.dayNumber, day]));
-      const next: PlannerDay[] = [];
+      const next: PlannerDayInput[] = [];
       for (let i = 0; i < totalDays; i += 1) {
         const date = new Date(start);
         date.setDate(start.getDate() + i);
@@ -135,8 +135,9 @@ export default function HomeTripPlanner() {
 
         if (destError) throw destError;
 
+        const typedDestinations = (destinations ?? []) as Destination[];
         const ordered = slugs
-          .map((slug) => destinations?.find((d) => d.slug === slug))
+          .map((slug) => typedDestinations.find((d) => d.slug === slug))
           .filter((d): d is Destination => Boolean(d));
 
         if (!cancelled) setMyPlaces(ordered);
