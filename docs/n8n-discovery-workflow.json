@@ -1,0 +1,206 @@
+{
+  "name": "Urban Manual - Place Discovery Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 12
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Run Every 12 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $vars.URBAN_MANUAL_URL }}/api/discovery/fetch",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.fetchParams) }}"
+      },
+      "id": "fetch-places",
+      "name": "Fetch New Places",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "condition-inserted",
+              "leftValue": "={{ $json.inserted }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-new-places",
+      "name": "New Places Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [660, 0]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $vars.URBAN_MANUAL_URL }}/api/discovery/candidates?limit=10",
+        "options": {}
+      },
+      "id": "get-candidates",
+      "name": "Get Pending Candidates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [880, -100]
+    },
+    {
+      "parameters": {
+        "channel": "#urban-manual-alerts",
+        "text": "=🆕 *New Places Discovered*\n\n{{ $json.inserted }} new candidates found!\nTotal pending: {{ $('Get Pending Candidates').item.json.total }}\n\n*Cities processed:* {{ $('Fetch New Places').item.json.cities_processed.join(', ') }}\n\n<{{ $vars.URBAN_MANUAL_URL }}/admin/discover|Review in Admin Panel>",
+        "otherOptions": {}
+      },
+      "id": "slack-notification",
+      "name": "Notify Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [1100, -100],
+      "credentials": {
+        "slackApi": {
+          "id": "REPLACE_WITH_YOUR_SLACK_CREDENTIAL_ID",
+          "name": "Slack API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "values": {
+          "object": [
+            {
+              "name": "fetchParams",
+              "value": "={{ {\n  \"minRating\": 4.2,\n  \"limit\": 20\n} }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-params-default",
+      "name": "Default Params (All Cities)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {},
+      "id": "no-op",
+      "name": "No New Places",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [880, 100]
+    }
+  ],
+  "connections": {
+    "Run Every 12 Hours": {
+      "main": [
+        [
+          {
+            "node": "Default Params (All Cities)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Params (All Cities)": {
+      "main": [
+        [
+          {
+            "node": "Fetch New Places",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch New Places": {
+      "main": [
+        [
+          {
+            "node": "New Places Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Places Found?": {
+      "main": [
+        [
+          {
+            "node": "Get Pending Candidates",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No New Places",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Pending Candidates": {
+      "main": [
+        [
+          {
+            "node": "Notify Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "variables": [
+    {
+      "key": "URBAN_MANUAL_URL",
+      "value": "https://www.urbanmanual.co"
+    }
+  ]
+}
