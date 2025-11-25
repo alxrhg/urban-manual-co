@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from 'react';
-import UMCard from "@/components/ui/UMCard";
-import UMActionPill from "@/components/ui/UMActionPill";
-import UMSectionTitle from "@/components/ui/UMSectionTitle";
-import { useDrawerStore } from "@/lib/stores/drawer-store";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import UMCard from '@/components/ui/UMCard';
+import UMActionPill from '@/components/ui/UMActionPill';
+import UMSectionTitle from '@/components/ui/UMSectionTitle';
+import { useDrawerStore } from '@/lib/stores/drawer-store';
 import Image from 'next/image';
 
 interface Location {
@@ -39,16 +41,38 @@ interface TripDayEditorDrawerProps {
   day: Day | null;
   index?: number;
   trip?: Trip | null;
+  hideHeader?: boolean;
+  className?: string;
 }
 
-export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEditorDrawerProps) {
+export default function TripDayEditorDrawer({
+  day,
+  index = 0,
+  trip,
+  hideHeader = false,
+  className,
+}: TripDayEditorDrawerProps) {
   const { openDrawer } = useDrawerStore();
+  const router = useRouter();
   const [selectedDayIndex, setSelectedDayIndex] = useState(index);
+  const [editorDays, setEditorDays] = useState<Day[]>(() => {
+    if (trip?.days?.length) return [...trip.days];
+    if (day) return [day];
+    return [];
+  });
 
-  // Get all days from trip
-  const allDays = trip?.days || (day ? [day] : []);
-  
-  // Get the currently selected day
+  useEffect(() => {
+    if (trip?.days?.length) {
+      setEditorDays([...trip.days]);
+      setSelectedDayIndex((prev) => Math.min(prev, trip.days.length - 1));
+    } else if (day) {
+      setEditorDays([day]);
+      setSelectedDayIndex(0);
+    }
+  }, [trip?.id, trip?.updated_at, trip?.days?.length, day]);
+
+  const allDays = editorDays.length ? editorDays : day ? [day] : [];
+
   const currentDay = allDays[selectedDayIndex] || day;
 
   if (!currentDay && !day) return null;
@@ -73,9 +97,36 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
     return null;
   };
 
-  const handleRemoveStop = (stopIndex: number) => {
-    console.log("Remove stop", stopIndex);
-    // TODO: Implement remove stop functionality
+  const handleRemoveStop = async (stopIndex: number) => {
+    if (!trip?.id || !currentDay) return;
+    const target = allLocations[stopIndex];
+    if (!target?.id) return;
+    try {
+      const supabaseClient = createClient();
+      const { error } = await supabaseClient
+        .from('itinerary_items')
+        .delete()
+        .eq('id', target.id)
+        .eq('trip_id', trip.id);
+      if (error) throw error;
+
+      setEditorDays((prev) =>
+        prev.map((d, idx) => {
+          if (idx !== selectedDayIndex) return d;
+          const filteredLocations = (d.locations || []).filter((loc) => loc.id !== target.id);
+          const filteredActivities = (d.activities || []).filter((loc) => loc.id !== target.id);
+          return {
+            ...d,
+            locations: filteredLocations,
+            activities: filteredActivities,
+          };
+        }),
+      );
+      router.refresh();
+    } catch (error) {
+      console.error('Error removing stop', error);
+      alert('Failed to remove this stop. Please try again.');
+    }
   };
 
   const handleClearMeal = (mealType: string) => {
@@ -83,31 +134,22 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
     // TODO: Implement clear meal functionality
   };
 
-  const handleDuplicateDay = () => {
-    console.log("Duplicate day", index);
-    // TODO: Implement duplicate day functionality
-  };
-
-  const handleDeleteDay = () => {
-    if (confirm('Are you sure you want to delete this day?')) {
-      console.log("Delete day", index);
-      // TODO: Implement delete day functionality
-    }
-  };
+  const containerClass =
+    className ?? (hideHeader ? 'space-y-10' : 'px-6 py-6 space-y-10');
 
   return (
-    <div className="px-6 py-6 space-y-10">
+    <div className={containerClass}>
       {/* DAY TABS */}
       {allDays.length > 1 && (
-        <div className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 border-b border-neutral-200 dark:border-white/10">
+        <div className="flex gap-2 overflow-x-auto pb-2 -mx-6 px-6 border-b border-gray-200 dark:border-gray-800">
           {allDays.map((d: Day, i: number) => (
             <button
               key={i}
               onClick={() => setSelectedDayIndex(i)}
-              className={`px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`px-4 py-2 text-xs font-medium transition-colors whitespace-nowrap ${
                 selectedDayIndex === i
-                  ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white'
-                  : 'text-neutral-500 dark:text-neutral-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'text-black dark:text-white border-b-2 border-black dark:border-white'
+                  : 'text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
               }`}
             >
               Day {i + 1}
@@ -117,14 +159,16 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
       )}
 
       {/* TITLE */}
-      <div className="space-y-1">
-        <h1 className="text-[20px] font-semibold text-gray-900 dark:text-white">
-          Day {selectedDayIndex + 1}
-        </h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          {currentDay.city || 'Unknown'} • {currentDay.date || ''}
-        </p>
-      </div>
+      {!hideHeader && (
+        <div className="space-y-1">
+          <h1 className="text-2xl font-light text-gray-900 dark:text-white">
+            Day {selectedDayIndex + 1}
+          </h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            {currentDay.city || 'Unknown'} • {currentDay.date || ''}
+          </p>
+        </div>
+      )}
 
       {/* STOPS LIST */}
       {allLocations.length > 0 && (
@@ -153,11 +197,11 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
 
                   {/* STOP DETAILS */}
                   <div className="space-y-1">
-                    <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       {locationName}
                     </p>
                     {locationType && (
-                      <p className="text-sm text-neutral-500 dark:text-neutral-400 capitalize">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                         {locationType}
                       </p>
                     )}
@@ -222,7 +266,7 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
 
           return (
             <UMCard key={meal} className="p-4 space-y-3">
-              <p className="font-medium capitalize text-[15px] text-gray-900 dark:text-white">
+              <p className="text-sm font-medium capitalize text-gray-900 dark:text-white">
                 {meal}
               </p>
 
@@ -239,11 +283,11 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
                     </div>
                   )}
 
-                  <p className="text-[16px] font-medium text-gray-900 dark:text-white">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {mealName}
                   </p>
                   {mealCategory && (
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400 capitalize">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                       {mealCategory}
                     </p>
                   )}
@@ -301,24 +345,6 @@ export default function TripDayEditorDrawer({ day, index = 0, trip }: TripDayEdi
         >
           Get AI Suggestions
         </UMActionPill>
-      </section>
-
-      {/* DUPLICATE / DELETE */}
-      <section className="pt-4 border-t border-neutral-200 dark:border-white/10">
-        <div className="flex justify-between pt-4">
-          <button
-            onClick={handleDuplicateDay}
-            className="text-sm text-neutral-500 dark:text-neutral-400 hover:underline"
-          >
-            Duplicate Day
-          </button>
-          <button
-            onClick={handleDeleteDay}
-            className="text-sm text-red-500 hover:underline"
-          >
-            Delete Day
-          </button>
-        </div>
       </section>
     </div>
   );

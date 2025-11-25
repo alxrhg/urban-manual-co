@@ -4,12 +4,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import UMCard from "@/components/ui/UMCard";
 import UMFeaturePill from "@/components/ui/UMFeaturePill";
 import UMActionPill from "@/components/ui/UMActionPill";
 import UMSectionTitle from "@/components/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, MapPin, Calendar, ChevronRight, Plane, Plus } from 'lucide-react';
 import Image from 'next/image';
 
 const LOADING_TIMEOUT = 15000; // 15 seconds
@@ -17,6 +16,47 @@ const LOADING_TIMEOUT = 15000; // 15 seconds
 interface TripListDrawerProps {
   trips?: any[];
   onNewTrip?: () => void;
+}
+
+// Status badge styling
+function getStatusConfig(status?: string) {
+  switch (status) {
+    case 'planning':
+      return {
+        label: 'Planning',
+        bg: 'bg-blue-50 dark:bg-blue-900/30',
+        text: 'text-blue-700 dark:text-blue-300',
+        dot: 'bg-blue-500',
+      };
+    case 'upcoming':
+      return {
+        label: 'Upcoming',
+        bg: 'bg-amber-50 dark:bg-amber-900/30',
+        text: 'text-amber-700 dark:text-amber-300',
+        dot: 'bg-amber-500',
+      };
+    case 'ongoing':
+      return {
+        label: 'Ongoing',
+        bg: 'bg-green-50 dark:bg-green-900/30',
+        text: 'text-green-700 dark:text-green-300',
+        dot: 'bg-green-500 animate-pulse',
+      };
+    case 'completed':
+      return {
+        label: 'Completed',
+        bg: 'bg-neutral-100 dark:bg-neutral-800',
+        text: 'text-neutral-600 dark:text-neutral-400',
+        dot: 'bg-neutral-400',
+      };
+    default:
+      return {
+        label: 'Planning',
+        bg: 'bg-blue-50 dark:bg-blue-900/30',
+        text: 'text-blue-700 dark:text-blue-300',
+        dot: 'bg-blue-500',
+      };
+  }
 }
 
 /**
@@ -44,7 +84,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
     try {
       setLoading(true);
       setError(null);
-      
+
       const supabaseClient = createClient();
       if (!supabaseClient) {
         throw new Error('Failed to initialize database connection');
@@ -86,22 +126,17 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
   const formatDate = (dateString: string | null) => {
     if (!dateString) return null;
     try {
-      // Parse date string as local date (YYYY-MM-DD format)
-      // Split to avoid timezone issues
       const [year, month, day] = dateString.split('-').map(Number);
       if (year && month && day) {
         const date = new Date(year, month - 1, day);
         return date.toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric',
-          year: 'numeric',
         });
       }
-      // Fallback to original parsing if format is different
       return new Date(dateString).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
-        year: 'numeric',
       });
     } catch {
       return null;
@@ -113,7 +148,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
     const startFormatted = formatDate(start);
     const endFormatted = formatDate(end);
     if (startFormatted && endFormatted) {
-      return `${startFormatted} → ${endFormatted}`;
+      return `${startFormatted} – ${endFormatted}`;
     }
     return startFormatted || endFormatted;
   };
@@ -131,33 +166,23 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
     }
   };
 
-  const handleDeleteTrip = async (tripId: string) => {
-    if (!confirm('Are you sure you want to delete this trip?')) return;
-    
-    try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
+  const handleSelectTrip = (trip: any) => {
+    openDrawer("trip-overview", { trip });
+  };
 
-      const { error } = await supabaseClient
-        .from('trips')
-        .delete()
-        .eq('id', tripId);
-
-      if (error) throw error;
-      
-      setTrips(trips.filter(t => t.id !== tripId));
-    } catch (error) {
-      console.error('Error deleting trip:', error);
-      alert('Failed to delete trip');
-    }
+  const handleEditTrip = (trip: any) => {
+    closeDrawer();
+    setTimeout(() => {
+      router.push(`/trips/${trip.id}`);
+    }, 200);
   };
 
   if (loading) {
     return (
       <div className="px-6 py-6">
         <div className="flex flex-col items-center justify-center py-12 space-y-3">
-          <Loader2 className="w-6 h-6 animate-spin text-neutral-500" />
-          <p className="text-sm text-neutral-500">Loading trips...</p>
+          <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+          <p className="text-xs text-neutral-500">Loading trips...</p>
         </div>
       </div>
     );
@@ -181,105 +206,112 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
   }
 
   return (
-    <>
-      <div className="px-6 py-6 space-y-8">
-        {/* MAIN CTA */}
-        <UMFeaturePill onClick={handleNewTrip}>
-          + New Trip
-        </UMFeaturePill>
+    <div className="px-6 py-6 space-y-6">
+      {/* MAIN CTA */}
+      <button
+        onClick={handleNewTrip}
+        className="w-full h-12 bg-black dark:bg-white text-white dark:text-black rounded-xl font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+      >
+        <Plus className="w-4 h-4" />
+        New Trip
+      </button>
 
-        {/* LIST HEADER */}
-        <div className="flex items-center justify-between">
-          <UMSectionTitle>All Trips</UMSectionTitle>
-          <UMActionPill
-            onClick={() => {
-              closeDrawer();
-              setTimeout(() => {
-                router.push('/trips');
-              }, 200);
-            }}
-          >
-            View All →
-          </UMActionPill>
-        </div>
-
-        {/* TRIP LIST */}
-        <div className="space-y-6">
-          {trips.length === 0 ? (
-            <div className="text-center py-16 space-y-4">
-              <p className="text-neutral-500 text-sm">
-                You have no trips yet.
-              </p>
-              <UMFeaturePill onClick={handleNewTrip}>
-                Create Trip
-              </UMFeaturePill>
-            </div>
-          ) : (
-            trips.map((trip) => {
-              const tripName = trip.name || trip.title || 'Untitled Trip';
-              const city = trip.destination || 'Unknown';
-              const dateRange = formatDateRange(trip.start_date, trip.end_date);
-              const coverImage = trip.cover_image || trip.coverImage;
-
-              return (
-                <UMCard key={trip.id}>
-                  <button
-                    onClick={() => openDrawer("trip-overview", { trip })}
-                    className="w-full text-left"
-                  >
-                    {/* IMAGE */}
-                    {coverImage && (
-                      <div className="w-full h-40 relative overflow-hidden rounded-t-[16px]">
-                        <Image
-                          src={coverImage}
-                          alt={tripName}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                    )}
-
-                    <div className="p-4 space-y-1">
-                      <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
-                        {tripName}
-                      </p>
-
-                      {/* SUBTITLE */}
-                      <p className="text-[14px] text-neutral-500 dark:text-neutral-400">
-                        {city} {dateRange && `• ${dateRange}`}
-                      </p>
-
-                      {/* ACTION ROW */}
-                      <div className="flex gap-2 pt-3">
-                        <UMActionPill
-                          onClick={(e) => {
-                            e?.stopPropagation();
-                            openDrawer("trip-overview", { trip });
-                          }}
-                        >
-                          View
-                        </UMActionPill>
-
-                        <UMActionPill
-                          onClick={(e) => {
-                            e?.stopPropagation();
-                            closeDrawer();
-                            setTimeout(() => {
-                              router.push(`/trips/${trip.id}`);
-                            }, 200);
-                          }}
-                        >
-                          Edit
-                        </UMActionPill>
-                      </div>
-                    </div>
-                  </button>
-                </UMCard>
-              );
-            })
-          )}
-        </div>
+      {/* LIST HEADER */}
+      <div className="flex items-center justify-between">
+        <UMSectionTitle>All Trips</UMSectionTitle>
+        <UMActionPill
+          onClick={() => {
+            closeDrawer();
+            setTimeout(() => {
+              router.push('/trips');
+            }, 200);
+          }}
+        >
+          View All →
+        </UMActionPill>
       </div>
-    </>
+
+      {/* TRIP LIST */}
+      <div className="space-y-3">
+        {trips.length === 0 ? (
+          <div className="text-center py-12 px-4 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-[16px] bg-neutral-50/50 dark:bg-neutral-900/50">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+              <Plane className="w-6 h-6 text-neutral-400 dark:text-neutral-500" />
+            </div>
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+              No trips yet
+            </p>
+            <UMFeaturePill onClick={handleNewTrip}>
+              Create Trip
+            </UMFeaturePill>
+          </div>
+        ) : (
+          trips.map((trip) => {
+            const tripName = trip.name || trip.title || 'Untitled Trip';
+            const dateRange = formatDateRange(trip.start_date, trip.end_date);
+            const coverImage = trip.cover_image || trip.coverImage;
+            const statusConfig = getStatusConfig(trip.status);
+
+            return (
+              <button
+                key={trip.id}
+                onClick={() => handleSelectTrip(trip)}
+                className="w-full border border-neutral-200 dark:border-neutral-700 rounded-[16px] overflow-hidden hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors text-left bg-white dark:bg-neutral-900 group"
+              >
+                {/* Cover Image */}
+                <div className="relative h-28 bg-neutral-100 dark:bg-neutral-800">
+                  {coverImage ? (
+                    <>
+                      <Image
+                        src={coverImage}
+                        alt={tripName}
+                        fill
+                        className="object-cover"
+                        sizes="400px"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    </>
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <MapPin className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
+                    </div>
+                  )}
+
+                  {/* Status Badge */}
+                  <div className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusConfig.bg} ${statusConfig.text} backdrop-blur-sm`}>
+                    <span className={`w-1 h-1 rounded-full ${statusConfig.dot}`} />
+                    {statusConfig.label}
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-3 flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                      {tripName}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
+                      {trip.destination && (
+                        <span className="flex items-center gap-1 truncate">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          {trip.destination}
+                        </span>
+                      )}
+                      {dateRange && (
+                        <span className="flex items-center gap-1 flex-shrink-0">
+                          <Calendar className="w-3 h-3" />
+                          {dateRange}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-neutral-300 dark:text-neutral-600 group-hover:text-neutral-500 transition-colors flex-shrink-0" />
+                </div>
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
   );
 }

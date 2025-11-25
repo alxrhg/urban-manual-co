@@ -40,6 +40,7 @@ class ForecastTrainingPipeline:
     """Coordinates fetching, training and persistence for demand forecasts."""
 
     def __init__(self):
+        """Initialize pipeline state and dependencies for recurring training."""
         self._model = get_forecast_model()
         self._lock = Lock()
         self._background_thread: Optional[Thread] = None

@@ -180,7 +180,7 @@ export default function CollectionDetailPage() {
 
   if (loading) {
     return (
-      <main className="w-full px-6 md:px-10 lg:px-12 py-20">
+      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
         <PageLoader />
       </main>
     );
@@ -188,7 +188,7 @@ export default function CollectionDetailPage() {
 
   if (!collection) {
     return (
-      <main className="w-full px-6 md:px-10 lg:px-12 py-20">
+      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
         <EmptyState
           icon="❓"
           title="Collection not found"
@@ -201,18 +201,16 @@ export default function CollectionDetailPage() {
   }
 
   return (
-    <main className="w-full px-6 md:px-10 lg:px-12 py-20">
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
       <div className="w-full">
         {/* Header */}
         <div className="mb-12">
           <button
             onClick={() => router.push('/account')}
-            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors mb-6"
+            className="mb-6 text-xs text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
             aria-label="Back to Account"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            ← Back
           </button>
 
           <div className="flex items-start justify-between">

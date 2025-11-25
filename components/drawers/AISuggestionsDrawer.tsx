@@ -116,17 +116,17 @@ export default function AISuggestionsDrawer({
     <div className="px-6 py-6 space-y-10">
       {/* TITLE */}
       <div className="space-y-1">
-        <h1 className="text-[20px] font-semibold text-gray-900 dark:text-white">
+        <h1 className="text-2xl font-light text-gray-900 dark:text-white">
           AI Suggestions
         </h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Based on your itinerary and location flow
         </p>
       </div>
 
       {/* SUGGESTIONS */}
       {suggestions.length === 0 ? (
-        <div className="text-center py-12 text-sm text-neutral-500">
+        <div className="text-center py-12 text-xs text-gray-500 dark:text-gray-400">
           No suggestions available at this time.
         </div>
       ) : (
@@ -148,11 +148,11 @@ export default function AISuggestionsDrawer({
                 )}
 
                 <div className="space-y-1">
-                  <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {s.title || s.text || "Suggestion"}
                   </p>
                   {s.detail && (
-                    <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {s.detail}
                     </p>
                   )}
@@ -175,7 +175,7 @@ export default function AISuggestionsDrawer({
 
       {/* APPLY ALL */}
       {suggestions.length > 0 && (
-        <section className="pt-4 border-t border-neutral-200 dark:border-white/10">
+        <section className="pt-4 border-t border-gray-200 dark:border-gray-800">
           <UMActionPill
             variant="primary"
             className="w-full justify-center mt-4"

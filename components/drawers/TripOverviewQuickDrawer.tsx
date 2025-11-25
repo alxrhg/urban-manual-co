@@ -127,19 +127,19 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
         <>
           {/* DAYS */}
           <DrawerSection bordered>
-            <h3 className="font-medium text-gray-900 dark:text-white mb-3">Days</h3>
+            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Days</h3>
             <div className="space-y-3">
               {days.length > 0 ? (
                 days.map((d: any, i: number) => (
                   <div
                     key={i}
-                    className="border border-[var(--um-border)] rounded-xl p-3 hover:bg-neutral-50 dark:hover:bg-neutral-900 cursor-pointer flex justify-between items-center bg-white dark:bg-gray-950 transition-colors"
+                    className="border border-[var(--um-border)] rounded-2xl p-3 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer flex justify-between items-center bg-white dark:bg-gray-950 transition-colors"
                     onClick={() => handleDayClick(d, i)}
                   >
-                    <p className="font-medium text-gray-900 dark:text-white">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       Day {i + 1} – {d.date}
                     </p>
-                    <span className="text-sm text-[var(--um-text-muted)]">→</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">→</span>
                   </div>
                 ))
               ) : (
@@ -151,15 +151,15 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
           {/* HOTELS */}
           {hotels.length > 0 && (
             <DrawerSection bordered>
-              <h3 className="font-medium text-gray-900 dark:text-white mb-2">Hotels</h3>
+              <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Hotels</h3>
               <div className="space-y-3">
                 {hotels.map((h: any, i: number) => (
                   <div
                     key={i}
-                    className="border border-[var(--um-border)] rounded-xl p-3 bg-white dark:bg-gray-950"
+                    className="border border-[var(--um-border)] rounded-2xl p-3 bg-white dark:bg-gray-950"
                   >
-                    <p className="font-medium text-gray-900 dark:text-white">{h.name}</p>
-                    <p className="text-xs text-[var(--um-text-muted)]">{h.city}</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">{h.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{h.city}</p>
                   </div>
                 ))}
               </div>
@@ -169,14 +169,14 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
           {/* ACTIONS */}
           <DrawerSection>
             <button
-              className="w-full py-3 rounded-xl border border-[var(--um-border)] text-gray-900 dark:text-white hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors bg-white dark:bg-gray-950 font-medium text-sm"
+              className="w-full py-3 rounded-2xl border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors bg-white dark:bg-gray-950 font-medium text-xs"
               onClick={handleViewFullTrip}
             >
               View Full Trip →
             </button>
 
             <button
-              className="w-full mt-4 py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-medium text-sm hover:opacity-90 transition-opacity"
+              className="w-full mt-4 py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black font-medium text-xs hover:opacity-90 transition-opacity"
               onClick={handleEditTrip}
             >
               Edit Trip (Fullscreen)

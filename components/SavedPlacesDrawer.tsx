@@ -1,87 +1,99 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDrawer } from '@/contexts/DrawerContext';
 import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
-import { EnhancedSavedTab } from '@/components/EnhancedSavedTab';
-import { Loader2, AlertCircle } from 'lucide-react';
-import { useDrawer } from '@/contexts/DrawerContext';
+import { DrawerHeader } from '@/components/ui/DrawerHeader';
+import { DrawerSection } from '@/components/ui/DrawerSection';
+import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
+import { Loader2, Bookmark, ChevronRight, MapPin, ChevronLeft } from 'lucide-react';
+import Image from 'next/image';
 
-const LOADING_TIMEOUT = 10000; // 10 seconds
+interface SavedPlace {
+  destination_slug: string;
+  destination: {
+    name: string;
+    city?: string;
+    category?: string;
+    image?: string;
+  } | null;
+}
+
+function PlaceItem({ place, onClick }: { place: SavedPlace; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-900"
+    >
+      <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
+        {place.destination?.image ? (
+          <Image src={place.destination.image} alt={place.destination?.name || ''} fill className="object-cover" sizes="48px" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center">
+            <MapPin className="h-5 w-5 text-gray-400" />
+          </div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+          {place.destination?.name || place.destination_slug}
+        </p>
+        {place.destination?.city && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">{place.destination.city}</p>
+        )}
+      </div>
+      <ChevronRight className="h-4 w-4 text-gray-400" />
+    </button>
+  );
+}
 
 export function SavedPlacesDrawer() {
+  const router = useRouter();
   const { user } = useAuth();
-  const { isDrawerOpen, closeDrawer } = useDrawer();
+  const { isDrawerOpen, closeDrawer, goBack, canGoBack } = useDrawer();
   const isOpen = isDrawerOpen('saved-places');
-  const [savedPlaces, setSavedPlaces] = useState<any[]>([]);
+  const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchSavedPlaces = useCallback(async () => {
     if (!user) {
       setSavedPlaces([]);
-      setLoading(false);
-      setError(null);
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-      
       const supabaseClient = createClient();
-      if (!supabaseClient) {
-        throw new Error('Failed to initialize database connection');
-      }
+      const { data: savedResult } = await supabaseClient
+        .from('saved_places')
+        .select('destination_slug')
+        .eq('user_id', user.id);
 
-      // Add timeout handling
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timeout')), LOADING_TIMEOUT);
-      });
+      if (savedResult && savedResult.length > 0) {
+        const slugs = savedResult.map((item: any) => item.destination_slug);
+        const { data: destData } = await supabaseClient
+          .from('destinations')
+          .select('slug, name, city, category, image')
+          .in('slug', slugs);
 
-      const fetchPromise = (async () => {
-        const { data: savedResult, error } = await supabaseClient
-          .from('saved_places')
-          .select('destination_slug')
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-
-        if (savedResult && savedResult.length > 0) {
-          const slugs = savedResult.map((item: any) => item.destination_slug);
-          const { data: destData } = await supabaseClient
-            .from('destinations')
-            .select('slug, name, city, category, image')
-            .in('slug', slugs);
-
-          if (destData) {
-            const mapped = savedResult.map((item: any) => {
-              const dest = destData.find((d: any) => d.slug === item.destination_slug);
-              return dest ? {
-                destination_slug: dest.slug,
-                destination: {
-                  name: dest.name,
-                  city: dest.city,
-                  category: dest.category,
-                  image: dest.image
-                }
-              } : null;
-            }).filter((item: any) => item !== null);
-            setSavedPlaces(mapped);
-          } else {
-            setSavedPlaces([]);
-          }
-        } else {
-          setSavedPlaces([]);
+        if (destData) {
+          const mapped = savedResult.map((item: any) => {
+            const dest = destData.find((d: any) => d.slug === item.destination_slug);
+            return {
+              destination_slug: item.destination_slug,
+              destination: dest ? { name: dest.name, city: dest.city, category: dest.category, image: dest.image } : null,
+            };
+          });
+          setSavedPlaces(mapped);
         }
-      })();
-
-      await Promise.race([fetchPromise, timeoutPromise]);
-    } catch (error: any) {
+      } else {
+        setSavedPlaces([]);
+      }
+    } catch (error) {
       console.error('Error fetching saved places:', error);
-      setError(error.message || 'Failed to load saved places. Please try again.');
-      setSavedPlaces([]);
     } finally {
       setLoading(false);
     }
@@ -90,55 +102,75 @@ export function SavedPlacesDrawer() {
   useEffect(() => {
     if (isOpen) {
       fetchSavedPlaces();
-    } else {
-      // Reset state when drawer closes
-      setError(null);
     }
   }, [isOpen, fetchSavedPlaces]);
 
-  const content = (
-    <div className="px-6 py-6">
-      {loading ? (
-        <div className="text-center py-12 space-y-3">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400 mx-auto" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Loading saved places...</p>
-          {/* Skeleton loader */}
-          <div className="space-y-3 mt-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="animate-pulse">
-                <div className="h-20 bg-gray-200 dark:bg-gray-800 rounded-2xl" />
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : error ? (
-        <div className="text-center py-12 space-y-4">
-          <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Failed to load</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{error}</p>
-          </div>
-          <button
-            onClick={fetchSavedPlaces}
-            className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-xl hover:opacity-80 transition-opacity"
-          >
-            Try Again
-          </button>
-        </div>
-      ) : (
-        <EnhancedSavedTab savedPlaces={savedPlaces} />
-      )}
-    </div>
+  const handleSelectPlace = (slug: string) => {
+    closeDrawer();
+    setTimeout(() => router.push(`/destination/${slug}`), 200);
+  };
+
+  const backButton = canGoBack ? (
+    <button
+      onClick={goBack}
+      className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+    >
+      <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+    </button>
+  ) : (
+    <Bookmark className="h-5 w-5 text-gray-500" />
   );
 
   return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={closeDrawer}
-      title="Saved Places"
-    >
-      {content}
+    <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer}>
+      <DrawerHeader
+        title="Saved Places"
+        subtitle={`${savedPlaces.length} places`}
+        leftAccessory={backButton}
+      />
+
+      <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
+        {loading ? (
+          <DrawerSection>
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+              <p className="mt-2 text-sm text-gray-500">Loading saved places...</p>
+            </div>
+          </DrawerSection>
+        ) : savedPlaces.length === 0 ? (
+          <DrawerSection>
+            <div className="text-center py-12 px-4 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl">
+              <Bookmark className="h-8 w-8 text-gray-400 mx-auto mb-3" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">No saved places yet</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Save places to find them here</p>
+            </div>
+          </DrawerSection>
+        ) : (
+          <DrawerSection>
+            <div className="-mx-3 space-y-0.5">
+              {savedPlaces.map((place) => (
+                <PlaceItem
+                  key={place.destination_slug}
+                  place={place}
+                  onClick={() => handleSelectPlace(place.destination_slug)}
+                />
+              ))}
+            </div>
+          </DrawerSection>
+        )}
+      </div>
+
+      <DrawerActionBar>
+        <button
+          onClick={() => {
+            closeDrawer();
+            router.push('/account?tab=saved');
+          }}
+          className="w-full bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium"
+        >
+          View all saved
+        </button>
+      </DrawerActionBar>
     </Drawer>
   );
 }
-

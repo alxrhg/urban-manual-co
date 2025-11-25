@@ -351,7 +351,7 @@ export function Drawer({
     if (!title && !headerContent) return null;
     
     return (
-      <div className={`flex-shrink-0 h-14 px-6 flex items-center justify-between ${headerBackground} border-b border-gray-200/50 dark:border-gray-800/50`}>
+      <div className={`flex-shrink-0 h-14 px-6 flex items-center justify-between ${headerBackground}`}>
         {headerContent || (
           <>
             <button

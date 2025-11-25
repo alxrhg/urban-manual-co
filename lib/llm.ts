@@ -1,9 +1,9 @@
 import { getOpenAI, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL } from '@/lib/openai';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '';
-const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
+import {
+  generateTextWithGemini,
+  generateJSONWithGemini,
+  isGeminiAvailable,
+} from '@/lib/gemini';
 
 export async function generateText(
   prompt: string,
@@ -28,21 +28,9 @@ export async function generateText(
     }
   }
 
-  // Fallback to Gemini
-  if (genAI) {
-    try {
-      const model = genAI.getGenerativeModel({
-        model: GEMINI_MODEL,
-        generationConfig: {
-          temperature,
-          maxOutputTokens: maxTokens,
-        },
-      });
-      const result = await model.generateContent(prompt);
-      return result.response.text();
-    } catch (error) {
-      console.error('Gemini generateText error:', error);
-    }
+  // Fallback to Gemini (using consolidated client)
+  if (isGeminiAvailable()) {
+    return generateTextWithGemini(prompt, { temperature, maxOutputTokens: maxTokens });
   }
 
   return null;
@@ -66,15 +54,11 @@ export async function generateJSON(system: string, user: string): Promise<any | 
       if (match) return JSON.parse(match[0]);
     } catch (_) {}
   }
-  // Fallback to Gemini
-  if (genAI) {
-    try {
-      const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-      const result = await model.generateContent(`${system}\nReturn ONLY valid JSON.\n\n${user}`);
-      const text = result.response.text();
-      const match = text.match(/\{[\s\S]*\}/);
-      if (match) return JSON.parse(match[0]);
-    } catch (_) {}
+  // Fallback to Gemini (using consolidated client)
+  if (isGeminiAvailable()) {
+    return generateJSONWithGemini(`${system}\nReturn ONLY valid JSON.\n\n${user}`, {
+      temperature: 0.2,
+    });
   }
   return null;
 }

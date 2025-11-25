@@ -55,11 +55,15 @@ class TaggingRequest(BaseModel):
 
 
 class TagReasonResponse(BaseModel):
+    """Serialized reason explaining why a semantic tag matched."""
+
     sentence: str
     keyword: str
 
 
 class TagDecisionResponse(BaseModel):
+    """API response payload describing an individual tag decision."""
+
     tag_id: int
     tag_slug: str
     tag_name: str
@@ -68,12 +72,15 @@ class TagDecisionResponse(BaseModel):
 
 
 class TaggingResponse(BaseModel):
+    """Response returned from the semantic tagging endpoint."""
+
     decisions: list[TagDecisionResponse]
     forced_on: list[int]
     forced_off: list[int]
 
     @classmethod
     def from_result(cls, result: TaggingResult) -> "TaggingResponse":
+        """Convert a domain-level tagging result to the API response shape."""
         return cls(
             decisions=[
                 TagDecisionResponse(

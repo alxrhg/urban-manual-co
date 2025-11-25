@@ -159,13 +159,6 @@ const RealtimeStatusBadge = dynamic(
     })),
   { ssr: false }
 );
-const TripPlanner = dynamic(
-  () =>
-    import("@/components/TripPlanner").then(mod => ({
-      default: mod.TripPlanner,
-    })),
-  { ssr: false }
-);
 const POIDrawer = dynamic(
   () =>
     import("@/components/POIDrawer").then(mod => ({ default: mod.POIDrawer })),
@@ -2865,18 +2858,15 @@ export default function Home() {
                           <span className="hidden sm:inline">Add New POI</span>
                         </button>
                       ) : (
-                        <button
-                          onClick={() => {
-                            setPlannerPrefill(null);
-                            setShowTripPlanner(true);
-                          }}
+                        <Link
+                          href="/trips"
                           className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-4 sm:px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
                           style={{ borderRadius: '9999px' }}
-                          aria-label="Create Trip"
+                          aria-label="View Trips"
                         >
                           <Plus className="h-4 w-4" />
-                          <span className="hidden sm:inline">Create Trip</span>
-                        </button>
+                          <span className="hidden sm:inline">Trips</span>
+                        </Link>
                       )}
 
                       {/* Filters - Compact Icon Button */}
@@ -3425,17 +3415,6 @@ export default function Home() {
           />
         )}
 
-        {/* Trip Planner Modal - Only render when open */}
-        {showTripPlanner && (
-        <TripPlanner
-          isOpen={showTripPlanner}
-          prefilledDestination={plannerPrefill}
-          onClose={() => {
-            setShowTripPlanner(false);
-            setPlannerPrefill(null);
-          }}
-        />
-      )}
 
         {/* POI Drawer (Admin only) */}
         {isAdmin && (

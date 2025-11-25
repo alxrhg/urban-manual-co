@@ -8,10 +8,10 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen">
+    <article className="min-h-screen" aria-labelledby="about-title">
       <div className="px-6 md:px-10 py-20">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold mb-12 text-black dark:text-white">About</h1>
+          <h1 id="about-title" className="text-4xl md:text-5xl font-bold mb-12 text-black dark:text-white">About</h1>
 
           <div className="space-y-6">
             <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
@@ -98,7 +98,7 @@ export default function AboutPage() {
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 

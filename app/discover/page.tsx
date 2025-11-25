@@ -117,8 +117,8 @@ export default function DiscoverPage() {
   // Show loading state while checking auth
   if (!authChecked) {
     return (
-      <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
-        <div className="w-full max-w-7xl mx-auto">
+      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+        <div className="w-full">
           <div className="text-center py-20">
             <p className="text-sm text-gray-500">Checking access...</p>
           </div>
@@ -130,25 +130,25 @@ export default function DiscoverPage() {
   // Show access denied for non-admin users
   if (!isAdmin) {
     return (
-      <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
-        <div className="w-full max-w-7xl mx-auto">
+      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+        <div className="w-full">
           <div className="text-center py-20">
             <Lock className="h-16 w-16 mx-auto text-gray-400 mb-4" />
             <h1 className="text-2xl font-light mb-2">Admin Access Required</h1>
-            <p className="text-sm text-gray-500 mb-6">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
               This ML showcase is only available to administrators.
             </p>
             {!user ? (
               <button
                 onClick={() => router.push('/auth/login')}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm"
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl text-xs font-medium"
               >
                 Sign In
               </button>
             ) : (
               <button
                 onClick={() => router.push('/account')}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm"
+                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl text-xs font-medium"
               >
                 Go to Account
               </button>
@@ -160,8 +160,8 @@ export default function DiscoverPage() {
   }
 
   return (
-    <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
-      <div className="w-full max-w-7xl mx-auto">
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <div className="w-full">
         {/* Header */}
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-2">
@@ -170,7 +170,7 @@ export default function DiscoverPage() {
               Admin Only
             </span>
           </div>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Explore destinations powered by machine learning and artificial intelligence
           </p>
         </div>

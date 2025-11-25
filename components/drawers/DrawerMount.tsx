@@ -7,7 +7,7 @@ import { Drawer } from "@/components/ui/Drawer";
 // DRAWERS (to be implemented in Parts 3–8)
 import TripListDrawer from "@/components/drawers/TripListDrawer";
 import TripOverviewDrawer from "@/components/drawers/TripOverviewDrawer";
-import TripDayEditorDrawer from "@/components/drawers/TripDayEditorDrawer";
+import TripSettingsDrawer from "@/components/drawers/TripSettingsDrawer";
 import PlaceSelectorDrawer from "@/components/drawers/PlaceSelectorDrawer";
 import AddHotelDrawer from "@/components/drawers/AddHotelDrawer";
 import AISuggestionsDrawer from "@/components/drawers/AISuggestionsDrawer";
@@ -50,19 +50,20 @@ export default function DrawerMount() {
         </Drawer>
       )}
 
-      {/* DAY EDITOR (FULLSCREEN) */}
-      {drawer === "trip-day-editor" && (
+      {/* TRIP SETTINGS */}
+      {drawer === "trip-settings" && props?.trip && (
         <Drawer
           isOpen={isOpen}
           onClose={closeDrawer}
-          fullScreen={true}
+          title="Trip Settings"
           style={drawerStyle}
           position="right"
+          desktopWidth="420px"
         >
-          <TripDayEditorDrawer
-            day={props?.day ?? null}
-            index={props?.index ?? 0}
-            trip={props?.trip ?? null}
+          <TripSettingsDrawer
+            trip={props.trip}
+            onUpdate={props?.onUpdate}
+            onDelete={props?.onDelete}
           />
         </Drawer>
       )}
@@ -72,17 +73,21 @@ export default function DrawerMount() {
         <Drawer
           isOpen={isOpen}
           onClose={closeDrawer}
-          title={props?.mealType ? `Add ${props.mealType}` : "Add Place"}
+          title="Add Place"
           style={drawerStyle}
           position="right"
           desktopWidth="420px"
         >
           <PlaceSelectorDrawer
-            day={props?.day ?? null}
-            trip={props?.trip ?? null}
+            tripId={props?.tripId}
+            dayNumber={props?.dayNumber}
+            city={props?.city}
+            onSelect={props?.onSelect}
+            day={props?.day}
+            trip={props?.trip}
             index={props?.index}
-            mealType={props?.mealType ?? null}
-            replaceIndex={props?.replaceIndex ?? null}
+            mealType={props?.mealType}
+            replaceIndex={props?.replaceIndex}
           />
         </Drawer>
       )}

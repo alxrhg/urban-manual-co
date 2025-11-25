@@ -20,22 +20,23 @@ export type DrawerType =
   | 'create-trip'
   | null;
 
-type DrawerManagerAction =
-  | { type: 'open'; drawer: DrawerType }
-  | { type: 'toggle'; drawer: DrawerType }
-  | { type: 'close' };
-
 interface DrawerContextType {
   /** Active drawer key, or null if no drawer is open */
   activeDrawer: DrawerType;
+  /** Parent drawer to return to */
+  parentDrawer: DrawerType;
   /** Open a specific drawer (automatically closes any other open drawer) */
-  openDrawer: (type: DrawerType) => void;
+  openDrawer: (type: DrawerType, parent?: DrawerType) => void;
   /** Toggle a specific drawer (opens it or closes if already active) */
   toggleDrawer: (type: DrawerType) => void;
   /** Close the currently open drawer */
   closeDrawer: () => void;
+  /** Go back to parent drawer */
+  goBack: () => void;
   /** Check if a specific drawer is open */
   isDrawerOpen: (type: DrawerType) => boolean;
+  /** Check if there's a parent drawer to go back to */
+  canGoBack: boolean;
 }
 
 const DrawerContext = createContext<DrawerContextType | undefined>(undefined);
@@ -43,25 +44,46 @@ const DrawerContext = createContext<DrawerContextType | undefined>(undefined);
 /**
  * DrawerProvider manages global drawer state
  * Ensures only one drawer can be open at a time
+ * Supports parent drawer for back navigation
  */
 export function DrawerProvider({ children }: { children: ReactNode }) {
   const [activeDrawer, setActiveDrawer] = useState<DrawerType>(null);
-
-  const updateDrawer = useCallback((action: DrawerManagerAction) => {
-    setActiveDrawer((current) => getNextDrawerState(current, action));
-  }, []);
+  const [parentDrawer, setParentDrawer] = useState<DrawerType>(null);
 
   const openDrawer = useCallback(
-    (type: DrawerType) => updateDrawer({ type: 'open', drawer: type }),
-    [updateDrawer]
+    (type: DrawerType, parent?: DrawerType) => {
+      setParentDrawer(parent || null);
+      setActiveDrawer(type);
+    },
+    []
   );
 
   const toggleDrawer = useCallback(
-    (type: DrawerType) => updateDrawer({ type: 'toggle', drawer: type }),
-    [updateDrawer]
+    (type: DrawerType) => {
+      setActiveDrawer((current) => {
+        if (current === type) {
+          setParentDrawer(null);
+          return null;
+        }
+        return type;
+      });
+    },
+    []
   );
 
-  const closeDrawer = useCallback(() => updateDrawer({ type: 'close' }), [updateDrawer]);
+  const closeDrawer = useCallback(() => {
+    setActiveDrawer(null);
+    setParentDrawer(null);
+  }, []);
+
+  const goBack = useCallback(() => {
+    if (parentDrawer) {
+      setActiveDrawer(parentDrawer);
+      setParentDrawer(null);
+    } else {
+      setActiveDrawer(null);
+    }
+  }, [parentDrawer]);
 
   const isDrawerOpen = useCallback(
     (type: DrawerType) => {
@@ -70,14 +92,19 @@ export function DrawerProvider({ children }: { children: ReactNode }) {
     [activeDrawer]
   );
 
+  const canGoBack = parentDrawer !== null;
+
   return (
     <DrawerContext.Provider
       value={{
         activeDrawer,
+        parentDrawer,
         openDrawer,
         toggleDrawer,
         closeDrawer,
+        goBack,
         isDrawerOpen,
+        canGoBack,
       }}
     >
       {children}
@@ -97,16 +124,4 @@ export function useDrawer() {
   return context;
 }
 
-export function getNextDrawerState(current: DrawerType, action: DrawerManagerAction): DrawerType {
-  switch (action.type) {
-    case 'open':
-      return action.drawer;
-    case 'toggle':
-      return current === action.drawer ? null : action.drawer;
-    case 'close':
-      return null;
-    default:
-      return current;
-  }
-}
 

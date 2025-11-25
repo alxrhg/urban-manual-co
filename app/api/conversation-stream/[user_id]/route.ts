@@ -6,7 +6,12 @@
 import { NextRequest } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { openai, OPENAI_MODEL } from '@/lib/openai';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  genAI,
+  GEMINI_MODEL,
+  getGeminiModel,
+  isGeminiAvailable,
+} from '@/lib/gemini';
 import { URBAN_MANUAL_EDITOR_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';
 import { formatFewShots } from '@/lib/ai/fewShots';
 import {
@@ -28,9 +33,6 @@ import {
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { unifiedSearch } from '@/lib/discovery-engine/integration';
 
-const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
-const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
 const CONVERSATION_MODEL = process.env.OPENAI_CONVERSATION_MODEL || OPENAI_MODEL;
 
 // Simple, conversational system prompt for Gemini

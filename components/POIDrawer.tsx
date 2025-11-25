@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Drawer } from '@/components/ui/Drawer';
-import { Loader2, X, Trash2 } from 'lucide-react';
-import { stripHtmlTags } from '@/lib/stripHtmlTags';
+import { DrawerHeader } from '@/components/ui/DrawerHeader';
+import { DrawerSection } from '@/components/ui/DrawerSection';
+import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
+import { Loader2, X, Trash2, MapPin } from 'lucide-react';
 import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
 import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
@@ -15,9 +17,9 @@ import { ParentDestinationAutocompleteInput } from '@/components/ParentDestinati
 interface POIDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave?: () => void; // Callback after successful save
-  destination?: Destination | null; // Optional destination for editing mode
-  initialCity?: string; // Optional initial city value for new POIs
+  onSave?: () => void;
+  destination?: Destination | null;
+  initialCity?: string;
 }
 
 interface Destination {
@@ -62,28 +64,17 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
     parent_destination_id: null as number | null,
   });
 
-  // Reset form when drawer opens/closes, or load destination data for editing
   useEffect(() => {
     if (!isOpen) {
       setFormData({
-        slug: '',
-        name: '',
-        city: '',
-        category: '',
-        description: '',
-        content: '',
-        image: '',
-        michelin_stars: null,
-        crown: false,
-        brand: '',
-        architect: '',
+        slug: '', name: '', city: '', category: '', description: '', content: '',
+        image: '', michelin_stars: null, crown: false, brand: '', architect: '',
         parent_destination_id: null,
       });
       setImageFile(null);
       setImagePreview(null);
       setShowDeleteConfirm(false);
     } else if (destination) {
-      // Pre-fill form with destination data for editing
       setFormData({
         slug: destination.slug || '',
         name: destination.name || '',
@@ -98,35 +89,15 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         architect: destination.architect || '',
         parent_destination_id: destination.parent_destination_id || null,
       });
-      if (destination.image) {
-        setImagePreview(destination.image);
-      }
+      if (destination.image) setImagePreview(destination.image);
     } else if (initialCity) {
-      // Pre-fill city for new POI from city page
-      setFormData({
-        slug: '',
-        name: '',
-        city: initialCity,
-        category: '',
-        description: '',
-        content: '',
-        image: '',
-        michelin_stars: null,
-        crown: false,
-        brand: '',
-        architect: '',
-        parent_destination_id: null,
-      });
+      setFormData(prev => ({ ...prev, city: initialCity }));
     }
   }, [isOpen, destination, initialCity]);
 
-  // Auto-generate slug from name
   useEffect(() => {
     if (formData.name && !formData.slug) {
-      const slug = formData.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+      const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
       setFormData(prev => ({ ...prev, slug }));
     }
   }, [formData.name]);
@@ -135,46 +106,27 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
     const file = e.target.files?.[0];
     if (file) {
       setImageFile(file);
-      // Create preview
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
+      reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
+    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
     if (file && file.type.startsWith('image/')) {
       setImageFile(file);
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
+      reader.onloadend = () => setImagePreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
   const uploadImage = async (): Promise<string | null> => {
     if (!imageFile) return null;
-
     setUploadingImage(true);
     try {
       const formDataToSend = new FormData();
@@ -183,28 +135,17 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
 
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
+      if (!session?.access_token) throw new Error('Not authenticated');
 
       const res = await fetch('/api/upload-image', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
         body: formDataToSend,
       });
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Upload failed');
-      }
-
-      const data = await res.json();
-      return data.url;
+      if (!res.ok) throw new Error((await res.json()).error || 'Upload failed');
+      return (await res.json()).url;
     } catch (error: any) {
-      console.error('Upload error:', error);
       toast.error(`Image upload failed: ${error.message}`);
       return null;
     } finally {
@@ -214,7 +155,6 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!formData.name || !formData.city || !formData.category) {
       toast.error('Please fill in name, city, and category');
       return;
@@ -222,32 +162,16 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
 
     setIsSaving(true);
     try {
-      // Upload image if file selected
       let imageUrl = formData.image;
       if (imageFile) {
         const uploadedUrl = await uploadImage();
-        if (uploadedUrl) {
-          imageUrl = uploadedUrl;
-        } else {
-          // Don't submit if upload failed
-          setIsSaving(false);
-          return;
-        }
+        if (uploadedUrl) imageUrl = uploadedUrl;
+        else { setIsSaving(false); return; }
       }
 
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
-      // Ensure category is not empty
-      if (!formData.category || !formData.category.trim()) {
-        toast.error('Category is required');
-        setIsSaving(false);
-        return;
-      }
+      if (!session) throw new Error('Not authenticated');
 
       const destinationData = {
         slug: formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
@@ -259,156 +183,51 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         image: imageUrl || null,
         michelin_stars: formData.michelin_stars || null,
         crown: formData.crown || false,
-        brand: formData.brand && formData.brand.trim() ? formData.brand.trim() : null,
-        architect: formData.architect && formData.architect.trim() ? formData.architect.trim() : null,
+        brand: formData.brand?.trim() || null,
+        architect: formData.architect?.trim() || null,
         parent_destination_id: formData.parent_destination_id || null,
       };
 
-      // Log the data being sent for debugging
-      console.log('Updating destination with data:', {
-        slug: destination?.slug,
-        category: destinationData.category,
-        brand: destinationData.brand,
-        architect: destinationData.architect,
-        fullData: destinationData
-      });
-
       const isEditing = !!destination;
-      
       let error;
-      let result;
       if (isEditing) {
-        // Update existing destination - explicitly select category to verify it was updated
-        // First, let's try updating just to see if there are any permission issues
-        console.log('Attempting to update destination:', {
-          slug: destination.slug,
-          currentCategory: destination.category,
-          newCategory: destinationData.category,
-          allFields: Object.keys(destinationData)
-        });
-        
-        const { data: updateData, error: updateError } = await supabase
-          .from('destinations')
-          .update(destinationData)
-          .eq('slug', destination.slug)
-          .select('slug, name, city, category, brand, architect');
+        const { error: updateError } = await supabase.from('destinations').update(destinationData).eq('slug', destination.slug);
         error = updateError;
-        result = updateData;
-        
-        // Log for debugging
-        if (error) {
-          console.error('Update error:', error);
-          console.error('Destination data being sent:', destinationData);
-          console.error('Error code:', error.code);
-          console.error('Error message:', error.message);
-          console.error('Error details:', error.details);
-        } else {
-          console.log('Update successful:', updateData);
-          console.log('Updated category:', updateData?.[0]?.category);
-          // Verify category was actually updated
-          if (updateData && updateData[0] && updateData[0].category !== destinationData.category) {
-            console.warn('Category mismatch! Expected:', destinationData.category, 'Got:', updateData[0].category);
-          }
-        }
       } else {
-        // Create new destination
-        const { data: insertData, error: insertError } = await supabase
-          .from('destinations')
-          .insert([destinationData])
-          .select();
+        const { error: insertError } = await supabase.from('destinations').insert([destinationData]);
         error = insertError;
-        result = insertData;
       }
 
       if (error) {
-        if (error.code === '23505') { // Unique constraint violation
-          toast.error('A destination with this slug already exists');
-        } else {
-          console.error('Save error details:', {
-            error,
-            destinationData,
-            isEditing,
-            destinationSlug: destination?.slug
-          });
-          throw error;
-        }
+        if (error.code === '23505') toast.error('A destination with this slug already exists');
+        else throw error;
         return;
       }
 
-      // Verify the update was successful, especially for category and brand
-      if (isEditing && result && result[0]) {
-        const updatedCategory = result[0].category;
-        const updatedBrand = result[0].brand;
-        if (updatedCategory !== destinationData.category) {
-          console.error('Category update verification failed:', {
-            expected: destinationData.category,
-            actual: updatedCategory,
-            fullResult: result[0]
-          });
-          toast.error(`Category update may have failed. Expected "${destinationData.category}" but got "${updatedCategory}"`);
-          setIsSaving(false);
-          return;
-        }
-        if (updatedBrand !== destinationData.brand) {
-          console.error('Brand update verification failed:', {
-            expected: destinationData.brand,
-            actual: updatedBrand,
-            fullResult: result[0]
-          });
-          toast.error(`Brand update may have failed. Expected "${destinationData.brand}" but got "${updatedBrand}"`);
-          setIsSaving(false);
-          return;
-        }
-        console.log('Category update verified successfully:', updatedCategory);
-        console.log('Brand update verified successfully:', updatedBrand);
-      }
-
-      toast.success(isEditing ? 'Destination updated successfully' : 'POI created successfully');
+      toast.success(isEditing ? 'Destination updated' : 'POI created');
       onSave?.();
       onClose();
     } catch (error: any) {
-      console.error('Error creating POI:', error);
-      toast.error(error.message || 'Failed to create POI');
+      toast.error(error.message || 'Failed to save');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!destination || !destination.slug) {
-      toast.error('No destination to delete');
-      return;
-    }
-
-    if (!showDeleteConfirm) {
-      setShowDeleteConfirm(true);
-      return;
-    }
+    if (!destination?.slug) return;
+    if (!showDeleteConfirm) { setShowDeleteConfirm(true); return; }
 
     setIsDeleting(true);
     try {
       const supabase = createClient();
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
-
-      const { error } = await supabase
-        .from('destinations')
-        .delete()
-        .eq('slug', destination.slug);
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success('Destination deleted successfully');
+      const { error } = await supabase.from('destinations').delete().eq('slug', destination.slug);
+      if (error) throw error;
+      toast.success('Destination deleted');
       onSave?.();
       onClose();
     } catch (error: any) {
-      console.error('Error deleting destination:', error);
-      toast.error(error.message || 'Failed to delete destination');
+      toast.error(error.message || 'Failed to delete');
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -418,514 +237,202 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
   const handleGooglePlaceSelect = async (placeDetails: any) => {
     const placeId = placeDetails?.place_id || placeDetails?.placeId;
     if (!placeId) return;
-    
+
     try {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      
-      if (!token) {
-        throw new Error('Not authenticated');
-      }
+      if (!session?.access_token) throw new Error('Not authenticated');
 
-      const response = await fetch('/api/fetch-google-place', {
+      const res = await fetch('/api/fetch-google-place', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
         body: JSON.stringify({ placeId }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch place details');
-      }
+      if (!res.ok) throw new Error('Failed to fetch place details');
+      const data = await res.json();
 
-      const data = await response.json();
-      
       if (data) {
-        // Update form with fetched data, always using fetched values when available
         setFormData(prev => ({
           ...prev,
-          // Use fetched data if it exists, otherwise keep previous value
-          name: data.name !== undefined && data.name !== null ? data.name : prev.name,
-          city: data.city !== undefined && data.city !== null ? data.city : prev.city,
-          category: data.category !== undefined && data.category !== null ? data.category : prev.category,
-          description: data.description !== undefined && data.description !== null ? data.description : prev.description,
-          content: data.content !== undefined && data.content !== null ? data.content : prev.content,
-          image: data.image !== undefined && data.image !== null ? data.image : prev.image,
-          michelin_stars: data.michelin_stars !== undefined && data.michelin_stars !== null ? data.michelin_stars : prev.michelin_stars,
+          name: data.name ?? prev.name,
+          city: data.city ?? prev.city,
+          category: data.category ?? prev.category,
+          description: data.description ?? prev.description,
+          image: data.image ?? prev.image,
         }));
-        
-        // Update image preview if image URL is provided
-        if (data.image) {
-          setImagePreview(data.image);
-        } else {
-          // Clear preview if no image
-          setImagePreview(null);
-        }
-        
+        if (data.image) setImagePreview(data.image);
         setGooglePlaceQuery('');
-        toast.success('Place details loaded from Google');
+        toast.success('Place details loaded');
       }
-    } catch (error: any) {
-      console.error('Error fetching Google place:', error);
+    } catch (error) {
       toast.error('Failed to load place details');
     }
   };
 
-  // Create header content with save button for mobile
-  const headerContent = (
-    <div className="flex items-center justify-between w-full gap-3">
-      <button
-        onClick={onClose}
-        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors md:hidden"
-        aria-label="Close drawer"
-      >
-        <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
-      </button>
-      <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center md:text-left md:ml-0">
-        {destination ? "Edit Destination" : "Add New POI"}
-      </h2>
-      {/* Save button for mobile - shown in header */}
-      <button
-        type="submit"
-        form="poi-form"
-        disabled={isSaving || isDeleting || !formData.name || !formData.city || !formData.category}
-        className="md:hidden px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
-      >
-        {isSaving ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {destination ? 'Updating...' : 'Creating...'}
-          </>
-        ) : (
-          destination ? 'Update' : 'Save'
-        )}
-      </button>
-      {/* Spacer for desktop to maintain centering */}
-      <div className="hidden md:block w-9" />
-    </div>
-  );
+  return (
+    <Drawer isOpen={isOpen} onClose={onClose} desktopWidth="500px">
+      <DrawerHeader
+        title={destination ? 'Edit Destination' : 'Add New POI'}
+        leftAccessory={<MapPin className="h-5 w-5 text-gray-500" />}
+      />
 
-  const content = (
-    <div className="px-6 py-6 pb-24">
-      <form id="poi-form" onSubmit={handleSubmit} className="space-y-8">
-        {/* Google Places Autocomplete */}
-        <div>
-          <label className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-            Search Google Places (optional)
-          </label>
-          <GooglePlacesAutocompleteNative
-            value={googlePlaceQuery}
-            onChange={setGooglePlaceQuery}
-            onPlaceSelect={handleGooglePlaceSelect}
-            placeholder="Search for a place on Google..."
-            className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm"
-            types={['establishment']}
-          />
-        </div>
+      <div className="overflow-y-auto max-h-[calc(100vh-8rem)] pb-20">
+        <form id="poi-form" onSubmit={handleSubmit}>
+          <DrawerSection bordered>
+            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Search Google Places</label>
+            <GooglePlacesAutocompleteNative
+              value={googlePlaceQuery}
+              onChange={setGooglePlaceQuery}
+              onPlaceSelect={handleGooglePlaceSelect}
+              placeholder="Search Google Places..."
+              className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+              types={['establishment']}
+            />
+          </DrawerSection>
 
-        {/* Section Divider: Basic Info */}
-        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Basic Information</h3>
-          
-          {/* Name */}
-          <div className="mb-6">
-            <label htmlFor="name" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-              Name *
-            </label>
+          <DrawerSection bordered>
+            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Name *</label>
             <input
-              id="name"
               type="text"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               required
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
-              placeholder="Restaurant name"
+              className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+              placeholder="Place name"
             />
-          </div>
+          </DrawerSection>
 
-          {/* Slug */}
-          <div className="mb-6">
-            <label htmlFor="slug" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-              Slug
-            </label>
-            <input
-              id="slug"
-              type="text"
-              value={formData.slug}
-              onChange={(e) => setFormData(prev => ({ ...prev, slug: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
-              placeholder="auto-generated-from-name"
-            />
-          </div>
-
-          {/* City */}
-          <div className="mb-6">
-            <label htmlFor="city" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-              City *
-            </label>
+          <DrawerSection bordered>
+            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">City *</label>
             <CityAutocompleteInput
               value={formData.city}
               onChange={(value) => setFormData(prev => ({ ...prev, city: value }))}
-              placeholder="Tokyo"
+              placeholder="City"
               required
             />
-          </div>
+          </DrawerSection>
 
-          {/* Category */}
-          <div className="mb-6">
-            <label htmlFor="category" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-              Category *
-            </label>
+          <DrawerSection bordered>
+            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Category *</label>
             <CategoryAutocompleteInput
               value={formData.category}
               onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-              placeholder="Dining"
+              placeholder="Category"
               required
             />
-          </div>
+          </DrawerSection>
 
-          {/* Brand */}
-          <div className="mb-6">
-            <label htmlFor="brand" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-              Brand
-            </label>
-            <input
-              id="brand"
-              type="text"
-              value={formData.brand}
-              onChange={(e) => setFormData(prev => ({ ...prev, brand: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
-              placeholder="Brand name"
-            />
-          </div>
-
-          {/* Architect */}
-          <div className="mb-6">
-            <label htmlFor="architect" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-              Architect
-            </label>
-            <input
-              id="architect"
-              type="text"
-              value={formData.architect}
-              onChange={(e) => setFormData(prev => ({ ...prev, architect: e.target.value }))}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
-              placeholder="Architect name"
-            />
-          </div>
-
-          {/* Parent Destination (Nested Location) */}
-          <div>
-            <label htmlFor="parent_destination" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-              Located In (Parent Location)
-            </label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-              Select a parent location if this place is nested inside another (e.g., a bar inside a hotel)
-            </p>
-            <ParentDestinationAutocompleteInput
-              value={formData.parent_destination_id}
-              onChange={(id) => setFormData(prev => ({ ...prev, parent_destination_id: id }))}
-              currentDestinationId={destination?.id}
-              placeholder="Search for parent location (e.g., hotel, building)..."
-            />
-          </div>
-        </div>
-
-        {/* Section Divider: Content */}
-        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Content</h3>
-          
-          {/* Description */}
-          <div className="mb-6">
-            <label htmlFor="description" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-              Description
-            </label>
+          <DrawerSection bordered>
+            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Description</label>
             <textarea
-              id="description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               rows={3}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
+              className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm resize-none"
               placeholder="Short description..."
             />
-          </div>
+          </DrawerSection>
 
-          {/* Content */}
-          <div>
-            <label htmlFor="content" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-              Content
-            </label>
-            <textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-              rows={6}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm resize-none placeholder:text-gray-400 dark:placeholder:text-gray-600"
-              placeholder="Full content (markdown supported)..."
-            />
-          </div>
-        </div>
-
-        {/* Section Divider: Media */}
-        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Media</h3>
-          
-          <div>
-            <label className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-              Image
-            </label>
-            
-            {/* Drag and Drop Zone */}
+          <DrawerSection bordered>
+            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Image</label>
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`relative border-2 border-dashed rounded-2xl p-8 transition-all duration-200 ease-in-out mb-4 ${
-                isDragging
-                  ? 'border-black dark:border-white bg-gray-100 dark:bg-gray-800 scale-[1.01] shadow-lg'
-                  : 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:border-gray-400 dark:hover:border-gray-600'
+              className={`relative border-2 border-dashed rounded-xl p-6 transition-all ${
+                isDragging ? 'border-black dark:border-white bg-gray-100 dark:bg-gray-800' : 'border-gray-300 dark:border-gray-700'
               }`}
             >
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-                id="image-upload-input"
-              />
-              <label
-                htmlFor="image-upload-input"
-                className="flex flex-col items-center justify-center cursor-pointer min-h-[120px]"
-              >
+              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload" />
+              <label htmlFor="image-upload" className="flex flex-col items-center cursor-pointer">
                 {imagePreview ? (
-                  <div className="relative w-full group">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="w-full h-48 object-cover rounded-xl mb-3 border border-gray-200 dark:border-gray-800"
-                    />
+                  <div className="relative w-full">
+                    <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setImageFile(null);
-                        setImagePreview(null);
-                        const input = document.getElementById('image-upload-input') as HTMLInputElement;
-                        if (input) input.value = '';
-                      }}
-                      className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-all duration-200 ease-in-out hover:scale-110 shadow-lg"
-                      title="Remove image"
-                      aria-label="Remove image"
+                      onClick={(e) => { e.preventDefault(); setImageFile(null); setImagePreview(null); }}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3 w-3" />
                     </button>
                   </div>
                 ) : (
                   <>
-                    <div className="text-4xl mb-3 opacity-60">📷</div>
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Drag & drop an image here
-                    </span>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                      or click to browse
-                    </span>
+                    <span className="text-2xl mb-2">📷</span>
+                    <span className="text-xs text-gray-500">Drop image or click to upload</span>
                   </>
                 )}
               </label>
             </div>
-
-            {/* Alternative: File Input Button */}
-            {!imagePreview && (
-              <div className="flex items-center gap-2 mb-4">
-                <label className="flex-1 cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                    id="image-upload-button"
-                  />
-                  <span className="inline-flex items-center justify-center w-full px-4 py-2.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 ease-in-out text-sm font-medium">
-                    📁 Choose File
-                  </span>
-                </label>
-              </div>
-            )}
-
-            {/* Or URL Input */}
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-3 text-center">or</div>
-            <input
-              id="image"
-              type="url"
-              value={formData.image}
-              onChange={(e) => {
-                setFormData(prev => ({ ...prev, image: e.target.value }));
-                if (!imageFile && e.target.value) {
-                  setImagePreview(e.target.value);
-                }
-              }}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm placeholder:text-gray-400 dark:placeholder:text-gray-600"
-              placeholder="Enter image URL"
-            />
-            {imagePreview && formData.image && !imageFile && (
-              <div className="mt-4">
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="w-full h-48 object-cover rounded-xl border border-gray-200 dark:border-gray-800"
-                  onError={() => setImagePreview(null)}
-                />
-              </div>
-            )}
             {uploadingImage && (
-              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800">
-                <div className="flex items-center gap-3">
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-600 dark:text-gray-400" />
-                  <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">Uploading image...</span>
-                </div>
+              <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                <Loader2 className="h-3 w-3 animate-spin" /> Uploading...
               </div>
             )}
-          </div>
-        </div>
+          </DrawerSection>
 
-        {/* Section Divider: Metadata */}
-        <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-          <h3 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-6">Metadata</h3>
-          
-          {/* Michelin Stars */}
-          <div className="mb-6">
-            <label htmlFor="michelin_stars" className="block text-xs font-medium uppercase tracking-wide mb-2 text-gray-700 dark:text-gray-300">
-              Michelin Stars
-            </label>
+          <DrawerSection bordered>
+            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Michelin Stars</label>
             <select
-              id="michelin_stars"
               value={formData.michelin_stars || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, michelin_stars: e.target.value ? parseInt(e.target.value) : null }))}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 focus:outline-none focus:ring-1 focus:ring-black/5 dark:focus:ring-white/5 focus:border-black dark:focus:border-white transition-all duration-200 ease-in-out text-sm appearance-none cursor-pointer"
+              className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
             >
               <option value="">None</option>
               <option value="1">1 Star</option>
               <option value="2">2 Stars</option>
               <option value="3">3 Stars</option>
             </select>
-          </div>
+          </DrawerSection>
 
-          {/* Crown */}
-          <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-200 dark:border-gray-800">
-            <input
-              id="crown"
-              type="checkbox"
-              checked={formData.crown}
-              onChange={(e) => setFormData(prev => ({ ...prev, crown: e.target.checked }))}
-              className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-black dark:text-white focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-0 cursor-pointer transition-all duration-200 ease-in-out"
+          <DrawerSection>
+            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Located In (Parent)</label>
+            <ParentDestinationAutocompleteInput
+              value={formData.parent_destination_id}
+              onChange={(id) => setFormData(prev => ({ ...prev, parent_destination_id: id }))}
+              currentDestinationId={destination?.id}
+              placeholder="Search parent location..."
             />
-            <label htmlFor="crown" className="text-xs font-medium text-gray-700 dark:text-gray-300 cursor-pointer">
-              Crown (Featured destination)
-            </label>
-          </div>
-        </div>
+          </DrawerSection>
 
-        {/* Submit Button - Desktop only (mobile button is in header) */}
-        <div className="hidden md:block space-y-4 pt-6 border-t border-gray-200 dark:border-gray-800">
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200 ease-in-out text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-gray-200 dark:disabled:hover:border-gray-800"
-              disabled={isSaving || isDeleting}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSaving || isDeleting || !formData.name || !formData.city || !formData.category}
-              className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm font-medium flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {destination ? 'Updating...' : 'Creating...'}
-                </>
-              ) : (
-                destination ? 'Update Destination' : 'Create POI'
-              )}
-            </button>
-          </div>
-
-          {/* Delete Button (only show when editing) */}
           {destination && (
-            <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+            <DrawerSection>
               {showDeleteConfirm ? (
-                <div className="space-y-4">
-                  <div className="p-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/50 rounded-xl">
-                    <p className="text-sm text-gray-900 dark:text-white text-center font-medium mb-1">
-                      Delete "{destination.name}"?
-                    </p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
-                      This action cannot be undone.
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteConfirm(false)}
-                      className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-200 ease-in-out text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={isDeleting}
-                    >
+                <div className="space-y-3">
+                  <p className="text-sm text-center text-gray-600 dark:text-gray-400">Delete "{destination.name}"?</p>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm">
                       Cancel
                     </button>
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      disabled={isDeleting}
-                      className="flex-1 px-4 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 text-sm font-medium flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:ring-offset-2"
-                    >
-                      {isDeleting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Deleting...
-                        </>
-                      ) : (
-                        <>
-                          <Trash2 className="h-4 w-4" />
-                          Delete Destination
-                        </>
-                      )}
+                    <button type="button" onClick={handleDelete} disabled={isDeleting} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-full text-sm">
+                      {isDeleting ? 'Deleting...' : 'Delete'}
                     </button>
                   </div>
                 </div>
               ) : (
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  disabled={isSaving || isDeleting}
-                  className="w-full px-4 py-3 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-400 dark:hover:border-red-700 transition-all duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:border-red-300 dark:disabled:hover:border-red-800 text-sm font-medium flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:ring-offset-2"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Delete Destination
+                <button type="button" onClick={handleDelete} className="w-full px-4 py-2 border border-red-300 text-red-600 rounded-full text-sm flex items-center justify-center gap-2">
+                  <Trash2 className="h-4 w-4" /> Delete Destination
                 </button>
               )}
-            </div>
+            </DrawerSection>
           )}
-        </div>
-      </form>
-    </div>
-  );
+        </form>
+      </div>
 
-  return (
-    <Drawer
-      isOpen={isOpen}
-      onClose={onClose}
-      title={undefined}
-      headerContent={headerContent}
-      desktopWidth="600px"
-    >
-      {content}
+      <DrawerActionBar>
+        <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-full text-sm">
+          Cancel
+        </button>
+        <button
+          type="submit"
+          form="poi-form"
+          disabled={isSaving || !formData.name || !formData.city || !formData.category}
+          className="flex-1 bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {isSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : destination ? 'Update' : 'Create'}
+        </button>
+      </DrawerActionBar>
     </Drawer>
   );
 }
-
