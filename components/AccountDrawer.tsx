@@ -273,19 +273,19 @@ export function AccountDrawer() {
               icon={Bookmark}
               label="Saved places"
               description={`${stats.saved} items`}
-              onClick={() => openDrawer('saved-places')}
+              onClick={() => openDrawer('saved-places', 'account')}
             />
             <NavItem
               icon={MapPin}
               label="Visited places"
               description={`${stats.visited} logged`}
-              onClick={() => openDrawer('visited-places')}
+              onClick={() => openDrawer('visited-places', 'account')}
             />
             <NavItem
               icon={Compass}
               label="Trips"
               description={`${stats.trips} planned`}
-              onClick={() => openDrawer('trips')}
+              onClick={() => openDrawer('trips', 'account')}
             />
           </div>
         </DrawerSection>
@@ -300,7 +300,7 @@ export function AccountDrawer() {
               icon={Settings}
               label="Settings"
               description="Preferences & privacy"
-              onClick={() => openDrawer('settings')}
+              onClick={() => openDrawer('settings', 'account')}
             />
             <NavItem
               icon={LogOut}

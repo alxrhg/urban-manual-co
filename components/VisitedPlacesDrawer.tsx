@@ -9,7 +9,7 @@ import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
 import { DrawerSection } from '@/components/ui/DrawerSection';
 import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
-import { Loader2, MapPin, ChevronRight } from 'lucide-react';
+import { Loader2, MapPin, ChevronRight, ChevronLeft } from 'lucide-react';
 import Image from 'next/image';
 
 interface VisitedPlace {
@@ -59,7 +59,7 @@ function PlaceItem({ place, onClick }: { place: VisitedPlace; onClick: () => voi
 export function VisitedPlacesDrawer() {
   const router = useRouter();
   const { user } = useAuth();
-  const { isDrawerOpen, closeDrawer } = useDrawer();
+  const { isDrawerOpen, closeDrawer, goBack, canGoBack } = useDrawer();
   const isOpen = isDrawerOpen('visited-places');
   const [visitedPlaces, setVisitedPlaces] = useState<VisitedPlace[]>([]);
   const [loading, setLoading] = useState(false);
@@ -118,12 +118,23 @@ export function VisitedPlacesDrawer() {
     setTimeout(() => router.push(`/destination/${slug}`), 200);
   };
 
+  const backButton = canGoBack ? (
+    <button
+      onClick={goBack}
+      className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+    >
+      <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+    </button>
+  ) : (
+    <MapPin className="h-5 w-5 text-gray-500" />
+  );
+
   return (
-    <Drawer isOpen={isOpen} onClose={closeDrawer}>
+    <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer}>
       <DrawerHeader
         title="Visited Places"
         subtitle={`${visitedPlaces.length} places`}
-        leftAccessory={<MapPin className="h-5 w-5 text-gray-500" />}
+        leftAccessory={backButton}
       />
 
       <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">

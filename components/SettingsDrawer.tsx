@@ -8,7 +8,7 @@ import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
 import { DrawerSection } from '@/components/ui/DrawerSection';
 import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
-import { Settings, User, Shield, Bell, ChevronRight } from 'lucide-react';
+import { Settings, User, Shield, Bell, ChevronRight, ChevronLeft } from 'lucide-react';
 
 function NavItem({
   icon: Icon,
@@ -43,7 +43,7 @@ function NavItem({
 export function SettingsDrawer() {
   const router = useRouter();
   const { user } = useAuth();
-  const { isDrawerOpen, closeDrawer } = useDrawer();
+  const { isDrawerOpen, closeDrawer, goBack, canGoBack } = useDrawer();
   const isOpen = isDrawerOpen('settings');
 
   const handleNavigate = (path: string) => {
@@ -51,12 +51,23 @@ export function SettingsDrawer() {
     setTimeout(() => router.push(path), 200);
   };
 
+  const backButton = canGoBack ? (
+    <button
+      onClick={goBack}
+      className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+    >
+      <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+    </button>
+  ) : (
+    <Settings className="h-5 w-5 text-gray-500" />
+  );
+
   if (!user) {
     return (
-      <Drawer isOpen={isOpen} onClose={closeDrawer}>
+      <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer}>
         <DrawerHeader
           title="Settings"
-          leftAccessory={<Settings className="h-5 w-5 text-gray-500" />}
+          leftAccessory={backButton}
         />
 
         <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
@@ -73,11 +84,11 @@ export function SettingsDrawer() {
   }
 
   return (
-    <Drawer isOpen={isOpen} onClose={closeDrawer}>
+    <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer}>
       <DrawerHeader
         title="Settings"
         subtitle="Manage your account"
-        leftAccessory={<Settings className="h-5 w-5 text-gray-500" />}
+        leftAccessory={backButton}
       />
 
       <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">

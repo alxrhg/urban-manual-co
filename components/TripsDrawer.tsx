@@ -9,7 +9,7 @@ import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
 import { DrawerSection } from '@/components/ui/DrawerSection';
 import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
-import { MapPin, Calendar, ChevronRight, Plus, Loader2, Plane } from 'lucide-react';
+import { MapPin, Calendar, ChevronRight, Plus, Loader2, Plane, ChevronLeft, Compass } from 'lucide-react';
 import Image from 'next/image';
 
 interface Trip {
@@ -97,7 +97,7 @@ function TripCard({ trip, onClick }: { trip: Trip; onClick: () => void }) {
 export function TripsDrawer() {
   const router = useRouter();
   const { user } = useAuth();
-  const { isDrawerOpen, closeDrawer } = useDrawer();
+  const { isDrawerOpen, closeDrawer, goBack, canGoBack } = useDrawer();
   const isOpen = isDrawerOpen('trips');
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(false);
@@ -141,9 +141,20 @@ export function TripsDrawer() {
     setTimeout(() => router.push('/trips'), 200);
   };
 
+  const backButton = canGoBack ? (
+    <button
+      onClick={goBack}
+      className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+    >
+      <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+    </button>
+  ) : (
+    <Compass className="h-5 w-5 text-gray-500" />
+  );
+
   return (
-    <Drawer isOpen={isOpen} onClose={closeDrawer}>
-      <DrawerHeader title="Your Trips" subtitle={`${trips.length} trips`} />
+    <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer}>
+      <DrawerHeader title="Your Trips" subtitle={`${trips.length} trips`} leftAccessory={backButton} />
 
       <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
         {loading ? (

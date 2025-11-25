@@ -9,7 +9,7 @@ import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
 import { DrawerSection } from '@/components/ui/DrawerSection';
 import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
-import { Loader2, Bookmark, ChevronRight, MapPin } from 'lucide-react';
+import { Loader2, Bookmark, ChevronRight, MapPin, ChevronLeft } from 'lucide-react';
 import Image from 'next/image';
 
 interface SavedPlace {
@@ -53,7 +53,7 @@ function PlaceItem({ place, onClick }: { place: SavedPlace; onClick: () => void 
 export function SavedPlacesDrawer() {
   const router = useRouter();
   const { user } = useAuth();
-  const { isDrawerOpen, closeDrawer } = useDrawer();
+  const { isDrawerOpen, closeDrawer, goBack, canGoBack } = useDrawer();
   const isOpen = isDrawerOpen('saved-places');
   const [savedPlaces, setSavedPlaces] = useState<SavedPlace[]>([]);
   const [loading, setLoading] = useState(false);
@@ -110,12 +110,23 @@ export function SavedPlacesDrawer() {
     setTimeout(() => router.push(`/destination/${slug}`), 200);
   };
 
+  const backButton = canGoBack ? (
+    <button
+      onClick={goBack}
+      className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+    >
+      <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+    </button>
+  ) : (
+    <Bookmark className="h-5 w-5 text-gray-500" />
+  );
+
   return (
-    <Drawer isOpen={isOpen} onClose={closeDrawer}>
+    <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer}>
       <DrawerHeader
         title="Saved Places"
         subtitle={`${savedPlaces.length} places`}
-        leftAccessory={<Bookmark className="h-5 w-5 text-gray-500" />}
+        leftAccessory={backButton}
       />
 
       <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
