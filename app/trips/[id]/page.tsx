@@ -298,7 +298,7 @@ export default function TripPage() {
                 Day {day.dayNumber}
                 {day.date && (
                   <span className="ml-1 opacity-60">
-                    ({new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                    ({formatTripDate(day.date)})
                   </span>
                 )}
               </button>
