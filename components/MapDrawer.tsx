@@ -1,16 +1,31 @@
 'use client';
 
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
+import { Drawer } from '@/components/ui/Drawer';
+import { DrawerHeader } from '@/components/ui/DrawerHeader';
+import { DrawerSection } from '@/components/ui/DrawerSection';
+import { Map } from 'lucide-react';
 
 interface MapDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
   children: ReactNode;
 }
 
-export default function MapDrawer({ children }: MapDrawerProps) {
+export default function MapDrawer({ isOpen, onClose, title = 'Map View', children }: MapDrawerProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-neutral-50 dark:bg-gray-900 border-t border-neutral-200 dark:border-gray-800 rounded-t-2xl shadow-[0_-4px_16px_rgba(0,0,0,0.08)] p-4 max-h-[40vh] overflow-y-auto z-10">
-      {children}
-    </div>
+    <Drawer isOpen={isOpen} onClose={onClose} mobileVariant="bottom" mobileHeight="40vh">
+      <DrawerHeader
+        title={title}
+        leftAccessory={<Map className="h-5 w-5 text-gray-500" />}
+      />
+
+      <div className="overflow-y-auto max-h-[calc(40vh-4rem)]">
+        <DrawerSection>
+          {children}
+        </DrawerSection>
+      </div>
+    </Drawer>
   );
 }
-
