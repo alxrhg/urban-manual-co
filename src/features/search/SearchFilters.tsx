@@ -190,126 +190,113 @@ export function SearchFiltersComponent({
               ? portalElement &&
                 createPortal(
                   <>
-                    {/* Compact full-width filter panel */}
+                    {/* Compact full-width filter panel - matches category pill design */}
                     <div className="mt-3 w-full overflow-hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 transition-all duration-200 ease-out animate-in fade-in slide-in-from-top-1">
                       <div className="py-3">
                         {/* Single row compact layout */}
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                          {/* Special Filters */}
-                          <div className="flex items-center gap-3 text-sm">
-                            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Special</span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {/* Special Filters - pill style */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (filters.michelin) {
+                                clearFilter('michelin');
+                              } else {
+                                updateFilter('michelin', true);
+                              }
+                            }}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                              filters.michelin
+                                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                            aria-pressed={Boolean(filters.michelin)}
+                          >
+                            Michelin
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (filters.openNow) {
+                                clearFilter('openNow');
+                              } else {
+                                updateFilter('openNow', true);
+                              }
+                            }}
+                            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                              filters.openNow
+                                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                            aria-pressed={Boolean(filters.openNow)}
+                          >
+                            Open Now
+                          </button>
+
+                          <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
+
+                          {/* Rating Filter - pill style */}
+                          {[4.5, 4.0, 3.5].map((rating) => (
                             <button
                               type="button"
+                              key={rating}
                               onClick={() => {
-                                if (filters.michelin) {
-                                  clearFilter('michelin');
+                                if (filters.minRating === rating) {
+                                  clearFilter('minRating');
                                 } else {
-                                  updateFilter('michelin', true);
+                                  updateFilter('minRating', rating);
                                 }
                               }}
-                              className={`transition-all ${
-                                filters.michelin
-                                  ? "font-medium text-black dark:text-white"
-                                  : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                                filters.minRating === rating
+                                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                               }`}
-                              aria-pressed={Boolean(filters.michelin)}
+                              aria-pressed={filters.minRating === rating}
                             >
-                              Michelin
+                              {rating}+
                             </button>
+                          ))}
+
+                          <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
+
+                          {/* Price Filter - pill style */}
+                          {[1, 2, 3, 4].map((level) => (
                             <button
                               type="button"
+                              key={level}
                               onClick={() => {
-                                if (filters.openNow) {
-                                  clearFilter('openNow');
+                                if (filters.minPrice === level && filters.maxPrice === level) {
+                                  clearFilter('minPrice');
+                                  clearFilter('maxPrice');
                                 } else {
-                                  updateFilter('openNow', true);
+                                  updateFilter('minPrice', level);
+                                  updateFilter('maxPrice', level);
                                 }
                               }}
-                              className={`transition-all ${
-                                filters.openNow
-                                  ? "font-medium text-black dark:text-white"
-                                  : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                                filters.minPrice === level && filters.maxPrice === level
+                                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                               }`}
-                              aria-pressed={Boolean(filters.openNow)}
+                              aria-pressed={filters.minPrice === level && filters.maxPrice === level}
                             >
-                              Open Now
+                              {'$'.repeat(level)}
                             </button>
-                          </div>
+                          ))}
 
-                          <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700" />
+                          <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
 
-                          {/* Rating Filter */}
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Rating</span>
-                            <div className="flex items-center gap-1">
-                              {[4.5, 4.0, 3.5].map((rating) => (
-                                <button
-                                  type="button"
-                                  key={rating}
-                                  onClick={() => {
-                                    if (filters.minRating === rating) {
-                                      clearFilter('minRating');
-                                    } else {
-                                      updateFilter('minRating', rating);
-                                    }
-                                  }}
-                                  className={`px-2 py-0.5 rounded transition-all ${
-                                    filters.minRating === rating
-                                      ? "bg-gray-900 dark:bg-white text-white dark:text-black font-medium"
-                                      : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
-                                  }`}
-                                  aria-pressed={filters.minRating === rating}
-                                >
-                                  {rating}+
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700" />
-
-                          {/* Price Filter */}
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Price</span>
-                            <div className="flex items-center gap-1">
-                              {[1, 2, 3, 4].map((level) => (
-                                <button
-                                  type="button"
-                                  key={level}
-                                  onClick={() => {
-                                    if (filters.minPrice === level && filters.maxPrice === level) {
-                                      clearFilter('minPrice');
-                                      clearFilter('maxPrice');
-                                    } else {
-                                      updateFilter('minPrice', level);
-                                      updateFilter('maxPrice', level);
-                                    }
-                                  }}
-                                  className={`px-2 py-0.5 rounded transition-all ${
-                                    filters.minPrice === level && filters.maxPrice === level
-                                      ? "bg-gray-900 dark:bg-white text-white dark:text-black font-medium"
-                                      : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
-                                  }`}
-                                  aria-pressed={filters.minPrice === level && filters.maxPrice === level}
-                                >
-                                  {'$'.repeat(level)}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700" />
-
-                          {/* Near Me Toggle */}
-                          <div className="flex items-center gap-2 text-sm">
+                          {/* Near Me - pill button + toggle */}
+                          <div className="flex items-center gap-2">
                             <button
                               type="button"
                               onClick={() => toggleNearMe(!filters.nearMe)}
                               disabled={loading}
-                              className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-all ${
+                              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
                                 filters.nearMe
-                                  ? "bg-gray-900 dark:bg-white text-white dark:text-black font-medium"
-                                  : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                               }`}
                               aria-pressed={Boolean(filters.nearMe)}
                               aria-label={filters.nearMe ? 'Disable near me filter' : 'Enable near me filter'}
@@ -322,7 +309,7 @@ export function SearchFiltersComponent({
                               Near Me
                             </button>
                             {filters.nearMe && hasLocation && !error && (
-                              <div className="flex items-center gap-2">
+                              <>
                                 <input
                                   id="near-me-radius-full"
                                   type="range"
@@ -331,47 +318,50 @@ export function SearchFiltersComponent({
                                   step="0.5"
                                   value={nearMeRadius}
                                   onChange={(e) => updateRadius(parseFloat(e.target.value))}
-                                  className="w-20 h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black dark:[&::-webkit-slider-thumb]:bg-white"
+                                  className="w-16 h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-900 dark:[&::-webkit-slider-thumb]:bg-white"
                                   aria-valuenow={nearMeRadius}
                                   aria-valuetext={formatDistance(nearMeRadius)}
                                 />
-                                <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[40px]">{formatDistance(nearMeRadius)}</span>
-                              </div>
+                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{formatDistance(nearMeRadius)}</span>
+                              </>
+                            )}
+                            {loading && (
+                              <span className="text-xs text-gray-500 dark:text-gray-400">Getting location...</span>
+                            )}
+                            {error && filters.nearMe && (
+                              <span className="text-xs text-red-500 dark:text-red-400">Location denied</span>
                             )}
                           </div>
 
                           {/* Sort Filter (Admin Only) */}
                           {isAdmin && onSortChange && (
                             <>
-                              <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700" />
-                              <div className="flex items-center gap-2 text-sm">
-                                <span className="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">Sort</span>
-                                <button
-                                  type="button"
-                                  onClick={() => onSortChange('default')}
-                                  className={`transition-all ${
-                                    sortBy === 'default'
-                                      ? "font-medium text-black dark:text-white"
-                                      : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
-                                  }`}
-                                  aria-pressed={sortBy === 'default'}
-                                >
-                                  Default
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => onSortChange('recent')}
-                                  className={`flex items-center gap-1 transition-all ${
-                                    sortBy === 'recent'
-                                      ? "font-medium text-black dark:text-white"
-                                      : "text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
-                                  }`}
-                                  aria-pressed={sortBy === 'recent'}
-                                >
-                                  <Sparkles className="h-3 w-3" />
-                                  Recent
-                                </button>
-                              </div>
+                              <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
+                              <button
+                                type="button"
+                                onClick={() => onSortChange('default')}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                                  sortBy === 'default'
+                                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                }`}
+                                aria-pressed={sortBy === 'default'}
+                              >
+                                Default
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => onSortChange('recent')}
+                                className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                                  sortBy === 'recent'
+                                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                }`}
+                                aria-pressed={sortBy === 'recent'}
+                              >
+                                <Sparkles className="h-3 w-3" />
+                                Recent
+                              </button>
                             </>
                           )}
 
@@ -383,27 +373,20 @@ export function SearchFiltersComponent({
                             {hasActiveFilters && (
                               <button
                                 onClick={clearAll}
-                                className="text-xs text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+                                className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                               >
-                                Clear
+                                Clear all
                               </button>
                             )}
                             <button
                               onClick={() => handleToggle(false)}
-                              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                               aria-label="Close filters"
                             >
-                              <X className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                              <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                             </button>
                           </div>
                         </div>
-
-                        {/* Error message for Near Me */}
-                        {error && filters.nearMe && (
-                          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            Location access denied. Please enable in browser settings.
-                          </div>
-                        )}
                       </div>
                     </div>
                   </>,
