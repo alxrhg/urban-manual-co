@@ -2532,9 +2532,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <div className="flex-1">
                     <div className="text-sm font-medium text-black dark:text-white mb-2">Location</div>
                     {/* Neighborhood, City, Country - Better organized */}
-                    {(destination.neighborhood || destination.city || destination.country) && (
+                    {((!parentDestination && destination.neighborhood) || destination.city || destination.country) && (
                       <div className="space-y-1 mb-2">
-                        {destination.neighborhood && (
+                        {!parentDestination && destination.neighborhood && (
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {destination.neighborhood}
                           </div>
@@ -3296,9 +3296,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <div className="flex-1">
                     <div className="text-sm font-medium text-black dark:text-white mb-2">Location</div>
                     {/* Neighborhood, City, Country - Better organized */}
-                    {(destination.neighborhood || destination.city || destination.country) && (
+                    {((!parentDestination && destination.neighborhood) || destination.city || destination.country) && (
                       <div className="space-y-1 mb-2">
-                        {destination.neighborhood && (
+                        {!parentDestination && destination.neighborhood && (
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {destination.neighborhood}
                           </div>
