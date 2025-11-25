@@ -1,31 +1,19 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Loader2, MapPin, Plane } from 'lucide-react';
-import { TripPlanner } from '@/components/TripPlanner';
+import { Plus, Loader2, MapPin, Calendar } from 'lucide-react';
 import type { Trip } from '@/types/trip';
-import UMFeaturePill from '@/components/ui/UMFeaturePill';
-import UMActionPill from '@/components/ui/UMActionPill';
-import TripCard from '@/components/trips/TripCard';
-
-interface TripWithImage extends Trip {
-  firstLocationImage?: string | null;
-}
-
-type FilterType = 'all' | 'planning' | 'upcoming' | 'completed';
 
 export default function TripsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [trips, setTrips] = useState<TripWithImage[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingTripId, setEditingTripId] = useState<string | null>(null);
-  const [deleteConfirmTrip, setDeleteConfirmTrip] = useState<{ id: string; title: string } | null>(null);
-  const [activeFilter, setActiveFilter] = useState<FilterType>('all');
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -34,328 +22,156 @@ export default function TripsPage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user) {
-      fetchTrips();
-    } else {
-      setTrips([]);
-    }
+    if (user) fetchTrips();
   }, [user]);
 
   const fetchTrips = async () => {
     try {
       setLoading(true);
-      const supabaseClient = createClient();
-      if (!supabaseClient || !user) return;
+      const supabase = createClient();
+      if (!supabase || !user) return;
 
-      let query = supabaseClient
+      const { data, error } = await supabase
         .from('trips')
         .select('*')
+        .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      query = query.eq('user_id', user.id);
-
-      const { data, error } = await query;
-
       if (error) throw error;
-
-      // Fetch first location image for each trip
-      const tripsWithImages = await Promise.all(
-        (data || []).map(async (trip) => {
-          // If trip has cover_image, use it
-          if (trip.cover_image) {
-            return { ...trip, firstLocationImage: null };
-          }
-
-          // Otherwise, fetch first itinerary item's image
-          const { data: items } = await supabaseClient
-            .from('itinerary_items')
-            .select('destination_slug, notes')
-            .eq('trip_id', trip.id)
-            .order('day', { ascending: true })
-            .order('order_index', { ascending: true })
-            .limit(1)
-            .maybeSingle();
-
-          let firstLocationImage: string | null = null;
-
-          if (items?.destination_slug) {
-            // Try to get image from destination
-            const { data: dest } = await supabaseClient
-              .from('destinations')
-              .select('image')
-              .eq('slug', items.destination_slug)
-              .maybeSingle();
-
-            if (dest?.image) {
-              firstLocationImage = dest.image;
-            }
-          } else if (items?.notes) {
-            // Try to parse image from notes JSON
-            try {
-              const notesData = JSON.parse(items.notes);
-              if (notesData.image) {
-                firstLocationImage = notesData.image;
-              }
-            } catch {
-              // Ignore parse errors
-            }
-          }
-
-          return { ...trip, firstLocationImage };
-        })
-      );
-
-      setTrips(tripsWithImages);
-    } catch (error) {
-      console.error('Error fetching trips:', error);
+      setTrips(data || []);
+    } catch (err) {
+      console.error('Error fetching trips:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const deleteTrip = async (id: string, title: string) => {
+  const createTrip = async () => {
+    if (!user) return;
     try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
+      setCreating(true);
+      const supabase = createClient();
+      if (!supabase) return;
 
-      const { error } = await supabaseClient
+      const { data, error } = await supabase
         .from('trips')
-        .delete()
-        .eq('id', id);
+        .insert({
+          user_id: user.id,
+          title: 'New Trip',
+          status: 'planning',
+        })
+        .select()
+        .single();
 
       if (error) throw error;
-
-      setTrips(trips.filter((trip) => trip.id !== id));
-      setDeleteConfirmTrip(null);
-    } catch (error) {
-      console.error('Error deleting trip:', error);
-      alert('Failed to delete trip');
+      if (data) router.push(`/trips/${data.id}`);
+    } catch (err) {
+      console.error('Error creating trip:', err);
+    } finally {
+      setCreating(false);
     }
   };
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    const planning = trips.filter(t => t.status === 'planning').length;
-    const upcoming = trips.filter(t => t.status === 'upcoming' || t.status === 'ongoing').length;
-    const completed = trips.filter(t => t.status === 'completed').length;
-    return { total: trips.length, planning, upcoming, completed };
-  }, [trips]);
-
-  // Filter trips based on active filter
-  const filteredTrips = useMemo(() => {
-    if (activeFilter === 'all') return trips;
-    if (activeFilter === 'planning') return trips.filter(t => t.status === 'planning');
-    if (activeFilter === 'upcoming') return trips.filter(t => t.status === 'upcoming' || t.status === 'ongoing');
-    if (activeFilter === 'completed') return trips.filter(t => t.status === 'completed');
-    return trips;
-  }, [trips, activeFilter]);
-
-  const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return null;
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } catch {
-      return null;
-    }
-  };
-
-  const getCityFromTrip = (trip: TripWithImage) => {
-    return trip.destination || undefined;
+  const formatDate = (date: string | null) => {
+    if (!date) return null;
+    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
       </div>
     );
   }
 
-  if (!user) {
-    return null;
-  }
-
-  const filters: { key: FilterType; label: string; count: number }[] = [
-    { key: 'all', label: 'All', count: stats.total },
-    { key: 'planning', label: 'Planning', count: stats.planning },
-    { key: 'upcoming', label: 'Upcoming', count: stats.upcoming },
-    { key: 'completed', label: 'Completed', count: stats.completed },
-  ];
+  if (!user) return null;
 
   return (
-    <div className="w-full px-6 md:px-10 py-20 min-h-screen">
-      <div className="w-full">
+    <div className="min-h-screen bg-white dark:bg-neutral-950">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-12">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-light">Trips</h1>
-            {/* Desktop: New Trip button in header */}
-            <div className="hidden sm:block">
-              <UMActionPill
-                variant="primary"
-                onClick={() => {
-                  if (!user) {
-                    router.push('/auth/login');
-                  } else {
-                    setShowCreateDialog(true);
-                  }
-                }}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                New Trip
-              </UMActionPill>
-            </div>
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white">Trips</h1>
+            <p className="text-sm text-neutral-500 mt-1">Plan your adventures</p>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Plan and organize your travels
-          </p>
+          <button
+            onClick={createTrip}
+            disabled={creating}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition"
+          >
+            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            New Trip
+          </button>
         </div>
 
-        <div className="w-full space-y-8">
-          {/* Mobile: Full-width New Trip CTA */}
-          <div className="sm:hidden">
-            <UMFeaturePill
-              onClick={() => {
-                if (!user) {
-                  router.push('/auth/login');
-                } else {
-                  setShowCreateDialog(true);
-                }
-              }}
-              className="w-full"
+        {/* Trip List */}
+        {trips.length === 0 ? (
+          <div className="py-20 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+              <MapPin className="w-7 h-7 text-neutral-400" />
+            </div>
+            <p className="text-neutral-900 dark:text-white font-medium mb-1">No trips yet</p>
+            <p className="text-sm text-neutral-500 mb-6">Create your first trip to start planning</p>
+            <button
+              onClick={createTrip}
+              disabled={creating}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              New Trip
-            </UMFeaturePill>
+              <Plus className="w-4 h-4" />
+              Create Trip
+            </button>
           </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {trips.map((trip) => (
+              <button
+                key={trip.id}
+                onClick={() => router.push(`/trips/${trip.id}`)}
+                className="text-left bg-neutral-50 dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden hover:border-neutral-300 dark:hover:border-neutral-700 transition group"
+              >
+                {/* Cover Image */}
+                <div className="aspect-[2/1] bg-neutral-200 dark:bg-neutral-800 relative">
+                  {trip.cover_image ? (
+                    <Image
+                      src={trip.cover_image}
+                      alt={trip.title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <MapPin className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
+                    </div>
+                  )}
+                </div>
 
-          {/* FILTER PILLS - Horizontally scrollable on mobile */}
-          {trips.length > 0 && (
-            <div className="overflow-x-auto -mx-6 px-6 sm:mx-0 sm:px-0 scrollbar-hide">
-              <div className="flex gap-2 min-w-max sm:min-w-0 sm:flex-wrap">
-                {filters.map((filter) => (
-                  <UMActionPill
-                    key={filter.key}
-                    variant={activeFilter === filter.key ? 'primary' : 'default'}
-                    onClick={() => setActiveFilter(filter.key)}
-                    className="whitespace-nowrap"
-                  >
-                    {filter.label}
-                    {filter.count > 0 && (
-                      <span className={`ml-1.5 text-xs ${
-                        activeFilter === filter.key
-                          ? 'text-white/70 dark:text-black/60'
-                          : 'text-neutral-400 dark:text-neutral-500'
-                      }`}>
-                        {filter.count}
+                {/* Info */}
+                <div className="p-4">
+                  <h3 className="font-medium text-neutral-900 dark:text-white truncate">
+                    {trip.title}
+                  </h3>
+                  <div className="flex items-center gap-3 mt-1 text-sm text-neutral-500">
+                    {trip.destination && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {trip.destination}
                       </span>
                     )}
-                  </UMActionPill>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TRIP LIST */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTrips.length === 0 ? (
-              <div className="col-span-full">
-                {/* Empty State */}
-                <div className="text-center py-16 px-6 rounded-[16px] border border-dashed border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50">
-                  <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                    <Plane className="w-8 h-8 text-neutral-400 dark:text-neutral-500" />
+                    {trip.start_date && (
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {formatDate(trip.start_date)}
+                        {trip.end_date && ` – ${formatDate(trip.end_date)}`}
+                      </span>
+                    )}
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    {activeFilter === 'all' ? 'No trips yet' : `No ${activeFilter} trips`}
-                  </h3>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6 max-w-sm mx-auto">
-                    {activeFilter === 'all'
-                      ? 'Start planning your next adventure by creating your first trip.'
-                      : `You don't have any ${activeFilter} trips. Create a new trip to get started.`
-                    }
-                  </p>
-                  <UMFeaturePill
-                    onClick={() => {
-                      if (!user) {
-                        router.push('/auth/login');
-                      } else {
-                        setShowCreateDialog(true);
-                      }
-                    }}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Trip
-                  </UMFeaturePill>
                 </div>
-              </div>
-            ) : (
-              filteredTrips.map((trip) => (
-                <TripCard
-                  key={trip.id}
-                  trip={{
-                    id: trip.id,
-                    name: trip.title,
-                    coverImage: trip.cover_image || trip.firstLocationImage,
-                    city: getCityFromTrip(trip),
-                    startDate: formatDate(trip.start_date) || undefined,
-                    endDate: formatDate(trip.end_date) || undefined,
-                    status: trip.status,
-                  }}
-                  onView={() => router.push(`/trips/${trip.id}`)}
-                  onEdit={() => {
-                    setEditingTripId(trip.id);
-                    setShowCreateDialog(true);
-                  }}
-                />
-              ))
-            )}
+              </button>
+            ))}
           </div>
-
-          {/* Trip Planner Modal - Only render when open */}
-          {showCreateDialog && (
-            <TripPlanner
-              isOpen={true}
-              tripId={editingTripId || undefined}
-              onClose={() => {
-                setShowCreateDialog(false);
-                setEditingTripId(null);
-                if (user) {
-                  fetchTrips();
-                }
-              }}
-            />
-          )}
-
-          {/* Delete Confirmation Modal */}
-          {deleteConfirmTrip && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-              <div
-                className="fixed inset-0 bg-black/50 transition-opacity"
-                onClick={() => setDeleteConfirmTrip(null)}
-              />
-              <div className="relative bg-white dark:bg-gray-950 rounded-[16px] shadow-xl border border-gray-200 dark:border-gray-800 p-6 max-w-md w-full">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  Delete Trip
-                </h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 font-light">
-                  Are you sure you want to delete &ldquo;{deleteConfirmTrip.title}&rdquo;? This action cannot be undone.
-                </p>
-                <div className="flex gap-3 justify-end">
-                  <UMActionPill onClick={() => setDeleteConfirmTrip(null)}>
-                    Cancel
-                  </UMActionPill>
-                  <button
-                    onClick={() => deleteTrip(deleteConfirmTrip.id, deleteConfirmTrip.title)}
-                    className="px-4 h-[38px] rounded-xl bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-all"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

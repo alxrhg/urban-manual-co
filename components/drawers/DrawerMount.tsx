@@ -7,6 +7,7 @@ import { Drawer } from "@/components/ui/Drawer";
 // DRAWERS (to be implemented in Parts 3–8)
 import TripListDrawer from "@/components/drawers/TripListDrawer";
 import TripOverviewDrawer from "@/components/drawers/TripOverviewDrawer";
+import TripSettingsDrawer from "@/components/drawers/TripSettingsDrawer";
 import PlaceSelectorDrawer from "@/components/drawers/PlaceSelectorDrawer";
 import AddHotelDrawer from "@/components/drawers/AddHotelDrawer";
 import AISuggestionsDrawer from "@/components/drawers/AISuggestionsDrawer";
@@ -49,22 +50,44 @@ export default function DrawerMount() {
         </Drawer>
       )}
 
+      {/* TRIP SETTINGS */}
+      {drawer === "trip-settings" && props?.trip && (
+        <Drawer
+          isOpen={isOpen}
+          onClose={closeDrawer}
+          title="Trip Settings"
+          style={drawerStyle}
+          position="right"
+          desktopWidth="420px"
+        >
+          <TripSettingsDrawer
+            trip={props.trip}
+            onUpdate={props?.onUpdate}
+            onDelete={props?.onDelete}
+          />
+        </Drawer>
+      )}
+
       {/* PLACE SELECTOR */}
       {drawer === "place-selector" && (
         <Drawer
           isOpen={isOpen}
           onClose={closeDrawer}
-          title={props?.mealType ? `Add ${props.mealType}` : "Add Place"}
+          title="Add Place"
           style={drawerStyle}
           position="right"
           desktopWidth="420px"
         >
           <PlaceSelectorDrawer
-            day={props?.day ?? null}
-            trip={props?.trip ?? null}
+            tripId={props?.tripId}
+            dayNumber={props?.dayNumber}
+            city={props?.city}
+            onSelect={props?.onSelect}
+            day={props?.day}
+            trip={props?.trip}
             index={props?.index}
-            mealType={props?.mealType ?? null}
-            replaceIndex={props?.replaceIndex ?? null}
+            mealType={props?.mealType}
+            replaceIndex={props?.replaceIndex}
           />
         </Drawer>
       )}

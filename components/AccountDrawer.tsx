@@ -31,7 +31,6 @@ import { Drawer } from "@/components/ui/Drawer";
 import { DrawerHeader } from "@/components/ui/DrawerHeader";
 import { DrawerSection } from "@/components/ui/DrawerSection";
 import { DrawerActionBar } from "@/components/ui/DrawerActionBar";
-import { TripViewDrawer } from "@/components/TripViewDrawer";
 import type { Trip } from "@/types/trip";
 import type { Collection } from "@/types/common";
 
@@ -1180,38 +1179,6 @@ export function AccountDrawer() {
         <div className="flex h-full flex-col">{renderContent()}</div>
       </Drawer>
 
-      {/* Trip Quickview Drawer */}
-      {viewingTripId && (
-        <TripViewDrawer
-          isOpen={showTripViewDrawer}
-          onClose={() => {
-            setShowTripViewDrawer(false);
-            setViewingTripId(null);
-          }}
-          tripId={viewingTripId}
-          onEdit={() => {
-            setShowTripViewDrawer(false);
-            setViewingTripId(null);
-            closeDrawer();
-            setTimeout(() => router.push(`/trips/${viewingTripId}`), 200);
-          }}
-          onDelete={() => {
-            setShowTripViewDrawer(false);
-            setViewingTripId(null);
-            if (user?.id && isOpen) {
-              const supabaseClient = createClient();
-              supabaseClient
-                .from("trips")
-                .select("*")
-                .eq("user_id", user.id)
-                .order("created_at", { ascending: false })
-                .then(({ data }) => {
-                  setTrips((data as Trip[]) || []);
-                });
-            }
-          }}
-        />
-      )}
     </>
   );
 }
