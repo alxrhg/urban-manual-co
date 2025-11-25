@@ -511,10 +511,10 @@ export default function TripPage() {
                       // Calculate travel time from previous item
                       let travelInfo = null;
                       if (prevItem && !isFlight && prevItem.parsedNotes?.type !== 'flight') {
-                        const prevLat = prevItem.parsedNotes?.latitude || prevItem.destination?.latitude;
-                        const prevLon = prevItem.parsedNotes?.longitude || prevItem.destination?.longitude;
-                        const currLat = item.parsedNotes?.latitude || item.destination?.latitude;
-                        const currLon = item.parsedNotes?.longitude || item.destination?.longitude;
+                        const prevLat = prevItem.parsedNotes?.latitude ?? prevItem.destination?.latitude ?? undefined;
+                        const prevLon = prevItem.parsedNotes?.longitude ?? prevItem.destination?.longitude ?? undefined;
+                        const currLat = item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined;
+                        const currLon = item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined;
                         travelInfo = estimateTravelTime(prevLat, prevLon, currLat, currLon);
                       }
 
