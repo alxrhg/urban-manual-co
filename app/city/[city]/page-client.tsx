@@ -27,12 +27,7 @@ const DestinationDrawer = dynamic(
   }
 );
 
-const POIDrawer = dynamic(
-  () => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })),
-  {
-    ssr: false,
-  }
-);
+import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 function capitalizeCity(city: string): string {
   return city
@@ -79,25 +74,36 @@ export default function CityPageClient() {
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
-  const [showPOIDrawer, setShowPOIDrawer] = useState(false);
-  const [isCreatingNewPOI, setIsCreatingNewPOI] = useState(false);
 
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
 
   const { openDrawer, isDrawerOpen: isDrawerTypeOpen, closeDrawer } = useDrawer();
+  const { openDrawer: openGlobalDrawer } = useDrawerStore();
 
   const handleAdminEdit = (destination: Destination) => {
     if (!isAdmin) return;
     setEditingDestination(destination);
-    setIsCreatingNewPOI(false);
-    setShowPOIDrawer(true);
+    openGlobalDrawer('poi-editor', {
+      destination: destination,
+      onSave: async () => {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await fetchDestinations();
+        setEditingDestination(null);
+      }
+    });
   };
 
   const handleAddNewPOI = () => {
     if (!isAdmin) return;
     setEditingDestination(null);
-    setIsCreatingNewPOI(true);
-    setShowPOIDrawer(true);
+    openGlobalDrawer('poi-editor', {
+      destination: null,
+      initialCity: citySlug,
+      onSave: async () => {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await fetchDestinations();
+      }
+    });
   };
 
   useEffect(() => {
@@ -592,26 +598,6 @@ export default function CityPageClient() {
             console.error('Error fetching destination:', error);
           }
         }}
-        />
-      )}
-
-      {isAdmin && (
-        <POIDrawer
-          isOpen={showPOIDrawer}
-          onClose={() => {
-            setShowPOIDrawer(false);
-            setEditingDestination(null);
-            setIsCreatingNewPOI(false);
-          }}
-          destination={editingDestination || undefined}
-          initialCity={isCreatingNewPOI ? citySlug : undefined}
-          onSave={async () => {
-            await new Promise(resolve => setTimeout(resolve, 200));
-            await fetchDestinations();
-            setEditingDestination(null);
-            setIsCreatingNewPOI(false);
-            setShowPOIDrawer(false);
-          }}
         />
       )}
     </>

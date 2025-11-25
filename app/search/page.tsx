@@ -18,9 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 import type { Destination as DestinationType } from '@/types/destination';
 
-const POIDrawer = dynamic(() => import('@/components/POIDrawer').then(mod => ({ default: mod.POIDrawer })), {
-  ssr: false,
-});
+import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 interface SearchDestination {
   id: number;
@@ -57,7 +55,7 @@ function SearchPageContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
   const [editingDestination, setEditingDestination] = useState<DestinationType | null>(null);
-  const [showPOIDrawer, setShowPOIDrawer] = useState(false);
+  const { openDrawer: openGlobalDrawer } = useDrawerStore();
   const isAdmin = (user?.app_metadata as Record<string, any> | undefined)?.role === 'admin';
   const {
     isEditMode: adminEditMode,
@@ -112,7 +110,14 @@ function SearchPageContent() {
   const handleEditDestination = (destination: DestinationType) => {
     if (!isAdmin) return;
     setEditingDestination(destination);
-    setShowPOIDrawer(true);
+    openGlobalDrawer('poi-editor', {
+      destination: destination,
+      onSave: async () => {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await performInitialSearch(searchState.originalQuery || query);
+        setEditingDestination(null);
+      }
+    });
   };
 
   // Recompute suggestions whenever filtered results or refinements change
@@ -417,22 +422,6 @@ function SearchPageContent() {
         </>
       )}
       </div>
-      {isAdmin && (
-        <POIDrawer
-          isOpen={showPOIDrawer}
-          onClose={() => {
-            setShowPOIDrawer(false);
-            setEditingDestination(null);
-          }}
-          destination={editingDestination || undefined}
-          onSave={async () => {
-            await new Promise(resolve => setTimeout(resolve, 200));
-            await performInitialSearch(searchState.originalQuery || query);
-            setEditingDestination(null);
-            setShowPOIDrawer(false);
-          }}
-        />
-      )}
     </>
   );
 }

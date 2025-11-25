@@ -11,6 +11,7 @@ import TripSettingsDrawer from "@/components/drawers/TripSettingsDrawer";
 import PlaceSelectorDrawer from "@/components/drawers/PlaceSelectorDrawer";
 import AddHotelDrawer from "@/components/drawers/AddHotelDrawer";
 import AISuggestionsDrawer from "@/components/drawers/AISuggestionsDrawer";
+import POIEditorDrawer from "@/components/drawers/POIEditorDrawer";
 
 /**
  * DrawerMount:
@@ -126,6 +127,24 @@ export default function DrawerMount() {
             index={props?.index}
             suggestions={props?.suggestions}
             onApply={props?.onApply}
+          />
+        </Drawer>
+      )}
+
+      {/* POI EDITOR */}
+      {drawer === "poi-editor" && (
+        <Drawer
+          isOpen={isOpen}
+          onClose={closeDrawer}
+          title={props?.destination ? "Edit Destination" : "Add New POI"}
+          style={drawerStyle}
+          position="right"
+          desktopWidth="500px"
+        >
+          <POIEditorDrawer
+            destination={props?.destination ?? null}
+            initialCity={props?.initialCity}
+            onSave={props?.onSave}
           />
         </Drawer>
       )}
