@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback, memo } from "react";
 import { Send, Sparkles, X, Minimize2, MapPin, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -40,7 +40,81 @@ interface Message {
   mode?: string;
   context?: TravelContext;
   suggestions?: Suggestion[];
+  isPreview?: boolean; // True when showing quick search results before AI response
 }
+
+// Memoized destination card - only re-renders when this specific destination changes
+const DestinationCard = memo(function DestinationCard({ dest }: { dest: Destination }) {
+  return (
+    <a
+      href={`/destination/${dest.slug}`}
+      className="group flex items-start gap-3 p-2 -mx-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+      onClick={(e) => {
+        e.preventDefault();
+        window.location.href = `/destination/${dest.slug}`;
+      }}
+    >
+      <div className="relative w-16 h-16 flex-shrink-0 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
+        {dest.image ? (
+          <img
+            src={dest.image}
+            alt={dest.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <MapPin className="h-5 w-5 opacity-30" />
+          </div>
+        )}
+        {dest.michelin_stars && dest.michelin_stars > 0 && (
+          <div className="absolute bottom-1 left-1 bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5">
+            <span className="text-red-500">*</span>
+            <span>{dest.michelin_stars}</span>
+          </div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-medium text-sm leading-tight line-clamp-1 text-black dark:text-white group-hover:underline">
+          {dest.name}
+        </h4>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+          {dest.neighborhood || dest.city} · {dest.category}
+          {dest.rating && <span className="ml-1">· {dest.rating}</span>}
+        </p>
+        {dest.micro_description && (
+          <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+            {dest.micro_description}
+          </p>
+        )}
+      </div>
+      <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+    </a>
+  );
+});
+
+// Memoized destinations grid - only re-renders when destinations array changes
+const DestinationsGrid = memo(function DestinationsGrid({
+  destinations,
+  isPreview
+}: {
+  destinations: Destination[];
+  isPreview?: boolean;
+}) {
+  if (!destinations || destinations.length === 0) return null;
+
+  return (
+    <div className={`mt-3 space-y-2 ${isPreview ? 'opacity-90' : ''}`}>
+      {destinations.slice(0, 4).map((dest) => (
+        <DestinationCard key={dest.slug} dest={dest} />
+      ))}
+      {destinations.length > 4 && (
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-1">
+          +{destinations.length - 4} more places
+        </p>
+      )}
+    </div>
+  );
+});
 
 export function ChatGPTStyleAI() {
   const [isOpen, setIsOpen] = useState(false);
@@ -74,21 +148,59 @@ export function ChatGPTStyleAI() {
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
 
-    try {
-      // Build conversation history from messages
-      const conversationHistory = messages.map(msg => ({
-        role: msg.role,
-        content: msg.content,
-        destinations: msg.destinations,
-        context: msg.context,
-      }));
+    // Build conversation history from messages
+    const conversationHistory = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content,
+      destinations: msg.destinations,
+      context: msg.context,
+    }));
 
-      // Call the new Travel Intelligence API
+    // Check if this looks like a search query (not conversational)
+    const isSearchQuery = /hotel|restaurant|cafe|bar|coffee|food|eat|stay|museum|shop|best|recommend|find|where|looking for/i.test(userMessage);
+
+    try {
+      // PHASE 1: Quick search for instant results (only for search queries)
+      if (isSearchQuery) {
+        const quickSearchPromise = fetch('/api/travel-intelligence/quick-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: userMessage,
+            context: currentContext,
+          }),
+        }).then(r => r.ok ? r.json() : null).catch(() => null);
+
+        // Show quick results immediately (non-blocking)
+        quickSearchPromise.then(quickData => {
+          if (quickData?.destinations?.length > 0) {
+            // Show preview destinations while AI thinks
+            setMessages(prev => {
+              const lastMsg = prev[prev.length - 1];
+              if (lastMsg?.role === 'user') {
+                return [...prev, {
+                  role: "assistant",
+                  content: "Finding the best options for you...",
+                  destinations: quickData.destinations,
+                  mode: 'discover',
+                  context: quickData.context,
+                  isPreview: true,
+                }];
+              }
+              return prev;
+            });
+            // Update context from quick search
+            if (quickData.context) {
+              setCurrentContext(prev => ({ ...prev, ...quickData.context }));
+            }
+          }
+        });
+      }
+
+      // PHASE 2: Full AI response (runs in parallel)
       const response = await fetch('/api/travel-intelligence', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage,
           userId: user?.id,
@@ -111,20 +223,29 @@ export function ChatGPTStyleAI() {
         setCurrentMode(data.mode);
       }
 
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: data.response || '',
-        destinations: data.destinations,
-        mode: data.mode,
-        context: data.context,
-        suggestions: data.suggestions,
-      }]);
+      // Replace preview message with full AI response
+      setMessages(prev => {
+        // Remove preview message if exists
+        const filtered = prev.filter((msg: any) => !msg.isPreview);
+        return [...filtered, {
+          role: "assistant",
+          content: data.response || '',
+          destinations: data.destinations,
+          mode: data.mode,
+          context: data.context,
+          suggestions: data.suggestions,
+        }];
+      });
     } catch (error) {
       console.error("Travel Intelligence error:", error);
-      setMessages(prev => [...prev, {
-        role: "assistant",
-        content: "I'm having trouble connecting right now. Please try again.",
-      }]);
+      setMessages(prev => {
+        // Remove preview message if exists
+        const filtered = prev.filter((msg: any) => !msg.isPreview);
+        return [...filtered, {
+          role: "assistant",
+          content: "I'm having trouble connecting right now. Please try again.",
+        }];
+      });
     } finally {
       setIsLoading(false);
     }
@@ -186,11 +307,18 @@ export function ChatGPTStyleAI() {
                   >
                     {message.role === 'assistant' && (
                       <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="h-4 w-4" />
-                        <span className="text-xs font-medium opacity-70">Travel Intelligence</span>
-                        {message.mode && (
+                        <Sparkles className={`h-4 w-4 ${message.isPreview ? 'animate-pulse' : ''}`} />
+                        <span className="text-xs font-medium opacity-70">
+                          {message.isPreview ? 'Quick results' : 'Travel Intelligence'}
+                        </span>
+                        {message.mode && !message.isPreview && (
                           <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${modeColors[message.mode] || modeColors.discover}`}>
                             {message.mode}
+                          </span>
+                        )}
+                        {message.isPreview && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-gray-500/20 text-gray-600 dark:text-gray-400 animate-pulse">
+                            AI thinking...
                           </span>
                         )}
                       </div>
@@ -212,62 +340,11 @@ export function ChatGPTStyleAI() {
                       })}
                     </div>
 
-                    {/* Destination Cards */}
-                    {message.destinations && message.destinations.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {message.destinations.slice(0, 4).map((dest) => (
-                          <a
-                            key={dest.slug}
-                            href={`/destination/${dest.slug}`}
-                            className="group flex items-start gap-3 p-2 -mx-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              window.location.href = `/destination/${dest.slug}`;
-                            }}
-                          >
-                            <div className="relative w-16 h-16 flex-shrink-0 bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden">
-                              {dest.image ? (
-                                <img
-                                  src={dest.image}
-                                  alt={dest.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                  <MapPin className="h-5 w-5 opacity-30" />
-                                </div>
-                              )}
-                              {dest.michelin_stars && dest.michelin_stars > 0 && (
-                                <div className="absolute bottom-1 left-1 bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5">
-                                  <span className="text-red-500">*</span>
-                                  <span>{dest.michelin_stars}</span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-medium text-sm leading-tight line-clamp-1 text-black dark:text-white group-hover:underline">
-                                {dest.name}
-                              </h4>
-                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                {dest.neighborhood || dest.city} · {dest.category}
-                                {dest.rating && <span className="ml-1">· {dest.rating}</span>}
-                              </p>
-                              {dest.micro_description && (
-                                <p className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
-                                  {dest.micro_description}
-                                </p>
-                              )}
-                            </div>
-                            <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </a>
-                        ))}
-                        {message.destinations.length > 4 && (
-                          <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-1">
-                            +{message.destinations.length - 4} more places
-                          </p>
-                        )}
-                      </div>
-                    )}
+                    {/* Destination Cards - Memoized for partial updates */}
+                    <DestinationsGrid
+                      destinations={message.destinations || []}
+                      isPreview={message.isPreview}
+                    />
 
                     {/* Follow-up Suggestions */}
                     {message.suggestions && message.suggestions.length > 0 && (
