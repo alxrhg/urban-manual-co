@@ -1,18 +1,30 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useDrawer } from '@/contexts/DrawerContext';
 import Image from 'next/image';
-import UMCard from "@/components/ui/UMCard";
-import UMActionPill from "@/components/ui/UMActionPill";
-import UMSectionTitle from "@/components/ui/UMSectionTitle";
-import { DrawerHeader } from "@/components/ui/DrawerHeader";
-import { DrawerSection } from "@/components/ui/DrawerSection";
-import { DrawerActionBar } from "@/components/ui/DrawerActionBar";
+import { Drawer } from '@/components/ui/Drawer';
+import { DrawerHeader } from '@/components/ui/DrawerHeader';
+import { DrawerSection } from '@/components/ui/DrawerSection';
+import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
+import {
+  Bookmark,
+  MapPin,
+  List,
+  Plane,
+  Trophy,
+  User,
+  Settings,
+  LogOut,
+  ChevronRight,
+  Shield,
+  Globe,
+  Calendar
+} from 'lucide-react';
 
 interface UpcomingTrip {
   id?: string;
@@ -34,6 +46,204 @@ interface AccountDrawerProps {
   onClose: () => void;
 }
 
+// Badge pill component (matching destination drawer style)
+function Badge({ children, variant = 'default' }: { children: React.ReactNode; variant?: 'default' | 'admin' | 'stat' }) {
+  const variants = {
+    default: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400',
+    admin: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+    stat: 'bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white'
+  };
+
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${variants[variant]}`}>
+      {children}
+    </span>
+  );
+}
+
+// User Passport Card component
+function UserPassportCard({
+  avatarUrl,
+  displayName,
+  displayHandle,
+  displayEmail,
+  isAdmin,
+  memberSince,
+  placesVisited,
+  countriesVisited
+}: {
+  avatarUrl: string | null;
+  displayName: string;
+  displayHandle: string;
+  displayEmail: string;
+  isAdmin: boolean;
+  memberSince?: string;
+  placesVisited?: number;
+  countriesVisited?: number;
+}) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 dark:from-gray-800 dark:via-gray-900 dark:to-black p-5">
+      {/* Decorative pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl transform translate-x-10 -translate-y-10" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full blur-3xl transform -translate-x-10 translate-y-10" />
+      </div>
+
+      {/* Header with badges */}
+      <div className="relative flex items-start justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Globe className="w-4 h-4 text-gray-400" />
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Urban Manual</span>
+        </div>
+        {isAdmin && (
+          <Badge variant="admin">Admin</Badge>
+        )}
+      </div>
+
+      {/* Profile section */}
+      <div className="relative flex items-center gap-4 mb-5">
+        {avatarUrl ? (
+          <div className="relative w-20 h-20 rounded-xl overflow-hidden ring-2 ring-white/20">
+            <Image
+              src={avatarUrl}
+              alt={displayName}
+              fill
+              className="object-cover"
+              sizes="80px"
+            />
+          </div>
+        ) : (
+          <div className="w-20 h-20 rounded-xl bg-gray-700 ring-2 ring-white/20 flex items-center justify-center">
+            <span className="text-white text-2xl font-semibold">
+              {displayName.charAt(0).toUpperCase()}
+            </span>
+          </div>
+        )}
+
+        <div className="flex-1 min-w-0">
+          <p className="text-xl font-semibold text-white truncate">
+            {displayName}
+          </p>
+          {displayHandle && (
+            <p className="text-sm text-gray-400 truncate">
+              {displayHandle}
+            </p>
+          )}
+          {displayEmail && (
+            <p className="text-xs text-gray-500 truncate mt-0.5">
+              {displayEmail}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div className="relative flex items-center gap-2">
+        {memberSince && (
+          <Badge variant="stat">
+            <Calendar className="w-3 h-3 mr-1" />
+            Since {memberSince}
+          </Badge>
+        )}
+        {placesVisited !== undefined && placesVisited > 0 && (
+          <Badge variant="stat">
+            <MapPin className="w-3 h-3 mr-1" />
+            {placesVisited} places
+          </Badge>
+        )}
+        {countriesVisited !== undefined && countriesVisited > 0 && (
+          <Badge variant="stat">
+            <Globe className="w-3 h-3 mr-1" />
+            {countriesVisited} countries
+          </Badge>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Upcoming trip card component
+function UpcomingTripCard({ trip, onClick }: { trip: UpcomingTrip; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+    >
+      {trip.coverImage && (
+        <div className="relative w-full h-32">
+          <Image
+            src={trip.coverImage}
+            alt={trip.name || 'Trip'}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 420px"
+          />
+        </div>
+      )}
+      <div className="p-4">
+        <p className="font-medium text-gray-900 dark:text-white">
+          {trip.name || trip.title || 'Untitled Trip'}
+        </p>
+        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+          {trip.city || trip.destination || ''}
+          {trip.startDate && trip.endDate && (
+            <> · {trip.startDate} – {trip.endDate}</>
+          )}
+        </p>
+      </div>
+    </button>
+  );
+}
+
+// Menu item component
+function MenuItem({
+  icon: Icon,
+  label,
+  description,
+  onClick,
+  variant = 'default'
+}: {
+  icon: React.ElementType;
+  label: string;
+  description?: string;
+  onClick: () => void;
+  variant?: 'default' | 'danger';
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-left"
+    >
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+        variant === 'danger'
+          ? 'bg-red-50 dark:bg-red-900/20'
+          : 'bg-gray-100 dark:bg-gray-800'
+      }`}>
+        <Icon className={`w-5 h-5 ${
+          variant === 'danger'
+            ? 'text-red-600 dark:text-red-400'
+            : 'text-gray-600 dark:text-gray-400'
+        }`} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className={`text-[15px] font-medium ${
+          variant === 'danger'
+            ? 'text-red-600 dark:text-red-400'
+            : 'text-gray-900 dark:text-white'
+        }`}>
+          {label}
+        </p>
+        {description && (
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 truncate">
+            {description}
+          </p>
+        )}
+      </div>
+      <ChevronRight className="w-5 h-5 text-gray-400 dark:text-gray-600" />
+    </button>
+  );
+}
+
 export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
@@ -43,6 +253,9 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const [username, setUsername] = useState<string | null>(null);
   const [upcomingTrip, setUpcomingTrip] = useState<UpcomingTrip | null>(null);
   const [loading, setLoading] = useState(false);
+  const [memberSince, setMemberSince] = useState<string | undefined>();
+  const [placesVisited, setPlacesVisited] = useState<number>(0);
+  const [countriesVisited, setCountriesVisited] = useState<number>(0);
 
   // Fetch user profile and upcoming trip
   useEffect(() => {
@@ -51,23 +264,30 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         setAvatarUrl(null);
         setUsername(null);
         setUpcomingTrip(null);
+        setMemberSince(undefined);
+        setPlacesVisited(0);
+        setCountriesVisited(0);
         return;
       }
 
       try {
         setLoading(true);
         const supabaseClient = createClient();
-        
+
         // Fetch profile
         const { data: profileData } = await supabaseClient
           .from('profiles')
-          .select('avatar_url, username')
+          .select('avatar_url, username, created_at')
           .eq('id', user.id)
           .maybeSingle();
 
         if (profileData) {
           setAvatarUrl(profileData.avatar_url || null);
           setUsername(profileData.username || null);
+          if (profileData.created_at) {
+            const date = new Date(profileData.created_at);
+            setMemberSince(date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }));
+          }
         } else {
           const { data: userProfileData } = await supabaseClient
             .from('user_profiles')
@@ -79,6 +299,25 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
             setUsername(userProfileData.username);
           }
           setAvatarUrl(null);
+        }
+
+        // Fetch visited places count
+        const { count: visitedCount } = await supabaseClient
+          .from('visited_places')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id);
+
+        setPlacesVisited(visitedCount || 0);
+
+        // Fetch countries visited (unique countries from visited places)
+        const { data: visitedData } = await supabaseClient
+          .from('visited_places')
+          .select('destinations!inner(country)')
+          .eq('user_id', user.id);
+
+        if (visitedData) {
+          const uniqueCountries = new Set(visitedData.map((v: any) => v.destinations?.country).filter(Boolean));
+          setCountriesVisited(uniqueCountries.size);
         }
 
         // Fetch upcoming trip (most recent trip with future start date)
@@ -98,7 +337,6 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
             return new Date(dateStr).toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
-              year: 'numeric',
             });
           };
 
@@ -143,312 +381,174 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     }
   };
 
-  const contentWrapperClasses =
-    "overflow-y-auto max-h-[calc(100vh-4rem)] pb-16 space-y-4";
+  const navigate = (path: string) => {
+    onClose();
+    router.push(path);
+  };
 
+  // Signed out state
   if (!user) {
     return (
-      <>
+      <Drawer isOpen={isOpen} onClose={onClose}>
         <DrawerHeader
           title="Account"
-          subtitle="Sign in to save places and trips"
-          bordered={false}
+          subtitle="Sign in to get started"
         />
-        <div className={contentWrapperClasses}>
+
+        <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
           <DrawerSection>
-            <UMCard className="p-6 space-y-3 text-center">
-              <p className="text-[17px] font-semibold text-gray-900 dark:text-white">
+            <div className="text-center py-8">
+              <div className="w-20 h-20 mx-auto rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
+                <User className="w-10 h-10 text-gray-400 dark:text-gray-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 Welcome to Urban Manual
+              </h3>
+              <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-xs mx-auto">
+                Sign in to save places, build trips, and sync your travel profile across devices.
               </p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Sign in to save places, build trips, and sync your travel profile.
-              </p>
-            </UMCard>
+            </div>
           </DrawerSection>
         </div>
-        <DrawerActionBar className="justify-between">
-          <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            Already have an account?
-          </p>
-          <UMActionPill
-            variant="primary"
-            className="justify-center"
-            onClick={() => {
-              onClose();
-              router.push('/auth/login');
-            }}
+
+        <DrawerActionBar>
+          <button
+            onClick={() => navigate('/auth/login')}
+            className="w-full bg-black dark:bg-white text-white dark:text-black rounded-full px-6 py-3 text-sm font-medium hover:opacity-90 transition-opacity"
           >
             Sign In
-          </UMActionPill>
+          </button>
         </DrawerActionBar>
-      </>
+      </Drawer>
     );
   }
 
-  const headerAvatar = avatarUrl ? (
-    <div className="relative h-10 w-10 rounded-full overflow-hidden border border-neutral-200 dark:border-white/10">
-      <Image
-        src={avatarUrl}
-        alt={displayName}
-        fill
-        className="object-cover"
-        sizes="40px"
-      />
-    </div>
-  ) : (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-800 border border-neutral-200 dark:border-white/10">
-      <span className="text-gray-500 dark:text-gray-400 text-base font-semibold">
-        {displayName.charAt(0).toUpperCase()}
-      </span>
-    </div>
-  );
-
-  const headerActions = (
-    <button
-      onClick={handleSignOut}
-      className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-    >
-      Sign Out
-    </button>
-  );
-
+  // Signed in state
   return (
-    <>
+    <Drawer isOpen={isOpen} onClose={onClose}>
       <DrawerHeader
         title="Account"
-        subtitle={displayEmail}
-        leftAccessory={headerAvatar}
-        rightAccessory={headerActions}
-        bordered={false}
+        rightAccessory={
+          <button
+            onClick={handleSignOut}
+            className="text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            Sign Out
+          </button>
+        }
       />
 
-      <div className={contentWrapperClasses}>
+      <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
+        {/* User Passport Card */}
         <DrawerSection>
-          <UMCard className="p-6 space-y-4">
-            <div className="flex items-center gap-4">
-              {avatarUrl ? (
-                <div className="relative w-14 h-14 rounded-full overflow-hidden border border-neutral-200 dark:border-white/10">
-                  <Image
-                    src={avatarUrl}
-                    alt={displayName}
-                    fill
-                    className="object-cover"
-                    sizes="56px"
-                  />
-                </div>
-              ) : (
-                <div className="w-14 h-14 rounded-full bg-gray-200 dark:bg-gray-800 border border-neutral-200 dark:border-white/10 flex items-center justify-center">
-                  <span className="text-gray-400 dark:text-gray-500 text-lg font-semibold">
-                    {displayName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
-
-              <div className="space-y-0.5 flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="text-[17px] font-semibold text-gray-900 dark:text-white truncate">
-                    {displayName}
-                  </p>
-                  {isAdmin && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-                      Admin
-                    </span>
-                  )}
-                </div>
-                {displayHandle && (
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400 truncate">
-                    {displayHandle}
-                  </p>
-                )}
-                {displayEmail && (
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400 truncate">
-                    {displayEmail}
-                  </p>
-                )}
-              </div>
-            </div>
-          </UMCard>
+          <UserPassportCard
+            avatarUrl={avatarUrl}
+            displayName={displayName}
+            displayHandle={displayHandle}
+            displayEmail={displayEmail}
+            isAdmin={isAdmin}
+            memberSince={memberSince}
+            placesVisited={placesVisited}
+            countriesVisited={countriesVisited}
+          />
         </DrawerSection>
 
+        {/* Upcoming Trip */}
         {upcomingTrip && (
-          <DrawerSection className="space-y-3">
-            <UMSectionTitle>Upcoming Trip</UMSectionTitle>
-            <UMCard
-              className="p-4 space-y-3 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
-              onClick={handleOpenTrip}
-            >
-              {upcomingTrip.coverImage && (
-                <div className="relative w-full h-40 rounded-[16px] overflow-hidden">
-                  <Image
-                    src={upcomingTrip.coverImage}
-                    alt={upcomingTrip.name || 'Trip'}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 420px"
-                  />
-                </div>
-              )}
-
-              <div className="space-y-1">
-                <p className="font-medium text-[17px] text-gray-900 dark:text-white">
-                  {upcomingTrip.name || upcomingTrip.title || 'Untitled Trip'}
-                </p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                  {upcomingTrip.city || upcomingTrip.destination || ''}
-                  {upcomingTrip.startDate && upcomingTrip.endDate && (
-                    <> • {upcomingTrip.startDate} → {upcomingTrip.endDate}</>
-                  )}
-                </p>
-              </div>
-
-              <UMActionPill className="w-full justify-center">
-                View Trip →
-              </UMActionPill>
-            </UMCard>
+          <DrawerSection bordered>
+            <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">
+              Upcoming Trip
+            </p>
+            <UpcomingTripCard trip={upcomingTrip} onClick={handleOpenTrip} />
           </DrawerSection>
         )}
 
-        <DrawerSection className="space-y-4">
-          <UMSectionTitle>Your Manual</UMSectionTitle>
-          <div className="space-y-4">
-            <UMCard
-              className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+        {/* Your Manual */}
+        <DrawerSection bordered>
+          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">
+            Your Manual
+          </p>
+          <div className="space-y-1">
+            <MenuItem
+              icon={Bookmark}
+              label="Saved Places"
+              description="Your curated favorites"
               onClick={() => {
                 onClose();
                 openLegacyDrawer('saved-places');
               }}
-            >
-              <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-                Saved Places
-              </p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Your curated favorites
-              </p>
-            </UMCard>
-
-            <UMCard
-              className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            />
+            <MenuItem
+              icon={MapPin}
+              label="Visited Places"
+              description="Your travel history"
               onClick={() => {
                 onClose();
                 openLegacyDrawer('visited-places');
               }}
-            >
-              <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-                Visited Places
-              </p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Your travel history
-              </p>
-            </UMCard>
-
-            <UMCard
-              className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
-              onClick={() => {
-                onClose();
-                router.push('/account?tab=collections');
-              }}
-            >
-              <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-                Lists
-              </p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Organize destinations
-              </p>
-            </UMCard>
-
-            <UMCard
-              className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
+            />
+            <MenuItem
+              icon={List}
+              label="Lists"
+              description="Organize destinations"
+              onClick={() => navigate('/account?tab=collections')}
+            />
+            <MenuItem
+              icon={Plane}
+              label="Trips"
+              description="Manage trip plans"
               onClick={() => {
                 onClose();
                 openSide('trip-list');
               }}
-            >
-              <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-                Trips
-              </p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Manage trip plans
-              </p>
-            </UMCard>
-
-            <UMCard
-              className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
-              onClick={() => {
-                onClose();
-                router.push('/account?tab=achievements');
-              }}
-            >
-              <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-                Achievements
-              </p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Milestones & travel badges
-              </p>
-            </UMCard>
+            />
+            <MenuItem
+              icon={Trophy}
+              label="Achievements"
+              description="Milestones & badges"
+              onClick={() => navigate('/account?tab=achievements')}
+            />
           </div>
         </DrawerSection>
 
-        <DrawerSection className="space-y-4">
-          <UMSectionTitle>Account & Settings</UMSectionTitle>
-
-          <UMCard
-            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
-            onClick={() => {
-              onClose();
-              router.push('/account');
-            }}
-          >
-            <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-              Profile & Preferences
-            </p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">
-              Notifications, privacy, theme
-            </p>
-          </UMCard>
-
-          {isAdmin && (
-            <UMCard
-              className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
-              onClick={() => {
-                onClose();
-                router.push('/admin');
-              }}
-            >
-              <p className="font-medium text-[15px] text-gray-900 dark:text-white">
-                Admin Panel
-              </p>
-              <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                Manage destinations, analytics
-              </p>
-            </UMCard>
-          )}
-
-          <UMCard
-            className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
-            onClick={handleSignOut}
-          >
-            <p className="font-medium text-[15px] text-red-600 dark:text-red-400">
-              Sign Out
-            </p>
-          </UMCard>
+        {/* Account & Settings */}
+        <DrawerSection bordered>
+          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide mb-3">
+            Account & Settings
+          </p>
+          <div className="space-y-1">
+            <MenuItem
+              icon={Settings}
+              label="Profile & Preferences"
+              description="Notifications, privacy, theme"
+              onClick={() => navigate('/account')}
+            />
+            {isAdmin && (
+              <MenuItem
+                icon={Shield}
+                label="Admin Panel"
+                description="Manage destinations, analytics"
+                onClick={() => navigate('/admin')}
+              />
+            )}
+            <MenuItem
+              icon={LogOut}
+              label="Sign Out"
+              onClick={handleSignOut}
+              variant="danger"
+            />
+          </div>
         </DrawerSection>
       </div>
 
-      <DrawerActionBar className="justify-between flex-wrap gap-3">
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">
-          Need advanced preferences?
-        </p>
-        <UMActionPill
-          variant="primary"
-          className="justify-center whitespace-nowrap"
-          onClick={() => {
-            onClose();
-            router.push('/account');
-          }}
+      <DrawerActionBar>
+        <button
+          onClick={() => navigate('/account')}
+          className="w-full bg-black dark:bg-white text-white dark:text-black rounded-full px-6 py-3 text-sm font-medium hover:opacity-90 transition-opacity"
         >
           Open Account Page
-        </UMActionPill>
+        </button>
       </DrawerActionBar>
-    </>
+    </Drawer>
   );
 }
