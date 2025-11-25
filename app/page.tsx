@@ -56,6 +56,7 @@ import {
 import GreetingHero from '@/src/features/search/GreetingHero';
 import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { DistanceBadge } from '@/components/DistanceBadge';
+import { IntelligentSearchFeedback } from '@/components/IntelligentSearchFeedback';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { type RefinementTag } from '@/components/RefinementChips';
 import { capitalizeCity } from '@/lib/utils';
@@ -68,6 +69,8 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useDestinationLoading } from '@/hooks/useDestinationLoading';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
+import { TravelIntelligencePanel } from '@/components/TravelIntelligencePanel';
+import type { TravelIntelligenceSummary } from '@/types/intelligence';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -599,6 +602,8 @@ export default function Home() {
       type?: "refine" | "expand" | "related";
     }>
   >([]);
+  const [travelIntelligence, setTravelIntelligence] =
+    useState<TravelIntelligenceSummary | null>(null);
 
   // Session and context state
   const [lastSession, setLastSession] = useState<any>(null);
@@ -1163,6 +1168,7 @@ export default function Home() {
       setSubmittedQuery("");
       setChatMessages([]);
       setFollowUpSuggestions([]);
+      setTravelIntelligence(null);
       lastSearchedQueryRef.current = ""; // Reset on clear
       // Show all destinations when no search (with filters if set)
       filterDestinations();
@@ -1848,6 +1854,7 @@ export default function Home() {
       setSubmittedQuery(trimmedQuery); // Store the submitted query
       // Clear previous suggestions when starting new search
       setFollowUpSuggestions([]);
+      setTravelIntelligence(null);
       // Match chat component: only check if empty or loading
       if (!trimmedQuery || searching) {
         return;
@@ -1967,6 +1974,12 @@ export default function Home() {
           setFollowUpSuggestions([]);
         }
 
+        if (data.travelIntelligence) {
+          setTravelIntelligence(data.travelIntelligence);
+        } else {
+          setTravelIntelligence(null);
+        }
+
         // Add messages to visual chat history
         const contextPrompt = getContextAwareLoadingMessage(query);
         setChatMessages(prev => [
@@ -1987,6 +2000,7 @@ export default function Home() {
         setSearchIntent(null);
         setSeasonalContext(null);
         setFollowUpSuggestions([]);
+        setTravelIntelligence(null);
         // Reset last searched query on error so user can retry
         lastSearchedQueryRef.current = "";
 
@@ -2142,6 +2156,18 @@ export default function Home() {
       }
     },
     [activeFilters, submittedQuery, performAISearch]
+  );
+
+  const handleIntentRefine = useCallback(
+    (suggestion: string) => {
+      const refinedQuery = suggestion?.trim();
+      if (!refinedQuery) {
+        return;
+      }
+      setSearchTerm(refinedQuery);
+      performAISearch(refinedQuery);
+    },
+    [performAISearch]
   );
 
   // Handle location changes from Near Me filter
@@ -2446,6 +2472,22 @@ export default function Home() {
                             />
                           </div>
                         </div>
+                      )}
+
+                      {!searching && searchIntent && (
+                        <IntelligentSearchFeedback
+                          intent={searchIntent}
+                          isSearching={searching}
+                          onRefine={handleIntentRefine}
+                          seasonalContext={seasonalContext}
+                        />
+                      )}
+
+                      {!searching && travelIntelligence && (
+                        <TravelIntelligencePanel
+                          summary={travelIntelligence}
+                          onRefine={handleIntentRefine}
+                        />
                       )}
 
                       {/* Loading State - Step Two */}

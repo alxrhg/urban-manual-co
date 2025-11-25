@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { openai, OPENAI_EMBEDDING_MODEL, getModelForQuery } from '@/lib/openai';
 import { embedText } from '@/lib/llm';
 import { rerankDestinations } from '@/lib/search/reranker';
-import { unifiedSearch } from '@/lib/discovery-engine/integration';
-import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase/server';
 import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
 import {
@@ -25,6 +23,7 @@ import {
   trackUsage,
   estimateTokens,
 } from '@/lib/ai/cost-tracking';
+import type { TravelIntelligenceSummary } from '@/types/intelligence';
 
 // LRU Cache implementation with TTL support
 class LRUCache<T> {
@@ -818,6 +817,302 @@ function generateResponse(count: number, city?: string, category?: string): stri
   return `I found ${count}${categoryText}s${location}.`;
 }
 
+type SupabaseServerClient = Awaited<ReturnType<typeof createServerClient>>;
+
+function formatCityName(value?: string | null): string | undefined {
+  if (!value) return undefined;
+  const cleaned = value.replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!cleaned) return undefined;
+  return cleaned
+    .split(' ')
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+function formatLabel(value?: string | null): string {
+  if (!value) return '';
+  return value
+    .split(/[\s-_]+/)
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function truncateText(value: string, length = 180): string {
+  if (value.length <= length) return value.trim();
+  return `${value.slice(0, length).trim()}…`;
+}
+
+function buildTravelIntelligenceSummary(
+  results: any[],
+  intent: any
+): TravelIntelligenceSummary | null {
+  if (!results || results.length === 0) {
+    return null;
+  }
+
+  const categoryCounts = new Map<string, number>();
+  const neighborhoodCounts = new Map<string, number>();
+
+  let michelinCount = 0;
+  let crownCount = 0;
+  let ratingTotal = 0;
+  let ratingCount = 0;
+  let outdoorCount = 0;
+
+  results.forEach(destination => {
+    if (destination.category) {
+      const key = destination.category.toLowerCase();
+      categoryCounts.set(key, (categoryCounts.get(key) || 0) + 1);
+    }
+    if (destination.neighborhood) {
+      const key = destination.neighborhood.toLowerCase();
+      neighborhoodCounts.set(key, (neighborhoodCounts.get(key) || 0) + 1);
+    }
+    if (destination.michelin_stars) {
+      michelinCount += 1;
+    }
+    if (destination.crown) {
+      crownCount += 1;
+    }
+    if (typeof destination.rating === 'number' && destination.rating > 0) {
+      ratingTotal += destination.rating;
+      ratingCount += 1;
+    }
+    if (Array.isArray(destination.tags)) {
+      if (
+        destination.tags.some((tag: string) =>
+          tag?.toLowerCase().includes('outdoor')
+        )
+      ) {
+        outdoorCount += 1;
+      }
+    }
+  });
+
+  const topCategories = Array.from(categoryCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([label, count]) => ({
+      label: formatLabel(label),
+      count,
+    }));
+
+  const neighborhoods = Array.from(neighborhoodCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([label, count]) => ({
+      label: formatLabel(label),
+      count,
+    }));
+
+  const stats: TravelIntelligenceSummary['stats'] = [
+    {
+      label: 'Curated Picks',
+      value: String(results.length),
+      helper:
+        results.length >= 12
+          ? 'Deep bench of options'
+          : results.length >= 6
+          ? 'Focused short list'
+          : 'Tight set of standouts',
+    },
+  ];
+
+  if (michelinCount > 0 || crownCount > 0) {
+    stats.push({
+      label: 'Awarded',
+      value: String(michelinCount + crownCount),
+      helper: `${michelinCount} Michelin · ${crownCount} Crown`,
+    });
+  }
+
+  if (ratingCount > 0) {
+    stats.push({
+      label: 'Avg Rating',
+      value: (ratingTotal / ratingCount).toFixed(1),
+      helper: `${ratingCount} destinations`,
+    });
+  }
+
+  if (outdoorCount > 0) {
+    stats.push({
+      label: 'Outdoor Friendly',
+      value: String(outdoorCount),
+      helper: 'Tagged for open-air energy',
+    });
+  }
+
+  const highlights = results
+    .filter(
+      destination =>
+        destination.architectural_significance ||
+        destination.design_story ||
+        destination.micro_description ||
+        destination.description
+    )
+    .slice(0, 3)
+    .map(destination => {
+      const detail =
+        destination.architectural_significance ||
+        destination.design_story ||
+        destination.micro_description ||
+        destination.description;
+
+      return {
+        title: destination.name,
+        detail: truncateText(detail ?? ''),
+        slug: destination.slug,
+      };
+    });
+
+  const formattedCity = formatCityName(intent?.city || results[0]?.city);
+  const leadCategory = topCategories[0]?.label;
+  const statementParts: string[] = [];
+
+  if (leadCategory && formattedCity) {
+    statementParts.push(
+      `${leadCategory} currently lead the scene in ${formattedCity}`
+    );
+  } else if (leadCategory) {
+    statementParts.push(`${leadCategory} dominate this search`);
+  } else if (formattedCity) {
+    statementParts.push(`A curated lens on ${formattedCity}`);
+  }
+
+  statementParts.push(
+    results.length >= 10
+      ? 'with plenty of depth to explore'
+      : 'focused on what truly matters'
+  );
+
+  return {
+    city: formattedCity,
+    statement: statementParts.join(', ') + '.',
+    totalResults: results.length,
+    topCategories,
+    neighborhoods,
+    stats,
+    highlights,
+  };
+}
+
+async function runCuratedSearch(
+  supabase: SupabaseServerClient,
+  query: string,
+  intent: any,
+  queryEmbedding: number[] | null
+): Promise<{ results: any[]; searchTier: string }> {
+  // Strategy 1: Vector search against Urban Manual embeddings
+  if (queryEmbedding) {
+    try {
+      const { data, error } = await supabase.rpc('match_destinations', {
+        query_embedding: queryEmbedding,
+        match_threshold: 0.6,
+        match_count: 100,
+        filter_city: intent.city || null,
+        filter_category: intent.category || null,
+        filter_michelin_stars: intent.filters?.michelinStar || null,
+        filter_min_rating: intent.filters?.rating || null,
+        filter_max_price_level: intent.filters?.priceLevel || null,
+        search_query: query,
+      });
+
+      if (!error && data && data.length > 0) {
+        return { results: data, searchTier: 'vector-search' };
+      }
+    } catch (error: any) {
+      console.error('[AI Chat] Vector search error:', error?.message || error);
+    }
+  }
+
+  // Strategy 2: Keyword + filter search directly against Supabase
+  try {
+    let keywordQuery = supabase
+      .from('destinations')
+      .select('*, parent_destination_id')
+      .is('parent_destination_id', null)
+      .limit(100);
+
+    if (intent.city) {
+      keywordQuery = keywordQuery.ilike('city', `%${intent.city}%`);
+    }
+
+    if (intent.category) {
+      keywordQuery = keywordQuery.ilike('category', `%${intent.category}%`);
+    }
+
+    if (intent.filters?.rating) {
+      keywordQuery = keywordQuery.gte('rating', intent.filters.rating);
+    }
+
+    if (intent.filters?.priceLevel) {
+      keywordQuery = keywordQuery.lte('price_level', intent.filters.priceLevel);
+    }
+
+    if (intent.filters?.michelinStar) {
+      keywordQuery = keywordQuery.gte(
+        'michelin_stars',
+        intent.filters.michelinStar
+      );
+    }
+
+    const keywords = query.split(/\s+/).filter((word: string) => word.length > 2);
+    if (keywords.length > 0) {
+      keywordQuery = keywordQuery.or(
+        `name.ilike.%${query}%,description.ilike.%${query}%,search_text.ilike.%${query}%`
+      );
+    }
+
+    const { data, error } = await keywordQuery;
+    if (!error && data && data.length > 0) {
+      return { results: data, searchTier: 'keyword-search' };
+    }
+  } catch (error: any) {
+    console.error('[AI Chat] Keyword search error:', error?.message || error);
+  }
+
+  // Strategy 3: City-level intelligence (top rated / highest intelligence score)
+  if (intent.city) {
+    try {
+      const { data } = await supabase
+        .from('destinations')
+        .select('*, parent_destination_id')
+        .is('parent_destination_id', null)
+        .ilike('city', `%${intent.city}%`)
+        .order('intelligence_score', { ascending: false })
+        .order('rating', { ascending: false })
+        .limit(50);
+
+      if (data && data.length > 0) {
+        return { results: data, searchTier: 'city-fallback' };
+      }
+    } catch (error: any) {
+      console.error('[AI Chat] City fallback error:', error?.message || error);
+    }
+  }
+
+  // Strategy 4: Global intelligence-driven curation
+  try {
+    const { data } = await supabase
+      .from('destinations')
+      .select('*, parent_destination_id')
+      .is('parent_destination_id', null)
+      .order('intelligence_score', { ascending: false })
+      .order('rating', { ascending: false })
+      .limit(50);
+
+    if (data && data.length > 0) {
+      return { results: data, searchTier: 'global-intelligence' };
+    }
+  } catch (error: any) {
+    console.error('[AI Chat] Global fallback error:', error?.message || error);
+  }
+
+  return { results: [], searchTier: 'ai-chat' };
+}
+
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder();
 
@@ -956,65 +1251,15 @@ async function processStreamingAIChatRequest(
         // Send intent update
         controller.enqueue(encoder.encode(createSSEMessage({ type: 'intent', intent })));
 
-        let results: any[] = [];
-        let searchTier = 'ai-chat';
-
-        // Try Discovery Engine first
-        try {
-          const discoveryEngine = getDiscoveryEngineService();
-          if (discoveryEngine.isAvailable()) {
-            const discoveryResult = await unifiedSearch({
-              query: query,
-              userId: userId,
-              city: intent.city,
-              category: intent.category,
-              priceLevel: intent.filters?.priceLevel,
-              minRating: intent.filters?.rating,
-              pageSize: 100,
-              useCache: true,
-            });
-
-            if (discoveryResult && discoveryResult.source === 'discovery_engine' && discoveryResult.results.length > 0) {
-              results = discoveryResult.results.map((result: any) => ({
-                ...result,
-                id: result.id || result.slug,
-                name: result.name,
-                description: result.description,
-                city: result.city,
-                category: result.category,
-                rating: result.rating || 0,
-                price_level: result.priceLevel || result.price_level || 0,
-                slug: result.slug || result.id,
-              }));
-              searchTier = 'discovery-engine';
-            }
-          }
-        } catch (error) {
-          console.error('[AI Chat Streaming] Discovery Engine error:', error);
-        }
-
-        // Fallback to vector search
-        if (results.length === 0 && queryEmbedding) {
-          try {
-            const { data, error } = await supabase.rpc('match_destinations', {
-              query_embedding: queryEmbedding,
-              match_threshold: 0.6,
-              match_count: 100,
-              filter_city: intent.city || null,
-              filter_category: intent.category || null,
-              filter_michelin_stars: intent.filters?.michelinStar || null,
-              filter_min_rating: intent.filters?.rating || null,
-              filter_max_price_level: intent.filters?.priceLevel || null,
-              search_query: query
-            });
-            if (!error && data && data.length > 0) {
-              results = data;
-              searchTier = 'vector-search';
-            }
-          } catch (error) {
-            console.error('[AI Chat Streaming] Vector search error:', error);
-          }
-        }
+        const searchOutcome = await runCuratedSearch(
+          supabase,
+          query,
+          intent,
+          queryEmbedding
+        );
+        let results: any[] = searchOutcome.results;
+        let searchTier = searchOutcome.searchTier;
+        const travelIntelligence = buildTravelIntelligenceSummary(results, intent);
 
         // Send destinations immediately
         controller.enqueue(encoder.encode(createSSEMessage({
@@ -1045,7 +1290,8 @@ async function processStreamingAIChatRequest(
             ...intent,
             resultCount: results.length,
             hasResults: results.length > 0
-          }
+          },
+          travelIntelligence
         })));
 
         controller.close();
@@ -1108,237 +1354,14 @@ async function processAIChatRequest(
     let results: any[] = [];
     let searchTier = 'ai-chat';
 
-    // PRIMARY STRATEGY: Discovery Engine is the primary search method (always try first)
-    // Determine if this is a conversational query (follow-up)
-    const isConversational = conversationHistory.length > 0;
-    const isNaturalLanguage = query.includes('with') || query.includes('under') || query.includes('near') || 
-                              query.includes('open now') || query.includes('outdoor') || query.includes('indoor');
-
-    // Strategy 1: Try Discovery Engine (PRIMARY - always connected and used first)
-    try {
-      const discoveryEngine = getDiscoveryEngineService();
-      let discoveryResult;
-      
-      // Check if Discovery Engine is available (primary search method)
-      if (discoveryEngine.isAvailable()) {
-        // Use conversational search for follow-up queries
-        if (isConversational && conversationHistory.length > 0) {
-          try {
-            // Build enhanced query with conversation context
-            // Extract key information from conversation history
-            const recentMessages = conversationHistory.slice(-4); // Last 4 messages for better context
-            const conversationSummary = recentMessages
-              .map((msg, idx) => {
-                if (msg.role === 'user') {
-                  return `Q${Math.floor(idx/2) + 1}: ${msg.content}`;
-                } else {
-                  return `A${Math.floor(idx/2) + 1}: ${msg.content.substring(0, 100)}...`;
-                }
-              })
-              .join(' | ');
-            
-            // Enhanced query that includes conversation context
-            const enhancedQuery = conversationHistory.length > 2 
-              ? `${query} (previous conversation: ${conversationSummary})`
-              : `${query} (context: ${recentMessages.map(m => m.content).join(' ')})`;
-            
-            const convResults = await discoveryEngine.search(enhancedQuery, {
-              userId: userId,
-              pageSize: 100,
-              filters: {
-                city: intent.city,
-                category: intent.category,
-                priceLevel: intent.filters?.priceLevel,
-                minRating: intent.filters?.rating,
-              },
-            });
-            
-            if (convResults.results.length > 0) {
-              discoveryResult = {
-                source: 'discovery_engine',
-                results: convResults.results,
-                totalSize: convResults.totalSize,
-              };
-              searchTier = 'conversational-search';
-              console.log(`[AI Chat] Discovery Engine (conversational) found ${discoveryResult.results.length} results`);
-            }
-          } catch (convError) {
-            console.warn('[AI Chat] Conversational search failed, trying regular Discovery Engine:', convError);
-          }
-        }
-        
-        // Use natural language search for complex queries
-        if (!discoveryResult && isNaturalLanguage) {
-          try {
-            // Parse natural language filters
-            const parsedFilters = parseNaturalLanguageFilters(query);
-            const cleanQuery = cleanNaturalLanguageQuery(query);
-            
-            const nlResults = await discoveryEngine.search(cleanQuery, {
-              userId: userId,
-              pageSize: 100,
-              filters: parsedFilters,
-            });
-            
-            if (nlResults.results.length > 0) {
-              discoveryResult = {
-                source: 'discovery_engine',
-                results: nlResults.results,
-                totalSize: nlResults.totalSize,
-              };
-              searchTier = 'natural-language-search';
-              console.log(`[AI Chat] Discovery Engine (natural language) found ${nlResults.results.length} results`);
-            }
-          } catch (nlError) {
-            console.warn('[AI Chat] Natural language search failed, trying regular Discovery Engine:', nlError);
-          }
-        }
-        
-        // PRIMARY: Always try regular Discovery Engine search (connected as primary method)
-        if (!discoveryResult) {
-          discoveryResult = await unifiedSearch({
-            query: query,
-            userId: userId,
-            city: intent.city,
-            category: intent.category,
-            priceLevel: intent.filters?.priceLevel,
-            minRating: intent.filters?.rating,
-            pageSize: 100,
-            useCache: true,
-          });
-        }
-
-        // Process Discovery Engine results (primary search method)
-        if (discoveryResult && discoveryResult.source === 'discovery_engine' && discoveryResult.results.length > 0) {
-          // Transform Discovery Engine results to match our format
-          results = discoveryResult.results.map((result: any) => ({
-            ...result,
-            // Map Discovery Engine fields to our expected format
-            id: result.id || result.slug,
-            name: result.name,
-            description: result.description,
-            city: result.city,
-            category: result.category,
-            rating: result.rating || 0,
-            price_level: result.priceLevel || result.price_level || 0,
-            michelin_stars: result.michelin_stars || 0,
-            slug: result.slug || result.id,
-            relevanceScore: result.relevanceScore || 0,
-          }));
-          searchTier = searchTier === 'ai-chat' ? 'discovery-engine' : searchTier;
-          console.log(`[AI Chat] Discovery Engine (primary) found ${results.length} results`);
-          
-          // Track search event for personalization
-          if (userId) {
-            try {
-              await discoveryEngine.trackEvent({
-                userId: userId,
-                eventType: 'search',
-                searchQuery: query,
-              });
-            } catch (trackError) {
-              console.warn('[AI Chat] Failed to track search event:', trackError);
-            }
-          }
-        }
-      } else {
-        console.error('[AI Chat] ERROR: Discovery Engine not available. This is the primary search feature and must be configured.');
-      }
-    } catch (discoveryError: any) {
-      console.error('[AI Chat] Discovery Engine search failed. This is the primary search feature and must be configured. Falling back to Supabase:', discoveryError?.message || discoveryError);
-    }
-
-    // Strategy 2: Secondary - OpenAI Embeddings (vector similarity search via Supabase)
-    // Only use if Discovery Engine didn't return results
-    if (results.length === 0 && queryEmbedding) {
-      try {
-        const { data, error } = await supabase.rpc('match_destinations', {
-          query_embedding: queryEmbedding,
-          match_threshold: 0.6,
-          match_count: 100,
-          filter_city: intent.city || null,
-          filter_category: intent.category || null,
-          filter_michelin_stars: intent.filters?.michelinStar || null,
-          filter_min_rating: intent.filters?.rating || null,
-          filter_max_price_level: intent.filters?.priceLevel || null,
-          search_query: query
-        });
-        
-        if (!error && data && data.length > 0) {
-          results = data;
-          searchTier = 'vector-search';
-          console.log(`[AI Chat] OpenAI Embeddings (secondary) found ${results.length} results`);
-        }
-      } catch (error: any) {
-        console.error('[AI Chat] OpenAI Embeddings search error:', error);
-      }
-    }
-
-    // Strategy 3: Last resort - Supabase keyword search (only if both Discovery Engine and Embeddings failed)
-    if (results.length === 0) {
-      try {
-        let keywordQuery = supabase
-          .from('destinations')
-          .select('*, parent_destination_id')
-          .is('parent_destination_id', null) // Only top-level destinations in search
-          .limit(100);
-
-        if (intent.city) {
-          keywordQuery = keywordQuery.ilike('city', `%${intent.city}%`);
-        }
-
-        if (intent.category) {
-          keywordQuery = keywordQuery.ilike('category', `%${intent.category}%`);
-        }
-
-        if (intent.filters?.rating) {
-          keywordQuery = keywordQuery.gte('rating', intent.filters.rating);
-        }
-
-        if (intent.filters?.priceLevel) {
-          keywordQuery = keywordQuery.lte('price_level', intent.filters.priceLevel);
-        }
-
-        if (intent.filters?.michelinStar) {
-          keywordQuery = keywordQuery.gte('michelin_stars', intent.filters.michelinStar);
-        }
-
-        const keywords = query.split(/\s+/).filter((w: string) => w.length > 2);
-        if (keywords.length > 0) {
-          keywordQuery = keywordQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,search_text.ilike.%${query}%`);
-        }
-
-        const { data, error } = await keywordQuery;
-        
-        if (!error && data && data.length > 0) {
-          results = data;
-          searchTier = 'keyword-search';
-          console.log(`[AI Chat] Supabase keyword search (last resort) found ${results.length} results`);
-        }
-      } catch (error: any) {
-        console.error('[AI Chat] Keyword search error:', error);
-      }
-    }
-
-    // Last resort - show popular destinations in the city
-    if (results.length === 0 && intent.city) {
-      try {
-        const { data: cityResults } = await supabase
-          .from('destinations')
-          .select('*, parent_destination_id')
-          .is('parent_destination_id', null) // Only top-level destinations
-          .ilike('city', `%${intent.city}%`)
-          .order('rating', { ascending: false })
-          .limit(50);
-
-        if (cityResults && cityResults.length > 0) {
-          results = cityResults;
-          console.log('[AI Chat] City fallback found', results.length, 'results');
-        }
-      } catch (error: any) {
-        console.error('[AI Chat] City fallback exception:', error);
-      }
-    }
+    const searchOutcome = await runCuratedSearch(
+      supabase,
+      query,
+      intent,
+      queryEmbedding
+    );
+    results = searchOutcome.results;
+    searchTier = searchOutcome.searchTier;
 
                 // Enrich results with additional data (photos, weather, routes, events) BEFORE reranking
                 // Optimized: Only enrich top 3 results for better performance
@@ -1518,6 +1541,11 @@ async function processAIChatRequest(
                   console.debug('[AI Chat] Failed to generate suggestions:', error);
                 }
 
+                const travelIntelligence = buildTravelIntelligenceSummary(
+                  limitedResults,
+                  intent
+                );
+
                 const responseData = {
                   content: enhancedContent,
                   destinations: limitedResults,
@@ -1531,6 +1559,7 @@ async function processAIChatRequest(
                   intelligence: intelligenceInsights,
                   enriched: enrichedMetadata, // Include enrichment metadata
                   suggestions: followUpSuggestions, // Include follow-up suggestions
+                  travelIntelligence,
                 };
 
                 // Cache non-personalized results
