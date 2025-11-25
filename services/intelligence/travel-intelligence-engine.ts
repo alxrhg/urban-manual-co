@@ -271,6 +271,40 @@ Return only the JSON, no explanation.`;
   }
 
   /**
+   * Normalize category to match database format (e.g., "hotel" -> "Hotel")
+   */
+  private normalizeCategory(category?: string): string | null {
+    if (!category) return null;
+    const categoryMap: Record<string, string> = {
+      'hotel': 'Hotel',
+      'hotels': 'Hotel',
+      'restaurant': 'Restaurant',
+      'restaurants': 'Restaurant',
+      'dining': 'Restaurant',
+      'cafe': 'Cafe',
+      'cafes': 'Cafe',
+      'coffee': 'Cafe',
+      'bar': 'Bar',
+      'bars': 'Bar',
+      'culture': 'Culture',
+      'museum': 'Culture',
+      'gallery': 'Culture',
+      'shop': 'Shop',
+      'shopping': 'Shop',
+    };
+    return categoryMap[category.toLowerCase()] || category;
+  }
+
+  /**
+   * Normalize city name for matching
+   */
+  private normalizeCity(city?: string): string | null {
+    if (!city) return null;
+    // Capitalize first letter of each word
+    return city.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
+  /**
    * Find relevant destinations from our curated collection
    */
   private async findRelevantDestinations(
@@ -282,57 +316,80 @@ Return only the JSON, no explanation.`;
     const supabase = await createServerClient();
     let results: any[] = [];
 
-    // Strategy 1: Vector search for semantic matching
+    // Normalize city and category for consistent matching
+    const normalizedCity = this.normalizeCity(context.city);
+    const normalizedCategory = this.normalizeCategory(context.category);
+
+    console.log('[TravelIntelligence] Searching with:', {
+      city: normalizedCity,
+      category: normalizedCategory,
+      message
+    });
+
+    // Strategy 1: Direct database query FIRST for specific queries (more reliable)
+    // This ensures we get results even if vector search has issues
     try {
-      const embedding = await embedText(message);
-      if (embedding) {
-        const { data } = await supabase.rpc('match_destinations', {
-          query_embedding: embedding,
-          match_threshold: 0.55,
-          match_count: 50,
-          filter_city: context.city || null,
-          filter_category: context.category || null,
-          filter_michelin_stars: null,
-          filter_min_rating: null,
-          filter_max_price_level: this.mapPricePreference(context.pricePreference),
-          search_query: message,
-        });
-        if (data?.length) {
-          results = data;
-        }
+      let query = supabase
+        .from('destinations')
+        .select('*')
+        .is('parent_destination_id', null)
+        .limit(50);
+
+      if (normalizedCity) {
+        query = query.ilike('city', `%${normalizedCity}%`);
+      }
+      if (normalizedCategory) {
+        query = query.ilike('category', `%${normalizedCategory}%`);
+      }
+      if (context.neighborhood) {
+        query = query.ilike('neighborhood', `%${context.neighborhood}%`);
+      }
+
+      const { data, error } = await query.order('rating', { ascending: false });
+
+      if (error) {
+        console.error('[TravelIntelligence] Database query error:', error);
+      }
+
+      if (data?.length) {
+        console.log('[TravelIntelligence] Database found', data.length, 'results');
+        results = data;
       }
     } catch (error) {
-      console.warn('[TravelIntelligence] Vector search failed:', error);
+      console.warn('[TravelIntelligence] Database query failed:', error);
     }
 
-    // Strategy 2: Direct database query as fallback/supplement
-    if (results.length < 5) {
+    // Strategy 2: Vector search for semantic matching (supplements database results)
+    if (results.length < 10) {
       try {
-        let query = supabase
-          .from('destinations')
-          .select('*')
-          .is('parent_destination_id', null)
-          .limit(50);
+        const embedding = await embedText(message);
+        if (embedding) {
+          const { data, error } = await supabase.rpc('match_destinations', {
+            query_embedding: embedding,
+            match_threshold: 0.45, // Lowered threshold for more results
+            match_count: 50,
+            filter_city: normalizedCity,
+            filter_category: normalizedCategory,
+            filter_michelin_stars: null,
+            filter_min_rating: null,
+            filter_max_price_level: this.mapPricePreference(context.pricePreference),
+            search_query: message,
+          });
 
-        if (context.city) {
-          query = query.ilike('city', `%${context.city}%`);
-        }
-        if (context.category) {
-          query = query.ilike('category', `%${context.category}%`);
-        }
-        if (context.neighborhood) {
-          query = query.ilike('neighborhood', `%${context.neighborhood}%`);
-        }
+          if (error) {
+            console.warn('[TravelIntelligence] Vector search error:', error);
+          }
 
-        const { data } = await query.order('rating', { ascending: false });
-        if (data?.length) {
-          // Merge with existing results, avoiding duplicates
-          const existingSlugs = new Set(results.map((r) => r.slug));
-          const newResults = data.filter((d) => !existingSlugs.has(d.slug));
-          results = [...results, ...newResults];
+          if (data?.length) {
+            console.log('[TravelIntelligence] Vector search found', data.length, 'results');
+            // Merge with existing results, avoiding duplicates
+            const existingSlugs = new Set(results.map((r) => r.slug));
+            const newResults = data.filter((d: any) => !existingSlugs.has(d.slug));
+            results = [...results, ...newResults];
+          }
         }
       } catch (error) {
-        console.warn('[TravelIntelligence] Database query failed:', error);
+        console.warn('[TravelIntelligence] Vector search failed:', error);
       }
     }
 
@@ -439,6 +496,10 @@ Return only the JSON, no explanation.`;
 
 ${MODE_PROMPTS[mode]}`;
 
+    // Determine how many options to present based on mode
+    const numDestinations = destinationContext.length;
+    const presentMultiple = mode === 'discover' || mode === 'recommend' || numDestinations > 1;
+
     const userPrompt = `CONTEXT:
 City: ${context.city || 'not specified'}
 Category: ${context.category || 'not specified'}
@@ -447,7 +508,7 @@ Time: ${context.timeOfDay || 'not specified'}
 Vibes: ${context.vibes?.join(', ') || 'not specified'}
 Price preference: ${context.pricePreference || 'not specified'}
 
-AVAILABLE DESTINATIONS (from Urban Manual's curated collection):
+AVAILABLE DESTINATIONS (${numDestinations} options from Urban Manual's curated collection):
 ${JSON.stringify(destinationContext, null, 2)}
 
 CONVERSATION HISTORY:
@@ -458,9 +519,10 @@ ${message}
 
 Generate a response as Urban Manual's Travel Intelligence. Remember:
 - Only reference destinations from the list above
-- Be specific about why each place fits
-- Stay concise (2-4 sentences unless more depth is requested)
-- End with a relevant follow-up question when appropriate`;
+- ${presentMultiple && numDestinations > 1 ? `IMPORTANT: Present 2-3 OPTIONS from the list with brief descriptions of each. The user wants to see choices, not just one recommendation.` : 'Be specific about why this place fits'}
+- For each place mentioned, include a brief reason why it stands out
+- Keep it conversational but informative
+- End with a follow-up question to help narrow down (e.g., "Looking for something more intimate or lively?")`;
 
     // Try OpenAI first
     if (openai?.chat) {
@@ -473,7 +535,7 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
             { role: 'user', content: userPrompt },
           ],
           temperature: 0.7,
-          max_tokens: 300,
+          max_tokens: presentMultiple ? 500 : 300, // More tokens for multiple options
         });
         const content = response.choices?.[0]?.message?.content;
         if (content) return content.trim();
@@ -487,7 +549,7 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
       try {
         const model = this.genAI.getGenerativeModel({
           model: 'gemini-1.5-flash',
-          generationConfig: { temperature: 0.7, maxOutputTokens: 300 },
+          generationConfig: { temperature: 0.7, maxOutputTokens: presentMultiple ? 500 : 300 },
         });
         const result = await model.generateContent(`${systemPrompt}\n\n${userPrompt}`);
         const content = result.response.text();
@@ -497,10 +559,17 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
       }
     }
 
-    // Fallback response
+    // Fallback response - show multiple options
     if (destinations.length > 0) {
-      const top = destinations[0];
-      return `${top.name} in ${top.city} stands out — ${top.micro_description || 'a noteworthy destination'}. ${destinations.length > 1 ? `I also have ${destinations.length - 1} other suggestions.` : ''} What matters most to you — atmosphere, food quality, or location?`;
+      if (destinations.length >= 3) {
+        const top3 = destinations.slice(0, 3);
+        return `Here are a few options: **${top3[0].name}** — ${top3[0].micro_description || 'a standout choice'}. **${top3[1].name}** — ${top3[1].micro_description || 'another great option'}. And **${top3[2].name}** if you want something different. What vibe are you going for?`;
+      } else if (destinations.length === 2) {
+        return `Two great options: **${destinations[0].name}** — ${destinations[0].micro_description || 'highly recommended'}. Or **${destinations[1].name}** — ${destinations[1].micro_description || 'equally impressive'}. Which sounds more like what you're after?`;
+      } else {
+        const top = destinations[0];
+        return `${top.name} in ${top.city} stands out — ${top.micro_description || 'a noteworthy destination'}. What matters most to you — atmosphere, quality, or location?`;
+      }
     }
 
     return "I'd love to help you discover something special. Could you tell me more about what you're looking for? A specific city, type of experience, or occasion?";
