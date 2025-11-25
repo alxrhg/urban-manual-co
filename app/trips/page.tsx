@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Loader2, MapPin, Calendar } from 'lucide-react';
+import { Plus, Loader2, MapPin, Calendar, Plane } from 'lucide-react';
+import { PageLoader } from '@/components/LoadingStates';
+import UMActionPill from '@/components/ui/UMActionPill';
 import type { Trip } from '@/types/trip';
 
 export default function TripsPage() {
@@ -77,95 +79,132 @@ export default function TripsPage() {
     return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  // Loading state
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
-      </div>
+      <main className="w-full px-6 md:px-10 py-20">
+        <PageLoader />
+      </main>
     );
   }
 
-  if (!user) return null;
+  // Not logged in
+  if (!user) {
+    return (
+      <main className="w-full px-6 md:px-10 py-20">
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="w-full max-w-sm">
+            <h1 className="text-2xl font-light mb-8">Trips</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
+              Sign in to plan and organize your travels
+            </p>
+            <button
+              onClick={() => router.push('/auth/login')}
+              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-sm hover:opacity-80 transition-opacity"
+            >
+              Sign In
+            </button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-neutral-950">
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-semibold text-neutral-900 dark:text-white">Trips</h1>
-            <p className="text-sm text-neutral-500 mt-1">Plan your adventures</p>
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <div className="w-full">
+        {/* Header - Matches account page */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-2xl font-light">Trips</h1>
+            <UMActionPill variant="primary" onClick={createTrip} disabled={creating}>
+              {creating ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-1" />
+              ) : (
+                <Plus className="w-4 h-4 mr-1" />
+              )}
+              New Trip
+            </UMActionPill>
           </div>
-          <button
-            onClick={createTrip}
-            disabled={creating}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition"
-          >
-            {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            New Trip
-          </button>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Plan and organize your travels
+          </p>
         </div>
+
+        {/* Stats - Like account page */}
+        {trips.length > 0 && (
+          <div className="grid grid-cols-3 gap-4 mb-12">
+            <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+              <div className="text-2xl font-light mb-1">{trips.length}</div>
+              <div className="text-xs text-gray-500">Total Trips</div>
+            </div>
+            <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+              <div className="text-2xl font-light mb-1">
+                {trips.filter(t => t.status === 'planning').length}
+              </div>
+              <div className="text-xs text-gray-500">Planning</div>
+            </div>
+            <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+              <div className="text-2xl font-light mb-1">
+                {trips.filter(t => t.status === 'completed').length}
+              </div>
+              <div className="text-xs text-gray-500">Completed</div>
+            </div>
+          </div>
+        )}
 
         {/* Trip List */}
         {trips.length === 0 ? (
-          <div className="py-20 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-              <MapPin className="w-7 h-7 text-neutral-400" />
+          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <Plane className="w-8 h-8 text-gray-400 dark:text-gray-500" />
             </div>
-            <p className="text-neutral-900 dark:text-white font-medium mb-1">No trips yet</p>
-            <p className="text-sm text-neutral-500 mb-6">Create your first trip to start planning</p>
-            <button
-              onClick={createTrip}
-              disabled={creating}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium"
-            >
-              <Plus className="w-4 h-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              No trips yet
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+              Start planning your next adventure by creating your first trip.
+            </p>
+            <UMActionPill variant="primary" onClick={createTrip} disabled={creating}>
+              <Plus className="w-4 h-4 mr-2" />
               Create Trip
-            </button>
+            </UMActionPill>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
             {trips.map((trip) => (
               <button
                 key={trip.id}
                 onClick={() => router.push(`/trips/${trip.id}`)}
-                className="text-left bg-neutral-50 dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden hover:border-neutral-300 dark:hover:border-neutral-700 transition group"
+                className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
               >
-                {/* Cover Image */}
-                <div className="aspect-[2/1] bg-neutral-200 dark:bg-neutral-800 relative">
+                {/* Image */}
+                <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
                   {trip.cover_image ? (
                     <Image
                       src={trip.cover_image}
                       alt={trip.title}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="object-cover"
+                      sizes="64px"
                     />
                   ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <MapPin className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
+                    <div className="w-full h-full flex items-center justify-center">
+                      <MapPin className="w-5 h-5 text-gray-400" />
                     </div>
                   )}
                 </div>
 
                 {/* Info */}
-                <div className="p-4">
-                  <h3 className="font-medium text-neutral-900 dark:text-white truncate">
-                    {trip.title}
-                  </h3>
-                  <div className="flex items-center gap-3 mt-1 text-sm text-neutral-500">
-                    {trip.destination && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {trip.destination}
-                      </span>
-                    )}
-                    {trip.start_date && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {formatDate(trip.start_date)}
-                        {trip.end_date && ` – ${formatDate(trip.end_date)}`}
-                      </span>
-                    )}
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{trip.title}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    {trip.destination && `${trip.destination} • `}
+                    {trip.start_date ? formatDate(trip.start_date) : 'No dates set'}
+                    {trip.end_date && ` – ${formatDate(trip.end_date)}`}
+                  </div>
+                  <div className="text-xs text-gray-400 mt-0.5 capitalize">
+                    {trip.status}
                   </div>
                 </div>
               </button>
@@ -173,6 +212,6 @@ export default function TripsPage() {
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }

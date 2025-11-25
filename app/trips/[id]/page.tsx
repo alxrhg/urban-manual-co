@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,15 +10,14 @@ import { useDrawerStore } from '@/lib/stores/drawer-store';
 import {
   ArrowLeft,
   Calendar,
-  ChevronLeft,
-  ChevronRight,
   Loader2,
   MapPin,
   Plus,
   Settings,
   Trash2,
-  GripVertical,
 } from 'lucide-react';
+import { PageLoader } from '@/components/LoadingStates';
+import UMActionPill from '@/components/ui/UMActionPill';
 import type { Trip, ItineraryItem } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 
@@ -38,7 +38,6 @@ export default function TripPage() {
   const [days, setDays] = useState<TripDay[]>([]);
   const [selectedDay, setSelectedDay] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
 
   // Fetch trip and items
   const fetchTrip = useCallback(async () => {
@@ -49,7 +48,6 @@ export default function TripPage() {
       const supabase = createClient();
       if (!supabase) return;
 
-      // Fetch trip
       const { data: tripData, error: tripError } = await supabase
         .from('trips')
         .select('*')
@@ -65,7 +63,6 @@ export default function TripPage() {
 
       setTrip(tripData);
 
-      // Fetch itinerary items
       const { data: items, error: itemsError } = await supabase
         .from('itinerary_items')
         .select('*')
@@ -75,7 +72,6 @@ export default function TripPage() {
 
       if (itemsError) throw itemsError;
 
-      // Fetch destinations for items
       const slugs = (items || [])
         .map((i) => i.destination_slug)
         .filter((s): s is string => Boolean(s));
@@ -90,7 +86,6 @@ export default function TripPage() {
         destinations?.forEach((d) => destinationsMap.set(d.slug, d));
       }
 
-      // Build days
       const numDays = calculateDays(tripData.start_date, tripData.end_date);
       const daysArray: TripDay[] = [];
 
@@ -123,12 +118,10 @@ export default function TripPage() {
     fetchTrip();
   }, [fetchTrip]);
 
-  // Update trip
   const updateTrip = async (updates: Partial<Trip>) => {
     if (!trip || !user) return;
 
     try {
-      setSaving(true);
       const supabase = createClient();
       if (!supabase) return;
 
@@ -141,18 +134,14 @@ export default function TripPage() {
       if (error) throw error;
       setTrip({ ...trip, ...updates });
 
-      // Refetch to update days if dates changed
       if (updates.start_date || updates.end_date) {
         fetchTrip();
       }
     } catch (err) {
       console.error('Error updating trip:', err);
-    } finally {
-      setSaving(false);
     }
   };
 
-  // Add item to day
   const addItem = async (dayNumber: number, destination: Destination) => {
     if (!trip || !user) return;
 
@@ -179,7 +168,6 @@ export default function TripPage() {
     }
   };
 
-  // Remove item
   const removeItem = async (itemId: string) => {
     try {
       const supabase = createClient();
@@ -197,7 +185,6 @@ export default function TripPage() {
     }
   };
 
-  // Open place selector
   const openPlaceSelector = (dayNumber: number) => {
     openDrawer('place-selector', {
       tripId: trip?.id,
@@ -207,165 +194,175 @@ export default function TripPage() {
     });
   };
 
-  // Loading
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
-      </div>
+      <main className="w-full px-6 md:px-10 py-20">
+        <PageLoader />
+      </main>
     );
   }
 
   if (!trip) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-neutral-500">Trip not found</p>
-      </div>
+      <main className="w-full px-6 md:px-10 py-20">
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <p className="text-gray-500">Trip not found</p>
+        </div>
+      </main>
     );
   }
 
   const currentDay = days.find((d) => d.dayNumber === selectedDay) || days[0];
+  const totalPlaces = days.reduce((acc, d) => acc + d.items.length, 0);
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      {/* Header */}
-      <header className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 sticky top-0 z-40">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/trips')}
-              className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <div className="w-full">
+        {/* Back Link */}
+        <Link
+          href="/trips"
+          className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white mb-8 transition-colors"
+        >
+          <ArrowLeft className="w-3 h-3" />
+          Back to Trips
+        </Link>
 
-            <div className="flex-1 min-w-0">
+        {/* Header */}
+        <div className="mb-12">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex-1">
               <input
                 type="text"
                 value={trip.title}
                 onChange={(e) => updateTrip({ title: e.target.value })}
-                className="w-full text-lg font-semibold text-neutral-900 dark:text-white bg-transparent border-none outline-none"
+                className="text-2xl font-light bg-transparent border-none outline-none w-full focus:outline-none"
                 placeholder="Trip name"
               />
-              <div className="flex items-center gap-3 mt-1 text-sm text-neutral-500">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-gray-500">
                 <button
-                  onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip })}
-                  className="flex items-center gap-1 hover:text-neutral-700 dark:hover:text-neutral-300"
+                  onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
+                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  <MapPin className="w-3.5 h-3.5" />
-                  {trip.destination || 'Set destination'}
+                  <MapPin className="w-3 h-3" />
+                  {trip.destination || 'Add destination'}
                 </button>
                 <button
-                  onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip })}
-                  className="flex items-center gap-1 hover:text-neutral-700 dark:hover:text-neutral-300"
+                  onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
+                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
-                  <Calendar className="w-3.5 h-3.5" />
-                  {trip.start_date ? formatDate(trip.start_date) : 'Set dates'}
+                  <Calendar className="w-3 h-3" />
+                  {trip.start_date ? formatDate(trip.start_date) : 'Add dates'}
                   {trip.end_date && ` – ${formatDate(trip.end_date)}`}
                 </button>
               </div>
             </div>
-
             <button
               onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-              className="p-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800"
+              className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <Settings className="w-5 h-5" />
             </button>
           </div>
         </div>
-      </header>
 
-      {/* Day Navigation */}
-      <div className="bg-white dark:bg-neutral-900 border-b border-neutral-200 dark:border-neutral-800 sticky top-[73px] z-30">
-        <div className="max-w-3xl mx-auto px-4 py-3">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSelectedDay(Math.max(1, selectedDay - 1))}
-              disabled={selectedDay === 1}
-              className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
-            </button>
-
-            <div className="flex-1 overflow-x-auto scrollbar-hide">
-              <div className="flex gap-2 min-w-max">
-                {days.map((day) => (
-                  <button
-                    key={day.dayNumber}
-                    onClick={() => setSelectedDay(day.dayNumber)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
-                      selectedDay === day.dayNumber
-                        ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-                    }`}
-                  >
-                    Day {day.dayNumber}
-                    {day.date && (
-                      <span className="ml-1.5 opacity-60">
-                        {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              onClick={() => setSelectedDay(Math.min(days.length, selectedDay + 1))}
-              disabled={selectedDay === days.length}
-              className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
-            </button>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-4 mb-12">
+          <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+            <div className="text-2xl font-light mb-1">{days.length}</div>
+            <div className="text-xs text-gray-500">Days</div>
+          </div>
+          <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+            <div className="text-2xl font-light mb-1">{totalPlaces}</div>
+            <div className="text-xs text-gray-500">Places</div>
+          </div>
+          <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+            <div className="text-2xl font-light mb-1 capitalize">{trip.status}</div>
+            <div className="text-xs text-gray-500">Status</div>
           </div>
         </div>
-      </div>
 
-      {/* Day Content */}
-      <main className="max-w-3xl mx-auto px-4 py-6">
+        {/* Day Tabs - Minimal style like account page */}
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+            {days.map((day) => (
+              <button
+                key={day.dayNumber}
+                onClick={() => setSelectedDay(day.dayNumber)}
+                className={`transition-all ${
+                  selectedDay === day.dayNumber
+                    ? 'font-medium text-black dark:text-white'
+                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                }`}
+              >
+                Day {day.dayNumber}
+                {day.date && (
+                  <span className="ml-1 opacity-60">
+                    ({new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Day Content */}
         {currentDay && (
-          <div className="space-y-4">
-            {/* Items */}
+          <div className="space-y-8 fade-in">
+            {/* Section Header */}
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                {currentDay.items.length} {currentDay.items.length === 1 ? 'place' : 'places'}
+              </h2>
+              <UMActionPill onClick={() => openPlaceSelector(selectedDay)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Add Place
+              </UMActionPill>
+            </div>
+
+            {/* Places List */}
             {currentDay.items.length > 0 ? (
-              <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 divide-y divide-neutral-100 dark:divide-neutral-800">
-                {currentDay.items.map((item, index) => (
+              <div className="space-y-2">
+                {currentDay.items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 p-4 group"
+                    className="flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors group"
                   >
-                    <div className="text-neutral-300 dark:text-neutral-600 cursor-grab">
-                      <GripVertical className="w-4 h-4" />
-                    </div>
-
-                    <div className="w-14 h-14 rounded-xl bg-neutral-100 dark:bg-neutral-800 overflow-hidden flex-shrink-0">
+                    {/* Image */}
+                    <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
                       {item.destination?.image || item.destination?.image_thumbnail ? (
                         <Image
                           src={item.destination.image_thumbnail || item.destination.image || ''}
                           alt={item.title}
-                          width={56}
-                          height={56}
-                          className="w-full h-full object-cover"
+                          fill
+                          className="object-cover"
+                          sizes="64px"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <MapPin className="w-5 h-5 text-neutral-400" />
+                          <MapPin className="w-5 h-5 text-gray-400" />
                         </div>
                       )}
                     </div>
 
+                    {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-neutral-900 dark:text-white truncate">
-                        {item.title}
-                      </p>
+                      <div className="text-sm font-medium truncate">{item.title}</div>
                       {item.description && (
-                        <p className="text-sm text-neutral-500 truncate">{item.description}</p>
+                        <div className="text-xs text-gray-500 mt-0.5 truncate">
+                          {item.description}
+                        </div>
+                      )}
+                      {item.destination?.category && (
+                        <div className="text-xs text-gray-400 mt-0.5">
+                          {item.destination.category}
+                        </div>
                       )}
                     </div>
 
+                    {/* Remove */}
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="p-2 text-neutral-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -373,30 +370,24 @@ export default function TripPage() {
                 ))}
               </div>
             ) : (
-              <div className="py-12 text-center">
-                <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-neutral-400" />
+              <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-gray-400" />
                 </div>
-                <p className="text-sm text-neutral-500 mb-4">No places added yet</p>
+                <p className="text-sm text-gray-500 mb-4">No places added to this day</p>
+                <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add First Place
+                </UMActionPill>
               </div>
             )}
-
-            {/* Add Place Button */}
-            <button
-              onClick={() => openPlaceSelector(selectedDay)}
-              className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl border-2 border-dashed border-neutral-200 dark:border-neutral-800 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 hover:border-neutral-300 dark:hover:border-neutral-700 transition"
-            >
-              <Plus className="w-5 h-5" />
-              Add place
-            </button>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
 
-// Helpers
 function calculateDays(start: string | null, end: string | null): number {
   if (!start) return 1;
   if (!end) return 1;
