@@ -21,7 +21,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $vars.URBAN_MANUAL_URL }}/api/discovery/fetch",
+        "url": "https://www.urbanmanual.co/api/discovery/fetch",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -73,7 +73,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ $vars.URBAN_MANUAL_URL }}/api/discovery/candidates?limit=10",
+        "url": "https://www.urbanmanual.co/api/discovery/candidates?limit=10",
         "options": {}
       },
       "id": "get-candidates",
@@ -85,7 +85,7 @@
     {
       "parameters": {
         "channel": "#urban-manual-alerts",
-        "text": "=🆕 *New Places Discovered*\n\n{{ $json.inserted }} new candidates found!\nTotal pending: {{ $('Get Pending Candidates').item.json.total }}\n\n*Cities processed:* {{ $('Fetch New Places').item.json.cities_processed.join(', ') }}\n\n<{{ $vars.URBAN_MANUAL_URL }}/admin/discover|Review in Admin Panel>",
+        "text": "=🆕 *New Places Discovered*\n\n{{ $('Fetch New Places').item.json.inserted }} new candidates found!\nTotal pending: {{ $json.total }}\n\n*Cities processed:* {{ $('Fetch New Places').item.json.cities_processed.join(', ') }}\n\n<https://www.urbanmanual.co/admin/discover|Review in Admin Panel>",
         "otherOptions": {}
       },
       "id": "slack-notification",
@@ -106,7 +106,7 @@
           "object": [
             {
               "name": "fetchParams",
-              "value": "={{ {\n  \"minRating\": 4.2,\n  \"limit\": 20\n} }}"
+              "value": "={{ { \"minRating\": 4.2, \"limit\": 20 } }}"
             }
           ]
         },
@@ -196,11 +196,5 @@
   },
   "staticData": null,
   "tags": [],
-  "triggerCount": 1,
-  "variables": [
-    {
-      "key": "URBAN_MANUAL_URL",
-      "value": "https://www.urbanmanual.co"
-    }
-  ]
+  "triggerCount": 1
 }

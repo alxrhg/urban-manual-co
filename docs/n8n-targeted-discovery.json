@@ -17,7 +17,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $vars.URBAN_MANUAL_URL }}/api/discovery/fetch",
+        "url": "https://www.urbanmanual.co/api/discovery/fetch",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -29,7 +29,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  city: $json.body?.city || undefined,\n  cities: $json.body?.cities || undefined,\n  category: $json.body?.category || undefined,\n  minRating: $json.body?.minRating || 4.0,\n  limit: $json.body?.limit || 20\n}) }}"
+        "jsonBody": "={{ JSON.stringify({ city: $json.body?.city || undefined, cities: $json.body?.cities || undefined, category: $json.body?.category || undefined, minRating: $json.body?.minRating || 4.0, limit: $json.body?.limit || 20 }) }}"
       },
       "id": "fetch-places",
       "name": "Fetch Places",
@@ -40,7 +40,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "={{ $vars.URBAN_MANUAL_URL }}/api/discovery/candidates?limit=5",
+        "url": "https://www.urbanmanual.co/api/discovery/candidates?limit=5",
         "options": {}
       },
       "id": "get-recent",
@@ -55,7 +55,7 @@
           "object": [
             {
               "name": "result",
-              "value": "={{ {\n  success: true,\n  inserted: $('Fetch Places').item.json.inserted,\n  total_found: $('Fetch Places').item.json.total_found,\n  already_exists: $('Fetch Places').item.json.already_exists,\n  cities_processed: $('Fetch Places').item.json.cities_processed,\n  pending_candidates: $('Get Recent Candidates').item.json.total,\n  review_url: $vars.URBAN_MANUAL_URL + '/admin/discover'\n} }}"
+              "value": "={{ { success: true, inserted: $('Fetch Places').item.json.inserted, total_found: $('Fetch Places').item.json.total_found, already_exists: $('Fetch Places').item.json.already_exists, cities_processed: $('Fetch Places').item.json.cities_processed, pending_candidates: $json.total, review_url: 'https://www.urbanmanual.co/admin/discover' } }}"
             }
           ]
         },
@@ -128,11 +128,5 @@
   },
   "settings": {
     "executionOrder": "v1"
-  },
-  "variables": [
-    {
-      "key": "URBAN_MANUAL_URL",
-      "value": "https://www.urbanmanual.co"
-    }
-  ]
+  }
 }
