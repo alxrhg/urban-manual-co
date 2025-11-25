@@ -9,6 +9,7 @@ import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocomplet
 import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 import { CategoryAutocompleteInput } from '@/components/CategoryAutocompleteInput';
 import { ParentDestinationAutocompleteInput } from '@/components/ParentDestinationAutocompleteInput';
+import { ArchitectTagInput } from '@/components/ArchitectTagInput';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -252,7 +253,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     michelin_stars: null as number | null,
     crown: false,
     brand: '',
-    architect: '',
+    architects: [] as string[], // Changed to array for tag input
     interior_designer: '',
     architectural_style: '',
     website: '',
@@ -403,6 +404,11 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   // Initialize edit form when entering edit mode
   useEffect(() => {
     if (isEditMode && destination) {
+      // Parse architect string to array (comma-separated)
+      const architectsArray = destination.architect
+        ? destination.architect.split(',').map(a => a.trim()).filter(a => a)
+        : [];
+
       setEditFormData({
         slug: destination.slug || '',
         name: destination.name || '',
@@ -416,7 +422,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         michelin_stars: destination.michelin_stars || null,
         crown: destination.crown || false,
         brand: destination.brand || '',
-        architect: destination.architect || '',
+        architects: architectsArray,
         interior_designer: destination.interior_designer || '',
         architectural_style: destination.architectural_style || '',
         website: destination.website || '',
@@ -525,7 +531,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         michelin_stars: editFormData.michelin_stars || null,
         crown: editFormData.crown || false,
         brand: editFormData.brand?.trim() || null,
-        architect: editFormData.architect?.trim() || null,
+        architect: editFormData.architects.length > 0 ? editFormData.architects.join(', ') : null,
         interior_designer: editFormData.interior_designer?.trim() || null,
         architectural_style: editFormData.architectural_style?.trim() || null,
         website: editFormData.website?.trim() || null,
@@ -1880,16 +1886,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
 
               {/* Architect */}
-              <div>
-                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Architect</label>
-                <input
-                  type="text"
-                  value={editFormData.architect}
-                  onChange={(e) => setEditFormData(prev => ({ ...prev, architect: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
-                  placeholder="e.g., Tadao Ando, Frank Lloyd Wright"
-                />
-              </div>
+              <ArchitectTagInput
+                label="Architects"
+                value={editFormData.architects}
+                onChange={(architects) => setEditFormData(prev => ({ ...prev, architects }))}
+                placeholder="Add architect..."
+              />
 
               {/* Interior Designer */}
               <div>
