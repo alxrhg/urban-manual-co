@@ -33,7 +33,7 @@ export function SplitPaneLayout({ children }: SplitPaneLayoutProps) {
         <div className="hidden lg:flex flex-none">
           <div
             className={clsx(
-              'sticky top-6 w-full transition-[opacity,transform] duration-300 ease-out pr-6',
+              'sticky top-6 w-full transition-[opacity,transform] duration-300 ease-out pr-6 mr-6',
               isPaneOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-6 pointer-events-none'
             )}
             style={{
