@@ -114,8 +114,9 @@ export default function PlaceSelectorDrawer({
 
         if (destError) throw destError;
 
+        const typedDestinations = (destinations ?? []) as Destination[];
         const ordered = slugs
-          .map((slug) => destinations?.find((d) => d.slug === slug))
+          .map((slug) => typedDestinations.find((d) => d.slug === slug))
           .filter((d): d is Destination => Boolean(d));
 
         if (!cancelled) {
