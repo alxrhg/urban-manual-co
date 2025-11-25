@@ -4,7 +4,6 @@ import { useState, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDrawer } from "@/contexts/DrawerContext";
-import { useDrawerStore } from "@/lib/stores/drawer-store";
 import {
   Settings,
   MapPin,
@@ -53,7 +52,6 @@ export function AccountDrawer() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
-  const openSide = useDrawerStore((s) => s.openSide);
   const isOpen = isDrawerOpen("account");
   const [currentSubpage, setCurrentSubpage] = useState<SubpageId>('main_drawer');
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
@@ -511,25 +509,7 @@ export function AccountDrawer() {
               {renderNavItem('Saved places', <Bookmark className="w-4 h-4" />, () => navigateToSubpage('saved_subpage'), `${stats.saved} items`)}
               {renderNavItem('Visited places', <MapPin className="w-4 h-4" />, () => navigateToSubpage('visited_subpage'), `${stats.visited} logged`)}
               {renderNavItem('Lists', <Folder className="w-4 h-4" />, () => navigateToSubpage('collections_subpage'), 'Organize favorites')}
-              {renderNavItem('Trips', <Compass className="w-4 h-4" />, () => {
-                console.log('[AccountDrawer] Opening trip list drawer');
-                // Close Account Drawer (uses DrawerContext) first
-                closeDrawer();
-                // Small delay to ensure Account Drawer closes before opening Trip List Drawer
-                setTimeout(() => {
-                  console.log('[AccountDrawer] Calling openSide("trip-list")');
-                  openSide('trip-list');
-                  // Double-check the store state after a brief moment
-                  setTimeout(() => {
-                    const store = useDrawerStore.getState();
-                    console.log('[AccountDrawer] Drawer store state after openSide:', {
-                      open: store.open,
-                      type: store.type,
-                      mode: store.mode
-                    });
-                  }, 100);
-                }, 150);
-              }, `${stats.trips} planned`)}
+              {renderNavItem('Trips', <Compass className="w-4 h-4" />, () => navigateToSubpage('trips_subpage'), `${stats.trips} planned`)}
               {renderNavItem('Achievements', <Trophy className="w-4 h-4" />, () => navigateToSubpage('achievements_subpage'), 'Milestones and badges')}
             </div>
           </div>

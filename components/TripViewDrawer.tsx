@@ -14,6 +14,7 @@ import {
 import { Drawer } from '@/components/ui/Drawer';
 import { TripDay } from '@/components/TripDay';
 import { AddLocationToTrip } from '@/components/AddLocationToTrip';
+import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 import type { Trip, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
 
 interface TripViewDrawerProps {
@@ -374,7 +375,31 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
   const formatDateForInput = (dateStr: string | null) => {
     if (!dateStr) return '';
     try {
-      return new Date(dateStr).toISOString().split('T')[0];
+      // If already in YYYY-MM-DD format, return as-is
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        return dateStr;
+      }
+      // Parse date string directly to avoid timezone issues
+      // Handle YYYY-MM-DD format by splitting
+      const parts = dateStr.split(/[-/]/);
+      if (parts.length === 3) {
+        const year = parts[0];
+        const month = parts[1].padStart(2, '0');
+        const day = parts[2].padStart(2, '0');
+        // Validate it's a valid date format
+        if (year.length === 4 && month.length === 2 && day.length === 2) {
+          return `${year}-${month}-${day}`;
+        }
+      }
+      // Fallback: parse as Date and use local date components
+      const date = new Date(dateStr);
+      if (!isNaN(date.getTime())) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+      return '';
     } catch {
       return '';
     }
@@ -484,12 +509,11 @@ export function TripViewDrawer({ isOpen, onClose, tripId, onEdit, onDelete }: Tr
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Cities Visiting (Optional)
                 </label>
-                <input
-                  type="text"
+                <CityAutocompleteInput
                   value={editedDestination}
-                  onChange={(e) => setEditedDestination(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-black dark:focus:border-white transition-colors text-sm"
-                  placeholder="e.g., Paris, London, Rome"
+                  onChange={setEditedDestination}
+                  placeholder="e.g., Tokyo, Paris, New York"
+                  className="border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">

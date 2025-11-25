@@ -845,8 +845,8 @@ export function AddLocationToTrip({
                     value={customLocationQuery}
                     onChange={setCustomLocationQuery}
                     onPlaceSelect={handleGooglePlaceSelect}
-                    placeholder="Search for any place on Google..."
-                    className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-800 rounded-lg bg-white dark:bg-gray-900 focus:outline-none focus:border-neutral-900 dark:focus:border-neutral-100 transition-colors text-sm"
+                    placeholder="Search any place on Google..."
+                    className="w-full px-4 py-2.5 rounded-2xl bg-gray-100 dark:bg-gray-800 border-none text-sm text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-colors"
                     types={[]}
                   />
                 ) : (
