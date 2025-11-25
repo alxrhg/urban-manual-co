@@ -82,15 +82,9 @@ export default function CityPageClient() {
 
   const handleAdminEdit = (destination: Destination) => {
     if (!isAdmin) return;
-    setEditingDestination(destination);
-    openGlobalDrawer('poi-editor', {
-      destination: destination,
-      onSave: async () => {
-        await new Promise(resolve => setTimeout(resolve, 200));
-        await fetchDestinations();
-        setEditingDestination(null);
-      }
-    });
+    // Open destination drawer - editing happens inline
+    setSelectedDestination(destination);
+    openDrawer('destination');
   };
 
   const handleAddNewPOI = () => {
@@ -570,8 +564,9 @@ export default function CityPageClient() {
           // The DestinationDrawer already handles the database update,
           // so we just need to sync our local state
         }}
-        onEdit={(destination) => {
-          handleAdminEdit(destination);
+        onDestinationUpdate={async () => {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          await fetchDestinations();
         }}
         onDestinationClick={async (slug: string) => {
           try {

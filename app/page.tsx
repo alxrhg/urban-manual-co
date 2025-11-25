@@ -3200,16 +3200,9 @@ export default function Home() {
                               destination={destination}
                               isAdmin={isAdmin}
                               onEdit={dest => {
-                                setEditingDestination(dest);
-                                openGlobalDrawer('poi-editor', {
-                                  destination: dest,
-                                  onSave: async () => {
-                                    await new Promise(resolve => setTimeout(resolve, 200));
-                                    await fetchDestinations();
-                                    setCurrentPage(1);
-                                    setEditingDestination(null);
-                                  }
-                                });
+                                // Open destination drawer - editing happens inline
+                                setSelectedDestination(dest);
+                                openDrawer('destination');
                               }}
                               showEditAffordance={editModeActive}
                               onClick={() => {
@@ -3400,17 +3393,10 @@ export default function Home() {
                 return sorted;
               });
             }}
-            onEdit={(destination) => {
-              setEditingDestination(destination);
-              openGlobalDrawer('poi-editor', {
-                destination: destination,
-                onSave: async () => {
-                  await new Promise(resolve => setTimeout(resolve, 200));
-                  await fetchDestinations();
-                  setCurrentPage(1);
-                  setEditingDestination(null);
-                }
-              });
+            onDestinationUpdate={async () => {
+              await new Promise(resolve => setTimeout(resolve, 200));
+              await fetchDestinations();
+              setCurrentPage(1);
             }}
             onDestinationClick={async (slug: string) => {
               try {

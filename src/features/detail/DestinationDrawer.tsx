@@ -3,8 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AlertCircle, X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe, Building2 } from 'lucide-react';
+import { AlertCircle, X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe, Building2, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
+import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
+import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
+import { CategoryAutocompleteInput } from '@/components/CategoryAutocompleteInput';
+import { ParentDestinationAutocompleteInput } from '@/components/ParentDestinationAutocompleteInput';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -77,6 +81,7 @@ interface DestinationDrawerProps {
   onVisitToggle?: (slug: string, visited: boolean) => void;
   onDestinationClick?: (slug: string) => void;
   onEdit?: (destination: Destination) => void; // Callback for editing destination
+  onDestinationUpdate?: () => void; // Callback when destination is updated/deleted
 }
 
 function capitalizeCity(city: string): string {
@@ -195,7 +200,7 @@ function parseTime(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
-export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick, onEdit }: DestinationDrawerProps) {
+export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick, onEdit, onDestinationUpdate }: DestinationDrawerProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isReviewersExpanded, setIsReviewersExpanded] = useState(false);
   const [isContactExpanded, setIsContactExpanded] = useState(false);
@@ -223,6 +228,27 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [reviewSummary, setReviewSummary] = useState<string | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Edit mode state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [googlePlaceQuery, setGooglePlaceQuery] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    slug: '',
+    name: '',
+    city: '',
+    category: '',
+    description: '',
+    image: '',
+    michelin_stars: null as number | null,
+    parent_destination_id: null as number | null,
+  });
 
   const handleAddSuccess = (tripTitle: string, day?: number) => {
     setIsAddedToTrip(true);
@@ -357,6 +383,189 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       console.error('Error generating review summary:', error);
     } finally {
       setLoadingReviewSummary(false);
+    }
+  };
+
+  // Initialize edit form when entering edit mode
+  useEffect(() => {
+    if (isEditMode && destination) {
+      setEditFormData({
+        slug: destination.slug || '',
+        name: destination.name || '',
+        city: destination.city || '',
+        category: destination.category || '',
+        description: destination.description || '',
+        image: destination.image || '',
+        michelin_stars: destination.michelin_stars || null,
+        parent_destination_id: destination.parent_destination_id || null,
+      });
+      if (destination.image) setImagePreview(destination.image);
+    }
+  }, [isEditMode, destination]);
+
+  // Reset edit mode when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsEditMode(false);
+      setShowDeleteConfirm(false);
+      setImageFile(null);
+      setImagePreview(null);
+    }
+  }, [isOpen]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return null;
+    setUploadingImage(true);
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', imageFile);
+      formDataToSend.append('slug', editFormData.slug || editFormData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+        body: formDataToSend,
+      });
+
+      if (!res.ok) throw new Error((await res.json()).error || 'Upload failed');
+      return (await res.json()).url;
+    } catch (error: any) {
+      toast.error(`Image upload failed: ${error.message}`);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editFormData.name || !editFormData.city || !editFormData.category) {
+      toast.error('Please fill in name, city, and category');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      let imageUrl = editFormData.image;
+      if (imageFile) {
+        const uploadedUrl = await uploadImage();
+        if (uploadedUrl) imageUrl = uploadedUrl;
+        else { setIsSaving(false); return; }
+      }
+
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const destinationData = {
+        slug: editFormData.slug || editFormData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        name: editFormData.name.trim(),
+        city: editFormData.city.trim(),
+        category: editFormData.category.trim(),
+        description: editFormData.description?.trim() || null,
+        image: imageUrl || null,
+        michelin_stars: editFormData.michelin_stars || null,
+        parent_destination_id: editFormData.parent_destination_id || null,
+      };
+
+      const { error } = await supabase.from('destinations').update(destinationData).eq('slug', destination?.slug);
+
+      if (error) {
+        if (error.code === '23505') toast.error('A destination with this slug already exists');
+        else throw error;
+        return;
+      }
+
+      toast.success('Destination updated');
+      setIsEditMode(false);
+      onDestinationUpdate?.();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!destination?.slug) return;
+    if (!showDeleteConfirm) { setShowDeleteConfirm(true); return; }
+
+    setIsDeleting(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from('destinations').delete().eq('slug', destination.slug);
+      if (error) throw error;
+      toast.success('Destination deleted');
+      onClose();
+      onDestinationUpdate?.();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleGooglePlaceSelect = async (placeDetails: any) => {
+    const placeId = placeDetails?.place_id || placeDetails?.placeId;
+    if (!placeId) return;
+
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const res = await fetch('/api/fetch-google-place', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ placeId }),
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch place details');
+      const data = await res.json();
+
+      if (data) {
+        setEditFormData(prev => ({
+          ...prev,
+          name: data.name ?? prev.name,
+          city: data.city ?? prev.city,
+          category: data.category ?? prev.category,
+          description: data.description ?? prev.description,
+          image: data.image ?? prev.image,
+        }));
+        if (data.image) setImagePreview(data.image);
+        setGooglePlaceQuery('');
+        toast.success('Place details loaded');
+      }
+    } catch (error) {
+      toast.error('Failed to load place details');
     }
   };
 
@@ -1184,7 +1393,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
         </button>
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-          {destination.name || 'Destination'}
+          {isEditMode ? 'Edit Destination' : (destination.name || 'Destination')}
         </h2>
       </div>
       {user && (
@@ -1194,20 +1403,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (onEdit) {
-                  onClose(); // Close the destination drawer
-                  onEdit(destination);
-                } else {
-                  // Fallback to admin page if no onEdit callback
-                  onClose();
-                  router.push(`/admin?slug=${destination.slug}`);
-                }
+                setIsEditMode(!isEditMode);
               }}
-              className="p-2 hover:bg-neutral-50 dark:hover:bg-white/5 rounded-lg transition-colors"
-              aria-label="Edit destination"
-              title="Edit destination (Admin)"
+              className={`p-2 rounded-lg transition-colors ${isEditMode ? 'bg-black dark:bg-white text-white dark:text-black' : 'hover:bg-neutral-50 dark:hover:bg-white/5'}`}
+              aria-label={isEditMode ? 'Exit edit mode' : 'Edit destination'}
+              title={isEditMode ? 'Exit edit mode' : 'Edit destination (Admin)'}
             >
-              <Edit className="h-4 w-4 text-gray-900 dark:text-white/90" strokeWidth={1.5} />
+              <Edit className={`h-4 w-4 ${isEditMode ? '' : 'text-gray-900 dark:text-white/90'}`} strokeWidth={1.5} />
             </button>
           )}
           {/* Bookmark Action */}
@@ -1460,6 +1662,173 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             </div>
           )}
+
+          {/* EDIT MODE FORM */}
+          {isEditMode ? (
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              {/* Google Places Search */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Search Google Places</label>
+                <GooglePlacesAutocompleteNative
+                  value={googlePlaceQuery}
+                  onChange={setGooglePlaceQuery}
+                  onPlaceSelect={handleGooglePlaceSelect}
+                  placeholder="Search Google Places..."
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  types={['establishment']}
+                />
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Name *</label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="Place name"
+                />
+              </div>
+
+              {/* City */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">City *</label>
+                <CityAutocompleteInput
+                  value={editFormData.city}
+                  onChange={(value) => setEditFormData(prev => ({ ...prev, city: value }))}
+                  placeholder="City"
+                  required
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Category *</label>
+                <CategoryAutocompleteInput
+                  value={editFormData.category}
+                  onChange={(value) => setEditFormData(prev => ({ ...prev, category: value }))}
+                  placeholder="Category"
+                  required
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Description</label>
+                <textarea
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm resize-none"
+                  placeholder="Short description..."
+                />
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Image</label>
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`relative border-2 border-dashed rounded-xl p-4 transition-all ${
+                    isDragging ? 'border-black dark:border-white bg-gray-100 dark:bg-gray-800' : 'border-gray-300 dark:border-gray-700'
+                  }`}
+                >
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="edit-image-upload" />
+                  <label htmlFor="edit-image-upload" className="flex flex-col items-center cursor-pointer">
+                    {imagePreview ? (
+                      <div className="relative w-full">
+                        <img src={imagePreview} alt="Preview" className="w-full h-24 object-cover rounded-lg" />
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setImageFile(null); setImagePreview(null); setEditFormData(prev => ({ ...prev, image: '' })); }}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-500">Drop image or click to upload</span>
+                    )}
+                  </label>
+                </div>
+                {uploadingImage && (
+                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Uploading...
+                  </div>
+                )}
+              </div>
+
+              {/* Michelin Stars */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Michelin Stars</label>
+                <select
+                  value={editFormData.michelin_stars || ''}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, michelin_stars: e.target.value ? parseInt(e.target.value) : null }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                >
+                  <option value="">None</option>
+                  <option value="1">1 Star</option>
+                  <option value="2">2 Stars</option>
+                  <option value="3">3 Stars</option>
+                </select>
+              </div>
+
+              {/* Parent Destination */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Located In (Parent)</label>
+                <ParentDestinationAutocompleteInput
+                  value={editFormData.parent_destination_id}
+                  onChange={(id) => setEditFormData(prev => ({ ...prev, parent_destination_id: id }))}
+                  currentDestinationId={destination?.id}
+                  placeholder="Search parent location..."
+                />
+              </div>
+
+              {/* Delete Button */}
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                {showDeleteConfirm ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-center text-gray-600 dark:text-gray-400">Delete "{destination.name}"?</p>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm">
+                        Cancel
+                      </button>
+                      <button type="button" onClick={handleDelete} disabled={isDeleting} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-full text-sm">
+                        {isDeleting ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" onClick={handleDelete} className="w-full px-4 py-2 border border-red-300 text-red-600 rounded-full text-sm flex items-center justify-center gap-2">
+                    <Trash2 className="h-4 w-4" /> Delete Destination
+                  </button>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsEditMode(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-full text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving || !editFormData.name || !editFormData.city || !editFormData.category}
+                  className="flex-1 bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          ) : (
+          <>
           {/* Mobile Content - Same as Desktop */}
           <div className="md:hidden">
           {/* Hero Image - Full width rounded */}
@@ -3002,6 +3371,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           </div>
+          </>
+          )}
         </div>
       </Drawer>
 
