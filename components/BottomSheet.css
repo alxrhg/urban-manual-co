@@ -1,0 +1,9 @@
+@layer utilities {
+  .ease-bose {
+    transition-timing-function: cubic-bezier(.33, 1, .68, 1);
+  }
+
+  .shadow-bose {
+    box-shadow: 0 -28px 80px -40px rgba(0, 0, 0, 0.65), 0 18px 50px -36px rgba(0, 0, 0, 0.38);
+  }
+}
