@@ -815,11 +815,14 @@ export default function TripPage() {
         isOpen={selectedDestination !== null}
         onClose={() => setSelectedDestination(null)}
         place={selectedDestination ? {
-          ...selectedDestination,
+          name: selectedDestination.name,
+          category: selectedDestination.category,
           neighborhood: selectedDestination.neighborhood ?? undefined,
-          michelinRating: selectedDestination.michelinRating ?? undefined,
-          googleRating: selectedDestination.googleRating ?? undefined,
-          googleReviews: selectedDestination.googleReviews ?? undefined,
+          michelinRating: selectedDestination.michelin_stars ?? undefined,
+          hasMichelin: !!selectedDestination.michelin_stars,
+          googleRating: selectedDestination.rating ?? undefined,
+          googleReviews: selectedDestination.user_ratings_total ?? undefined,
+          priceLevel: selectedDestination.price_level ?? undefined,
           description: selectedDestination.description ?? undefined,
           image: selectedDestination.image ?? undefined,
           image_thumbnail: selectedDestination.image_thumbnail ?? undefined,
