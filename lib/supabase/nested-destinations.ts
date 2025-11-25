@@ -20,23 +20,27 @@ export async function getNestedDestinations(
   includeDeep: boolean = false
 ): Promise<Destination[]> {
   try {
-    if (includeDeep) {
-      // Use recursive function for deep nesting
-      const { data, error } = await supabase.rpc('get_all_nested_destinations', {
-        parent_id: parentId,
-      });
+    // Direct query - fetch all destinations where parent_destination_id = parentId
+    const { data, error } = await supabase
+      .from('destinations')
+      .select('*')
+      .eq('parent_destination_id', parentId)
+      .order('name');
 
-      if (error) throw error;
-      return (data || []) as Destination[];
-    } else {
-      // Use simple function for direct children only
-      const { data, error } = await supabase.rpc('get_nested_destinations', {
-        parent_id: parentId,
-      });
+    if (error) throw error;
 
-      if (error) throw error;
-      return (data || []) as Destination[];
+    const destinations = (data || []) as Destination[];
+
+    // If deep nesting requested, recursively fetch nested for each
+    if (includeDeep && destinations.length > 0) {
+      for (const dest of destinations) {
+        if (dest.id) {
+          dest.nested_destinations = await getNestedDestinations(supabase, dest.id, true);
+        }
+      }
     }
+
+    return destinations;
   } catch (error) {
     console.warn('[Nested Destinations] Error fetching nested destinations:', error);
     return [];
