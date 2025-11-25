@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { BottomNav } from "@/components/BottomNav";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
@@ -204,6 +205,7 @@ export default function RootLayout({
                           {children}
                         </main>
                         <Footer />
+                        <BottomNav />
                         <CookieConsent />
                         <DrawerMount />
                       </ItineraryProvider>
