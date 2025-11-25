@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import type { Trip } from '@/types/trip';
 import { Plane, Plus } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { TripPlanner } from '@/components/TripPlanner';
 import TripCard from '@/components/trips/TripCard';
 import UMActionPill from '@/components/ui/UMActionPill';
 import UMFeaturePill from '@/components/ui/UMFeaturePill';
@@ -15,7 +13,6 @@ interface TripsTabProps {
   onTripsUpdated: () => Promise<void>;
 }
 
-// Format date helper
 function formatDate(dateStr: string | null | undefined): string | undefined {
   if (!dateStr) return undefined;
   try {
@@ -28,28 +25,18 @@ function formatDate(dateStr: string | null | undefined): string | undefined {
 
 export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
   const router = useRouter();
-  const [showTripDialog, setShowTripDialog] = useState(false);
-  const [editingTripId, setEditingTripId] = useState<string | null>(null);
 
   const handleNewTrip = () => {
-    setEditingTripId(null);
-    setShowTripDialog(true);
-  };
-
-  const handleEditTrip = (tripId: string) => {
-    setEditingTripId(tripId);
-    setShowTripDialog(true);
+    router.push('/trips');
   };
 
   return (
     <div className="fade-in space-y-6">
-      {/* Header with New Trip button */}
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-            {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
-          </p>
-        </div>
+        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+          {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
+        </p>
         <UMActionPill variant="primary" onClick={handleNewTrip}>
           <Plus className="w-4 h-4 mr-1" />
           New Trip
@@ -88,23 +75,10 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
                 status: trip.status,
               }}
               onView={() => router.push(`/trips/${trip.id}`)}
-              onEdit={() => handleEditTrip(trip.id)}
+              onEdit={() => router.push(`/trips/${trip.id}`)}
             />
           ))}
         </div>
-      )}
-
-      {/* Trip Planner - Only render when open */}
-      {showTripDialog && (
-        <TripPlanner
-          isOpen={true}
-          tripId={editingTripId ?? undefined}
-          onClose={async () => {
-            setShowTripDialog(false);
-            setEditingTripId(null);
-            await onTripsUpdated();
-          }}
-        />
       )}
     </div>
   );

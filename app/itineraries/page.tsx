@@ -3,18 +3,14 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { TripPlanner } from '@/components/TripPlanner';
-import { TripViewDrawer } from '@/components/TripViewDrawer';
 
-// Redirect to /trips or show trips page
-// This is an alias for the trips page
+// Redirect to /trips
 export default function ItinerariesPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!authLoading) {
-      // Redirect to trips page
       router.replace('/trips');
     }
   }, [authLoading, router]);
@@ -29,4 +25,3 @@ export default function ItinerariesPage() {
 
   return null;
 }
-

@@ -33,7 +33,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
-import { AddToTripModal } from '@/components/AddToTripModal';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -3088,19 +3087,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         />
       )}
 
-      {/* Add to Trip Modal */}
-      {destination && (
-        <AddToTripModal
-          destinationSlug={destination.slug}
-          destinationName={destination.name}
-          isOpen={showAddToTripModal}
-          onClose={() => setShowAddToTripModal(false)}
-          onAdd={(tripId, tripTitle, day) => {
-            handleAddSuccess(tripTitle, day);
-            console.log(`Added ${destination.name} to trip ${tripId}`);
-          }}
-        />
-      )}
     </>
   );
 }
