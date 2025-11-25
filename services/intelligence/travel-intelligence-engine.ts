@@ -10,11 +10,8 @@ import { embedText } from '@/lib/llm';
 import {
   ConversationMode,
   TravelContext,
-  IntelligenceResult,
   TRAVEL_INTELLIGENCE_SYSTEM_PROMPT,
   MODE_PROMPTS,
-  CONTEXT_EXTRACTION_PROMPT,
-  RESPONSE_GENERATION_PROMPT,
 } from '@/lib/ai/travel-intelligence';
 import { knowledgeGraphService } from '@/services/intelligence/knowledge-graph';
 
@@ -38,6 +35,14 @@ export interface ProcessResult {
     type: string;
     content: string;
   }>;
+}
+
+interface NLUResult {
+  mode: ConversationMode;
+  context: TravelContext;
+  confidence: number;
+  needsClarification: boolean;
+  clarificationQuestion?: string;
 }
 
 /**
@@ -94,35 +99,50 @@ export class TravelIntelligenceEngine {
     existingContext?: TravelContext
   ): Promise<ProcessResult> {
     try {
-      // Step 1: Extract/update context from the conversation
-      const context = await this.extractContext(message, conversationHistory, existingContext);
+      console.log('[TravelIntelligence] ========== NEW REQUEST ==========');
+      console.log('[TravelIntelligence] Message:', message);
+      console.log('[TravelIntelligence] Existing context:', existingContext);
 
-      // Step 2: Detect conversation mode
-      const mode = await this.detectMode(message, conversationHistory, context);
+      // Step 1: UNIFIED NLU - Extract context AND mode together
+      const nluResult = await this.understandQuery(message, conversationHistory, existingContext);
 
-      // Step 3: Find relevant destinations from our curated collection
-      const destinations = await this.findRelevantDestinations(message, context, mode, userId);
+      console.log('[TravelIntelligence] NLU Result:', {
+        mode: nluResult.mode,
+        context: nluResult.context,
+        confidence: nluResult.confidence,
+      });
 
-      // Step 4: Generate intelligent response
+      // Step 2: Find relevant destinations from our curated collection
+      const destinations = await this.findRelevantDestinations(
+        message,
+        nluResult.context,
+        nluResult.mode,
+        userId
+      );
+
+      console.log('[TravelIntelligence] Found', destinations.length, 'destinations');
+
+      // Step 3: Generate intelligent response
       const response = await this.generateResponse(
         message,
         destinations,
-        context,
-        mode,
-        conversationHistory
+        nluResult.context,
+        nluResult.mode,
+        conversationHistory,
+        nluResult.needsClarification ? nluResult.clarificationQuestion : undefined
       );
 
-      // Step 5: Generate follow-up suggestions
-      const suggestions = await this.generateSuggestions(context, mode, destinations);
+      // Step 4: Generate follow-up suggestions
+      const suggestions = this.generateSuggestions(nluResult.context, nluResult.mode, destinations);
 
-      // Step 6: Extract insights if appropriate
-      const insights = this.extractInsights(destinations, context, mode);
+      // Step 5: Extract insights if appropriate
+      const insights = this.extractInsights(destinations, nluResult.context, nluResult.mode);
 
       return {
         response,
-        destinations: destinations.slice(0, 12), // Limit displayed destinations
-        mode,
-        context,
+        destinations: destinations.slice(0, 12),
+        mode: nluResult.mode,
+        context: nluResult.context,
         suggestions,
         insights,
       };
@@ -138,63 +158,78 @@ export class TravelIntelligenceEngine {
   }
 
   /**
-   * Extract structured context from the conversation
+   * UNIFIED NLU: Understand the query - extract context AND detect mode together
+   * This is the core natural language understanding step
    */
-  private async extractContext(
+  private async understandQuery(
     message: string,
     history: ConversationMessage[],
     existingContext?: TravelContext
-  ): Promise<TravelContext> {
+  ): Promise<NLUResult> {
     // Start with existing context
-    const context: TravelContext = { ...existingContext };
+    const baseContext: TravelContext = { ...existingContext };
 
-    // Build conversation summary for context extraction
+    // Build conversation summary
     const recentHistory = history.slice(-6).map((m) => `${m.role}: ${m.content}`).join('\n');
 
-    // Try AI extraction
-    const extracted = await this.extractContextWithAI(message, recentHistory);
+    // Step 1: Try AI-powered NLU
+    const aiResult = await this.runAINLU(message, recentHistory, baseContext);
 
-    // Merge extracted context (new values override old ones)
-    if (extracted) {
-      if (extracted.city) context.city = extracted.city;
-      if (extracted.neighborhood) context.neighborhood = extracted.neighborhood;
-      if (extracted.category) context.category = extracted.category;
-      if (extracted.occasion) context.occasion = extracted.occasion;
-      if (extracted.timeOfDay) context.timeOfDay = extracted.timeOfDay;
-      if (extracted.groupSize) context.groupSize = extracted.groupSize;
-      if (extracted.pricePreference) context.pricePreference = extracted.pricePreference;
-      if (extracted.vibes?.length) context.vibes = extracted.vibes;
-      if (extracted.constraints?.length) context.constraints = extracted.constraints;
+    if (aiResult && aiResult.confidence > 0.5) {
+      console.log('[TravelIntelligence] AI NLU succeeded with confidence:', aiResult.confidence);
+      return aiResult;
     }
 
-    // Track previously mentioned destinations
-    const mentionedSlugs = history
-      .filter((m) => m.destinations)
-      .flatMap((m) => m.destinations?.map((d: any) => d.slug) || []);
-    if (mentionedSlugs.length > 0) {
-      context.previouslyMentioned = [...new Set(mentionedSlugs)];
-    }
-
-    return context;
+    // Step 2: Fallback to rule-based NLU
+    console.log('[TravelIntelligence] Falling back to rule-based NLU');
+    return this.runRuleBasedNLU(message, baseContext);
   }
 
   /**
-   * Use AI to extract context from message
+   * AI-powered NLU using LLM
    */
-  private async extractContextWithAI(
+  private async runAINLU(
     message: string,
-    conversationSummary: string
-  ): Promise<Partial<TravelContext> | null> {
+    conversationSummary: string,
+    existingContext: TravelContext
+  ): Promise<NLUResult | null> {
+    const prompt = `You are a travel query analyzer. Extract structured information from this travel query.
+
+EXISTING CONTEXT (from previous conversation):
+${JSON.stringify(existingContext, null, 2)}
+
+CONVERSATION HISTORY:
+${conversationSummary || 'None'}
+
+CURRENT MESSAGE: "${message}"
+
+Analyze and return JSON with this EXACT structure:
+{
+  "mode": "discover" | "plan" | "compare" | "insight" | "recommend" | "navigate",
+  "confidence": 0.0 to 1.0,
+  "city": "city name or null",
+  "neighborhood": "neighborhood name or null",
+  "category": "Hotel" | "Restaurant" | "Cafe" | "Bar" | "Culture" | "Shop" | null,
+  "occasion": "romantic" | "business" | "celebration" | "casual" | "solo" | null,
+  "timeOfDay": "breakfast" | "brunch" | "lunch" | "afternoon" | "dinner" | "late-night" | null,
+  "pricePreference": "budget" | "moderate" | "upscale" | "splurge" | null,
+  "vibes": ["array", "of", "vibes"] or [],
+  "needsClarification": true or false,
+  "clarificationQuestion": "question to ask if clarification needed"
+}
+
+RULES:
+- For "hotel in tokyo": city="Tokyo", category="Hotel", mode="discover" or "recommend"
+- For "best restaurant paris": city="Paris", category="Restaurant", mode="recommend"
+- For "romantic dinner": occasion="romantic", category="Restaurant", timeOfDay="dinner"
+- CAPITALIZE city names properly: "tokyo" -> "Tokyo", "paris" -> "Paris"
+- CAPITALIZE category: "hotel" -> "Hotel", "restaurant" -> "Restaurant"
+- If query is vague, set needsClarification=true
+- confidence should reflect how clear the intent is
+
+Return ONLY the JSON, no explanation.`;
+
     try {
-      const prompt = `${CONTEXT_EXTRACTION_PROMPT}
-
-Conversation:
-${conversationSummary}
-
-Current message: "${message}"
-
-Return only the JSON, no explanation.`;
-
       let result: any = null;
 
       // Try OpenAI first
@@ -207,9 +242,12 @@ Return only the JSON, no explanation.`;
             response_format: { type: 'json_object' },
           });
           const text = response.choices?.[0]?.message?.content;
-          if (text) result = JSON.parse(text);
+          if (text) {
+            result = JSON.parse(text);
+            console.log('[TravelIntelligence] OpenAI NLU raw result:', result);
+          }
         } catch (e) {
-          console.warn('[TravelIntelligence] OpenAI context extraction failed:', e);
+          console.warn('[TravelIntelligence] OpenAI NLU failed:', e);
         }
       }
 
@@ -222,56 +260,178 @@ Return only the JSON, no explanation.`;
           });
           const response = await model.generateContent(prompt);
           const text = response.response.text();
-          if (text) result = JSON.parse(text);
+          if (text) {
+            result = JSON.parse(text);
+            console.log('[TravelIntelligence] Gemini NLU raw result:', result);
+          }
         } catch (e) {
-          console.warn('[TravelIntelligence] Gemini context extraction failed:', e);
+          console.warn('[TravelIntelligence] Gemini NLU failed:', e);
         }
       }
 
-      return result?.context || null;
+      if (!result) return null;
+
+      // Build context from AI result
+      const context: TravelContext = {
+        ...existingContext,
+        city: result.city || existingContext?.city,
+        neighborhood: result.neighborhood || existingContext?.neighborhood,
+        category: result.category || existingContext?.category,
+        occasion: result.occasion || existingContext?.occasion,
+        timeOfDay: result.timeOfDay || existingContext?.timeOfDay,
+        pricePreference: result.pricePreference || existingContext?.pricePreference,
+        vibes: result.vibes?.length > 0 ? result.vibes : existingContext?.vibes,
+      };
+
+      return {
+        mode: result.mode || 'discover',
+        context,
+        confidence: result.confidence || 0.7,
+        needsClarification: result.needsClarification || false,
+        clarificationQuestion: result.clarificationQuestion,
+      };
     } catch (error) {
-      console.error('[TravelIntelligence] Context extraction error:', error);
+      console.error('[TravelIntelligence] AI NLU error:', error);
       return null;
     }
   }
 
   /**
-   * Detect the conversation mode
+   * Rule-based NLU fallback - parses query without AI
    */
-  private async detectMode(
-    message: string,
-    history: ConversationMessage[],
-    context: TravelContext
-  ): Promise<ConversationMode> {
-    const lowerMessage = message.toLowerCase();
+  private runRuleBasedNLU(message: string, existingContext: TravelContext): NLUResult {
+    const lower = message.toLowerCase();
+    const context: TravelContext = { ...existingContext };
+    let mode: ConversationMode = 'discover';
+    let confidence = 0.6;
 
-    // Quick heuristics for common patterns
-    if (lowerMessage.includes(' vs ') || lowerMessage.includes('compare') || lowerMessage.includes('difference between')) {
-      return 'compare';
-    }
-    if (lowerMessage.includes('tell me about') || lowerMessage.includes('what makes') || lowerMessage.includes('why is')) {
-      return 'insight';
-    }
-    if (lowerMessage.includes('plan') || lowerMessage.includes('itinerary') || lowerMessage.includes('day in')) {
-      return 'plan';
-    }
-    if (lowerMessage.includes('best') || lowerMessage.includes('recommend') || lowerMessage.includes('where should')) {
-      return 'recommend';
-    }
-    if (lowerMessage.includes('find') || lowerMessage.includes('looking for') || lowerMessage.includes('any')) {
-      return 'discover';
+    // === CITY EXTRACTION ===
+    const cityPatterns: Record<string, string> = {
+      'tokyo': 'Tokyo',
+      'paris': 'Paris',
+      'london': 'London',
+      'new york': 'New York',
+      'nyc': 'New York',
+      'los angeles': 'Los Angeles',
+      'la': 'Los Angeles',
+      'singapore': 'Singapore',
+      'hong kong': 'Hong Kong',
+      'sydney': 'Sydney',
+      'dubai': 'Dubai',
+      'bangkok': 'Bangkok',
+      'berlin': 'Berlin',
+      'amsterdam': 'Amsterdam',
+      'rome': 'Rome',
+      'barcelona': 'Barcelona',
+      'lisbon': 'Lisbon',
+      'madrid': 'Madrid',
+      'vienna': 'Vienna',
+      'prague': 'Prague',
+      'stockholm': 'Stockholm',
+      'copenhagen': 'Copenhagen',
+      'milan': 'Milan',
+      'taipei': 'Taipei',
+      'seoul': 'Seoul',
+      'kyoto': 'Kyoto',
+      'osaka': 'Osaka',
+      'mexico city': 'Mexico City',
+      'san francisco': 'San Francisco',
+      'chicago': 'Chicago',
+      'toronto': 'Toronto',
+      'vancouver': 'Vancouver',
+      'melbourne': 'Melbourne',
+    };
+
+    for (const [pattern, cityName] of Object.entries(cityPatterns)) {
+      if (lower.includes(pattern)) {
+        context.city = cityName;
+        confidence += 0.1;
+        break;
+      }
     }
 
-    // Default based on context completeness
-    if (context.city && context.category) {
-      return 'recommend';
+    // === CATEGORY EXTRACTION ===
+    const categoryPatterns: Array<{ patterns: string[]; category: string }> = [
+      { patterns: ['hotel', 'hotels', 'stay', 'accommodation', 'where to stay', 'place to stay'], category: 'Hotel' },
+      { patterns: ['restaurant', 'restaurants', 'dining', 'eat', 'food', 'meal', 'dinner', 'lunch', 'breakfast'], category: 'Restaurant' },
+      { patterns: ['cafe', 'cafes', 'coffee', 'coffee shop'], category: 'Cafe' },
+      { patterns: ['bar', 'bars', 'drinks', 'cocktail', 'cocktails', 'nightlife'], category: 'Bar' },
+      { patterns: ['museum', 'gallery', 'art', 'culture', 'exhibition'], category: 'Culture' },
+      { patterns: ['shop', 'shopping', 'store', 'boutique'], category: 'Shop' },
+    ];
+
+    for (const { patterns, category } of categoryPatterns) {
+      if (patterns.some((p) => lower.includes(p))) {
+        context.category = category;
+        confidence += 0.1;
+        break;
+      }
     }
 
-    return 'discover';
+    // === OCCASION EXTRACTION ===
+    if (lower.includes('romantic') || lower.includes('date') || lower.includes('anniversary')) {
+      context.occasion = 'romantic';
+    } else if (lower.includes('business') || lower.includes('meeting') || lower.includes('work')) {
+      context.occasion = 'business';
+    } else if (lower.includes('celebrat') || lower.includes('birthday') || lower.includes('special')) {
+      context.occasion = 'celebration';
+    }
+
+    // === TIME OF DAY EXTRACTION ===
+    if (lower.includes('breakfast')) {
+      context.timeOfDay = 'breakfast';
+    } else if (lower.includes('brunch')) {
+      context.timeOfDay = 'brunch';
+    } else if (lower.includes('lunch')) {
+      context.timeOfDay = 'lunch';
+    } else if (lower.includes('dinner')) {
+      context.timeOfDay = 'dinner';
+    } else if (lower.includes('late night') || lower.includes('late-night')) {
+      context.timeOfDay = 'late-night';
+    }
+
+    // === PRICE PREFERENCE ===
+    if (lower.includes('budget') || lower.includes('cheap') || lower.includes('affordable')) {
+      context.pricePreference = 'budget';
+    } else if (lower.includes('luxury') || lower.includes('high-end') || lower.includes('splurge') || lower.includes('fine dining')) {
+      context.pricePreference = 'splurge';
+    } else if (lower.includes('upscale') || lower.includes('nice')) {
+      context.pricePreference = 'upscale';
+    }
+
+    // === VIBES EXTRACTION ===
+    const vibePatterns = ['cozy', 'trendy', 'modern', 'classic', 'traditional', 'hip', 'quiet', 'lively', 'intimate', 'hidden gem', 'local', 'authentic'];
+    const vibes = vibePatterns.filter((v) => lower.includes(v));
+    if (vibes.length > 0) {
+      context.vibes = vibes;
+    }
+
+    // === MODE DETECTION ===
+    if (lower.includes(' vs ') || lower.includes('compare') || lower.includes('difference between') || lower.includes('or ')) {
+      mode = 'compare';
+    } else if (lower.includes('tell me about') || lower.includes('what is') || lower.includes('what makes') || lower.includes('why is')) {
+      mode = 'insight';
+    } else if (lower.includes('plan') || lower.includes('itinerary') || lower.includes('day in') || lower.includes('schedule')) {
+      mode = 'plan';
+    } else if (lower.includes('best') || lower.includes('recommend') || lower.includes('top') || lower.includes('where should')) {
+      mode = 'recommend';
+    } else if (context.city && context.category) {
+      mode = 'recommend';
+    }
+
+    console.log('[TravelIntelligence] Rule-based NLU result:', { mode, context, confidence });
+
+    return {
+      mode,
+      context,
+      confidence,
+      needsClarification: !context.city && !context.category,
+      clarificationQuestion: !context.city ? "Which city are you interested in?" : undefined,
+    };
   }
 
   /**
-   * Normalize category to match database format (e.g., "hotel" -> "Hotel")
+   * Normalize category to match database format
    */
   private normalizeCategory(category?: string): string | null {
     if (!category) return null;
@@ -300,7 +460,6 @@ Return only the JSON, no explanation.`;
    */
   private normalizeCity(city?: string): string | null {
     if (!city) return null;
-    // Capitalize first letter of each word
     return city.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
@@ -316,18 +475,18 @@ Return only the JSON, no explanation.`;
     const supabase = await createServerClient();
     let results: any[] = [];
 
-    // Normalize city and category for consistent matching
+    // Normalize city and category (in case AI returned lowercase)
     const normalizedCity = this.normalizeCity(context.city);
     const normalizedCategory = this.normalizeCategory(context.category);
 
-    console.log('[TravelIntelligence] Searching with:', {
+    console.log('[TravelIntelligence] Searching with normalized values:', {
       city: normalizedCity,
       category: normalizedCategory,
-      message
+      originalCity: context.city,
+      originalCategory: context.category,
     });
 
-    // Strategy 1: Direct database query FIRST for specific queries (more reliable)
-    // This ensures we get results even if vector search has issues
+    // Strategy 1: Direct database query FIRST for specific queries
     try {
       let query = supabase
         .from('destinations')
@@ -354,6 +513,8 @@ Return only the JSON, no explanation.`;
       if (data?.length) {
         console.log('[TravelIntelligence] Database found', data.length, 'results');
         results = data;
+      } else {
+        console.log('[TravelIntelligence] Database found 0 results');
       }
     } catch (error) {
       console.warn('[TravelIntelligence] Database query failed:', error);
@@ -366,7 +527,7 @@ Return only the JSON, no explanation.`;
         if (embedding) {
           const { data, error } = await supabase.rpc('match_destinations', {
             query_embedding: embedding,
-            match_threshold: 0.45, // Lowered threshold for more results
+            match_threshold: 0.40,
             match_count: 50,
             filter_city: normalizedCity,
             filter_category: normalizedCategory,
@@ -382,7 +543,6 @@ Return only the JSON, no explanation.`;
 
           if (data?.length) {
             console.log('[TravelIntelligence] Vector search found', data.length, 'results');
-            // Merge with existing results, avoiding duplicates
             const existingSlugs = new Set(results.map((r) => r.slug));
             const newResults = data.filter((d: any) => !existingSlugs.has(d.slug));
             results = [...results, ...newResults];
@@ -390,6 +550,33 @@ Return only the JSON, no explanation.`;
         }
       } catch (error) {
         console.warn('[TravelIntelligence] Vector search failed:', error);
+      }
+    }
+
+    // Strategy 3: Broader search if still no results
+    if (results.length === 0 && (normalizedCity || normalizedCategory)) {
+      console.log('[TravelIntelligence] Trying broader search...');
+      try {
+        let query = supabase
+          .from('destinations')
+          .select('*')
+          .is('parent_destination_id', null)
+          .limit(30);
+
+        // Try with just city OR just category
+        if (normalizedCity) {
+          query = query.ilike('city', `%${normalizedCity}%`);
+        } else if (normalizedCategory) {
+          query = query.ilike('category', `%${normalizedCategory}%`);
+        }
+
+        const { data } = await query.order('rating', { ascending: false });
+        if (data?.length) {
+          console.log('[TravelIntelligence] Broader search found', data.length, 'results');
+          results = data;
+        }
+      } catch (error) {
+        console.warn('[TravelIntelligence] Broader search failed:', error);
       }
     }
 
@@ -477,7 +664,8 @@ Return only the JSON, no explanation.`;
     destinations: any[],
     context: TravelContext,
     mode: ConversationMode,
-    history: ConversationMessage[]
+    history: ConversationMessage[],
+    clarificationQuestion?: string
   ): Promise<string> {
     // Build destination context for the AI
     const destinationContext = destinations.slice(0, 8).map((d) => ({
@@ -496,7 +684,7 @@ Return only the JSON, no explanation.`;
 
 ${MODE_PROMPTS[mode]}`;
 
-    // Determine how many options to present based on mode
+    // Determine how many options to present
     const numDestinations = destinationContext.length;
     const presentMultiple = mode === 'discover' || mode === 'recommend' || numDestinations > 1;
 
@@ -522,7 +710,7 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
 - ${presentMultiple && numDestinations > 1 ? `IMPORTANT: Present 2-3 OPTIONS from the list with brief descriptions of each. The user wants to see choices, not just one recommendation.` : 'Be specific about why this place fits'}
 - For each place mentioned, include a brief reason why it stands out
 - Keep it conversational but informative
-- End with a follow-up question to help narrow down (e.g., "Looking for something more intimate or lively?")`;
+- ${clarificationQuestion ? `Consider asking: "${clarificationQuestion}"` : 'End with a follow-up question to help narrow down'}`;
 
     // Try OpenAI first
     if (openai?.chat) {
@@ -535,7 +723,7 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
             { role: 'user', content: userPrompt },
           ],
           temperature: 0.7,
-          max_tokens: presentMultiple ? 500 : 300, // More tokens for multiple options
+          max_tokens: presentMultiple ? 500 : 300,
         });
         const content = response.choices?.[0]?.message?.content;
         if (content) return content.trim();
@@ -572,17 +760,22 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
       }
     }
 
+    // No results - ask for clarification
+    if (clarificationQuestion) {
+      return `I'd love to help! ${clarificationQuestion}`;
+    }
+
     return "I'd love to help you discover something special. Could you tell me more about what you're looking for? A specific city, type of experience, or occasion?";
   }
 
   /**
    * Generate follow-up suggestions
    */
-  private async generateSuggestions(
+  private generateSuggestions(
     context: TravelContext,
     mode: ConversationMode,
     destinations: any[]
-  ): Promise<Array<{ text: string; type: 'refine' | 'expand' | 'related' | 'next-step' }>> {
+  ): Array<{ text: string; type: 'refine' | 'expand' | 'related' | 'next-step' }> {
     const suggestions: Array<{ text: string; type: 'refine' | 'expand' | 'related' | 'next-step' }> = [];
 
     // Context-aware suggestions
@@ -591,7 +784,7 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
       suggestions.push({ text: `Where to stay in ${context.city}`, type: 'related' });
     }
 
-    if (context.category === 'restaurant' || context.category === 'Restaurant') {
+    if (context.category === 'Restaurant' || context.category === 'restaurant') {
       if (!context.timeOfDay) {
         suggestions.push({ text: 'For dinner tonight', type: 'refine' });
       }
@@ -601,18 +794,18 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
       }
     }
 
+    if (context.category === 'Hotel' || context.category === 'hotel') {
+      suggestions.push({ text: 'Something more boutique', type: 'refine' });
+      suggestions.push({ text: 'With a great restaurant', type: 'refine' });
+    }
+
     if (mode === 'recommend' && destinations.length > 0) {
       suggestions.push({ text: 'Something different?', type: 'expand' });
-      if (context.city) {
-        suggestions.push({ text: `More in ${destinations[0]?.neighborhood || context.city}`, type: 'expand' });
+      if (context.city && destinations[0]?.neighborhood) {
+        suggestions.push({ text: `More in ${destinations[0].neighborhood}`, type: 'expand' });
       }
     }
 
-    if (mode === 'plan') {
-      suggestions.push({ text: 'Coffee between activities', type: 'next-step' });
-    }
-
-    // Limit to 3 suggestions
     return suggestions.slice(0, 3);
   }
 
@@ -626,7 +819,6 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
   ): Array<{ type: string; content: string }> {
     const insights: Array<{ type: string; content: string }> = [];
 
-    // Neighborhood insight
     if (destinations.length > 0) {
       const neighborhoods = [...new Set(destinations.slice(0, 5).map((d) => d.neighborhood).filter(Boolean))];
       if (neighborhoods.length === 1 && neighborhoods[0]) {
@@ -637,7 +829,6 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
       }
     }
 
-    // Michelin insight
     const michelinCount = destinations.filter((d) => d.michelin_stars > 0).length;
     if (michelinCount > 2) {
       insights.push({
