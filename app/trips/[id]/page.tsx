@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import UMActionPill from '@/components/ui/UMActionPill';
+import { formatTripDate, parseDateString } from '@/lib/utils';
 import type { Trip, ItineraryItem } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 
@@ -251,8 +252,8 @@ export default function TripPage() {
                   className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   <Calendar className="w-3 h-3" />
-                  {trip.start_date ? formatDate(trip.start_date) : 'Add dates'}
-                  {trip.end_date && ` – ${formatDate(trip.end_date)}`}
+                  {trip.start_date ? formatTripDate(trip.start_date) : 'Add dates'}
+                  {trip.end_date && ` – ${formatTripDate(trip.end_date)}`}
                 </button>
               </div>
             </div>
@@ -391,34 +392,20 @@ export default function TripPage() {
 function calculateDays(start: string | null, end: string | null): number {
   if (!start) return 1;
   if (!end) return 1;
-  const startDate = new Date(start);
-  const endDate = new Date(end);
+  const startDate = parseDateString(start);
+  const endDate = parseDateString(end);
+  if (!startDate || !endDate) return 1;
   const diff = endDate.getTime() - startDate.getTime();
   return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1);
 }
 
-function addDays(date: string, days: number): string {
-  const d = new Date(date);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-}
-
-function formatDate(date: string): string {
-  if (!date) return '';
-  try {
-    // Parse date string directly to avoid timezone issues
-    // Handle YYYY-MM-DD format
-    const parts = date.split('-');
-    if (parts.length === 3) {
-      const year = parseInt(parts[0], 10);
-      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
-      const day = parseInt(parts[2], 10);
-      const dateObj = new Date(year, month, day);
-      return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-    // Fallback for other formats
-    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  } catch {
-    return date;
-  }
+function addDays(dateStr: string, days: number): string {
+  const date = parseDateString(dateStr);
+  if (!date) return dateStr;
+  date.setDate(date.getDate() + days);
+  // Return in YYYY-MM-DD format
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }

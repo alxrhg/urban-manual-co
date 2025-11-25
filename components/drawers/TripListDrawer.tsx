@@ -10,6 +10,7 @@ import UMSectionTitle from "@/components/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { Loader2, AlertCircle, MapPin, Calendar, ChevronRight, Plane, Plus } from 'lucide-react';
 import Image from 'next/image';
+import { formatTripDateRange } from '@/lib/utils';
 
 const LOADING_TIMEOUT = 15000; // 15 seconds
 
@@ -123,36 +124,6 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
     }
   }, [propsTrips, fetchTrips]);
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return null;
-    try {
-      const [year, month, day] = dateString.split('-').map(Number);
-      if (year && month && day) {
-        const date = new Date(year, month - 1, day);
-        return date.toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-        });
-      }
-      return new Date(dateString).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return null;
-    }
-  };
-
-  const formatDateRange = (start: string | null, end: string | null) => {
-    if (!start && !end) return null;
-    const startFormatted = formatDate(start);
-    const endFormatted = formatDate(end);
-    if (startFormatted && endFormatted) {
-      return `${startFormatted} – ${endFormatted}`;
-    }
-    return startFormatted || endFormatted;
-  };
-
   const handleNewTrip = () => {
     if (onNewTrip) {
       onNewTrip();
@@ -248,7 +219,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
         ) : (
           trips.map((trip) => {
             const tripName = trip.name || trip.title || 'Untitled Trip';
-            const dateRange = formatDateRange(trip.start_date, trip.end_date);
+            const dateRange = formatTripDateRange(trip.start_date, trip.end_date);
             const coverImage = trip.cover_image || trip.coverImage;
             const statusConfig = getStatusConfig(trip.status);
 

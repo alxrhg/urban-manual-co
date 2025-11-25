@@ -100,6 +100,89 @@ export function formatDate(date: Date): string {
 }
 
 /**
+ * Parse YYYY-MM-DD date string to Date without timezone issues
+ * Creates date using local timezone instead of UTC
+ * @example parseDateString("2025-01-15") → Date object for Jan 15, 2025 local time
+ */
+export function parseDateString(dateStr: string | null | undefined): Date | null {
+  if (!dateStr) return null;
+  try {
+    // Handle YYYY-MM-DD format to avoid UTC interpretation
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+      const day = parseInt(parts[2], 10);
+      if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+        return new Date(year, month, day);
+      }
+    }
+    // Fallback for other formats
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? null : date;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Format trip date string for display (short format)
+ * Safely parses YYYY-MM-DD without timezone shift
+ * @example formatTripDate("2025-01-15") → "Jan 15"
+ */
+export function formatTripDate(dateStr: string | null | undefined): string | null {
+  const date = parseDateString(dateStr);
+  if (!date) return null;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+/**
+ * Format trip date string with year for display
+ * Safely parses YYYY-MM-DD without timezone shift
+ * @example formatTripDateWithYear("2025-01-15") → "Jan 15, 2025"
+ */
+export function formatTripDateWithYear(dateStr: string | null | undefined): string | null {
+  const date = parseDateString(dateStr);
+  if (!date) return null;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+/**
+ * Format trip date range for display
+ * @example formatTripDateRange("2025-01-15", "2025-01-20") → "Jan 15 – Jan 20"
+ */
+export function formatTripDateRange(
+  startDate: string | null | undefined,
+  endDate: string | null | undefined
+): string | null {
+  const startFormatted = formatTripDate(startDate);
+  const endFormatted = formatTripDate(endDate);
+
+  if (startFormatted && endFormatted) {
+    return `${startFormatted} – ${endFormatted}`;
+  }
+  return startFormatted || endFormatted || null;
+}
+
+/**
+ * Calculate number of days between two date strings
+ * @example calculateTripDays("2025-01-15", "2025-01-20") → 6
+ */
+export function calculateTripDays(
+  startDate: string | null | undefined,
+  endDate: string | null | undefined
+): number | null {
+  const start = parseDateString(startDate);
+  const end = parseDateString(endDate);
+
+  if (!start || !end) return null;
+
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  return diffDays;
+}
+
+/**
  * Format time for display (24-hour format)
  * @example formatTime(new Date()) → "14:30"
  */

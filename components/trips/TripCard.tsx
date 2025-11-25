@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Calendar, MapPin } from "lucide-react";
 import UMCard from "@/components/ui/UMCard";
 import UMActionPill from "@/components/ui/UMActionPill";
+import { formatTripDateRange, calculateTripDays } from "@/lib/utils";
 
 interface Trip {
   id: string | number;
@@ -59,27 +60,10 @@ function getStatusConfig(status?: string) {
   }
 }
 
-// Calculate days between dates
-function calculateDays(startDate?: string, endDate?: string): number | null {
-  if (!startDate || !endDate) return null;
-  try {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return diffDays;
-  } catch {
-    return null;
-  }
-}
-
 export default function TripCard({ trip, onView, onEdit }: TripCardProps) {
   const statusConfig = getStatusConfig(trip.status);
-  const daysCount = trip.daysCount || calculateDays(trip.startDate, trip.endDate);
-
-  const dateDisplay = trip.startDate && trip.endDate
-    ? `${trip.startDate} – ${trip.endDate}`
-    : trip.startDate || trip.endDate || null;
+  const daysCount = trip.daysCount || calculateTripDays(trip.startDate, trip.endDate);
+  const dateDisplay = formatTripDateRange(trip.startDate, trip.endDate);
 
   return (
     <UMCard
