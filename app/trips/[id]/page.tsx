@@ -994,11 +994,8 @@ export default function TripPage() {
                     </UMCard>
                   ))}
                 </div>
-              )}
-            </section>
-          </div>
-        )}
-*** End Patch*** End Patch
+
+            <div className="flex items-center justify-between">
               <UMSectionTitle>Accommodations</UMSectionTitle>
               {isOwner && (
                 <div className="flex flex-wrap gap-2">
