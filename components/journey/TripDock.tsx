@@ -4,6 +4,8 @@ import { useMemo } from "react";
 import { Bookmark, MessageSquare, ListChecks } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
 import { useDrawer } from "@/contexts/DrawerContext";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 const DOCK_ITEMS = [
   {
@@ -27,7 +29,7 @@ const DOCK_ITEMS = [
     action: "drawer" as const,
     drawer: "chat" as const,
   },
-];
+] as const;
 
 export function TripDock() {
   const router = useRouter();
@@ -42,42 +44,46 @@ export function TripDock() {
 
   return (
     <div className="fixed bottom-4 left-1/2 z-[60] -translate-x-1/2 sm:left-auto sm:right-6 sm:translate-x-0">
-      <div className="flex items-center gap-2 rounded-full border border-gray-200/60 dark:border-white/10 bg-white/90 dark:bg-white/10 backdrop-blur-2xl px-3 py-2 shadow-[0_25px_60px_-40px_rgba(15,23,42,0.9)]">
+      <div className="flex items-center gap-2 rounded-full border border-border/70 bg-white/95 px-3 py-2 shadow-[0_25px_60px_-40px_rgba(15,23,42,0.9)] dark:border-white/10 dark:bg-white/10 backdrop-blur-2xl">
         {DOCK_ITEMS.map(item => {
           const isActive =
             activeRouteId === item.id ||
             (item.action === "drawer" && isDrawerOpen(item.drawer));
+          const handleClick = () => {
+            if (item.action === "route" && item.href) {
+              router.push(item.href);
+            } else if (item.action === "drawer" && item.drawer) {
+              openDrawer(item.drawer);
+            }
+          };
+
           return (
-            <button
+            <Button
               key={item.id}
               data-testid={`trip-dock-${item.id}`}
-              onClick={() => {
-                if (item.action === "route" && item.href) {
-                  router.push(item.href);
-                  return;
-                }
-                if (item.action === "drawer" && item.drawer) {
-                  openDrawer(item.drawer);
-                }
-              }}
-              className={`flex flex-col items-center gap-1 rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[1.5px] transition-colors ${
+              variant="ghost"
+              size="xs"
+              className={cn(
+                "flex flex-col items-center gap-1 rounded-full px-3 py-2 text-[11px] font-semibold uppercase tracking-[1.5px]",
                 isActive
-                  ? "text-gray-900 dark:text-white"
-                  : "text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-              }`}
+                  ? "text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={handleClick}
               aria-label={item.label}
             >
               <span
-                className={`flex h-10 w-10 items-center justify-center rounded-full border transition-colors ${
+                className={cn(
+                  "flex h-10 w-10 items-center justify-center rounded-full border transition-colors",
                   isActive
-                    ? "border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white/20"
-                    : "border-gray-200 text-gray-700 dark:border-white/20"
-                }`}
+                    ? "border-neutral-900 bg-neutral-900 text-white dark:border-white dark:bg-white/20"
+                    : "border-border text-foreground/70 dark:border-white/20"
+                )}
               >
                 {item.icon}
               </span>
               <span className="hidden sm:inline">{item.label}</span>
-            </button>
+            </Button>
           );
         })}
       </div>

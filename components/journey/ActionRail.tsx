@@ -1,9 +1,24 @@
 "use client";
 
 import Image from "next/image";
-import { Bookmark, ListPlus, Share2, MessageSquare, ArrowUpRight, Trash2 } from "lucide-react";
+import {
+  Bookmark,
+  ListPlus,
+  Share2,
+  MessageSquare,
+  ArrowUpRight,
+  Trash2,
+} from "lucide-react";
 import type { Destination } from "@/types/destination";
 import type { ShortlistItem } from "@/hooks/useJourneyShortlist";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface JourneyActionRailProps {
   selectedDestination: Destination | null;
@@ -32,12 +47,14 @@ export function JourneyActionRail({
 }: JourneyActionRailProps) {
   return (
     <div className="sticky top-32 space-y-6">
-      <div className="rounded-3xl border border-gray-200/70 dark:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-lg p-4 shadow-[0_30px_70px_-50px_rgba(15,23,42,0.9)]">
-        <div className="mb-4 text-xs uppercase tracking-[2px] text-gray-500 dark:text-gray-400 font-medium">
-          Action hub
-        </div>
-        {selectedDestination ? (
-          <div className="space-y-4">
+      <Card className="border-border/70 bg-white/90 dark:bg-white/5 backdrop-blur-xl">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
+            Action hub
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {selectedDestination ? (
             <SelectionCard
               destination={selectedDestination}
               isShortlisted={isShortlisted(selectedDestination.slug)}
@@ -47,75 +64,85 @@ export function JourneyActionRail({
               onShare={() => onShare(selectedDestination)}
               onOpenChat={() => onOpenChat(selectedDestination)}
             />
-          </div>
-        ) : (
-          <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-            Tap a card to preview details here without leaving the feed.
-          </p>
-        )}
-      </div>
-
-      <div className="rounded-3xl border border-gray-200/70 dark:border-white/10 bg-white/60 dark:bg-white/5 backdrop-blur-lg p-4 shadow-[0_30px_70px_-50px_rgba(15,23,42,0.9)]">
-        <div className="mb-4 flex items-center justify-between text-xs uppercase tracking-[2px] text-gray-500 dark:text-gray-400 font-medium">
-          Shortlist
-          {shortlist.length > 0 && (
-            <span className="text-[11px] text-gray-400">{shortlist.length}/20</span>
+          ) : (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Tap a destination card to preview details here.
+            </p>
           )}
-        </div>
-        {shortlist.length === 0 ? (
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Save a few spots to compare vibes and build trips faster.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            {shortlist.slice(0, 4).map(item => (
-              <button
-                key={item.slug}
-                className="flex w-full items-center gap-3 rounded-2xl border border-gray-200/70 dark:border-white/10 px-3 py-2 text-left hover:border-gray-900/70 dark:hover:border-white/40 transition-colors"
-                onClick={() => onSelectFromShortlist(item.slug)}
-              >
-                <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-2xl bg-gray-100 dark:bg-white/10">
-                  {item.image ? (
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      fill
-                      sizes="48px"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
-                      <Bookmark className="h-4 w-4" />
-                    </div>
-                  )}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
-                    {item.name}
-                  </p>
-                  <p className="truncate text-xs text-gray-500 dark:text-gray-400">
-                    {[item.category, item.city].filter(Boolean).join(" • ")}
-                  </p>
-                </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/70 bg-white/90 dark:bg-white/5 backdrop-blur-xl">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
+            Shortlist
+          </CardTitle>
+          {shortlist.length > 0 && (
+            <span className="text-[11px] uppercase tracking-[2px] text-muted-foreground">
+              {shortlist.length}/20
+            </span>
+          )}
+        </CardHeader>
+        <CardContent>
+          {shortlist.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Save a few spots to compare vibes and build trips faster.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {shortlist.slice(0, 4).map(item => (
                 <button
-                  onClick={event => {
-                    event.stopPropagation();
-                    onRemoveShortlist(item.slug);
-                  }}
-                  className="rounded-full p-1 text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  key={item.slug}
+                  className="group flex w-full items-center gap-3 rounded-2xl border border-border/70 px-3 py-2 text-left transition-colors hover:border-foreground/30"
+                  onClick={() => onSelectFromShortlist(item.slug)}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-2xl bg-muted">
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                        <Bookmark className="h-4 w-4" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {item.name}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {[item.category, item.city].filter(Boolean).join(" • ")}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={event => {
+                      event.stopPropagation();
+                      onRemoveShortlist(item.slug);
+                    }}
+                    className="text-muted-foreground hover:text-foreground"
+                    aria-label={`Remove ${item.name} from shortlist`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </button>
-              </button>
-            ))}
-            {shortlist.length > 4 && (
-              <p className="text-[11px] uppercase tracking-[2px] text-gray-400 text-center">
-                +{shortlist.length - 4} more saved
-              </p>
-            )}
-          </div>
-        )}
-      </div>
+              ))}
+              {shortlist.length > 4 && (
+                <p className="text-center text-[11px] uppercase tracking-[2px] text-muted-foreground">
+                  +{shortlist.length - 4} more saved
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -139,7 +166,7 @@ function SelectionCard({
 }) {
   return (
     <div className="space-y-3">
-      <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-white/10">
+      <div className="relative h-44 w-full overflow-hidden rounded-2xl bg-muted">
         {destination.image ? (
           <Image
             src={destination.image}
@@ -149,7 +176,7 @@ function SelectionCard({
             className="object-cover"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-gray-400 text-xs uppercase tracking-[2px]">
+          <div className="flex h-full w-full items-center justify-center text-muted-foreground text-xs uppercase tracking-[2px]">
             {destination.city}
           </div>
         )}
@@ -163,34 +190,34 @@ function SelectionCard({
       </div>
 
       {destination.micro_description && (
-        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+        <p className="text-sm text-muted-foreground leading-relaxed">
           {destination.micro_description}
         </p>
       )}
 
       <div className="grid grid-cols-2 gap-2">
-        <ActionButton
+        <JourneyActionButton
           icon={<Bookmark className="h-4 w-4" />}
           label={isShortlisted ? "Shortlisted" : "Shortlist"}
           onClick={onToggleShortlist}
           active={isShortlisted}
         />
-        <ActionButton
+        <JourneyActionButton
           icon={<ListPlus className="h-4 w-4" />}
           label="Add to trip"
           onClick={onAddToTrip}
         />
-        <ActionButton
+        <JourneyActionButton
           icon={<Share2 className="h-4 w-4" />}
           label="Share"
           onClick={onShare}
         />
-        <ActionButton
+        <JourneyActionButton
           icon={<MessageSquare className="h-4 w-4" />}
           label="Ask AI"
           onClick={onOpenChat}
         />
-        <ActionButton
+        <JourneyActionButton
           icon={<ArrowUpRight className="h-4 w-4" />}
           label="Full details"
           onClick={onOpenDetail}
@@ -201,7 +228,7 @@ function SelectionCard({
   );
 }
 
-function ActionButton({
+function JourneyActionButton({
   icon,
   label,
   onClick,
@@ -214,24 +241,23 @@ function ActionButton({
   active?: boolean;
   variant?: "solid" | "ghost";
 }) {
-  const baseClasses =
-    "flex items-center justify-center gap-2 rounded-2xl border text-xs font-semibold uppercase tracking-[1.5px] py-3 transition-colors";
-
-  let className = `${baseClasses} ${
-    active
-      ? "border-gray-900 bg-gray-900 text-white dark:border-white dark:bg-white/20 dark:text-white"
-      : "border-gray-200 text-gray-800 hover:border-gray-900 dark:border-white/10 dark:text-white dark:hover:border-white/40"
-  }`;
-
-  if (variant === "ghost") {
-    className = `${baseClasses} border-transparent text-gray-500 hover:border-gray-900/40 dark:text-gray-300 dark:hover:border-white/30`;
-  }
-
   return (
-    <button onClick={onClick} className={className}>
+    <Button
+      type="button"
+      variant={variant === "ghost" ? "ghost" : "muted"}
+      className={cn(
+        "w-full rounded-2xl text-xs font-semibold uppercase tracking-[1.5px] py-3",
+        active && variant !== "ghost"
+          ? "bg-neutral-900 text-white hover:bg-neutral-800 dark:bg-white/15"
+          : variant !== "ghost"
+          ? "border border-border/70"
+          : "justify-start text-muted-foreground"
+      )}
+      onClick={onClick}
+    >
       {icon}
       {label}
-    </button>
+    </Button>
   );
 }
 

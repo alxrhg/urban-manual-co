@@ -2,6 +2,14 @@
 
 import { Sparkles, CalendarRange } from "lucide-react";
 import type { ReactNode } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export interface JourneyGoal {
   id: string;
@@ -29,64 +37,67 @@ export function GoalPicker({
   const featuredGoals = goals.slice(0, 4);
 
   return (
-    <div className="rounded-3xl border border-gray-200/70 dark:border-white/10 bg-white/70 dark:bg-white/5 backdrop-blur-lg p-4 md:p-6 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.6)]">
-      <div className="flex items-center gap-2 text-xs uppercase tracking-[2px] text-gray-500 dark:text-gray-400 font-medium mb-4">
-        <Sparkles className="h-3.5 w-3.5 text-gray-800 dark:text-white" />
-        {heading}
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        {featuredGoals.map(goal => {
-          const isActive = goal.id === activeGoalId;
-          return (
-            <button
-              key={goal.id}
-              onClick={() => onSelect(goal)}
-              className={`group flex h-full flex-col rounded-2xl border px-4 py-3 text-left transition-all ${
-                isActive
-                  ? "border-gray-900 dark:border-white bg-gray-900 text-white dark:bg-white/10"
-                  : "border-gray-200/70 dark:border-white/10 hover:border-gray-900/60 dark:hover:border-white/40"
-              }`}
-            >
-              <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[1.5px] text-gray-500 dark:text-gray-400">
-                {goal.icon ?? <CalendarRange className="h-3.5 w-3.5" />}
-                {goal.label}
-              </div>
-              <p
-                className={`text-sm leading-relaxed ${
+    <Card className="border-muted/50 bg-gradient-to-br from-white/90 via-white to-white/70 dark:from-white/5 dark:via-white/5 dark:to-white/5 backdrop-blur-xl">
+      <CardHeader className="flex flex-row items-center gap-2 pb-2">
+        <Sparkles className="h-4 w-4 text-amber-500 dark:text-amber-300" />
+        <CardTitle className="text-xs font-semibold uppercase tracking-[2px] text-muted-foreground">
+          {heading}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid gap-3 md:grid-cols-2">
+          {featuredGoals.map(goal => {
+            const isActive = goal.id === activeGoalId;
+            return (
+              <Button
+                key={goal.id}
+                type="button"
+                variant="muted"
+                className={cn(
+                  "flex h-full flex-col items-start gap-2 rounded-2xl border text-left transition-all",
                   isActive
-                    ? "text-white/90 dark:text-white"
-                    : "text-gray-900 dark:text-gray-100"
-                }`}
+                    ? "border-neutral-900 bg-neutral-900 text-white dark:border-white/80 dark:bg-white/10"
+                    : "border-transparent bg-white text-neutral-900 shadow-sm hover:border-neutral-200 dark:bg-white/5 dark:text-white"
+                )}
+                onClick={() => onSelect(goal)}
               >
-                {goal.description}
-              </p>
-            </button>
-          );
-        })}
-      </div>
-      {recentGoalIds.length > 0 && (
-        <div className="mt-4 border-t border-gray-200/70 dark:border-white/10 pt-4">
-          <p className="text-[11px] uppercase tracking-[2px] text-gray-400 mb-2">
-            Recent intents
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {recentGoalIds.map(id => {
-              const goal = goals.find(goal => goal.id === id);
-              if (!goal) return null;
-              return (
-                <button
-                  key={goal.id}
-                  onClick={() => onSelect(goal)}
-                  className="px-3 py-1.5 rounded-full border border-gray-200/70 dark:border-white/10 text-xs text-gray-600 dark:text-gray-200 hover:border-gray-900 dark:hover:border-white/40 transition-colors"
-                >
+                <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[2px] text-muted-foreground">
+                  {goal.icon ?? <CalendarRange className="h-3.5 w-3.5" />}
                   {goal.label}
-                </button>
-              );
-            })}
-          </div>
+                </span>
+                <span className="text-sm leading-relaxed text-pretty">
+                  {goal.description}
+                </span>
+              </Button>
+            );
+          })}
         </div>
-      )}
-    </div>
+        {recentGoalIds.length > 0 && (
+          <div className="space-y-2 border-t border-border/70 pt-4">
+            <p className="text-[11px] uppercase tracking-[2px] text-muted-foreground">
+              Recent intents
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {recentGoalIds.map(id => {
+                const goal = goals.find(g => g.id === id);
+                if (!goal) return null;
+                return (
+                  <Button
+                    key={goal.id}
+                    variant="pill"
+                    size="xs"
+                    onClick={() => onSelect(goal)}
+                    className="border-border/70 text-muted-foreground hover:text-foreground"
+                  >
+                    {goal.label}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
