@@ -20,6 +20,7 @@ interface TripWeatherForecastProps {
   endDate: string | null;
   latitude?: number;
   longitude?: number;
+  compact?: boolean;
 }
 
 export default function TripWeatherForecast({
@@ -28,6 +29,7 @@ export default function TripWeatherForecast({
   endDate,
   latitude,
   longitude,
+  compact = false,
 }: TripWeatherForecastProps) {
   const [weather, setWeather] = useState<WeatherDay[]>([]);
   const [loading, setLoading] = useState(true);
@@ -176,6 +178,14 @@ export default function TripWeatherForecast({
   };
 
   if (loading) {
+    if (compact) {
+      return (
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <Loader2 className="w-3 h-3 animate-spin" />
+          <span>Loading weather...</span>
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-center py-8">
         <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
@@ -184,10 +194,54 @@ export default function TripWeatherForecast({
   }
 
   if (error) {
+    if (compact) {
+      return (
+        <div className="flex items-center gap-2 text-xs text-gray-400">
+          <Cloud className="w-3 h-3" />
+          <span>{error}</span>
+        </div>
+      );
+    }
     return (
       <div className="text-center py-6 px-4 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
         <Cloud className="w-8 h-8 text-gray-300 mx-auto mb-2" />
         <p className="text-xs text-gray-500">{error}</p>
+      </div>
+    );
+  }
+
+  // Compact view: horizontal scrollable strip
+  if (compact) {
+    const avgTemp = Math.round(weather.reduce((sum, d) => sum + d.temp.max, 0) / weather.length);
+    const rainyDays = weather.filter((d) => d.precipitation > 0).length;
+
+    return (
+      <div className="flex items-center gap-4 overflow-x-auto">
+        {/* Summary */}
+        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 flex-shrink-0">
+          <Sun className="w-4 h-4 text-yellow-500" />
+          <span className="font-medium">{avgTemp}°C avg</span>
+          {rainyDays > 0 && (
+            <>
+              <span className="text-gray-300">|</span>
+              <CloudRain className="w-4 h-4 text-blue-500" />
+              <span>{rainyDays} rainy {rainyDays === 1 ? 'day' : 'days'}</span>
+            </>
+          )}
+        </div>
+
+        {/* Compact day pills */}
+        <div className="flex gap-1.5 overflow-x-auto">
+          {weather.slice(0, 7).map((day) => (
+            <div
+              key={day.date}
+              className="flex items-center gap-1 px-2 py-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex-shrink-0"
+            >
+              {getWeatherIcon(day.icon)}
+              <span className="text-[10px] font-medium">{day.temp.max}°</span>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

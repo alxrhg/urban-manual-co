@@ -9,19 +9,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import {
   ArrowLeft,
+  Bookmark,
   Calendar,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   GripVertical,
-  List,
-  Loader2,
-  Map,
   MapPin,
-  Navigation,
   Plane,
   Plus,
   Settings,
-  StickyNote,
   Trash2,
+  Users,
 } from 'lucide-react';
 import {
   DndContext,
@@ -47,8 +46,12 @@ import TripWeatherForecast from '@/components/trips/TripWeatherForecast';
 import TripSafetyAlerts from '@/components/trips/TripSafetyAlerts';
 import NearbyDiscoveries from '@/components/trips/NearbyDiscoveries';
 import FlightStatusCard from '@/components/trips/FlightStatusCard';
-import OpeningHoursIndicator from '@/components/trips/OpeningHoursIndicator';
+import DayTimelineAnalysis from '@/components/trips/DayTimelineAnalysis';
+import CrowdIndicator from '@/components/trips/CrowdIndicator';
+import TransitOptions from '@/components/trips/TransitOptions';
+import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
 import { formatTripDate, parseDateString } from '@/lib/utils';
+import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
 import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData } from '@/types/trip';
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
 import type { Destination } from '@/types/destination';
@@ -94,8 +97,10 @@ export default function TripPage() {
   const [days, setDays] = useState<TripDay[]>([]);
   const [selectedDay, setSelectedDay] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const [showTransitFor, setShowTransitFor] = useState<string | null>(null);
+  const [showBucketList, setShowBucketList] = useState(false);
+  const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
 
   // DnD sensors
   const sensors = useSensors(
@@ -219,7 +224,6 @@ export default function TripPage() {
       const currentDay = days.find((d) => d.dayNumber === dayNumber);
       const orderIndex = currentDay?.items.length || 0;
 
-      // Store location data and category in notes
       const notesData: ItineraryItemNotes = {
         type: 'place',
         latitude: destination.latitude ?? undefined,
@@ -351,7 +355,6 @@ export default function TripPage() {
 
     if (oldIndex === -1 || newIndex === -1) return;
 
-    // Optimistically update UI
     const newItems = arrayMove(currentDayData.items, oldIndex, newIndex);
     setDays((prev) =>
       prev.map((d) =>
@@ -359,7 +362,6 @@ export default function TripPage() {
       )
     );
 
-    // Update order in database
     try {
       const supabase = createClient();
       if (!supabase) return;
@@ -374,15 +376,14 @@ export default function TripPage() {
       );
     } catch (err) {
       console.error('Error reordering:', err);
-      fetchTrip(); // Revert on error
+      fetchTrip();
     }
   };
 
-  // Open destination drawer for a place (uses global drawer system)
+  // Open destination drawer for a place
   const openDestinationDrawer = (item: ItineraryItem & { destination?: Destination }) => {
     if (item.destination) {
       const dest = item.destination;
-      // Map Destination fields to Place interface for the drawer
       openDrawer('destination', {
         place: {
           name: dest.name,
@@ -399,42 +400,33 @@ export default function TripPage() {
           latitude: dest.latitude ?? undefined,
           longitude: dest.longitude ?? undefined,
         },
-        hideAddToTrip: true, // Hide "Add to Trip" since already in trip
+        hideAddToTrip: true,
       });
     }
   };
 
-  // Calculate travel time estimate between two coordinates (simple approximation)
-  const estimateTravelTime = (
-    lat1: number | undefined,
-    lon1: number | undefined,
-    lat2: number | undefined,
-    lon2: number | undefined
-  ): { time: string; distance: string } | null => {
-    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
-
-    // Haversine formula for distance
-    const R = 6371; // Earth's radius in km
-    const dLat = ((lat2 - lat1) * Math.PI) / 180;
-    const dLon = ((lon2 - lon1) * Math.PI) / 180;
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-
-    // Estimate time: ~30km/h average city speed
-    const timeMinutes = Math.round((distance / 30) * 60);
-
-    if (distance < 0.5) return null; // Too close, skip
-
-    return {
-      time: timeMinutes < 60 ? `${timeMinutes} min` : `${Math.round(timeMinutes / 60)}h ${timeMinutes % 60}m`,
-      distance: distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`,
+  // Bucket list handlers
+  const handleAddBucketItem = (item: Omit<BucketItem, 'id' | 'addedAt'>) => {
+    const newItem: BucketItem = {
+      ...item,
+      id: crypto.randomUUID(),
+      addedAt: new Date().toISOString(),
     };
+    setBucketItems((prev) => [...prev, newItem]);
+  };
+
+  const handleRemoveBucketItem = (id: string) => {
+    setBucketItems((prev) => prev.filter((i) => i.id !== id));
+  };
+
+  const handleReorderBucketItems = (items: BucketItem[]) => {
+    setBucketItems(items);
+  };
+
+  const handleAssignBucketItemToDay = (item: BucketItem, dayNumber: number) => {
+    // For now, just remove from bucket list
+    // In a full implementation, you'd add it to the day's itinerary
+    handleRemoveBucketItem(item.id);
   };
 
   if (loading) {
@@ -457,255 +449,279 @@ export default function TripPage() {
 
   const currentDay = days.find((d) => d.dayNumber === selectedDay) || days[0];
 
-  return (
-    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
-      <div className="w-full">
-        {/* Back Link */}
-        <Link
-          href="/trips"
-          className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white mb-8 transition-colors"
-        >
-          <ArrowLeft className="w-3 h-3" />
-          Back to Trips
-        </Link>
+  // Prepare items for timeline analysis
+  const timelineItems = currentDay?.items
+    .filter((item) => item.parsedNotes?.type !== 'flight')
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      time: item.time,
+      category: item.destination?.category || item.parsedNotes?.category,
+      latitude: item.parsedNotes?.latitude ?? item.destination?.latitude,
+      longitude: item.parsedNotes?.longitude ?? item.destination?.longitude,
+    })) || [];
 
-        {/* Header */}
-        <div className="mb-12">
-          <div className="flex items-start justify-between gap-4 mb-4">
-            <div className="flex-1">
-              <input
-                type="text"
-                value={trip.title}
-                onChange={(e) => updateTrip({ title: e.target.value })}
-                className="text-2xl font-light bg-transparent border-none outline-none w-full focus:outline-none"
-                placeholder="Trip name"
-              />
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs text-gray-500">
-                <button
-                  onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  <MapPin className="w-3 h-3" />
-                  {trip.destination || 'Add destination'}
-                </button>
-                <button
-                  onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-                  className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  <Calendar className="w-3 h-3" />
-                  {trip.start_date ? formatTripDate(trip.start_date) : 'Add dates'}
-                  {trip.end_date && ` – ${formatTripDate(trip.end_date)}`}
-                </button>
-              </div>
+  // Prepare map places
+  const mapPlaces = currentDay?.items
+    .filter((item) => item.parsedNotes?.type !== 'flight')
+    .map((item, index) => ({
+      id: item.id,
+      name: item.title,
+      latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
+      longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
+      category: item.destination?.category || item.parsedNotes?.category,
+      order: index + 1,
+    })) || [];
+
+  return (
+    <main className="w-full min-h-screen">
+      {/* Header */}
+      <div className="px-6 md:px-10 py-6 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <Link
+              href="/trips"
+              className="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white mb-2 transition-colors"
+            >
+              <ArrowLeft className="w-3 h-3" />
+              Back to Trips
+            </Link>
+            <input
+              type="text"
+              value={trip.title}
+              onChange={(e) => updateTrip({ title: e.target.value })}
+              className="text-xl font-light bg-transparent border-none outline-none w-full focus:outline-none"
+              placeholder="Trip name"
+            />
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-gray-500">
+              <button
+                onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
+                className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <MapPin className="w-3 h-3" />
+                {trip.destination || 'Add destination'}
+              </button>
+              <button
+                onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
+                className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <Calendar className="w-3 h-3" />
+                {trip.start_date ? formatTripDate(trip.start_date) : 'Add dates'}
+                {trip.end_date && ` – ${formatTripDate(trip.end_date)}`}
+              </button>
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowBucketList(!showBucketList)}
+              className={`p-2 rounded-lg transition-colors ${
+                showBucketList
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+              title="Bucket List"
+            >
+              <Bookmark className="w-5 h-5" />
+            </button>
             <button
               onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-              className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             >
               <Settings className="w-5 h-5" />
             </button>
           </div>
         </div>
+      </div>
 
-
-        {/* Weather Forecast */}
-        <div className="mb-8">
-          <TripWeatherForecast
-            destination={trip.destination}
-            startDate={trip.start_date}
-            endDate={trip.end_date}
-          />
-        </div>
-
-        {/* Safety Alerts */}
-        <div className="mb-12">
-          <TripSafetyAlerts destination={trip.destination} />
-        </div>
-
-        {/* Day Tabs - Minimal style like account page */}
-        <div className="mb-8">
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {days.map((day) => (
-              <button
-                key={day.dayNumber}
-                onClick={() => setSelectedDay(day.dayNumber)}
-                className={`transition-all ${
-                  selectedDay === day.dayNumber
-                    ? 'font-medium text-black dark:text-white'
-                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                }`}
-              >
-                Day {day.dayNumber}
-                {day.date && (
-                  <span className="ml-1 opacity-60">
-                    ({formatTripDate(day.date)})
-                  </span>
-                )}
-              </button>
-            ))}
+      {/* Split-Screen Canvas */}
+      <div className="flex h-[calc(100vh-120px)]">
+        {/* Left Panel: Itinerary */}
+        <div className={`flex flex-col overflow-hidden transition-all ${showBucketList ? 'w-1/2 lg:w-2/5' : 'w-1/2 lg:w-3/5'}`}>
+          {/* Weather & Alerts Bar */}
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+            <TripWeatherForecast
+              destination={trip.destination}
+              startDate={trip.start_date}
+              endDate={trip.end_date}
+              compact
+            />
           </div>
-        </div>
 
-        {/* Day Content */}
-        {currentDay && (
-          <div className="space-y-8 fade-in">
-            {/* Section Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                  {currentDay.items.length} {currentDay.items.length === 1 ? 'item' : 'items'}
-                </h2>
-                {/* View Toggle */}
-                <div className="flex items-center gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-1.5 rounded transition-colors ${
-                      viewMode === 'list'
-                        ? 'bg-white dark:bg-gray-900 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                    title="List view"
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('map')}
-                    className={`p-1.5 rounded transition-colors ${
-                      viewMode === 'map'
-                        ? 'bg-white dark:bg-gray-900 shadow-sm'
-                        : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                    title="Map view"
-                  >
-                    <Map className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <UMActionPill onClick={() => openFlightDrawer(selectedDay)}>
-                  <Plane className="w-4 h-4 mr-1" />
-                  Add Flight
-                </UMActionPill>
-                <UMActionPill onClick={() => openPlaceSelector(selectedDay)}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Place
-                </UMActionPill>
-              </div>
+          {/* Day Tabs */}
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center gap-2 overflow-x-auto">
+            <button
+              onClick={() => setSelectedDay(Math.max(1, selectedDay - 1))}
+              disabled={selectedDay === 1}
+              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex gap-1 flex-1 overflow-x-auto">
+              {days.map((day) => (
+                <button
+                  key={day.dayNumber}
+                  onClick={() => setSelectedDay(day.dayNumber)}
+                  className={`px-3 py-1.5 text-xs rounded-lg whitespace-nowrap transition-colors ${
+                    selectedDay === day.dayNumber
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium'
+                      : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  Day {day.dayNumber}
+                  {day.date && (
+                    <span className="ml-1 opacity-60 hidden sm:inline">
+                      {formatTripDate(day.date)}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
+            <button
+              onClick={() => setSelectedDay(Math.min(days.length, selectedDay + 1))}
+              disabled={selectedDay === days.length}
+              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-30"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
 
-            {/* Map View */}
-            {viewMode === 'map' && (
-              <TripMapView
-                places={currentDay.items
-                  .filter((item) => item.parsedNotes?.type !== 'flight')
-                  .map((item, index) => ({
-                    id: item.id,
-                    name: item.title,
-                    latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
-                    longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
-                    category: item.destination?.category || item.parsedNotes?.category,
-                    order: index + 1,
-                  }))}
-                className="h-[400px]"
-              />
-            )}
+          {/* Day Timeline Analysis */}
+          {timelineItems.length > 0 && (
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+              <DayTimelineAnalysis items={timelineItems} />
+            </div>
+          )}
 
-            {/* Items List */}
-            {viewMode === 'list' && (
-              <>
-                {currentDay.items.length > 0 ? (
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
-                  >
-                    <SortableContext
-                      items={currentDay.items.map((i) => i.id)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div className="space-y-1">
-                        {currentDay.items.map((item, index) => {
-                          const isFlight = item.parsedNotes?.type === 'flight';
-                          const prevItem = index > 0 ? currentDay.items[index - 1] : null;
-                          const isExpanded = expandedItem === item.id;
+          {/* Action Buttons */}
+          <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-800 flex gap-2">
+            <UMActionPill onClick={() => openFlightDrawer(selectedDay)}>
+              <Plane className="w-4 h-4 mr-1" />
+              Flight
+            </UMActionPill>
+            <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)}>
+              <Plus className="w-4 h-4 mr-1" />
+              Place
+            </UMActionPill>
+          </div>
 
-                          // Calculate travel time from previous item
-                          let travelInfo = null;
-                          if (prevItem && !isFlight && prevItem.parsedNotes?.type !== 'flight') {
-                            const prevLat = prevItem.parsedNotes?.latitude ?? prevItem.destination?.latitude ?? undefined;
-                            const prevLon = prevItem.parsedNotes?.longitude ?? prevItem.destination?.longitude ?? undefined;
-                            const currLat = item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined;
-                            const currLon = item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined;
-                            travelInfo = estimateTravelTime(prevLat, prevLon, currLat, currLon);
-                          }
+          {/* Itinerary Items */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {currentDay && currentDay.items.length > 0 ? (
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={currentDay.items.map((i) => i.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-2">
+                    {currentDay.items.map((item, index) => {
+                      const isFlight = item.parsedNotes?.type === 'flight';
+                      const prevItem = index > 0 ? currentDay.items[index - 1] : null;
+                      const isExpanded = expandedItem === item.id;
+                      const showingTransit = showTransitFor === item.id;
+                      const category = item.destination?.category || item.parsedNotes?.category;
+                      const estimatedDuration = getEstimatedDuration(category);
 
-                          return (
-                            <SortableItem key={item.id} id={item.id}>
-                              {/* Travel Time Indicator */}
-                              {travelInfo && (
-                                <div className="flex items-center gap-2 py-2 px-4 text-xs text-gray-400">
-                                  <Navigation className="w-3 h-3" />
-                                  <span>{travelInfo.time}</span>
-                                  <span className="opacity-60">({travelInfo.distance})</span>
-                                </div>
-                              )}
+                      // Get coordinates for transit
+                      const prevLat = prevItem?.parsedNotes?.latitude ?? prevItem?.destination?.latitude;
+                      const prevLon = prevItem?.parsedNotes?.longitude ?? prevItem?.destination?.longitude;
+                      const currLat = item.parsedNotes?.latitude ?? item.destination?.latitude;
+                      const currLon = item.parsedNotes?.longitude ?? item.destination?.longitude;
 
-                              {/* Item Card */}
-                              <div
-                                className={`flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors group ${
-                                  isFlight ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
-                                }`}
-                              >
-                                {/* Drag Handle */}
-                                <div className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400">
-                                  <GripVertical className="w-4 h-4" />
-                                </div>
-
-                                {/* Time Input */}
-                                <div className="w-16 flex-shrink-0">
-                                  <input
-                                    type="time"
-                                    value={item.time || ''}
-                                    onChange={(e) => updateItemTime(item.id, e.target.value)}
-                                    className="w-full text-xs text-center bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg py-1 px-1 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                                    placeholder="--:--"
+                      return (
+                        <SortableItem key={item.id} id={item.id}>
+                          {/* Transit Options (between items) */}
+                          {prevItem && !isFlight && prevItem.parsedNotes?.type !== 'flight' && (
+                            <div className="mb-2">
+                              {showingTransit ? (
+                                <TransitOptions
+                                  fromLat={prevLat}
+                                  fromLon={prevLon}
+                                  toLat={currLat}
+                                  toLon={currLon}
+                                  fromName={prevItem.title}
+                                  toName={item.title}
+                                />
+                              ) : (
+                                <button
+                                  onClick={() => setShowTransitFor(showingTransit ? null : item.id)}
+                                  className="w-full"
+                                >
+                                  <TransitOptions
+                                    fromLat={prevLat}
+                                    fromLon={prevLon}
+                                    toLat={currLat}
+                                    toLon={currLon}
+                                    compact
                                   />
-                                </div>
-
-                                {/* Icon/Image - Clickable for places */}
-                                <button
-                                  onClick={() => !isFlight && openDestinationDrawer(item)}
-                                  className={`relative w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden ${
-                                    isFlight ? 'bg-blue-100 dark:bg-blue-800' : 'bg-gray-100 dark:bg-gray-800'
-                                  } ${!isFlight && item.destination ? 'cursor-pointer hover:ring-2 hover:ring-black dark:hover:ring-white' : ''}`}
-                                  disabled={isFlight || !item.destination}
-                                >
-                                  {isFlight ? (
-                                    <div className="w-full h-full flex items-center justify-center">
-                                      <Plane className="w-5 h-5 text-blue-500" />
-                                    </div>
-                                  ) : item.destination?.image || item.destination?.image_thumbnail ? (
-                                    <Image
-                                      src={item.destination.image_thumbnail || item.destination.image || ''}
-                                      alt={item.title}
-                                      fill
-                                      className="object-cover"
-                                      sizes="48px"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center">
-                                      <MapPin className="w-5 h-5 text-gray-400" />
-                                    </div>
-                                  )}
                                 </button>
+                              )}
+                            </div>
+                          )}
 
-                                {/* Info - Clickable for places */}
+                          {/* Item Card */}
+                          <div
+                            className={`rounded-xl border transition-colors ${
+                              isFlight
+                                ? 'border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/20'
+                                : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3 p-3">
+                              {/* Drag Handle */}
+                              <div className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 mt-1">
+                                <GripVertical className="w-4 h-4" />
+                              </div>
+
+                              {/* Time Input */}
+                              <div className="w-14 flex-shrink-0">
+                                <input
+                                  type="time"
+                                  value={item.time || ''}
+                                  onChange={(e) => updateItemTime(item.id, e.target.value)}
+                                  className="w-full text-xs text-center bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg py-1.5 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+                                  placeholder="--:--"
+                                />
+                              </div>
+
+                              {/* Thumbnail */}
+                              <button
+                                onClick={() => !isFlight && openDestinationDrawer(item)}
+                                className={`relative w-14 h-14 flex-shrink-0 rounded-xl overflow-hidden ${
+                                  isFlight ? 'bg-blue-100 dark:bg-blue-800' : 'bg-gray-100 dark:bg-gray-800'
+                                } ${!isFlight && item.destination ? 'cursor-pointer hover:ring-2 hover:ring-black dark:hover:ring-white' : ''}`}
+                                disabled={isFlight || !item.destination}
+                              >
+                                {isFlight ? (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <Plane className="w-5 h-5 text-blue-500" />
+                                  </div>
+                                ) : item.destination?.image || item.destination?.image_thumbnail ? (
+                                  <Image
+                                    src={item.destination.image_thumbnail || item.destination.image || ''}
+                                    alt={item.title}
+                                    fill
+                                    className="object-cover"
+                                    sizes="56px"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <MapPin className="w-5 h-5 text-gray-400" />
+                                  </div>
+                                )}
+                              </button>
+
+                              {/* Info */}
+                              <div className="flex-1 min-w-0">
                                 <button
                                   onClick={() => !isFlight && openDestinationDrawer(item)}
-                                  className={`flex-1 min-w-0 text-left ${!isFlight && item.destination ? 'cursor-pointer' : ''}`}
+                                  className={`text-left w-full ${!isFlight && item.destination ? 'cursor-pointer' : ''}`}
                                   disabled={isFlight || !item.destination}
                                 >
-                                  <div className="text-sm font-medium truncate hover:text-black dark:hover:text-white transition-colors">
+                                  <div className="text-sm font-medium truncate">
                                     {item.title}
                                   </div>
                                   {item.description && (
@@ -713,100 +729,132 @@ export default function TripPage() {
                                       {item.description}
                                     </div>
                                   )}
+                                </button>
+
+                                {/* Meta info */}
+                                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                                  {!isFlight && (
+                                    <>
+                                      {/* Duration estimate */}
+                                      <div className="flex items-center gap-1 text-[10px] text-gray-400">
+                                        <Clock className="w-3 h-3" />
+                                        <span>~{formatDuration(estimatedDuration)}</span>
+                                      </div>
+
+                                      {/* Crowd indicator */}
+                                      {item.time && (
+                                        <CrowdIndicator
+                                          category={category}
+                                          scheduledTime={item.time}
+                                          scheduledDate={currentDay.date}
+                                          compact
+                                          onTimeClick={(time) => updateItemTime(item.id, time)}
+                                        />
+                                      )}
+                                    </>
+                                  )}
+
                                   {isFlight && item.parsedNotes?.departureTime && (
-                                    <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                                    <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
                                       <Clock className="w-3 h-3" />
                                       {item.parsedNotes.departureTime}
                                       {item.parsedNotes.arrivalTime && ` → ${item.parsedNotes.arrivalTime}`}
                                     </div>
                                   )}
-                                  {!isFlight && (
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                      {(item.destination?.category || item.parsedNotes?.category) && (
-                                        <span className="text-xs text-gray-400">
-                                          {item.destination?.category || item.parsedNotes?.category}
-                                        </span>
-                                      )}
-                                      {item.time && (
-                                        <OpeningHoursIndicator
-                                          placeId={item.destination?.slug}
-                                          scheduledTime={item.time}
-                                          scheduledDate={currentDay.date || undefined}
-                                        />
-                                      )}
-                                    </div>
-                                  )}
-                                </button>
-
-                                {/* Expand/Actions */}
-                                <div className="flex items-center gap-1">
-                                  {!isFlight && (
-                                    <button
-                                      onClick={() => setExpandedItem(isExpanded ? null : item.id)}
-                                      className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                                      title="Show nearby places"
-                                    >
-                                      <StickyNote className="w-4 h-4" />
-                                    </button>
-                                  )}
-                                  <button
-                                    onClick={() => removeItem(item.id)}
-                                    className="p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
                                 </div>
                               </div>
 
-                              {/* Expanded Content */}
-                              {isExpanded && (
-                                <div className="ml-8 pl-4 border-l-2 border-gray-100 dark:border-gray-800">
-                                  {isFlight && item.parsedNotes && (
-                                    <FlightStatusCard
-                                      flight={item.parsedNotes}
-                                      departureDate={item.parsedNotes.departureDate}
-                                    />
-                                  )}
-                                  {!isFlight && item.parsedNotes && (
-                                    <NearbyDiscoveries
-                                      currentPlace={{
-                                        name: item.title,
-                                        latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
-                                        longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
-                                        city: item.destination?.city || trip?.destination || undefined,
-                                      }}
-                                      excludeSlugs={currentDay.items.map((i) => i.destination?.slug).filter(Boolean) as string[]}
-                                      onAddPlace={(destination) => addItem(selectedDay, destination)}
-                                    />
-                                  )}
-                                </div>
-                              )}
-                            </SortableItem>
-                          );
-                        })}
-                      </div>
-                    </SortableContext>
-                  </DndContext>
-                ) : (
-                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
-                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                      <MapPin className="w-5 h-5 text-gray-400" />
-                    </div>
-                    <p className="text-sm text-gray-500 mb-4">No items added to this day</p>
-                    <div className="flex justify-center gap-2">
-                      <UMActionPill onClick={() => openFlightDrawer(selectedDay)}>
-                        <Plane className="w-4 h-4 mr-1" />
-                        Add Flight
-                      </UMActionPill>
-                      <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)}>
-                        <Plus className="w-4 h-4 mr-1" />
-                        Add Place
-                      </UMActionPill>
-                    </div>
+                              {/* Actions */}
+                              <button
+                                onClick={() => removeItem(item.id)}
+                                className="p-1.5 text-gray-300 hover:text-red-500 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            {/* Expanded crowd prediction */}
+                            {!isFlight && item.time && (
+                              <div className="px-3 pb-3">
+                                <CrowdIndicator
+                                  category={category}
+                                  scheduledTime={item.time}
+                                  scheduledDate={currentDay.date}
+                                  onTimeClick={(time) => updateItemTime(item.id, time)}
+                                />
+                              </div>
+                            )}
+
+                            {/* Expanded content */}
+                            {isExpanded && (
+                              <div className="border-t border-gray-100 dark:border-gray-800 p-3">
+                                {isFlight && item.parsedNotes && (
+                                  <FlightStatusCard
+                                    flight={item.parsedNotes}
+                                    departureDate={item.parsedNotes.departureDate}
+                                  />
+                                )}
+                                {!isFlight && item.parsedNotes && (
+                                  <NearbyDiscoveries
+                                    currentPlace={{
+                                      name: item.title,
+                                      latitude: currLat ?? undefined,
+                                      longitude: currLon ?? undefined,
+                                      city: item.destination?.city || trip?.destination || undefined,
+                                    }}
+                                    excludeSlugs={currentDay.items.map((i) => i.destination?.slug).filter(Boolean) as string[]}
+                                    onAddPlace={(destination) => addItem(selectedDay, destination)}
+                                  />
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </SortableItem>
+                      );
+                    })}
                   </div>
-                )}
-              </>
+                </SortableContext>
+              </DndContext>
+            ) : (
+              <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-gray-400" />
+                </div>
+                <p className="text-sm text-gray-500 mb-4">No items for Day {selectedDay}</p>
+                <div className="flex justify-center gap-2">
+                  <UMActionPill onClick={() => openFlightDrawer(selectedDay)}>
+                    <Plane className="w-4 h-4 mr-1" />
+                    Add Flight
+                  </UMActionPill>
+                  <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Place
+                  </UMActionPill>
+                </div>
+              </div>
             )}
+          </div>
+        </div>
+
+        {/* Right Panel: Map (always visible) */}
+        <div className={`border-l border-gray-200 dark:border-gray-800 transition-all ${showBucketList ? 'w-1/4 lg:w-2/5' : 'w-1/2 lg:w-2/5'}`}>
+          <TripMapView
+            places={mapPlaces}
+            className="h-full"
+          />
+        </div>
+
+        {/* Right Sidebar: Bucket List */}
+        {showBucketList && (
+          <div className="w-1/4 lg:w-1/5 border-l border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+            <TripBucketList
+              items={bucketItems}
+              onAdd={handleAddBucketItem}
+              onRemove={handleRemoveBucketItem}
+              onReorder={handleReorderBucketItems}
+              onAssignToDay={handleAssignBucketItemToDay}
+              availableDays={days.map((d) => d.dayNumber)}
+            />
           </div>
         )}
       </div>
@@ -828,7 +876,6 @@ function addDays(dateStr: string, days: number): string {
   const date = parseDateString(dateStr);
   if (!date) return dateStr;
   date.setDate(date.getDate() + days);
-  // Return in YYYY-MM-DD format
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
