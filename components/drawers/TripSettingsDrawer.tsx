@@ -1,22 +1,17 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Trash2, Loader2, MapPin } from 'lucide-react';
+import { Trash2, Loader2 } from 'lucide-react';
 import type { Trip } from '@/types/trip';
+import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 
 interface TripSettingsDrawerProps {
   trip: Trip;
   onUpdate?: (updates: Partial<Trip>) => void;
   onDelete?: () => void;
-}
-
-interface CitySuggestion {
-  city: string;
-  country: string | null;
-  count: number;
 }
 
 // Format date string for HTML date input (YYYY-MM-DD format)
@@ -66,89 +61,6 @@ export default function TripSettingsDrawer({
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  // City autocomplete state
-  const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Fetch city suggestions
-  useEffect(() => {
-    const fetchCities = async () => {
-      if (!destination || destination.length < 2) {
-        setCitySuggestions([]);
-        return;
-      }
-
-      setLoadingSuggestions(true);
-      try {
-        const supabase = createClient();
-        if (!supabase) return;
-
-        // Get unique cities from destinations table
-        const { data, error } = await supabase
-          .from('destinations')
-          .select('city, country')
-          .ilike('city', `%${destination}%`)
-          .limit(50);
-
-        if (error) throw error;
-
-        // Group by city and count
-        const cityMap = new Map<string, CitySuggestion>();
-        data?.forEach((d) => {
-          const key = d.city.toLowerCase();
-          if (cityMap.has(key)) {
-            cityMap.get(key)!.count++;
-          } else {
-            cityMap.set(key, {
-              city: d.city,
-              country: d.country,
-              count: 1,
-            });
-          }
-        });
-
-        // Convert to array and sort by count
-        const suggestions = Array.from(cityMap.values())
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 8);
-
-        setCitySuggestions(suggestions);
-      } catch (err) {
-        console.error('Error fetching cities:', err);
-      } finally {
-        setLoadingSuggestions(false);
-      }
-    };
-
-    const debounce = setTimeout(fetchCities, 200);
-    return () => clearTimeout(debounce);
-  }, [destination]);
-
-  // Close suggestions on click outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        suggestionsRef.current &&
-        !suggestionsRef.current.contains(e.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(e.target as Node)
-      ) {
-        setShowSuggestions(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleSelectCity = (city: string) => {
-    setDestination(city);
-    setShowSuggestions(false);
-  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -224,61 +136,16 @@ export default function TripSettingsDrawer({
       </div>
 
       {/* Destination with Autocomplete */}
-      <div className="relative">
+      <div>
         <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
           Destination
         </label>
-        <div className="relative">
-          <input
-            ref={inputRef}
-            type="text"
-            value={destination}
-            onChange={(e) => {
-              setDestination(e.target.value);
-              setShowSuggestions(true);
-            }}
-            onFocus={() => setShowSuggestions(true)}
-            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
-            placeholder="e.g. Tokyo, Paris, New York"
-            autoComplete="off"
-          />
-          {loadingSuggestions && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
-            </div>
-          )}
-        </div>
-
-        {/* Suggestions Dropdown */}
-        {showSuggestions && citySuggestions.length > 0 && (
-          <div
-            ref={suggestionsRef}
-            className="absolute z-50 w-full mt-1 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl shadow-lg overflow-hidden"
-          >
-            {citySuggestions.map((suggestion, index) => (
-              <button
-                key={`${suggestion.city}-${index}`}
-                onClick={() => handleSelectCity(suggestion.city)}
-                className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors text-left"
-              >
-                <MapPin className="w-4 h-4 text-neutral-400 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm text-neutral-900 dark:text-white">
-                    {suggestion.city}
-                  </span>
-                  {suggestion.country && (
-                    <span className="text-xs text-neutral-500 ml-2">
-                      {suggestion.country}
-                    </span>
-                  )}
-                </div>
-                <span className="text-xs text-neutral-400">
-                  {suggestion.count} {suggestion.count === 1 ? 'place' : 'places'}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
+        <CityAutocompleteInput
+          value={destination}
+          onChange={setDestination}
+          placeholder="e.g. Tokyo, Paris, New York"
+          className="w-full"
+        />
       </div>
 
       {/* Dates */}
