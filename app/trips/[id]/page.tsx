@@ -47,7 +47,6 @@ import TripSafetyAlerts from '@/components/trips/TripSafetyAlerts';
 import NearbyDiscoveries from '@/components/trips/NearbyDiscoveries';
 import FlightStatusCard from '@/components/trips/FlightStatusCard';
 import DayTimelineAnalysis from '@/components/trips/DayTimelineAnalysis';
-import CrowdIndicator from '@/components/trips/CrowdIndicator';
 import TransitOptions from '@/components/trips/TransitOptions';
 import AvailabilityAlert from '@/components/trips/AvailabilityAlert';
 import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
@@ -99,7 +98,6 @@ export default function TripPage() {
   const [selectedDay, setSelectedDay] = useState(1);
   const [loading, setLoading] = useState(true);
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
-  const [showTransitFor, setShowTransitFor] = useState<string | null>(null);
   const [showBucketList, setShowBucketList] = useState(false);
   const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
 
@@ -586,23 +584,26 @@ export default function TripPage() {
             </button>
           </div>
 
-          {/* Day Timeline Analysis */}
-          {timelineItems.length > 0 && (
-            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+          {/* Day Summary & Actions */}
+          <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between gap-4">
+            {/* Timeline summary */}
+            {timelineItems.length > 0 ? (
               <DayTimelineAnalysis items={timelineItems} />
-            </div>
-          )}
+            ) : (
+              <span className="text-xs text-gray-400">No items yet</span>
+            )}
 
-          {/* Action Buttons */}
-          <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-800 flex gap-2">
-            <UMActionPill onClick={() => openFlightDrawer(selectedDay)}>
-              <Plane className="w-4 h-4 mr-1" />
-              Flight
-            </UMActionPill>
-            <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)}>
-              <Plus className="w-4 h-4 mr-1" />
-              Place
-            </UMActionPill>
+            {/* Action Buttons */}
+            <div className="flex gap-2 flex-shrink-0">
+              <UMActionPill onClick={() => openFlightDrawer(selectedDay)}>
+                <Plane className="w-4 h-4 mr-1" />
+                Flight
+              </UMActionPill>
+              <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)}>
+                <Plus className="w-4 h-4 mr-1" />
+                Place
+              </UMActionPill>
+            </div>
           </div>
 
           {/* Itinerary Items */}
@@ -622,7 +623,6 @@ export default function TripPage() {
                       const isFlight = item.parsedNotes?.type === 'flight';
                       const prevItem = index > 0 ? currentDay.items[index - 1] : null;
                       const isExpanded = expandedItem === item.id;
-                      const showingTransit = showTransitFor === item.id;
                       const category = item.destination?.category || item.parsedNotes?.category;
                       const estimatedDuration = getEstimatedDuration(category);
 
@@ -634,33 +634,15 @@ export default function TripPage() {
 
                       return (
                         <SortableItem key={item.id} id={item.id}>
-                          {/* Transit Options (between items) */}
+                          {/* Transit between items */}
                           {prevItem && !isFlight && prevItem.parsedNotes?.type !== 'flight' && (
-                            <div className="mb-2">
-                              {showingTransit ? (
-                                <TransitOptions
-                                  fromLat={prevLat}
-                                  fromLon={prevLon}
-                                  toLat={currLat}
-                                  toLon={currLon}
-                                  fromName={prevItem.title}
-                                  toName={item.title}
-                                />
-                              ) : (
-                                <button
-                                  onClick={() => setShowTransitFor(showingTransit ? null : item.id)}
-                                  className="w-full"
-                                >
-                                  <TransitOptions
-                                    fromLat={prevLat}
-                                    fromLon={prevLon}
-                                    toLat={currLat}
-                                    toLon={currLon}
-                                    compact
-                                  />
-                                </button>
-                              )}
-                            </div>
+                            <TransitOptions
+                              fromLat={prevLat}
+                              fromLon={prevLon}
+                              toLat={currLat}
+                              toLon={currLon}
+                              compact
+                            />
                           )}
 
                           {/* Item Card */}
