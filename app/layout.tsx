@@ -202,14 +202,16 @@ export default function RootLayout({
                     <Suspense fallback={null}>
                       <AdminEditModeProvider>
                         <ItineraryProvider>
-                          <Header />
-                          <main id="main-content" className="min-h-screen page-transition" role="main">
-                            <SplitPaneLayout>
+                        <SplitPaneLayout>
+                          <div className="flex flex-col min-h-screen">
+                            <Header />
+                            <main id="main-content" className="flex-1 page-transition" role="main">
                               {children}
-                            </SplitPaneLayout>
-                          </main>
-                          <Footer />
-                          <CookieConsent />
+                            </main>
+                            <Footer />
+                            <CookieConsent />
+                          </div>
+                        </SplitPaneLayout>
                           <DrawerMount />
                         </ItineraryProvider>
                       </AdminEditModeProvider>
