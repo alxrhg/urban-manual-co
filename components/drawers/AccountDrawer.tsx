@@ -434,7 +434,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         </DrawerSection>
       </div>
 
-      <DrawerActionBar className="justify-between flex-wrap gap-3">
+      <DrawerActionBar className="justify-between flex-wrap gap-3 bg-white/95 dark:bg-gray-950/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur border-t border-black/5 dark:border-white/10 shadow-[0_-18px_45px_rgba(15,23,42,0.12)]">
         <p className="text-sm text-neutral-600 dark:text-neutral-400">
           Need advanced preferences?
         </p>
