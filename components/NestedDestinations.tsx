@@ -2,6 +2,7 @@
 
 import { Destination } from '@/types/destination';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, ArrowRight } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
@@ -64,7 +65,18 @@ export function NestedDestinations({ destinations, parentName, onDestinationClic
             </div>
 
             <div className="space-y-0 flex-1 flex flex-col">
-              <h4 className={`${CARD_TITLE} line-clamp-2 min-h-[2.5rem]`}>{dest.name}</h4>
+              <Link 
+                href={`/destination/${dest.slug}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleClick(dest);
+                }}
+                className="hover:underline"
+              >
+                <h4 className={`${CARD_TITLE} line-clamp-2 min-h-[2.5rem]`}>
+                  {dest.name || dest.slug}
+                </h4>
+              </Link>
               <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">
                 {dest.micro_description || 
                  (dest.category && dest.city 
