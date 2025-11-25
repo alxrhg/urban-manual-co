@@ -962,8 +962,49 @@ export default function TripPage() {
                     >
                       {saving ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin mr-ニー
-            <div className="flex items-center justify-between">
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          Saving...
+                        </>
+                      ) : (
+                        'Save Hotels'
+                      )}
+                    </UMActionPill>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {hotels.map((hotel, index) => (
+                    <UMCard key={`view-${index}`} className="p-5 space-y-2">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {hotel.name || 'Untitled hotel'}
+                          </p>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                            {hotel.address || 'Address not set'}
+                          </p>
+                        </div>
+                        <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                          {hotel.startDate
+                            ? formatDateLong(hotel.startDate)
+                            : 'Start date TBD'}{' '}
+                          –{' '}
+                          {hotel.endDate ? formatDateLong(hotel.endDate) : 'End date TBD'}
+                        </div>
+                      </div>
+                      {hotel.notes && (
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                          {hotel.notes}
+                        </p>
+                      )}
+                    </UMCard>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
+        )}
+*** End Patch*** End Patch
               <UMSectionTitle>Accommodations</UMSectionTitle>
               {isOwner && (
                 <div className="flex flex-wrap gap-2">
