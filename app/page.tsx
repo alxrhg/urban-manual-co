@@ -22,6 +22,7 @@ import {
   Sparkles,
   Globe,
   Funnel,
+  CalendarRange,
 } from "lucide-react";
 import { getCategoryIconComponent } from "@/lib/icons/category-icons";
 // Lazy load drawer (only when opened)
@@ -68,6 +69,14 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useDestinationLoading } from '@/hooks/useDestinationLoading';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
+import {
+  GoalPicker,
+  type JourneyGoal,
+} from "@/components/journey/GoalPicker";
+import { JourneyContextRail } from "@/components/journey/ContextRail";
+import { JourneyActionRail } from "@/components/journey/ActionRail";
+import { useJourneyShortlist } from "@/hooks/useJourneyShortlist";
+import { useIsDesktop } from "@/hooks/useIsDesktop";
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -174,6 +183,9 @@ function capitalizeCategory(category: string): string {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
 }
+
+const FEATURED_CITIES = ["taipei", "tokyo", "new-york", "london"];
+const RECENT_GOALS_STORAGE_KEY = "um-recent-intents";
 
 // Use capitalizeCity from lib/utils.ts instead of duplicate function
 
@@ -576,8 +588,7 @@ export default function Home() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [viewMode, advancedFilters.nearMe, nearbyDestinations, filteredDestinations, itemsPerPage]);
 
-  // Featured cities to always show in filter
-  const FEATURED_CITIES = ["taipei", "tokyo", "new-york", "london"];
+  // Featured cities to always show in filter (defined near top of file)
 
   // AI-powered chat using the chat API endpoint - only website content
   const [chatResponse, setChatResponse] = useState<string>("");
@@ -621,6 +632,51 @@ export default function Home() {
       contextPrompt?: string;
     }>
   >([]);
+
+  const { shortlist, toggleShortlist, removeFromShortlist, isShortlisted } =
+    useJourneyShortlist();
+  const isDesktop = useIsDesktop(1280);
+  const [activeGoalId, setActiveGoalId] = useState<string | null>(null);
+  const [recentGoalIds, setRecentGoalIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    try {
+      const stored = window.localStorage.getItem(RECENT_GOALS_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          setRecentGoalIds(parsed);
+        }
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[JourneyGoals] Failed to parse stored intents:", error);
+      }
+    }
+  }, []);
+
+  const persistRecentGoals = useCallback(
+    (updater: (prev: string[]) => string[]) => {
+      setRecentGoalIds(prev => {
+        const next = updater(prev);
+        if (typeof window !== "undefined") {
+          try {
+            window.localStorage.setItem(
+              RECENT_GOALS_STORAGE_KEY,
+              JSON.stringify(next)
+            );
+          } catch {
+            // Ignore storage errors
+          }
+        }
+        return next;
+      });
+    },
+    []
+  );
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
@@ -2267,6 +2323,166 @@ export default function Home() {
     ? [...featuredCities, ...remainingCities]
     : featuredCities;
 
+  const fallbackIntentCity =
+    selectedCity ||
+    searchIntent?.city ||
+    (userContext?.city as string | undefined) ||
+    (lastSession?.context_summary?.city as string | undefined) ||
+    "";
+  const formattedIntentCity = fallbackIntentCity
+    ? capitalizeCity(fallbackIntentCity)
+    : "";
+
+  const journeyIntents = useMemo<JourneyGoal[]>(
+    () => [
+      {
+        id: "tonight",
+        label: "Tonight",
+        description: formattedIntentCity
+          ? `Secure dinner tonight in ${formattedIntentCity}`
+          : "Secure dinner tonight",
+        query: formattedIntentCity
+          ? `tonight in ${formattedIntentCity} best restaurants`
+          : "best restaurants tonight",
+        icon: <Clock className="h-3.5 w-3.5" />,
+      },
+      {
+        id: "weekend",
+        label: "Weekend",
+        description: formattedIntentCity
+          ? `Design a weekend in ${formattedIntentCity}`
+          : "Design a weekend escape",
+        query: formattedIntentCity
+          ? `weekend itinerary in ${formattedIntentCity}`
+          : "weekend itinerary ideas",
+        icon: <CalendarRange className="h-3.5 w-3.5" />,
+      },
+      {
+        id: "remote-week",
+        label: "Remote week",
+        description: formattedIntentCity
+          ? `Plan a remote work week in ${formattedIntentCity}`
+          : "Plan a remote work week",
+        query: formattedIntentCity
+          ? `remote work friendly cafes and hotels in ${formattedIntentCity}`
+          : "remote work friendly cafes and hotels",
+        icon: <Globe className="h-3.5 w-3.5" />,
+      },
+      {
+        id: "surprise",
+        label: "Surprise me",
+        description: formattedIntentCity
+          ? `Unexpected gems near ${formattedIntentCity}`
+          : "Unexpected gems anywhere",
+        query: formattedIntentCity
+          ? `hidden gems in ${formattedIntentCity}`
+          : "hidden travel gems worldwide",
+        icon: <Sparkles className="h-3.5 w-3.5" />,
+      },
+    ],
+    [formattedIntentCity]
+  );
+
+  const journeyStats = useMemo(() => {
+    const context = userContext as Record<string, any> | null;
+    const saved =
+      typeof context?.saved_count === "number"
+        ? context.saved_count
+        : Array.isArray(context?.saved_places)
+        ? context.saved_places.length
+        : undefined;
+    const trips =
+      typeof context?.trip_count === "number"
+        ? context.trip_count
+        : Array.isArray(context?.trips)
+        ? context.trips.length
+        : undefined;
+    return {
+      visited: visitedSlugs.size,
+      saved,
+      trips,
+    };
+  }, [userContext, visitedSlugs]);
+
+  const handleGoalSelect = useCallback(
+    (goal: JourneyGoal) => {
+      if (!goal?.query || searching) {
+        return;
+      }
+      setActiveGoalId(goal.id);
+      setSearchTerm(goal.query);
+      performAISearch(goal.query);
+      persistRecentGoals(prev =>
+        [goal.id, ...prev.filter(id => id !== goal.id)].slice(0, 4)
+      );
+    },
+    [performAISearch, persistRecentGoals, searching]
+  );
+
+  const handleSelectFromShortlist = useCallback(
+    (slug: string) => {
+      if (!slug) return;
+      const match =
+        filteredDestinations.find(destination => destination.slug === slug) ||
+        destinations.find(destination => destination.slug === slug);
+      if (match) {
+        setSelectedDestination(match);
+        if (!isDesktop) {
+          openDrawer("destination");
+        }
+        return;
+      }
+      router.push(`/destination/${slug}`);
+    },
+    [filteredDestinations, destinations, isDesktop, openDrawer, router]
+  );
+
+  const handleAddDestinationToTrip = useCallback(
+    (destination: Destination) => {
+      if (!destination) return;
+      openDrawer("trips");
+    },
+    [openDrawer]
+  );
+
+  const handleShareDestination = useCallback((destination: Destination) => {
+    if (!destination?.slug) return;
+    const shareUrl = `${
+      process.env.NEXT_PUBLIC_SITE_URL || "https://www.urbanmanual.co"
+    }/destination/${destination.slug}`;
+    if (typeof window === "undefined") return;
+
+    if (navigator.share) {
+      navigator
+        .share({
+          title: `${destination.name} · Urban Manual`,
+          url: shareUrl,
+        })
+        .catch(() => undefined);
+      return;
+    }
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl).catch(() => undefined);
+    }
+  }, []);
+
+  const handleOpenDestinationPage = useCallback(
+    (destination: Destination) => {
+      if (!destination?.slug) return;
+      router.push(`/destination/${destination.slug}`);
+    },
+    [router]
+  );
+
+  const handleOpenChatWithDestination = useCallback(
+    (destination: Destination) => {
+      if (!destination) return;
+      openDrawer("chat");
+    },
+    [openDrawer]
+  );
+
   return (
     <ErrorBoundary>
       {/* Structured Data for SEO */}
@@ -2418,6 +2634,14 @@ export default function Home() {
                         availableCities={cities}
                         availableCategories={categories}
                       />
+                      <div className="mt-6">
+                        <GoalPicker
+                          goals={journeyIntents}
+                          onSelect={handleGoalSelect}
+                          activeGoalId={activeGoalId}
+                          recentGoalIds={recentGoalIds}
+                        />
+                      </div>
                     </>
                   )}
 
@@ -2819,9 +3043,30 @@ export default function Home() {
           </div>
         )}
 
-              {/* Content Section - Grid directly below hero */}
-              <div className="w-full px-6 md:px-10 mt-8">
-                <div className="max-w-[1800px] mx-auto">
+        {/* Content Section - Grid directly below hero */}
+        <div className="w-full px-6 md:px-10 mt-8">
+          <div className="max-w-[1800px] mx-auto">
+            <div className="grid gap-6 lg:grid-cols-[260px,minmax(0,1fr)] xl:grid-cols-[260px,minmax(0,1fr),340px]">
+              <div className="hidden lg:block">
+                <JourneyContextRail
+                  intents={journeyIntents}
+                  onIntentSelect={handleGoalSelect}
+                  activeGoalId={activeGoalId}
+                  recentIntents={recentGoalIds}
+                  selectedCity={formattedIntentCity || undefined}
+                  selectedCategory={
+                    advancedFilters.michelin
+                      ? "Michelin"
+                      : selectedCategory
+                      ? capitalizeCategory(selectedCategory)
+                      : undefined
+                  }
+                  lastSession={lastSession}
+                  onResumeSession={handleResumeSession}
+                  stats={journeyStats}
+                />
+              </div>
+              <div className="min-w-0">
                 {/* Mid Nav - Horizontal Row, Right Aligned */}
                 <div className="mb-6">
                   <div className="flex justify-start sm:justify-end">
@@ -3076,7 +3321,9 @@ export default function Home() {
                 source: "map_marker" | "map_list"
               ) => {
                 setSelectedDestination(destination);
-                // Don't open drawer in map view - details show in sidebar
+                if (!isDesktop) {
+                  openDrawer("destination");
+                }
                 const position = findDestinationPosition(destination.slug);
                 trackDestinationEngagement(
                   destination,
@@ -3200,7 +3447,9 @@ export default function Home() {
                               destination={destination}
                               onClick={() => {
                                 setSelectedDestination(destination);
-                                openDrawer('destination');
+                                if (!isDesktop) {
+                                  openDrawer('destination');
+                                }
                                 trackDestinationEngagement(
                                   destination,
                                   "grid",
@@ -3336,7 +3585,23 @@ export default function Home() {
               );
             })()}
               </div>
+              <div className="hidden xl:block">
+                <JourneyActionRail
+                  selectedDestination={selectedDestination}
+                  shortlist={shortlist}
+                  isShortlisted={isShortlisted}
+                  onToggleShortlist={toggleShortlist}
+                  onAddToTrip={handleAddDestinationToTrip}
+                  onOpenDetailPage={handleOpenDestinationPage}
+                  onShare={handleShareDestination}
+                  onOpenChat={handleOpenChatWithDestination}
+                  onRemoveShortlist={removeFromShortlist}
+                  onSelectFromShortlist={handleSelectFromShortlist}
+                />
+              </div>
             </div>
+          </div>
+        </div>
 
         {/* Destination Drawer - Only render when open and NOT in map view */}
         {isDrawerOpen('destination') && selectedDestination && viewMode !== 'map' && (

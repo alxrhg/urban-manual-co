@@ -17,6 +17,7 @@ import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 import DrawerMount from "@/components/DrawerMount";
+import { TripDock } from "@/components/journey/TripDock";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -203,6 +204,7 @@ export default function RootLayout({
                         <main id="main-content" className="min-h-screen page-transition" role="main">
                           {children}
                         </main>
+                        <TripDock />
                         <Footer />
                         <CookieConsent />
                         <DrawerMount />

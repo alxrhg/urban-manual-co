@@ -1,8 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { User } from "lucide-react";
+import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect, useMemo } from "react";
+import { User, Compass } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
@@ -11,6 +12,7 @@ import { LoginDrawer } from "@/components/LoginDrawer";
 
 export function Header() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -89,8 +91,24 @@ export function Header() {
     router.push(path);
   };
 
+  const navItems = useMemo(
+    () => [
+      { id: "discover", label: "Discover", href: "/" },
+      { id: "trips", label: "Trips", href: "/trips" },
+      { id: "journeys", label: "Journeys", href: "/account" },
+    ],
+    []
+  );
+
   const actionButtons = (
     <>
+      <button
+        onClick={() => router.push("/trips")}
+        className="hidden lg:inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 dark:border-white/20 rounded-full text-xs font-semibold uppercase tracking-[1.5px] text-gray-700 dark:text-gray-200 hover:border-gray-900 dark:hover:border-white/60 transition-colors"
+      >
+        <Compass className="h-3.5 w-3.5" />
+        Trip Workspace
+      </button>
       {isAdmin && buildVersion && (
         <span
           className="text-[10px] text-gray-400 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded"
@@ -144,13 +162,36 @@ export function Header() {
           className="flex items-center justify-between py-4 w-full"
           aria-label="Main navigation"
         >
-          <button
-            onClick={() => navigate("/")}
-            className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
-            aria-label="Go to homepage"
-          >
-            Urban Manual®
-          </button>
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => navigate("/")}
+              className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
+              aria-label="Go to homepage"
+            >
+              Urban Manual®
+            </button>
+            <div className="hidden md:flex items-center gap-3 text-xs font-semibold uppercase tracking-[1.5px]">
+              {navItems.map(item => {
+                const isActive =
+                  item.href === "/"
+                    ? pathname === "/"
+                    : pathname?.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    className={`px-3 py-1.5 rounded-full transition-colors ${
+                      isActive
+                        ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                        : "text-gray-500 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
 
           <div className="flex items-center gap-2">{actionButtons}</div>
         </nav>
