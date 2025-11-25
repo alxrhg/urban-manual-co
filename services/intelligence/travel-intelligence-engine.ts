@@ -40,12 +40,24 @@ export interface ProcessResult {
   }>;
 }
 
+/**
+ * Intent types for conversational flow
+ */
+type MessageIntent =
+  | 'search'        // User wants to find new places
+  | 'followup'      // Continue conversation about shown places
+  | 'refine'        // Narrow down / modify current results
+  | 'clarify'       // Answering a clarification question
+  | 'conversational'; // Greetings, thanks, general chat
+
 interface NLUResult {
+  intent: MessageIntent;
   mode: ConversationMode;
   context: TravelContext;
   confidence: number;
   needsClarification: boolean;
   clarificationQuestion?: string;
+  continueConversation?: boolean; // True = don't search, just respond
 }
 
 /**
@@ -104,41 +116,93 @@ export class TravelIntelligenceEngine {
     try {
       console.log('[TravelIntelligence] ========== NEW REQUEST ==========');
       console.log('[TravelIntelligence] Message:', message);
+      console.log('[TravelIntelligence] History length:', conversationHistory.length);
       console.log('[TravelIntelligence] Existing context:', existingContext);
 
-      // Step 1: UNIFIED NLU - Extract context AND mode together
+      // Step 1: UNIFIED NLU - Extract context, mode, AND INTENT
       const nluResult = await this.understandQuery(message, conversationHistory, existingContext);
 
       console.log('[TravelIntelligence] NLU Result:', {
+        intent: nluResult.intent,
         mode: nluResult.mode,
         context: nluResult.context,
         confidence: nluResult.confidence,
+        continueConversation: nluResult.continueConversation,
       });
 
-      // Step 2: Find relevant destinations from our curated collection
-      const destinations = await this.findRelevantDestinations(
-        message,
-        nluResult.context,
-        nluResult.mode,
-        userId
-      );
+      // Get previous destinations from conversation for follow-up/refine intents
+      const previousDestinations = this.getPreviousDestinations(conversationHistory);
 
-      console.log('[TravelIntelligence] Found', destinations.length, 'destinations');
+      let destinations: any[] = [];
+      let response: string;
 
-      // Step 3: Generate intelligent response
-      const response = await this.generateResponse(
-        message,
-        destinations,
-        nluResult.context,
-        nluResult.mode,
-        conversationHistory,
-        nluResult.needsClarification ? nluResult.clarificationQuestion : undefined
-      );
+      // Handle different intents
+      if (nluResult.continueConversation || nluResult.intent === 'conversational') {
+        // Pure conversational - just respond, no search
+        console.log('[TravelIntelligence] Conversational intent - no search needed');
+        response = await this.generateConversationalResponse(
+          message,
+          nluResult.context,
+          conversationHistory
+        );
+      } else if (nluResult.intent === 'followup' && previousDestinations.length > 0) {
+        // Follow-up about shown destinations - discuss them without new search
+        console.log('[TravelIntelligence] Follow-up intent - discussing previous destinations');
+        destinations = previousDestinations;
+        response = await this.generateFollowUpResponse(
+          message,
+          previousDestinations,
+          nluResult.context,
+          conversationHistory
+        );
+      } else if (nluResult.intent === 'refine' && previousDestinations.length > 0) {
+        // Refine results - filter the previous results
+        console.log('[TravelIntelligence] Refine intent - filtering previous results');
+        destinations = this.refineDestinations(previousDestinations, nluResult.context);
+        if (destinations.length < 3) {
+          // Not enough after filtering, do a new search
+          destinations = await this.findRelevantDestinations(
+            message,
+            nluResult.context,
+            nluResult.mode,
+            userId
+          );
+        }
+        response = await this.generateResponse(
+          message,
+          destinations,
+          nluResult.context,
+          nluResult.mode,
+          conversationHistory,
+          nluResult.needsClarification ? nluResult.clarificationQuestion : undefined
+        );
+      } else {
+        // Search intent - find new destinations
+        console.log('[TravelIntelligence] Search intent - finding new destinations');
+        destinations = await this.findRelevantDestinations(
+          message,
+          nluResult.context,
+          nluResult.mode,
+          userId
+        );
 
-      // Step 4: Generate follow-up suggestions
+        console.log('[TravelIntelligence] Found', destinations.length, 'destinations');
+
+        // Generate intelligent response
+        response = await this.generateResponse(
+          message,
+          destinations,
+          nluResult.context,
+          nluResult.mode,
+          conversationHistory,
+          nluResult.needsClarification ? nluResult.clarificationQuestion : undefined
+        );
+      }
+
+      // Generate follow-up suggestions
       const suggestions = this.generateSuggestions(nluResult.context, nluResult.mode, destinations);
 
-      // Step 5: Extract insights if appropriate
+      // Extract insights if appropriate
       const insights = this.extractInsights(destinations, nluResult.context, nluResult.mode);
 
       return {
@@ -158,6 +222,212 @@ export class TravelIntelligenceEngine {
         context: existingContext || {},
       };
     }
+  }
+
+  /**
+   * Extract destinations from previous assistant messages
+   */
+  private getPreviousDestinations(history: ConversationMessage[]): any[] {
+    // Look at last few assistant messages for destinations
+    const recentAssistantMessages = history
+      .filter((m) => m.role === 'assistant' && m.destinations?.length)
+      .slice(-3);
+
+    if (recentAssistantMessages.length === 0) return [];
+
+    // Get unique destinations from recent messages
+    const seen = new Set<string>();
+    const destinations: any[] = [];
+
+    for (const msg of recentAssistantMessages.reverse()) {
+      for (const dest of msg.destinations || []) {
+        if (!seen.has(dest.slug)) {
+          seen.add(dest.slug);
+          destinations.push(dest);
+        }
+      }
+    }
+
+    return destinations;
+  }
+
+  /**
+   * Filter destinations based on new context
+   */
+  private refineDestinations(destinations: any[], context: TravelContext): any[] {
+    return destinations.filter((dest) => {
+      // Price filter
+      if (context.pricePreference) {
+        const priceMap: Record<string, number> = { budget: 1, moderate: 2, upscale: 3, splurge: 4 };
+        const targetPrice = priceMap[context.pricePreference] || 2;
+        if (dest.price_level && Math.abs(dest.price_level - targetPrice) > 1) {
+          return false;
+        }
+      }
+
+      // Vibe filter
+      if (context.vibes?.length) {
+        const destTags = (dest.tags || []).map((t: string) => t.toLowerCase());
+        const destDesc = (dest.description || '').toLowerCase();
+        const hasMatchingVibe = context.vibes.some(
+          (v) => destTags.includes(v.toLowerCase()) || destDesc.includes(v.toLowerCase())
+        );
+        // Prefer matches but don't exclude everything
+        if (!hasMatchingVibe && destinations.length > 3) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }
+
+  /**
+   * Generate a purely conversational response (no destinations)
+   */
+  private async generateConversationalResponse(
+    message: string,
+    context: TravelContext,
+    history: ConversationMessage[]
+  ): Promise<string> {
+    const recentHistory = history.slice(-4).map((m) => `${m.role}: ${m.content}`).join('\n');
+
+    const prompt = `You are Urban Manual's Travel Intelligence - a knowledgeable, friendly travel concierge.
+
+CONVERSATION HISTORY:
+${recentHistory}
+
+USER MESSAGE: "${message}"
+
+CURRENT CONTEXT:
+${JSON.stringify(context, null, 2)}
+
+Respond naturally and conversationally. This is a follow-up or casual message, not a search request.
+- If they're thanking you, acknowledge warmly
+- If they're asking about something you mentioned, expand on it
+- If they're making small talk, be friendly but gently guide toward travel help
+- Keep your response concise and natural
+- Feel free to ask what else you can help them discover`;
+
+    // Try OpenAI
+    if (openai?.chat) {
+      try {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.8,
+          max_tokens: 200,
+        });
+        const content = response.choices?.[0]?.message?.content;
+        if (content) return content.trim();
+      } catch (error) {
+        console.warn('[TravelIntelligence] OpenAI conversational response failed:', error);
+      }
+    }
+
+    // Fallback to Gemini
+    if (this.genAI) {
+      try {
+        const model = this.genAI.getGenerativeModel({
+          model: 'gemini-1.5-flash',
+          generationConfig: { temperature: 0.8, maxOutputTokens: 200 },
+        });
+        const result = await model.generateContent(prompt);
+        const content = result.response.text();
+        if (content) return content.trim();
+      } catch (error) {
+        console.warn('[TravelIntelligence] Gemini conversational response failed:', error);
+      }
+    }
+
+    // Hardcoded fallback for common conversational patterns
+    const lower = message.toLowerCase();
+    if (lower.includes('thank') || lower.includes('thanks')) {
+      return "You're welcome! Let me know if you'd like to explore more places or need any other recommendations.";
+    }
+    if (lower.includes('great') || lower.includes('perfect') || lower.includes('sounds good')) {
+      return "Glad that resonates! Anything else you'd like to discover? I'm here to help you find the perfect spots.";
+    }
+    if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+      return "Hello! I'm here to help you discover amazing places. What are you in the mood for?";
+    }
+
+    return "I'm here to help you discover amazing places. What kind of experience are you looking for?";
+  }
+
+  /**
+   * Generate a follow-up response about previously shown destinations
+   */
+  private async generateFollowUpResponse(
+    message: string,
+    destinations: any[],
+    context: TravelContext,
+    history: ConversationMessage[]
+  ): Promise<string> {
+    const recentHistory = history.slice(-4).map((m) => `${m.role}: ${m.content}`).join('\n');
+
+    const destinationSummary = destinations.slice(0, 5).map((d) => ({
+      name: d.name,
+      city: d.city,
+      category: d.category,
+      description: d.micro_description || d.description?.substring(0, 150),
+      rating: d.rating,
+      michelin_stars: d.michelin_stars,
+    }));
+
+    const prompt = `You are Urban Manual's Travel Intelligence - a knowledgeable travel editor.
+
+RECENT CONVERSATION:
+${recentHistory}
+
+DESTINATIONS WE'VE DISCUSSED:
+${JSON.stringify(destinationSummary, null, 2)}
+
+USER'S FOLLOW-UP: "${message}"
+
+The user is asking a follow-up question about the places we've been discussing.
+- Answer their specific question about these destinations
+- Reference the places by name when relevant
+- Be helpful and specific
+- Keep it conversational
+- If they want to know more about a specific place, elaborate`;
+
+    // Try OpenAI
+    if (openai?.chat) {
+      try {
+        const response = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: 300,
+        });
+        const content = response.choices?.[0]?.message?.content;
+        if (content) return content.trim();
+      } catch (error) {
+        console.warn('[TravelIntelligence] OpenAI follow-up response failed:', error);
+      }
+    }
+
+    // Fallback to Gemini
+    if (this.genAI) {
+      try {
+        const model = this.genAI.getGenerativeModel({
+          model: 'gemini-1.5-flash',
+          generationConfig: { temperature: 0.7, maxOutputTokens: 300 },
+        });
+        const result = await model.generateContent(prompt);
+        const content = result.response.text();
+        if (content) return content.trim();
+      } catch (error) {
+        console.warn('[TravelIntelligence] Gemini follow-up response failed:', error);
+      }
+    }
+
+    // Fallback
+    if (destinations.length > 0) {
+      return `Among the places we discussed, ${destinations[0].name} is particularly noteworthy. Would you like more details about any specific one?`;
+    }
+    return "I'd be happy to tell you more. Which place caught your eye?";
   }
 
   /**
@@ -196,7 +466,7 @@ export class TravelIntelligenceEngine {
     conversationSummary: string,
     existingContext: TravelContext
   ): Promise<NLUResult | null> {
-    const prompt = `You are a travel query analyzer. Extract structured information from this travel query.
+    const prompt = `You are a conversational travel assistant analyzer. Determine the user's INTENT and extract information.
 
 EXISTING CONTEXT (from previous conversation):
 ${JSON.stringify(existingContext, null, 2)}
@@ -208,6 +478,7 @@ CURRENT MESSAGE: "${message}"
 
 Analyze and return JSON with this EXACT structure:
 {
+  "intent": "search" | "followup" | "refine" | "clarify" | "conversational",
   "mode": "discover" | "plan" | "compare" | "insight" | "recommend" | "navigate",
   "confidence": 0.0 to 1.0,
   "city": "city name or null",
@@ -217,18 +488,40 @@ Analyze and return JSON with this EXACT structure:
   "timeOfDay": "breakfast" | "brunch" | "lunch" | "afternoon" | "dinner" | "late-night" | null,
   "pricePreference": "budget" | "moderate" | "upscale" | "splurge" | null,
   "vibes": ["array", "of", "vibes"] or [],
-  "needsClarification": true or false,
-  "clarificationQuestion": "question to ask if clarification needed"
+  "needsClarification": false,
+  "continueConversation": true or false
 }
 
+INTENT RULES (most important):
+- "search" = User wants to FIND NEW places (contains city/category/place type)
+- "followup" = User is asking about places ALREADY SHOWN (e.g., "tell me more", "which one is best", "what about the first one")
+- "refine" = User wants to MODIFY results (e.g., "something cheaper", "more romantic", "different neighborhood")
+- "clarify" = User is answering a question you asked
+- "conversational" = Greetings, thanks, small talk, general questions NOT about finding places
+
+CONVERSATIONAL EXAMPLES (intent=conversational, continueConversation=true):
+- "thanks" / "thank you" / "great" / "perfect" / "sounds good"
+- "hello" / "hi" / "hey"
+- "yes" / "no" / "okay" / "sure"
+- "interesting" / "nice" / "cool"
+- "what do you think?" / "any thoughts?"
+
+FOLLOWUP EXAMPLES (intent=followup):
+- "tell me more about that" / "more details"
+- "which one do you recommend?" / "which is better?"
+- "what about the second option?" / "the first one sounds good"
+- "why?" / "how so?" / "what makes it special?"
+
+SEARCH EXAMPLES (intent=search):
+- "hotel in tokyo" / "restaurants in paris"
+- "find me a cafe" / "looking for a bar"
+- "best sushi" / "where can I get coffee"
+
 RULES:
-- For "hotel in tokyo": city="Tokyo", category="Hotel", mode="discover" or "recommend"
-- For "best restaurant paris": city="Paris", category="Restaurant", mode="recommend"
-- For "romantic dinner": occasion="romantic", category="Restaurant", timeOfDay="dinner"
-- CAPITALIZE city names properly: "tokyo" -> "Tokyo", "paris" -> "Paris"
-- CAPITALIZE category: "hotel" -> "Hotel", "restaurant" -> "Restaurant"
-- If query is vague, set needsClarification=true
-- confidence should reflect how clear the intent is
+- CAPITALIZE city names properly: "tokyo" -> "Tokyo"
+- CAPITALIZE category: "hotel" -> "Hotel"
+- Set continueConversation=true for conversational/followup intents
+- For followup/conversational, keep existing context values
 
 Return ONLY the JSON, no explanation.`;
 
@@ -274,24 +567,47 @@ Return ONLY the JSON, no explanation.`;
 
       if (!result) return null;
 
+      // Determine intent (default to search if not specified)
+      const intent: MessageIntent = result.intent || 'search';
+      const continueConversation = result.continueConversation ||
+        intent === 'conversational' ||
+        intent === 'followup';
+
       // Build context from AI result
-      const context: TravelContext = {
-        ...existingContext,
-        city: result.city || existingContext?.city,
-        neighborhood: result.neighborhood || existingContext?.neighborhood,
-        category: result.category || existingContext?.category,
-        occasion: result.occasion || existingContext?.occasion,
-        timeOfDay: result.timeOfDay || existingContext?.timeOfDay,
-        pricePreference: result.pricePreference || existingContext?.pricePreference,
-        vibes: result.vibes?.length > 0 ? result.vibes : existingContext?.vibes,
-      };
+      // For conversational/followup, preserve more of existing context
+      const context: TravelContext = continueConversation
+        ? {
+            ...existingContext,
+            // Only update if explicitly provided
+            city: result.city || existingContext?.city,
+            neighborhood: result.neighborhood || existingContext?.neighborhood,
+            category: result.category || existingContext?.category,
+            occasion: result.occasion || existingContext?.occasion,
+            timeOfDay: result.timeOfDay || existingContext?.timeOfDay,
+            pricePreference: result.pricePreference || existingContext?.pricePreference,
+            vibes: result.vibes?.length > 0 ? result.vibes : existingContext?.vibes,
+          }
+        : {
+            ...existingContext,
+            city: result.city || existingContext?.city,
+            neighborhood: result.neighborhood || existingContext?.neighborhood,
+            category: result.category || existingContext?.category,
+            occasion: result.occasion || existingContext?.occasion,
+            timeOfDay: result.timeOfDay || existingContext?.timeOfDay,
+            pricePreference: result.pricePreference || existingContext?.pricePreference,
+            vibes: result.vibes?.length > 0 ? result.vibes : existingContext?.vibes,
+          };
+
+      console.log('[TravelIntelligence] AI detected intent:', intent, 'continueConversation:', continueConversation);
 
       return {
+        intent,
         mode: result.mode || 'discover',
         context,
         confidence: result.confidence || 0.7,
         needsClarification: result.needsClarification || false,
         clarificationQuestion: result.clarificationQuestion,
+        continueConversation,
       };
     } catch (error) {
       console.error('[TravelIntelligence] AI NLU error:', error);
@@ -303,10 +619,69 @@ Return ONLY the JSON, no explanation.`;
    * Rule-based NLU fallback - parses query without AI
    */
   private runRuleBasedNLU(message: string, existingContext: TravelContext): NLUResult {
-    const lower = message.toLowerCase();
+    const lower = message.toLowerCase().trim();
     const context: TravelContext = { ...existingContext };
     let mode: ConversationMode = 'discover';
     let confidence = 0.6;
+    let intent: MessageIntent = 'search';
+    let continueConversation = false;
+
+    // === INTENT DETECTION (do this FIRST) ===
+
+    // Conversational patterns - these don't need search
+    const conversationalPatterns = [
+      /^(thanks|thank you|thx|ty)[\s!.]*$/i,
+      /^(great|perfect|awesome|nice|cool|good|ok|okay|sure|yes|no|yep|nope)[\s!.]*$/i,
+      /^(hi|hello|hey|howdy)[\s!.]*$/i,
+      /^(sounds good|that works|got it|i see|interesting)[\s!.]*$/i,
+      /^(what do you think|any thoughts|your opinion)[\s!?]*$/i,
+    ];
+
+    if (conversationalPatterns.some((p) => p.test(lower))) {
+      console.log('[TravelIntelligence] Rule-based: Detected conversational intent');
+      return {
+        intent: 'conversational',
+        mode: 'discover',
+        context: existingContext,
+        confidence: 0.9,
+        needsClarification: false,
+        continueConversation: true,
+      };
+    }
+
+    // Follow-up patterns - discuss previously shown places
+    const followupPatterns = [
+      /^(tell me more|more details|more info|what else|elaborate)/i,
+      /^(which one|which is better|which do you recommend|what do you suggest)/i,
+      /^(the first|the second|the third|option 1|option 2|that one|this one)/i,
+      /^(why|how so|what makes it|what's special)/i,
+      /^(and|also|plus|what about)/i,
+    ];
+
+    if (followupPatterns.some((p) => p.test(lower))) {
+      console.log('[TravelIntelligence] Rule-based: Detected follow-up intent');
+      return {
+        intent: 'followup',
+        mode: 'insight',
+        context: existingContext,
+        confidence: 0.8,
+        needsClarification: false,
+        continueConversation: true,
+      };
+    }
+
+    // Refine patterns - modify current results
+    const refinePatterns = [
+      /^(something|anything) (cheaper|more expensive|different|else|similar)/i,
+      /^(more|less) (romantic|casual|fancy|quiet|lively)/i,
+      /^(but|however) (cheaper|more|less|different)/i,
+      /show me (more|different|other)/i,
+    ];
+
+    if (refinePatterns.some((p) => p.test(lower))) {
+      intent = 'refine';
+      confidence = 0.75;
+    }
 
     // === CITY EXTRACTION ===
     const cityPatterns: Record<string, string> = {
@@ -422,14 +797,16 @@ Return ONLY the JSON, no explanation.`;
       mode = 'recommend';
     }
 
-    console.log('[TravelIntelligence] Rule-based NLU result:', { mode, context, confidence });
+    console.log('[TravelIntelligence] Rule-based NLU result:', { intent, mode, context, confidence });
 
     return {
+      intent,
       mode,
       context,
       confidence,
-      needsClarification: !context.city && !context.category,
-      clarificationQuestion: !context.city ? "Which city are you interested in?" : undefined,
+      needsClarification: !context.city && !context.category && intent === 'search',
+      clarificationQuestion: !context.city && intent === 'search' ? "Which city are you interested in?" : undefined,
+      continueConversation,
     };
   }
 
