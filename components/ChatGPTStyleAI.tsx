@@ -161,6 +161,7 @@ export function ChatGPTStyleAI() {
 
     try {
       // PHASE 1: Quick search for instant results (only for search queries)
+      // Note: Quick search is just for preview - don't update context from it
       if (isSearchQuery) {
         const quickSearchPromise = fetch('/api/travel-intelligence/quick-search', {
           method: 'POST',
@@ -189,15 +190,13 @@ export function ChatGPTStyleAI() {
               }
               return prev;
             });
-            // Update context from quick search
-            if (quickData.context) {
-              setCurrentContext(prev => ({ ...prev, ...quickData.context }));
-            }
+            // DON'T update context from quick search - let the full AI response handle context
           }
         });
       }
 
       // PHASE 2: Full AI response (runs in parallel)
+      // Pass conversation history - the API handles context understanding
       const response = await fetch('/api/travel-intelligence', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -215,9 +214,13 @@ export function ChatGPTStyleAI() {
 
       const data = await response.json();
 
-      // Update current context and mode
+      // IMPORTANT: Replace context with what the API returns, don't accumulate
+      // The API now properly handles:
+      // - New topics: returns fresh context for the new topic
+      // - Refinements: returns merged context from conversation
+      // - Conversations: preserves existing context
       if (data.context) {
-        setCurrentContext(prev => ({ ...prev, ...data.context }));
+        setCurrentContext(data.context);
       }
       if (data.mode) {
         setCurrentMode(data.mode);

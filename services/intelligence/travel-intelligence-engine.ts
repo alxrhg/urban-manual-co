@@ -42,11 +42,25 @@ export interface ProcessResult {
 
 /**
  * Intent types for conversational flow
+ *
+ * KEY INSIGHT: The AI should be CONVERSATIONAL, not QUERY-STACKING.
+ *
+ * Example of GOOD conversational flow:
+ * - User: "hotel in tokyo" → Search for hotels in Tokyo
+ * - User: "something budget" → Understand this REFERS to the previous hotels, filter by budget
+ * - User: "near shibuya" → Understand this MODIFIES the search, add neighborhood filter
+ *
+ * Example of BAD query-stacking (what we want to avoid):
+ * - User: "hotel in tokyo" → Query: "hotel in tokyo"
+ * - User: "something budget" → Query: "hotel in tokyo something budget" (BAD!)
+ * - User: "near shibuya" → Query: "hotel in tokyo something budget near shibuya" (BAD!)
+ *
+ * The difference: conversational AI UNDERSTANDS the intent, query-stacking just concatenates.
  */
 type MessageIntent =
-  | 'search'        // User wants to find new places
-  | 'followup'      // Continue conversation about shown places
-  | 'refine'        // Narrow down / modify current results
+  | 'search'        // User wants to find NEW places (contains explicit city/category)
+  | 'followup'      // Asking about shown places: "tell me more", "which one?"
+  | 'refine'        // Modify current results: "something cheaper", "near shibuya"
   | 'clarify'       // Answering a clarification question
   | 'conversational'; // Greetings, thanks, general chat
 
@@ -58,6 +72,8 @@ interface NLUResult {
   needsClarification: boolean;
   clarificationQuestion?: string;
   continueConversation?: boolean; // True = don't search, just respond
+  isNewTopic?: boolean; // True = user is starting a fresh search (e.g., new city/category)
+  searchQuery?: string; // The CLEAN search query to use (not accumulated)
 }
 
 /**
@@ -106,6 +122,16 @@ export class TravelIntelligenceEngine {
 
   /**
    * Main entry point: process a user message
+   *
+   * CONVERSATIONAL APPROACH:
+   * - Each message is understood IN CONTEXT of the conversation
+   * - We DON'T stack/concatenate queries
+   * - Instead, we understand what the user MEANS and build appropriate searches
+   *
+   * Examples:
+   * - "hotel in tokyo" → Search: hotels in Tokyo
+   * - "something budget" → User means: budget hotels in Tokyo (from context)
+   * - "near shibuya" → User means: budget hotels near Shibuya in Tokyo
    */
   async processMessage(
     message: string,
@@ -119,7 +145,7 @@ export class TravelIntelligenceEngine {
       console.log('[TravelIntelligence] History length:', conversationHistory.length);
       console.log('[TravelIntelligence] Existing context:', existingContext);
 
-      // Step 1: UNIFIED NLU - Extract context, mode, AND INTENT
+      // Step 1: CONVERSATIONAL NLU - Understand the message in context
       const nluResult = await this.understandQuery(message, conversationHistory, existingContext);
 
       console.log('[TravelIntelligence] NLU Result:', {
@@ -128,6 +154,8 @@ export class TravelIntelligenceEngine {
         context: nluResult.context,
         confidence: nluResult.confidence,
         continueConversation: nluResult.continueConversation,
+        isNewTopic: nluResult.isNewTopic,
+        searchQuery: nluResult.searchQuery,
       });
 
       // Get previous destinations from conversation for follow-up/refine intents
@@ -135,8 +163,9 @@ export class TravelIntelligenceEngine {
 
       let destinations: any[] = [];
       let response: string;
+      let finalContext = nluResult.context;
 
-      // Handle different intents
+      // Handle different intents with TRUE conversational understanding
       if (nluResult.continueConversation || nluResult.intent === 'conversational') {
         // Pure conversational - just respond, no search
         console.log('[TravelIntelligence] Conversational intent - no search needed');
@@ -156,18 +185,27 @@ export class TravelIntelligenceEngine {
           conversationHistory
         );
       } else if (nluResult.intent === 'refine' && previousDestinations.length > 0) {
-        // Refine results - filter the previous results
-        console.log('[TravelIntelligence] Refine intent - filtering previous results');
+        // REFINE: User wants to modify the current search
+        // E.g., "something budget" or "near shibuya" after "hotels in tokyo"
+        console.log('[TravelIntelligence] Refine intent - searching with updated context');
+
+        // First try filtering existing results
         destinations = this.refineDestinations(previousDestinations, nluResult.context);
+
         if (destinations.length < 3) {
-          // Not enough after filtering, do a new search
+          // Not enough after filtering, do a new search with UNDERSTOOD context
+          // DON'T use raw message - use the searchQuery which is contextually understood
+          const searchQuery = nluResult.searchQuery || this.buildContextualSearchQuery(nluResult.context);
+          console.log('[TravelIntelligence] Contextual search query:', searchQuery);
+
           destinations = await this.findRelevantDestinations(
-            message,
+            searchQuery,
             nluResult.context,
             nluResult.mode,
             userId
           );
         }
+
         response = await this.generateResponse(
           message,
           destinations,
@@ -177,11 +215,27 @@ export class TravelIntelligenceEngine {
           nluResult.needsClarification ? nluResult.clarificationQuestion : undefined
         );
       } else {
-        // Search intent - find new destinations
-        console.log('[TravelIntelligence] Search intent - finding new destinations');
+        // SEARCH: New search request
+        // Check if this is a completely NEW topic or continuing the current topic
+        let searchQuery = message;
+
+        if (!nluResult.isNewTopic && conversationHistory.length > 0) {
+          // Not a new topic - use context to enhance the search
+          searchQuery = nluResult.searchQuery || this.buildContextualSearchQuery(nluResult.context);
+          console.log('[TravelIntelligence] Continuing topic, contextual query:', searchQuery);
+        } else {
+          console.log('[TravelIntelligence] New topic, using raw message');
+          // Reset context for new topic
+          finalContext = {
+            city: nluResult.context.city,
+            category: nluResult.context.category,
+            neighborhood: nluResult.context.neighborhood,
+          };
+        }
+
         destinations = await this.findRelevantDestinations(
-          message,
-          nluResult.context,
+          searchQuery,
+          finalContext,
           nluResult.mode,
           userId
         );
@@ -192,7 +246,7 @@ export class TravelIntelligenceEngine {
         response = await this.generateResponse(
           message,
           destinations,
-          nluResult.context,
+          finalContext,
           nluResult.mode,
           conversationHistory,
           nluResult.needsClarification ? nluResult.clarificationQuestion : undefined
@@ -200,16 +254,16 @@ export class TravelIntelligenceEngine {
       }
 
       // Generate follow-up suggestions
-      const suggestions = this.generateSuggestions(nluResult.context, nluResult.mode, destinations);
+      const suggestions = this.generateSuggestions(finalContext, nluResult.mode, destinations);
 
       // Extract insights if appropriate
-      const insights = this.extractInsights(destinations, nluResult.context, nluResult.mode);
+      const insights = this.extractInsights(destinations, finalContext, nluResult.mode);
 
       return {
         response,
         destinations: destinations.slice(0, 12),
         mode: nluResult.mode,
-        context: nluResult.context,
+        context: finalContext,
         suggestions,
         insights,
       };
@@ -222,6 +276,35 @@ export class TravelIntelligenceEngine {
         context: existingContext || {},
       };
     }
+  }
+
+  /**
+   * Build a clean search query from context
+   * This is used for REFINE/continuation queries where we don't want to use the raw message
+   */
+  private buildContextualSearchQuery(context: TravelContext): string {
+    const parts: string[] = [];
+
+    if (context.category) {
+      parts.push(context.category.toLowerCase());
+    }
+    if (context.city) {
+      parts.push(`in ${context.city}`);
+    }
+    if (context.neighborhood) {
+      parts.push(`near ${context.neighborhood}`);
+    }
+    if (context.pricePreference) {
+      parts.push(context.pricePreference);
+    }
+    if (context.occasion) {
+      parts.push(context.occasion);
+    }
+    if (context.vibes?.length) {
+      parts.push(context.vibes.join(' '));
+    }
+
+    return parts.join(' ') || 'places to visit';
   }
 
   /**
@@ -460,15 +543,22 @@ The user is asking a follow-up question about the places we've been discussing.
 
   /**
    * AI-powered NLU using LLM
+   *
+   * KEY: This must determine if the user is:
+   * 1. Starting a NEW search topic (e.g., "hotels in tokyo" -> new topic)
+   * 2. REFINING current search (e.g., "something budget" -> adds filter)
+   * 3. Continuing conversation (e.g., "tell me more" -> no new search)
    */
   private async runAINLU(
     message: string,
     conversationSummary: string,
     existingContext: TravelContext
   ): Promise<NLUResult | null> {
-    const prompt = `You are a conversational travel assistant analyzer. Determine the user's INTENT and extract information.
+    const prompt = `You are a CONVERSATIONAL travel assistant analyzer. Your job is to understand the user's message IN CONTEXT of the conversation.
 
-EXISTING CONTEXT (from previous conversation):
+CRITICAL: Do NOT stack/concatenate queries. Understand what the user MEANS.
+
+EXISTING CONTEXT (what we've been discussing):
 ${JSON.stringify(existingContext, null, 2)}
 
 CONVERSATION HISTORY:
@@ -479,10 +569,12 @@ CURRENT MESSAGE: "${message}"
 Analyze and return JSON with this EXACT structure:
 {
   "intent": "search" | "followup" | "refine" | "clarify" | "conversational",
+  "isNewTopic": true or false,
+  "searchQuery": "the clean search query to use (built from context + message)",
   "mode": "discover" | "plan" | "compare" | "insight" | "recommend" | "navigate",
   "confidence": 0.0 to 1.0,
   "city": "city name or null",
-  "neighborhood": "neighborhood name or null",
+  "neighborhood": "neighborhood name or null (e.g., 'Shibuya', 'Le Marais', 'SoHo')",
   "category": "Hotel" | "Restaurant" | "Cafe" | "Bar" | "Culture" | "Shop" | null,
   "occasion": "romantic" | "business" | "celebration" | "casual" | "solo" | null,
   "timeOfDay": "breakfast" | "brunch" | "lunch" | "afternoon" | "dinner" | "late-night" | null,
@@ -492,36 +584,44 @@ Analyze and return JSON with this EXACT structure:
   "continueConversation": true or false
 }
 
-INTENT RULES (most important):
-- "search" = User wants to FIND NEW places (contains city/category/place type)
-- "followup" = User is asking about places ALREADY SHOWN (e.g., "tell me more", "which one is best", "what about the first one")
-- "refine" = User wants to MODIFY results (e.g., "something cheaper", "more romantic", "different neighborhood")
-- "clarify" = User is answering a question you asked
-- "conversational" = Greetings, thanks, small talk, general questions NOT about finding places
+INTENT + isNewTopic RULES:
 
-CONVERSATIONAL EXAMPLES (intent=conversational, continueConversation=true):
-- "thanks" / "thank you" / "great" / "perfect" / "sounds good"
-- "hello" / "hi" / "hey"
-- "yes" / "no" / "okay" / "sure"
-- "interesting" / "nice" / "cool"
-- "what do you think?" / "any thoughts?"
+1. NEW TOPIC (isNewTopic=true, intent=search):
+   - User explicitly mentions a NEW city or category
+   - Example: After discussing Tokyo hotels, user says "restaurants in Paris" → NEW TOPIC
+   - Example: First message "hotels in tokyo" → NEW TOPIC (no history)
 
-FOLLOWUP EXAMPLES (intent=followup):
-- "tell me more about that" / "more details"
-- "which one do you recommend?" / "which is better?"
-- "what about the second option?" / "the first one sounds good"
-- "why?" / "how so?" / "what makes it special?"
+2. REFINE (isNewTopic=false, intent=refine):
+   - User adds a modifier WITHOUT changing city/category
+   - Example: "something budget" after "hotels in tokyo" → REFINE (inherit hotel+tokyo)
+   - Example: "near shibuya" after "hotels in tokyo" → REFINE (add neighborhood)
+   - For REFINE, the searchQuery should be built from CONTEXT + new modifier
 
-SEARCH EXAMPLES (intent=search):
-- "hotel in tokyo" / "restaurants in paris"
-- "find me a cafe" / "looking for a bar"
-- "best sushi" / "where can I get coffee"
+3. FOLLOWUP (isNewTopic=false, intent=followup):
+   - User asking about places already shown
+   - "tell me more", "which one", "the first one", "why that one"
 
-RULES:
-- CAPITALIZE city names properly: "tokyo" -> "Tokyo"
-- CAPITALIZE category: "hotel" -> "Hotel"
-- Set continueConversation=true for conversational/followup intents
-- For followup/conversational, keep existing context values
+4. CONVERSATIONAL (intent=conversational):
+   - Greetings, thanks, acknowledgments
+   - "thanks", "great", "sounds good", "hello"
+
+SEARCHQUERY RULES (very important):
+- For NEW TOPIC: searchQuery = the user's message as-is
+- For REFINE: searchQuery = combine existing context + new info
+  Example: context={city:Tokyo, category:Hotel} + message="something budget"
+  → searchQuery = "budget hotels in Tokyo"
+  Example: context={city:Tokyo, category:Hotel, pricePreference:budget} + message="near shibuya"
+  → searchQuery = "budget hotels in Tokyo near Shibuya"
+
+NEIGHBORHOOD EXAMPLES:
+- "near shibuya", "in shibuya" → neighborhood = "Shibuya"
+- "daikanyama area" → neighborhood = "Daikanyama"
+- "le marais" → neighborhood = "Le Marais"
+
+CAPITALIZE properly:
+- city: "tokyo" → "Tokyo"
+- category: "hotel" → "Hotel"
+- neighborhood: "shibuya" → "Shibuya"
 
 Return ONLY the JSON, no explanation.`;
 
@@ -569,36 +669,49 @@ Return ONLY the JSON, no explanation.`;
 
       // Determine intent (default to search if not specified)
       const intent: MessageIntent = result.intent || 'search';
+      const isNewTopic = result.isNewTopic ?? (conversationSummary.length === 0);
       const continueConversation = result.continueConversation ||
         intent === 'conversational' ||
         intent === 'followup';
 
       // Build context from AI result
-      // For conversational/followup, preserve more of existing context
-      const context: TravelContext = continueConversation
-        ? {
-            ...existingContext,
-            // Only update if explicitly provided
-            city: result.city || existingContext?.city,
-            neighborhood: result.neighborhood || existingContext?.neighborhood,
-            category: result.category || existingContext?.category,
-            occasion: result.occasion || existingContext?.occasion,
-            timeOfDay: result.timeOfDay || existingContext?.timeOfDay,
-            pricePreference: result.pricePreference || existingContext?.pricePreference,
-            vibes: result.vibes?.length > 0 ? result.vibes : existingContext?.vibes,
-          }
-        : {
-            ...existingContext,
-            city: result.city || existingContext?.city,
-            neighborhood: result.neighborhood || existingContext?.neighborhood,
-            category: result.category || existingContext?.category,
-            occasion: result.occasion || existingContext?.occasion,
-            timeOfDay: result.timeOfDay || existingContext?.timeOfDay,
-            pricePreference: result.pricePreference || existingContext?.pricePreference,
-            vibes: result.vibes?.length > 0 ? result.vibes : existingContext?.vibes,
-          };
+      // For NEW topics, reset context to just what's in this message
+      // For REFINE/continuation, merge with existing context
+      let context: TravelContext;
 
-      console.log('[TravelIntelligence] AI detected intent:', intent, 'continueConversation:', continueConversation);
+      if (isNewTopic && intent === 'search') {
+        // NEW topic - start fresh context
+        context = {
+          city: result.city || null,
+          neighborhood: result.neighborhood || null,
+          category: result.category || null,
+          occasion: result.occasion || null,
+          timeOfDay: result.timeOfDay || null,
+          pricePreference: result.pricePreference || null,
+          vibes: result.vibes?.length > 0 ? result.vibes : [],
+        };
+        console.log('[TravelIntelligence] New topic detected - fresh context');
+      } else {
+        // REFINE/continuation - merge with existing context
+        context = {
+          ...existingContext,
+          city: result.city || existingContext?.city,
+          neighborhood: result.neighborhood || existingContext?.neighborhood,
+          category: result.category || existingContext?.category,
+          occasion: result.occasion || existingContext?.occasion,
+          timeOfDay: result.timeOfDay || existingContext?.timeOfDay,
+          pricePreference: result.pricePreference || existingContext?.pricePreference,
+          vibes: result.vibes?.length > 0 ? result.vibes : existingContext?.vibes,
+        };
+        console.log('[TravelIntelligence] Continuing/refining - merged context');
+      }
+
+      console.log('[TravelIntelligence] AI detected:', {
+        intent,
+        isNewTopic,
+        continueConversation,
+        searchQuery: result.searchQuery,
+      });
 
       return {
         intent,
@@ -608,6 +721,8 @@ Return ONLY the JSON, no explanation.`;
         needsClarification: result.needsClarification || false,
         clarificationQuestion: result.clarificationQuestion,
         continueConversation,
+        isNewTopic,
+        searchQuery: result.searchQuery,
       };
     } catch (error) {
       console.error('[TravelIntelligence] AI NLU error:', error);
@@ -625,6 +740,8 @@ Return ONLY the JSON, no explanation.`;
     let confidence = 0.6;
     let intent: MessageIntent = 'search';
     let continueConversation = false;
+    let isNewTopic = true;
+    let searchQuery = message;
 
     // === INTENT DETECTION (do this FIRST) ===
 
@@ -646,6 +763,8 @@ Return ONLY the JSON, no explanation.`;
         confidence: 0.9,
         needsClarification: false,
         continueConversation: true,
+        isNewTopic: false,
+        searchQuery: '',
       };
     }
 
@@ -667,20 +786,29 @@ Return ONLY the JSON, no explanation.`;
         confidence: 0.8,
         needsClarification: false,
         continueConversation: true,
+        isNewTopic: false,
+        searchQuery: '',
       };
     }
 
-    // Refine patterns - modify current results
+    // Refine patterns - modify current results (NOT new topics)
+    // These are messages that ADD to existing context without being a full new search
     const refinePatterns = [
-      /^(something|anything) (cheaper|more expensive|different|else|similar)/i,
+      /^(something|anything) (cheaper|more expensive|different|else|similar|budget)/i,
       /^(more|less) (romantic|casual|fancy|quiet|lively)/i,
       /^(but|however) (cheaper|more|less|different)/i,
       /show me (more|different|other)/i,
+      /^near /i,  // "near shibuya" is a refinement
+      /^in (shibuya|shinjuku|ginza|daikanyama|harajuku|aoyama|roppongi)/i, // neighborhood refinements
+      /^budget$/i,
+      /^cheaper$/i,
+      /^something (budget|cheaper|romantic|fancy|nice|different)$/i,
     ];
 
     if (refinePatterns.some((p) => p.test(lower))) {
       intent = 'refine';
       confidence = 0.75;
+      isNewTopic = false;
     }
 
     // === CITY EXTRACTION ===
@@ -797,7 +925,45 @@ Return ONLY the JSON, no explanation.`;
       mode = 'recommend';
     }
 
-    console.log('[TravelIntelligence] Rule-based NLU result:', { intent, mode, context, confidence });
+    // === DETERMINE IF NEW TOPIC ===
+    // It's a new topic if:
+    // 1. A city was explicitly mentioned in THIS message (not inherited from context)
+    // 2. AND it's a search intent (not refine)
+    const cityMentionedInMessage = Object.keys(cityPatterns).some((p) => lower.includes(p));
+    const categoryMentionedInMessage = categoryPatterns.some(({ patterns }) =>
+      patterns.some((p) => lower.includes(p))
+    );
+
+    if (intent === 'search' && (cityMentionedInMessage || categoryMentionedInMessage)) {
+      isNewTopic = true;
+    } else if (intent === 'refine') {
+      isNewTopic = false;
+    }
+
+    // === BUILD SEARCH QUERY ===
+    if (isNewTopic) {
+      // For new topics, use the raw message
+      searchQuery = message;
+    } else if (intent === 'refine') {
+      // For refinements, build query from context + new modifiers
+      const parts: string[] = [];
+      if (context.category) parts.push(context.category.toLowerCase());
+      if (context.city) parts.push(`in ${context.city}`);
+      if (context.neighborhood) parts.push(`near ${context.neighborhood}`);
+      if (context.pricePreference) parts.push(context.pricePreference);
+      if (context.occasion) parts.push(context.occasion);
+
+      // Add any new info from current message (neighborhood, price, etc.)
+      const neighborhoodMatch = lower.match(/near (\w+)/i) || lower.match(/in (shibuya|shinjuku|ginza|daikanyama|harajuku|aoyama|roppongi)/i);
+      if (neighborhoodMatch && !context.neighborhood) {
+        context.neighborhood = neighborhoodMatch[1].charAt(0).toUpperCase() + neighborhoodMatch[1].slice(1);
+        parts.push(`near ${context.neighborhood}`);
+      }
+
+      searchQuery = parts.join(' ') || message;
+    }
+
+    console.log('[TravelIntelligence] Rule-based NLU result:', { intent, mode, context, confidence, isNewTopic, searchQuery });
 
     return {
       intent,
@@ -807,6 +973,8 @@ Return ONLY the JSON, no explanation.`;
       needsClarification: !context.city && !context.category && intent === 'search',
       clarificationQuestion: !context.city && intent === 'search' ? "Which city are you interested in?" : undefined,
       continueConversation,
+      isNewTopic,
+      searchQuery,
     };
   }
 
