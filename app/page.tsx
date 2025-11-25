@@ -61,7 +61,6 @@ import { type RefinementTag } from '@/components/RefinementChips';
 import { capitalizeCity } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
-import HomeTripPlanner from '@/components/trip/HomeTripPlanner';
 import HomeMapSplitView from '@/components/HomeMapSplitView';
 import { EditModeToggle } from '@/components/EditModeToggle';
 import { UniversalGrid } from '@/components/UniversalGrid';
@@ -2819,13 +2818,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
-        {/* Trip Planner section */}
-        <div className="w-full px-6 md:px-10 mt-6">
-          <div className="max-w-[1800px] mx-auto">
-            <HomeTripPlanner />
-          </div>
-        </div>
 
         {/* Content Section - Grid directly below hero */}
         <div className="w-full px-6 md:px-10 mt-8">
