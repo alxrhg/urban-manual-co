@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect, ReactNode, useRef, useState, useCallback } from 'react';
+import { useEffect, ReactNode, useRef, useState, useCallback, useId } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { DRAWER_STYLES } from '@/lib/drawer-styles';
+import { useSplitPane } from '@/contexts/SplitPaneContext';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 export interface DrawerProps {
   isOpen: boolean;
@@ -26,6 +29,14 @@ export interface DrawerProps {
   mobileExpanded?: boolean;
   keepStateOnClose?: boolean;
   fullScreen?: boolean;
+}
+
+const DEFAULT_DESKTOP_WIDTH = 420;
+
+function getNumericWidth(width?: string) {
+  if (!width) return DEFAULT_DESKTOP_WIDTH;
+  const numeric = parseInt(width.replace('px', ''), 10);
+  return Number.isFinite(numeric) ? numeric : DEFAULT_DESKTOP_WIDTH;
 }
 
 /**
@@ -68,12 +79,18 @@ export function Drawer({
   const mobileSideRef = useRef<HTMLDivElement>(null);
   const tabletRef = useRef<HTMLDivElement>(null);
   const desktopRef = useRef<HTMLDivElement>(null);
+  const splitPaneRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
   const startYRef = useRef<number | null>(null);
   const scrollPositionRef = useRef<number>(0);
   const [isAnimating, setIsAnimating] = useState(false);
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
   const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const paneId = useId();
+  const { panelNode, openPane, closePane, activePaneId } = useSplitPane();
+  const isDesktop = useMediaQuery('(min-width: 1024px)');
+  const numericDesktopWidth = getNumericWidth(desktopWidth);
+  const shouldUseSplitPane = Boolean(panelNode) && isDesktop && !fullScreen;
 
   // Cleanup animation timeout on unmount
   useEffect(() => {
@@ -84,9 +101,34 @@ export function Drawer({
     };
   }, []);
 
+  useEffect(() => {
+    if (!shouldUseSplitPane) {
+      if (activePaneId === paneId) {
+        closePane(paneId);
+      }
+      return;
+    }
+
+    if (isOpen) {
+      openPane(paneId, numericDesktopWidth);
+    } else if (activePaneId === paneId) {
+      closePane(paneId);
+    }
+
+    return () => {
+      if (activePaneId === paneId) {
+        closePane(paneId);
+      }
+    };
+  }, [shouldUseSplitPane, isOpen, openPane, closePane, paneId, numericDesktopWidth, activePaneId]);
+
   // Get the currently visible drawer element - memoized to prevent stale closures
   const getCurrentDrawer = useCallback((): HTMLDivElement | null => {
     if (typeof window === 'undefined') return null;
+
+    if (shouldUseSplitPane && splitPaneRef.current) {
+      return splitPaneRef.current;
+    }
 
     if (mobileVariant === 'bottom' && mobileBottomRef.current) {
       return mobileBottomRef.current;
@@ -102,24 +144,34 @@ export function Drawer({
       return desktopRef.current;
     }
     // Fallback: return first available
-    return mobileBottomRef.current || mobileSideRef.current || tabletRef.current || desktopRef.current;
-  }, [mobileVariant]);
+    return (
+      mobileBottomRef.current ||
+      mobileSideRef.current ||
+      tabletRef.current ||
+      desktopRef.current ||
+      splitPaneRef.current
+    );
+  }, [mobileVariant, shouldUseSplitPane]);
 
   // Improved body scroll locking (prevents layout shift)
   useEffect(() => {
-    if (isOpen) {
-      // Save current scroll position
-      scrollPositionRef.current = window.scrollY;
-      
-      // Lock scroll without layout shift
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollPositionRef.current}px`;
-      document.body.style.width = '100%';
-      document.body.style.overflow = 'hidden';
-      
-      // Prevent iOS bounce
-      document.body.style.touchAction = 'none';
-    } else {
+    if (!isOpen || shouldUseSplitPane) {
+      return;
+    }
+
+    // Save current scroll position
+    scrollPositionRef.current = window.scrollY;
+    
+    // Lock scroll without layout shift
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollPositionRef.current}px`;
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    
+    // Prevent iOS bounce
+    document.body.style.touchAction = 'none';
+
+    return () => {
       // Restore scroll position
       const scrollY = scrollPositionRef.current;
       document.body.style.position = '';
@@ -128,21 +180,11 @@ export function Drawer({
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
       
-      // Restore scroll position after a brief delay
       requestAnimationFrame(() => {
         window.scrollTo(0, scrollY);
       });
-    }
-    
-    return () => {
-      // Cleanup
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
     };
-  }, [isOpen]);
+  }, [isOpen, shouldUseSplitPane]);
 
   // Focus management for accessibility
   useEffect(() => {
@@ -195,7 +237,7 @@ export function Drawer({
 
   // Swipe gestures for mobile
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || shouldUseSplitPane) return;
 
     // Get drawer element - use a small delay to ensure refs are set
     const getDrawer = () => getCurrentDrawer();
@@ -313,7 +355,7 @@ export function Drawer({
         drawer.removeEventListener('touchend', handleTouchEnd);
       }
     };
-  }, [isOpen, mobileVariant, position, onClose, getCurrentDrawer]);
+  }, [isOpen, mobileVariant, position, onClose, getCurrentDrawer, shouldUseSplitPane]);
 
   // Determine background classes based on style
   const backgroundClasses = style === 'glassy' 
@@ -342,6 +384,7 @@ export function Drawer({
     ? 'translate3d(0, 0, 0) scale(1)'
     : `translate3d(0, ${peekOffset}, 0) scale(0.985)`;
   const radiusClass = mobileBorderRadius ?? 'rounded-[32px]';
+  const shouldRenderBackdrop = showBackdrop && !shouldUseSplitPane;
 
   // Don't render if closed and not keeping state
   if (!isOpen && !keepStateOnClose) return null;
@@ -376,7 +419,7 @@ export function Drawer({
   return (
     <>
       {/* Backdrop */}
-      {showBackdrop && (
+      {shouldRenderBackdrop && (
         <div
           className={`fixed inset-0 transition-opacity duration-300 ease-out ${
             isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -461,6 +504,31 @@ export function Drawer({
         </div>
       )}
 
+      {/* Desktop Drawer - Split Pane */}
+      {shouldUseSplitPane && panelNode && createPortal(
+        <div
+          ref={splitPaneRef}
+          className={`flex h-[calc(100vh-7rem)] max-h-[calc(100vh-4rem)] flex-col ${backgroundClasses} ${shadowClasses} ${borderClasses} rounded-[32px] overflow-hidden transition-all duration-300 ease-out`}
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby={title ? `drawer-title-${title}` : undefined}
+          tabIndex={-1}
+        >
+          {renderHeader()}
+
+          <div className="flex-1 overflow-y-auto overscroll-contain">
+            {children}
+          </div>
+
+          {footerContent && (
+            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
+              {footerContent}
+            </div>
+          )}
+        </div>,
+        panelNode
+      )}
+
       {/* Desktop Drawer - Tablet (md) */}
       <div
         ref={tabletRef}
@@ -495,43 +563,45 @@ export function Drawer({
       </div>
 
       {/* Desktop Drawer - Large screens (lg+) */}
-      <div
-        ref={desktopRef}
-        className={`hidden lg:flex fixed ${
-          fullScreen 
-            ? 'inset-0 rounded-none' 
-            : `${desktopSpacing} rounded-2xl`
-        } ${backgroundClasses} ${shadowClasses} ${!fullScreen ? borderClasses : ''} z-50 transform transition-transform duration-300 ease-out ${
-          isOpen 
-            ? 'translate-x-0 opacity-100' 
-            : fullScreen
-            ? 'opacity-0'
-            : (position === 'right' ? 'translate-x-[calc(100%+2rem)] opacity-0' : '-translate-x-[calc(100%+2rem)] opacity-0')
-        } overflow-hidden flex-col`}
-        style={{ 
-          zIndex, 
-          width: fullScreen ? '100%' : desktopWidth,
-          maxWidth: fullScreen ? '100%' : 'calc(100vw - 2rem)',
-        }}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? `drawer-title-${title}` : undefined}
-        tabIndex={-1}
-      >
-        {renderHeader()}
+      {!shouldUseSplitPane && (
+        <div
+          ref={desktopRef}
+          className={`hidden lg:flex fixed ${
+            fullScreen 
+              ? 'inset-0 rounded-none' 
+              : `${desktopSpacing} rounded-2xl`
+          } ${backgroundClasses} ${shadowClasses} ${!fullScreen ? borderClasses : ''} z-50 transform transition-transform duration-300 ease-out ${
+            isOpen 
+              ? 'translate-x-0 opacity-100' 
+              : fullScreen
+              ? 'opacity-0'
+              : (position === 'right' ? 'translate-x-[calc(100%+2rem)] opacity-0' : '-translate-x-[calc(100%+2rem)] opacity-0')
+          } overflow-hidden flex-col`}
+          style={{ 
+            zIndex, 
+            width: fullScreen ? '100%' : desktopWidth,
+            maxWidth: fullScreen ? '100%' : 'calc(100vw - 2rem)',
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? `drawer-title-${title}` : undefined}
+          tabIndex={-1}
+        >
+          {renderHeader()}
 
-        {/* Content - Independent scroll */}
-        <div className="flex-1 overflow-y-auto overscroll-contain">
-          {children}
-        </div>
-
-        {/* Footer */}
-        {footerContent && (
-          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
-            {footerContent}
+          {/* Content - Independent scroll */}
+          <div className="flex-1 overflow-y-auto overscroll-contain">
+            {children}
           </div>
-        )}
-      </div>
+
+          {/* Footer */}
+          {footerContent && (
+            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
+              {footerContent}
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }

@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { DrawerProvider } from "@/contexts/DrawerContext";
+import { SplitPaneProvider } from "@/contexts/SplitPaneContext";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { SplashScreen } from "@/components/SplashScreen";
@@ -17,6 +18,7 @@ import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 import DrawerMount from "@/components/DrawerMount";
+import { SplitPaneLayout } from "@/components/layout/SplitPaneLayout";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -195,21 +197,25 @@ export default function RootLayout({
           <SplashScreen />
           <TRPCProvider>
               <AuthProvider>
-                <DrawerProvider>
-                  <Suspense fallback={null}>
-                    <AdminEditModeProvider>
-                      <ItineraryProvider>
-                        <Header />
-                        <main id="main-content" className="min-h-screen page-transition" role="main">
-                          {children}
-                        </main>
-                        <Footer />
-                        <CookieConsent />
-                        <DrawerMount />
-                      </ItineraryProvider>
-                    </AdminEditModeProvider>
-                  </Suspense>
-                </DrawerProvider>
+                <SplitPaneProvider>
+                  <DrawerProvider>
+                    <Suspense fallback={null}>
+                      <AdminEditModeProvider>
+                        <ItineraryProvider>
+                          <Header />
+                          <main id="main-content" className="min-h-screen page-transition" role="main">
+                            <SplitPaneLayout>
+                              {children}
+                            </SplitPaneLayout>
+                          </main>
+                          <Footer />
+                          <CookieConsent />
+                          <DrawerMount />
+                        </ItineraryProvider>
+                      </AdminEditModeProvider>
+                    </Suspense>
+                  </DrawerProvider>
+                </SplitPaneProvider>
               </AuthProvider>
           </TRPCProvider>
           <ToastContainer />
