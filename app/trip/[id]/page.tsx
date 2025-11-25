@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useTrip } from '@/hooks/useTrip';
 import DayCard from '@/components/trip/DayCard';
-import { PencilLine, Sparkles, Utensils, ListChecks, Building2, Plus } from 'lucide-react';
+import { PencilLine, Sparkles, Utensils, ListChecks, Building2, Plus, ArrowLeft, Loader2 } from 'lucide-react';
 
 type Mode = 'view' | 'edit';
 type UseTripResult = ReturnType<typeof useTrip>;
@@ -15,6 +15,7 @@ type DrawerOpener = (type: string, props?: any) => void;
 
 export default function TripPage() {
   const params = useParams();
+  const router = useRouter();
   const tripId = params?.id as string | null;
   const openDrawer = useDrawerStore((s) => s.openDrawer);
   const { trip, loading, error } = useTrip(tripId);
@@ -34,9 +35,43 @@ export default function TripPage() {
     });
   }, [trip?.id, trip?.days?.length]);
 
-  if (loading) return <div className="px-4 py-8">Loading...</div>;
-  if (error) return <div className="px-4 py-8 text-red-600">Error: {error}</div>;
-  if (!trip) return <div className="px-4 py-8">Trip not found</div>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+        <p className="text-red-600 dark:text-red-400 mb-4">Error: {error}</p>
+        <button
+          onClick={() => router.push('/trips')}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-100 dark:bg-neutral-800 text-sm font-medium text-gray-900 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 transition"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Trips
+        </button>
+      </div>
+    );
+  }
+
+  if (!trip) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+        <p className="text-neutral-500 dark:text-neutral-400 mb-4">Trip not found</p>
+        <button
+          onClick={() => router.push('/trips')}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-100 dark:bg-neutral-800 text-sm font-medium text-gray-900 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 transition"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Trips
+        </button>
+      </div>
+    );
+  }
 
   const metaParts = [trip.destination || 'Destination TBD'];
   if (trip.start_date && trip.end_date) {
@@ -50,30 +85,40 @@ export default function TripPage() {
       : 'Use the quick actions below to update meals, activities, and logistics for each day.';
 
   return (
-    <div className="px-4 py-8 space-y-6">
-      <header className="space-y-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400 mb-1">Trip</p>
-            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">{trip.title}</h1>
-            {metaParts.filter(Boolean).length > 0 && (
-              <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{metaParts.filter(Boolean).join(' • ')}</p>
-            )}
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+        {/* Back Navigation */}
+        <button
+          onClick={() => router.push('/trips')}
+          className="inline-flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Trips
+        </button>
+
+        <header className="space-y-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400 mb-1">Trip</p>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">{trip.title}</h1>
+              {metaParts.filter(Boolean).length > 0 && (
+                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{metaParts.filter(Boolean).join(' • ')}</p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <ModeToggle mode={mode} onChange={setMode} />
+              <button
+                className="px-4 py-2 rounded-full bg-black text-white text-sm font-medium dark:bg-white dark:text-black hover:opacity-90 transition-opacity"
+                onClick={() => openDrawer('trip-overview', { trip })}
+              >
+                Overview
+              </button>
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <ModeToggle mode={mode} onChange={setMode} />
-            <button
-              className="px-4 py-2 rounded-full bg-black text-white text-sm font-medium dark:bg-white dark:text-black"
-              onClick={() => openDrawer('trip-overview', { trip })}
-            >
-              Overview
-            </button>
-          </div>
-        </div>
-
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">{modeDescription}</p>
-      </header>
+          <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-2xl">{modeDescription}</p>
+        </header>
 
       {mode === 'view' ? (
         <ItineraryViewSection
@@ -90,6 +135,7 @@ export default function TripPage() {
           onSelectDay={setSelectedDayIndex}
         />
       )}
+      </div>
     </div>
   );
 }
