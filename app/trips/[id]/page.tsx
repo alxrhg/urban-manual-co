@@ -814,7 +814,18 @@ export default function TripPage() {
       <DestinationDrawer
         isOpen={selectedDestination !== null}
         onClose={() => setSelectedDestination(null)}
-        place={selectedDestination}
+        place={selectedDestination ? {
+          ...selectedDestination,
+          neighborhood: selectedDestination.neighborhood ?? undefined,
+          michelinRating: selectedDestination.michelinRating ?? undefined,
+          googleRating: selectedDestination.googleRating ?? undefined,
+          googleReviews: selectedDestination.googleReviews ?? undefined,
+          description: selectedDestination.description ?? undefined,
+          image: selectedDestination.image ?? undefined,
+          image_thumbnail: selectedDestination.image_thumbnail ?? undefined,
+          latitude: selectedDestination.latitude ?? undefined,
+          longitude: selectedDestination.longitude ?? undefined,
+        } : null}
       />
     </main>
   );
