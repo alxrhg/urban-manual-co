@@ -1,24 +1,37 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState, useEffect, useRef } from 'react';
-import { ChevronUp } from 'lucide-react';
-import { openCookieSettings } from '@/components/CookieConsent';
+import Link from "next/link";
+import { useState, useEffect, useRef } from "react";
+import { ChevronUp } from "lucide-react";
+
+import { SubpageHero } from "@/components/layout/SubpageHero";
+import { openCookieSettings } from "@/components/CookieConsent";
+import { cn } from "@/lib/utils";
 
 const sections = [
-  { id: 'introduction', title: 'Introduction' },
-  { id: 'information-we-collect', title: 'Information We Collect' },
-  { id: 'how-we-use', title: 'How We Use Your Information' },
-  { id: 'how-we-share', title: 'How We Share Information' },
-  { id: 'cookies-tracking', title: 'Cookies & Tracking' },
-  { id: 'location-data', title: 'Location Data' },
-  { id: 'data-retention', title: 'Data Retention' },
-  { id: 'data-export-deletion', title: 'Data Export & Deletion Requests' },
-  { id: 'your-rights', title: 'Your Rights & Choices' },
-  { id: 'security', title: 'Security' },
-  { id: 'children', title: 'Children' },
-  { id: 'contact', title: 'Contact Us' },
+  { id: "introduction", title: "Introduction" },
+  { id: "information-we-collect", title: "Information We Collect" },
+  { id: "how-we-use", title: "How We Use Your Information" },
+  { id: "how-we-share", title: "How We Share Information" },
+  { id: "cookies-tracking", title: "Cookies & Tracking" },
+  { id: "location-data", title: "Location Data" },
+  { id: "data-retention", title: "Data Retention" },
+  { id: "data-export-deletion", title: "Data Export & Deletion Requests" },
+  { id: "your-rights", title: "Your Rights & Choices" },
+  { id: "security", title: "Security" },
+  { id: "children", title: "Children" },
+  { id: "contact", title: "Contact Us" },
 ];
+
+const heroMeta = [
+  { label: "Last updated", value: "Nov 2025" },
+  { label: "Data region", value: "EU + US" },
+  { label: "Export SLA", value: "< 48 hours" },
+  { label: "Consent engine", value: "Cookie banner + Supabase" },
+];
+
+const sectionCardClass =
+  "rounded-[28px] border border-black/5 dark:border-white/10 bg-white/95 dark:bg-[#0F1114]/90 px-6 py-6 shadow-[0px_40px_120px_-60px_rgba(15,15,20,0.45)] dark:shadow-[0px_45px_140px_-60px_rgba(0,0,0,0.9)] backdrop-blur-xl";
 
 export default function PrivacyPage() {
   const [activeSection, setActiveSection] = useState(sections[0].id);
@@ -77,48 +90,56 @@ export default function PrivacyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      {/* Large Centered Title */}
-      <div className="px-6 md:px-10 py-16 md:py-24">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-normal text-center text-black dark:text-white mb-16 md:mb-20">
-            Privacy Policy
-          </h1>
+    <main className="w-full bg-white dark:bg-gray-950 px-6 md:px-10 lg:px-16 py-16 md:py-20">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10">
+        <SubpageHero
+          eyebrow="Privacy"
+          title="Designed like the drawer—calm, transparent, and deliberate."
+          description="Urban Manual collects only the signals we need to keep your destinations, collections, and account features in sync. The token system, pill tabs, and rounded surfaces that guide our UI now frame how we explain data practices."
+          meta={heroMeta}
+          pills={[
+            { label: "Consent-first analytics" },
+            { label: "Supabase RLS + encryption" },
+          ]}
+        />
 
-          {/* Two-Column Layout */}
-          <div className="flex flex-col lg:flex-row gap-16 lg:gap-20">
-            {/* Left Sidebar - Navigation */}
-            <aside className="lg:w-56 flex-shrink-0">
-              <div className="sticky top-24">
-                <nav className="space-y-0.5">
-                  {sections.map((section, index) => (
-                    <button
-                      key={section.id}
-                      onClick={() => scrollToSection(section.id)}
-                      className={`w-full text-left px-0 py-2.5 text-xs tracking-wide transition-colors flex items-center justify-between ${
-                        activeSection === section.id
-                          ? 'text-black dark:text-white'
-                          : 'text-gray-500 dark:text-gray-500 hover:text-black dark:hover:text-white'
-                      }`}
-                    >
-                      <span className={activeSection === section.id ? 'font-medium' : ''}>{section.title}</span>
-                      {activeSection === section.id && (
-                        <ChevronUp className="h-3 w-3 text-black dark:text-white" />
-                      )}
-                    </button>
-                  ))}
-                </nav>
-              </div>
-            </aside>
+        <div className="flex flex-col gap-12 lg:flex-row">
+          <aside className="lg:w-64 flex-shrink-0">
+            <div className="sticky top-24 rounded-[28px] border border-black/5 dark:border-white/10 bg-white/80 dark:bg-white/5 px-4 py-5 backdrop-blur-xl">
+              <nav className="space-y-2">
+                {sections.map(section => (
+                  <button
+                    key={section.id}
+                    onClick={() => scrollToSection(section.id)}
+                    className={cn(
+                      "flex w-full items-center justify-between rounded-full px-4 py-2 text-xs font-medium transition-all",
+                      activeSection === section.id
+                        ? "bg-white text-neutral-900 shadow-sm dark:bg-white/10 dark:text-white"
+                        : "text-neutral-500 hover:text-neutral-900 dark:text-neutral-500 dark:hover:text-white",
+                    )}
+                    aria-current={activeSection === section.id ? "true" : undefined}
+                  >
+                    <span className={activeSection === section.id ? "font-semibold" : ""}>
+                      {section.title}
+                    </span>
+                    {activeSection === section.id && (
+                      <ChevronUp className="h-3 w-3 text-neutral-900 dark:text-white" />
+                    )}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          </aside>
 
-            {/* Main Content Area */}
-            <main className="flex-1 max-w-3xl">
-              <div className="space-y-16 md:space-y-20">
+          <div className="flex-1 max-w-3xl">
+            <div className="space-y-10 md:space-y-12">
                 {/* Introduction */}
                 <section
                   id="introduction"
-                  ref={(el) => { sectionRefs.current['introduction'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["introduction"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Introduction</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -133,8 +154,10 @@ export default function PrivacyPage() {
                 {/* Information We Collect */}
                 <section
                   id="information-we-collect"
-                  ref={(el) => { sectionRefs.current['information-we-collect'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["information-we-collect"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Information We Collect</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -157,8 +180,10 @@ export default function PrivacyPage() {
                 {/* How We Use Your Information */}
                 <section
                   id="how-we-use"
-                  ref={(el) => { sectionRefs.current['how-we-use'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["how-we-use"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">How We Use Your Information</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -176,8 +201,10 @@ export default function PrivacyPage() {
                 {/* How We Share Information */}
                 <section
                   id="how-we-share"
-                  ref={(el) => { sectionRefs.current['how-we-share'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["how-we-share"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">How We Share Information</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -205,8 +232,10 @@ export default function PrivacyPage() {
                 {/* Cookies & Tracking */}
                 <section
                   id="cookies-tracking"
-                  ref={(el) => { sectionRefs.current['cookies-tracking'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["cookies-tracking"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Cookies & Tracking</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -311,8 +340,10 @@ export default function PrivacyPage() {
                 {/* Location Data */}
                 <section
                   id="location-data"
-                  ref={(el) => { sectionRefs.current['location-data'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["location-data"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Location Data</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -327,8 +358,10 @@ export default function PrivacyPage() {
                 {/* Data Retention */}
                 <section
                   id="data-retention"
-                  ref={(el) => { sectionRefs.current['data-retention'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["data-retention"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Data Retention</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -346,8 +379,10 @@ export default function PrivacyPage() {
                 {/* Data Export & Deletion Requests */}
                 <section
                   id="data-export-deletion"
-                  ref={(el) => { sectionRefs.current['data-export-deletion'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["data-export-deletion"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Data Export & Deletion Requests</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -372,8 +407,10 @@ export default function PrivacyPage() {
                 {/* Your Rights & Choices */}
                 <section
                   id="your-rights"
-                  ref={(el) => { sectionRefs.current['your-rights'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["your-rights"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Your Rights & Choices</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -389,8 +426,10 @@ export default function PrivacyPage() {
                 {/* Security */}
                 <section
                   id="security"
-                  ref={(el) => { sectionRefs.current['security'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["security"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Security</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -404,8 +443,10 @@ export default function PrivacyPage() {
                 {/* Children */}
                 <section
                   id="children"
-                  ref={(el) => { sectionRefs.current['children'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["children"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Children</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -419,8 +460,10 @@ export default function PrivacyPage() {
                 {/* Contact Us */}
                 <section
                   id="contact"
-                  ref={(el) => { sectionRefs.current['contact'] = el; }}
-                  className="scroll-mt-24"
+                  ref={(el) => {
+                    sectionRefs.current["contact"] = el;
+                  }}
+                  className={cn("scroll-mt-24", sectionCardClass)}
                 >
                   <h2 className="text-xl font-normal mb-6 text-black dark:text-white tracking-tight">Contact Us</h2>
                   <div className="space-y-5 text-sm text-gray-700 dark:text-gray-400 leading-relaxed">
@@ -433,14 +476,19 @@ export default function PrivacyPage() {
                 {/* Last Updated */}
                 <div className="pt-12">
                   <p className="text-xs text-gray-400 dark:text-gray-500 tracking-wide">
-                    Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    Last updated:{" "}
+                    {new Date().toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
                   </p>
                 </div>
               </div>
-            </main>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

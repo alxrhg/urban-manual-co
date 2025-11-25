@@ -1,86 +1,113 @@
-import { Metadata } from 'next';
-import Link from 'next/link';
+import { Metadata } from "next";
+import Link from "next/link";
+
+import { ContentCard } from "@/components/layout/ContentCard";
+import { SubpageHero } from "@/components/layout/SubpageHero";
 
 export const metadata: Metadata = {
-  title: 'Contact | The Urban Manual',
-  description: 'Get in touch with The Urban Manual team.',
+  title: "Contact | The Urban Manual",
+  description: "Reach the Urban Manual team for submissions, partnerships, or product support.",
 };
+
+const heroMeta = [
+  { label: "Avg. response", value: "< 48 hrs" },
+  { label: "Timezone", value: "GMT & PST" },
+  { label: "Preferred channel", value: "Email first" },
+  { label: "Status", value: "Always shipping" },
+];
 
 export default function ContactPage() {
   return (
-    <article className="min-h-screen" aria-labelledby="contact-title">
-      <div className="px-6 md:px-10 py-20">
-        <div className="max-w-2xl mx-auto">
-          <h1 id="contact-title" className="text-4xl md:text-5xl font-bold mb-6 text-black dark:text-white">Contact</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-12 leading-relaxed">
-            We'd love to hear from you. Whether you have questions, feedback, or suggestions, we're here to help.
-          </p>
+    <main className="w-full px-6 md:px-10 lg:px-16 py-16 md:py-20">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">
+        <SubpageHero
+          eyebrow="Contact"
+          title="One inbox for curation, support, and partnerships."
+          description="Write like you would inside the destination drawer: concise, thoughtful, and focused on what matters. We route every message through the same system we use to manage submissions and privacy requests so nothing gets lost."
+          meta={heroMeta}
+          pills={[
+            { label: "Pill actions • account inspired" },
+            { label: "Rounded gradients • drawer DNA" },
+          ]}
+          actions={
+            <Link
+              href="/privacy"
+              className="inline-flex items-center rounded-full border border-neutral-200/80 px-4 py-2 text-xs font-medium text-neutral-600 hover:text-neutral-900 dark:border-white/15 dark:text-neutral-300 dark:hover:text-white"
+            >
+              View privacy policy →
+            </Link>
+          }
+        />
 
-          <div className="space-y-4">
-            <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">General Inquiries</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                For general questions, feedback, or support:
-              </p>
+        <div className="grid gap-5 md:grid-cols-2">
+          <ContentCard title="General inquiries" description="Product feedback, press, and support.">
+            <a
+              href="mailto:hello@urbanmanual.co"
+              className="text-sm font-medium text-neutral-900 underline decoration-neutral-300 underline-offset-4 hover:opacity-80 dark:text-white"
+            >
+              hello@urbanmanual.co
+            </a>
+            <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+              Expect a reply within two business days. Include screenshots if you&apos;re reporting a bug.
+            </p>
+          </ContentCard>
+
+          <ContentCard title="Submit a place" description="Flag a destination that deserves a spot in the drawer.">
+            <div className="space-y-2">
               <a
-                href="mailto:hello@urbanmanual.co"
-                className="text-sm text-black dark:text-white underline hover:opacity-60 transition-opacity"
-              >
-                hello@urbanmanual.co
-              </a>
-            </section>
-
-            <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Submit a Place</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                Have a great place you'd like to see in our guide?
-              </p>
-              <a 
-                href="mailto:submit@urbanmanual.co" 
-                className="text-sm text-black dark:text-white underline hover:opacity-60 transition-opacity"
+                href="mailto:submit@urbanmanual.co"
+                className="text-sm font-medium text-neutral-900 underline decoration-neutral-300 underline-offset-4 hover:opacity-80 dark:text-white"
               >
                 submit@urbanmanual.co
               </a>
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-3">
-                Or visit our <Link href="/submit" className="underline hover:text-black dark:hover:text-white transition-colors">submit page</Link> for more information.
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                Add links, a short description, and why it fits the Urban Manual perspective. You can also use the{" "}
+                <Link href="/submit" className="underline">
+                  submit page
+                </Link>
+                .
               </p>
-            </section>
+            </div>
+          </ContentCard>
 
-            <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Privacy & Data</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                For privacy-related questions or data requests:
-              </p>
-              <a 
-                href="mailto:privacy@urbanmanual.co" 
-                className="text-sm text-black dark:text-white underline hover:opacity-60 transition-opacity"
-              >
-                privacy@urbanmanual.co
-              </a>
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-3">
-                You can also manage your data directly from your <Link href="/account" className="underline hover:text-black dark:hover:text-white transition-colors">account settings</Link>.
-              </p>
-            </section>
-
-            <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
-              <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">Response Time</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                We aim to respond to all inquiries within 48 hours. For urgent matters, please include "URGENT" in your subject line.
-              </p>
-            </section>
-          </div>
-
-          <div className="mt-8">
-            <Link 
-              href="/"
-              className="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
+          <ContentCard title="Privacy & data" description="Account deletions, exports, and compliance questions.">
+            <a
+              href="mailto:privacy@urbanmanual.co"
+              className="text-sm font-medium text-neutral-900 underline decoration-neutral-300 underline-offset-4 hover:opacity-80 dark:text-white"
             >
-              ← Back to home
-            </Link>
-          </div>
+              privacy@urbanmanual.co
+            </a>
+            <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+              You can self-serve inside{" "}
+              <Link href="/account?tab=settings" className="underline">
+                Account → Settings
+              </Link>{" "}
+              if you are signed in.
+            </p>
+          </ContentCard>
+
+          <ContentCard title="Partnerships & studio" description="Collaborations, licensing, and editorial partnerships.">
+            <a
+              href="mailto:studio@urbanmanual.co"
+              className="text-sm font-medium text-neutral-900 underline decoration-neutral-300 underline-offset-4 hover:opacity-80 dark:text-white"
+            >
+              studio@urbanmanual.co
+            </a>
+            <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
+              We review pitches weekly alongside design system updates so the cadence stays aligned.
+            </p>
+          </ContentCard>
         </div>
+
+        <ContentCard variant="muted" title="Response expectations">
+          <div className="space-y-2 text-sm text-neutral-600 dark:text-neutral-300">
+            <p>• We reply Monday–Friday from London and Los Angeles.</p>
+            <p>• Urgent issues—include “URGENT” in the subject line and we&apos;ll triage within a few hours.</p>
+            <p>• We log submissions in Supabase so follow-ups are threaded with your previous context.</p>
+          </div>
+        </ContentCard>
       </div>
-    </article>
+    </main>
   );
 }
 

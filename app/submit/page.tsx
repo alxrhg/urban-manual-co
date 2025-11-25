@@ -1,78 +1,91 @@
-import { Metadata } from 'next';
-import Link from 'next/link';
+import { Metadata } from "next";
+import Link from "next/link";
+
+import { ContentCard } from "@/components/layout/ContentCard";
+import { SubpageHero } from "@/components/layout/SubpageHero";
 
 export const metadata: Metadata = {
-  title: 'Submit a Place | The Urban Manual',
-  description: 'Submit a new place to The Urban Manual',
+  title: "Submit a Place | The Urban Manual",
+  description: "Nominate destinations that should live inside the Urban Manual drawer.",
 };
+
+const heroMeta = [
+  { label: "Review cycle", value: "Weekly" },
+  { label: "Lead time", value: "3–5 days" },
+  { label: "Acceptance rate", value: "8%" },
+  { label: "Focus", value: "Design-forward" },
+];
 
 export default function SubmitPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <div className="w-full px-6 md:px-10 lg:px-12 py-20">
-        <div className="max-w-2xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4">Submit a Place</h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-8">
-          Help us grow our collection by suggesting amazing places to visit.
-        </p>
+    <main className="w-full px-6 md:px-10 lg:px-16 py-16 md:py-20">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
+        <SubpageHero
+          eyebrow="Submit"
+          title="Point us to places with intention."
+          description="We look for venues that match the calm, detail-oriented spirit of the homepage and destination drawer. Rounded corners, pill buttons, and subtle gradients are the visual language; thoughtful hospitality is the content."
+          meta={heroMeta}
+          pills={[
+            { label: "Quality over quantity" },
+            { label: "Architectural or cultural significance" },
+          ]}
+          actions={
+            <Link
+              href="/contact"
+              className="inline-flex items-center rounded-full border border-neutral-200/80 px-4 py-2 text-xs font-medium text-neutral-600 hover:text-neutral-900 dark:border-white/15 dark:text-neutral-300 dark:hover:text-white"
+            >
+              Need help? Contact us →
+            </Link>
+          }
+        />
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 mb-8">
-          <h2 className="text-2xl font-semibold mb-4">How to Submit</h2>
-          <p className="text-gray-700 dark:text-gray-300 mb-6">
-            We're always looking to add new destinations to our guide. To submit a place:
-          </p>
-          
-          <ol className="list-decimal pl-6 space-y-4 text-gray-700 dark:text-gray-300">
+        <ContentCard title="How to nominate a destination">
+          <ol className="space-y-4 text-sm text-neutral-600 dark:text-neutral-300">
             <li>
-              <strong>Find the place on Google Maps</strong> - Make sure the place exists and has accurate information
+              <span className="font-medium text-neutral-900 dark:text-white">1. Verify the basics.</span> Confirm the place
+              exists on Google Maps or Apple Maps with accurate info.
             </li>
             <li>
-              <strong>Gather details</strong> - Collect the name, address, category, and any other relevant information
+              <span className="font-medium text-neutral-900 dark:text-white">2. Gather context.</span> Share what makes it fit
+              Urban Manual—design story, neighborhood energy, standout details.
             </li>
             <li>
-              <strong>Contact us</strong> - Send us an email with the place details and we'll review it for inclusion
+              <span className="font-medium text-neutral-900 dark:text-white">3. Email the editors.</span> Send a short note with
+              links, photos, and any firsthand observations.
             </li>
           </ol>
-        </div>
+        </ContentCard>
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 mb-8">
-          <h2 className="text-2xl font-semibold mb-4">What We're Looking For</h2>
-          <ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
-            <li>Restaurants, cafes, bars, and dining experiences</li>
-            <li>Hotels, accommodations, and unique stays</li>
-            <li>Museums, galleries, and cultural sites</li>
-            <li>Parks, attractions, and activities</li>
-            <li>Shops, markets, and retail experiences</li>
-            <li>Any place that offers a unique travel experience</li>
+        <ContentCard title="What we prioritize" description="We lean toward places that feel editorial and built with intention.">
+          <ul className="grid gap-3 text-sm text-neutral-600 dark:text-neutral-300 sm:grid-cols-2">
+            <li>• Contemporary restaurants, bakeries, and cafes.</li>
+            <li>• Boutique hotels, guesthouses, and unique stays.</li>
+            <li>• Cultural spaces—museums, galleries, design studios.</li>
+            <li>• Retail concepts, markets, and brand flagships.</li>
+            <li>• Parks, baths, and public experiences with character.</li>
+            <li>• Architecture-driven landmarks or interiors.</li>
           </ul>
-        </div>
+        </ContentCard>
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8">
-          <h2 className="text-2xl font-semibold mb-4">Get in Touch</h2>
-          <p className="text-gray-700 dark:text-gray-300 mb-4">
-            Ready to submit a place? Contact us with the details:
-          </p>
-          <div className="space-y-2 text-gray-700 dark:text-gray-300">
+        <ContentCard variant="muted" title="Send your submission">
+          <div className="space-y-2 text-sm text-neutral-600 dark:text-neutral-300">
             <p>
-              <strong>Email:</strong> submit@urbanmanual.com
+              <strong className="text-neutral-900 dark:text-white">Email</strong>:{" "}
+              <a href="mailto:submit@urbanmanual.co" className="underline">
+                submit@urbanmanual.co
+              </a>
             </p>
             <p>
-              <strong>Include:</strong> Place name, address, category, and why you think it should be included
+              <strong className="text-neutral-900 dark:text-white">Include</strong>: Name, location, website/Instagram, your
+              notes, and any imagery we should review.
+            </p>
+            <p>
+              We reply within a week. Approved places go through the same drawer-ready design pass used on the homepage.
             </p>
           </div>
-        </div>
-
-        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
-          <Link 
-            href="/"
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            ← Back to home
-          </Link>
-        </div>
-        </div>
+        </ContentCard>
       </div>
-    </div>
+    </main>
   );
 }
 

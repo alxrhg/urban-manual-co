@@ -28,6 +28,7 @@ const DestinationDrawer = dynamic(
 );
 
 import { useDrawerStore } from '@/lib/stores/drawer-store';
+import { SubpageHero } from '@/components/layout/SubpageHero';
 
 function capitalizeCity(city: string): string {
   return city
@@ -261,53 +262,61 @@ export default function CityPageClient() {
 
   const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
 
+  const heroPills = [
+    selectedCategory ? { label: capitalizeCategory(selectedCategory) } : null,
+    advancedFilters.michelin ? { label: "Michelin only" } : null,
+    advancedFilters.crown ? { label: "Crown picks" } : null,
+  ].filter((pill): pill is { label: string } => Boolean(pill));
+
+  const heroMeta = [
+    { label: "Destinations", value: filteredDestinations.length.toString() },
+    { label: "Categories", value: categories.length.toString() },
+    { label: "Visited", value: visitedSlugs.size.toString() },
+    { label: "Active filters", value: heroPills.length.toString() },
+  ];
+
   return (
     <>
       <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
         <div className="max-w-[1800px] mx-auto">
-          {/* Header - Minimal design matching homepage */}
-          <div className="mb-12">
+          <div className="mb-6">
             <button
               onClick={() => router.push('/')}
-              className="mb-6 text-xs text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
               aria-label="Back"
             >
-              ← Back
+              <ArrowLeft className="h-3 w-3" />
+              Back
             </button>
+          </div>
 
-            <div className="mb-8">
-              {country && (
-                <div className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">
-                  {country}
-                </div>
-              )}
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h1 className="text-2xl font-light text-black dark:text-white mb-1">{cityDisplayName}</h1>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 flex-wrap justify-end">
-                  {isAdmin && (
-                    <button
-                      onClick={handleAddNewPOI}
-                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out text-xs font-medium flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
-                      title="Add new POI to this city"
-                    >
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                      </svg>
-                      Add POI
-                    </button>
-                  )}
-                  {isAdmin && (
-                    <EditModeToggle active={editModeActive} onToggle={handleEditModeToggle} size="compact" />
-                  )}
-                  <CityClock citySlug={citySlug} />
-                </div>
+          <SubpageHero
+            eyebrow={country || undefined}
+            title={cityDisplayName}
+            description={`${filteredDestinations.length} curated ${filteredDestinations.length === 1 ? 'destination' : 'destinations'} across ${categories.length} categories.`}
+            meta={heroMeta}
+            pills={heroPills}
+            actions={
+              <div className="flex flex-wrap items-center gap-3">
+                {isAdmin && (
+                  <button
+                    onClick={handleAddNewPOI}
+                    className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ease-in-out text-xs font-medium flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 focus:ring-offset-2"
+                    title="Add new POI to this city"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add POI
+                  </button>
+                )}
+                {isAdmin && (
+                  <EditModeToggle active={editModeActive} onToggle={handleEditModeToggle} size="compact" />
+                )}
+                <CityClock citySlug={citySlug} />
               </div>
-            </div>
+            }
+          />
 
             {editModeActive && (
               <div className="mb-8 rounded-2xl border border-gray-200/70 dark:border-gray-700/30 bg-gray-50/80 dark:bg-gray-800/10 px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

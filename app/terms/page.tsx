@@ -1,78 +1,117 @@
-import { Metadata } from 'next';
+import { Metadata } from "next";
+
+import { ContentCard } from "@/components/layout/ContentCard";
+import { SubpageHero } from "@/components/layout/SubpageHero";
 
 export const metadata: Metadata = {
-  title: 'Terms of Service | The Urban Manual',
-  description: 'Terms of Service for The Urban Manual',
+  title: "Terms of Service | The Urban Manual",
+  description: "The conditions of using Urban Manual across the app, drawer, and newsletter.",
 };
+
+const heroMeta = [
+  { label: "Last updated", value: new Date().toLocaleDateString("en-US") },
+  { label: "Jurisdiction", value: "UK / US" },
+  { label: "Product surface", value: "Web & email" },
+  { label: "Contact", value: "hello@urbanmanual.co" },
+];
+
+const sections = [
+  {
+    title: "Acceptance of terms",
+    body: (
+      <p>
+        By using Urban Manual—including the homepage, subpages, destination drawer, mobile layout, and newsletter—you agree
+        to these Terms and all referenced policies.
+      </p>
+    ),
+  },
+  {
+    title: "Use license",
+    body: (
+      <>
+        <p className="mb-3">
+          We grant you a personal, non-transferable license to view and interact with the product. Under this license you
+          may not:
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>Resell or commercialize the curated data, copy, or imagery.</li>
+          <li>Reverse-engineer or scrape the interface, drawer, or API responses.</li>
+          <li>Remove branding, edit screenshots without attribution, or misrepresent affiliation.</li>
+        </ul>
+      </>
+    ),
+  },
+  {
+    title: "User content",
+    body: (
+      <p>
+        Saving places, creating collections, or submitting new destinations remains your responsibility. You grant us a
+        license to host and display that content so it can appear in your account, drawer, or shared lists.
+      </p>
+    ),
+  },
+  {
+    title: "Disclaimers",
+    body: (
+      <p>
+        We mirror the calm, editorial nature of the interface but the data still ships “as is.” We do not guarantee
+        availability, accuracy, or suitability of any recommendation or location.
+      </p>
+    ),
+  },
+  {
+    title: "Limitations of liability",
+    body: (
+      <p>
+        Urban Manual and its suppliers are not liable for indirect, incidental, or consequential damages resulting from the
+        use of the site, drawer, or newsletters.
+      </p>
+    ),
+  },
+  {
+    title: "Revisions",
+    body: (
+      <p>
+        We may update these Terms as the product evolves. Material changes will be announced inside the account tab system
+        so you can review them quickly.
+      </p>
+    ),
+  },
+  {
+    title: "Contact",
+    body: (
+      <p>
+        Questions? Email <span className="font-medium text-neutral-900 dark:text-white">hello@urbanmanual.co</span> or visit
+        the contact page.
+      </p>
+    ),
+  },
+];
 
 export default function TermsPage() {
   return (
-    <article className="min-h-screen bg-white dark:bg-gray-900" aria-labelledby="terms-title">
-      <div className="w-full px-6 md:px-10 lg:px-12 py-20 max-w-4xl mx-auto">
-        <h1 id="terms-title" className="text-4xl font-bold mb-8">Terms of Service</h1>
-        
-        <div className="prose prose-gray dark:prose-invert max-w-none">
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Last updated: {new Date().toLocaleDateString()}
-          </p>
+    <main className="w-full px-6 md:px-10 lg:px-16 py-16 md:py-20">
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+        <SubpageHero
+          eyebrow="Terms"
+          title="The legal layer that keeps our design system trustworthy."
+          description="Just like the pill tabs on the account page, these terms keep everything organized: what you can do, how we treat content, and what to expect from the service."
+          meta={heroMeta}
+          pills={[
+            { label: "Drawer-informed structure" },
+            { label: "Consistent corner radius" },
+          ]}
+        />
 
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">1. Acceptance of Terms</h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-4">
-              By accessing and using The Urban Manual, you accept and agree to be bound by the terms and provision of this agreement.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">2. Use License</h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-4">
-              Permission is granted to temporarily access the materials on The Urban Manual for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title, and under this license you may not:
-            </p>
-            <ul className="list-disc pl-6 mb-4 text-gray-700 dark:text-gray-300">
-              <li>Modify or copy the materials</li>
-              <li>Use the materials for any commercial purpose or for any public display</li>
-              <li>Attempt to reverse engineer any software contained on The Urban Manual</li>
-              <li>Remove any copyright or other proprietary notations from the materials</li>
-            </ul>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">3. User Content</h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-4">
-              You are responsible for any content you submit to The Urban Manual. By submitting content, you grant us a worldwide, non-exclusive, royalty-free license to use, reproduce, and distribute your content.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">4. Disclaimer</h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-4">
-              The materials on The Urban Manual are provided on an 'as is' basis. The Urban Manual makes no warranties, expressed or implied, and hereby disclaims and negates all other warranties including, without limitation, implied warranties or conditions of merchantability, fitness for a particular purpose, or non-infringement of intellectual property or other violation of rights.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">5. Limitations</h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-4">
-              In no event shall The Urban Manual or its suppliers be liable for any damages (including, without limitation, damages for loss of data or profit, or due to business interruption) arising out of the use or inability to use the materials on The Urban Manual.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">6. Revisions</h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-4">
-              The Urban Manual may revise these terms of service at any time without notice. By using this website you are agreeing to be bound by the then current version of these terms of service.
-            </p>
-          </section>
-
-          <section className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">7. Contact Information</h2>
-            <p className="text-gray-700 dark:text-gray-300 mb-4">
-              If you have any questions about these Terms of Service, please contact us.
-            </p>
-          </section>
+        <div className="space-y-5">
+          {sections.map(section => (
+            <ContentCard key={section.title} title={section.title}>
+              <div className="text-sm leading-relaxed text-neutral-600 dark:text-neutral-300">{section.body}</div>
+            </ContentCard>
+          ))}
         </div>
       </div>
-    </article>
+    </main>
   );
 }
 
