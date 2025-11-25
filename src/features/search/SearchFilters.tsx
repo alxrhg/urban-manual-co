@@ -190,12 +190,12 @@ export function SearchFiltersComponent({
               ? portalElement &&
                 createPortal(
                   <>
-                    {/* Compact full-width filter panel - matches category pill design */}
-                    <div className="mt-3 w-full overflow-hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 transition-all duration-200 ease-out animate-in fade-in slide-in-from-top-1">
-                      <div className="py-3">
-                        {/* Single row compact layout */}
-                        <div className="flex flex-wrap items-center gap-2">
-                          {/* Special Filters - pill style */}
+                    {/* Compact filter panel - text style like city/category, right aligned */}
+                    <div className="mt-3 w-full overflow-hidden transition-all duration-200 ease-out animate-in fade-in slide-in-from-top-1">
+                      <div className="py-2">
+                        {/* Right-aligned text style filters */}
+                        <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-xs">
+                          {/* Special Filters */}
                           <button
                             type="button"
                             onClick={() => {
@@ -205,10 +205,10 @@ export function SearchFiltersComponent({
                                 updateFilter('michelin', true);
                               }
                             }}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                            className={`transition-all duration-200 ease-out ${
                               filters.michelin
-                                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                             }`}
                             aria-pressed={Boolean(filters.michelin)}
                           >
@@ -223,19 +223,17 @@ export function SearchFiltersComponent({
                                 updateFilter('openNow', true);
                               }
                             }}
-                            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                            className={`transition-all duration-200 ease-out ${
                               filters.openNow
-                                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                             }`}
                             aria-pressed={Boolean(filters.openNow)}
                           >
                             Open Now
                           </button>
 
-                          <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
-
-                          {/* Rating Filter - pill style */}
+                          {/* Rating Filter */}
                           {[4.5, 4.0, 3.5].map((rating) => (
                             <button
                               type="button"
@@ -247,10 +245,10 @@ export function SearchFiltersComponent({
                                   updateFilter('minRating', rating);
                                 }
                               }}
-                              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                              className={`transition-all duration-200 ease-out ${
                                 filters.minRating === rating
-                                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                  ? "font-medium text-black dark:text-white"
+                                  : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                               }`}
                               aria-pressed={filters.minRating === rating}
                             >
@@ -258,9 +256,7 @@ export function SearchFiltersComponent({
                             </button>
                           ))}
 
-                          <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
-
-                          {/* Price Filter - pill style */}
+                          {/* Price Filter */}
                           {[1, 2, 3, 4].map((level) => (
                             <button
                               type="button"
@@ -274,10 +270,10 @@ export function SearchFiltersComponent({
                                   updateFilter('maxPrice', level);
                                 }
                               }}
-                              className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                              className={`transition-all duration-200 ease-out ${
                                 filters.minPrice === level && filters.maxPrice === level
-                                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                  ? "font-medium text-black dark:text-white"
+                                  : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                               }`}
                               aria-pressed={filters.minPrice === level && filters.maxPrice === level}
                             >
@@ -285,65 +281,64 @@ export function SearchFiltersComponent({
                             </button>
                           ))}
 
-                          <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
+                          {/* Near Me */}
+                          <button
+                            type="button"
+                            onClick={() => toggleNearMe(!filters.nearMe)}
+                            disabled={loading}
+                            className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                              filters.nearMe
+                                ? "font-medium text-black dark:text-white"
+                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                            }`}
+                            aria-pressed={Boolean(filters.nearMe)}
+                            aria-label={filters.nearMe ? 'Disable near me filter' : 'Enable near me filter'}
+                          >
+                            {loading ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <MapPin className="h-3 w-3" />
+                            )}
+                            Near Me
+                          </button>
 
-                          {/* Near Me - pill button + toggle */}
-                          <div className="flex items-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => toggleNearMe(!filters.nearMe)}
-                              disabled={loading}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
-                                filters.nearMe
-                                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                              }`}
-                              aria-pressed={Boolean(filters.nearMe)}
-                              aria-label={filters.nearMe ? 'Disable near me filter' : 'Enable near me filter'}
-                            >
-                              {loading ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                <MapPin className="h-3 w-3" />
-                              )}
-                              Near Me
-                            </button>
-                            {filters.nearMe && hasLocation && !error && (
-                              <>
-                                <input
-                                  id="near-me-radius-full"
-                                  type="range"
-                                  min="0.5"
-                                  max="25"
-                                  step="0.5"
-                                  value={nearMeRadius}
-                                  onChange={(e) => updateRadius(parseFloat(e.target.value))}
-                                  className="w-16 h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-900 dark:[&::-webkit-slider-thumb]:bg-white"
-                                  aria-valuenow={nearMeRadius}
-                                  aria-valuetext={formatDistance(nearMeRadius)}
-                                />
-                                <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{formatDistance(nearMeRadius)}</span>
-                              </>
-                            )}
-                            {loading && (
-                              <span className="text-xs text-gray-500 dark:text-gray-400">Getting location...</span>
-                            )}
-                            {error && filters.nearMe && (
-                              <span className="text-xs text-red-500 dark:text-red-400">Location denied</span>
-                            )}
-                          </div>
+                          {/* Near Me radius slider - shown when active and has location */}
+                          {filters.nearMe && hasLocation && !error && (
+                            <div className="flex items-center gap-2">
+                              <input
+                                id="near-me-radius-full"
+                                type="range"
+                                min="0.5"
+                                max="25"
+                                step="0.5"
+                                value={nearMeRadius}
+                                onChange={(e) => updateRadius(parseFloat(e.target.value))}
+                                className="w-16 h-1 bg-gray-300 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-black dark:[&::-webkit-slider-thumb]:bg-white"
+                                aria-valuenow={nearMeRadius}
+                                aria-valuetext={formatDistance(nearMeRadius)}
+                              />
+                              <span className="font-medium text-black dark:text-white">{formatDistance(nearMeRadius)}</span>
+                            </div>
+                          )}
+
+                          {/* Near Me status messages */}
+                          {loading && filters.nearMe && (
+                            <span className="font-medium text-black/30 dark:text-gray-500">Getting location...</span>
+                          )}
+                          {error && filters.nearMe && (
+                            <span className="font-medium text-red-500 dark:text-red-400">Location denied</span>
+                          )}
 
                           {/* Sort Filter (Admin Only) */}
                           {isAdmin && onSortChange && (
                             <>
-                              <div className="hidden sm:block w-px h-4 bg-gray-200 dark:bg-gray-700 mx-1" />
                               <button
                                 type="button"
                                 onClick={() => onSortChange('default')}
-                                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                                className={`transition-all duration-200 ease-out ${
                                   sortBy === 'default'
-                                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                    ? "font-medium text-black dark:text-white"
+                                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                                 }`}
                                 aria-pressed={sortBy === 'default'}
                               >
@@ -352,10 +347,10 @@ export function SearchFiltersComponent({
                               <button
                                 type="button"
                                 onClick={() => onSortChange('recent')}
-                                className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-full transition-all duration-180 ${
+                                className={`flex items-center gap-1 transition-all duration-200 ease-out ${
                                   sortBy === 'recent'
-                                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                                    ? "font-medium text-black dark:text-white"
+                                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
                                 }`}
                                 aria-pressed={sortBy === 'recent'}
                               >
@@ -365,27 +360,24 @@ export function SearchFiltersComponent({
                             </>
                           )}
 
-                          {/* Spacer */}
-                          <div className="flex-1" />
-
-                          {/* Clear & Close */}
-                          <div className="flex items-center gap-2">
-                            {hasActiveFilters && (
-                              <button
-                                onClick={clearAll}
-                                className="px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                              >
-                                Clear all
-                              </button>
-                            )}
+                          {/* Clear all */}
+                          {hasActiveFilters && (
                             <button
-                              onClick={() => handleToggle(false)}
-                              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                              aria-label="Close filters"
+                              onClick={clearAll}
+                              className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out"
                             >
-                              <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                              Clear
                             </button>
-                          </div>
+                          )}
+
+                          {/* Close */}
+                          <button
+                            onClick={() => handleToggle(false)}
+                            className="font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300 transition-all duration-200 ease-out"
+                            aria-label="Close filters"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
                         </div>
                       </div>
                     </div>
