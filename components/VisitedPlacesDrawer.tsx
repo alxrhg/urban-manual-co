@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { createClient } from '@/lib/supabase/client';
-import { Drawer } from '@/components/ui/Drawer';
+import { DrawerSystem } from '@/components/ui/DrawerSystem';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
 import { DrawerSection } from '@/components/ui/DrawerSection';
 import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
@@ -130,7 +130,7 @@ export function VisitedPlacesDrawer() {
   );
 
   return (
-    <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer}>
+    <DrawerSystem isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer} width="420px" position="right" style="glassy">
       <DrawerHeader
         title="Visited Places"
         subtitle={`${visitedPlaces.length} places`}
@@ -179,6 +179,6 @@ export function VisitedPlacesDrawer() {
           View all visited
         </button>
       </DrawerActionBar>
-    </Drawer>
+    </DrawerSystem>
   );
 }

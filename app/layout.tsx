@@ -17,6 +17,7 @@ import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 import DrawerMount from "@/components/DrawerMount";
+import { MainContent } from "@/components/MainContent";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -200,10 +201,12 @@ export default function RootLayout({
                     <AdminEditModeProvider>
                       <ItineraryProvider>
                         <Header />
-                        <main id="main-content" className="min-h-screen page-transition" role="main">
-                          {children}
-                        </main>
-                        <Footer />
+                        <MainContent>
+                          <main id="main-content" className="min-h-screen page-transition" role="main">
+                            {children}
+                          </main>
+                          <Footer />
+                        </MainContent>
                         <CookieConsent />
                         <DrawerMount />
                       </ItineraryProvider>

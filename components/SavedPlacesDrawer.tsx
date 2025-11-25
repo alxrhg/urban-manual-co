@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { createClient } from '@/lib/supabase/client';
-import { Drawer } from '@/components/ui/Drawer';
+import { DrawerSystem } from '@/components/ui/DrawerSystem';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
 import { DrawerSection } from '@/components/ui/DrawerSection';
 import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
@@ -122,7 +122,7 @@ export function SavedPlacesDrawer() {
   );
 
   return (
-    <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer}>
+    <DrawerSystem isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer} width="420px" position="right" style="glassy">
       <DrawerHeader
         title="Saved Places"
         subtitle={`${savedPlaces.length} places`}
@@ -171,6 +171,6 @@ export function SavedPlacesDrawer() {
           View all saved
         </button>
       </DrawerActionBar>
-    </Drawer>
+    </DrawerSystem>
   );
 }

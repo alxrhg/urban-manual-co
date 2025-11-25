@@ -15,12 +15,21 @@ import TripOverviewQuickDrawer from '@/components/drawers/TripOverviewQuickDrawe
 import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
 import TripSettingsDrawer from '@/components/drawers/TripSettingsDrawer';
 import AccountDrawerNew from '@/components/drawers/AccountDrawer';
-import { Drawer } from '@/components/ui/Drawer';
+import { DrawerSystem } from '@/components/ui/DrawerSystem';
 import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 
+/**
+ * DrawerMount - Central component for rendering all drawers
+ *
+ * Supports both overlay mode (mobile/forced) and split-pane mode (desktop default).
+ * Drawers automatically use split-pane on desktop unless forceOverlay is true.
+ */
 export default function DrawerMount() {
-  const { open, type, props, closeDrawer } = useDrawerStore();
+  const { open, type, props, closeDrawer, displayMode } = useDrawerStore();
   const drawerStyle = useDrawerStyle();
+
+  // Determine if we should force overlay mode (for fullscreen drawers, etc.)
+  const shouldForceOverlay = type === 'trip-ai';
 
   return (
     <>
@@ -29,17 +38,17 @@ export default function DrawerMount() {
       <SavedPlacesDrawer />
       <VisitedPlacesDrawer />
 
-      {/* New drawers that use the global drawer store */}
+      {/* New drawers using DrawerSystem with split-pane support */}
       {open && type === 'account-new' && (
-        <Drawer
+        <DrawerSystem
           isOpen={open}
           onClose={closeDrawer}
-          desktopWidth="420px"
+          width="420px"
           style={drawerStyle}
           position="right"
         >
           <AccountDrawerNew isOpen={open} onClose={closeDrawer} />
-        </Drawer>
+        </DrawerSystem>
       )}
 
       <DestinationDrawer
@@ -50,29 +59,29 @@ export default function DrawerMount() {
       />
 
       {open && type === 'trip-overview' && (
-        <Drawer
+        <DrawerSystem
           isOpen={open}
           onClose={closeDrawer}
           title={props?.trip?.name ?? props?.trip?.title ?? "Trip Overview"}
           style={drawerStyle}
           position="right"
-          desktopWidth="420px"
+          width="420px"
         >
           <TripOverviewDrawer trip={props?.trip ?? null} />
-        </Drawer>
+        </DrawerSystem>
       )}
 
       {open && type === 'trip-list' && (
-        <Drawer
+        <DrawerSystem
           isOpen={open}
           onClose={closeDrawer}
           title="Your Trips"
           style={drawerStyle}
           position="right"
-          desktopWidth="420px"
+          width="420px"
         >
           <TripListDrawer {...props} />
-        </Drawer>
+        </DrawerSystem>
       )}
 
       <TripOverviewQuickDrawer
@@ -82,30 +91,30 @@ export default function DrawerMount() {
       />
 
       {open && type === 'trip-settings' && props?.trip && (
-        <Drawer
+        <DrawerSystem
           isOpen={open}
           onClose={closeDrawer}
           title="Trip Settings"
           style={drawerStyle}
           position="right"
-          desktopWidth="420px"
+          width="420px"
         >
           <TripSettingsDrawer
             trip={props.trip}
             onUpdate={props?.onUpdate}
             onDelete={props?.onDelete}
           />
-        </Drawer>
+        </DrawerSystem>
       )}
 
       {open && type === 'place-selector' && (
-        <Drawer
+        <DrawerSystem
           isOpen={open}
           onClose={closeDrawer}
           title="Add Place"
           style={drawerStyle}
           position="right"
-          desktopWidth="420px"
+          width="420px"
         >
           <PlaceSelectorDrawer
             tripId={props?.tripId}
@@ -118,32 +127,33 @@ export default function DrawerMount() {
             mealType={props?.mealType}
             replaceIndex={props?.replaceIndex}
           />
-        </Drawer>
+        </DrawerSystem>
       )}
 
       {open && type === 'trip-add-hotel' && (
-        <Drawer
+        <DrawerSystem
           isOpen={open}
           onClose={closeDrawer}
           title="Select Hotel"
           style={drawerStyle}
           position="right"
-          desktopWidth="420px"
+          width="420px"
         >
           <AddHotelDrawer
             trip={props.trip || null}
             day={props.day || null}
             index={props.index}
           />
-        </Drawer>
+        </DrawerSystem>
       )}
 
       {open && type === 'trip-ai' && (
-        <Drawer
+        <DrawerSystem
           isOpen={open}
           onClose={closeDrawer}
           title="AI Suggestions"
           fullScreen={true}
+          forceOverlay={true}
           position="right"
           style={drawerStyle}
         >
@@ -154,7 +164,7 @@ export default function DrawerMount() {
             suggestions={props.suggestions}
             onApply={props.onApply}
           />
-        </Drawer>
+        </DrawerSystem>
       )}
     </>
   );

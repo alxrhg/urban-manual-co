@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Drawer } from '@/components/ui/Drawer';
+import { DrawerSystem } from '@/components/ui/DrawerSystem';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
 import { DrawerSection } from '@/components/ui/DrawerSection';
 import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
@@ -90,7 +90,13 @@ export default function DestinationDrawer({ isOpen, onClose, place }: Destinatio
   );
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose}>
+    <DrawerSystem
+      isOpen={isOpen}
+      onClose={onClose}
+      width="420px"
+      position="right"
+      style="glassy"
+    >
       <DrawerHeader
         title={name}
         subtitle={[category, neighborhood].filter(Boolean).join(' · ')}
@@ -136,6 +142,6 @@ export default function DestinationDrawer({ isOpen, onClose, place }: Destinatio
           Add to trip
         </button>
       </DrawerActionBar>
-    </Drawer>
+    </DrawerSystem>
   );
 }
