@@ -26,7 +26,11 @@ export async function getNestedDestinations(
         parent_id: parentId,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Nested Destinations] RPC error (deep):', error);
+        throw error;
+      }
+      console.log('[Nested Destinations] Fetched (deep):', { parentId, count: data?.length || 0 });
       return (data || []) as Destination[];
     } else {
       // Use simple function for direct children only
@@ -34,11 +38,27 @@ export async function getNestedDestinations(
         parent_id: parentId,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('[Nested Destinations] RPC error:', error);
+        // Fallback to direct query if RPC fails
+        console.log('[Nested Destinations] Falling back to direct query for parentId:', parentId);
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('destinations')
+          .select('*')
+          .eq('parent_destination_id', parentId);
+        
+        if (fallbackError) {
+          console.error('[Nested Destinations] Fallback query error:', fallbackError);
+          throw fallbackError;
+        }
+        console.log('[Nested Destinations] Fallback query result:', { parentId, count: fallbackData?.length || 0 });
+        return (fallbackData || []) as Destination[];
+      }
+      console.log('[Nested Destinations] Fetched via RPC:', { parentId, count: data?.length || 0 });
       return (data || []) as Destination[];
     }
   } catch (error) {
-    console.warn('[Nested Destinations] Error fetching nested destinations:', error);
+    console.error('[Nested Destinations] Error fetching nested destinations:', error);
     return [];
   }
 }
