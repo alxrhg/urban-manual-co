@@ -3,7 +3,7 @@
 import { Destination } from '@/types/destination';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { MapPin } from 'lucide-react';
+import { MapPin, ArrowRight } from 'lucide-react';
 import { capitalizeCity } from '@/lib/utils';
 
 interface NestedDestinationsProps {
