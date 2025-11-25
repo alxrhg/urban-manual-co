@@ -42,7 +42,6 @@ import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
-import { AddToTripModal } from '@/components/AddToTripModal';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -315,7 +314,6 @@ export function DestinationDrawer({
   const [isAdmin, setIsAdmin] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showVisitedModal, setShowVisitedModal] = useState(false);
-  const [showAddToTripModal, setShowAddToTripModal] = useState(false);
 
   // Edit mode state
   const [formData, setFormData] = useState<FormData>({
@@ -1146,13 +1144,6 @@ export function DestinationDrawer({
                 setIsVisited(true);
                 setShowVisitedModal(false);
               }}
-            />
-            <AddToTripModal
-              isOpen={showAddToTripModal}
-              onClose={() => setShowAddToTripModal(false)}
-              destinationSlug={destination.slug}
-              destinationName={destination.name}
-              onAdd={() => setShowAddToTripModal(false)}
             />
           </>
         )}
