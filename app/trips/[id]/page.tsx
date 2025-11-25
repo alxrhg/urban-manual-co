@@ -161,10 +161,10 @@ export default function TripPage() {
       // Store location data and category in notes
       const notesData: ItineraryItemNotes = {
         type: 'place',
-        latitude: destination.latitude,
-        longitude: destination.longitude,
-        category: destination.category,
-        image: destination.image_thumbnail || destination.image,
+        latitude: destination.latitude ?? undefined,
+        longitude: destination.longitude ?? undefined,
+        category: destination.category ?? undefined,
+        image: destination.image_thumbnail || destination.image || undefined,
       };
 
       const { error } = await supabase.from('itinerary_items').insert({
