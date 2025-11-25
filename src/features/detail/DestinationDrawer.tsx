@@ -1044,8 +1044,9 @@ export function DestinationDrawer({
             <VisitedModal
               isOpen={showVisitedModal}
               onClose={() => setShowVisitedModal(false)}
-              destination={destination}
-              onSave={() => {
+              destinationSlug={destination.slug}
+              destinationName={destination.name}
+              onUpdate={() => {
                 setIsVisited(true);
                 setShowVisitedModal(false);
               }}
@@ -1053,8 +1054,9 @@ export function DestinationDrawer({
             <AddToTripModal
               isOpen={showAddToTripModal}
               onClose={() => setShowAddToTripModal(false)}
-              destination={destination}
-              onSuccess={() => setShowAddToTripModal(false)}
+              destinationSlug={destination.slug}
+              destinationName={destination.name}
+              onAdd={() => setShowAddToTripModal(false)}
             />
           </>
         )}
