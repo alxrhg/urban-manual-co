@@ -17,12 +17,7 @@ interface TripMapViewProps {
   className?: string;
 }
 
-declare global {
-  interface Window {
-    google: any;
-    initMap: () => void;
-  }
-}
+// Google Maps types are provided by @types/google.maps
 
 export default function TripMapView({ places, className = '' }: TripMapViewProps) {
   const mapRef = useRef<HTMLDivElement>(null);

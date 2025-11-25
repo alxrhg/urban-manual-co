@@ -48,6 +48,7 @@ import TripSafetyAlerts from '@/components/trips/TripSafetyAlerts';
 import NearbyDiscoveries from '@/components/trips/NearbyDiscoveries';
 import FlightStatusCard from '@/components/trips/FlightStatusCard';
 import OpeningHoursIndicator from '@/components/trips/OpeningHoursIndicator';
+import DestinationDrawer from '@/components/DestinationDrawer';
 import { formatTripDate, parseDateString } from '@/lib/utils';
 import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData } from '@/types/trip';
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
@@ -57,6 +58,30 @@ interface TripDay {
   dayNumber: number;
   date: string | null;
   items: (ItineraryItem & { destination?: Destination; parsedNotes?: ItineraryItemNotes })[];
+}
+
+// Sortable item wrapper for drag-and-drop
+function SortableItem({ id, children }: { id: string; children: React.ReactNode }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
 }
 
 export default function TripPage() {
@@ -71,6 +96,14 @@ export default function TripPage() {
   const [selectedDay, setSelectedDay] = useState(1);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   // Fetch trip and items
   const fetchTrip = useCallback(async () => {
@@ -307,6 +340,53 @@ export default function TripPage() {
     });
   };
 
+  // Handle drag-and-drop reordering
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const currentDayData = days.find((d) => d.dayNumber === selectedDay);
+    if (!currentDayData) return;
+
+    const oldIndex = currentDayData.items.findIndex((i) => i.id === active.id);
+    const newIndex = currentDayData.items.findIndex((i) => i.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    // Optimistically update UI
+    const newItems = arrayMove(currentDayData.items, oldIndex, newIndex);
+    setDays((prev) =>
+      prev.map((d) =>
+        d.dayNumber === selectedDay ? { ...d, items: newItems } : d
+      )
+    );
+
+    // Update order in database
+    try {
+      const supabase = createClient();
+      if (!supabase) return;
+
+      await Promise.all(
+        newItems.map((item, index) =>
+          supabase
+            .from('itinerary_items')
+            .update({ order_index: index })
+            .eq('id', item.id)
+        )
+      );
+    } catch (err) {
+      console.error('Error reordering:', err);
+      fetchTrip(); // Revert on error
+    }
+  };
+
+  // Open destination drawer for a place
+  const openDestinationDrawer = (item: ItineraryItem & { destination?: Destination }) => {
+    if (item.destination) {
+      setSelectedDestination(item.destination);
+    }
+  };
+
   // Calculate travel time estimate between two coordinates (simple approximation)
   const estimateTravelTime = (
     lat1: number | undefined,
@@ -428,12 +508,17 @@ export default function TripPage() {
         </div>
 
         {/* Weather Forecast */}
-        <div className="mb-12">
+        <div className="mb-8">
           <TripWeatherForecast
             destination={trip.destination}
             startDate={trip.start_date}
             endDate={trip.end_date}
           />
+        </div>
+
+        {/* Safety Alerts */}
+        <div className="mb-12">
+          <TripSafetyAlerts destination={trip.destination} />
         </div>
 
         {/* Day Tabs - Minimal style like account page */}
@@ -528,106 +613,179 @@ export default function TripPage() {
             {viewMode === 'list' && (
               <>
                 {currentDay.items.length > 0 ? (
-                  <div className="space-y-1">
-                    {currentDay.items.map((item, index) => {
-                      const isFlight = item.parsedNotes?.type === 'flight';
-                      const prevItem = index > 0 ? currentDay.items[index - 1] : null;
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={currentDay.items.map((i) => i.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-1">
+                        {currentDay.items.map((item, index) => {
+                          const isFlight = item.parsedNotes?.type === 'flight';
+                          const prevItem = index > 0 ? currentDay.items[index - 1] : null;
+                          const isExpanded = expandedItem === item.id;
 
-                      // Calculate travel time from previous item
-                      let travelInfo = null;
-                      if (prevItem && !isFlight && prevItem.parsedNotes?.type !== 'flight') {
-                        const prevLat = prevItem.parsedNotes?.latitude ?? prevItem.destination?.latitude ?? undefined;
-                        const prevLon = prevItem.parsedNotes?.longitude ?? prevItem.destination?.longitude ?? undefined;
-                        const currLat = item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined;
-                        const currLon = item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined;
-                        travelInfo = estimateTravelTime(prevLat, prevLon, currLat, currLon);
-                      }
+                          // Calculate travel time from previous item
+                          let travelInfo = null;
+                          if (prevItem && !isFlight && prevItem.parsedNotes?.type !== 'flight') {
+                            const prevLat = prevItem.parsedNotes?.latitude ?? prevItem.destination?.latitude ?? undefined;
+                            const prevLon = prevItem.parsedNotes?.longitude ?? prevItem.destination?.longitude ?? undefined;
+                            const currLat = item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined;
+                            const currLon = item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined;
+                            travelInfo = estimateTravelTime(prevLat, prevLon, currLat, currLon);
+                          }
 
-                      return (
-                        <div key={item.id}>
-                          {/* Travel Time Indicator */}
-                          {travelInfo && (
-                            <div className="flex items-center gap-2 py-2 px-4 text-xs text-gray-400">
-                              <Navigation className="w-3 h-3" />
-                              <span>{travelInfo.time}</span>
-                              <span className="opacity-60">({travelInfo.distance})</span>
-                            </div>
-                          )}
-
-                          {/* Item Card */}
-                          <div
-                            className={`flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors group ${
-                              isFlight ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
-                            }`}
-                          >
-                            {/* Time Input */}
-                            <div className="w-16 flex-shrink-0">
-                              <input
-                                type="time"
-                                value={item.time || ''}
-                                onChange={(e) => updateItemTime(item.id, e.target.value)}
-                                className="w-full text-xs text-center bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg py-1 px-1 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
-                                placeholder="--:--"
-                              />
-                            </div>
-
-                            {/* Icon/Image */}
-                            <div className={`relative w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden ${
-                              isFlight ? 'bg-blue-100 dark:bg-blue-800' : 'bg-gray-100 dark:bg-gray-800'
-                            }`}>
-                              {isFlight ? (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <Plane className="w-5 h-5 text-blue-500" />
-                                </div>
-                              ) : item.destination?.image || item.destination?.image_thumbnail ? (
-                                <Image
-                                  src={item.destination.image_thumbnail || item.destination.image || ''}
-                                  alt={item.title}
-                                  fill
-                                  className="object-cover"
-                                  sizes="48px"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                  <MapPin className="w-5 h-5 text-gray-400" />
+                          return (
+                            <SortableItem key={item.id} id={item.id}>
+                              {/* Travel Time Indicator */}
+                              {travelInfo && (
+                                <div className="flex items-center gap-2 py-2 px-4 text-xs text-gray-400">
+                                  <Navigation className="w-3 h-3" />
+                                  <span>{travelInfo.time}</span>
+                                  <span className="opacity-60">({travelInfo.distance})</span>
                                 </div>
                               )}
-                            </div>
 
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                              <div className="text-sm font-medium truncate">{item.title}</div>
-                              {item.description && (
-                                <div className="text-xs text-gray-500 mt-0.5 truncate">
-                                  {item.description}
+                              {/* Item Card */}
+                              <div
+                                className={`flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors group ${
+                                  isFlight ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
+                                }`}
+                              >
+                                {/* Drag Handle */}
+                                <div className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400">
+                                  <GripVertical className="w-4 h-4" />
                                 </div>
-                              )}
-                              {isFlight && item.parsedNotes?.departureTime && (
-                                <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 mt-0.5">
-                                  <Clock className="w-3 h-3" />
-                                  {item.parsedNotes.departureTime}
-                                  {item.parsedNotes.arrivalTime && ` → ${item.parsedNotes.arrivalTime}`}
-                                </div>
-                              )}
-                              {!isFlight && (item.destination?.category || item.parsedNotes?.category) && (
-                                <div className="text-xs text-gray-400 mt-0.5">
-                                  {item.destination?.category || item.parsedNotes?.category}
-                                </div>
-                              )}
-                            </div>
 
-                            {/* Remove */}
-                            <button
-                              onClick={() => removeItem(item.id)}
-                              className="p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                                {/* Time Input */}
+                                <div className="w-16 flex-shrink-0">
+                                  <input
+                                    type="time"
+                                    value={item.time || ''}
+                                    onChange={(e) => updateItemTime(item.id, e.target.value)}
+                                    className="w-full text-xs text-center bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg py-1 px-1 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+                                    placeholder="--:--"
+                                  />
+                                </div>
+
+                                {/* Icon/Image - Clickable for places */}
+                                <button
+                                  onClick={() => !isFlight && openDestinationDrawer(item)}
+                                  className={`relative w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden ${
+                                    isFlight ? 'bg-blue-100 dark:bg-blue-800' : 'bg-gray-100 dark:bg-gray-800'
+                                  } ${!isFlight && item.destination ? 'cursor-pointer hover:ring-2 hover:ring-black dark:hover:ring-white' : ''}`}
+                                  disabled={isFlight || !item.destination}
+                                >
+                                  {isFlight ? (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <Plane className="w-5 h-5 text-blue-500" />
+                                    </div>
+                                  ) : item.destination?.image || item.destination?.image_thumbnail ? (
+                                    <Image
+                                      src={item.destination.image_thumbnail || item.destination.image || ''}
+                                      alt={item.title}
+                                      fill
+                                      className="object-cover"
+                                      sizes="48px"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                      <MapPin className="w-5 h-5 text-gray-400" />
+                                    </div>
+                                  )}
+                                </button>
+
+                                {/* Info - Clickable for places */}
+                                <button
+                                  onClick={() => !isFlight && openDestinationDrawer(item)}
+                                  className={`flex-1 min-w-0 text-left ${!isFlight && item.destination ? 'cursor-pointer' : ''}`}
+                                  disabled={isFlight || !item.destination}
+                                >
+                                  <div className="text-sm font-medium truncate hover:text-black dark:hover:text-white transition-colors">
+                                    {item.title}
+                                  </div>
+                                  {item.description && (
+                                    <div className="text-xs text-gray-500 mt-0.5 truncate">
+                                      {item.description}
+                                    </div>
+                                  )}
+                                  {isFlight && item.parsedNotes?.departureTime && (
+                                    <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                                      <Clock className="w-3 h-3" />
+                                      {item.parsedNotes.departureTime}
+                                      {item.parsedNotes.arrivalTime && ` → ${item.parsedNotes.arrivalTime}`}
+                                    </div>
+                                  )}
+                                  {!isFlight && (
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      {(item.destination?.category || item.parsedNotes?.category) && (
+                                        <span className="text-xs text-gray-400">
+                                          {item.destination?.category || item.parsedNotes?.category}
+                                        </span>
+                                      )}
+                                      {item.time && (
+                                        <OpeningHoursIndicator
+                                          placeId={item.destination?.slug}
+                                          scheduledTime={item.time}
+                                          scheduledDate={currentDay.date || undefined}
+                                        />
+                                      )}
+                                    </div>
+                                  )}
+                                </button>
+
+                                {/* Expand/Actions */}
+                                <div className="flex items-center gap-1">
+                                  {!isFlight && (
+                                    <button
+                                      onClick={() => setExpandedItem(isExpanded ? null : item.id)}
+                                      className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                      title="Show nearby places"
+                                    >
+                                      <StickyNote className="w-4 h-4" />
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => removeItem(item.id)}
+                                    className="p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Expanded Content */}
+                              {isExpanded && (
+                                <div className="ml-8 pl-4 border-l-2 border-gray-100 dark:border-gray-800">
+                                  {isFlight && item.parsedNotes && (
+                                    <FlightStatusCard
+                                      flight={item.parsedNotes}
+                                      departureDate={item.parsedNotes.departureDate}
+                                    />
+                                  )}
+                                  {!isFlight && item.parsedNotes && (
+                                    <NearbyDiscoveries
+                                      currentPlace={{
+                                        name: item.title,
+                                        latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
+                                        longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
+                                        city: item.destination?.city || trip?.destination || undefined,
+                                      }}
+                                      excludeSlugs={currentDay.items.map((i) => i.destination?.slug).filter(Boolean) as string[]}
+                                      onAddPlace={(destination) => addItem(selectedDay, destination)}
+                                    />
+                                  )}
+                                </div>
+                              )}
+                            </SortableItem>
+                          );
+                        })}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                 ) : (
                   <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
                     <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
@@ -651,6 +809,13 @@ export default function TripPage() {
           </div>
         )}
       </div>
+
+      {/* Destination Drawer - opens when clicking on a place */}
+      <DestinationDrawer
+        isOpen={selectedDestination !== null}
+        onClose={() => setSelectedDestination(null)}
+        place={selectedDestination}
+      />
     </main>
   );
 }
