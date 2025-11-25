@@ -11,6 +11,7 @@ import {
   ArrowLeft,
   Calendar,
   Clock,
+  GripVertical,
   List,
   Loader2,
   Map,
@@ -19,12 +20,34 @@ import {
   Plane,
   Plus,
   Settings,
+  StickyNote,
   Trash2,
 } from 'lucide-react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { PageLoader } from '@/components/LoadingStates';
 import UMActionPill from '@/components/ui/UMActionPill';
 import TripMapView from '@/components/trips/TripMapView';
 import TripWeatherForecast from '@/components/trips/TripWeatherForecast';
+import TripSafetyAlerts from '@/components/trips/TripSafetyAlerts';
+import NearbyDiscoveries from '@/components/trips/NearbyDiscoveries';
+import FlightStatusCard from '@/components/trips/FlightStatusCard';
+import OpeningHoursIndicator from '@/components/trips/OpeningHoursIndicator';
 import { formatTripDate, parseDateString } from '@/lib/utils';
 import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData } from '@/types/trip';
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
@@ -492,8 +515,8 @@ export default function TripPage() {
                   .map((item, index) => ({
                     id: item.id,
                     name: item.title,
-                    latitude: item.parsedNotes?.latitude || item.destination?.latitude,
-                    longitude: item.parsedNotes?.longitude || item.destination?.longitude,
+                    latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
+                    longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
                     category: item.destination?.category || item.parsedNotes?.category,
                     order: index + 1,
                   }))}
