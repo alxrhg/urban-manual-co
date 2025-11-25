@@ -1039,7 +1039,7 @@ export function DestinationDrawer({
               isOpen={showSaveModal}
               onClose={() => setShowSaveModal(false)}
               destinationSlug={destination.slug}
-              destinationName={destination.name}
+              destinationId={destination.id!}
             />
             <VisitedModal
               isOpen={showVisitedModal}
