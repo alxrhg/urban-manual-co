@@ -273,11 +273,6 @@ export default function CitiesPage() {
                         <DestinationCard
                           destination={cityStatsToDestination(cityData)}
                           onClick={() => router.push(`/city/${encodeURIComponent(cityData.city)}`)}
-                          isAdmin={isAdmin}
-                          onEdit={isAdmin ? () => {
-                            setCityToEdit(cityData);
-                            setIsEditDrawerOpen(true);
-                          } : undefined}
                           showBadges={false}
                         />
                       </div>
@@ -354,11 +349,6 @@ export default function CitiesPage() {
                     key={cityData.city}
                     destination={cityStatsToDestination(cityData)}
                     onClick={() => router.push(`/city/${encodeURIComponent(cityData.city)}`)}
-                    isAdmin={isAdmin}
-                    onEdit={isAdmin ? () => {
-                      setCityToEdit(cityData);
-                      setIsEditDrawerOpen(true);
-                    } : undefined}
                     showBadges={false}
                   />
                 )}

@@ -20,43 +20,27 @@ export async function getNestedDestinations(
   includeDeep: boolean = false
 ): Promise<Destination[]> {
   try {
-    if (includeDeep) {
-      // Use recursive function for deep nesting
-      const { data, error } = await supabase.rpc('get_all_nested_destinations', {
-        parent_id: parentId,
-      });
+    // Direct query - fetch all destinations where parent_destination_id = parentId
+    const { data, error } = await supabase
+      .from('destinations')
+      .select('*')
+      .eq('parent_destination_id', parentId)
+      .order('name');
 
-      if (error) {
-        console.error('[Nested Destinations] RPC error (deep):', error);
-        throw error;
-      }
-      console.log('[Nested Destinations] Fetched (deep):', { parentId, count: data?.length || 0 });
-      return (data || []) as Destination[];
-    } else {
-      // Use simple function for direct children only
-      const { data, error } = await supabase.rpc('get_nested_destinations', {
-        parent_id: parentId,
-      });
+    if (error) throw error;
 
-      if (error) {
-        console.error('[Nested Destinations] RPC error:', error);
-        // Fallback to direct query if RPC fails
-        console.log('[Nested Destinations] Falling back to direct query for parentId:', parentId);
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('destinations')
-          .select('*')
-          .eq('parent_destination_id', parentId);
-        
-        if (fallbackError) {
-          console.error('[Nested Destinations] Fallback query error:', fallbackError);
-          throw fallbackError;
+    const destinations = (data || []) as Destination[];
+
+    // If deep nesting requested, recursively fetch nested for each
+    if (includeDeep && destinations.length > 0) {
+      for (const dest of destinations) {
+        if (dest.id) {
+          dest.nested_destinations = await getNestedDestinations(supabase, dest.id, true);
         }
-        console.log('[Nested Destinations] Fallback query result:', { parentId, count: fallbackData?.length || 0 });
-        return (fallbackData || []) as Destination[];
       }
-      console.log('[Nested Destinations] Fetched via RPC:', { parentId, count: data?.length || 0 });
-      return (data || []) as Destination[];
     }
+
+    return destinations;
   } catch (error) {
     console.error('[Nested Destinations] Error fetching nested destinations:', error);
     return [];

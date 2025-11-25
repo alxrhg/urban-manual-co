@@ -3,44 +3,26 @@
 import React, { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Drawer } from '@/components/ui/Drawer';
-import { DrawerHeader } from '@/components/ui/DrawerHeader';
 import { DrawerSection } from '@/components/ui/DrawerSection';
-import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
-import { Loader2, X, Trash2, MapPin } from 'lucide-react';
+import { Loader2, X, Trash2 } from 'lucide-react';
 import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
 import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 import { CategoryAutocompleteInput } from '@/components/CategoryAutocompleteInput';
 import { ParentDestinationAutocompleteInput } from '@/components/ParentDestinationAutocompleteInput';
+import { useDrawerStore } from '@/lib/stores/drawer-store';
+import type { Destination } from '@/types/destination';
 
-interface POIDrawerProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave?: () => void;
+interface POIEditorDrawerProps {
   destination?: Destination | null;
   initialCity?: string;
+  onSave?: () => void;
 }
 
-interface Destination {
-  slug: string;
-  name: string;
-  city: string;
-  category: string;
-  description?: string | null;
-  content?: string | null;
-  image?: string | null;
-  michelin_stars?: number | null;
-  crown?: boolean;
-  brand?: string | null;
-  architect?: string | null;
-  id?: number;
-  parent_destination_id?: number | null;
-}
-
-export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }: POIDrawerProps) {
+export default function POIEditorDrawer({ destination, initialCity, onSave }: POIEditorDrawerProps) {
   const { user } = useAuth();
   const toast = useToast();
+  const { closeDrawer } = useDrawerStore();
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -65,16 +47,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
   });
 
   useEffect(() => {
-    if (!isOpen) {
-      setFormData({
-        slug: '', name: '', city: '', category: '', description: '', content: '',
-        image: '', michelin_stars: null, crown: false, brand: '', architect: '',
-        parent_destination_id: null,
-      });
-      setImageFile(null);
-      setImagePreview(null);
-      setShowDeleteConfirm(false);
-    } else if (destination) {
+    if (destination) {
       setFormData({
         slug: destination.slug || '',
         name: destination.name || '',
@@ -93,14 +66,14 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
     } else if (initialCity) {
       setFormData(prev => ({ ...prev, city: initialCity }));
     }
-  }, [isOpen, destination, initialCity]);
+  }, [destination, initialCity]);
 
   useEffect(() => {
     if (formData.name && !formData.slug) {
       const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
       setFormData(prev => ({ ...prev, slug }));
     }
-  }, [formData.name]);
+  }, [formData.name, formData.slug]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -206,7 +179,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
 
       toast.success(isEditing ? 'Destination updated' : 'POI created');
       onSave?.();
-      onClose();
+      closeDrawer();
     } catch (error: any) {
       toast.error(error.message || 'Failed to save');
     } finally {
@@ -225,7 +198,7 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
       if (error) throw error;
       toast.success('Destination deleted');
       onSave?.();
-      onClose();
+      closeDrawer();
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete');
     } finally {
@@ -271,14 +244,9 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
   };
 
   return (
-    <Drawer isOpen={isOpen} onClose={onClose} desktopWidth="500px">
-      <DrawerHeader
-        title={destination ? 'Edit Destination' : 'Add New POI'}
-        leftAccessory={<MapPin className="h-5 w-5 text-gray-500" />}
-      />
-
-      <div className="overflow-y-auto max-h-[calc(100vh-8rem)] pb-20">
-        <form id="poi-form" onSubmit={handleSubmit}>
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-y-auto pb-24">
+        <form id="poi-editor-form" onSubmit={handleSubmit}>
           <DrawerSection bordered>
             <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Search Google Places</label>
             <GooglePlacesAutocompleteNative
@@ -344,14 +312,14 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
                 isDragging ? 'border-black dark:border-white bg-gray-100 dark:bg-gray-800' : 'border-gray-300 dark:border-gray-700'
               }`}
             >
-              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="image-upload" />
-              <label htmlFor="image-upload" className="flex flex-col items-center cursor-pointer">
+              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="poi-image-upload" />
+              <label htmlFor="poi-image-upload" className="flex flex-col items-center cursor-pointer">
                 {imagePreview ? (
                   <div className="relative w-full">
                     <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
                     <button
                       type="button"
-                      onClick={(e) => { e.preventDefault(); setImageFile(null); setImagePreview(null); }}
+                      onClick={(e) => { e.preventDefault(); setImageFile(null); setImagePreview(null); setFormData(prev => ({ ...prev, image: '' })); }}
                       className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5"
                     >
                       <X className="h-3 w-3" />
@@ -420,19 +388,22 @@ export function POIDrawer({ isOpen, onClose, onSave, destination, initialCity }:
         </form>
       </div>
 
-      <DrawerActionBar>
-        <button type="button" onClick={onClose} className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-full text-sm">
-          Cancel
-        </button>
-        <button
-          type="submit"
-          form="poi-form"
-          disabled={isSaving || !formData.name || !formData.city || !formData.category}
-          className="flex-1 bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-        >
-          {isSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : destination ? 'Update' : 'Create'}
-        </button>
-      </DrawerActionBar>
-    </Drawer>
+      {/* Fixed bottom action bar */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-950 border-t border-gray-200 dark:border-gray-800">
+        <div className="flex gap-3">
+          <button type="button" onClick={closeDrawer} className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-full text-sm">
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="poi-editor-form"
+            disabled={isSaving || !formData.name || !formData.city || !formData.category}
+            className="flex-1 bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : destination ? 'Update' : 'Create'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

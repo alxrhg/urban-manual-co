@@ -2,10 +2,8 @@
 
 import { Destination } from '@/types/destination';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import { MapPin, ArrowRight } from 'lucide-react';
-import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import { capitalizeCity } from '@/lib/utils';
 
 interface NestedDestinationsProps {
@@ -30,67 +28,51 @@ export function NestedDestinations({ destinations, parentName, onDestinationClic
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-          {parentName ? `Located in ${parentName}` : 'Nested Destinations'}
-        </h3>
-        <span className="text-xs text-gray-500 dark:text-gray-400">
-          {destinations.length} {destinations.length === 1 ? 'venue' : 'venues'}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div>
+      <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">
+        {parentName ? `Inside ${parentName}` : 'Venues Here'}
+      </h3>
+      <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide -mx-6 px-6">
         {destinations.map((dest) => (
           <button
             key={dest.slug}
             onClick={() => handleClick(dest)}
-            className={`${CARD_WRAPPER} text-left group cursor-pointer flex flex-col`}
+            className="group text-left flex-shrink-0 w-32 flex flex-col"
           >
-            <div className={`${CARD_MEDIA} mb-3 relative`}>
+            <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-2 border border-gray-200 dark:border-gray-800">
               {dest.image ? (
                 <Image
                   src={dest.image}
                   alt={dest.name}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  quality={80}
+                  sizes="(max-width: 640px) 50vw, 200px"
+                  className="object-cover group-hover:opacity-90 transition-opacity"
+                  quality={85}
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                  <MapPin className="h-12 w-12 opacity-20" />
+                  <MapPin className="h-8 w-8 opacity-30" />
+                </div>
+              )}
+              {/* Michelin Stars Badge */}
+              {dest.michelin_stars && dest.michelin_stars > 0 && (
+                <div className="absolute bottom-2 left-2 px-2 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1">
+                  <img
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    className="h-3 w-3"
+                    loading="lazy"
+                  />
+                  <span>{dest.michelin_stars}</span>
                 </div>
               )}
             </div>
-
-            <div className="space-y-0 flex-1 flex flex-col">
-              <Link 
-                href={`/destination/${dest.slug}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClick(dest);
-                }}
-                className="hover:underline"
-              >
-                <h4 className={`${CARD_TITLE} line-clamp-2 min-h-[2.5rem]`}>
-                  {dest.name || dest.slug}
-                </h4>
-              </Link>
-              <div className="text-[10px] text-gray-600 dark:text-gray-400 line-clamp-1">
-                {dest.micro_description || 
-                 (dest.category && dest.city 
-                   ? `${dest.category} in ${capitalizeCity(dest.city)}`
-                   : dest.city 
-                     ? capitalizeCity(dest.city)
-                     : dest.category || '')}
-              </div>
-            </div>
-
-            <div className="mt-2 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">
-              <span>View details</span>
-              <ArrowRight className="h-3 w-3" />
-            </div>
+            <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1 text-black dark:text-white">
+              {dest.name}
+            </h4>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {dest.category || capitalizeCity(dest.city)}
+            </span>
           </button>
         ))}
       </div>

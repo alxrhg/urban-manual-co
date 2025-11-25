@@ -37,6 +37,7 @@ const DestinationDrawer = dynamic(
 );
 import { useAuth } from "@/contexts/AuthContext";
 import { useDrawer } from "@/contexts/DrawerContext";
+import { useDrawerStore } from "@/lib/stores/drawer-store";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -157,11 +158,6 @@ const RealtimeStatusBadge = dynamic(
     import("@/components/RealtimeStatusBadge").then(mod => ({
       default: mod.RealtimeStatusBadge,
     })),
-  { ssr: false }
-);
-const POIDrawer = dynamic(
-  () =>
-    import("@/components/POIDrawer").then(mod => ({ default: mod.POIDrawer })),
   { ssr: false }
 );
 
@@ -377,7 +373,7 @@ export default function Home() {
   } = useAdminEditMode();
   const { trackAction, predictions } = useSequenceTracker();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showPOIDrawer, setShowPOIDrawer] = useState(false);
+  const { openDrawer: openGlobalDrawer } = useDrawerStore();
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
   const editModeActive = isAdmin && adminEditMode;
 
@@ -2782,7 +2778,14 @@ export default function Home() {
                   <button
                     onClick={() => {
                       setEditingDestination(null);
-                      setShowPOIDrawer(true);
+                      openGlobalDrawer('poi-editor', {
+                        destination: null,
+                        onSave: async () => {
+                          await new Promise(resolve => setTimeout(resolve, 200));
+                          await fetchDestinations();
+                          setCurrentPage(1);
+                        }
+                      });
                     }}
                     className="flex items-center justify-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg bg-gray-50 dark:bg-gray-800/30 text-gray-900 dark:text-gray-100 border border-gray-200/50 dark:border-gray-700/40 hover:bg-gray-100 dark:hover:bg-gray-800/40 transition-all"
                     title="Add new place"
@@ -2848,7 +2851,14 @@ export default function Home() {
                         <button
                           onClick={() => {
                             setEditingDestination(null);
-                            setShowPOIDrawer(true);
+                            openGlobalDrawer('poi-editor', {
+                              destination: null,
+                              onSave: async () => {
+                                await new Promise(resolve => setTimeout(resolve, 200));
+                                await fetchDestinations();
+                                setCurrentPage(1);
+                              }
+                            });
                           }}
                           className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-4 sm:px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
                           style={{ borderRadius: '9999px' }}
@@ -3188,12 +3198,6 @@ export default function Home() {
                             <DestinationCard
                               key={destination.slug}
                               destination={destination}
-                              isAdmin={isAdmin}
-                              onEdit={dest => {
-                                setEditingDestination(dest);
-                                setShowPOIDrawer(true);
-                              }}
-                              showEditAffordance={editModeActive}
                               onClick={() => {
                                 setSelectedDestination(destination);
                                 openDrawer('destination');
@@ -3203,12 +3207,12 @@ export default function Home() {
                                   globalIndex
                                 );
                               }}
-                                index={globalIndex}
-                                isVisited={isVisited}
-                                showBadges={true}
-                              />
-                            );
-                          }}
+                              index={globalIndex}
+                              isVisited={isVisited}
+                              showBadges={true}
+                            />
+                          );
+                        }}
                           emptyState={
                             displayDestinations.length === 0 ? (
                               <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">
@@ -3382,9 +3386,10 @@ export default function Home() {
                 return sorted;
               });
             }}
-            onEdit={(destination) => {
-              setEditingDestination(destination);
-              setShowPOIDrawer(true);
+            onDestinationUpdate={async () => {
+              await new Promise(resolve => setTimeout(resolve, 200));
+              await fetchDestinations();
+              setCurrentPage(1);
             }}
             onDestinationClick={async (slug: string) => {
               try {
@@ -3411,32 +3416,6 @@ export default function Home() {
               } catch (error) {
                 console.error('Error fetching destination:', error);
               }
-            }}
-          />
-        )}
-
-
-        {/* POI Drawer (Admin only) */}
-        {isAdmin && (
-          <POIDrawer
-            isOpen={showPOIDrawer}
-            onClose={() => {
-              setShowPOIDrawer(false);
-              setEditingDestination(null);
-            }}
-            destination={editingDestination}
-            onSave={async () => {
-              // Refresh destinations immediately after creating/updating/deleting POI
-              // Small delay to ensure database transaction is committed
-              await new Promise(resolve => setTimeout(resolve, 200));
-
-              // Fetch fresh destinations (this will automatically apply current filters)
-              await fetchDestinations();
-
-              // Reset to first page to show the newly created POI at the top
-              setCurrentPage(1);
-
-              setEditingDestination(null);
             }}
           />
         )}

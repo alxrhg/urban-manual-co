@@ -3,8 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { AlertCircle, X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe, Building2 } from 'lucide-react';
+import { AlertCircle, X, MapPin, Tag, Bookmark, Share2, Navigation, ChevronDown, Plus, Loader2, Clock, ExternalLink, Check, List, Map, Heart, Edit, Crown, Star, Instagram, Phone, Globe, Building2, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
+import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
+import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
+import { CategoryAutocompleteInput } from '@/components/CategoryAutocompleteInput';
+import { ParentDestinationAutocompleteInput } from '@/components/ParentDestinationAutocompleteInput';
+import { ArchitectTagInput } from '@/components/ArchitectTagInput';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -37,7 +42,7 @@ import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
-import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
+import { NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
@@ -77,6 +82,7 @@ interface DestinationDrawerProps {
   onVisitToggle?: (slug: string, visited: boolean) => void;
   onDestinationClick?: (slug: string) => void;
   onEdit?: (destination: Destination) => void; // Callback for editing destination
+  onDestinationUpdate?: () => void; // Callback when destination is updated/deleted
 }
 
 function capitalizeCity(city: string): string {
@@ -195,7 +201,7 @@ function parseTime(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
-export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick, onEdit }: DestinationDrawerProps) {
+export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick, onEdit, onDestinationUpdate }: DestinationDrawerProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isReviewersExpanded, setIsReviewersExpanded] = useState(false);
   const [isContactExpanded, setIsContactExpanded] = useState(false);
@@ -223,6 +229,41 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [reviewSummary, setReviewSummary] = useState<string | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Edit mode state
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [googlePlaceQuery, setGooglePlaceQuery] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    slug: '',
+    name: '',
+    city: '',
+    category: '',
+    neighborhood: '',
+    micro_description: '',
+    description: '',
+    content: '',
+    image: '',
+    michelin_stars: null as number | null,
+    crown: false,
+    brand: '',
+    architects: [] as string[], // Changed to array for tag input
+    interior_designer: '',
+    architectural_style: '',
+    website: '',
+    instagram_handle: '',
+    phone_number: '',
+    opentable_url: '',
+    resy_url: '',
+    booking_url: '',
+    parent_destination_id: null as number | null,
+  });
 
   const handleAddSuccess = (tripTitle: string, day?: number) => {
     setIsAddedToTrip(true);
@@ -357,6 +398,222 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       console.error('Error generating review summary:', error);
     } finally {
       setLoadingReviewSummary(false);
+    }
+  };
+
+  // Initialize edit form when entering edit mode
+  useEffect(() => {
+    if (isEditMode && destination) {
+      // Parse architect string to array (comma-separated)
+      const architectsArray = destination.architect
+        ? destination.architect.split(',').map(a => a.trim()).filter(a => a)
+        : [];
+
+      setEditFormData({
+        slug: destination.slug || '',
+        name: destination.name || '',
+        city: destination.city || '',
+        category: destination.category || '',
+        neighborhood: destination.neighborhood || '',
+        micro_description: destination.micro_description || '',
+        description: destination.description || '',
+        content: destination.content || '',
+        image: destination.image || '',
+        michelin_stars: destination.michelin_stars || null,
+        crown: destination.crown || false,
+        brand: destination.brand || '',
+        architects: architectsArray,
+        interior_designer: destination.interior_designer || '',
+        architectural_style: destination.architectural_style || '',
+        website: destination.website || '',
+        instagram_handle: destination.instagram_handle || '',
+        phone_number: destination.phone_number || '',
+        opentable_url: destination.opentable_url || '',
+        resy_url: destination.resy_url || '',
+        booking_url: destination.booking_url || '',
+        parent_destination_id: destination.parent_destination_id || null,
+      });
+      if (destination.image) setImagePreview(destination.image);
+    }
+  }, [isEditMode, destination]);
+
+  // Reset edit mode when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsEditMode(false);
+      setShowDeleteConfirm(false);
+      setImageFile(null);
+      setImagePreview(null);
+    }
+  }, [isOpen]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault(); e.stopPropagation(); setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return null;
+    setUploadingImage(true);
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', imageFile);
+      formDataToSend.append('slug', editFormData.slug || editFormData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const res = await fetch('/api/upload-image', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${session.access_token}` },
+        body: formDataToSend,
+      });
+
+      if (!res.ok) throw new Error((await res.json()).error || 'Upload failed');
+      return (await res.json()).url;
+    } catch (error: any) {
+      toast.error(`Image upload failed: ${error.message}`);
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editFormData.name || !editFormData.city || !editFormData.category) {
+      toast.error('Please fill in name, city, and category');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      let imageUrl = editFormData.image;
+      if (imageFile) {
+        const uploadedUrl = await uploadImage();
+        if (uploadedUrl) imageUrl = uploadedUrl;
+        else { setIsSaving(false); return; }
+      }
+
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const destinationData = {
+        slug: editFormData.slug || editFormData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        name: editFormData.name.trim(),
+        city: editFormData.city.trim(),
+        category: editFormData.category.trim(),
+        neighborhood: editFormData.neighborhood?.trim() || null,
+        micro_description: editFormData.micro_description?.trim() || null,
+        description: editFormData.description?.trim() || null,
+        content: editFormData.content?.trim() || null,
+        image: imageUrl || null,
+        michelin_stars: editFormData.michelin_stars || null,
+        crown: editFormData.crown || false,
+        brand: editFormData.brand?.trim() || null,
+        architect: editFormData.architects.length > 0 ? editFormData.architects.join(', ') : null,
+        interior_designer: editFormData.interior_designer?.trim() || null,
+        architectural_style: editFormData.architectural_style?.trim() || null,
+        website: editFormData.website?.trim() || null,
+        instagram_handle: editFormData.instagram_handle?.trim() || null,
+        phone_number: editFormData.phone_number?.trim() || null,
+        opentable_url: editFormData.opentable_url?.trim() || null,
+        resy_url: editFormData.resy_url?.trim() || null,
+        booking_url: editFormData.booking_url?.trim() || null,
+        parent_destination_id: editFormData.parent_destination_id || null,
+      };
+
+      const { error } = await supabase.from('destinations').update(destinationData).eq('slug', destination?.slug);
+
+      if (error) {
+        if (error.code === '23505') toast.error('A destination with this slug already exists');
+        else throw error;
+        return;
+      }
+
+      toast.success('Destination updated');
+      setIsEditMode(false);
+      onDestinationUpdate?.();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!destination?.slug) return;
+    if (!showDeleteConfirm) { setShowDeleteConfirm(true); return; }
+
+    setIsDeleting(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from('destinations').delete().eq('slug', destination.slug);
+      if (error) throw error;
+      toast.success('Destination deleted');
+      onClose();
+      onDestinationUpdate?.();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  const handleGooglePlaceSelect = async (placeDetails: any) => {
+    const placeId = placeDetails?.place_id || placeDetails?.placeId;
+    if (!placeId) return;
+
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const res = await fetch('/api/fetch-google-place', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+        body: JSON.stringify({ placeId }),
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch place details');
+      const data = await res.json();
+
+      if (data) {
+        setEditFormData(prev => ({
+          ...prev,
+          name: data.name ?? prev.name,
+          city: data.city ?? prev.city,
+          category: data.category ?? prev.category,
+          description: data.description ?? prev.description,
+          image: data.image ?? prev.image,
+        }));
+        if (data.image) setImagePreview(data.image);
+        setGooglePlaceQuery('');
+        toast.success('Place details loaded');
+      }
+    } catch (error) {
+      toast.error('Failed to load place details');
     }
   };
 
@@ -1195,7 +1452,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
         </button>
         <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-          {destination.name || 'Destination'}
+          {isEditMode ? 'Edit Destination' : (destination.name || 'Destination')}
         </h2>
       </div>
       {user && (
@@ -1205,20 +1462,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                if (onEdit) {
-                  onClose(); // Close the destination drawer
-                  onEdit(destination);
-                } else {
-                  // Fallback to admin page if no onEdit callback
-                  onClose();
-                  router.push(`/admin?slug=${destination.slug}`);
-                }
+                setIsEditMode(!isEditMode);
               }}
-              className="p-2 hover:bg-neutral-50 dark:hover:bg-white/5 rounded-lg transition-colors"
-              aria-label="Edit destination"
-              title="Edit destination (Admin)"
+              className={`p-2 rounded-lg transition-colors ${isEditMode ? 'bg-black dark:bg-white text-white dark:text-black' : 'hover:bg-neutral-50 dark:hover:bg-white/5'}`}
+              aria-label={isEditMode ? 'Exit edit mode' : 'Edit destination'}
+              title={isEditMode ? 'Exit edit mode' : 'Edit destination (Admin)'}
             >
-              <Edit className="h-4 w-4 text-gray-900 dark:text-white/90" strokeWidth={1.5} />
+              <Edit className={`h-4 w-4 ${isEditMode ? '' : 'text-gray-900 dark:text-white/90'}`} strokeWidth={1.5} />
             </button>
           )}
           {/* Bookmark Action */}
@@ -1471,6 +1721,335 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               </div>
             </div>
           )}
+
+          {/* EDIT MODE FORM */}
+          {isEditMode ? (
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              {/* Google Places Search */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Search Google Places</label>
+                <GooglePlacesAutocompleteNative
+                  value={googlePlaceQuery}
+                  onChange={setGooglePlaceQuery}
+                  onPlaceSelect={handleGooglePlaceSelect}
+                  placeholder="Search Google Places..."
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  types={['establishment']}
+                />
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Name *</label>
+                <input
+                  type="text"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                  required
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="Place name"
+                />
+              </div>
+
+              {/* City */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">City *</label>
+                <CityAutocompleteInput
+                  value={editFormData.city}
+                  onChange={(value) => setEditFormData(prev => ({ ...prev, city: value }))}
+                  placeholder="City"
+                  required
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Category *</label>
+                <CategoryAutocompleteInput
+                  value={editFormData.category}
+                  onChange={(value) => setEditFormData(prev => ({ ...prev, category: value }))}
+                  placeholder="Category"
+                  required
+                />
+              </div>
+
+              {/* Neighborhood */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Neighborhood</label>
+                <input
+                  type="text"
+                  value={editFormData.neighborhood}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, neighborhood: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="e.g., Shibuya, SoHo"
+                />
+              </div>
+
+              {/* Micro Description */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Micro Description</label>
+                <input
+                  type="text"
+                  value={editFormData.micro_description}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, micro_description: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="One-line description for cards"
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Description</label>
+                <textarea
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm resize-none"
+                  placeholder="Short description..."
+                />
+              </div>
+
+              {/* Content (longer form) */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Content</label>
+                <textarea
+                  value={editFormData.content}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, content: e.target.value }))}
+                  rows={5}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm resize-none"
+                  placeholder="Detailed content..."
+                />
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Image</label>
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`relative border-2 border-dashed rounded-xl p-4 transition-all ${
+                    isDragging ? 'border-black dark:border-white bg-gray-100 dark:bg-gray-800' : 'border-gray-300 dark:border-gray-700'
+                  }`}
+                >
+                  <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="edit-image-upload" />
+                  <label htmlFor="edit-image-upload" className="flex flex-col items-center cursor-pointer">
+                    {imagePreview ? (
+                      <div className="relative w-full">
+                        <img src={imagePreview} alt="Preview" className="w-full h-24 object-cover rounded-lg" />
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); setImageFile(null); setImagePreview(null); setEditFormData(prev => ({ ...prev, image: '' })); }}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-500">Drop image or click to upload</span>
+                    )}
+                  </label>
+                </div>
+                {uploadingImage && (
+                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                    <Loader2 className="h-3 w-3 animate-spin" /> Uploading...
+                  </div>
+                )}
+              </div>
+
+              {/* Michelin Stars */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Michelin Stars</label>
+                <select
+                  value={editFormData.michelin_stars || ''}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, michelin_stars: e.target.value ? parseInt(e.target.value) : null }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                >
+                  <option value="">None</option>
+                  <option value="1">1 Star</option>
+                  <option value="2">2 Stars</option>
+                  <option value="3">3 Stars</option>
+                </select>
+              </div>
+
+              {/* Crown */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="edit-crown"
+                  checked={editFormData.crown}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, crown: e.target.checked }))}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <label htmlFor="edit-crown" className="text-sm text-gray-600 dark:text-gray-400">Crown (Featured)</label>
+              </div>
+
+              {/* Brand */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Brand</label>
+                <input
+                  type="text"
+                  value={editFormData.brand}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, brand: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="e.g., Four Seasons, Aman"
+                />
+              </div>
+
+              {/* Architect */}
+              <ArchitectTagInput
+                label="Architects"
+                value={editFormData.architects}
+                onChange={(architects) => setEditFormData(prev => ({ ...prev, architects }))}
+                placeholder="Add architect..."
+              />
+
+              {/* Interior Designer */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Interior Designer</label>
+                <input
+                  type="text"
+                  value={editFormData.interior_designer}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, interior_designer: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="e.g., Kelly Wearstler"
+                />
+              </div>
+
+              {/* Architectural Style */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Architectural Style</label>
+                <input
+                  type="text"
+                  value={editFormData.architectural_style}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, architectural_style: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="e.g., Brutalist, Minimalist"
+                />
+              </div>
+
+              {/* Website */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Website</label>
+                <input
+                  type="url"
+                  value={editFormData.website}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, website: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="https://..."
+                />
+              </div>
+
+              {/* Instagram Handle */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Instagram Handle</label>
+                <input
+                  type="text"
+                  value={editFormData.instagram_handle}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, instagram_handle: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="@handle"
+                />
+              </div>
+
+              {/* Phone Number */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Phone Number</label>
+                <input
+                  type="tel"
+                  value={editFormData.phone_number}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="+1 234 567 8900"
+                />
+              </div>
+
+              {/* Booking URLs */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">OpenTable URL</label>
+                <input
+                  type="url"
+                  value={editFormData.opentable_url}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, opentable_url: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="https://opentable.com/..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Resy URL</label>
+                <input
+                  type="url"
+                  value={editFormData.resy_url}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, resy_url: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="https://resy.com/..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Booking URL</label>
+                <input
+                  type="url"
+                  value={editFormData.booking_url}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, booking_url: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="https://booking.com/..."
+                />
+              </div>
+
+              {/* Parent Destination */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Located In (Parent)</label>
+                <ParentDestinationAutocompleteInput
+                  value={editFormData.parent_destination_id}
+                  onChange={(id) => setEditFormData(prev => ({ ...prev, parent_destination_id: id }))}
+                  currentDestinationId={destination?.id}
+                  placeholder="Search parent location..."
+                />
+              </div>
+
+              {/* Delete Button */}
+              <div className="pt-4 border-t border-gray-200 dark:border-gray-800">
+                {showDeleteConfirm ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-center text-gray-600 dark:text-gray-400">Delete "{destination.name}"?</p>
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => setShowDeleteConfirm(false)} className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm">
+                        Cancel
+                      </button>
+                      <button type="button" onClick={handleDelete} disabled={isDeleting} className="flex-1 px-4 py-2 bg-red-600 text-white rounded-full text-sm">
+                        {isDeleting ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" onClick={handleDelete} className="w-full px-4 py-2 border border-red-300 text-red-600 rounded-full text-sm flex items-center justify-center gap-2">
+                    <Trash2 className="h-4 w-4" /> Delete Destination
+                  </button>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setIsEditMode(false)}
+                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-full text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving || !editFormData.name || !editFormData.city || !editFormData.category}
+                  className="flex-1 bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {isSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving...</> : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          ) : (
+          <>
           {/* Mobile Content - Same as Desktop */}
           <div className="md:hidden">
           {/* Hero Image - Full width rounded */}
@@ -1815,37 +2394,41 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Meta & Info Section - Same as Desktop */}
           <div className="space-y-6">
-            {/* Parent destination context */}
+            {/* Parent destination context - Horizontal card */}
             {parentDestination && (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  <LocatedInBadge
-                    parent={parentDestination}
-                    onClick={() => {
-                      if (parentDestination.slug && parentDestination.slug.trim()) {
-                        router.push(`/destination/${parentDestination.slug}`);
-                        onClose();
-                      }
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Located inside</p>
-                  <div className="max-w-xs">
-                    <DestinationCard
-                      destination={parentDestination}
-                      onClick={() => {
-                        if (parentDestination.slug && parentDestination.slug.trim()) {
-                          onClose();
-                          setTimeout(() => router.push(`/destination/${parentDestination.slug}`), 100);
-                        }
-                      }}
-                      showBadges={true}
+              <button
+                onClick={() => {
+                  if (parentDestination.slug && onDestinationClick) {
+                    onDestinationClick(parentDestination.slug);
+                  }
+                }}
+                className="w-full flex items-center gap-3 p-3 -mx-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group text-left"
+              >
+                {/* Square Image */}
+                <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  {parentDestination.image ? (
+                    <Image
+                      src={parentDestination.image}
+                      alt={parentDestination.name}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
                     />
-                  </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                      <MapPin className="h-6 w-6" />
+                    </div>
+                  )}
                 </div>
-              </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Located inside</p>
+                  <p className="font-medium text-sm text-black dark:text-white truncate group-hover:underline">{parentDestination.name}</p>
+                  {parentDestination.category && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{parentDestination.category}</p>
+                  )}
+                </div>
+              </button>
             )}
 
             {/* AI-Generated Tags */}
@@ -1960,9 +2543,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <div className="flex-1">
                     <div className="text-sm font-medium text-black dark:text-white mb-2">Location</div>
                     {/* Neighborhood, City, Country - Better organized */}
-                    {(destination.neighborhood || destination.city || destination.country) && (
+                    {((!parentDestination && destination.neighborhood) || destination.city || destination.country) && (
                       <div className="space-y-1 mb-2">
-                        {destination.neighborhood && (
+                        {!parentDestination && destination.neighborhood && (
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {destination.neighborhood}
                           </div>
@@ -2022,9 +2605,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       destinations={nestedDestinations}
                       parentName={destination.name}
                       onDestinationClick={(nested) => {
-                        if (nested.slug) {
-                          onClose();
-                          setTimeout(() => router.push(`/destination/${nested.slug}`), 100);
+                        if (nested.slug && onDestinationClick) {
+                          onDestinationClick(nested.slug);
                         }
                       }}
                     />
@@ -2576,37 +3158,41 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Meta & Info Section */}
           <div className="space-y-6">
-            {/* Parent destination context */}
+            {/* Parent destination context - Horizontal card */}
             {parentDestination && (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  <LocatedInBadge
-                    parent={parentDestination}
-                    onClick={() => {
-                      if (parentDestination.slug && parentDestination.slug.trim()) {
-                        router.push(`/destination/${parentDestination.slug}`);
-                        onClose();
-                      }
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Located inside</p>
-                  <div className="max-w-xs">
-                    <DestinationCard
-                      destination={parentDestination}
-                      onClick={() => {
-                        if (parentDestination.slug && parentDestination.slug.trim()) {
-                          onClose();
-                          setTimeout(() => router.push(`/destination/${parentDestination.slug}`), 100);
-                        }
-                      }}
-                      showBadges={true}
+              <button
+                onClick={() => {
+                  if (parentDestination.slug && onDestinationClick) {
+                    onDestinationClick(parentDestination.slug);
+                  }
+                }}
+                className="w-full flex items-center gap-3 p-3 -mx-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group text-left"
+              >
+                {/* Square Image */}
+                <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  {parentDestination.image ? (
+                    <Image
+                      src={parentDestination.image}
+                      alt={parentDestination.name}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
                     />
-                  </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                      <MapPin className="h-6 w-6" />
+                    </div>
+                  )}
                 </div>
-              </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Located inside</p>
+                  <p className="font-medium text-sm text-black dark:text-white truncate group-hover:underline">{parentDestination.name}</p>
+                  {parentDestination.category && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{parentDestination.category}</p>
+                  )}
+                </div>
+              </button>
             )}
 
             {/* AI-Generated Tags */}
@@ -2721,9 +3307,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <div className="flex-1">
                     <div className="text-sm font-medium text-black dark:text-white mb-2">Location</div>
                     {/* Neighborhood, City, Country - Better organized */}
-                    {(destination.neighborhood || destination.city || destination.country) && (
+                    {((!parentDestination && destination.neighborhood) || destination.city || destination.country) && (
                       <div className="space-y-1 mb-2">
-                        {destination.neighborhood && (
+                        {!parentDestination && destination.neighborhood && (
                           <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {destination.neighborhood}
                           </div>
@@ -2784,9 +3370,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       destinations={nestedDestinations}
                       parentName={destination.name}
                       onDestinationClick={(nested) => {
-                        if (nested.slug) {
-                          onClose();
-                          setTimeout(() => router.push(`/destination/${nested.slug}`), 100);
+                        if (nested.slug && onDestinationClick) {
+                          onDestinationClick(nested.slug);
                         }
                       }}
                     />
@@ -3013,6 +3598,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           )}
 
           </div>
+          </>
+          )}
         </div>
       </Drawer>
 
