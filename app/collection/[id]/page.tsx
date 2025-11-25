@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Plus, Trash2, Edit2, Globe, Lock } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Globe, Lock, MoreHorizontal } from 'lucide-react';
 import Image from 'next/image';
 import { PageLoader } from '@/components/LoadingStates';
 import { EmptyState } from '@/components/EmptyStates';
+import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
+import type { Destination } from '@/types/destination';
 
 // Helper function to capitalize city names
 function capitalizeCity(city: string): string {
@@ -23,7 +25,7 @@ export default function CollectionDetailPage() {
 
   const [user, setUser] = useState<any>(null);
   const [collection, setCollection] = useState<any>(null);
-  const [destinations, setDestinations] = useState<any[]>([]);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState('');
@@ -80,11 +82,11 @@ export default function CollectionDetailPage() {
           const slugs = (listItems as any[]).map((item: any) => item.destination_slug);
           const { data: destData } = await supabase
             .from('destinations')
-            .select('slug, name, city, category, image')
+            .select('*')
             .in('slug', slugs);
 
           if (destData) {
-            setDestinations(destData);
+            setDestinations(destData as Destination[]);
           }
         }
       } catch (error) {
@@ -157,6 +159,7 @@ export default function CollectionDetailPage() {
   };
 
   const handleRemoveDestination = async (slug: string) => {
+    if (!confirm('Remove this place from collection?')) return;
     try {
       const { error } = await supabase
         .from('list_items')
@@ -201,59 +204,68 @@ export default function CollectionDetailPage() {
   }
 
   return (
-    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
-      <div className="w-full">
-        {/* Header */}
+    <main className="w-full min-h-screen bg-white dark:bg-gray-950">
+      {/* Header Background */}
+      <div className="h-48 w-full bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800" />
+      
+      <div className="max-w-5xl mx-auto px-6 md:px-10 -mt-12">
+        {/* Header Content */}
         <div className="mb-12">
           <button
             onClick={() => router.push('/account')}
-            className="mb-6 text-xs text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+            className="mb-6 text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1"
             aria-label="Back to Account"
           >
-            ← Back
+            <ArrowLeft className="w-3 h-3" />
+            Back to Account
           </button>
 
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-4xl">{collection.emoji || '📚'}</span>
-                <h1 className="text-2xl font-light">{collection.name}</h1>
+              <div className="flex items-center gap-4 mb-4">
+                <div className="h-16 w-16 rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-center text-3xl">
+                  {collection.emoji || '📚'}
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{collection.name}</h1>
+                  <div className="flex items-center gap-3 text-xs text-gray-500 mt-1 font-medium">
+                    <span>{destinations.length} places</span>
+                    <span>•</span>
+                    <div className="flex items-center gap-1">
+                      {collection.is_public ? (
+                        <>
+                          <Globe className="h-3 w-3" />
+                          <span>Public</span>
+                        </>
+                      ) : (
+                        <>
+                          <Lock className="h-3 w-3" />
+                          <span>Private</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
+              
               {collection.description && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+                <p className="text-sm text-gray-600 dark:text-gray-300 max-w-2xl leading-relaxed">
                   {collection.description}
                 </p>
               )}
-              <div className="flex items-center gap-3 text-xs text-gray-400">
-                <span>{destinations.length} places</span>
-                <span>•</span>
-                <div className="flex items-center gap-1">
-                  {collection.is_public ? (
-                    <>
-                      <Globe className="h-3 w-3" />
-                      <span>Public</span>
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="h-3 w-3" />
-                      <span>Private</span>
-                    </>
-                  )}
-                </div>
-              </div>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowEditModal(true)}
-                className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:opacity-80 rounded-2xl transition-opacity text-xs font-medium flex items-center gap-2"
+                className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors text-xs font-medium flex items-center gap-2 shadow-sm"
               >
                 <Edit2 className="h-3 w-3" />
                 Edit
               </button>
               <button
                 onClick={handleDeleteCollection}
-                className="px-4 py-2 bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:opacity-80 rounded-2xl transition-opacity text-xs font-medium flex items-center gap-2"
+                className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 hover:border-red-100 dark:hover:border-red-900/30 rounded-xl transition-colors text-xs font-medium flex items-center gap-2 shadow-sm text-gray-600 dark:text-gray-400"
               >
                 <Trash2 className="h-3 w-3" />
                 Delete
@@ -262,59 +274,43 @@ export default function CollectionDetailPage() {
           </div>
         </div>
 
-        {/* Destinations Grid */}
-        {destinations.length === 0 ? (
-          <EmptyState
-            icon="🏞️"
-            title="No places in this collection yet"
-            description="Browse destinations and add them to this collection"
-            actionLabel="Browse Destinations"
-            actionHref="/"
-          />
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
-            {destinations.map((destination) => (
-              <div key={destination.slug} className="group relative">
-                <button
-                  onClick={() => router.push(`/destination/${destination.slug}`)}
-                  className="w-full text-left"
-                >
-                  <div className="relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 mb-2">
-                    {destination.image ? (
-                      <Image
-                        src={destination.image}
-                        alt={destination.name}
-                        fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-300"
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                        <span className="text-4xl">🏞️</span>
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="text-xs font-medium line-clamp-2 mb-1">{destination.name}</h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {capitalizeCity(destination.city)}
-                  </p>
-                </button>
-
-                {/* Remove button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleRemoveDestination(destination.slug);
-                  }}
-                  className="absolute top-2 right-2 p-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full hover:opacity-80 transition-opacity opacity-0 group-hover:opacity-100"
-                  title="Remove from collection"
-                >
-                  <Trash2 className="h-3 w-3 text-red-600" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Destinations List */}
+        <div className="space-y-4 pb-20">
+          {destinations.length === 0 ? (
+            <EmptyState
+              icon="🏞️"
+              title="No places in this collection yet"
+              description="Browse destinations and add them to this collection"
+              actionLabel="Browse Destinations"
+              actionHref="/"
+            />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {destinations.map((destination) => (
+                <div key={destination.slug} className="relative group">
+                  <HorizontalDestinationCard
+                    destination={destination}
+                    onClick={() => router.push(`/destination/${destination.slug}`)}
+                    showBadges={true}
+                    className="pr-12" // Make room for delete button
+                  />
+                  
+                  {/* Remove button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveDestination(destination.slug);
+                    }}
+                    className="absolute top-1/2 -translate-y-1/2 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    title="Remove from collection"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Edit Collection Modal */}
@@ -324,59 +320,59 @@ export default function CollectionDetailPage() {
           onClick={() => setShowEditModal(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md"
+            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-100 dark:border-gray-800"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-light">Edit Collection</h2>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold">Edit Collection</h2>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="p-2 hover:opacity-60 transition-opacity"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
               >
-                <span className="text-lg">×</span>
+                <span className="text-xl leading-none">&times;</span>
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
               <div>
-                <label className="block text-xs font-medium mb-2">Collection Name *</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Name</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm"
                   maxLength={50}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-2">Description</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Description</label>
                 <textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none text-sm"
                   maxLength={200}
                 />
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 py-2">
                 <input
                   type="checkbox"
                   id="edit-public"
                   checked={editPublic}
                   onChange={(e) => setEditPublic(e.target.checked)}
-                  className="rounded"
+                  className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
                 />
-                <label htmlFor="edit-public" className="text-xs">
+                <label htmlFor="edit-public" className="text-sm font-medium cursor-pointer">
                   Make this collection public
                 </label>
               </div>
 
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
+                  className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
                   disabled={updating}
                 >
                   Cancel
@@ -384,7 +380,7 @@ export default function CollectionDetailPage() {
                 <button
                   onClick={handleUpdateCollection}
                   disabled={!editName.trim() || updating}
-                  className="flex-1 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                 >
                   {updating ? 'Saving...' : 'Save Changes'}
                 </button>
