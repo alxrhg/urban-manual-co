@@ -49,6 +49,7 @@ import FlightStatusCard from '@/components/trips/FlightStatusCard';
 import DayTimelineAnalysis from '@/components/trips/DayTimelineAnalysis';
 import CrowdIndicator from '@/components/trips/CrowdIndicator';
 import TransitOptions from '@/components/trips/TransitOptions';
+import AvailabilityAlert from '@/components/trips/AvailabilityAlert';
 import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
 import { formatTripDate, parseDateString } from '@/lib/utils';
 import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
@@ -741,14 +742,14 @@ export default function TripPage() {
                                         <span>~{formatDuration(estimatedDuration)}</span>
                                       </div>
 
-                                      {/* Crowd indicator */}
+                                      {/* Wait time indicator */}
                                       {item.time && (
-                                        <CrowdIndicator
+                                        <AvailabilityAlert
+                                          placeName={item.title}
                                           category={category}
                                           scheduledTime={item.time}
                                           scheduledDate={currentDay.date}
                                           compact
-                                          onTimeClick={(time) => updateItemTime(item.id, time)}
                                         />
                                       )}
                                     </>
@@ -773,14 +774,15 @@ export default function TripPage() {
                               </button>
                             </div>
 
-                            {/* Expanded crowd prediction */}
+                            {/* Availability & Wait Time Alert */}
                             {!isFlight && item.time && (
                               <div className="px-3 pb-3">
-                                <CrowdIndicator
+                                <AvailabilityAlert
+                                  placeName={item.title}
                                   category={category}
                                   scheduledTime={item.time}
                                   scheduledDate={currentDay.date}
-                                  onTimeClick={(time) => updateItemTime(item.id, time)}
+                                  onTimeChange={(time) => updateItemTime(item.id, time)}
                                 />
                               </div>
                             )}

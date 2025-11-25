@@ -506,3 +506,205 @@ export function suggestWeatherSwaps(
 
   return suggestions;
 }
+
+/**
+ * Real-time availability estimation
+ * Predicts wait times and suggests alternatives
+ */
+export interface AvailabilityPrediction {
+  hasWait: boolean;
+  waitMinutes: number;
+  waitLabel: string;
+  requiresReservation: boolean;
+  reservationDifficulty: 'easy' | 'moderate' | 'hard' | 'very_hard';
+  suggestion?: string;
+  alternativeTime?: string;
+  alternativeTimeWait?: number;
+}
+
+// Categories that typically require reservations
+const RESERVATION_CATEGORIES = new Set([
+  'fine dining',
+  'michelin',
+  'omakase',
+  'tasting menu',
+  'upscale restaurant',
+  'high-end restaurant',
+]);
+
+// Categories with typical wait times
+const WAIT_TIME_CATEGORIES: Record<string, { base: number; peakMultiplier: number }> = {
+  'restaurant': { base: 15, peakMultiplier: 4 },
+  'fine dining': { base: 0, peakMultiplier: 1 }, // Reservation required
+  'cafe': { base: 5, peakMultiplier: 3 },
+  'coffee shop': { base: 5, peakMultiplier: 2 },
+  'bakery': { base: 10, peakMultiplier: 3 },
+  'brunch': { base: 30, peakMultiplier: 3 },
+  'ramen': { base: 20, peakMultiplier: 4 },
+  'sushi': { base: 15, peakMultiplier: 3 },
+  'pizza': { base: 15, peakMultiplier: 2.5 },
+  'bar': { base: 0, peakMultiplier: 2 },
+  'museum': { base: 10, peakMultiplier: 3 },
+  'attraction': { base: 20, peakMultiplier: 4 },
+  'theme park': { base: 30, peakMultiplier: 5 },
+};
+
+export function predictAvailability(
+  category?: string | null,
+  scheduledTime?: string | null,
+  dayOfWeek?: number, // 0 = Sunday, 6 = Saturday
+  popularity?: number // 0-100, optional popularity score
+): AvailabilityPrediction {
+  const normalizedCategory = (category || '').toLowerCase();
+  const hour = scheduledTime ? parseInt(scheduledTime.split(':')[0], 10) : 12;
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const isFriday = dayOfWeek === 5;
+
+  // Check if reservation is required
+  let requiresReservation = false;
+  for (const resCategory of RESERVATION_CATEGORIES) {
+    if (normalizedCategory.includes(resCategory)) {
+      requiresReservation = true;
+      break;
+    }
+  }
+
+  // Find matching wait time category
+  let waitConfig = { base: 10, peakMultiplier: 2 };
+  for (const [cat, config] of Object.entries(WAIT_TIME_CATEGORIES)) {
+    if (normalizedCategory.includes(cat)) {
+      waitConfig = config;
+      break;
+    }
+  }
+
+  // Calculate peak factor based on time
+  let peakFactor = 1;
+
+  // Restaurant peak times
+  if (normalizedCategory.includes('restaurant') || normalizedCategory.includes('dining')) {
+    // Lunch peak: 12-14
+    if (hour >= 12 && hour < 14) peakFactor = 2.5;
+    // Dinner peak: 19-21
+    else if (hour >= 19 && hour < 21) peakFactor = 3;
+    // Early dinner: 17-19
+    else if (hour >= 17 && hour < 19) peakFactor = 1.5;
+    // Off-peak: 14-17
+    else if (hour >= 14 && hour < 17) peakFactor = 0.5;
+  }
+  // Brunch peak
+  else if (normalizedCategory.includes('brunch')) {
+    if (isWeekend && hour >= 10 && hour < 14) peakFactor = 3;
+  }
+  // Cafe peaks
+  else if (normalizedCategory.includes('cafe') || normalizedCategory.includes('coffee')) {
+    if (hour >= 8 && hour < 10) peakFactor = 2;
+    else if (hour >= 14 && hour < 16) peakFactor = 1.5;
+  }
+  // Museum/attraction peaks
+  else if (normalizedCategory.includes('museum') || normalizedCategory.includes('attraction')) {
+    if (hour >= 11 && hour < 15) peakFactor = 2;
+  }
+
+  // Weekend/Friday adjustment
+  if (isWeekend) peakFactor *= 1.5;
+  else if (isFriday && hour >= 18) peakFactor *= 1.3;
+
+  // Popularity adjustment
+  if (popularity) {
+    peakFactor *= (0.5 + (popularity / 100));
+  }
+
+  // Calculate wait time
+  let waitMinutes = Math.round(waitConfig.base * peakFactor);
+
+  // Cap wait time reasonably
+  waitMinutes = Math.min(waitMinutes, 120);
+
+  // Generate wait label
+  let waitLabel: string;
+  if (waitMinutes === 0) waitLabel = 'No wait expected';
+  else if (waitMinutes <= 10) waitLabel = 'Short wait (~10 min)';
+  else if (waitMinutes <= 20) waitLabel = '15-20 min wait';
+  else if (waitMinutes <= 30) waitLabel = '20-30 min wait';
+  else if (waitMinutes <= 45) waitLabel = '30-45 min wait';
+  else if (waitMinutes <= 60) waitLabel = '45-60 min wait';
+  else if (waitMinutes <= 90) waitLabel = '1-1.5 hour wait';
+  else waitLabel = '1.5-2 hour wait';
+
+  // Reservation difficulty
+  let reservationDifficulty: AvailabilityPrediction['reservationDifficulty'] = 'easy';
+  if (requiresReservation) {
+    if (peakFactor > 2.5) reservationDifficulty = 'very_hard';
+    else if (peakFactor > 2) reservationDifficulty = 'hard';
+    else if (peakFactor > 1.5) reservationDifficulty = 'moderate';
+  }
+
+  // Generate suggestions
+  let suggestion: string | undefined;
+  let alternativeTime: string | undefined;
+  let alternativeTimeWait: number | undefined;
+
+  if (waitMinutes > 30 || reservationDifficulty === 'hard' || reservationDifficulty === 'very_hard') {
+    // Find a better time
+    const betterTimes: { time: string; factor: number }[] = [];
+
+    if (normalizedCategory.includes('restaurant') || normalizedCategory.includes('dining')) {
+      betterTimes.push(
+        { time: '17:30', factor: 0.6 },
+        { time: '14:30', factor: 0.4 },
+        { time: '21:30', factor: 0.7 },
+      );
+    } else if (normalizedCategory.includes('brunch')) {
+      betterTimes.push(
+        { time: '09:00', factor: 0.5 },
+        { time: '14:30', factor: 0.6 },
+      );
+    } else if (normalizedCategory.includes('museum')) {
+      betterTimes.push(
+        { time: '09:00', factor: 0.4 },
+        { time: '16:00', factor: 0.5 },
+      );
+    } else {
+      betterTimes.push(
+        { time: '09:00', factor: 0.5 },
+        { time: '15:00', factor: 0.6 },
+      );
+    }
+
+    // Find best alternative
+    const best = betterTimes.sort((a, b) => a.factor - b.factor)[0];
+    if (best) {
+      alternativeTime = best.time;
+      alternativeTimeWait = Math.round(waitConfig.base * best.factor);
+
+      if (requiresReservation) {
+        suggestion = `This restaurant usually has a ${waitLabel.toLowerCase()} at ${scheduledTime}. Try booking for ${alternativeTime} instead.`;
+      } else {
+        suggestion = `Expect a ${waitLabel.toLowerCase()} at ${scheduledTime}. Try arriving at ${alternativeTime} for a shorter ${alternativeTimeWait < 10 ? 'wait' : `${alternativeTimeWait} min wait`}.`;
+      }
+    }
+  }
+
+  return {
+    hasWait: waitMinutes > 10,
+    waitMinutes,
+    waitLabel,
+    requiresReservation,
+    reservationDifficulty,
+    suggestion,
+    alternativeTime,
+    alternativeTimeWait,
+  };
+}
+
+/**
+ * Find alternative places in the same category
+ */
+export interface AlternativePlace {
+  slug: string;
+  name: string;
+  category: string;
+  waitEstimate: string;
+  reason: string;
+}
