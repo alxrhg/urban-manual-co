@@ -93,7 +93,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
 
       <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-24">
         <div className="px-5 sm:px-6 py-6 space-y-6">
-          <div className="um-glass p-6">
+          <div className="rounded-3xl border border-black/5 dark:border-white/10 bg-white dark:bg-[#0f0f0f] p-6">
             <p className="text-[15px] font-semibold text-gray-900 dark:text-white">
               Sign in to sync saved places, trips, and AI recommendations across every device.
             </p>
@@ -228,7 +228,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
         </div>
       </div>
 
-      <DrawerActionBar className="flex-col gap-1 text-center bg-white/95 dark:bg-gray-950/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur border-t border-black/5 dark:border-white/10">
+      <DrawerActionBar className="flex-col gap-1 text-center bg-transparent border-none shadow-none">
         <p className="text-xs text-gray-500 dark:text-gray-400">
           By continuing, you agree to our{' '}
           <a href="/privacy" className="underline decoration-dotted decoration-gray-400 dark:decoration-white/40 hover:text-gray-900 dark:hover:text-white">

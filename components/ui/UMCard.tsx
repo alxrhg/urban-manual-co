@@ -26,10 +26,9 @@ export default function UMCard({ className, children, onClick }: UMCardProps) {
       onClick={onClick}
       className={cn(
         "rounded-[20px] border border-black/5 dark:border-white/10",
-        "bg-white/95 dark:bg-white/[0.04]",
-        "shadow-[0_18px_50px_rgba(15,23,42,0.08)]",
-        "transition-shadow duration-300",
-        onClick && "cursor-pointer text-left w-full hover:shadow-[0_25px_65px_rgba(15,23,42,0.12)]",
+        "bg-white dark:bg-[#0f0f0f]",
+        "transition-colors duration-200",
+        onClick && "cursor-pointer text-left w-full hover:border-black/20 dark:hover:border-white/40",
         className
       )}
     >
