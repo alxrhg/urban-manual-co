@@ -13,6 +13,39 @@ interface TripSettingsDrawerProps {
   onDelete?: () => void;
 }
 
+// Format date string for HTML date input (YYYY-MM-DD format)
+function formatDateForInput(dateStr: string | null | undefined): string {
+  if (!dateStr) return '';
+  try {
+    // If already in YYYY-MM-DD format, return as-is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return dateStr;
+    }
+    // Parse date string directly to avoid timezone issues
+    const parts = dateStr.split(/[-/]/);
+    if (parts.length === 3) {
+      const year = parts[0].length === 4 ? parts[0] : parts[2];
+      const month = parts[0].length === 4 ? parts[1] : parts[0];
+      const day = parts[0].length === 4 ? parts[2] : parts[1];
+      // Validate and format
+      if (year.length === 4 && month.length <= 2 && day.length <= 2) {
+        return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+    }
+    // Fallback: parse as Date and use local date components
+    const date = new Date(dateStr);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return '';
+  } catch {
+    return '';
+  }
+}
+
 export default function TripSettingsDrawer({
   trip,
   onUpdate,
@@ -22,8 +55,8 @@ export default function TripSettingsDrawer({
   const { user } = useAuth();
   const [title, setTitle] = useState(trip.title);
   const [destination, setDestination] = useState(trip.destination || '');
-  const [startDate, setStartDate] = useState(trip.start_date || '');
-  const [endDate, setEndDate] = useState(trip.end_date || '');
+  const [startDate, setStartDate] = useState(formatDateForInput(trip.start_date));
+  const [endDate, setEndDate] = useState(formatDateForInput(trip.end_date));
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
