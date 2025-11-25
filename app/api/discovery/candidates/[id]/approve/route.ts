@@ -74,7 +74,7 @@ export async function POST(
         candidate.name,
         candidate.city,
         candidate.category,
-        null // no existing description
+        undefined // no existing description
       );
     } catch (enrichError) {
       console.warn("[Approve] Enrichment failed, proceeding with basic data:", enrichError);
