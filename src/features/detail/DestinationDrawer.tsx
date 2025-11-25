@@ -42,7 +42,7 @@ import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
-import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
+import { NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
@@ -2383,37 +2383,41 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Meta & Info Section - Same as Desktop */}
           <div className="space-y-6">
-            {/* Parent destination context */}
+            {/* Parent destination context - Horizontal card */}
             {parentDestination && (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  <LocatedInBadge
-                    parent={parentDestination}
-                    onClick={() => {
-                      if (parentDestination.slug && parentDestination.slug.trim()) {
-                        router.push(`/destination/${parentDestination.slug}`);
-                        onClose();
-                      }
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Located inside</p>
-                  <div className="max-w-xs">
-                    <DestinationCard
-                      destination={parentDestination}
-                      onClick={() => {
-                        if (parentDestination.slug && parentDestination.slug.trim()) {
-                          onClose();
-                          setTimeout(() => router.push(`/destination/${parentDestination.slug}`), 100);
-                        }
-                      }}
-                      showBadges={true}
+              <button
+                onClick={() => {
+                  if (parentDestination.slug && onDestinationClick) {
+                    onDestinationClick(parentDestination.slug);
+                  }
+                }}
+                className="w-full flex items-center gap-3 p-3 -mx-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group text-left"
+              >
+                {/* Square Image */}
+                <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  {parentDestination.image ? (
+                    <Image
+                      src={parentDestination.image}
+                      alt={parentDestination.name}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
                     />
-                  </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                      <MapPin className="h-6 w-6" />
+                    </div>
+                  )}
                 </div>
-              </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Located inside</p>
+                  <p className="font-medium text-sm text-black dark:text-white truncate group-hover:underline">{parentDestination.name}</p>
+                  {parentDestination.category && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{parentDestination.category}</p>
+                  )}
+                </div>
+              </button>
             )}
 
             {/* AI-Generated Tags */}
@@ -2590,9 +2594,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       destinations={nestedDestinations}
                       parentName={destination.name}
                       onDestinationClick={(nested) => {
-                        if (nested.slug) {
-                          onClose();
-                          setTimeout(() => router.push(`/destination/${nested.slug}`), 100);
+                        if (nested.slug && onDestinationClick) {
+                          onDestinationClick(nested.slug);
                         }
                       }}
                     />
@@ -3144,37 +3147,41 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
 
           {/* Meta & Info Section */}
           <div className="space-y-6">
-            {/* Parent destination context */}
+            {/* Parent destination context - Horizontal card */}
             {parentDestination && (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  <LocatedInBadge
-                    parent={parentDestination}
-                    onClick={() => {
-                      if (parentDestination.slug && parentDestination.slug.trim()) {
-                        router.push(`/destination/${parentDestination.slug}`);
-                        onClose();
-                      }
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Located inside</p>
-                  <div className="max-w-xs">
-                    <DestinationCard
-                      destination={parentDestination}
-                      onClick={() => {
-                        if (parentDestination.slug && parentDestination.slug.trim()) {
-                          onClose();
-                          setTimeout(() => router.push(`/destination/${parentDestination.slug}`), 100);
-                        }
-                      }}
-                      showBadges={true}
+              <button
+                onClick={() => {
+                  if (parentDestination.slug && onDestinationClick) {
+                    onDestinationClick(parentDestination.slug);
+                  }
+                }}
+                className="w-full flex items-center gap-3 p-3 -mx-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group text-left"
+              >
+                {/* Square Image */}
+                <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                  {parentDestination.image ? (
+                    <Image
+                      src={parentDestination.image}
+                      alt={parentDestination.name}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
                     />
-                  </div>
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                      <MapPin className="h-6 w-6" />
+                    </div>
+                  )}
                 </div>
-              </div>
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Located inside</p>
+                  <p className="font-medium text-sm text-black dark:text-white truncate group-hover:underline">{parentDestination.name}</p>
+                  {parentDestination.category && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{parentDestination.category}</p>
+                  )}
+                </div>
+              </button>
             )}
 
             {/* AI-Generated Tags */}
@@ -3352,9 +3359,8 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                       destinations={nestedDestinations}
                       parentName={destination.name}
                       onDestinationClick={(nested) => {
-                        if (nested.slug) {
-                          onClose();
-                          setTimeout(() => router.push(`/destination/${nested.slug}`), 100);
+                        if (nested.slug && onDestinationClick) {
+                          onDestinationClick(nested.slug);
                         }
                       }}
                     />
