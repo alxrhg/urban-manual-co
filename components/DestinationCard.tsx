@@ -7,6 +7,7 @@ import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
 import { DestinationBadges } from './DestinationBadges';
+import { QuickActions } from './QuickActions';
 
 interface DestinationCardProps {
   destination: Destination;
@@ -14,7 +15,9 @@ interface DestinationCardProps {
   index?: number;
   isVisited?: boolean;
   showBadges?: boolean;
+  showQuickActions?: boolean;
   className?: string;
+  onAddToTrip?: () => void;
 }
 
 /**
@@ -27,7 +30,9 @@ export const DestinationCard = memo(function DestinationCard({
   index = 0,
   isVisited = false,
   showBadges = true,
+  showQuickActions = true,
   className = '',
+  onAddToTrip,
 }: DestinationCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -135,6 +140,28 @@ export const DestinationCard = memo(function DestinationCard({
             pointer-events-none
           `}
         />
+
+        {/* Quick Actions - Top Right on Hover */}
+        {showQuickActions && destination.slug && (
+          <div
+            className={`
+              absolute top-2 right-2 z-20
+              opacity-0 group-hover:opacity-100
+              translate-y-1 group-hover:translate-y-0
+              transition-all duration-200
+            `}
+          >
+            <QuickActions
+              destinationId={destination.id}
+              destinationSlug={destination.slug}
+              destinationName={destination.name}
+              destinationCity={destination.city}
+              showAddToTrip={true}
+              compact
+              onAddToTrip={onAddToTrip}
+            />
+          </div>
+        )}
 
         {/* Visited Check Badge - Center */}
         {isVisited && (
