@@ -30,19 +30,22 @@ export function SplitPaneLayout({ children }: SplitPaneLayoutProps) {
         )}
       >
         <div className="flex-1 min-w-0">{children}</div>
-        <div className="hidden lg:block flex-none sticky top-0 h-screen">
+        <div className="hidden lg:flex flex-none">
           <div
-            ref={paneRef}
             className={clsx(
-              'h-full transition-[width,opacity,transform] duration-300 ease-out',
+              'sticky top-6 w-full transition-[opacity,transform] duration-300 ease-out pr-6',
               isPaneOpen ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-6 pointer-events-none'
             )}
             style={{
               width: isPaneOpen ? paneWidth : 0,
               maxWidth: paneWidth,
-              height: '100%',
             }}
-          />
+          >
+            <div
+              ref={paneRef}
+              className="h-[calc(100vh-3rem)] min-h-[400px]"
+            />
+          </div>
         </div>
       </div>
     </div>
