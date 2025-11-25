@@ -33,7 +33,7 @@ export function NestedDestinations({ destinations, parentName, onDestinationClic
     <div className="space-y-4">
       <div className="flex items-center gap-2">
         <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-          {parentName ? `Located in ${parentName}` : 'Nested Destinations'}
+          {parentName ? `Inside ${parentName}` : 'Venues Here'}
         </h3>
         <span className="text-xs text-gray-500 dark:text-gray-400">
           {destinations.length} {destinations.length === 1 ? 'venue' : 'venues'}
