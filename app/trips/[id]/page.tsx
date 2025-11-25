@@ -10,8 +10,11 @@ import { useDrawerStore } from '@/lib/stores/drawer-store';
 import {
   ArrowLeft,
   Calendar,
+  Clock,
   Loader2,
   MapPin,
+  Navigation,
+  Plane,
   Plus,
   Settings,
   Trash2,
@@ -19,13 +22,14 @@ import {
 import { PageLoader } from '@/components/LoadingStates';
 import UMActionPill from '@/components/ui/UMActionPill';
 import { formatTripDate, parseDateString } from '@/lib/utils';
-import type { Trip, ItineraryItem } from '@/types/trip';
+import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData } from '@/types/trip';
+import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 
 interface TripDay {
   dayNumber: number;
   date: string | null;
-  items: (ItineraryItem & { destination?: Destination })[];
+  items: (ItineraryItem & { destination?: Destination; parsedNotes?: ItineraryItemNotes })[];
 }
 
 export default function TripPage() {
@@ -98,6 +102,7 @@ export default function TripPage() {
             destination: item.destination_slug
               ? destinationsMap.get(item.destination_slug)
               : undefined,
+            parsedNotes: parseItineraryNotes(item.notes),
           }));
 
         daysArray.push({
@@ -153,6 +158,15 @@ export default function TripPage() {
       const currentDay = days.find((d) => d.dayNumber === dayNumber);
       const orderIndex = currentDay?.items.length || 0;
 
+      // Store location data and category in notes
+      const notesData: ItineraryItemNotes = {
+        type: 'place',
+        latitude: destination.latitude,
+        longitude: destination.longitude,
+        category: destination.category,
+        image: destination.image_thumbnail || destination.image,
+      };
+
       const { error } = await supabase.from('itinerary_items').insert({
         trip_id: trip.id,
         destination_slug: destination.slug,
@@ -160,12 +174,72 @@ export default function TripPage() {
         order_index: orderIndex,
         title: destination.name,
         description: destination.city,
+        notes: stringifyItineraryNotes(notesData),
       });
 
       if (error) throw error;
       fetchTrip();
     } catch (err) {
       console.error('Error adding item:', err);
+    }
+  };
+
+  const addFlight = async (dayNumber: number, flightData: FlightData) => {
+    if (!trip || !user) return;
+
+    try {
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const currentDay = days.find((d) => d.dayNumber === dayNumber);
+      const orderIndex = currentDay?.items.length || 0;
+
+      const notesData: ItineraryItemNotes = {
+        type: 'flight',
+        airline: flightData.airline,
+        flightNumber: flightData.flightNumber,
+        from: flightData.from,
+        to: flightData.to,
+        departureDate: flightData.departureDate,
+        departureTime: flightData.departureTime,
+        arrivalDate: flightData.arrivalDate,
+        arrivalTime: flightData.arrivalTime,
+        confirmationNumber: flightData.confirmationNumber,
+        raw: flightData.notes,
+      };
+
+      const { error } = await supabase.from('itinerary_items').insert({
+        trip_id: trip.id,
+        destination_slug: null,
+        day: dayNumber,
+        order_index: orderIndex,
+        time: flightData.departureTime,
+        title: `${flightData.airline} ${flightData.flightNumber || 'Flight'}`,
+        description: `${flightData.from} → ${flightData.to}`,
+        notes: stringifyItineraryNotes(notesData),
+      });
+
+      if (error) throw error;
+      fetchTrip();
+    } catch (err) {
+      console.error('Error adding flight:', err);
+    }
+  };
+
+  const updateItemTime = async (itemId: string, time: string) => {
+    try {
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { error } = await supabase
+        .from('itinerary_items')
+        .update({ time })
+        .eq('id', itemId);
+
+      if (error) throw error;
+      fetchTrip();
+    } catch (err) {
+      console.error('Error updating time:', err);
     }
   };
 
@@ -193,6 +267,47 @@ export default function TripPage() {
       city: trip?.destination,
       onSelect: (destination: Destination) => addItem(dayNumber, destination),
     });
+  };
+
+  const openFlightDrawer = (dayNumber: number) => {
+    openDrawer('add-flight', {
+      tripId: trip?.id,
+      dayNumber,
+      onAdd: (flightData: FlightData) => addFlight(dayNumber, flightData),
+    });
+  };
+
+  // Calculate travel time estimate between two coordinates (simple approximation)
+  const estimateTravelTime = (
+    lat1: number | undefined,
+    lon1: number | undefined,
+    lat2: number | undefined,
+    lon2: number | undefined
+  ): { time: string; distance: string } | null => {
+    if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+
+    // Haversine formula for distance
+    const R = 6371; // Earth's radius in km
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const distance = R * c;
+
+    // Estimate time: ~30km/h average city speed
+    const timeMinutes = Math.round((distance / 30) * 60);
+
+    if (distance < 0.5) return null; // Too close, skip
+
+    return {
+      time: timeMinutes < 60 ? `${timeMinutes} min` : `${Math.round(timeMinutes / 60)}h ${timeMinutes % 60}m`,
+      distance: distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`,
+    };
   };
 
   if (loading) {
@@ -312,74 +427,138 @@ export default function TripPage() {
             {/* Section Header */}
             <div className="flex items-center justify-between">
               <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                {currentDay.items.length} {currentDay.items.length === 1 ? 'place' : 'places'}
+                {currentDay.items.length} {currentDay.items.length === 1 ? 'item' : 'items'}
               </h2>
-              <UMActionPill onClick={() => openPlaceSelector(selectedDay)}>
-                <Plus className="w-4 h-4 mr-1" />
-                Add Place
-              </UMActionPill>
+              <div className="flex gap-2">
+                <UMActionPill onClick={() => openFlightDrawer(selectedDay)}>
+                  <Plane className="w-4 h-4 mr-1" />
+                  Add Flight
+                </UMActionPill>
+                <UMActionPill onClick={() => openPlaceSelector(selectedDay)}>
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Place
+                </UMActionPill>
+              </div>
             </div>
 
-            {/* Places List */}
+            {/* Items List */}
             {currentDay.items.length > 0 ? (
-              <div className="space-y-2">
-                {currentDay.items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors group"
-                  >
-                    {/* Image */}
-                    <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                      {item.destination?.image || item.destination?.image_thumbnail ? (
-                        <Image
-                          src={item.destination.image_thumbnail || item.destination.image || ''}
-                          alt={item.title}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <MapPin className="w-5 h-5 text-gray-400" />
-                        </div>
-                      )}
-                    </div>
+              <div className="space-y-1">
+                {currentDay.items.map((item, index) => {
+                  const isFlight = item.parsedNotes?.type === 'flight';
+                  const prevItem = index > 0 ? currentDay.items[index - 1] : null;
 
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{item.title}</div>
-                      {item.description && (
-                        <div className="text-xs text-gray-500 mt-0.5 truncate">
-                          {item.description}
-                        </div>
-                      )}
-                      {item.destination?.category && (
-                        <div className="text-xs text-gray-400 mt-0.5">
-                          {item.destination.category}
-                        </div>
-                      )}
-                    </div>
+                  // Calculate travel time from previous item
+                  let travelInfo = null;
+                  if (prevItem && !isFlight && prevItem.parsedNotes?.type !== 'flight') {
+                    const prevLat = prevItem.parsedNotes?.latitude || prevItem.destination?.latitude;
+                    const prevLon = prevItem.parsedNotes?.longitude || prevItem.destination?.longitude;
+                    const currLat = item.parsedNotes?.latitude || item.destination?.latitude;
+                    const currLon = item.parsedNotes?.longitude || item.destination?.longitude;
+                    travelInfo = estimateTravelTime(prevLat, prevLon, currLat, currLon);
+                  }
 
-                    {/* Remove */}
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                  return (
+                    <div key={item.id}>
+                      {/* Travel Time Indicator */}
+                      {travelInfo && (
+                        <div className="flex items-center gap-2 py-2 px-4 text-xs text-gray-400">
+                          <Navigation className="w-3 h-3" />
+                          <span>{travelInfo.time}</span>
+                          <span className="opacity-60">({travelInfo.distance})</span>
+                        </div>
+                      )}
+
+                      {/* Item Card */}
+                      <div
+                        className={`flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors group ${
+                          isFlight ? 'bg-blue-50/50 dark:bg-blue-900/20' : ''
+                        }`}
+                      >
+                        {/* Time Input */}
+                        <div className="w-16 flex-shrink-0">
+                          <input
+                            type="time"
+                            value={item.time || ''}
+                            onChange={(e) => updateItemTime(item.id, e.target.value)}
+                            className="w-full text-xs text-center bg-transparent border border-gray-200 dark:border-gray-700 rounded-lg py-1 px-1 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+                            placeholder="--:--"
+                          />
+                        </div>
+
+                        {/* Icon/Image */}
+                        <div className={`relative w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden ${
+                          isFlight ? 'bg-blue-100 dark:bg-blue-800' : 'bg-gray-100 dark:bg-gray-800'
+                        }`}>
+                          {isFlight ? (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Plane className="w-5 h-5 text-blue-500" />
+                            </div>
+                          ) : item.destination?.image || item.destination?.image_thumbnail ? (
+                            <Image
+                              src={item.destination.image_thumbnail || item.destination.image || ''}
+                              alt={item.title}
+                              fill
+                              className="object-cover"
+                              sizes="48px"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <MapPin className="w-5 h-5 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium truncate">{item.title}</div>
+                          {item.description && (
+                            <div className="text-xs text-gray-500 mt-0.5 truncate">
+                              {item.description}
+                            </div>
+                          )}
+                          {isFlight && item.parsedNotes?.departureTime && (
+                            <div className="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 mt-0.5">
+                              <Clock className="w-3 h-3" />
+                              {item.parsedNotes.departureTime}
+                              {item.parsedNotes.arrivalTime && ` → ${item.parsedNotes.arrivalTime}`}
+                            </div>
+                          )}
+                          {!isFlight && (item.destination?.category || item.parsedNotes?.category) && (
+                            <div className="text-xs text-gray-400 mt-0.5">
+                              {item.destination?.category || item.parsedNotes?.category}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Remove */}
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="p-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
                 <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <MapPin className="w-5 h-5 text-gray-400" />
                 </div>
-                <p className="text-sm text-gray-500 mb-4">No places added to this day</p>
-                <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add First Place
-                </UMActionPill>
+                <p className="text-sm text-gray-500 mb-4">No items added to this day</p>
+                <div className="flex justify-center gap-2">
+                  <UMActionPill onClick={() => openFlightDrawer(selectedDay)}>
+                    <Plane className="w-4 h-4 mr-1" />
+                    Add Flight
+                  </UMActionPill>
+                  <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)}>
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Place
+                  </UMActionPill>
+                </div>
               </div>
             )}
           </div>

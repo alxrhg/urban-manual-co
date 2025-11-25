@@ -41,13 +41,15 @@ export interface UpdateTrip {
   cover_image?: string | null;
 }
 
+export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'custom';
+
 export interface ItineraryItem {
   id: string; // UUID
   trip_id: string; // UUID
   destination_slug: string | null; // VARCHAR(255)
   day: number; // INTEGER NOT NULL
   order_index: number; // INTEGER NOT NULL
-  time: string | null; // VARCHAR(50)
+  time: string | null; // VARCHAR(50) - start time e.g. "09:00"
   title: string; // VARCHAR(255) NOT NULL
   description: string | null; // TEXT
   notes: string | null; // TEXT (can contain JSON)
@@ -93,20 +95,68 @@ export interface TripLocation {
  * Parsed notes data structure (stored as JSON in notes field)
  */
 export interface ItineraryItemNotes {
+  type?: ItineraryItemType;
   raw?: string;
-  duration?: number;
+  duration?: number; // in minutes
   image?: string;
   city?: string;
   category?: string;
   slug?: string;
+  // Location data
+  latitude?: number;
+  longitude?: number;
   // Flight-specific fields
-  from?: any;
-  to?: any;
+  from?: string;
+  to?: string;
   airline?: string;
   flightNumber?: string;
+  departureDate?: string;
   departureTime?: string;
+  arrivalDate?: string;
   arrivalTime?: string;
+  confirmationNumber?: string;
   // Train-specific fields
   trainNumber?: string;
+  trainLine?: string;
+  // Travel time to next item
+  travelTimeToNext?: number; // in minutes
+  travelDistanceToNext?: number; // in km
+  travelModeToNext?: 'walking' | 'driving' | 'transit' | 'flight';
+}
+
+/**
+ * Flight data structure
+ */
+export interface FlightData {
+  type: 'flight';
+  airline: string;
+  flightNumber: string;
+  from: string;
+  to: string;
+  departureDate: string;
+  departureTime: string;
+  arrivalDate: string;
+  arrivalTime: string;
+  confirmationNumber?: string;
+  notes?: string;
+}
+
+/**
+ * Helper to parse notes JSON safely
+ */
+export function parseItineraryNotes(notes: string | null): ItineraryItemNotes | null {
+  if (!notes) return null;
+  try {
+    return JSON.parse(notes);
+  } catch {
+    return { raw: notes };
+  }
+}
+
+/**
+ * Helper to stringify notes for storage
+ */
+export function stringifyItineraryNotes(notes: ItineraryItemNotes): string {
+  return JSON.stringify(notes);
 }
 
