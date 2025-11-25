@@ -87,18 +87,6 @@
   animation: fadeIn 0.2s ease-out;
 }
 
-/* Safe area inset for bottom navigation */
-.safe-area-inset-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-/* Bottom padding for pages to account for mobile bottom nav */
-@media (max-width: 768px) {
-  main {
-    padding-bottom: 80px; /* Height of bottom nav + some spacing */
-  }
-}
-
 /* Shimmer animation for search input - subtle background shimmer */
 @keyframes inputShimmer {
   0% {
