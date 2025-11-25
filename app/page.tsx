@@ -3198,13 +3198,6 @@ export default function Home() {
                             <DestinationCard
                               key={destination.slug}
                               destination={destination}
-                              isAdmin={isAdmin}
-                              onEdit={dest => {
-                                // Open destination drawer - editing happens inline
-                                setSelectedDestination(dest);
-                                openDrawer('destination');
-                              }}
-                              showEditAffordance={editModeActive}
                               onClick={() => {
                                 setSelectedDestination(destination);
                                 openDrawer('destination');
@@ -3214,12 +3207,12 @@ export default function Home() {
                                   globalIndex
                                 );
                               }}
-                                index={globalIndex}
-                                isVisited={isVisited}
-                                showBadges={true}
-                              />
-                            );
-                          }}
+                              index={globalIndex}
+                              isVisited={isVisited}
+                              showBadges={true}
+                            />
+                          );
+                        }}
                           emptyState={
                             displayDestinations.length === 0 ? (
                               <div className="col-span-full flex flex-col items-center justify-center py-24 text-center">

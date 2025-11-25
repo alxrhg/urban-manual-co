@@ -439,9 +439,6 @@ export default function CityPageClient() {
                         index={globalIndex}
                         isVisited={isVisited}
                         showBadges={true}
-                        isAdmin={isAdmin}
-                        onEdit={handleAdminEdit}
-                        showEditAffordance={editModeActive}
                       />
                     );
                 }}

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, memo } from 'react';
 import Image from 'next/image';
-import { MapPin, Check, Edit } from 'lucide-react';
+import { MapPin, Check } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
@@ -15,9 +15,6 @@ interface DestinationCardProps {
   isVisited?: boolean;
   showBadges?: boolean;
   className?: string;
-  isAdmin?: boolean;
-  onEdit?: (destination: Destination) => void;
-  showEditAffordance?: boolean;
 }
 
 /**
@@ -31,9 +28,6 @@ export const DestinationCard = memo(function DestinationCard({
   isVisited = false,
   showBadges = true,
   className = '',
-  isAdmin = false,
-  onEdit,
-  showEditAffordance = false,
 }: DestinationCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -88,7 +82,6 @@ export const DestinationCard = memo(function DestinationCard({
         cursor-pointer text-left focus-ring
         hover:scale-[1.01]
         active:scale-[0.98]
-        ${showEditAffordance ? 'ring-1 ring-black/10 dark:ring-white/10' : ''}
         ${className}
       `}
       aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
@@ -102,7 +95,6 @@ export const DestinationCard = memo(function DestinationCard({
             transition-all duration-300 ease-out
             mb-3
             ${isLoaded ? 'opacity-100' : 'opacity-0'}
-            ${showEditAffordance ? 'ring-1 ring-black/10 dark:ring-white/10' : ''}
           `}
         >
         {/* Skeleton while loading */}
@@ -155,34 +147,6 @@ export const DestinationCard = memo(function DestinationCard({
             <Check className="w-5 h-5 text-gray-900 dark:text-white stroke-[3]" />
           </div>
         )}
-
-        {/* Admin Edit Button - Top Right */}
-          {isAdmin && onEdit && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(destination);
-            }}
-              className={`absolute top-3 right-3 z-20 p-2 rounded-xl transition-all shadow-md backdrop-blur-md
-                ${showEditAffordance 
-                  ? 'opacity-100 scale-100 bg-amber-500 text-white border border-white/20 shadow-amber-500/40 ring-2 ring-amber-500/20' 
-                  : 'opacity-0 group-hover:opacity-100 bg-white/95 dark:bg-gray-900/95 text-gray-700 dark:text-gray-300 border border-gray-200/50 dark:border-gray-700/50'
-                }
-                hover:scale-105 active:scale-95 hover:shadow-lg
-              `}
-            title="Edit destination"
-            aria-label="Edit destination"
-          >
-            <Edit className={`h-4 w-4 ${showEditAffordance ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`} />
-          </button>
-        )}
-
-          {showEditAffordance && (
-            <>
-              <div className="pointer-events-none absolute inset-0 rounded-2xl border border-amber-400/40 dark:border-amber-500/40" />
-              <div className="pointer-events-none absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-amber-400/60 via-amber-500/80 to-amber-400/60 rounded-t-2xl" />
-            </>
-          )}
 
         {/* Badges - Animated on hover */}
         {showBadges && (

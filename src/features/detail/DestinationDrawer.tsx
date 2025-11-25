@@ -244,9 +244,23 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     name: '',
     city: '',
     category: '',
+    neighborhood: '',
+    micro_description: '',
     description: '',
+    content: '',
     image: '',
     michelin_stars: null as number | null,
+    crown: false,
+    brand: '',
+    architect: '',
+    interior_designer: '',
+    architectural_style: '',
+    website: '',
+    instagram_handle: '',
+    phone_number: '',
+    opentable_url: '',
+    resy_url: '',
+    booking_url: '',
     parent_destination_id: null as number | null,
   });
 
@@ -394,9 +408,23 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         name: destination.name || '',
         city: destination.city || '',
         category: destination.category || '',
+        neighborhood: destination.neighborhood || '',
+        micro_description: destination.micro_description || '',
         description: destination.description || '',
+        content: destination.content || '',
         image: destination.image || '',
         michelin_stars: destination.michelin_stars || null,
+        crown: destination.crown || false,
+        brand: destination.brand || '',
+        architect: destination.architect || '',
+        interior_designer: destination.interior_designer || '',
+        architectural_style: destination.architectural_style || '',
+        website: destination.website || '',
+        instagram_handle: destination.instagram_handle || '',
+        phone_number: destination.phone_number || '',
+        opentable_url: destination.opentable_url || '',
+        resy_url: destination.resy_url || '',
+        booking_url: destination.booking_url || '',
         parent_destination_id: destination.parent_destination_id || null,
       });
       if (destination.image) setImagePreview(destination.image);
@@ -489,9 +517,23 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
         name: editFormData.name.trim(),
         city: editFormData.city.trim(),
         category: editFormData.category.trim(),
+        neighborhood: editFormData.neighborhood?.trim() || null,
+        micro_description: editFormData.micro_description?.trim() || null,
         description: editFormData.description?.trim() || null,
+        content: editFormData.content?.trim() || null,
         image: imageUrl || null,
         michelin_stars: editFormData.michelin_stars || null,
+        crown: editFormData.crown || false,
+        brand: editFormData.brand?.trim() || null,
+        architect: editFormData.architect?.trim() || null,
+        interior_designer: editFormData.interior_designer?.trim() || null,
+        architectural_style: editFormData.architectural_style?.trim() || null,
+        website: editFormData.website?.trim() || null,
+        instagram_handle: editFormData.instagram_handle?.trim() || null,
+        phone_number: editFormData.phone_number?.trim() || null,
+        opentable_url: editFormData.opentable_url?.trim() || null,
+        resy_url: editFormData.resy_url?.trim() || null,
+        booking_url: editFormData.booking_url?.trim() || null,
         parent_destination_id: editFormData.parent_destination_id || null,
       };
 
@@ -1714,6 +1756,30 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 />
               </div>
 
+              {/* Neighborhood */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Neighborhood</label>
+                <input
+                  type="text"
+                  value={editFormData.neighborhood}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, neighborhood: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="e.g., Shibuya, SoHo"
+                />
+              </div>
+
+              {/* Micro Description */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Micro Description</label>
+                <input
+                  type="text"
+                  value={editFormData.micro_description}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, micro_description: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="One-line description for cards"
+                />
+              </div>
+
               {/* Description */}
               <div>
                 <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Description</label>
@@ -1723,6 +1789,18 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   rows={3}
                   className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm resize-none"
                   placeholder="Short description..."
+                />
+              </div>
+
+              {/* Content (longer form) */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Content</label>
+                <textarea
+                  value={editFormData.content}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, content: e.target.value }))}
+                  rows={5}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm resize-none"
+                  placeholder="Detailed content..."
                 />
               </div>
 
@@ -1775,6 +1853,136 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   <option value="2">2 Stars</option>
                   <option value="3">3 Stars</option>
                 </select>
+              </div>
+
+              {/* Crown */}
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="edit-crown"
+                  checked={editFormData.crown}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, crown: e.target.checked }))}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <label htmlFor="edit-crown" className="text-sm text-gray-600 dark:text-gray-400">Crown (Featured)</label>
+              </div>
+
+              {/* Brand */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Brand</label>
+                <input
+                  type="text"
+                  value={editFormData.brand}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, brand: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="e.g., Four Seasons, Aman"
+                />
+              </div>
+
+              {/* Architect */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Architect</label>
+                <input
+                  type="text"
+                  value={editFormData.architect}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, architect: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="e.g., Tadao Ando, Frank Lloyd Wright"
+                />
+              </div>
+
+              {/* Interior Designer */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Interior Designer</label>
+                <input
+                  type="text"
+                  value={editFormData.interior_designer}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, interior_designer: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="e.g., Kelly Wearstler"
+                />
+              </div>
+
+              {/* Architectural Style */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Architectural Style</label>
+                <input
+                  type="text"
+                  value={editFormData.architectural_style}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, architectural_style: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="e.g., Brutalist, Minimalist"
+                />
+              </div>
+
+              {/* Website */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Website</label>
+                <input
+                  type="url"
+                  value={editFormData.website}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, website: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="https://..."
+                />
+              </div>
+
+              {/* Instagram Handle */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Instagram Handle</label>
+                <input
+                  type="text"
+                  value={editFormData.instagram_handle}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, instagram_handle: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="@handle"
+                />
+              </div>
+
+              {/* Phone Number */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Phone Number</label>
+                <input
+                  type="tel"
+                  value={editFormData.phone_number}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="+1 234 567 8900"
+                />
+              </div>
+
+              {/* Booking URLs */}
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">OpenTable URL</label>
+                <input
+                  type="url"
+                  value={editFormData.opentable_url}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, opentable_url: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="https://opentable.com/..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Resy URL</label>
+                <input
+                  type="url"
+                  value={editFormData.resy_url}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, resy_url: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="https://resy.com/..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Booking URL</label>
+                <input
+                  type="url"
+                  value={editFormData.booking_url}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, booking_url: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
+                  placeholder="https://booking.com/..."
+                />
               </div>
 
               {/* Parent Destination */}

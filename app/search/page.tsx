@@ -339,9 +339,6 @@ function SearchPageContent() {
                       onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
                       index={startIndex + idx}
                       showBadges={true}
-                      isAdmin={isAdmin}
-                      onEdit={handleEditDestination}
-                      showEditAffordance={editModeActive}
                     />
                   ))}
                 </div>
