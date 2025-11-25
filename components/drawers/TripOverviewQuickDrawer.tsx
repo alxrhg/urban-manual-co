@@ -8,6 +8,8 @@ import { useDrawerStore } from '@/lib/stores/drawer-store';
 import Image from 'next/image';
 import { useTrip } from '@/hooks/useTrip';
 import { formatTripDateWithYear } from '@/lib/utils';
+import UMFeaturePill from '@/components/ui/UMFeaturePill';
+import { MapPin, Calendar, Clock, ArrowRight } from 'lucide-react';
 
 interface Trip {
   id?: string;
@@ -85,108 +87,137 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
     <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      desktopWidth="420px"
+      desktopWidth="440px"
       position="right"
       style="solid"
-      backdropOpacity="15"
+      backdropOpacity="20"
       keepStateOnClose={true}
       fullScreen={false}
     >
       <DrawerHeader
         title={tripName}
         subtitle={startDate && endDate ? `${startDate} – ${endDate}` : undefined}
-        leftAccessory={
-          <button
-            className="text-sm opacity-70 hover:opacity-100 transition-opacity"
-            onClick={onClose}
-          >
-            ←
-          </button>
-        }
+        onClose={onClose}
       />
 
-      {coverImage && (
-        <div className="px-4 pb-4">
-          <div className="relative w-full h-40 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-            <Image
-              src={coverImage}
-              alt={tripName}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 420px"
-            />
-          </div>
-        </div>
-      )}
-
-      {loading ? (
-        <DrawerSection>
-          <div className="text-center py-8">
-            <p className="text-sm text-[var(--um-text-muted)]">Loading trip details...</p>
-          </div>
-        </DrawerSection>
-      ) : (
-        <>
-          {/* DAYS */}
-          <DrawerSection bordered>
-            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Days</h3>
-            <div className="space-y-3">
-              {days.length > 0 ? (
-                days.map((d: any, i: number) => (
-                  <div
-                    key={i}
-                    className="border border-[var(--um-border)] rounded-2xl p-3 hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer flex justify-between items-center bg-white dark:bg-gray-950 transition-colors"
-                    onClick={() => handleDayClick(d, i)}
-                  >
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Day {i + 1} – {d.date}
-                    </p>
-                    <span className="text-xs text-gray-500 dark:text-gray-400">→</span>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-[var(--um-text-muted)]">No days added yet</p>
-              )}
-            </div>
-          </DrawerSection>
-
-          {/* HOTELS */}
-          {hotels.length > 0 && (
-            <DrawerSection bordered>
-              <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Hotels</h3>
-              <div className="space-y-3">
-                {hotels.map((h: any, i: number) => (
-                  <div
-                    key={i}
-                    className="border border-[var(--um-border)] rounded-2xl p-3 bg-white dark:bg-gray-950"
-                  >
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{h.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{h.city}</p>
-                  </div>
-                ))}
+      <div className="pb-24">
+        {coverImage && (
+          <div className="px-4 pb-6">
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <Image
+                src={coverImage}
+                alt={tripName}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 440px"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-60" />
+              <div className="absolute bottom-3 left-4 text-white">
+                <h3 className="text-lg font-semibold leading-tight">{tripName}</h3>
+                <div className="flex items-center gap-2 text-xs opacity-90 mt-1">
+                  <Calendar className="w-3 h-3" />
+                  <span>{startDate} – {endDate}</span>
+                </div>
               </div>
-            </DrawerSection>
-          )}
+            </div>
+          </div>
+        )}
 
-          {/* ACTIONS */}
-          <DrawerSection>
-            <button
-              className="w-full py-3 rounded-2xl border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors bg-white dark:bg-gray-950 font-medium text-xs"
-              onClick={handleViewFullTrip}
-            >
-              View Full Trip →
-            </button>
+        {loading ? (
+          <div className="px-4 py-12 text-center">
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-sm text-gray-500">Loading trip details...</p>
+          </div>
+        ) : (
+          <>
+            {/* DAYS */}
+            <div className="px-4 mb-8">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3 px-1">Itinerary</h3>
+              <div className="space-y-2">
+                {days.length > 0 ? (
+                  days.map((d: any, i: number) => (
+                    <button
+                      key={i}
+                      className="w-full flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group text-left"
+                      onClick={() => handleDayClick(d, i)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 text-xs font-bold text-gray-500 group-hover:bg-black group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-black transition-colors">
+                          Day {i + 1}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 dark:text-white">
+                            {d.date}
+                          </p>
+                          {d.city && (
+                            <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3" />
+                              {d.city}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 dark:text-gray-600 transition-colors" />
+                    </button>
+                  ))
+                ) : (
+                  <div className="text-center py-8 rounded-xl bg-gray-50 dark:bg-gray-900 border border-dashed border-gray-200 dark:border-gray-800">
+                    <p className="text-sm text-gray-500 mb-2">No days added yet</p>
+                    <button 
+                      onClick={handleEditTrip}
+                      className="text-xs font-medium text-black dark:text-white underline underline-offset-2"
+                    >
+                      Start Planning
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
 
-            <button
-              className="w-full mt-4 py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black font-medium text-xs hover:opacity-90 transition-opacity"
-              onClick={handleEditTrip}
-            >
-              Edit Trip (Fullscreen)
-            </button>
-          </DrawerSection>
-        </>
-      )}
+            {/* HOTELS */}
+            {hotels.length > 0 && (
+              <div className="px-4 mb-8">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3 px-1">Accommodations</h3>
+                <div className="space-y-2">
+                  {hotels.map((h: any, i: number) => (
+                    <div
+                      key={i}
+                      className="p-3 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 flex items-start gap-3"
+                    >
+                      <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="w-5 h-5 text-indigo-500 dark:text-indigo-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">{h.name}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{h.city}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* FOOTER ACTIONS */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-800">
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            className="w-full py-3 rounded-xl border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors bg-white dark:bg-gray-950 font-medium text-sm"
+            onClick={handleEditTrip}
+          >
+            Edit Trip
+          </button>
+          
+          <button
+            className="w-full py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-medium text-sm hover:opacity-90 transition-opacity"
+            onClick={handleViewFullTrip}
+          >
+            View Full Trip
+          </button>
+        </div>
+      </div>
     </Drawer>
   );
 }
-
