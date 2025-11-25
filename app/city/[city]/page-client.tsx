@@ -278,8 +278,8 @@ export default function CityPageClient() {
   return (
     <>
       <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
-        <div className="max-w-[1800px] mx-auto">
-          <div className="mb-6">
+        <div className="max-w-[1800px] mx-auto space-y-8">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/')}
               className="inline-flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors"
@@ -293,7 +293,9 @@ export default function CityPageClient() {
           <SubpageHero
             eyebrow={country || undefined}
             title={cityDisplayName}
-            description={`${filteredDestinations.length} curated ${filteredDestinations.length === 1 ? 'destination' : 'destinations'} across ${categories.length} categories.`}
+            description={`${filteredDestinations.length} curated ${
+              filteredDestinations.length === 1 ? 'destination' : 'destinations'
+            } across ${categories.length} categories.`}
             meta={heroMeta}
             pills={heroPills}
             actions={
@@ -318,57 +320,57 @@ export default function CityPageClient() {
             }
           />
 
-            {editModeActive && (
-              <div className="mb-8 rounded-2xl border border-gray-200/70 dark:border-gray-700/30 bg-gray-50/80 dark:bg-gray-800/10 px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-50">
-                    Editing {cityDisplayName}
-                  </p>
-                  <p className="text-xs text-gray-700/80 dark:text-gray-300/80">
-                    Use the edit button on any card to update this city's places instantly.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={handleAddNewPOI}
-                    className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-white text-gray-900 border border-gray-200 shadow-sm hover:bg-gray-100 transition-all dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
-                  >
-                    Add Place
-                  </button>
-                  <button
-                    onClick={() => disableEditMode()}
-                    className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-all dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
-                  >
-                    Exit Edit Mode
-                  </button>
-                </div>
+          {editModeActive && (
+            <div className="rounded-2xl border border-gray-200/70 dark:border-gray-700/30 bg-gray-50/80 dark:bg-gray-800/10 px-4 py-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-gray-50">
+                  Editing {cityDisplayName}
+                </p>
+                <p className="text-xs text-gray-700/80 dark:text-gray-300/80">
+                  Use the edit button on any card to update this city's places instantly.
+                </p>
               </div>
-            )}
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={handleAddNewPOI}
+                  className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-white text-gray-900 border border-gray-200 shadow-sm hover:bg-gray-100 transition-all dark:bg-gray-900 dark:text-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+                >
+                  Add Place
+                </button>
+                <button
+                  onClick={() => disableEditMode()}
+                  className="px-3 py-1.5 text-[11px] font-semibold rounded-full bg-gray-900 text-white hover:bg-gray-800 transition-all dark:bg-gray-100 dark:text-gray-900 dark:hover:bg-gray-200"
+                >
+                  Exit Edit Mode
+                </button>
+              </div>
+            </div>
+          )}
 
-            {/* Filters - Matching homepage style */}
-            <div className="space-y-4">
-              {/* Categories */}
-              {categories.length > 0 && (
-                <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                  <button
-                    onClick={() => handleCategorySelect('')}
-                    className={`transition-all duration-200 ease-out ${
-                      !selectedCategory
-                        ? 'font-medium text-black dark:text-white'
-                        : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                    }`}
-                  >
-                    All Categories
-                  </button>
-                  {categories
-                    .slice()
-                    .sort((a, b) => {
-                      // Always put "others" at the end
-                      if (a.toLowerCase() === 'others') return 1;
-                      if (b.toLowerCase() === 'others') return -1;
-                      return 0;
-                    })
-                    .map(category => (
+          {/* Filters - Matching homepage style */}
+          <div className="space-y-4">
+            {/* Categories */}
+            {categories.length > 0 && (
+              <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+                <button
+                  onClick={() => handleCategorySelect('')}
+                  className={`transition-all duration-200 ease-out ${
+                    !selectedCategory
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
+                >
+                  All Categories
+                </button>
+                {categories
+                  .slice()
+                  .sort((a, b) => {
+                    // Always put "others" at the end
+                    if (a.toLowerCase() === 'others') return 1;
+                    if (b.toLowerCase() === 'others') return -1;
+                    return 0;
+                  })
+                  .map(category => (
                     <button
                       key={category}
                       onClick={() => handleCategorySelect(category)}
@@ -381,47 +383,44 @@ export default function CityPageClient() {
                       {capitalizeCategory(category)}
                     </button>
                   ))}
-                </div>
-              )}
-
-              {/* Advanced Filters */}
-              <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                <button
-                  onClick={() => setAdvancedFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
-                  className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                    advancedFilters.michelin
-                      ? 'font-medium text-black dark:text-white'
-                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                  }`}
-                >
-                  <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                    alt="Michelin star"
-                    className="h-3 w-3"
-                    onError={(e) => {
-                      // Fallback to local file if external URL fails
-                      const target = e.currentTarget;
-                      if (target.src !== '/michelin-star.svg') {
-                        target.src = '/michelin-star.svg';
-                      }
-                    }}
-                  />
-                  Michelin
-                </button>
-                <button
-                  onClick={() => setAdvancedFilters(prev => ({ ...prev, crown: !prev.crown }))}
-                  className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                    advancedFilters.crown
-                      ? 'font-medium text-black dark:text-white'
-                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-                  }`}
-                >
-                  Crown
-                </button>
               </div>
+            )}
+
+            {/* Advanced Filters */}
+            <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
+              <button
+                onClick={() => setAdvancedFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
+                className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                  advancedFilters.michelin
+                    ? 'font-medium text-black dark:text-white'
+                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                }`}
+              >
+                <img
+                  src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                  alt="Michelin star"
+                  className="h-3 w-3"
+                  onError={e => {
+                    const target = e.currentTarget;
+                    if (target.src !== '/michelin-star.svg') {
+                      target.src = '/michelin-star.svg';
+                    }
+                  }}
+                />
+                Michelin
+              </button>
+              <button
+                onClick={() => setAdvancedFilters(prev => ({ ...prev, crown: !prev.crown }))}
+                className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
+                  advancedFilters.crown
+                    ? 'font-medium text-black dark:text-white'
+                    : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                }`}
+              >
+                Crown
+              </button>
             </div>
           </div>
-
           {/* Destinations Grid - Using UniversalGrid */}
           {filteredDestinations.length === 0 ? (
             <div className="text-center py-20">
@@ -537,68 +536,64 @@ export default function CityPageClient() {
             closeDrawer();
             setSelectedDestination(null);
           }}
-        onSaveToggle={async (slug: string) => {
-          if (!user) return;
+          onSaveToggle={async (slug: string) => {
+            if (!user) return;
 
-          const { data } = await supabase
-            .from('saved_places')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('destination_slug', slug)
-            .single();
-
-          if (data) {
-            await supabase.from('saved_places').delete().eq('user_id', user.id).eq('destination_slug', slug);
-          } else {
-            await (supabase.from('saved_places').insert as any)({ user_id: user.id, destination_slug: slug });
-          }
-        }}
-        onVisitToggle={async (slug: string, visited: boolean) => {
-          if (!user) return;
-
-          // Update local state based on the visited parameter
-          setVisitedSlugs(prev => {
-            const next = new Set(prev);
-            if (visited) {
-              next.add(slug);
-            } else {
-              next.delete(slug);
-            }
-            return next;
-          });
-
-          // The DestinationDrawer already handles the database update,
-          // so we just need to sync our local state
-        }}
-        onDestinationUpdate={async () => {
-          await new Promise(resolve => setTimeout(resolve, 200));
-          await fetchDestinations();
-        }}
-        onDestinationClick={async (slug: string) => {
-          try {
-            const supabaseClient = createClient();
-            if (!supabaseClient) {
-              console.error('Failed to create Supabase client');
-              return;
-            }
-            
-            const { data: destination, error } = await supabaseClient
-              .from('destinations')
-              .select('*')
-              .eq('slug', slug)
+            const { data } = await supabase
+              .from('saved_places')
+              .select('id')
+              .eq('user_id', user.id)
+              .eq('destination_slug', slug)
               .single();
-            
-            if (error || !destination) {
-              console.error('Failed to fetch destination:', error);
-              return;
+
+            if (data) {
+              await supabase.from('saved_places').delete().eq('user_id', user.id).eq('destination_slug', slug);
+            } else {
+              await (supabase.from('saved_places').insert as any)({ user_id: user.id, destination_slug: slug });
             }
-            
-            setSelectedDestination(destination as Destination);
-            openDrawer('destination');
-          } catch (error) {
-            console.error('Error fetching destination:', error);
-          }
-        }}
+          }}
+          onVisitToggle={async (slug: string, visited: boolean) => {
+            if (!user) return;
+
+            setVisitedSlugs(prev => {
+              const next = new Set(prev);
+              if (visited) {
+                next.add(slug);
+              } else {
+                next.delete(slug);
+              }
+              return next;
+            });
+          }}
+          onDestinationUpdate={async () => {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            await fetchDestinations();
+          }}
+          onDestinationClick={async (slug: string) => {
+            try {
+              const supabaseClient = createClient();
+              if (!supabaseClient) {
+                console.error('Failed to create Supabase client');
+                return;
+              }
+
+              const { data: destination, error } = await supabaseClient
+                .from('destinations')
+                .select('*')
+                .eq('slug', slug)
+                .single();
+
+              if (error || !destination) {
+                console.error('Failed to fetch destination:', error);
+                return;
+              }
+
+              setSelectedDestination(destination as Destination);
+              openDrawer('destination');
+            } catch (error) {
+              console.error('Error fetching destination:', error);
+            }
+          }}
         />
       )}
     </>
