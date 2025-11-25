@@ -1,6 +1,7 @@
 /**
  * Travel Intelligence Engine
  * The core brain of Urban Manual's conversational AI
+ * Uses Google Discovery Engine for personalized search
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
@@ -14,6 +15,8 @@ import {
   MODE_PROMPTS,
 } from '@/lib/ai/travel-intelligence';
 import { knowledgeGraphService } from '@/services/intelligence/knowledge-graph';
+import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
+import { unifiedSearch, trackUserEvent, isDiscoveryEngineAvailable } from '@/lib/discovery-engine/integration';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -464,7 +467,8 @@ Return ONLY the JSON, no explanation.`;
   }
 
   /**
-   * Find relevant destinations from our curated collection
+   * Find relevant destinations using Discovery Engine (primary) with Supabase fallback
+   * Discovery Engine provides personalized results based on user behavior
    */
   private async findRelevantDestinations(
     message: string,
@@ -472,63 +476,130 @@ Return ONLY the JSON, no explanation.`;
     mode: ConversationMode,
     userId?: string
   ): Promise<any[]> {
-    const supabase = await createServerClient();
     let results: any[] = [];
 
-    // Normalize city and category (in case AI returned lowercase)
+    // Normalize city and category
     const normalizedCity = this.normalizeCity(context.city);
     const normalizedCategory = this.normalizeCategory(context.category);
 
-    console.log('[TravelIntelligence] Searching with normalized values:', {
+    console.log('[TravelIntelligence] Searching with:', {
       city: normalizedCity,
       category: normalizedCategory,
-      originalCity: context.city,
-      originalCategory: context.category,
+      userId: userId || 'anonymous',
+      discoveryEngineAvailable: isDiscoveryEngineAvailable(),
     });
 
-    // Strategy 1: Direct database query FIRST for specific queries
-    try {
-      let query = supabase
-        .from('destinations')
-        .select('*')
-        .is('parent_destination_id', null)
-        .limit(50);
+    // ========================================
+    // STRATEGY 1: Google Discovery Engine (Primary)
+    // Provides personalized search with user behavior tracking
+    // ========================================
+    if (isDiscoveryEngineAvailable()) {
+      try {
+        console.log('[TravelIntelligence] Using Discovery Engine for search');
 
-      if (normalizedCity) {
-        query = query.ilike('city', `%${normalizedCity}%`);
-      }
-      if (normalizedCategory) {
-        query = query.ilike('category', `%${normalizedCategory}%`);
-      }
-      if (context.neighborhood) {
-        query = query.ilike('neighborhood', `%${context.neighborhood}%`);
-      }
+        const searchResult = await unifiedSearch({
+          query: message,
+          userId,
+          city: normalizedCity || undefined,
+          category: normalizedCategory || undefined,
+          priceLevel: this.mapPricePreference(context.pricePreference) || undefined,
+          pageSize: 30,
+          useCache: true,
+        });
 
-      const { data, error } = await query.order('rating', { ascending: false });
+        if (searchResult.results?.length > 0) {
+          console.log('[TravelIntelligence] Discovery Engine found', searchResult.results.length, 'results');
+          console.log('[TravelIntelligence] Search source:', searchResult.source);
 
-      if (error) {
-        console.error('[TravelIntelligence] Database query error:', error);
-      }
+          // Discovery Engine returns different format - normalize it
+          results = searchResult.results.map((r: any) => ({
+            id: r.id,
+            slug: r.slug || r.id,
+            name: r.name,
+            description: r.description,
+            micro_description: r.description?.substring(0, 150),
+            city: r.city,
+            category: r.category,
+            neighborhood: r.neighborhood,
+            tags: r.tags || [],
+            rating: r.rating,
+            price_level: r.priceLevel || r.price_level,
+            michelin_stars: r.michelin_stars,
+            image: r.image || r.images?.[0],
+            relevanceScore: r.relevanceScore || 0,
+          }));
 
-      if (data?.length) {
-        console.log('[TravelIntelligence] Database found', data.length, 'results');
-        results = data;
-      } else {
-        console.log('[TravelIntelligence] Database found 0 results');
+          // Track the search event for personalization
+          if (userId) {
+            trackUserEvent({
+              userId,
+              eventType: 'search',
+              searchQuery: message,
+            }).catch((err) => console.warn('[TravelIntelligence] Failed to track search event:', err));
+          }
+        }
+      } catch (error) {
+        console.warn('[TravelIntelligence] Discovery Engine search failed:', error);
+        // Fall through to fallback
       }
-    } catch (error) {
-      console.warn('[TravelIntelligence] Database query failed:', error);
     }
 
-    // Strategy 2: Vector search for semantic matching (supplements database results)
+    // ========================================
+    // STRATEGY 2: Supabase Direct Query (Fallback)
+    // Used when Discovery Engine is unavailable or returns no results
+    // ========================================
+    if (results.length < 5) {
+      console.log('[TravelIntelligence] Using Supabase fallback');
+      const supabase = await createServerClient();
+
+      try {
+        let query = supabase
+          .from('destinations')
+          .select('*')
+          .is('parent_destination_id', null)
+          .limit(50);
+
+        if (normalizedCity) {
+          query = query.ilike('city', `%${normalizedCity}%`);
+        }
+        if (normalizedCategory) {
+          query = query.ilike('category', `%${normalizedCategory}%`);
+        }
+        if (context.neighborhood) {
+          query = query.ilike('neighborhood', `%${context.neighborhood}%`);
+        }
+
+        const { data, error } = await query.order('rating', { ascending: false });
+
+        if (error) {
+          console.error('[TravelIntelligence] Supabase query error:', error);
+        }
+
+        if (data?.length) {
+          console.log('[TravelIntelligence] Supabase found', data.length, 'results');
+          // Merge with existing results, avoiding duplicates
+          const existingSlugs = new Set(results.map((r) => r.slug));
+          const newResults = data.filter((d) => !existingSlugs.has(d.slug));
+          results = [...results, ...newResults];
+        }
+      } catch (error) {
+        console.warn('[TravelIntelligence] Supabase query failed:', error);
+      }
+    }
+
+    // ========================================
+    // STRATEGY 3: Vector Search (Supplement)
+    // Adds semantically similar results
+    // ========================================
     if (results.length < 10) {
       try {
+        const supabase = await createServerClient();
         const embedding = await embedText(message);
         if (embedding) {
           const { data, error } = await supabase.rpc('match_destinations', {
             query_embedding: embedding,
             match_threshold: 0.40,
-            match_count: 50,
+            match_count: 30,
             filter_city: normalizedCity,
             filter_category: normalizedCategory,
             filter_michelin_stars: null,
@@ -537,12 +608,8 @@ Return ONLY the JSON, no explanation.`;
             search_query: message,
           });
 
-          if (error) {
-            console.warn('[TravelIntelligence] Vector search error:', error);
-          }
-
-          if (data?.length) {
-            console.log('[TravelIntelligence] Vector search found', data.length, 'results');
+          if (!error && data?.length) {
+            console.log('[TravelIntelligence] Vector search found', data.length, 'additional results');
             const existingSlugs = new Set(results.map((r) => r.slug));
             const newResults = data.filter((d: any) => !existingSlugs.has(d.slug));
             results = [...results, ...newResults];
@@ -553,17 +620,19 @@ Return ONLY the JSON, no explanation.`;
       }
     }
 
-    // Strategy 3: Broader search if still no results
+    // ========================================
+    // STRATEGY 4: Broader Search (Last Resort)
+    // ========================================
     if (results.length === 0 && (normalizedCity || normalizedCategory)) {
       console.log('[TravelIntelligence] Trying broader search...');
       try {
+        const supabase = await createServerClient();
         let query = supabase
           .from('destinations')
           .select('*')
           .is('parent_destination_id', null)
           .limit(30);
 
-        // Try with just city OR just category
         if (normalizedCity) {
           query = query.ilike('city', `%${normalizedCity}%`);
         } else if (normalizedCategory) {
@@ -592,6 +661,7 @@ Return ONLY the JSON, no explanation.`;
       }
     }
 
+    console.log('[TravelIntelligence] Final result count:', results.length);
     return results;
   }
 
