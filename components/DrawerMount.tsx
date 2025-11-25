@@ -8,6 +8,7 @@ import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
 
 import AddHotelDrawer from '@/components/drawers/AddHotelDrawer';
+import AddFlightDrawer from '@/components/drawers/AddFlightDrawer';
 import AISuggestionsDrawer from '@/components/drawers/AISuggestionsDrawer';
 import TripListDrawer from '@/components/drawers/TripListDrawer';
 import TripOverviewDrawer from '@/components/drawers/TripOverviewDrawer';
@@ -134,6 +135,23 @@ export default function DrawerMount() {
             trip={props.trip || null}
             day={props.day || null}
             index={props.index}
+          />
+        </Drawer>
+      )}
+
+      {open && type === 'trip-add-flight' && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          title="Add Flight"
+          style={drawerStyle}
+          position="right"
+          desktopWidth="420px"
+        >
+          <AddFlightDrawer
+            tripId={props.tripId}
+            dayNumber={props.dayNumber}
+            onAdd={props.onAdd}
           />
         </Drawer>
       )}

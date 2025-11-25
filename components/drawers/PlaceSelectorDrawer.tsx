@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
-import { Search, MapPin, Loader2, Globe } from 'lucide-react';
+import { Search, MapPin, Loader2, Globe, Bookmark } from 'lucide-react';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
 
 const CATEGORIES = ['All', 'Dining', 'Cafe', 'Bar', 'Culture', 'Shopping', 'Hotel'];
 
-type Tab = 'curated' | 'google';
+type Tab = 'curated' | 'saved' | 'google';
 
 interface PlaceSelectorDrawerProps {
   tripId?: string;
@@ -37,6 +38,7 @@ export default function PlaceSelectorDrawer({
   replaceIndex,
 }: PlaceSelectorDrawerProps) {
   const { closeDrawer } = useDrawerStore();
+  const { user } = useAuth();
   const [tab, setTab] = useState<Tab>('curated');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
@@ -47,6 +49,10 @@ export default function PlaceSelectorDrawer({
   const [googleQuery, setGoogleQuery] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googlePlace, setGooglePlace] = useState<any>(null);
+  const [savedPlaces, setSavedPlaces] = useState<Destination[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const [savedFetched, setSavedFetched] = useState(false);
+  const [savedError, setSavedError] = useState<string | null>(null);
 
   const searchCity = city || trip?.destination || null;
 
@@ -55,6 +61,85 @@ export default function PlaceSelectorDrawer({
       fetchPlaces();
     }
   }, [query, category, searchCity, tab]);
+
+  useEffect(() => {
+    if (!user) {
+      setSavedPlaces([]);
+      setSavedFetched(false);
+      setSavedError(null);
+      setSavedLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (tab !== 'saved') return;
+    if (!user) return;
+    if (savedFetched) return;
+
+    let cancelled = false;
+
+    const loadSaved = async () => {
+      setSavedLoading(true);
+      setSavedError(null);
+
+      try {
+        const supabase = createClient();
+        if (!supabase) return;
+
+        const { data: savedRows, error } = await supabase
+          .from('saved_places')
+          .select('destination_slug')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(40);
+
+        if (error) throw error;
+
+        const slugs = (savedRows || [])
+          .map((row: { destination_slug: string | null }) => row.destination_slug)
+          .filter((slug): slug is string => Boolean(slug));
+
+        if (!slugs.length) {
+          if (!cancelled) {
+            setSavedPlaces([]);
+            setSavedFetched(true);
+          }
+          return;
+        }
+
+        const { data: destinations, error: destError } = await supabase
+          .from('destinations')
+          .select('slug, name, city, category, image, image_thumbnail, micro_description')
+          .in('slug', slugs);
+
+        if (destError) throw destError;
+
+        const ordered = slugs
+          .map((slug) => destinations?.find((d) => d.slug === slug))
+          .filter((d): d is Destination => Boolean(d));
+
+        if (!cancelled) {
+          setSavedPlaces(ordered);
+          setSavedFetched(true);
+        }
+      } catch (err) {
+        console.error('Error loading saved places:', err);
+        if (!cancelled) {
+          setSavedError('Failed to load saved places');
+        }
+      } finally {
+        if (!cancelled) {
+          setSavedLoading(false);
+        }
+      }
+    };
+
+    loadSaved();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, user, savedFetched]);
 
   const fetchPlaces = async () => {
     try {
@@ -88,6 +173,14 @@ export default function PlaceSelectorDrawer({
       console.error('Error fetching places:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSavedRefresh = () => {
+    if (!user) return;
+    setSavedFetched(false);
+    if (tab !== 'saved') {
+      setTab('saved');
     }
   };
 
@@ -157,6 +250,16 @@ export default function PlaceSelectorDrawer({
       {/* Tab Switcher - Minimal style */}
       <div className="px-4 pt-4 pb-3 flex gap-4 text-xs">
         <button
+          onClick={() => setTab('saved')}
+          className={`transition-all ${
+            tab === 'saved'
+              ? 'font-medium text-black dark:text-white'
+              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+          }`}
+        >
+          My Places
+        </button>
+        <button
           onClick={() => setTab('curated')}
           className={`transition-all ${
             tab === 'curated'
@@ -178,7 +281,7 @@ export default function PlaceSelectorDrawer({
         </button>
       </div>
 
-      {tab === 'curated' ? (
+      {tab === 'curated' && (
         <>
           {/* Curated Search */}
           <div className="px-4 pb-4 border-b border-gray-200 dark:border-gray-800">
@@ -263,7 +366,97 @@ export default function PlaceSelectorDrawer({
             )}
           </div>
         </>
-      ) : (
+      )}
+
+      {tab === 'saved' && (
+        <>
+          <div className="px-4 pb-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">My Places</p>
+              <p className="text-xs text-gray-500">Saved spots ready to add to your trip</p>
+            </div>
+            {user && (
+              <button
+                onClick={handleSavedRefresh}
+                className="text-xs text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              >
+                Refresh
+              </button>
+            )}
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            {!user ? (
+              <div className="text-center py-12 px-4">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <Bookmark className="w-5 h-5 text-gray-400" />
+                </div>
+                <p className="text-sm text-gray-500 mb-1">Sign in to access My Places</p>
+                <p className="text-xs text-gray-400">
+                  Save destinations from the homepage to build trips faster.
+                </p>
+              </div>
+            ) : savedLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+              </div>
+            ) : savedError ? (
+              <div className="text-center py-12 px-4">
+                <p className="text-sm text-gray-500 mb-2">{savedError}</p>
+                <button
+                  onClick={handleSavedRefresh}
+                  className="text-xs text-black dark:text-white border border-gray-200 dark:border-gray-700 rounded-full px-4 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : savedPlaces.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-gray-400" />
+                </div>
+                <p className="text-sm text-gray-500 mb-1">No saved places yet</p>
+                <p className="text-xs text-gray-400">
+                  Tap the bookmark icon on any destination to store it here.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {savedPlaces.map((place) => (
+                  <button
+                    key={place.slug}
+                    onClick={() => handleSelect(place)}
+                    className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors"
+                  >
+                    <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
+                      {place.image_thumbnail || place.image ? (
+                        <Image
+                          src={place.image_thumbnail || place.image || ''}
+                          alt={place.name}
+                          width={56}
+                          height={56}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <MapPin className="w-5 h-5 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{place.name}</p>
+                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                        {place.category} · {place.city}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {tab === 'google' && (
         <>
           {/* Google Search */}
           <div className="px-4 pb-4 border-b border-gray-200 dark:border-gray-800">
