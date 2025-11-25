@@ -96,12 +96,6 @@ export default function TripPage() {
     }
   }, [trip]);
 
-  useEffect(() => {
-    if (activeTab !== 'hotels' && hotelEditMode) {
-      setHotelEditMode(false);
-    }
-  }, [activeTab, hotelEditMode]);
-
   // Load hotels from itinerary_items
   const loadHotels = async () => {
     if (!tripId || !user) return;
