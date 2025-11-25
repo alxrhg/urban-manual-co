@@ -2,16 +2,27 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useTrip } from '@/hooks/useTrip';
-import DayCard from '@/components/trip/DayCard';
-import { PencilLine, Sparkles, Utensils, ListChecks, Building2, Plus, ArrowLeft, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  Calendar,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Loader2,
+  MapPin,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Sparkles,
+  Utensils,
+} from 'lucide-react';
 
-type Mode = 'view' | 'edit';
 type UseTripResult = ReturnType<typeof useTrip>;
 type TripWithDays = NonNullable<UseTripResult['trip']>;
 type TripDay = TripWithDays['days'][number];
-type DrawerOpener = (type: string, props?: any) => void;
 
 export default function TripPage() {
   const params = useParams();
@@ -19,7 +30,6 @@ export default function TripPage() {
   const tripId = params?.id as string | null;
   const openDrawer = useDrawerStore((s) => s.openDrawer);
   const { trip, loading, error } = useTrip(tripId);
-  const [mode, setMode] = useState<Mode>('view');
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
 
   useEffect(() => {
@@ -27,267 +37,236 @@ export default function TripPage() {
       setSelectedDayIndex(0);
       return;
     }
-    setSelectedDayIndex((prev) => {
-      if (prev >= trip.days.length) {
-        return trip.days.length - 1;
-      }
-      return prev;
-    });
+    setSelectedDayIndex((prev) =>
+      prev >= trip.days.length ? trip.days.length - 1 : prev
+    );
   }, [trip?.id, trip?.days?.length]);
 
+  // Loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-neutral-950">
+        <Loader2 className="w-5 h-5 animate-spin text-neutral-400" />
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <p className="text-red-600 dark:text-red-400 mb-4">Error: {error}</p>
-        <button
-          onClick={() => router.push('/trips')}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-100 dark:bg-neutral-800 text-sm font-medium text-gray-900 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 transition"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Trips
-        </button>
-      </div>
-    );
-  }
-
-  if (!trip) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <p className="text-neutral-500 dark:text-neutral-400 mb-4">Trip not found</p>
-        <button
-          onClick={() => router.push('/trips')}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-100 dark:bg-neutral-800 text-sm font-medium text-gray-900 dark:text-white hover:bg-neutral-200 dark:hover:bg-neutral-700 transition"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Trips
-        </button>
-      </div>
-    );
-  }
-
-  const metaParts = [trip.destination || 'Destination TBD'];
-  if (trip.start_date && trip.end_date) {
-    metaParts.push(`${trip.start_date} → ${trip.end_date}`);
-  } else if (trip.start_date || trip.end_date) {
-    metaParts.push(trip.start_date || trip.end_date || '');
-  }
-  const modeDescription =
-    mode === 'view'
-      ? 'Browse your itinerary without the editing chrome.'
-      : 'Use the quick actions below to update meals, activities, and logistics for each day.';
-
-  return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-        {/* Back Navigation */}
-        <button
-          onClick={() => router.push('/trips')}
-          className="inline-flex items-center gap-2 text-sm text-neutral-500 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Trips
-        </button>
-
-        <header className="space-y-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-neutral-500 dark:text-neutral-400 mb-1">Trip</p>
-              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">{trip.title}</h1>
-              {metaParts.filter(Boolean).length > 0 && (
-                <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1">{metaParts.filter(Boolean).join(' • ')}</p>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <ModeToggle mode={mode} onChange={setMode} />
-              <button
-                className="px-4 py-2 rounded-full bg-black text-white text-sm font-medium dark:bg-white dark:text-black hover:opacity-90 transition-opacity"
-                onClick={() => openDrawer('trip-overview', { trip })}
-              >
-                Overview
-              </button>
-            </div>
-          </div>
-
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-2xl">{modeDescription}</p>
-        </header>
-
-      {mode === 'view' ? (
-        <ItineraryViewSection
-          trip={trip}
-          openDrawer={openDrawer}
-          selectedDayIndex={selectedDayIndex}
-          onSelectDay={setSelectedDayIndex}
-        />
-      ) : (
-        <EditModeSection
-          trip={trip}
-          openDrawer={openDrawer}
-          selectedDayIndex={selectedDayIndex}
-          onSelectDay={setSelectedDayIndex}
-        />
-      )}
-      </div>
-    </div>
-  );
-}
-
-function ModeToggle({ mode, onChange }: { mode: Mode; onChange: (mode: Mode) => void }) {
-  const options: { key: Mode; label: string }[] = [
-    { key: 'view', label: 'View' },
-    { key: 'edit', label: 'Edit' },
-  ];
-
-  return (
-    <div className="inline-flex rounded-full bg-neutral-100 dark:bg-neutral-800 p-1">
-      {options.map((option) => (
-        <button
-          key={option.key}
-          onClick={() => onChange(option.key)}
-          className={`px-4 py-1.5 text-sm font-medium rounded-full transition ${
-            mode === option.key
-              ? 'bg-white text-gray-900 shadow-sm dark:bg-gray-950 dark:text-white'
-              : 'text-neutral-500 dark:text-neutral-400'
-          }`}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function ItineraryViewSection({
-  trip,
-  openDrawer,
-  selectedDayIndex,
-  onSelectDay,
-}: {
-  trip: TripWithDays;
-  openDrawer: DrawerOpener;
-  selectedDayIndex: number;
-  onSelectDay: (index: number) => void;
-}) {
-  const hasDays = trip.days && trip.days.length > 0;
-
-  if (!hasDays) {
-    return (
-      <EmptyItineraryState
-        title="No itinerary yet"
-        description="Add dates, meals, and activities to see your trip take shape."
-        actionLabel="Plan this trip"
-        onAction={() => openDrawer('trip-overview', { trip })}
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      <DayTabs days={trip.days} selectedIndex={selectedDayIndex} onSelect={onSelectDay} />
-      {trip.days[selectedDayIndex] && (
-        <>
-          <DayCard
-            key={`${trip.days[selectedDayIndex].date}-${selectedDayIndex}`}
-            day={trip.days[selectedDayIndex]}
-            index={selectedDayIndex}
-            trip={trip}
-            openDrawer={openDrawer}
-            mode="view"
-          />
-          <AddPlaceButton trip={trip} selectedDayIndex={selectedDayIndex} openDrawer={openDrawer} />
-        </>
-      )}
-    </div>
-  );
-}
-
-function EditModeSection({
-  trip,
-  openDrawer,
-  selectedDayIndex,
-  onSelectDay,
-}: {
-  trip: TripWithDays;
-  openDrawer: DrawerOpener;
-  selectedDayIndex: number;
-  onSelectDay: (index: number) => void;
-}) {
-  const hasDays = trip.days && trip.days.length > 0;
-
-  return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-[#15161a] p-4 space-y-4">
-        <h2 className="text-sm font-semibold text-neutral-600 dark:text-neutral-300 uppercase tracking-wide">
-          Quick actions
-        </h2>
-        <div className="grid gap-3 sm:grid-cols-2">
+      <div className="min-h-screen bg-white dark:bg-neutral-950 flex items-center justify-center px-4">
+        <div className="text-center space-y-4">
+          <p className="text-red-500 text-sm">{error}</p>
           <button
-            className="flex items-start gap-3 rounded-2xl border border-transparent bg-white dark:bg-[#0f1012] p-4 text-left shadow-sm hover:shadow-md transition-shadow"
-            onClick={() => openDrawer('trip-overview', { trip })}
+            onClick={() => router.push('/trips')}
+            className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition"
           >
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-neutral-900 text-white dark:bg-white dark:text-black">
-              <PencilLine className="w-4 h-4" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Update overview</p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                Change title, dates, destination, or cover image.
-              </p>
-            </div>
-          </button>
-
-          <button
-            className="flex items-start gap-3 rounded-2xl border border-transparent bg-white dark:bg-[#0f1012] p-4 text-left shadow-sm hover:shadow-md transition-shadow"
-            onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
-          >
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-800 dark:bg-amber-400/10 dark:text-amber-200">
-              <Sparkles className="w-4 h-4" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-gray-900 dark:text-white">Ask AI for ideas</p>
-              <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                Get meal or activity suggestions for any day.
-              </p>
-            </div>
+            Back to trips
           </button>
         </div>
       </div>
+    );
+  }
 
-      {hasDays ? (
-        <div className="space-y-4">
-          <DayTabs days={trip.days} selectedIndex={selectedDayIndex} onSelect={onSelectDay} />
-          {trip.days[selectedDayIndex] && (
-            <DayEditCard
-              key={`${trip.days[selectedDayIndex].date}-${selectedDayIndex}-edit`}
-              day={trip.days[selectedDayIndex]}
+  // Not found
+  if (!trip) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-neutral-950 flex items-center justify-center px-4">
+        <div className="text-center space-y-4">
+          <p className="text-neutral-500 text-sm">Trip not found</p>
+          <button
+            onClick={() => router.push('/trips')}
+            className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition"
+          >
+            Back to trips
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const hasDays = trip.days && trip.days.length > 0;
+  const selectedDay = hasDays ? trip.days[selectedDayIndex] : null;
+
+  // Format date helper
+  const formatDateShort = (dateStr: string) => {
+    try {
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  const formatDateRange = () => {
+    if (!trip.start_date || !trip.end_date) return null;
+    const start = formatDateShort(trip.start_date);
+    const end = formatDateShort(trip.end_date);
+    return `${start} – ${end}`;
+  };
+
+  const goToPrevDay = () => {
+    if (selectedDayIndex > 0) setSelectedDayIndex(selectedDayIndex - 1);
+  };
+
+  const goToNextDay = () => {
+    if (hasDays && selectedDayIndex < trip.days.length - 1) {
+      setSelectedDayIndex(selectedDayIndex + 1);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white dark:bg-neutral-950">
+      {/* Sticky Header */}
+      <header className="sticky top-0 z-40 bg-white/80 dark:bg-neutral-950/80 backdrop-blur-xl border-b border-neutral-100 dark:border-neutral-900">
+        <div className="max-w-3xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            <button
+              onClick={() => router.push('/trips')}
+              className="p-2 -ml-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition"
+            >
+              <ArrowLeft className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+            </button>
+
+            <div className="flex-1 min-w-0 text-center">
+              <h1 className="text-base font-semibold text-neutral-900 dark:text-white truncate">
+                {trip.title}
+              </h1>
+              {trip.destination && (
+                <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {trip.destination}
+                </p>
+              )}
+            </div>
+
+            <button
+              onClick={() => openDrawer('trip-overview', { trip })}
+              className="p-2 -mr-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 transition"
+            >
+              <MoreHorizontal className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-3xl mx-auto">
+        {/* Trip Info Bar */}
+        {(trip.start_date || trip.destination) && (
+          <div className="px-4 py-4 border-b border-neutral-100 dark:border-neutral-900">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
+              {formatDateRange() && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4" />
+                  {formatDateRange()}
+                </span>
+              )}
+              {trip.destination && (
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4" />
+                  {trip.destination}
+                </span>
+              )}
+              {hasDays && (
+                <span className="text-neutral-400 dark:text-neutral-500">
+                  {trip.days.length} {trip.days.length === 1 ? 'day' : 'days'}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Day Navigator */}
+        {hasDays && (
+          <div className="sticky top-[57px] z-30 bg-white dark:bg-neutral-950 border-b border-neutral-100 dark:border-neutral-900">
+            <div className="px-4 py-3 flex items-center justify-between gap-2">
+              <button
+                onClick={goToPrevDay}
+                disabled={selectedDayIndex === 0}
+                className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              >
+                <ChevronLeft className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+              </button>
+
+              <div className="flex-1 text-center">
+                <p className="text-sm font-medium text-neutral-900 dark:text-white">
+                  Day {selectedDayIndex + 1}
+                </p>
+                {selectedDay?.date && (
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    {formatDateShort(selectedDay.date)}
+                  </p>
+                )}
+              </div>
+
+              <button
+                onClick={goToNextDay}
+                disabled={selectedDayIndex === trip.days.length - 1}
+                className="p-2 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed transition"
+              >
+                <ChevronRight className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+              </button>
+            </div>
+
+            {/* Day Pills */}
+            <div className="px-4 pb-3 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-1.5 min-w-max">
+                {trip.days.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setSelectedDayIndex(i)}
+                    className={`w-8 h-8 rounded-full text-xs font-medium transition ${
+                      selectedDayIndex === i
+                        ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900'
+                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-700'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="px-4 py-6">
+          {hasDays && selectedDay ? (
+            <DayContent
+              day={selectedDay}
               dayIndex={selectedDayIndex}
               trip={trip}
               openDrawer={openDrawer}
             />
+          ) : (
+            <EmptyState trip={trip} openDrawer={openDrawer} />
           )}
-          <AddPlaceButton trip={trip} selectedDayIndex={selectedDayIndex} openDrawer={openDrawer} variant="outlined" />
         </div>
-      ) : (
-        <EmptyItineraryState
-          title="Nothing to edit yet"
-          description="Add at least one day to unlock the editor."
-          actionLabel="Open overview"
-          onAction={() => openDrawer('trip-overview', { trip })}
-        />
+      </main>
+
+      {/* Floating Action Button */}
+      {hasDays && selectedDay && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <button
+            onClick={() =>
+              openDrawer('place-selector', {
+                day: selectedDay,
+                trip,
+                index: selectedDayIndex,
+                replaceIndex: null,
+              })
+            }
+            className="w-14 h-14 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-lg shadow-neutral-900/20 dark:shadow-black/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
+          >
+            <Plus className="w-6 h-6" />
+          </button>
+        </div>
       )}
     </div>
   );
 }
 
-function DayEditCard({
+function DayContent({
   day,
   dayIndex,
   trip,
@@ -296,42 +275,52 @@ function DayEditCard({
   day: TripDay;
   dayIndex: number;
   trip: TripWithDays;
-  openDrawer: DrawerOpener;
+  openDrawer: (type: string, props: any) => void;
 }) {
-  const mealSummary = getMealSummary(day);
-  const activitySummary =
-    day.activities && day.activities.length > 0 ? `${day.activities.length} planned` : 'No activities yet';
-  const hotelSummary = day.hotel?.name || day.hotel?.title || 'No hotel saved';
-
-  const infoBlocks = [
-    { label: 'Meals', value: mealSummary, icon: Utensils },
-    { label: 'Activities', value: activitySummary, icon: ListChecks },
-    { label: 'Stay', value: hotelSummary, icon: Building2 },
-  ];
+  // Build timeline entries from meals and activities
+  const entries = buildEntries(day);
 
   return (
-    <div className="rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#0f1012] p-5 space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-neutral-500 dark:text-neutral-500">Day {dayIndex + 1}</p>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{day.date}</h3>
-          <p className="text-sm text-neutral-500 dark:text-neutral-400">{day.city || 'City TBD'}</p>
+    <div className="space-y-6">
+      {/* Quick Actions */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => openDrawer('trip-day', { day, dayIndex, trip })}
+          className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition"
+        >
+          <Pencil className="w-4 h-4" />
+          Edit Day
+        </button>
+        <button
+          onClick={() => openDrawer('trip-ai', { trip, suggestions: [] })}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 text-sm font-medium text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition"
+        >
+          <Sparkles className="w-4 h-4" />
+          Ideas
+        </button>
+      </div>
+
+      {/* Timeline */}
+      {entries.length > 0 ? (
+        <div className="space-y-1">
+          {entries.map((entry, i) => (
+            <TimelineItem
+              key={entry.id}
+              entry={entry}
+              isLast={i === entries.length - 1}
+              openDrawer={openDrawer}
+            />
+          ))}
         </div>
-        <div className="flex flex-wrap gap-2">
+      ) : (
+        <div className="py-16 text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+            <MapPin className="w-5 h-5 text-neutral-400" />
+          </div>
+          <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">
+            No activities planned for this day
+          </p>
           <button
-            className="px-4 py-2 rounded-full border border-neutral-200 text-sm font-medium text-gray-900 hover:bg-neutral-50 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-900"
-            onClick={() =>
-              openDrawer('trip-day', {
-                day,
-                dayIndex,
-                trip,
-              })
-            }
-          >
-            Edit day
-          </button>
-          <button
-            className="px-4 py-2 rounded-full border border-neutral-200 text-sm font-medium text-gray-900 hover:bg-neutral-50 dark:border-neutral-700 dark:text-white dark:hover:bg-neutral-900 flex items-center gap-2"
             onClick={() =>
               openDrawer('place-selector', {
                 day,
@@ -340,137 +329,177 @@ function DayEditCard({
                 replaceIndex: null,
               })
             }
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium hover:opacity-90 transition"
           >
             <Plus className="w-4 h-4" />
-            Add place
+            Add first place
           </button>
         </div>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-3">
-        {infoBlocks.map((block) => (
-          <div
-            key={block.label}
-            className="rounded-2xl border border-neutral-100 dark:border-neutral-800 bg-neutral-50/80 dark:bg-neutral-900/40 p-3"
-          >
-            <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-neutral-500 dark:text-neutral-400 mb-1">
-              <block.icon className="w-3.5 h-3.5" />
-              {block.label}
-            </div>
-            <p className="text-sm text-gray-900 dark:text-white leading-snug">{block.value}</p>
-          </div>
-        ))}
-      </div>
+      )}
     </div>
   );
 }
 
-function EmptyItineraryState({
-  title,
-  description,
-  actionLabel,
-  onAction,
-}: {
+interface TimelineEntry {
+  id: string;
   title: string;
-  description: string;
-  actionLabel: string;
-  onAction: () => void;
+  type: 'meal' | 'activity';
+  mealType?: string;
+  time?: string;
+  image?: string | null;
+  slug?: string;
+}
+
+function TimelineItem({
+  entry,
+  isLast,
+  openDrawer,
+}: {
+  entry: TimelineEntry;
+  isLast: boolean;
+  openDrawer: (type: string, props: any) => void;
 }) {
+  const isMeal = entry.type === 'meal';
+  const iconBg = isMeal
+    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+    : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400';
+
   return (
-    <div className="rounded-3xl border-2 border-dashed border-neutral-200 dark:border-neutral-800 p-10 text-center space-y-4">
-      <p className="text-lg font-semibold text-gray-900 dark:text-white">{title}</p>
-      <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-md mx-auto">{description}</p>
-      <button
-        onClick={onAction}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-black text-white text-sm font-semibold dark:bg-white dark:text-black"
-      >
-        <Plus className="w-4 h-4" />
-        {actionLabel}
-      </button>
-    </div>
+    <button
+      onClick={() => entry.slug && openDrawer('destination', { slug: entry.slug })}
+      className="w-full flex gap-3 p-3 rounded-2xl hover:bg-neutral-50 dark:hover:bg-neutral-900/50 transition text-left group"
+    >
+      {/* Timeline */}
+      <div className="flex flex-col items-center">
+        <div className={`w-9 h-9 rounded-full flex items-center justify-center ${iconBg}`}>
+          {isMeal ? <Utensils className="w-4 h-4" /> : <MapPin className="w-4 h-4" />}
+        </div>
+        {!isLast && <div className="w-px flex-1 bg-neutral-200 dark:bg-neutral-800 my-1" />}
+      </div>
+
+      {/* Image */}
+      <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-800 flex-shrink-0">
+        {entry.image ? (
+          <Image
+            src={entry.image}
+            alt={entry.title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform"
+            sizes="56px"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <MapPin className="w-4 h-4 text-neutral-300 dark:text-neutral-600" />
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 py-0.5">
+        <p className="text-sm font-medium text-neutral-900 dark:text-white truncate">
+          {entry.title}
+        </p>
+        <div className="flex items-center gap-2 mt-0.5">
+          {entry.mealType && (
+            <span className="text-xs text-neutral-500 dark:text-neutral-400 capitalize">
+              {entry.mealType}
+            </span>
+          )}
+          {entry.time && (
+            <span className="inline-flex items-center gap-1 text-xs text-neutral-400 dark:text-neutral-500">
+              <Clock className="w-3 h-3" />
+              {entry.time}
+            </span>
+          )}
+        </div>
+      </div>
+    </button>
   );
 }
 
-function getMealSummary(day: TripDay): string {
-  if (!day.meals) return 'Not set yet';
-  const meals = ['breakfast', 'lunch', 'dinner']
-    .map((mealType) => {
-      const meal = (day.meals as Record<string, any>)[mealType];
-      if (!meal) return null;
-      return meal.title || meal.name || mealType;
-    })
-    .filter(Boolean);
-
-  return meals.length > 0 ? (meals as string[]).join(' • ') : 'Not set yet';
-}
-
-function AddPlaceButton({
+function EmptyState({
   trip,
-  selectedDayIndex,
   openDrawer,
-  variant = 'solid',
 }: {
   trip: TripWithDays;
-  selectedDayIndex: number;
-  openDrawer: DrawerOpener;
-  variant?: 'solid' | 'outlined';
+  openDrawer: (type: string, props: any) => void;
 }) {
-  const day = trip.days?.[selectedDayIndex];
-  if (!day) return null;
-
-  const baseClasses = 'w-full max-w-md mx-auto flex items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition';
-  const styles =
-    variant === 'outlined'
-      ? 'border border-neutral-300 text-neutral-800 dark:text-white dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-900'
-      : 'bg-black text-white dark:bg-white dark:text-black hover:opacity-90';
-
   return (
-    <div className="flex justify-center">
+    <div className="py-16 text-center">
+      <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+        <Calendar className="w-7 h-7 text-neutral-400" />
+      </div>
+      <h2 className="text-lg font-semibold text-neutral-900 dark:text-white mb-2">
+        Start planning your trip
+      </h2>
+      <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-xs mx-auto mb-6">
+        Add dates to create your day-by-day itinerary, then fill it with places and activities.
+      </p>
       <button
-        className={`${baseClasses} ${styles}`}
-        onClick={() =>
-          openDrawer('place-selector', {
-            day,
-            trip,
-            index: selectedDayIndex,
-            replaceIndex: null,
-          })
-        }
+        onClick={() => openDrawer('trip-overview', { trip })}
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium hover:opacity-90 transition"
       >
         <Plus className="w-4 h-4" />
-        Add place to Day {selectedDayIndex + 1}
+        Set trip dates
       </button>
     </div>
   );
 }
 
-function DayTabs({
-  days,
-  selectedIndex,
-  onSelect,
-}: {
-  days: TripDay[];
-  selectedIndex: number;
-  onSelect: (index: number) => void;
-}) {
-  return (
-    <div className="-mx-4 px-4 md:mx-0 md:px-0">
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
-        {days.map((day, index) => (
-          <button
-            key={`${day.date}-${index}-tab`}
-            onClick={() => onSelect(index)}
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition ${
-              selectedIndex === index
-                ? 'bg-black text-white dark:bg-white dark:text-black'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200 dark:bg-neutral-800 dark:text-neutral-300 dark:hover:bg-neutral-700'
-            }`}
-          >
-            Day {index + 1}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
+function buildEntries(day: TripDay): TimelineEntry[] {
+  const entries: TimelineEntry[] = [];
 
+  // Helper to parse image from item
+  const getImage = (item: any): string | null => {
+    if (item?.image) return item.image;
+    if (item?.image_thumbnail) return item.image_thumbnail;
+    if (item?.notes) {
+      try {
+        const notes = typeof item.notes === 'string' ? JSON.parse(item.notes) : item.notes;
+        return notes?.image || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  // Add meals
+  const mealTypes = ['breakfast', 'lunch', 'dinner'] as const;
+  mealTypes.forEach((mealType) => {
+    const meal = day.meals?.[mealType];
+    if (meal) {
+      entries.push({
+        id: `meal-${mealType}`,
+        title: meal.title || meal.name || mealType.charAt(0).toUpperCase() + mealType.slice(1),
+        type: 'meal',
+        mealType,
+        time: meal.time,
+        image: getImage(meal),
+        slug: meal.slug || meal.destination_slug,
+      });
+    }
+  });
+
+  // Add activities
+  if (day.activities?.length) {
+    day.activities.forEach((activity: any, i: number) => {
+      entries.push({
+        id: `activity-${i}`,
+        title: activity.title || activity.name || 'Activity',
+        type: 'activity',
+        time: activity.time,
+        image: getImage(activity),
+        slug: activity.slug || activity.destination_slug,
+      });
+    });
+  }
+
+  // Sort by time if available
+  return entries.sort((a, b) => {
+    if (!a.time && !b.time) return 0;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time.localeCompare(b.time);
+  });
+}
