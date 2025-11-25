@@ -31,6 +31,16 @@ interface UserStats {
   countries: number;
 }
 
+// Badge pill - matching destination drawer badge style
+function StatBadge({ icon: Icon, children }: { icon: React.ElementType; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300">
+      <Icon className="w-3 h-3" />
+      {children}
+    </span>
+  );
+}
+
 // Passport-style user card
 function UserPassportCard({
   avatarUrl,
@@ -48,39 +58,39 @@ function UserPassportCard({
   return (
     <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 dark:from-gray-800 dark:via-gray-900 dark:to-black p-5">
       {/* Decorative pattern */}
-      <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 opacity-[0.03]">
         <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl transform translate-x-10 -translate-y-10" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-white rounded-full blur-3xl transform -translate-x-10 translate-y-10" />
       </div>
 
       {/* Header */}
-      <div className="relative flex items-center gap-2 mb-4">
-        <Globe className="w-4 h-4 text-gray-400" />
-        <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Urban Manual</span>
+      <div className="relative flex items-center gap-1.5 mb-4">
+        <Globe className="w-3.5 h-3.5 text-gray-500" />
+        <span className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">Urban Manual</span>
       </div>
 
       {/* Profile section */}
-      <div className="relative flex items-center gap-4 mb-5">
+      <div className="relative flex items-center gap-4 mb-4">
         {avatarUrl ? (
-          <div className="relative w-20 h-20 rounded-xl overflow-hidden ring-2 ring-white/20">
+          <div className="relative w-16 h-16 rounded-xl overflow-hidden ring-2 ring-white/10">
             <Image
               src={avatarUrl}
               alt={displayUsername}
               fill
               className="object-cover"
-              sizes="80px"
+              sizes="64px"
             />
           </div>
         ) : (
-          <div className="w-20 h-20 rounded-xl bg-gray-700 ring-2 ring-white/20 flex items-center justify-center">
-            <span className="text-white text-2xl font-semibold">
+          <div className="w-16 h-16 rounded-xl bg-gray-700/50 ring-2 ring-white/10 flex items-center justify-center">
+            <span className="text-white/90 text-xl font-semibold">
               {displayUsername.charAt(0).toUpperCase()}
             </span>
           </div>
         )}
 
         <div className="flex-1 min-w-0">
-          <p className="text-xl font-semibold text-white truncate">
+          <p className="text-lg font-semibold text-white truncate">
             {displayUsername}
           </p>
           {email && (
@@ -91,23 +101,23 @@ function UserPassportCard({
         </div>
       </div>
 
-      {/* Stats row */}
+      {/* Stats row - matching destination drawer badge layout */}
       <div className="relative flex flex-wrap items-center gap-2">
         {memberSince && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white/10 text-white">
-            <Calendar className="w-3 h-3 mr-1.5" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+            <Calendar className="w-3 h-3" />
             Since {memberSince}
           </span>
         )}
         {stats.visited > 0 && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white/10 text-white">
-            <MapPin className="w-3 h-3 mr-1.5" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+            <MapPin className="w-3 h-3" />
             {stats.visited} places
           </span>
         )}
         {stats.countries > 0 && (
-          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white/10 text-white">
-            <Globe className="w-3 h-3 mr-1.5" />
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-400">
+            <Globe className="w-3 h-3" />
             {stats.countries} countries
           </span>
         )}
@@ -139,17 +149,17 @@ function NavItem({
       }`}
     >
       <div
-        className={`flex h-10 w-10 items-center justify-center rounded-full ${
+        className={`flex h-9 w-9 items-center justify-center rounded-full ${
           isDanger
             ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
-            : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+            : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400'
         }`}
       >
-        <Icon className="h-5 w-5" />
+        <Icon className="h-4 w-4" />
       </div>
       <div className="flex-1 min-w-0">
         <p
-          className={`text-[15px] font-medium ${
+          className={`text-sm font-medium ${
             isDanger
               ? 'text-red-600 dark:text-red-400'
               : 'text-gray-900 dark:text-white'
@@ -158,13 +168,13 @@ function NavItem({
           {label}
         </p>
         {description && (
-          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+          <p className="text-xs text-muted-foreground truncate">
             {description}
           </p>
         )}
       </div>
       <ChevronRight
-        className={`h-5 w-5 ${isDanger ? 'text-red-400' : 'text-gray-400 dark:text-gray-600'}`}
+        className={`h-4 w-4 ${isDanger ? 'text-red-400' : 'text-gray-400 dark:text-gray-600'}`}
       />
     </button>
   );
@@ -281,15 +291,15 @@ export function AccountDrawer() {
 
         <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
           <DrawerSection>
-            <div className="text-center py-8">
-              <div className="w-20 h-20 mx-auto rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
-                <User className="w-10 h-10 text-gray-400 dark:text-gray-600" />
+            <div className="text-center py-6">
+              <div className="w-16 h-16 mx-auto rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center mb-4">
+                <User className="w-8 h-8 text-gray-400 dark:text-gray-500" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">
                 Welcome to Urban Manual
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
-                Sign in to save places, build trips, and sync your travel profile across devices.
+              <p className="text-sm text-muted-foreground">
+                Sign in to save places and build trips.
               </p>
             </div>
           </DrawerSection>
@@ -298,9 +308,9 @@ export function AccountDrawer() {
         <DrawerActionBar>
           <button
             onClick={() => openDrawer('login')}
-            className="w-full bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium"
+            className="bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2 text-sm font-medium"
           >
-            Sign In
+            Sign in
           </button>
         </DrawerActionBar>
       </Drawer>
@@ -310,15 +320,8 @@ export function AccountDrawer() {
   return (
     <Drawer isOpen={isOpen} onClose={closeDrawer}>
       <DrawerHeader
-        title="Account"
-        rightAccessory={
-          <button
-            onClick={handleSignOut}
-            className="text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            Sign Out
-          </button>
-        }
+        title={displayUsername}
+        subtitle={user.email || undefined}
       />
 
       <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
@@ -335,20 +338,20 @@ export function AccountDrawer() {
 
         {/* Your Manual */}
         <DrawerSection>
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
             Your Manual
           </p>
-          <div className="space-y-1">
+          <div className="-mx-3">
             <NavItem
               icon={Bookmark}
-              label="Saved Places"
-              description="Your curated favorites"
+              label="Saved places"
+              description={`${stats.saved} items`}
               onClick={() => openDrawer('saved-places', 'account')}
             />
             <NavItem
               icon={MapPin}
-              label="Visited Places"
-              description="Your travel history"
+              label="Visited places"
+              description={`${stats.visited} logged`}
               onClick={() => openDrawer('visited-places', 'account')}
             />
             <NavItem
@@ -360,7 +363,7 @@ export function AccountDrawer() {
             <NavItem
               icon={Compass}
               label="Trips"
-              description="Manage trip plans"
+              description={`${stats.trips} planned`}
               onClick={() => openDrawer('trips', 'account')}
             />
             <NavItem
@@ -374,10 +377,10 @@ export function AccountDrawer() {
 
         {/* Account */}
         <DrawerSection>
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-1">
             Account
           </p>
-          <div className="space-y-1">
+          <div className="-mx-3">
             <NavItem
               icon={Settings}
               label="Settings"
@@ -386,7 +389,7 @@ export function AccountDrawer() {
             />
             <NavItem
               icon={LogOut}
-              label="Sign Out"
+              label="Sign out"
               onClick={handleSignOut}
               isDanger
             />
@@ -397,9 +400,9 @@ export function AccountDrawer() {
       <DrawerActionBar>
         <button
           onClick={() => handleNavigate('/account')}
-          className="w-full bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium"
+          className="bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2 text-sm font-medium"
         >
-          Edit Profile
+          Edit profile
         </button>
       </DrawerActionBar>
     </Drawer>

@@ -14,7 +14,6 @@ import TripOverviewDrawer from '@/components/drawers/TripOverviewDrawer';
 import TripOverviewQuickDrawer from '@/components/drawers/TripOverviewQuickDrawer';
 import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
 import TripSettingsDrawer from '@/components/drawers/TripSettingsDrawer';
-import AccountDrawerNew from '@/components/drawers/AccountDrawer';
 import { Drawer } from '@/components/ui/Drawer';
 import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 
@@ -30,18 +29,6 @@ export default function DrawerMount() {
       <VisitedPlacesDrawer />
 
       {/* New drawers that use the global drawer store */}
-      {open && type === 'account-new' && (
-        <Drawer
-          isOpen={open}
-          onClose={closeDrawer}
-          desktopWidth="420px"
-          style={drawerStyle}
-          position="right"
-        >
-          <AccountDrawerNew isOpen={open} onClose={closeDrawer} />
-        </Drawer>
-      )}
-
       <DestinationDrawer
         isOpen={open && type === 'destination'}
         onClose={closeDrawer}
