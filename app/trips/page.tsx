@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Plus, Loader2, MapPin, Calendar, Plane } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import UMActionPill from '@/components/ui/UMActionPill';
+import TripCard from '@/components/trips/TripCard';
 import type { Trip } from '@/types/trip';
 
 export default function TripsPage() {
@@ -74,11 +75,6 @@ export default function TripsPage() {
     }
   };
 
-  const formatDate = (date: string | null) => {
-    if (!date) return null;
-    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
   // Loading state
   if (authLoading || loading) {
     return (
@@ -93,14 +89,17 @@ export default function TripsPage() {
     return (
       <main className="w-full px-6 md:px-10 py-20">
         <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="w-full max-w-sm">
-            <h1 className="text-2xl font-light mb-8">Trips</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
+          <div className="w-full max-w-sm text-center">
+            <div className="w-20 h-20 rounded-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center mb-6 mx-auto">
+              <Plane className="h-8 w-8 text-gray-400" />
+            </div>
+            <h1 className="text-2xl font-light mb-4">Trips</h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-8">
               Sign in to plan and organize your travels
             </p>
             <button
               onClick={() => router.push('/auth/login')}
-              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-sm hover:opacity-80 transition-opacity"
+              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-xl hover:opacity-80 transition-opacity"
             >
               Sign In
             </button>
@@ -112,7 +111,7 @@ export default function TripsPage() {
 
   return (
     <main className="w-full px-6 md:px-10 py-20 min-h-screen">
-      <div className="w-full">
+      <div className="w-full max-w-7xl mx-auto">
         {/* Header - Matches account page */}
         <div className="mb-12">
           <div className="flex items-center justify-between mb-2">
@@ -155,14 +154,14 @@ export default function TripsPage() {
 
         {/* Trip List */}
         {trips.length === 0 ? (
-          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <Plane className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
+              <Plane className="w-8 h-8 text-neutral-400 dark:text-neutral-500" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               No trips yet
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6 max-w-sm mx-auto">
               Start planning your next adventure by creating your first trip.
             </p>
             <UMActionPill variant="primary" onClick={createTrip} disabled={creating}>
@@ -171,43 +170,22 @@ export default function TripsPage() {
             </UMActionPill>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {trips.map((trip) => (
-              <button
+              <TripCard
                 key={trip.id}
-                onClick={() => router.push(`/trips/${trip.id}`)}
-                className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
-              >
-                {/* Image */}
-                <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                  {trip.cover_image ? (
-                    <Image
-                      src={trip.cover_image}
-                      alt={trip.title}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <MapPin className="w-5 h-5 text-gray-400" />
-                    </div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">{trip.title}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">
-                    {trip.destination && `${trip.destination} • `}
-                    {trip.start_date ? formatDate(trip.start_date) : 'No dates set'}
-                    {trip.end_date && ` – ${formatDate(trip.end_date)}`}
-                  </div>
-                  <div className="text-xs text-gray-400 mt-0.5 capitalize">
-                    {trip.status}
-                  </div>
-                </div>
-              </button>
+                trip={{
+                  id: trip.id,
+                  name: trip.title,
+                  coverImage: trip.cover_image,
+                  city: trip.destination || undefined,
+                  startDate: trip.start_date || undefined,
+                  endDate: trip.end_date || undefined,
+                  status: trip.status,
+                }}
+                onView={() => router.push(`/trips/${trip.id}`)}
+                onEdit={() => router.push(`/trips/${trip.id}`)}
+              />
             ))}
           </div>
         )}
