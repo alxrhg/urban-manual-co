@@ -22,6 +22,7 @@ import {
   Sparkles,
   Globe,
   Funnel,
+  Loader2,
 } from "lucide-react";
 import { getCategoryIconComponent } from "@/lib/icons/category-icons";
 // Lazy load drawer (only when opened)
@@ -403,6 +404,7 @@ export default function Home() {
   // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
   const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
+  const [creatingTrip, setCreatingTrip] = useState(false);
   
   // Shared loading state for grid and map views
   const destinationLoading = useDestinationLoading();
@@ -423,6 +425,37 @@ export default function Home() {
     category?: string;
   } | null>(null);
   const [showTripSidebar, setShowTripSidebar] = useState(false);
+
+  // Direct trip creation - creates trip and navigates to editor immediately
+  const handleCreateTrip = useCallback(async () => {
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+
+    try {
+      setCreatingTrip(true);
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { data, error } = await supabase
+        .from('trips')
+        .insert({
+          user_id: user.id,
+          title: 'New Trip',
+          status: 'planning',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      if (data) router.push(`/trips/${data.id}`);
+    } catch (err) {
+      console.error('Error creating trip:', err);
+    } finally {
+      setCreatingTrip(false);
+    }
+  }, [user, router]);
 
   const trackDestinationEngagement = useCallback(
     (
@@ -2837,15 +2870,20 @@ export default function Home() {
                           <span className="hidden sm:inline">Add New POI</span>
                         </button>
                       ) : (
-                        <Link
-                          href="/trips"
-                          className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-4 sm:px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10"
+                        <button
+                          onClick={handleCreateTrip}
+                          disabled={creatingTrip}
+                          className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-4 sm:px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10 disabled:opacity-50"
                           style={{ borderRadius: '9999px' }}
-                          aria-label="View Trips"
+                          aria-label="Create Trip"
                         >
-                          <Plus className="h-4 w-4" />
-                          <span className="hidden sm:inline">Trips</span>
-                        </Link>
+                          {creatingTrip ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Plus className="h-4 w-4" />
+                          )}
+                          <span className="hidden sm:inline">{creatingTrip ? 'Creating...' : 'Create Trip'}</span>
+                        </button>
                       )}
 
                       {/* Filters - Compact Icon Button */}

@@ -68,7 +68,6 @@ function getStatusConfig(status?: string) {
 export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripListDrawerProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const openDrawer = useDrawerStore((s) => s.openDrawer);
   const closeDrawer = useDrawerStore((s) => s.closeDrawer);
   const [trips, setTrips] = useState<any[]>(propsTrips || []);
   const [loading, setLoading] = useState(false);
@@ -124,21 +123,51 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
     }
   }, [propsTrips, fetchTrips]);
 
-  const handleNewTrip = () => {
+  const handleNewTrip = async () => {
     if (onNewTrip) {
       onNewTrip();
-    } else if (!user) {
+      return;
+    }
+
+    if (!user) {
       router.push('/auth/login');
-    } else {
+      return;
+    }
+
+    // Create trip directly and navigate to it
+    try {
+      const supabaseClient = createClient();
+      if (!supabaseClient) return;
+
+      const { data, error } = await supabaseClient
+        .from('trips')
+        .insert({
+          user_id: user.id,
+          title: 'New Trip',
+          status: 'planning',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
       closeDrawer();
-      setTimeout(() => {
-        router.push('/trips');
-      }, 200);
+      if (data) {
+        setTimeout(() => {
+          router.push(`/trips/${data.id}`);
+        }, 200);
+      }
+    } catch (err) {
+      console.error('Error creating trip:', err);
     }
   };
 
   const handleSelectTrip = (trip: any) => {
-    openDrawer("trip-overview", { trip });
+    // Navigate directly to trip page for faster access
+    closeDrawer();
+    setTimeout(() => {
+      router.push(`/trips/${trip.id}`);
+    }, 200);
   };
 
   if (loading) {
