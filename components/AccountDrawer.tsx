@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
+import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
@@ -142,7 +143,8 @@ function NavItem({
 export function AccountDrawer() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { isDrawerOpen, closeDrawer, openDrawer } = useDrawer();
+  const { isDrawerOpen, closeDrawer: closeLegacyDrawer, openDrawer: openLegacyDrawer } = useDrawer();
+  const { openSide, closeDrawer: closeStoreDrawer } = useDrawerStore();
   const isOpen = isDrawerOpen('account');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
@@ -249,7 +251,7 @@ export function AccountDrawer() {
             </p>
             
             <button
-              onClick={() => openDrawer('login')}
+              onClick={() => openLegacyDrawer('login')}
               className="w-full py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-medium hover:opacity-90 transition-opacity"
             >
               Sign In / Sign Up
@@ -318,19 +320,22 @@ export function AccountDrawer() {
                   icon={Bookmark}
                   label="Saved Places"
                   description={`${stats.saved} curated spots`}
-                  onClick={() => openDrawer('saved-places', 'account')}
+                  onClick={() => openLegacyDrawer('saved-places', 'account')}
                 />
                 <NavItem
                   icon={MapPin}
                   label="Visited Places"
                   description={`${stats.visited} experiences logged`}
-                  onClick={() => openDrawer('visited-places', 'account')}
+                  onClick={() => openLegacyDrawer('visited-places', 'account')}
                 />
                 <NavItem
                   icon={Compass}
                   label="Trip Plans"
                   description={`${stats.trips} itineraries`}
-                  onClick={() => openDrawer('trips', 'account')}
+                  onClick={() => {
+                    closeLegacyDrawer();
+                    openSide('trip-list');
+                  }}
                 />
               </div>
             </div>
@@ -345,7 +350,7 @@ export function AccountDrawer() {
                   icon={Settings}
                   label="Settings"
                   description="App preferences & privacy"
-                  onClick={() => openDrawer('settings', 'account')}
+                  onClick={() => openLegacyDrawer('settings', 'account')}
                 />
               </div>
             </div>
