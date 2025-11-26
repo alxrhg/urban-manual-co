@@ -3,12 +3,13 @@
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 import { AccountDrawer } from '@/components/AccountDrawer';
-import DestinationDrawer from '@/components/DestinationDrawer';
+import { DestinationDrawer } from '@/src/features/detail/DestinationDrawer';
 import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
 import { QuickTripSelector } from '@/components/QuickTripSelector';
 
 import AddHotelDrawer from '@/components/drawers/AddHotelDrawer';
+import AddFlightDrawer from '@/components/drawers/AddFlightDrawer';
 import AISuggestionsDrawer from '@/components/drawers/AISuggestionsDrawer';
 import TripListDrawer from '@/components/drawers/TripListDrawer';
 import TripOverviewDrawer from '@/components/drawers/TripOverviewDrawer';
@@ -46,22 +47,15 @@ export default function DrawerMount() {
       <DestinationDrawer
         isOpen={open && type === 'destination'}
         onClose={closeDrawer}
-        place={props.place || null}
+        destination={props.place || props.destination || null}
         {...props}
       />
 
-      {open && type === 'trip-overview' && (
-        <Drawer
-          isOpen={open}
-          onClose={closeDrawer}
-          title={props?.trip?.name ?? props?.trip?.title ?? "Trip Overview"}
-          style={drawerStyle}
-          position="right"
-          desktopWidth="420px"
-        >
-          <TripOverviewDrawer trip={props?.trip ?? null} />
-        </Drawer>
-      )}
+      <TripOverviewDrawer
+        isOpen={open && type === 'trip-overview'}
+        onClose={closeDrawer}
+        trip={props?.trip ?? null}
+      />
 
       {open && type === 'trip-list' && (
         <Drawer
@@ -135,6 +129,23 @@ export default function DrawerMount() {
             trip={props.trip || null}
             day={props.day || null}
             index={props.index}
+          />
+        </Drawer>
+      )}
+
+      {open && type === 'add-flight' && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          title="Add Flight"
+          style={drawerStyle}
+          position="right"
+          desktopWidth="420px"
+        >
+          <AddFlightDrawer
+            tripId={props?.tripId}
+            dayNumber={props?.dayNumber}
+            onAdd={props?.onAdd}
           />
         </Drawer>
       )}

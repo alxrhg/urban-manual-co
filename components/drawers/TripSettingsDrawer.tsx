@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Trash2, Loader2 } from 'lucide-react';
 import type { Trip } from '@/types/trip';
+import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 
 interface TripSettingsDrawerProps {
   trip: Trip;
@@ -134,17 +135,16 @@ export default function TripSettingsDrawer({
         />
       </div>
 
-      {/* Destination */}
+      {/* Destination with Autocomplete */}
       <div>
         <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
           Destination
         </label>
-        <input
-          type="text"
+        <CityAutocompleteInput
           value={destination}
-          onChange={(e) => setDestination(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+          onChange={setDestination}
           placeholder="e.g. Tokyo, Paris, New York"
+          className="w-full"
         />
       </div>
 

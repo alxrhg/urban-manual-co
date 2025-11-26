@@ -8,6 +8,9 @@ import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { useTrip } from '@/hooks/useTrip';
 import Image from 'next/image';
 import { formatTripDateWithYear } from '@/lib/utils';
+import { Drawer } from '@/components/ui/Drawer';
+import { DrawerHeader } from '@/components/ui/DrawerHeader';
+import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 
 interface Trip {
   id?: string;
@@ -45,12 +48,14 @@ interface Trip {
 }
 
 interface TripOverviewDrawerProps {
+  isOpen: boolean;
+  onClose: () => void;
   trip: Trip | null;
 }
 
-export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDrawerProps) {
+export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip }: TripOverviewDrawerProps) {
   const router = useRouter();
-  const { closeDrawer } = useDrawerStore();
+  const drawerStyle = useDrawerStyle();
   
   // If trip has an ID, fetch full trip data with days
   const { trip: fullTrip, loading } = useTrip(initialTrip?.id || null);
@@ -59,9 +64,18 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
   if (!displayTrip) {
     if (loading) {
       return (
-        <div className="px-6 py-8 flex items-center justify-center">
-          <p className="text-xs text-gray-500 dark:text-gray-400">Loading trip...</p>
-        </div>
+        <Drawer
+          isOpen={isOpen}
+          onClose={onClose}
+          title="Loading..."
+          style={drawerStyle}
+          position="right"
+          desktopWidth="420px"
+        >
+          <div className="px-6 py-8 flex items-center justify-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">Loading trip...</p>
+          </div>
+        </Drawer>
       );
     }
     return null;
@@ -73,7 +87,7 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
 
   const startDate = formatTripDateWithYear(displayTrip.startDate || displayTrip.start_date);
   const endDate = formatTripDateWithYear(displayTrip.endDate || displayTrip.end_date);
-  const dateRange = startDate && endDate ? `${startDate} → ${endDate}` : startDate || endDate || '';
+  const dateRange = startDate && endDate ? `${startDate} – ${endDate}` : startDate || endDate || '';
 
   // Extract cities from days if cities array is empty
   const days = displayTrip.days || [];
@@ -117,7 +131,7 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
   }
 
   const handleViewTrip = () => {
-    closeDrawer();
+    onClose();
     if (displayTrip.id) {
       setTimeout(() => {
         router.push(`/trips/${displayTrip.id}`);
@@ -126,187 +140,174 @@ export default function TripOverviewDrawer({ trip: initialTrip }: TripOverviewDr
   };
 
   return (
-    <div className="px-6 py-8 space-y-10">
-      {/* COVER IMAGE */}
-      {coverImage && (
-        <div className="w-full h-48 relative overflow-hidden rounded-[16px]">
-          <Image
-            src={coverImage}
-            alt={tripName}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 640px"
-          />
-        </div>
-      )}
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      style={drawerStyle}
+      position="right"
+      desktopWidth="420px"
+    >
+      <DrawerHeader
+        title={tripName}
+        subtitle={city}
+        rightAccessory={
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        }
+      />
 
-      {/* TITLE + METADATA */}
-      <div className="space-y-1">
-        <h1 className="text-2xl font-light text-gray-900 dark:text-white">
-          {tripName}
-        </h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {city} {dateRange && `• ${dateRange}`}
-        </p>
-      </div>
+      <div className="px-6 py-6 space-y-8 overflow-y-auto h-[calc(100vh-64px)] pb-20">
+        {/* COVER IMAGE */}
+        {coverImage && (
+          <div className="w-full h-48 relative overflow-hidden rounded-[16px]">
+            <Image
+              src={coverImage}
+              alt={tripName}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 640px"
+            />
+          </div>
+        )}
 
-      {/* TRIP SUMMARY */}
-      <section className="space-y-4">
-        <UMSectionTitle>Trip Summary</UMSectionTitle>
-        <UMCard className="p-4 space-y-3">
+        {/* METADATA */}
+        <div className="space-y-1">
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {days.length} day{days.length !== 1 ? 's' : ''} · {cities.length > 0 ? cities.join(', ') : 'No cities'}
+            {dateRange}
           </p>
-          
-          {/* Compact list of destinations */}
-          {allDestinations.length > 0 && (
-            <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-800">
-              {allDestinations.slice(0, 10).map((dest, idx) => (
-                <div key={idx} className="flex items-center gap-3 text-sm">
-                  {dest.image && (
-                    <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
-                      <Image
-                        src={dest.image}
-                        alt={dest.name}
-                        fill
-                        className="object-cover"
-                        sizes="40px"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                      {dest.name}
-                    </p>
-                    {dest.city && (
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {dest.city}
-                      </p>
+        </div>
+
+        {/* TRIP SUMMARY */}
+        <section className="space-y-4">
+          <UMSectionTitle>Trip Summary</UMSectionTitle>
+          <UMCard className="p-4 space-y-3">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              {days.length} day{days.length !== 1 ? 's' : ''} · {cities.length > 0 ? cities.join(', ') : 'No cities'}
+            </p>
+            
+            {/* Compact list of destinations */}
+            {allDestinations.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-800">
+                {allDestinations.slice(0, 10).map((dest, idx) => (
+                  <div key={idx} className="flex items-center gap-3 text-sm">
+                    {dest.image && (
+                      <div className="relative w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
+                        <Image
+                          src={dest.image}
+                          alt={dest.name}
+                          fill
+                          className="object-cover"
+                          sizes="40px"
+                        />
+                      </div>
                     )}
-                  </div>
-                </div>
-              ))}
-              {allDestinations.length > 10 && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 pt-1">
-                  +{allDestinations.length - 10} more
-                </p>
-              )}
-            </div>
-          )}
-        </UMCard>
-      </section>
-
-      {/* DAYS SECTION */}
-      {days.length > 0 && (
-        <section className="space-y-4">
-          <UMSectionTitle>Days</UMSectionTitle>
-          <div className="space-y-4">
-            {days.map((day, i) => {
-              const dayCoverImage = day.coverImage;
-              const dayDate = day.date || '';
-              const dayCity = day.city || '';
-
-              return (
-                <UMCard
-                  key={i}
-                  className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
-                  onClick={() => {
-                    closeDrawer();
-                    if (displayTrip.id) {
-                      setTimeout(() => {
-                        router.push(`/trips/${displayTrip.id}?day=${i}`);
-                      }, 200);
-                    }
-                  }}
-                >
-                  {dayCoverImage && (
-                    <div className="w-full h-32 relative overflow-hidden rounded-[16px] mb-3">
-                      <Image
-                        src={dayCoverImage}
-                        alt={`Day ${i + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 640px"
-                      />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {dest.name}
+                      </p>
+                      {dest.city && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {dest.city}
+                        </p>
+                      )}
                     </div>
-                  )}
-
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Day {i + 1}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {dayCity} {dayDate && `• ${dayDate}`}
-                    </p>
                   </div>
-                </UMCard>
-              );
-            })}
-          </div>
+                ))}
+                {allDestinations.length > 10 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 pt-1">
+                    +{allDestinations.length - 10} more
+                  </p>
+                )}
+              </div>
+            )}
+          </UMCard>
         </section>
-      )}
 
-      {/* HOTELS SECTION */}
-      {hotels.length > 0 && (
-        <section className="space-y-4">
-          <UMSectionTitle>Hotels</UMSectionTitle>
-          <div className="space-y-4">
-            {hotels.map((hotel, idx) => (
-              <UMCard key={idx} className="p-4">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {hotel.name}
-                </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {hotel.city}
-                </p>
-              </UMCard>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* FLIGHTS SECTION */}
-      {flights.length > 0 && (
-        <section className="space-y-4">
-          <UMSectionTitle>Flights</UMSectionTitle>
-          <div className="space-y-4">
-            {flights.map((flight, idx) => {
-              const depart = flight.departure || flight.depart || '';
-              const arrive = flight.arrival || flight.arrive || '';
-
-              return (
-                <UMCard key={idx} className="p-4 space-y-1">
+        {/* HOTELS SECTION */}
+        {hotels.length > 0 && (
+          <section className="space-y-4">
+            <UMSectionTitle>Hotels</UMSectionTitle>
+            <div className="space-y-4">
+              {hotels.map((hotel, idx) => (
+                <UMCard key={idx} className="p-4">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {flight.airline}
+                    {hotel.name}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {depart && arrive ? `${depart} → ${arrive}` : depart || arrive}
+                    {hotel.city}
                   </p>
-                  {flight.flightNumber && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {flight.flightNumber}
-                    </p>
+                </UMCard>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* FLIGHTS SECTION */}
+        {flights.length > 0 && (
+          <section className="space-y-4">
+            <UMSectionTitle>Flights</UMSectionTitle>
+            <div className="space-y-4">
+            {flights.map((flight, idx) => {
+              const from = flight.from || flight.departure || flight.depart || '';
+              const to = flight.to || flight.arrival || flight.arrive || '';
+              const time = flight.departureTime && flight.arrivalTime 
+                ? `${flight.departureTime} – ${flight.arrivalTime}`
+                : flight.departureTime || '';
+
+              return (
+                <UMCard key={idx} className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg font-semibold text-gray-900 dark:text-white">{from}</span>
+                        <span className="text-gray-400">→</span>
+                        <span className="text-lg font-semibold text-gray-900 dark:text-white">{to}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {time || 'Time TBD'}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{flight.airline}</p>
+                      {flight.flightNumber && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{flight.flightNumber}</p>
+                      )}
+                    </div>
+                  </div>
+                  {flight.confirmationNumber && (
+                    <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                      <span className="text-xs text-gray-500">Confirmation</span>
+                      <span className="text-xs font-mono font-medium">{flight.confirmationNumber}</span>
+                    </div>
                   )}
                 </UMCard>
               );
             })}
-          </div>
-        </section>
-      )}
+            </div>
+          </section>
+        )}
 
-      {/* VIEW FULL TRIP BUTTON */}
-      {displayTrip.id && (
-        <div className="pt-4">
-          <UMCard
-            className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/10 transition"
-            onClick={handleViewTrip}
-          >
-            <p className="text-sm font-medium text-gray-900 dark:text-white text-center">
-              View Full Trip →
-            </p>
-          </UMCard>
-        </div>
-      )}
-    </div>
+        {/* VIEW FULL TRIP BUTTON */}
+        {displayTrip.id && (
+          <div className="pt-4">
+            <UMCard
+              className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/10 transition bg-black dark:bg-white text-white dark:text-black"
+              onClick={handleViewTrip}
+            >
+              <p className="text-sm font-medium text-center">
+                View Full Trip →
+              </p>
+            </UMCard>
+          </div>
+        )}
+      </div>
+    </Drawer>
   );
 }

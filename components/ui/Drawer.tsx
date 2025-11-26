@@ -29,16 +29,15 @@ export interface DrawerProps {
 }
 
 /**
- * Universal Drawer Component - Redesigned
+ * Universal Drawer Component - Redesigned Mobile Behavior & Layout
  * 
  * Improvements:
- * - Better body scroll locking (no layout shift)
- * - Smooth animations with proper timing
- * - Better mobile gestures
- * - Focus management for accessibility
- * - Performance optimizations
- * - Consistent behavior across all breakpoints
- * - Fixed: Separate refs for each drawer variant to prevent conflicts
+ * - Fluid 1:1 touch tracking for bottom sheet
+ * - Velocity-based dismissal
+ * - Proper safe area handling (extends to bottom edge)
+ * - Spring-like animations
+ * - Better backdrop transitions
+ * - Minimal drag handle
  */
 export function Drawer({
   isOpen,
@@ -51,7 +50,7 @@ export function Drawer({
   desktopWidth = '420px',
   zIndex = 50,
   showBackdrop = true,
-  backdropOpacity = '15',
+  backdropOpacity = '20',
   position = 'right',
   style = 'solid',
   mobileWidth = 'max-w-md',
@@ -63,251 +62,176 @@ export function Drawer({
   keepStateOnClose = false,
   fullScreen = false,
 }: DrawerProps) {
-  // Separate refs for each drawer variant to prevent conflicts
+  // Refs
   const mobileBottomRef = useRef<HTMLDivElement>(null);
   const mobileSideRef = useRef<HTMLDivElement>(null);
   const tabletRef = useRef<HTMLDivElement>(null);
   const desktopRef = useRef<HTMLDivElement>(null);
-  const startXRef = useRef<number | null>(null);
-  const startYRef = useRef<number | null>(null);
-  const scrollPositionRef = useRef<number>(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  
+  // Gesture State
+  const isDraggingRef = useRef(false);
+  const startYRef = useRef<number>(0);
+  const currentYRef = useRef<number>(0);
+  const lastYRef = useRef<number>(0);
+  const startTimeRef = useRef<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
-  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Cleanup animation timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (animationTimeoutRef.current) {
-        clearTimeout(animationTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  // Get the currently visible drawer element - memoized to prevent stale closures
+  // Get the currently visible drawer element
   const getCurrentDrawer = useCallback((): HTMLDivElement | null => {
     if (typeof window === 'undefined') return null;
 
-    if (mobileVariant === 'bottom' && mobileBottomRef.current) {
+    if (mobileVariant === 'bottom' && window.innerWidth < 768) {
       return mobileBottomRef.current;
     }
-    if (mobileVariant === 'side' && mobileSideRef.current) {
+    if (mobileVariant === 'side' && window.innerWidth < 768) {
       return mobileSideRef.current;
     }
     const width = window.innerWidth;
-    if (tabletRef.current && width >= 768 && width < 1024) {
+    if (width >= 768 && width < 1024) {
       return tabletRef.current;
     }
-    if (desktopRef.current && width >= 1024) {
+    if (width >= 1024) {
       return desktopRef.current;
     }
-    // Fallback: return first available
-    return mobileBottomRef.current || mobileSideRef.current || tabletRef.current || desktopRef.current;
+    return null;
   }, [mobileVariant]);
 
-  // Improved body scroll locking (prevents layout shift)
-  // Uses overflow: hidden instead of position: fixed to avoid visual "refresh"
+  // Body Scroll Locking
   useEffect(() => {
     if (isOpen) {
-      // Save current scroll position for reference (not used for restoration with this approach)
-      scrollPositionRef.current = window.scrollY;
-
-      // Calculate scrollbar width to prevent layout shift
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-
-      // Lock scroll without layout shift - just hide overflow
       document.body.style.overflow = 'hidden';
       document.body.style.paddingRight = `${scrollbarWidth}px`;
-
-      // Prevent iOS bounce on the body
-      document.body.style.touchAction = 'none';
+      document.body.style.touchAction = 'none'; // Prevent body scroll on mobile
     } else {
-      // Simply restore body styles - scroll position is maintained naturally
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
       document.body.style.touchAction = '';
     }
 
     return () => {
-      // Cleanup
       document.body.style.overflow = '';
       document.body.style.paddingRight = '';
       document.body.style.touchAction = '';
     };
   }, [isOpen]);
 
-  // Focus management for accessibility
+  // Focus Management
   useEffect(() => {
     if (isOpen) {
-      // Save previous focus
       previousActiveElementRef.current = document.activeElement as HTMLElement;
-
-      // Use a timeout to ensure drawer is rendered
       const timeoutId = setTimeout(() => {
         const drawer = getCurrentDrawer();
         if (drawer) {
-          // Focus the drawer
           const focusableElement = drawer.querySelector<HTMLElement>(
             'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
           );
-
-          if (focusableElement) {
-            focusableElement.focus();
-          } else {
-            drawer.focus();
-          }
+          if (focusableElement) focusableElement.focus();
+          else drawer.focus();
         }
       }, 100);
-
       return () => clearTimeout(timeoutId);
     } else if (previousActiveElementRef.current) {
-      // Restore focus when closing
       const timeoutId = setTimeout(() => {
         if (previousActiveElementRef.current) {
           previousActiveElementRef.current.focus();
           previousActiveElementRef.current = null;
         }
       }, 100);
-
       return () => clearTimeout(timeoutId);
     }
   }, [isOpen, getCurrentDrawer]);
 
-  // Close on escape key
+  // Close on Escape
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && !isAnimating) {
-        onClose();
-      }
+      if (e.key === 'Escape' && isOpen) onClose();
     };
-
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose, isAnimating]);
+  }, [isOpen, onClose]);
 
-  // Swipe gestures for mobile
+  // Mobile Bottom Sheet Gestures
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || mobileVariant !== 'bottom') return;
 
-    // Get drawer element - use a small delay to ensure refs are set
-    const getDrawer = () => getCurrentDrawer();
-
-    let startX: number | null = null;
-    let startY: number | null = null;
-    let currentX: number | null = null;
-    let isDragging = false;
+    const drawer = mobileBottomRef.current;
+    const handle = drawer?.querySelector('.drawer-handle') as HTMLElement;
+    
+    if (!drawer || !handle) return;
 
     const handleTouchStart = (e: TouchEvent) => {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      isDragging = false;
+      isDraggingRef.current = true;
+      startYRef.current = e.touches[0].clientY;
+      lastYRef.current = e.touches[0].clientY;
+      startTimeRef.current = Date.now();
+      setIsDragging(true);
+      // Disable transition during drag for instant response
+      drawer.style.transition = 'none';
     };
 
     const handleTouchMove = (e: TouchEvent) => {
-      if (startX === null || startY === null) return;
+      if (!isDraggingRef.current) return;
+      
+      const clientY = e.touches[0].clientY;
+      const deltaY = clientY - startYRef.current;
+      lastYRef.current = clientY;
 
-      const drawer = getDrawer();
-      if (!drawer) return;
-
-      currentX = e.touches[0].clientX;
-      const currentY = e.touches[0].clientY;
-      const diffX = currentX - startX;
-      const diffY = currentY - startY;
-
-      // Determine if this is a horizontal swipe
-      if (!isDragging && Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-        isDragging = true;
+      // Only allow dragging downwards or slightly upwards (resistance)
+      if (deltaY > 0) {
+        drawer.style.transform = `translate3d(0, ${deltaY}px, 0)`;
+        setDragOffset(deltaY);
+      } else {
+        // Resistance when pulling up
+        const resistedY = deltaY * 0.2;
+        drawer.style.transform = `translate3d(0, ${resistedY}px, 0)`;
+        setDragOffset(resistedY);
+      }
+      
+      // Prevent scrolling content while dragging handle
+      if (e.target === handle || handle.contains(e.target as Node)) {
         e.preventDefault();
       }
-
-      if (isDragging && mobileVariant === 'bottom') {
-        // Bottom sheet: swipe down to close
-        if (diffY > 0) {
-          const translateY = Math.min(diffY, drawer.offsetHeight);
-          drawer.style.transform = `translateY(${translateY}px)`;
-        }
-      } else if (isDragging && mobileVariant === 'side') {
-        // Side drawer: swipe in direction to close
-        const swipeDirection = position === 'right' ? diffX : -diffX;
-        if (swipeDirection > 0) {
-          const translateX = Math.min(swipeDirection, drawer.offsetWidth);
-          drawer.style.transform = position === 'right'
-            ? `translateX(${translateX}px)`
-            : `translateX(-${translateX}px)`;
-        }
-      }
     };
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (!isDragging || startX === null || currentX === null) {
-        startX = null;
-        startY = null;
-        currentX = null;
-        return;
-      }
+    const handleTouchEnd = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      setIsDragging(false);
 
-      const drawer = getDrawer();
-      if (!drawer) {
-        startX = null;
-        startY = null;
-        currentX = null;
-        return;
-      }
+      // Re-enable transition for snap animation
+      drawer.style.transition = 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)';
 
-      const diffX = currentX - startX;
-      const diffY = startY ? (e.changedTouches[0].clientY - startY) : 0;
+      const endTime = Date.now();
+      const timeDiff = endTime - startTimeRef.current;
+      const distY = lastYRef.current - startYRef.current;
+      const velocity = distY / timeDiff;
 
-      if (mobileVariant === 'bottom' && diffY > drawer.offsetHeight * 0.25) {
-        // Swiped down more than 25% - close
-        setIsAnimating(true);
+      // Close if dragged down significantly or flicked down fast
+      if (distY > 150 || (distY > 50 && velocity > 0.5)) {
         onClose();
-        if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
-        animationTimeoutRef.current = setTimeout(() => setIsAnimating(false), 300);
-      } else if (mobileVariant === 'side') {
-        const swipeDirection = position === 'right' ? diffX : -diffX;
-        if (swipeDirection > drawer.offsetWidth * 0.25) {
-          // Swiped more than 25% - close
-          setIsAnimating(true);
-          onClose();
-          if (animationTimeoutRef.current) clearTimeout(animationTimeoutRef.current);
-          animationTimeoutRef.current = setTimeout(() => setIsAnimating(false), 300);
-        } else {
-          // Snap back
-          drawer.style.transform = '';
-        }
       } else {
-        // Snap back
+        // Snap back to open
         drawer.style.transform = '';
+        setDragOffset(0);
       }
-
-      startX = null;
-      startY = null;
-      currentX = null;
-      isDragging = false;
     };
 
-    // Attach listeners after a small delay to ensure drawer is rendered
-    const timeoutId = setTimeout(() => {
-      const drawer = getDrawer();
-      if (drawer) {
-        drawer.addEventListener('touchstart', handleTouchStart, { passive: true });
-        drawer.addEventListener('touchmove', handleTouchMove, { passive: false });
-        drawer.addEventListener('touchend', handleTouchEnd);
-      }
-    }, 100);
+    handle.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleTouchEnd);
 
     return () => {
-      clearTimeout(timeoutId);
-      const drawer = getDrawer();
-      if (drawer) {
-        drawer.removeEventListener('touchstart', handleTouchStart);
-        drawer.removeEventListener('touchmove', handleTouchMove);
-        drawer.removeEventListener('touchend', handleTouchEnd);
-      }
+      handle.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isOpen, mobileVariant, position, onClose, getCurrentDrawer]);
+  }, [isOpen, mobileVariant, onClose]);
 
-  // Determine background classes based on style
+  // Styling
   const backgroundClasses = style === 'glassy' 
     ? `${DRAWER_STYLES.glassyBackground} ${position === 'right' ? DRAWER_STYLES.glassyBorderLeft : DRAWER_STYLES.glassyBorderRight}`
     : 'bg-white dark:bg-gray-950';
@@ -317,48 +241,39 @@ export function Drawer({
     : (position === 'right' ? 'border-l border-gray-200 dark:border-gray-800' : 'border-r border-gray-200 dark:border-gray-800');
 
   const shadowClasses = style === 'solid' ? 'shadow-2xl ring-1 ring-black/5 dark:ring-white/5' : '';
-
-  // Header background
+  
   const headerBackground = style === 'glassy'
     ? DRAWER_STYLES.headerBackground
     : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm';
 
-  const computedMobileHeight =
-    mobileHeight ?? 'calc(96vh - env(safe-area-inset-bottom) - 1rem)';
-  const computedMobileMaxHeight =
-    mobileMaxHeight ?? 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.5rem)';
-  const peekOffset = 'clamp(3.5rem, 32vh, 14rem)';
-  const bottomSheetTransform = !isOpen
-    ? 'translate3d(0, 120%, 0) scale(0.98)'
-    : mobileExpanded
-    ? 'translate3d(0, 0, 0) scale(1)'
-    : `translate3d(0, ${peekOffset}, 0) scale(0.985)`;
-  const radiusClass = mobileBorderRadius ?? 'rounded-[32px]';
+  // Mobile Height Calculation - Ensure it reaches bottom
+  const computedMobileHeight = mobileHeight ?? '96vh'; // Use vh for simplicity, safe area handled by padding
+  const computedMobileMaxHeight = mobileMaxHeight ?? '100vh';
+  
+  // Radius
+  const radiusClass = mobileBorderRadius ?? 'rounded-t-[28px]';
 
-  // Don't render if closed and not keeping state
   if (!isOpen && !keepStateOnClose) return null;
 
-  // Common header component
   const renderHeader = () => {
     if (!title && !headerContent) return null;
-    
     return (
-      <div className={`flex-shrink-0 h-14 px-6 flex items-center justify-between ${headerBackground}`}>
+      <div className={`flex-shrink-0 min-h-[3.5rem] px-6 flex items-center justify-between ${headerBackground} border-b border-black/5 dark:border-white/5 z-20`}>
         {headerContent || (
           <>
-            <button
-              onClick={onClose}
-              className="p-2 flex items-center justify-center transition-opacity touch-manipulation rounded-lg hover:bg-neutral-50 dark:hover:bg-white/5"
-              aria-label="Close drawer"
-            >
-              <X className="h-5 w-5 text-gray-900 dark:text-white/90" />
-            </button>
+            <div className="w-9" /> {/* Spacer */}
             {title && (
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center px-2">
+              <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white flex-1 text-center px-2 truncate">
                 {title}
               </h2>
             )}
-            <div className="w-9" /> {/* Spacer for centering */}
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+            </button>
           </>
         )}
       </div>
@@ -370,81 +285,92 @@ export function Drawer({
       {/* Backdrop */}
       {showBackdrop && (
         <div
-          className={`fixed inset-0 transition-opacity duration-300 ease-out ${
+          className={`fixed inset-0 transition-opacity duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
             isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
           }`}
           style={{
             backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity) / 100})`,
             zIndex: zIndex - 10,
-            backdropFilter: 'blur(0px)',
           }}
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
-      {/* Mobile Drawer - Bottom Sheet */}
+      {/* Mobile Bottom Sheet */}
       {mobileVariant === 'bottom' && (
         <div
           ref={mobileBottomRef}
-          className={`md:hidden fixed inset-x-[10px] bottom-[10px] transform transition-transform duration-300 ease-out will-change-transform flex flex-col ${backgroundClasses} ${DRAWER_STYLES.glassyBorderTop} w-[calc(100%-20px)] max-w-full overflow-hidden overscroll-contain ${radiusClass} ${
-            !isOpen ? 'translate-y-full opacity-0' : 'translate-y-0 opacity-100'
+          className={`md:hidden fixed inset-x-0 bottom-0 transform transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1) flex flex-col ${backgroundClasses} w-full ${radiusClass} shadow-[0_-8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.4)] ${
+            !isOpen ? 'translate-y-full' : 'translate-y-0'
           }`}
           style={{
             zIndex,
             maxHeight: computedMobileMaxHeight,
-            height: mobileHeight ? mobileHeight : computedMobileHeight,
-            transform: isOpen ? bottomSheetTransform : 'translate3d(0, 120%, 0) scale(0.98)',
+            height: isOpen ? (isDragging ? undefined : computedMobileHeight) : computedMobileHeight,
+            transform: !isOpen ? 'translate3d(0, 100%, 0)' : undefined,
+            // Ensure bottom safe area is handled by content padding, not bottom constraint
+            // bottom: 0 is implicit via inset-x-0 bottom-0
           }}
           role="dialog"
           aria-modal="true"
-          aria-labelledby={title ? `drawer-title-${title}` : undefined}
-          tabIndex={-1}
         >
-          {/* Drag handle for bottom sheet */}
-          <div className="flex-shrink-0 flex justify-center pt-3 pb-1">
-            <div className="w-12 h-1.5 rounded-full bg-gray-300 dark:bg-gray-700" />
+          {/* Drag Handle Area */}
+          <div className="drawer-handle flex-shrink-0 w-full h-6 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none bg-inherit z-10 absolute top-0 left-0 right-0 rounded-t-[28px]">
+            <div className="w-10 h-1.5 rounded-full bg-gray-300/80 dark:bg-gray-600/80 mt-2" />
           </div>
+
+          {/* Header space filler if handle overlaps content */}
+          <div className="h-3 flex-shrink-0" />
 
           {renderHeader()}
 
-          {/* Content - Independent scroll */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden w-full max-w-full overscroll-contain">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden w-full overscroll-contain relative pb-[env(safe-area-inset-bottom)]">
             {children}
           </div>
 
-          {/* Footer */}
           {footerContent && (
-            <div className={`flex-shrink-0 ${DRAWER_STYLES.glassyBorderTop} ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
+            <div className={`flex-shrink-0 border-t border-gray-100 dark:border-gray-800 pb-[calc(1rem+env(safe-area-inset-bottom))] ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white dark:bg-gray-950'}`}>
               {footerContent}
             </div>
           )}
         </div>
       )}
 
-      {/* Mobile Drawer - Side Drawer */}
-      {mobileVariant === 'side' && (
+      {/* Side Drawer (Mobile Side & Desktop) */}
+      {(mobileVariant === 'side' || typeof window !== 'undefined' && window.innerWidth >= 768) && (
         <div
-          ref={mobileSideRef}
-          className={`md:hidden fixed ${position === 'right' ? 'right-0' : 'left-0'} top-0 bottom-0 w-full ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-out ${
-            isOpen 
+          ref={window.innerWidth >= 1024 ? desktopRef : (window.innerWidth >= 768 ? tabletRef : mobileSideRef)}
+          className={`
+            fixed 
+            ${window.innerWidth >= 768 
+              ? `${desktopSpacing} rounded-2xl` 
+              : `top-0 bottom-0 w-full ${position === 'right' ? 'right-0' : 'left-0'}`
+            }
+            ${backgroundClasses} ${shadowClasses} ${window.innerWidth >= 768 ? borderClasses : ''}
+            z-50 transform transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1)
+            flex flex-col overflow-hidden
+            ${isOpen 
               ? 'translate-x-0 opacity-100' 
-              : (position === 'right' ? 'translate-x-full opacity-0' : '-translate-x-full opacity-0')
-          } overflow-hidden flex flex-col`}
-          style={{ zIndex }}
+              : (position === 'right' ? 'translate-x-[110%]' : '-translate-x-[110%]')
+            }
+            ${fullScreen && window.innerWidth >= 1024 ? 'inset-0 !rounded-none !w-full !max-w-none !translate-x-0' : ''}
+            ${fullScreen && window.innerWidth >= 1024 && !isOpen ? '!opacity-0 pointer-events-none' : ''}
+          `}
+          style={{ 
+            zIndex, 
+            width: window.innerWidth >= 768 && !fullScreen ? desktopWidth : '100%',
+            maxWidth: window.innerWidth >= 768 && !fullScreen ? 'calc(100vw - 2rem)' : '100%',
+          }}
           role="dialog"
           aria-modal="true"
-          aria-labelledby={title ? `drawer-title-${title}` : undefined}
-          tabIndex={-1}
         >
           {renderHeader()}
-
-          {/* Content - Independent scroll */}
+          
           <div className="flex-1 overflow-y-auto overscroll-contain">
             {children}
           </div>
 
-          {/* Footer */}
           {footerContent && (
             <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
               {footerContent}
@@ -452,78 +378,6 @@ export function Drawer({
           )}
         </div>
       )}
-
-      {/* Desktop Drawer - Tablet (md) */}
-      <div
-        ref={tabletRef}
-        className={`hidden md:flex lg:hidden fixed ${desktopSpacing} rounded-2xl ${backgroundClasses} ${shadowClasses} ${borderClasses} z-50 transform transition-transform duration-300 ease-out ${
-          isOpen 
-            ? 'translate-x-0 opacity-100' 
-            : (position === 'right' ? 'translate-x-[calc(100%+2rem)] opacity-0' : '-translate-x-[calc(100%+2rem)] opacity-0')
-        } overflow-hidden flex-col`}
-        style={{ 
-          zIndex, 
-          width: '70%',
-          maxWidth: 'calc(100vw - 2rem)',
-        }}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? `drawer-title-${title}` : undefined}
-        tabIndex={-1}
-      >
-        {renderHeader()}
-
-        {/* Content - Independent scroll */}
-        <div className="flex-1 overflow-y-auto overscroll-contain">
-          {children}
-        </div>
-
-        {/* Footer */}
-        {footerContent && (
-          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
-            {footerContent}
-          </div>
-        )}
-      </div>
-
-      {/* Desktop Drawer - Large screens (lg+) */}
-      <div
-        ref={desktopRef}
-        className={`hidden lg:flex fixed ${
-          fullScreen 
-            ? 'inset-0 rounded-none' 
-            : `${desktopSpacing} rounded-2xl`
-        } ${backgroundClasses} ${shadowClasses} ${!fullScreen ? borderClasses : ''} z-50 transform transition-transform duration-300 ease-out ${
-          isOpen 
-            ? 'translate-x-0 opacity-100' 
-            : fullScreen
-            ? 'opacity-0'
-            : (position === 'right' ? 'translate-x-[calc(100%+2rem)] opacity-0' : '-translate-x-[calc(100%+2rem)] opacity-0')
-        } overflow-hidden flex-col`}
-        style={{ 
-          zIndex, 
-          width: fullScreen ? '100%' : desktopWidth,
-          maxWidth: fullScreen ? '100%' : 'calc(100vw - 2rem)',
-        }}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? `drawer-title-${title}` : undefined}
-        tabIndex={-1}
-      >
-        {renderHeader()}
-
-        {/* Content - Independent scroll */}
-        <div className="flex-1 overflow-y-auto overscroll-contain">
-          {children}
-        </div>
-
-        {/* Footer */}
-        {footerContent && (
-          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
-            {footerContent}
-          </div>
-        )}
-      </div>
     </>
   );
 }

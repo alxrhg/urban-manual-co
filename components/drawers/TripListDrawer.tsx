@@ -25,36 +25,36 @@ function getStatusConfig(status?: string) {
     case 'planning':
       return {
         label: 'Planning',
-        bg: 'bg-blue-50 dark:bg-blue-900/30',
-        text: 'text-blue-700 dark:text-blue-300',
+        bg: 'bg-blue-500/10 backdrop-blur-md',
+        text: 'text-blue-600 dark:text-blue-400',
         dot: 'bg-blue-500',
       };
     case 'upcoming':
       return {
         label: 'Upcoming',
-        bg: 'bg-amber-50 dark:bg-amber-900/30',
-        text: 'text-amber-700 dark:text-amber-300',
+        bg: 'bg-amber-500/10 backdrop-blur-md',
+        text: 'text-amber-600 dark:text-amber-400',
         dot: 'bg-amber-500',
       };
     case 'ongoing':
       return {
         label: 'Ongoing',
-        bg: 'bg-green-50 dark:bg-green-900/30',
-        text: 'text-green-700 dark:text-green-300',
+        bg: 'bg-green-500/10 backdrop-blur-md',
+        text: 'text-green-600 dark:text-green-400',
         dot: 'bg-green-500 animate-pulse',
       };
     case 'completed':
       return {
         label: 'Completed',
-        bg: 'bg-neutral-100 dark:bg-neutral-800',
-        text: 'text-neutral-600 dark:text-neutral-400',
-        dot: 'bg-neutral-400',
+        bg: 'bg-gray-500/10 backdrop-blur-md',
+        text: 'text-gray-600 dark:text-gray-400',
+        dot: 'bg-gray-400',
       };
     default:
       return {
         label: 'Planning',
-        bg: 'bg-blue-50 dark:bg-blue-900/30',
-        text: 'text-blue-700 dark:text-blue-300',
+        bg: 'bg-blue-500/10 backdrop-blur-md',
+        text: 'text-blue-600 dark:text-blue-400',
         dot: 'bg-blue-500',
       };
   }
@@ -141,80 +141,73 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
     openDrawer("trip-overview", { trip });
   };
 
-  const handleEditTrip = (trip: any) => {
-    closeDrawer();
-    setTimeout(() => {
-      router.push(`/trips/${trip.id}`);
-    }, 200);
-  };
-
   if (loading) {
     return (
-      <div className="px-6 py-6">
-        <div className="flex flex-col items-center justify-center py-12 space-y-3">
-          <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
-          <p className="text-xs text-neutral-500">Loading trips...</p>
-        </div>
+      <div className="px-6 py-12 flex flex-col items-center justify-center space-y-3">
+        <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+        <p className="text-xs text-neutral-500">Loading trips...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="px-6 py-6">
-        <div className="text-center py-12 space-y-4">
-          <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">Failed to load</p>
-            <p className="text-xs text-neutral-500">{error}</p>
-          </div>
-          <UMActionPill onClick={fetchTrips}>
-            Try Again
-          </UMActionPill>
+      <div className="px-6 py-12 text-center space-y-4">
+        <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">Failed to load</p>
+          <p className="text-xs text-neutral-500">{error}</p>
         </div>
+        <UMActionPill onClick={fetchTrips}>
+          Try Again
+        </UMActionPill>
       </div>
     );
   }
 
   return (
-    <div className="px-6 py-6 space-y-6">
+    <div className="px-5 py-6 space-y-6">
       {/* MAIN CTA */}
       <button
         onClick={handleNewTrip}
-        className="w-full h-12 bg-black dark:bg-white text-white dark:text-black rounded-xl font-medium text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+        className="w-full h-12 bg-black dark:bg-white text-white dark:text-black rounded-xl font-medium text-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm"
       >
         <Plus className="w-4 h-4" />
-        New Trip
+        Create New Trip
       </button>
 
       {/* LIST HEADER */}
-      <div className="flex items-center justify-between">
-        <UMSectionTitle>All Trips</UMSectionTitle>
-        <UMActionPill
+      <div className="flex items-center justify-between px-1">
+        <UMSectionTitle>My Trips</UMSectionTitle>
+        <button
           onClick={() => {
             closeDrawer();
             setTimeout(() => {
               router.push('/trips');
             }, 200);
           }}
+          className="text-xs font-medium text-neutral-500 hover:text-black dark:hover:text-white transition-colors"
         >
-          View All →
-        </UMActionPill>
+          View All
+        </button>
       </div>
 
       {/* TRIP LIST */}
       <div className="space-y-3">
         {trips.length === 0 ? (
-          <div className="text-center py-12 px-4 border border-dashed border-neutral-200 dark:border-neutral-700 rounded-[16px] bg-neutral-50/50 dark:bg-neutral-900/50">
+          <div className="text-center py-16 px-6 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl bg-neutral-50/50 dark:bg-neutral-900/50">
             <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
               <Plane className="w-6 h-6 text-neutral-400 dark:text-neutral-500" />
             </div>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
-              No trips yet
+            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
+              Start planning your next adventure
             </p>
-            <UMFeaturePill onClick={handleNewTrip}>
-              Create Trip
-            </UMFeaturePill>
+            <button 
+              onClick={handleNewTrip}
+              className="text-xs font-medium text-black dark:text-white underline underline-offset-4 decoration-neutral-300 dark:decoration-neutral-700 hover:decoration-black dark:hover:decoration-white transition-all"
+            >
+              Start Planning
+            </button>
           </div>
         ) : (
           trips.map((trip) => {
@@ -227,56 +220,62 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
               <button
                 key={trip.id}
                 onClick={() => handleSelectTrip(trip)}
-                className="w-full border border-neutral-200 dark:border-neutral-700 rounded-[16px] overflow-hidden hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors text-left bg-white dark:bg-neutral-900 group"
+                className="group relative w-full border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden hover:border-neutral-300 dark:hover:border-neutral-700 transition-all text-left bg-white dark:bg-neutral-900"
               >
-                {/* Cover Image */}
-                <div className="relative h-28 bg-neutral-100 dark:bg-neutral-800">
-                  {coverImage ? (
-                    <>
+                <div className="flex">
+                  {/* Left: Image */}
+                  <div className="relative w-24 h-24 sm:w-28 sm:h-full bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 self-center">
+                    {coverImage ? (
                       <Image
                         src={coverImage}
                         alt={tripName}
                         fill
-                        className="object-cover"
-                        sizes="400px"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="120px"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                    </>
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <MapPin className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
-                    </div>
-                  )}
-
-                  {/* Status Badge */}
-                  <div className={`absolute top-2 right-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${statusConfig.bg} ${statusConfig.text} backdrop-blur-sm`}>
-                    <span className={`w-1 h-1 rounded-full ${statusConfig.dot}`} />
-                    {statusConfig.label}
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <MapPin className="w-6 h-6 text-neutral-300 dark:text-neutral-600" />
+                      </div>
+                    )}
                   </div>
-                </div>
 
-                {/* Content */}
-                <div className="p-3 flex items-center gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                      {tripName}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-neutral-500">
-                      {trip.destination && (
-                        <span className="flex items-center gap-1 truncate">
-                          <MapPin className="w-3 h-3 flex-shrink-0" />
-                          {trip.destination}
-                        </span>
-                      )}
-                      {dateRange && (
-                        <span className="flex items-center gap-1 flex-shrink-0">
-                          <Calendar className="w-3 h-3" />
-                          {dateRange}
-                        </span>
-                      )}
+                  {/* Right: Content */}
+                  <div className="flex-1 p-3.5 flex flex-col justify-between min-h-[96px]">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <h4 className="font-medium text-sm text-gray-900 dark:text-white truncate pr-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                          {tripName}
+                        </h4>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {statusConfig && (
+                            <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium ${statusConfig.bg} ${statusConfig.text}`}>
+                              <span className={`w-1 h-1 rounded-full ${statusConfig.dot}`} />
+                              {statusConfig.label}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-neutral-100 dark:border-neutral-800">
+                      <div className="flex flex-col text-xs text-neutral-500">
+                        {trip.destination && (
+                          <span className="flex items-center gap-1 truncate max-w-[120px]">
+                            <MapPin className="w-3 h-3 flex-shrink-0" />
+                            {trip.destination}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 text-xs text-neutral-400">
+                        {dateRange ? (
+                          <span>{dateRange}</span>
+                        ) : (
+                          <span className="italic">No dates</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-neutral-300 dark:text-neutral-600 group-hover:text-neutral-500 transition-colors flex-shrink-0" />
                 </div>
               </button>
             );
