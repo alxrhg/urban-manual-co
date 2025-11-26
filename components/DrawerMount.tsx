@@ -51,18 +51,11 @@ export default function DrawerMount() {
         {...props}
       />
 
-      {open && type === 'trip-overview' && (
-        <Drawer
-          isOpen={open}
-          onClose={closeDrawer}
-          title={props?.trip?.name ?? props?.trip?.title ?? "Trip Overview"}
-          style={drawerStyle}
-          position="right"
-          desktopWidth="420px"
-        >
-          <TripOverviewDrawer trip={props?.trip ?? null} />
-        </Drawer>
-      )}
+      <TripOverviewDrawer
+        isOpen={open && type === 'trip-overview'}
+        onClose={closeDrawer}
+        trip={props?.trip ?? null}
+      />
 
       {open && type === 'trip-list' && (
         <Drawer
