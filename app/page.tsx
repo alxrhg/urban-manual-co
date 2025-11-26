@@ -68,7 +68,7 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useDestinationLoading } from '@/hooks/useDestinationLoading';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
-import { AIAssistant } from '@/components/AIAssistant';
+import { useAIConversation } from '@/contexts/AIConversationContext';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -373,6 +373,7 @@ export default function Home() {
     canUseEditMode,
   } = useAdminEditMode();
   const { trackAction, predictions } = useSequenceTracker();
+  const { sendMessage: sendAIMessage, messages: sharedMessages, isLoading: aiLoading, clearConversation } = useAIConversation();
   const [isAdmin, setIsAdmin] = useState(false);
   const { openDrawer: openGlobalDrawer } = useDrawerStore();
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
@@ -580,15 +581,8 @@ export default function Home() {
   // Featured cities to always show in filter
   const FEATURED_CITIES = ["taipei", "tokyo", "new-york", "london"];
 
-  // AI-powered chat using the chat API endpoint - only website content
+  // AI-powered chat using shared context
   const [chatResponse, setChatResponse] = useState<string>("");
-  const [conversationHistory, setConversationHistory] = useState<
-    Array<{
-      role: "user" | "assistant";
-      content: string;
-      destinations?: Destination[];
-    }>
-  >([]);
   const [searchIntent, setSearchIntent] = useState<ExtractedIntent | null>(
     null
   ); // Store enhanced intent data
@@ -610,20 +604,9 @@ export default function Home() {
   const [enrichedGreetingContext, setEnrichedGreetingContext] =
     useState<any>(null);
 
-  // Track submitted query for chat display
+  // Track submitted query for display
   const [submittedQuery, setSubmittedQuery] = useState<string>("");
   const [followUpInput, setFollowUpInput] = useState<string>("");
-
-  // Track visual chat messages for display
-  const [chatMessages, setChatMessages] = useState<
-    Array<{
-      type: "user" | "assistant";
-      content: string;
-      contextPrompt?: string;
-    }>
-  >([]);
-
-  const chatContainerRef = useRef<HTMLDivElement>(null);
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapRef = useRef<Destination[] | null>(null);
   const discoveryBootstrapPromiseRef = useRef<Promise<Destination[]> | null>(
@@ -1159,10 +1142,9 @@ export default function Home() {
       // Clear everything when search is empty
       setFilteredDestinations([]);
       setChatResponse("");
-      setConversationHistory([]);
+      clearConversation(); // Clear shared AI conversation
       setSearching(false);
       setSubmittedQuery("");
-      setChatMessages([]);
       setFollowUpSuggestions([]);
       lastSearchedQueryRef.current = ""; // Reset on clear
       // Show all destinations when no search (with filters if set)
@@ -1170,14 +1152,6 @@ export default function Home() {
       setCurrentPage(1);
     }
   }, [searchTerm]); // Only depend on searchTerm - checking searching inside effect
-
-  // Auto-scroll to bottom when new messages arrive
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
-    }
-  }, [chatMessages]);
 
   // Separate useEffect for filters (only when NO search term)
   // Fetch destinations lazily when filters are applied
@@ -1827,6 +1801,7 @@ export default function Home() {
 
   // AI Chat-only search - EXACTLY like chat component
   // Accept ANY query (like chat component), API will validate
+  // Uses shared AI conversation context for memory across both AI interfaces
   const performAISearch = useCallback(
     async (query: string) => {
       const trimmedQuery = query.trim();
@@ -1862,57 +1837,23 @@ export default function Home() {
       setSearchIntent(null);
 
       try {
-        // Match chat component exactly - build history from existing conversation
-        // Chat component maps messages array (which doesn't include current query yet due to async state)
-        const historyForAPI = conversationHistory.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-        }));
+        // Use shared AI context - this maintains conversation history across both AI interfaces
+        const data = await sendAIMessage(trimmedQuery);
 
-        // ALL queries go through AI chat - no exceptions
-        const response = await fetch("/api/ai-chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: query.trim(),
-            userId: user?.id,
-            conversationHistory: historyForAPI, // History WITHOUT current query (matches chat component)
-          }),
-        });
-
-        if (!response.ok) {
+        if (!data) {
           throw new Error("AI chat failed");
         }
-
-        const data = await response.json();
 
         // Update search tier
         setSearchTier(data.searchTier || "ai-chat");
 
-        // Update conversation history for API context (not displayed)
-        const userMessage = { role: "user" as const, content: query };
-        const assistantMessage = {
-          role: "assistant" as const,
-          content: data.content || "",
-          destinations: data.destinations,
-        };
-
-        const newHistory = [
-          ...conversationHistory,
-          userMessage,
-          assistantMessage,
-        ];
-        setConversationHistory(newHistory.slice(-10)); // Keep last 10 messages for context
-
         // Store enhanced intent data for intelligent feedback
         if (data.intent) {
-          setSearchIntent(data.intent);
+          setSearchIntent(data.intent as ExtractedIntent);
 
           // Store inferred tags for refinement chips
           if (data.inferredTags) {
-            setInferredTags(data.inferredTags);
+            setInferredTags(data.inferredTags as any);
           } else {
             setInferredTags(null);
           }
@@ -1938,7 +1879,7 @@ export default function Home() {
           // Update loading text with context-aware message based on intent
           const contextAwareText = getContextAwareLoadingMessage(
             query,
-            data.intent,
+            data.intent as ExtractedIntent,
             seasonData,
             userContext
           );
@@ -1957,28 +1898,16 @@ export default function Home() {
         // ONLY show the latest AI response (simple text)
         setChatResponse(data.content || "");
 
-        // ALWAYS set destinations array
+        // ALWAYS set destinations array - filter the grid
         const destinations = data.destinations || [];
-        setFilteredDestinations(destinations);
+        setFilteredDestinations(destinations as Destination[]);
 
         // Store follow-up suggestions from API response
         if (data.suggestions && Array.isArray(data.suggestions)) {
-          setFollowUpSuggestions(data.suggestions);
+          setFollowUpSuggestions(data.suggestions as any);
         } else {
           setFollowUpSuggestions([]);
         }
-
-        // Add messages to visual chat history
-        const contextPrompt = getContextAwareLoadingMessage(query);
-        setChatMessages(prev => [
-          ...prev,
-          { type: "user", content: query },
-          {
-            type: "assistant",
-            content: data.content || "",
-            contextPrompt: destinations.length > 0 ? contextPrompt : undefined,
-          },
-        ]);
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
           console.error("AI chat error:", error);
@@ -1990,21 +1919,11 @@ export default function Home() {
         setFollowUpSuggestions([]);
         // Reset last searched query on error so user can retry
         lastSearchedQueryRef.current = "";
-
-        // Add error message to chat
-        setChatMessages(prev => [
-          ...prev,
-          { type: "user", content: query },
-          {
-            type: "assistant",
-            content: "Sorry, I encountered an error. Please try again.",
-          },
-        ]);
       } finally {
         setSearching(false);
       }
     },
-    [user, searching, conversationHistory, trackAction, submittedQuery]
+    [searching, trackAction, sendAIMessage, userContext, seasonalContext]
   );
 
   // Convert inferredTags to RefinementTag array
@@ -2355,7 +2274,7 @@ export default function Home() {
                           setSearchTerm(value);
                           // Clear conversation history only if search is cleared
                           if (!value.trim()) {
-                            setConversationHistory([]);
+                            clearConversation(); // Clear shared AI conversation
                             setSearchIntent(null);
                             setSeasonalContext(null);
                             setSearchTier(null);
@@ -3355,7 +3274,6 @@ export default function Home() {
             }}
           />
         )}
-        <AIAssistant />
       </main>
     </ErrorBoundary>
   );

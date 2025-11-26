@@ -17,7 +17,10 @@ import {
   ChevronRight,
   User,
   Edit3,
+  Sparkles,
+  Send,
 } from 'lucide-react';
+import { useAIConversation } from '@/contexts/AIConversationContext';
 import Image from 'next/image';
 
 interface UserStats {
@@ -80,6 +83,132 @@ function StatCard({
         {value}
       </span>
       <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{label}</span>
+    </div>
+  );
+}
+
+function AIConversationSection() {
+  const { messages, isLoading, sendMessage } = useAIConversation();
+  const [input, setInput] = React.useState('');
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+    const query = input.trim();
+    setInput('');
+    await sendMessage(query);
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Chat Header */}
+      <div className="flex items-center gap-2 px-2 mb-3">
+        <Sparkles className="h-4 w-4 text-gray-400" />
+        <span className="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+          AI Assistant
+        </span>
+      </div>
+
+      {/* Messages Area */}
+      <div className="flex-1 overflow-y-auto space-y-3 mb-3 max-h-[300px]">
+        {messages.length === 0 ? (
+          <div className="text-center py-6">
+            <p className="text-sm text-gray-400 dark:text-gray-500">
+              Ask me anything about travel...
+            </p>
+            <div className="flex flex-wrap gap-2 justify-center mt-3">
+              {["What's good in Tokyo?", "Help me plan a trip"].map((suggestion) => (
+                <button
+                  key={suggestion}
+                  onClick={() => setInput(suggestion)}
+                  className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[85%] rounded-2xl px-3 py-2 ${
+                  message.role === 'user'
+                    ? 'bg-black dark:bg-white text-white dark:text-black'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                }`}
+              >
+                <p className="text-sm leading-relaxed">{message.content}</p>
+                {/* Destination Cards - Horizontal row */}
+                {message.destinations && message.destinations.length > 0 && (
+                  <div className="mt-2 -mx-1">
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {message.destinations.slice(0, 5).map((dest) => (
+                        <a
+                          key={dest.slug}
+                          href={`/destination/${dest.slug}`}
+                          className="flex-shrink-0 w-24 group"
+                        >
+                          <div className="relative aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-1">
+                            {dest.image && (
+                              <img
+                                src={dest.image}
+                                alt={dest.name}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                            )}
+                          </div>
+                          <p className="text-[10px] font-medium leading-tight line-clamp-2">
+                            {dest.name}
+                          </p>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-3 py-2">
+              <div className="flex gap-1">
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+              </div>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Input Area */}
+      <form onSubmit={handleSubmit} className="flex items-center gap-2">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask me anything..."
+          className="flex-1 px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-xl border-none outline-none text-gray-900 dark:text-white placeholder-gray-400"
+        />
+        <button
+          type="submit"
+          disabled={!input.trim() || isLoading}
+          className="p-2 bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-80 transition-opacity disabled:opacity-50"
+        >
+          <Send className="h-4 w-4" />
+        </button>
+      </form>
     </div>
   );
 }
@@ -312,6 +441,11 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {/* Navigation Groups */}
           <div className="px-4 space-y-8 pb-12">
+          {/* AI Assistant Section */}
+          <div className="bg-gray-50/50 dark:bg-gray-900/50 rounded-2xl p-4 border border-gray-100 dark:border-gray-800">
+            <AIConversationSection />
+          </div>
+
           {/* Library */}
           <div>
             <h3 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
