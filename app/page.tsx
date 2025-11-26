@@ -2512,12 +2512,7 @@ export default function Home() {
                         <div className="mt-4">
                           <IntentConfirmationChips
                             intent={searchIntent}
-                            onConfirm={updatedIntent => {
-                              setSearchIntent(updatedIntent);
-                              setFilteredDestinations(
-                                filterDestinationsByIntent(destinations, updatedIntent)
-                              );
-                            }}
+                            editable={false}
                           />
                         </div>
                       )}
