@@ -465,88 +465,146 @@ export default function TripPage() {
     }
 
     // Check if there are already items in the trip
-    const totalItems = days.reduce((acc, day) => acc + day.items.length, 0);
-    if (totalItems > 0) {
-      const confirmed = window.confirm(
-        'Your trip already has some items. AI planning will add more places to fill the remaining time. Continue?'
-      );
-      if (!confirmed) return;
-    }
+    const allItems = days.flatMap(day => day.items);
+    const totalItems = allItems.length;
 
     try {
       setIsAIPlanning(true);
-
-      // Call the multi-day planning API
-      const response = await fetch('/api/intelligence/multi-day-plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          city: trip.destination,
-          startDate: trip.start_date,
-          endDate: trip.end_date,
-          userId: user.id,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate trip plan');
-      }
-
-      const plan = await response.json();
-
-      if (!plan.days || plan.days.length === 0) {
-        throw new Error('No itinerary generated');
-      }
-
-      // Insert generated items into the database
       const supabase = createClient();
       if (!supabase) return;
 
-      // Fetch destination details for the generated items
-      const destinationIds = plan.days.flatMap((day: any) =>
-        day.items.map((item: any) => item.destinationId)
-      ).filter(Boolean);
+      if (totalItems > 0) {
+        // Use smart-fill API for contextual recommendations
+        const existingItemsForAPI = allItems.map(item => ({
+          day: days.find(d => d.items.includes(item))?.dayNumber || 1,
+          time: item.time,
+          title: item.title,
+          destination_slug: item.destination_slug,
+          category: item.parsedNotes?.category || item.destination?.category,
+          parsedNotes: item.parsedNotes,
+        }));
 
-      let destinationsMap: Record<number, any> = {};
-      if (destinationIds.length > 0) {
-        const { data: destinations } = await supabase
-          .from('destinations')
-          .select('id, slug, name, city, category, image, image_thumbnail, latitude, longitude')
-          .in('id', destinationIds);
+        const response = await fetch('/api/intelligence/smart-fill', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            city: trip.destination,
+            existingItems: existingItemsForAPI,
+            tripDays: days.length,
+          }),
+        });
 
-        if (destinations) {
-          destinations.forEach((d) => {
-            destinationsMap[d.id] = d;
-          });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to get AI suggestions');
         }
-      }
 
-      // Insert items for each day
-      for (const day of plan.days) {
-        for (const item of day.items) {
-          const destination = destinationsMap[item.destinationId];
-          if (!destination) continue;
+        const result = await response.json();
+
+        if (!result.suggestions || result.suggestions.length === 0) {
+          alert('Your trip looks complete! No additional suggestions needed.');
+          return;
+        }
+
+        // Insert smart suggestions into the database
+        for (const suggestion of result.suggestions) {
+          const dest = suggestion.destination;
+          if (!dest) continue;
+
+          // Find the current max order_index for this day
+          const dayItems = days.find(d => d.dayNumber === suggestion.day)?.items || [];
+          const maxOrder = dayItems.length > 0
+            ? Math.max(...dayItems.map(i => i.order_index || 0))
+            : -1;
 
           const notesData: ItineraryItemNotes = {
             type: 'place',
-            latitude: destination.latitude ?? undefined,
-            longitude: destination.longitude ?? undefined,
-            category: destination.category ?? undefined,
-            image: destination.image_thumbnail || destination.image || undefined,
-            duration: item.durationMinutes,
+            latitude: dest.latitude ?? undefined,
+            longitude: dest.longitude ?? undefined,
+            category: dest.category ?? undefined,
+            image: dest.image_thumbnail || dest.image || undefined,
           };
 
           await supabase.from('itinerary_items').insert({
             trip_id: trip.id,
-            destination_slug: destination.slug,
-            day: day.dayNumber,
-            order_index: item.order,
-            time: item.startTime,
-            title: destination.name,
-            description: destination.city,
+            destination_slug: dest.slug,
+            day: suggestion.day,
+            order_index: maxOrder + 1 + (suggestion.order || 0),
+            time: suggestion.startTime,
+            title: dest.name,
+            description: `${dest.category ? dest.category + ' • ' : ''}${suggestion.reason || 'AI suggested'}`,
             notes: stringifyItineraryNotes(notesData),
           });
+        }
+      } else {
+        // Use multi-day planning API for empty trips
+        const response = await fetch('/api/intelligence/multi-day-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            city: trip.destination,
+            startDate: trip.start_date,
+            endDate: trip.end_date,
+            userId: user.id,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to generate trip plan');
+        }
+
+        const plan = await response.json();
+
+        if (!plan.days || plan.days.length === 0) {
+          throw new Error('No itinerary generated');
+        }
+
+        // Fetch destination details for the generated items
+        const destinationIds = plan.days.flatMap((day: any) =>
+          day.items.map((item: any) => item.destinationId)
+        ).filter(Boolean);
+
+        let destinationsMap: Record<number, any> = {};
+        if (destinationIds.length > 0) {
+          const { data: destinations } = await supabase
+            .from('destinations')
+            .select('id, slug, name, city, category, image, image_thumbnail, latitude, longitude')
+            .in('id', destinationIds);
+
+          if (destinations) {
+            destinations.forEach((d) => {
+              destinationsMap[d.id] = d;
+            });
+          }
+        }
+
+        // Insert items for each day
+        for (const day of plan.days) {
+          for (const item of day.items) {
+            const destination = destinationsMap[item.destinationId];
+            if (!destination) continue;
+
+            const notesData: ItineraryItemNotes = {
+              type: 'place',
+              latitude: destination.latitude ?? undefined,
+              longitude: destination.longitude ?? undefined,
+              category: destination.category ?? undefined,
+              image: destination.image_thumbnail || destination.image || undefined,
+              duration: item.durationMinutes,
+            };
+
+            await supabase.from('itinerary_items').insert({
+              trip_id: trip.id,
+              destination_slug: destination.slug,
+              day: day.dayNumber,
+              order_index: item.order,
+              time: item.startTime,
+              title: destination.name,
+              description: destination.city,
+              notes: stringifyItineraryNotes(notesData),
+            });
+          }
         }
       }
 
