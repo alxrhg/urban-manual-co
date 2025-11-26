@@ -41,7 +41,9 @@ export interface UpdateTrip {
   cover_image?: string | null;
 }
 
-export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'custom';
+export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'lunch' | 'dinner' | 'custom';
+
+export type MealType = 'breakfast' | 'lunch' | 'dinner';
 
 export interface ItineraryItem {
   id: string; // UUID
@@ -124,6 +126,8 @@ export interface ItineraryItemNotes {
   checkInTime?: string;
   checkOutTime?: string;
   hotelConfirmation?: string;
+  // Meal-specific fields
+  mealType?: MealType; // Label for restaurants: breakfast, lunch, or dinner
   // Travel time to next item
   travelTimeToNext?: number; // in minutes
   travelDistanceToNext?: number; // in km

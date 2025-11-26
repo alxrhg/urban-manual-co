@@ -57,7 +57,7 @@ import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketLi
 import { TripItemCard } from '@/components/trips/TripItemCard';
 import { formatTripDate, parseDateString } from '@/lib/utils';
 import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
-import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData } from '@/types/trip';
+import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, MealType } from '@/types/trip';
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 
@@ -323,6 +323,41 @@ export default function TripPage() {
       fetchTrip();
     } catch (err) {
       console.error('Error updating time:', err);
+    }
+  };
+
+  const updateItemNotes = async (
+    itemId: string,
+    rawNotes: string,
+    duration?: number,
+    mealType?: MealType,
+    isHotel?: boolean
+  ) => {
+    try {
+      const supabase = createClient();
+      if (!supabase) return;
+
+      // Find the current item to preserve existing notes data
+      const currentItem = days.flatMap((d) => d.items).find((i) => i.id === itemId);
+      const existingNotes = currentItem?.parsedNotes || {};
+
+      const updatedNotes: ItineraryItemNotes = {
+        ...existingNotes,
+        raw: rawNotes || undefined,
+        duration: duration || undefined,
+        mealType: mealType || undefined,
+        isHotel: isHotel || undefined,
+      };
+
+      const { error } = await supabase
+        .from('itinerary_items')
+        .update({ notes: stringifyItineraryNotes(updatedNotes) })
+        .eq('id', itemId);
+
+      if (error) throw error;
+      fetchTrip();
+    } catch (err) {
+      console.error('Error updating notes:', err);
     }
   };
 
@@ -871,11 +906,14 @@ export default function TripPage() {
                             </div>
                           )}
 
-                          <TripItemCard 
+                          <TripItemCard
                             item={item}
                             isExpanded={isExpanded}
                             onToggleExpand={() => setExpandedItem(isExpanded ? null : item.id)}
                             onUpdateTime={(time) => updateItemTime(item.id, time)}
+                            onUpdateNotes={(rawNotes, duration, mealType, isHotel) =>
+                              updateItemNotes(item.id, rawNotes, duration, mealType, isHotel)
+                            }
                             onRemove={() => removeItem(item.id)}
                             onView={() => !isFlight && openDestinationDrawer(item)}
                             onAddPlace={(destination) => addItem(selectedDay, destination)}

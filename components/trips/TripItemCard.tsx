@@ -2,20 +2,23 @@
 
 import { memo } from 'react';
 import Image from 'next/image';
-import { 
-  GripVertical, 
-  Clock, 
-  MapPin, 
-  Plane, 
+import {
+  GripVertical,
+  Clock,
+  MapPin,
+  Plane,
   Trash2,
-  ChevronRight
+  ChevronRight,
+  UtensilsCrossed,
+  Hotel
 } from 'lucide-react';
 import { Destination } from '@/types/destination';
-import { ItineraryItem, ItineraryItemNotes } from '@/types/trip';
+import { ItineraryItem, ItineraryItemNotes, MealType } from '@/types/trip';
 import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
 import AvailabilityAlert from '@/components/trips/AvailabilityAlert';
 import FlightStatusCard from '@/components/trips/FlightStatusCard';
 import NearbyDiscoveries from '@/components/trips/NearbyDiscoveries';
+import ItemNotesEditor from '@/components/trips/ItemNotesEditor';
 
 interface TripItemCardProps {
   item: ItineraryItem & { destination?: Destination; parsedNotes?: ItineraryItemNotes };
@@ -23,6 +26,7 @@ interface TripItemCardProps {
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   onUpdateTime?: (time: string) => void;
+  onUpdateNotes?: (rawNotes: string, duration?: number, mealType?: MealType, isHotel?: boolean) => void;
   onRemove?: () => void;
   onView?: () => void;
   onAddPlace?: (destination: Destination) => void;
@@ -36,6 +40,7 @@ export const TripItemCard = memo(function TripItemCard({
   isExpanded,
   onToggleExpand,
   onUpdateTime,
+  onUpdateNotes,
   onRemove,
   onView,
   onAddPlace,
@@ -45,6 +50,17 @@ export const TripItemCard = memo(function TripItemCard({
   const isFlight = item.parsedNotes?.type === 'flight';
   const category = item.destination?.category || item.parsedNotes?.category;
   const estimatedDuration = getEstimatedDuration(category);
+  const mealType = item.parsedNotes?.mealType;
+  const isHotel = item.parsedNotes?.isHotel;
+
+  const getMealLabel = (meal: string) => {
+    const labels: Record<string, { label: string; color: string }> = {
+      breakfast: { label: 'Breakfast', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' },
+      lunch: { label: 'Lunch', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300' },
+      dinner: { label: 'Dinner', color: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300' },
+    };
+    return labels[meal] || { label: meal, color: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400' };
+  };
 
   return (
     <div 
@@ -116,13 +132,35 @@ export const TripItemCard = memo(function TripItemCard({
               {item.title}
             </h4>
             
-            <div className="flex items-center gap-2 mt-0.5">
+            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
               {item.description && (
                 <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">
                   {item.description}
                 </span>
               )}
-              
+
+              {/* Meal Type Label */}
+              {mealType && (
+                <>
+                  {item.description && <span className="w-0.5 h-0.5 rounded-full bg-gray-300 dark:bg-gray-600" />}
+                  <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${getMealLabel(mealType).color}`}>
+                    <UtensilsCrossed className="w-2.5 h-2.5" />
+                    {getMealLabel(mealType).label}
+                  </span>
+                </>
+              )}
+
+              {/* Hotel Label */}
+              {isHotel && (
+                <>
+                  {(item.description || mealType) && <span className="w-0.5 h-0.5 rounded-full bg-gray-300 dark:bg-gray-600" />}
+                  <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300">
+                    <Hotel className="w-2.5 h-2.5" />
+                    Stay
+                  </span>
+                </>
+              )}
+
               {!isFlight && (
                 <>
                   <span className="w-0.5 h-0.5 rounded-full bg-gray-300 dark:bg-gray-600" />
@@ -144,6 +182,18 @@ export const TripItemCard = memo(function TripItemCard({
                   compact
                 />
               </div>
+            )}
+
+            {/* Notes Editor */}
+            {!isFlight && onUpdateNotes && (
+              <ItemNotesEditor
+                notes={item.parsedNotes?.raw}
+                duration={item.parsedNotes?.duration}
+                mealType={item.parsedNotes?.mealType}
+                isHotel={item.parsedNotes?.isHotel}
+                category={category}
+                onSave={onUpdateNotes}
+              />
             )}
           </div>
         </div>
