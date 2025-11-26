@@ -359,7 +359,7 @@ export function Drawer({
           `}
           style={{ 
             zIndex, 
-            width: window.innerWidth >= 1024 && !fullScreen ? desktopWidth : (window.innerWidth >= 768 ? '70%' : '100%'),
+            width: window.innerWidth >= 768 && !fullScreen ? desktopWidth : '100%',
             maxWidth: window.innerWidth >= 768 && !fullScreen ? 'calc(100vw - 2rem)' : '100%',
           }}
           role="dialog"
