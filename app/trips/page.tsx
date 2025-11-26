@@ -9,6 +9,7 @@ import { Plus, Loader2, MapPin, Calendar, Plane } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import UMActionPill from '@/components/ui/UMActionPill';
 import TripCard from '@/components/trips/TripCard';
+import CreateTripModal from '@/components/trips/CreateTripModal';
 import type { Trip } from '@/types/trip';
 
 export default function TripsPage() {
@@ -16,7 +17,7 @@ export default function TripsPage() {
   const { user, loading: authLoading } = useAuth();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -49,10 +50,9 @@ export default function TripsPage() {
     }
   };
 
-  const createTrip = async () => {
+  const createTrip = async (tripData: { title: string; destination: string; startDate: string; endDate: string }) => {
     if (!user) return;
     try {
-      setCreating(true);
       const supabase = createClient();
       if (!supabase) return;
 
@@ -60,18 +60,22 @@ export default function TripsPage() {
         .from('trips')
         .insert({
           user_id: user.id,
-          title: 'New Trip',
+          title: tripData.title || 'New Trip',
+          destination: tripData.destination || null,
+          start_date: tripData.startDate || null,
+          end_date: tripData.endDate || null,
           status: 'planning',
         })
         .select()
         .single();
 
       if (error) throw error;
-      if (data) router.push(`/trips/${data.id}`);
+      if (data) {
+        setShowCreateModal(false);
+        router.push(`/trips/${data.id}`);
+      }
     } catch (err) {
       console.error('Error creating trip:', err);
-    } finally {
-      setCreating(false);
     }
   };
 
@@ -116,12 +120,8 @@ export default function TripsPage() {
         <div className="mb-12">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-2xl font-light">Trips</h1>
-            <UMActionPill variant="primary" onClick={createTrip} disabled={creating}>
-              {creating ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-1" />
-              ) : (
-                <Plus className="w-4 h-4 mr-1" />
-              )}
+            <UMActionPill variant="primary" onClick={() => setShowCreateModal(true)}>
+              <Plus className="w-4 h-4 mr-1" />
               New Trip
             </UMActionPill>
           </div>
@@ -164,7 +164,7 @@ export default function TripsPage() {
             <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6 max-w-sm mx-auto">
               Start planning your next adventure by creating your first trip.
             </p>
-            <UMActionPill variant="primary" onClick={createTrip} disabled={creating}>
+            <UMActionPill variant="primary" onClick={() => setShowCreateModal(true)}>
               <Plus className="w-4 h-4 mr-2" />
               Create Trip
             </UMActionPill>
@@ -190,6 +190,13 @@ export default function TripsPage() {
           </div>
         )}
       </div>
+
+      {/* Create Trip Modal */}
+      <CreateTripModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onCreate={createTrip}
+      />
     </main>
   );
 }

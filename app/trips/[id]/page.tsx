@@ -23,6 +23,9 @@ import {
   Users,
   Map,
   LayoutGrid,
+  CheckCircle2,
+  Circle,
+  Sparkles,
 } from 'lucide-react';
 import {
   DndContext,
@@ -53,6 +56,7 @@ import TransitOptions from '@/components/trips/TransitOptions';
 import AvailabilityAlert from '@/components/trips/AvailabilityAlert';
 import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
 import { TripItemCard } from '@/components/trips/TripItemCard';
+import QuickAddMenu, { createQuickAddItems } from '@/components/trips/QuickAddMenu';
 import { formatTripDate, parseDateString } from '@/lib/utils';
 import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
 import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData } from '@/types/trip';
@@ -467,6 +471,21 @@ export default function TripPage() {
 
   const currentDay = days.find((d) => d.dayNumber === selectedDay) || days[0];
 
+  // Calculate trip planning progress
+  const totalItems = days.reduce((acc, day) => acc + day.items.length, 0);
+  const daysWithItems = days.filter((d) => d.items.length > 0).length;
+  const hasDestination = Boolean(trip?.destination);
+  const hasDates = Boolean(trip?.start_date && trip?.end_date);
+  const progressSteps = [
+    { done: hasDestination, label: 'Destination' },
+    { done: hasDates, label: 'Dates' },
+    { done: totalItems > 0, label: 'First place' },
+    { done: daysWithItems >= Math.ceil(days.length / 2), label: 'Half planned' },
+    { done: daysWithItems === days.length, label: 'All days' },
+  ];
+  const completedSteps = progressSteps.filter((s) => s.done).length;
+  const progressPercent = Math.round((completedSteps / progressSteps.length) * 100);
+
   // Prepare items for timeline analysis
   const timelineItems = currentDay?.items
     .filter((item) => item.parsedNotes?.type !== 'flight')
@@ -517,32 +536,75 @@ export default function TripPage() {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-medium text-gray-700 dark:text-gray-300"
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors text-xs font-medium ${
+                    hasDestination
+                      ? 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                  }`}
                 >
                   <MapPin className="w-3.5 h-3.5" />
                   {trip.destination || 'Add destination'}
                 </button>
                 <button
                   onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-medium text-gray-700 dark:text-gray-300"
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors text-xs font-medium ${
+                    hasDates
+                      ? 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
+                      : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                  }`}
                 >
                   <Calendar className="w-3.5 h-3.5" />
                   {trip.start_date ? formatTripDate(trip.start_date) : 'Add dates'}
                   {trip.end_date && ` – ${formatTripDate(trip.end_date)}`}
                 </button>
+
+                {/* Progress indicator */}
+                <div className="hidden sm:flex items-center gap-2 ml-2 pl-2 border-l border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-1">
+                    {progressSteps.map((step, i) => (
+                      <div
+                        key={i}
+                        className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                          step.done ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'
+                        }`}
+                        title={step.label}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                    {progressPercent}%
+                  </span>
+                </div>
               </div>
             </div>
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Mobile View Toggle */}
-            <button
-              onClick={() => setMobileView(mobileView === 'itinerary' ? 'map' : 'itinerary')}
-              className="md:hidden p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              aria-label={mobileView === 'itinerary' ? 'Show Map' : 'Show Itinerary'}
-            >
-              {mobileView === 'itinerary' ? <Map className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
-            </button>
+            {/* Mobile View Toggle - Segmented Control */}
+            <div className="md:hidden flex items-center bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
+              <button
+                onClick={() => setMobileView('itinerary')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  mobileView === 'itinerary'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>List</span>
+              </button>
+              <button
+                onClick={() => setMobileView('map')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  mobileView === 'map'
+                    ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                <Map className="w-3.5 h-3.5" />
+                <span>Map</span>
+              </button>
+            </div>
 
             <button
               onClick={() => setShowBucketList(!showBucketList)}
@@ -594,24 +656,39 @@ export default function TripPage() {
               <ChevronLeft className="w-4 h-4" />
             </button>
             <div className="flex gap-2 flex-1 overflow-x-auto no-scrollbar px-2">
-              {days.map((day) => (
-                <button
-                  key={day.dayNumber}
-                  onClick={() => setSelectedDay(day.dayNumber)}
-                  className={`flex flex-col items-center justify-center px-4 py-2 rounded-xl min-w-[80px] transition-all duration-200 border flex-shrink-0 ${
-                    selectedDay === day.dayNumber
-                      ? 'bg-black dark:bg-white text-white dark:text-black border-transparent shadow-md transform scale-105'
-                      : 'bg-white dark:bg-gray-900 text-gray-500 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-                  }`}
-                >
-                  <span className="text-xs font-bold uppercase tracking-wider">Day {day.dayNumber}</span>
-                  {day.date && (
-                    <span className={`text-[10px] mt-0.5 ${selectedDay === day.dayNumber ? 'opacity-80' : 'opacity-60'}`}>
-                      {formatTripDate(day.date) ?? ''}
-                    </span>
-                  )}
-                </button>
-              ))}
+              {days.map((day) => {
+                const itemCount = day.items.length;
+                const hasItems = itemCount > 0;
+
+                return (
+                  <button
+                    key={day.dayNumber}
+                    onClick={() => setSelectedDay(day.dayNumber)}
+                    className={`relative flex flex-col items-center justify-center px-4 py-2 rounded-xl min-w-[80px] transition-all duration-200 border flex-shrink-0 ${
+                      selectedDay === day.dayNumber
+                        ? 'bg-black dark:bg-white text-white dark:text-black border-transparent shadow-md transform scale-105'
+                        : 'bg-white dark:bg-gray-900 text-gray-500 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    {/* Item count badge */}
+                    {hasItems && (
+                      <span className={`absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] flex items-center justify-center rounded-full text-[10px] font-bold ${
+                        selectedDay === day.dayNumber
+                          ? 'bg-white dark:bg-black text-black dark:text-white'
+                          : 'bg-black dark:bg-white text-white dark:text-black'
+                      }`}>
+                        {itemCount}
+                      </span>
+                    )}
+                    <span className="text-xs font-bold uppercase tracking-wider">Day {day.dayNumber}</span>
+                    {day.date && (
+                      <span className={`text-[10px] mt-0.5 ${selectedDay === day.dayNumber ? 'opacity-80' : 'opacity-60'}`}>
+                        {formatTripDate(day.date) ?? ''}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
             <button
               onClick={() => setSelectedDay(Math.min(days.length, selectedDay + 1))}
@@ -629,21 +706,24 @@ export default function TripPage() {
               {timelineItems.length > 0 ? (
                 <DayTimelineAnalysis items={timelineItems} />
               ) : (
-                <span className="text-xs text-gray-400 italic">Start planning your day...</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400 italic">Start planning your day</span>
+                  {currentDay?.date && (
+                    <span className="text-xs text-gray-300 dark:text-gray-600">
+                      ({formatTripDate(currentDay.date)})
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2 flex-shrink-0">
-              <UMActionPill onClick={() => openFlightDrawer(selectedDay)} className="!bg-white dark:!bg-gray-900 border !border-gray-200 dark:!border-gray-800">
-                <Plane className="w-3.5 h-3.5 mr-1.5" />
-                <span className="hidden sm:inline">Flight</span>
-              </UMActionPill>
-              <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)}>
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Place
-              </UMActionPill>
-            </div>
+            {/* Quick Add Menu */}
+            <QuickAddMenu
+              items={createQuickAddItems({
+                onAddPlace: () => openPlaceSelector(selectedDay),
+                onAddFlight: () => openFlightDrawer(selectedDay),
+              })}
+            />
           </div>
 
           {/* Itinerary Items */}
@@ -702,23 +782,51 @@ export default function TripPage() {
                 </SortableContext>
               </DndContext>
             ) : (
-              <div className="text-center py-20 px-6 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 mt-4">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center">
-                  <MapPin className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+              <div className="mt-4 space-y-4">
+                {/* Main empty state */}
+                <div className="text-center py-12 px-6 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800 bg-gradient-to-b from-gray-50/80 to-white dark:from-gray-900/50 dark:to-gray-950">
+                  <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 dark:from-blue-500/20 dark:to-purple-500/20 flex items-center justify-center">
+                    <MapPin className="w-7 h-7 text-blue-500 dark:text-blue-400" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    {selectedDay === 1 ? 'Start your adventure' : `Plan Day ${selectedDay}`}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs mx-auto">
+                    {trip.destination
+                      ? `Discover amazing places in ${trip.destination} to add to your itinerary.`
+                      : 'Add places, flights, and activities to build your perfect day.'}
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-3">
+                    <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)} className="!py-2.5 !px-5">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Place
+                    </UMActionPill>
+                    <UMActionPill onClick={() => openFlightDrawer(selectedDay)} className="!py-2.5 !px-5 !bg-blue-50 dark:!bg-blue-900/20 !border-blue-200 dark:!border-blue-800 !text-blue-600 dark:!text-blue-400">
+                      <Plane className="w-4 h-4 mr-2" />
+                      Add Flight
+                    </UMActionPill>
+                  </div>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Empty Day</h3>
-                <p className="text-sm text-gray-500 mb-8 max-w-xs mx-auto">
-                  Add places or flights to build your itinerary for Day {selectedDay}.
-                </p>
-                <div className="flex justify-center gap-3">
-                  <UMActionPill onClick={() => openFlightDrawer(selectedDay)} className="!py-2.5 !px-5">
-                    <Plane className="w-4 h-4 mr-2" />
-                    Add Flight
-                  </UMActionPill>
-                  <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)} className="!py-2.5 !px-5">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Place
-                  </UMActionPill>
+
+                {/* Quick suggestions based on day */}
+                <div className="p-4 rounded-2xl bg-amber-50/50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-amber-900 dark:text-amber-200 mb-1">
+                        {selectedDay === 1 ? 'Arrival day tip' : selectedDay === days.length ? 'Departure day tip' : 'Planning tip'}
+                      </p>
+                      <p className="text-xs text-amber-700/80 dark:text-amber-300/60">
+                        {selectedDay === 1
+                          ? 'Consider adding your arrival flight and checking into your hotel first. Keep the rest light for jet lag!'
+                          : selectedDay === days.length
+                          ? 'Save time for packing and getting to the airport. Maybe a farewell breakfast nearby?'
+                          : 'Mix activities with meals and breaks. 3-4 planned stops per day is usually comfortable.'}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
