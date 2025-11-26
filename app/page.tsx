@@ -2422,75 +2422,42 @@ export default function Home() {
                     </>
                   )}
 
-                  {/* Step Two: Chat-like display when search is active */}
+                  {/* Subtle AI Response - Shows latest query and single paragraph response */}
                   {submittedQuery && (
                     <div className="w-full">
-                      {/* Scrollable chat history - Fixed height for about 2 message pairs */}
-                      <div
-                        ref={chatContainerRef}
-                        className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
-                      >
-                        {chatMessages.length > 0
-                          ? chatMessages.map((message, index) => (
-                              <div key={index} className="space-y-2">
-                                {message.type === "user" ? (
-                                  <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
-                                    {message.content}
-                                  </div>
-                                ) : (
-                                  <div className="space-y-4">
-                                    <MarkdownRenderer
-                                      content={message.content}
-                                      className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                                    />
-                                    {message.contextPrompt && (
-                                      <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
-                                        {message.contextPrompt}
-                                      </div>
-                                    )}
-                                    {/* Show follow-up suggestions after the last assistant message */}
-                                    {index === chatMessages.length - 1 &&
-                                      followUpSuggestions.length > 0 && (
-                                        <FollowUpSuggestions
-                                          suggestions={followUpSuggestions}
-                                          onSuggestionClick={suggestion => {
-                                            // Only set searchTerm - the useEffect will handle the search
-                                            // This prevents duplicate searches
-                                            setSearchTerm(suggestion);
-                                            setFollowUpInput("");
-                                          }}
-                                          isLoading={searching}
-                                        />
-                                      )}
-                                  </div>
-                                )}
-                              </div>
-                            ))
-                          : null}
-
-                        {/* Loading State */}
-                        {(searching ||
-                          (submittedQuery && chatMessages.length === 0)) && (
-                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                            <div className="flex items-center gap-2">
-                              {discoveryEngineLoading && (
-                                <div className="flex gap-1">
-                                  <span className="animate-bounce" style={{ animationDelay: "0ms", animationDuration: "1.4s" }}>.</span>
-                                  <span className="animate-bounce" style={{ animationDelay: "200ms", animationDuration: "1.4s" }}>.</span>
-                                  <span className="animate-bounce" style={{ animationDelay: "400ms", animationDuration: "1.4s" }}>.</span>
-                                </div>
-                              )}
-                              <span>{currentLoadingText}</span>
-                            </div>
-                          </div>
-                        )}
+                      {/* Current search query */}
+                      <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white mb-4">
+                        {submittedQuery}
                       </div>
 
-                      {/* Follow-up input field - Chat style */}
-                      {!searching && chatMessages.length > 0 && (
-                        <div className="relative">
+                      {/* Loading State */}
+                      {searching && (
+                        <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left mb-6">
+                          <div className="flex items-center gap-2">
+                            <div className="flex gap-1">
+                              <span className="animate-bounce" style={{ animationDelay: "0ms", animationDuration: "1.4s" }}>.</span>
+                              <span className="animate-bounce" style={{ animationDelay: "200ms", animationDuration: "1.4s" }}>.</span>
+                              <span className="animate-bounce" style={{ animationDelay: "400ms", animationDuration: "1.4s" }}>.</span>
+                            </div>
+                            <span>{currentLoadingText}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Single paragraph response - subtle, not chatty */}
+                      {!searching && chatResponse && (
+                        <div className="mb-6">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed text-left">
+                            {chatResponse}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Follow-up input - subtle style */}
+                      {!searching && chatResponse && (
+                        <div className="relative mb-4">
                           <input
-                            placeholder="Refine your search or ask a follow-up..."
+                            placeholder="Refine your search..."
                             value={followUpInput}
                             onChange={e => setFollowUpInput(e.target.value)}
                             onKeyDown={e => {

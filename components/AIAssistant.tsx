@@ -97,14 +97,14 @@ export function AIAssistant() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 flex items-center gap-2 px-6 py-3 bg-white/10 dark:bg-white/10 backdrop-blur-xl text-white border border-white/20 hover:bg-white/20 transition-all duration-200"
+        className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 flex items-center gap-2 px-5 py-2.5 bg-black/80 dark:bg-white/90 backdrop-blur-xl text-white dark:text-black border border-white/10 dark:border-black/10 hover:bg-black/90 dark:hover:bg-white transition-all duration-200"
         style={{
-          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 4px 24px 0 rgba(0, 0, 0, 0.3)',
           borderRadius: '9999px'
         }}
       >
-        <Sparkles className="h-5 w-5" />
-        <span className="font-medium">AI</span>
+        <Sparkles className="h-4 w-4" />
+        <span className="text-sm font-medium">Chat with AI</span>
       </button>
     );
   }
@@ -133,9 +133,8 @@ export function AIAssistant() {
                     }`}
                   >
                     {message.role === 'assistant' && (
-                      <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="h-4 w-4" />
-                        <span className="text-xs font-medium opacity-70">AI Assistant</span>
+                      <div className="flex items-center gap-1.5 mb-2 opacity-60">
+                        <Sparkles className="h-3.5 w-3.5" />
                       </div>
                     )}
                     <div className="text-sm whitespace-pre-wrap leading-relaxed">
@@ -155,53 +154,55 @@ export function AIAssistant() {
                       })}
                     </div>
 
-                    {/* Destination Cards */}
+                    {/* Destination Cards - Horizontal scrollable row */}
                     {message.destinations && message.destinations.length > 0 && (
-                      <div className="mt-3 grid grid-cols-2 gap-3">
-                        {message.destinations.map((dest) => (
-                          <a
-                            key={dest.slug}
-                            href={`/destination/${dest.slug}`}
-                            className="group block"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              window.location.href = `/destination/${dest.slug}`;
-                            }}
-                          >
-                            <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
-                              {dest.image ? (
-                                <img
-                                  src={dest.image}
-                                  alt={dest.name}
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                  <MapPin className="h-8 w-8 opacity-20" />
-                                </div>
-                              )}
-                              {dest.crown && (
-                                <div className="absolute top-2 left-2 text-lg">👑</div>
-                              )}
-                              {dest.michelin_stars && dest.michelin_stars > 0 && (
-                                <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                      <div className="mt-4 -mx-4 px-4">
+                        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                          {message.destinations.map((dest) => (
+                            <a
+                              key={dest.slug}
+                              href={`/destination/${dest.slug}`}
+                              className="group flex-shrink-0 w-32"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                window.location.href = `/destination/${dest.slug}`;
+                              }}
+                            >
+                              <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-lg overflow-hidden mb-2">
+                                {dest.image ? (
                                   <img
-                                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                                    alt="Michelin star"
-                                    className="h-3 w-3"
+                                    src={dest.image}
+                                    alt={dest.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                   />
-                                  <span>{dest.michelin_stars}</span>
-                                </div>
-                              )}
-                            </div>
-                            <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1 text-black dark:text-white">
-                              {dest.name}
-                            </h4>
-                            <span className="text-xs text-gray-500 capitalize">
-                              {dest.city.replace(/-/g, ' ')} · {dest.category}
-                            </span>
-                          </a>
-                        ))}
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center text-gray-300">
+                                    <MapPin className="h-6 w-6 opacity-20" />
+                                  </div>
+                                )}
+                                {dest.crown && (
+                                  <div className="absolute top-1.5 left-1.5 text-sm">👑</div>
+                                )}
+                                {dest.michelin_stars && dest.michelin_stars > 0 && (
+                                  <div className="absolute bottom-1.5 left-1.5 bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5">
+                                    <img
+                                      src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                                      alt="Michelin star"
+                                      className="h-2.5 w-2.5"
+                                    />
+                                    <span>{dest.michelin_stars}</span>
+                                  </div>
+                                )}
+                              </div>
+                              <h4 className="font-medium text-[11px] leading-tight line-clamp-2 mb-0.5 text-black dark:text-white">
+                                {dest.name}
+                              </h4>
+                              <span className="text-[10px] text-gray-500 capitalize line-clamp-1">
+                                {dest.city.replace(/-/g, ' ')}
+                              </span>
+                            </a>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -245,7 +246,7 @@ export function AIAssistant() {
                     handleSubmit(e);
                   }
                 }}
-                placeholder="Ask about destinations, cities, or restaurants..."
+                placeholder="Let's explore together... where to?"
                 rows={1}
                 className="w-full resize-none bg-transparent border-none outline-none text-black dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-base"
                 style={{ maxHeight: '120px' }}
@@ -274,12 +275,12 @@ export function AIAssistant() {
 
           {messages.length === 0 && (
             <div className="mt-3 pt-3 border-t border-white/20 dark:border-gray-700/50">
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Try asking:</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">Start a conversation:</div>
               <div className="flex flex-wrap gap-2">
                 {[
-                  "Best restaurants in Tokyo",
-                  "Michelin-starred restaurants",
-                  "Cafes in Paris"
+                  "What's good in Tokyo?",
+                  "Help me plan a trip to Paris",
+                  "I'm craving something special tonight"
                 ].map((suggestion, index) => (
                   <button
                     key={index}
