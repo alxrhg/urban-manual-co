@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback, memo } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import { Send, Sparkles, X, Minimize2, MapPin, ChevronRight } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -18,29 +18,17 @@ interface Destination {
   micro_description?: string;
 }
 
-interface TravelContext {
-  city?: string;
-  neighborhood?: string;
-  category?: string;
-  occasion?: string;
-  timeOfDay?: string;
-  vibes?: string[];
-  pricePreference?: string;
-}
-
 interface Suggestion {
   text: string;
-  type: 'refine' | 'expand' | 'related' | 'next-step';
+  icon?: string;
+  type?: string;
 }
 
 interface Message {
   role: "user" | "assistant";
   content: string;
   destinations?: Destination[];
-  mode?: string;
-  context?: TravelContext;
   suggestions?: Suggestion[];
-  isPreview?: boolean; // True when showing quick search results before AI response
 }
 
 // Memoized destination card - only re-renders when this specific destination changes
@@ -94,16 +82,14 @@ const DestinationCard = memo(function DestinationCard({ dest }: { dest: Destinat
 
 // Memoized destinations grid - only re-renders when destinations array changes
 const DestinationsGrid = memo(function DestinationsGrid({
-  destinations,
-  isPreview
+  destinations
 }: {
   destinations: Destination[];
-  isPreview?: boolean;
 }) {
   if (!destinations || destinations.length === 0) return null;
 
   return (
-    <div className={`mt-3 space-y-2 ${isPreview ? 'opacity-90' : ''}`}>
+    <div className="mt-3 space-y-2">
       {destinations.slice(0, 4).map((dest) => (
         <DestinationCard key={dest.slug} dest={dest} />
       ))}
@@ -121,8 +107,6 @@ export function ChatGPTStyleAI() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [currentContext, setCurrentContext] = useState<TravelContext>({});
-  const [currentMode, setCurrentMode] = useState<string>('discover');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { user } = useAuth();
@@ -139,6 +123,13 @@ export function ChatGPTStyleAI() {
     }
   }, [isOpen]);
 
+  /**
+   * CONVERSATIONAL AI APPROACH:
+   * - Just send the message + conversation history to /api/ai-chat
+   * - The API handles all context understanding from conversation history
+   * - No client-side context tracking that causes query stacking
+   * - Each message is understood IN CONTEXT of the conversation
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -148,107 +139,43 @@ export function ChatGPTStyleAI() {
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
 
-    // Build conversation history from messages
-    const conversationHistory = messages.map(msg => ({
-      role: msg.role,
-      content: msg.content,
-      destinations: msg.destinations,
-      context: msg.context,
-    }));
-
-    // Check if this looks like a search query (not conversational)
-    const isSearchQuery = /hotel|restaurant|cafe|bar|coffee|food|eat|stay|museum|shop|best|recommend|find|where|looking for/i.test(userMessage);
-
     try {
-      // PHASE 1: Quick search for instant results (only for search queries)
-      // Note: Quick search is just for preview - don't update context from it
-      if (isSearchQuery) {
-        const quickSearchPromise = fetch('/api/travel-intelligence/quick-search', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: userMessage,
-            context: currentContext,
-          }),
-        }).then(r => r.ok ? r.json() : null).catch(() => null);
+      // Build conversation history from messages
+      const conversationHistory = messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
 
-        // Show quick results immediately (non-blocking)
-        quickSearchPromise.then(quickData => {
-          if (quickData?.destinations?.length > 0) {
-            // Show preview destinations while AI thinks
-            setMessages(prev => {
-              const lastMsg = prev[prev.length - 1];
-              if (lastMsg?.role === 'user') {
-                return [...prev, {
-                  role: "assistant",
-                  content: "Finding the best options for you...",
-                  destinations: quickData.destinations,
-                  mode: 'discover',
-                  context: quickData.context,
-                  isPreview: true,
-                }];
-              }
-              return prev;
-            });
-            // DON'T update context from quick search - let the full AI response handle context
-          }
-        });
-      }
-
-      // PHASE 2: Full AI response (runs in parallel)
-      // Pass conversation history - the API handles context understanding
-      const response = await fetch('/api/travel-intelligence', {
+      // Use the conversational /api/ai-chat endpoint
+      // It understands context from conversation history naturally
+      const response = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: userMessage,
+          query: userMessage,
           userId: user?.id,
           conversationHistory,
-          context: currentContext,
         }),
       });
 
       if (!response.ok) {
-        throw new Error('Travel Intelligence request failed');
+        throw new Error('AI chat request failed');
       }
 
       const data = await response.json();
 
-      // IMPORTANT: Replace context with what the API returns, don't accumulate
-      // The API now properly handles:
-      // - New topics: returns fresh context for the new topic
-      // - Refinements: returns merged context from conversation
-      // - Conversations: preserves existing context
-      if (data.context) {
-        setCurrentContext(data.context);
-      }
-      if (data.mode) {
-        setCurrentMode(data.mode);
-      }
-
-      // Replace preview message with full AI response
-      setMessages(prev => {
-        // Remove preview message if exists
-        const filtered = prev.filter((msg: any) => !msg.isPreview);
-        return [...filtered, {
-          role: "assistant",
-          content: data.response || '',
-          destinations: data.destinations,
-          mode: data.mode,
-          context: data.context,
-          suggestions: data.suggestions,
-        }];
-      });
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: data.content || '',
+        destinations: data.destinations,
+        suggestions: data.suggestions,
+      }]);
     } catch (error) {
-      console.error("Travel Intelligence error:", error);
-      setMessages(prev => {
-        // Remove preview message if exists
-        const filtered = prev.filter((msg: any) => !msg.isPreview);
-        return [...filtered, {
-          role: "assistant",
-          content: "I'm having trouble connecting right now. Please try again.",
-        }];
-      });
+      console.error("AI Chat error:", error);
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: "I'm having trouble connecting right now. Please try again.",
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -257,16 +184,6 @@ export function ChatGPTStyleAI() {
   const handleSuggestionClick = (suggestion: string) => {
     setInput(suggestion);
     inputRef.current?.focus();
-  };
-
-  // Mode indicator colors
-  const modeColors: Record<string, string> = {
-    discover: 'bg-blue-500/20 text-blue-600 dark:text-blue-400',
-    plan: 'bg-green-500/20 text-green-600 dark:text-green-400',
-    compare: 'bg-amber-500/20 text-amber-600 dark:text-amber-400',
-    insight: 'bg-purple-500/20 text-purple-600 dark:text-purple-400',
-    recommend: 'bg-rose-500/20 text-rose-600 dark:text-rose-400',
-    navigate: 'bg-gray-500/20 text-gray-600 dark:text-gray-400',
   };
 
   if (!isOpen) {
@@ -310,20 +227,10 @@ export function ChatGPTStyleAI() {
                   >
                     {message.role === 'assistant' && (
                       <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className={`h-4 w-4 ${message.isPreview ? 'animate-pulse' : ''}`} />
+                        <Sparkles className="h-4 w-4" />
                         <span className="text-xs font-medium opacity-70">
-                          {message.isPreview ? 'Quick results' : 'Travel Intelligence'}
+                          Travel Intelligence
                         </span>
-                        {message.mode && !message.isPreview && (
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${modeColors[message.mode] || modeColors.discover}`}>
-                            {message.mode}
-                          </span>
-                        )}
-                        {message.isPreview && (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-gray-500/20 text-gray-600 dark:text-gray-400 animate-pulse">
-                            AI thinking...
-                          </span>
-                        )}
                       </div>
                     )}
                     <div className="text-sm whitespace-pre-wrap leading-relaxed">
@@ -344,10 +251,7 @@ export function ChatGPTStyleAI() {
                     </div>
 
                     {/* Destination Cards - Memoized for partial updates */}
-                    <DestinationsGrid
-                      destinations={message.destinations || []}
-                      isPreview={message.isPreview}
-                    />
+                    <DestinationsGrid destinations={message.destinations || []} />
 
                     {/* Follow-up Suggestions */}
                     {message.suggestions && message.suggestions.length > 0 && (
@@ -395,37 +299,6 @@ export function ChatGPTStyleAI() {
             boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)'
           }}
         >
-          {/* Context indicator */}
-          {(currentContext.city || currentContext.category) && messages.length > 0 && (
-            <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200/50 dark:border-gray-700/50">
-              <span className="text-xs text-gray-500">Context:</span>
-              {currentContext.city && (
-                <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
-                  {currentContext.city}
-                </span>
-              )}
-              {currentContext.category && (
-                <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
-                  {currentContext.category}
-                </span>
-              )}
-              {currentContext.occasion && (
-                <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
-                  {currentContext.occasion}
-                </span>
-              )}
-              <button
-                onClick={() => {
-                  setCurrentContext({});
-                  setMessages([]);
-                }}
-                className="ml-auto text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                Clear
-              </button>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="flex items-end gap-3">
             <div className="flex-1">
               <textarea
@@ -457,7 +330,6 @@ export function ChatGPTStyleAI() {
                 onClick={() => {
                   setIsOpen(false);
                   setMessages([]);
-                  setCurrentContext({});
                 }}
                 className="p-2 bg-gray-100 dark:bg-gray-800 text-black dark:text-white rounded-lg hover:scale-105 transition-transform"
               >
