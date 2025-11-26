@@ -19,10 +19,12 @@ import {
   Plane,
   Plus,
   Settings,
+  Sparkles,
   Trash2,
   Users,
   Map,
   LayoutGrid,
+  Loader2,
 } from 'lucide-react';
 import {
   DndContext,
@@ -116,6 +118,7 @@ export default function TripPage() {
   const [showBucketList, setShowBucketList] = useState(false);
   const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
   const [mobileView, setMobileView] = useState<'itinerary' | 'map'>('itinerary');
+  const [isAIPlanning, setIsAIPlanning] = useState(false);
 
   // DnD sensors
   const sensors = useSensors(
@@ -447,6 +450,174 @@ export default function TripPage() {
     handleRemoveBucketItem(item.id);
   };
 
+  // AI Trip Planning - fill empty days with AI-generated itinerary
+  const handleAITripPlanning = async () => {
+    if (!trip || !user) return;
+
+    // Check if trip has required fields
+    if (!trip.destination) {
+      alert('Please add a destination to your trip first');
+      return;
+    }
+    if (!trip.start_date || !trip.end_date) {
+      alert('Please add dates to your trip first');
+      return;
+    }
+
+    // Check if there are already items in the trip
+    const allItems = days.flatMap(day => day.items);
+    const totalItems = allItems.length;
+
+    try {
+      setIsAIPlanning(true);
+      const supabase = createClient();
+      if (!supabase) return;
+
+      if (totalItems > 0) {
+        // Use smart-fill API for contextual recommendations
+        const existingItemsForAPI = allItems.map(item => ({
+          day: days.find(d => d.items.includes(item))?.dayNumber || 1,
+          time: item.time,
+          title: item.title,
+          destination_slug: item.destination_slug,
+          category: item.parsedNotes?.category || item.destination?.category,
+          parsedNotes: item.parsedNotes,
+        }));
+
+        const response = await fetch('/api/intelligence/smart-fill', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            city: trip.destination,
+            existingItems: existingItemsForAPI,
+            tripDays: days.length,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to get AI suggestions');
+        }
+
+        const result = await response.json();
+
+        if (!result.suggestions || result.suggestions.length === 0) {
+          alert('Your trip looks complete! No additional suggestions needed.');
+          return;
+        }
+
+        // Insert smart suggestions into the database
+        for (const suggestion of result.suggestions) {
+          const dest = suggestion.destination;
+          if (!dest) continue;
+
+          // Find the current max order_index for this day
+          const dayItems = days.find(d => d.dayNumber === suggestion.day)?.items || [];
+          const maxOrder = dayItems.length > 0
+            ? Math.max(...dayItems.map(i => i.order_index || 0))
+            : -1;
+
+          const notesData: ItineraryItemNotes = {
+            type: 'place',
+            latitude: dest.latitude ?? undefined,
+            longitude: dest.longitude ?? undefined,
+            category: dest.category ?? undefined,
+            image: dest.image_thumbnail || dest.image || undefined,
+          };
+
+          await supabase.from('itinerary_items').insert({
+            trip_id: trip.id,
+            destination_slug: dest.slug,
+            day: suggestion.day,
+            order_index: maxOrder + 1 + (suggestion.order || 0),
+            time: suggestion.startTime,
+            title: dest.name,
+            description: `${dest.category ? dest.category + ' • ' : ''}${suggestion.reason || 'AI suggested'}`,
+            notes: stringifyItineraryNotes(notesData),
+          });
+        }
+      } else {
+        // Use multi-day planning API for empty trips
+        const response = await fetch('/api/intelligence/multi-day-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            city: trip.destination,
+            startDate: trip.start_date,
+            endDate: trip.end_date,
+            userId: user.id,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to generate trip plan');
+        }
+
+        const plan = await response.json();
+
+        if (!plan.days || plan.days.length === 0) {
+          throw new Error('No itinerary generated');
+        }
+
+        // Fetch destination details for the generated items
+        const destinationIds = plan.days.flatMap((day: any) =>
+          day.items.map((item: any) => item.destinationId)
+        ).filter(Boolean);
+
+        let destinationsMap: Record<number, any> = {};
+        if (destinationIds.length > 0) {
+          const { data: destinations } = await supabase
+            .from('destinations')
+            .select('id, slug, name, city, category, image, image_thumbnail, latitude, longitude')
+            .in('id', destinationIds);
+
+          if (destinations) {
+            destinations.forEach((d) => {
+              destinationsMap[d.id] = d;
+            });
+          }
+        }
+
+        // Insert items for each day
+        for (const day of plan.days) {
+          for (const item of day.items) {
+            const destination = destinationsMap[item.destinationId];
+            if (!destination) continue;
+
+            const notesData: ItineraryItemNotes = {
+              type: 'place',
+              latitude: destination.latitude ?? undefined,
+              longitude: destination.longitude ?? undefined,
+              category: destination.category ?? undefined,
+              image: destination.image_thumbnail || destination.image || undefined,
+              duration: item.durationMinutes,
+            };
+
+            await supabase.from('itinerary_items').insert({
+              trip_id: trip.id,
+              destination_slug: destination.slug,
+              day: day.dayNumber,
+              order_index: item.order,
+              time: item.startTime,
+              title: destination.name,
+              description: destination.city,
+              notes: stringifyItineraryNotes(notesData),
+            });
+          }
+        }
+      }
+
+      // Refresh trip data
+      await fetchTrip();
+    } catch (err: any) {
+      console.error('Error with AI trip planning:', err);
+      alert(err.message || 'Failed to generate AI trip plan. Please try again.');
+    } finally {
+      setIsAIPlanning(false);
+    }
+  };
+
   if (loading) {
     return (
       <main className="w-full px-4 md:px-10 py-20">
@@ -542,6 +713,21 @@ export default function TripPage() {
               aria-label={mobileView === 'itinerary' ? 'Show Map' : 'Show Itinerary'}
             >
               {mobileView === 'itinerary' ? <Map className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+            </button>
+
+            {/* AI Trip Planner Button */}
+            <button
+              onClick={handleAITripPlanning}
+              disabled={isAIPlanning}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium text-sm hover:from-violet-600 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
+              title="Fill trip with AI-recommended places"
+            >
+              {isAIPlanning ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Sparkles className="w-4 h-4" />
+              )}
+              <span className="hidden sm:inline">{isAIPlanning ? 'Planning...' : 'AI Plan'}</span>
             </button>
 
             <button
