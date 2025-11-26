@@ -592,7 +592,7 @@ export default function TripPage() {
                   <span className="text-xs font-bold uppercase tracking-wider">Day {day.dayNumber}</span>
                   {day.date && (
                     <span className={`text-[10px] mt-0.5 ${selectedDay === day.dayNumber ? 'opacity-80' : 'opacity-60'}`}>
-                      {formatTripDate(day.date).split(',')[0]}
+                      {formatTripDate(day.date) ?? ''}
                     </span>
                   )}
                 </button>
