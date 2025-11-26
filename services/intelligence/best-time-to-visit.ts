@@ -532,8 +532,10 @@ export class BestTimeToVisitService {
     const currentMonth = now.getMonth();
     const targetMonth = new Date(`${startMonth.month} 1, ${startMonth.year}`).getMonth();
 
-    const monthsUntil = (targetMonth - currentMonth + 12) % 12;
-    if (monthsUntil === 0) monthsUntil === 12;
+    let monthsUntil = (targetMonth - currentMonth + 12) % 12;
+    // If monthsUntil is 0, it means the target month is the current month
+    // Treat it as "book now" since the best time is now
+    if (monthsUntil === 0) monthsUntil = 12;
 
     if (monthsUntil <= 1) return 'book_now';
     if (monthsUntil <= 3) return 'book_soon';
