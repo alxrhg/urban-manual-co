@@ -224,7 +224,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
               >
                 <div className="flex">
                   {/* Left: Image */}
-                  <div className="relative w-24 h-24 sm:w-28 sm:h-full bg-neutral-100 dark:bg-neutral-800 flex-shrink-0">
+                  <div className="relative w-24 h-24 sm:w-28 sm:h-full bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 self-center">
                     {coverImage ? (
                       <Image
                         src={coverImage}
