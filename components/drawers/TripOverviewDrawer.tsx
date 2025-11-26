@@ -230,56 +230,6 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
           </UMCard>
         </section>
 
-        {/* DAYS SECTION */}
-        {days.length > 0 && (
-          <section className="space-y-4">
-            <UMSectionTitle>Days</UMSectionTitle>
-            <div className="space-y-4">
-              {days.map((day, i) => {
-                const dayCoverImage = day.coverImage;
-                const dayDate = day.date || '';
-                const dayCity = day.city || '';
-
-                return (
-                  <UMCard
-                    key={i}
-                    className="p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition"
-                    onClick={() => {
-                      onClose();
-                      if (displayTrip.id) {
-                        setTimeout(() => {
-                          router.push(`/trips/${displayTrip.id}?day=${i}`);
-                        }, 200);
-                      }
-                    }}
-                  >
-                    {dayCoverImage && (
-                      <div className="w-full h-32 relative overflow-hidden rounded-[16px] mb-3">
-                        <Image
-                          src={dayCoverImage}
-                          alt={`Day ${i + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, 640px"
-                        />
-                      </div>
-                    )}
-
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white">
-                        Day {i + 1}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {dayCity} {dayDate && `• ${dayDate}`}
-                      </p>
-                    </div>
-                  </UMCard>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
         {/* HOTELS SECTION */}
         {hotels.length > 0 && (
           <section className="space-y-4">
