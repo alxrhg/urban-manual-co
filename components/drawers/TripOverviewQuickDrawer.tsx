@@ -97,7 +97,17 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
       <DrawerHeader
         title={tripName}
         subtitle={startDate && endDate ? `${startDate} – ${endDate}` : undefined}
-        onClose={onClose}
+        rightAccessory={
+          <button
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            <span className="sr-only">Close</span>
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        }
       />
 
       <div className="pb-24">
