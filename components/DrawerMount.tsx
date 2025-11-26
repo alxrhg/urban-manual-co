@@ -3,7 +3,7 @@
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 import { AccountDrawer } from '@/components/AccountDrawer';
-import DestinationDrawer from '@/src/features/detail/DestinationDrawer';
+import { DestinationDrawer } from '@/src/features/detail/DestinationDrawer';
 import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
 import { QuickTripSelector } from '@/components/QuickTripSelector';
