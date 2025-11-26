@@ -2425,92 +2425,100 @@ export default function Home() {
                   {/* Step Two: Chat-like display when search is active */}
                   {submittedQuery && (
                     <div className="w-full">
-                      {/* User Intent Label - Step Two spec */}
-                      <div className="text-left mb-4">
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-[1.5px] font-medium">
-                          You asked: "{submittedQuery}"
-                        </div>
+                      {/* Scrollable chat history - Fixed height for about 2 message pairs */}
+                      <div
+                        ref={chatContainerRef}
+                        className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700 scrollbar-track-transparent"
+                      >
+                        {chatMessages.length > 0
+                          ? chatMessages.map((message, index) => (
+                              <div key={index} className="space-y-2">
+                                {message.type === "user" ? (
+                                  <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                                    {message.content}
+                                  </div>
+                                ) : (
+                                  <div className="space-y-4">
+                                    <MarkdownRenderer
+                                      content={message.content}
+                                      className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                                    />
+                                    {message.contextPrompt && (
+                                      <div className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed text-left italic">
+                                        {message.contextPrompt}
+                                      </div>
+                                    )}
+                                    {/* Show follow-up suggestions after the last assistant message */}
+                                    {index === chatMessages.length - 1 &&
+                                      followUpSuggestions.length > 0 && (
+                                        <FollowUpSuggestions
+                                          suggestions={followUpSuggestions}
+                                          onSuggestionClick={suggestion => {
+                                            // Only set searchTerm - the useEffect will handle the search
+                                            // This prevents duplicate searches
+                                            setSearchTerm(suggestion);
+                                            setFollowUpInput("");
+                                          }}
+                                          isLoading={searching}
+                                        />
+                                      )}
+                                  </div>
+                                )}
+                              </div>
+                            ))
+                          : null}
+
+                        {/* Loading State */}
+                        {(searching ||
+                          (submittedQuery && chatMessages.length === 0)) && (
+                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                            <div className="flex items-center gap-2">
+                              {discoveryEngineLoading && (
+                                <div className="flex gap-1">
+                                  <span className="animate-bounce" style={{ animationDelay: "0ms", animationDuration: "1.4s" }}>.</span>
+                                  <span className="animate-bounce" style={{ animationDelay: "200ms", animationDuration: "1.4s" }}>.</span>
+                                  <span className="animate-bounce" style={{ animationDelay: "400ms", animationDuration: "1.4s" }}>.</span>
+                                </div>
+                              )}
+                              <span>{currentLoadingText}</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
-                      {/* AI Response - Step Two spec: natural language, max 4 sentences */}
-                      {!searching && chatResponse && (
-                        <div className="mb-6">
-                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                            <MarkdownRenderer
-                              content={(() => {
-                                // Format to max 4 sentences
-                                const sentences = chatResponse.split(/[.!?]+/).filter(s => s.trim().length > 0);
-                                const limitedSentences = sentences.slice(0, 4);
-                                return limitedSentences.join('. ') + (limitedSentences.length < sentences.length ? '.' : '');
-                              })()}
-                              className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                            />
-                          </div>
+                      {/* Follow-up input field - Chat style */}
+                      {!searching && chatMessages.length > 0 && (
+                        <div className="relative">
+                          <input
+                            placeholder="Refine your search or ask a follow-up..."
+                            value={followUpInput}
+                            onChange={e => setFollowUpInput(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === "Enter" && !e.shiftKey && followUpInput.trim()) {
+                                e.preventDefault();
+                                const query = followUpInput.trim();
+                                setSearchTerm(query);
+                                setFollowUpInput("");
+                                performAISearch(query);
+                              }
+                            }}
+                            className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
+                          />
                         </div>
                       )}
 
-                      {/* Loading State - Step Two */}
-                      {searching && (
-                        <div className="mb-6 text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                          <div className="flex items-center gap-2">
-                            {discoveryEngineLoading && (
-                              <div className="flex gap-1">
-                                <span
-                                  className="animate-bounce"
-                                  style={{
-                                    animationDelay: "0ms",
-                                    animationDuration: "1.4s",
-                                  }}
-                                >
-                                  .
-                                </span>
-                                <span
-                                  className="animate-bounce"
-                                  style={{
-                                    animationDelay: "200ms",
-                                    animationDuration: "1.4s",
-                                  }}
-                                >
-                                  .
-                                </span>
-                                <span
-                                  className="animate-bounce"
-                                  style={{
-                                    animationDelay: "400ms",
-                                    animationDuration: "1.4s",
-                                  }}
-                                >
-                                  .
-                                </span>
-                              </div>
-                            )}
-                            <span>{currentLoadingText}</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Suggestion Pills - Step Two spec: limit 4, from AI response keywords */}
-                      {!searching && followUpSuggestions.length > 0 && (
-                        <div className="mb-6">
-                          <div className="flex flex-wrap gap-2">
-                            {followUpSuggestions.slice(0, 4).map((suggestion, idx) => (
-                              <button
-                                key={idx}
-                                onClick={() => {
-                                  // Continue conversation by appending suggestion to existing query context
-                                  // This allows users to keep filtering down instead of starting fresh
-                                  const continuationQuery = submittedQuery 
-                                    ? `${submittedQuery} ${suggestion.text}`
-                                    : suggestion.text;
-                                  setSearchTerm(continuationQuery);
-                                  performAISearch(continuationQuery);
-                                }}
-                                className="px-3 py-1.5 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                              >
-                                {suggestion.text}
-                              </button>
-                            ))}
-                          </div>
+                      {/* Intent Confirmation Chips - Always under text input */}
+                      {searchIntent && !searching && (
+                        <div className="mt-4">
+                          <IntentConfirmationChips
+                            intent={searchIntent}
+                            onConfirm={updatedIntent => {
+                              setSearchIntent(updatedIntent);
+                              setFilteredDestinations(
+                                filterDestinationsByIntent(destinations, updatedIntent)
+                              );
+                            }}
+                          />
                         </div>
                       )}
 
@@ -2526,7 +2534,10 @@ export default function Home() {
                             );
                           if (activeTags.length === 0) return null;
                           return (
-                            <div className="mb-6">
+                            <div className="mb-4">
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                Filtered by:
+                              </div>
                               <RefinementChips
                                 tags={activeTags}
                                 onChipClick={tag => handleChipClick(tag)}
@@ -2537,68 +2548,30 @@ export default function Home() {
                           );
                         })()}
 
-                      {/* Continue Chat Input - Step Two: allow users to continue conversation */}
-                      <div className="mt-6">
-                        <GreetingHero
-                          searchQuery={searchTerm}
-                          onSearchChange={value => {
-                            setSearchTerm(value);
-                          }}
-                          onSubmit={query => {
-                            if (query.trim() && !searching) {
-                              performAISearch(query);
-                            }
-                          }}
-                          userName={(function () {
-                            const raw = ((user?.user_metadata as any)?.name ||
-                              (user?.email
-                                ? user.email.split("@")[0]
-                                : undefined)) as string | undefined;
-                            if (!raw) return undefined;
-                            return raw
-                              .split(/[\s._-]+/)
-                              .filter(Boolean)
-                              .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-                              .join(" ");
-                          })()}
-                          userProfile={userProfile}
-                          lastSession={lastSession}
-                          enrichedContext={enrichedGreetingContext}
-                          isAIEnabled={isAIEnabled}
-                          isSearching={searching}
-                          filters={advancedFilters}
-                          onFiltersChange={newFilters => {
-                            setAdvancedFilters(newFilters);
-                            if (newFilters.city !== undefined) {
-                              setSelectedCity(
-                                typeof newFilters.city === "string"
-                                  ? newFilters.city
-                                  : ""
-                              );
-                            }
-                            if (newFilters.category !== undefined) {
-                              setSelectedCategory(
-                                typeof newFilters.category === "string"
-                                  ? newFilters.category
-                                  : ""
-                              );
-                            }
-                            Object.entries(newFilters).forEach(([key, value]) => {
-                              if (
-                                value !== undefined &&
-                                value !== null &&
-                                value !== ""
-                              ) {
-                                trackFilterChange({ filterType: key, value });
-                              }
-                            });
-                          }}
-                          availableCities={cities}
-                          availableCategories={categories}
-                          showGreeting={false}
-                        />
-                      </div>
-
+                      {/* Refinement Chips - Suggestions */}
+                      {inferredTags &&
+                        !searching &&
+                        (() => {
+                          const suggestionTags =
+                            convertInferredTagsToRefinementTags(
+                              inferredTags,
+                              activeFilters,
+                              false
+                            );
+                          if (suggestionTags.length === 0) return null;
+                          return (
+                            <div className="mb-6">
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                Suggestions:
+                              </div>
+                              <RefinementChips
+                                tags={suggestionTags}
+                                onChipClick={tag => handleChipClick(tag)}
+                                activeTags={activeFilters}
+                              />
+                            </div>
+                          );
+                        })()}
                     </div>
                   )}
 
