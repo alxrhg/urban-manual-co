@@ -29,14 +29,15 @@ export interface DrawerProps {
 }
 
 /**
- * Universal Drawer Component - Redesigned Mobile Behavior
+ * Universal Drawer Component - Redesigned Mobile Behavior & Layout
  * 
  * Improvements:
  * - Fluid 1:1 touch tracking for bottom sheet
  * - Velocity-based dismissal
- * - Proper safe area handling
+ * - Proper safe area handling (extends to bottom edge)
  * - Spring-like animations
  * - Better backdrop transitions
+ * - Minimal drag handle
  */
 export function Drawer({
   isOpen,
@@ -49,7 +50,7 @@ export function Drawer({
   desktopWidth = '420px',
   zIndex = 50,
   showBackdrop = true,
-  backdropOpacity = '15',
+  backdropOpacity = '20',
   position = 'right',
   style = 'solid',
   mobileWidth = 'max-w-md',
@@ -202,7 +203,7 @@ export function Drawer({
       setIsDragging(false);
 
       // Re-enable transition for snap animation
-      drawer.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+      drawer.style.transition = 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)';
 
       const endTime = Date.now();
       const timeDiff = endTime - startTimeRef.current;
@@ -212,8 +213,6 @@ export function Drawer({
       // Close if dragged down significantly or flicked down fast
       if (distY > 150 || (distY > 50 && velocity > 0.5)) {
         onClose();
-        // Force transform to off-screen to ensure smooth exit animation start
-        // The state change to isOpen=false will trigger the CSS transition to final closed state
       } else {
         // Snap back to open
         drawer.style.transform = '';
@@ -247,33 +246,33 @@ export function Drawer({
     ? DRAWER_STYLES.headerBackground
     : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm';
 
-  // Mobile Height Calculation
-  const computedMobileHeight = mobileHeight ?? 'calc(96vh - env(safe-area-inset-bottom) - 1rem)';
-  const computedMobileMaxHeight = mobileMaxHeight ?? 'calc(100vh - env(safe-area-inset-top) - 0.5rem)';
+  // Mobile Height Calculation - Ensure it reaches bottom
+  const computedMobileHeight = mobileHeight ?? '96vh'; // Use vh for simplicity, safe area handled by padding
+  const computedMobileMaxHeight = mobileMaxHeight ?? '100vh';
   
   // Radius
-  const radiusClass = mobileBorderRadius ?? 'rounded-t-[32px]'; // Only round top corners for bottom sheet
+  const radiusClass = mobileBorderRadius ?? 'rounded-t-[28px]';
 
   if (!isOpen && !keepStateOnClose) return null;
 
   const renderHeader = () => {
     if (!title && !headerContent) return null;
     return (
-      <div className={`flex-shrink-0 h-14 px-6 flex items-center justify-between ${headerBackground} border-b border-black/5 dark:border-white/5`}>
+      <div className={`flex-shrink-0 min-h-[3.5rem] px-6 flex items-center justify-between ${headerBackground} border-b border-black/5 dark:border-white/5 z-20`}>
         {headerContent || (
           <>
             <div className="w-9" /> {/* Spacer */}
             {title && (
-              <h2 className="text-sm font-semibold text-gray-900 dark:text-white flex-1 text-center px-2">
+              <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white flex-1 text-center px-2 truncate">
                 {title}
               </h2>
             )}
             <button
               onClick={onClose}
-              className="p-2 flex items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               aria-label="Close"
             >
-              <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <X className="h-4 w-4 text-gray-600 dark:text-gray-300" />
             </button>
           </>
         )}
@@ -302,33 +301,36 @@ export function Drawer({
       {mobileVariant === 'bottom' && (
         <div
           ref={mobileBottomRef}
-          className={`md:hidden fixed inset-x-0 bottom-0 transform transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1) flex flex-col ${backgroundClasses} w-full overflow-hidden ${radiusClass} ${
+          className={`md:hidden fixed inset-x-0 bottom-0 transform transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1) flex flex-col ${backgroundClasses} w-full ${radiusClass} shadow-[0_-8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.4)] ${
             !isOpen ? 'translate-y-full' : 'translate-y-0'
           }`}
           style={{
             zIndex,
             maxHeight: computedMobileMaxHeight,
-            height: isOpen ? (isDragging ? undefined : computedMobileHeight) : computedMobileHeight, // Allow dynamic height during drag if needed
-            // When dragging, transform is handled by JS. When not dragging, it's handled by CSS class + empty inline style.
-            transform: !isOpen ? 'translate3d(0, 100%, 0)' : undefined, 
-            paddingBottom: 'env(safe-area-inset-bottom)',
+            height: isOpen ? (isDragging ? undefined : computedMobileHeight) : computedMobileHeight,
+            transform: !isOpen ? 'translate3d(0, 100%, 0)' : undefined,
+            // Ensure bottom safe area is handled by content padding, not bottom constraint
+            // bottom: 0 is implicit via inset-x-0 bottom-0
           }}
           role="dialog"
           aria-modal="true"
         >
-          {/* Drag Handle Area - Larger touch target */}
-          <div className="drawer-handle flex-shrink-0 w-full h-8 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none bg-inherit z-10 relative">
-            <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600 opacity-50" />
+          {/* Drag Handle Area */}
+          <div className="drawer-handle flex-shrink-0 w-full h-6 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none bg-inherit z-10 absolute top-0 left-0 right-0 rounded-t-[28px]">
+            <div className="w-10 h-1.5 rounded-full bg-gray-300/80 dark:bg-gray-600/80 mt-2" />
           </div>
+
+          {/* Header space filler if handle overlaps content */}
+          <div className="h-3 flex-shrink-0" />
 
           {renderHeader()}
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden w-full overscroll-contain relative">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden w-full overscroll-contain relative pb-[env(safe-area-inset-bottom)]">
             {children}
           </div>
 
           {footerContent && (
-            <div className={`flex-shrink-0 border-t border-gray-100 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white dark:bg-gray-950'}`}>
+            <div className={`flex-shrink-0 border-t border-gray-100 dark:border-gray-800 pb-[calc(1rem+env(safe-area-inset-bottom))] ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white dark:bg-gray-950'}`}>
               {footerContent}
             </div>
           )}
