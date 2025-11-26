@@ -21,6 +21,8 @@ import {
   Settings,
   Trash2,
   Users,
+  Map,
+  LayoutGrid,
 } from 'lucide-react';
 import {
   DndContext,
@@ -99,8 +101,6 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
   );
 }
 
-import React from 'react';
-
 export default function TripPage() {
   const params = useParams();
   const router = useRouter();
@@ -115,6 +115,7 @@ export default function TripPage() {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
   const [showBucketList, setShowBucketList] = useState(false);
   const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
+  const [mobileView, setMobileView] = useState<'itinerary' | 'map'>('itinerary');
 
   // DnD sensors
   const sensors = useSensors(
@@ -448,7 +449,7 @@ export default function TripPage() {
 
   if (loading) {
     return (
-      <main className="w-full px-6 md:px-10 py-20">
+      <main className="w-full px-4 md:px-10 py-20">
         <PageLoader />
       </main>
     );
@@ -456,7 +457,7 @@ export default function TripPage() {
 
   if (!trip) {
     return (
-      <main className="w-full px-6 md:px-10 py-20">
+      <main className="w-full px-4 md:px-10 py-20">
         <div className="min-h-[60vh] flex items-center justify-center">
           <p className="text-gray-500">Trip not found</p>
         </div>
@@ -493,7 +494,7 @@ export default function TripPage() {
   return (
     <main className="w-full min-h-screen bg-white dark:bg-gray-950">
       {/* Header */}
-      <div className="px-6 md:px-10 py-8 border-b border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md sticky top-0 z-30">
+      <div className="px-4 md:px-10 py-6 md:py-8 border-b border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md sticky top-0 z-30">
         <div className="flex items-start justify-between gap-4 max-w-7xl mx-auto w-full">
           <div className="flex-1 space-y-4">
             <Link
@@ -509,7 +510,7 @@ export default function TripPage() {
                 type="text"
                 value={trip.title}
                 onChange={(e) => updateTrip({ title: e.target.value })}
-                className="text-3xl md:text-4xl font-semibold bg-transparent border-none outline-none w-full focus:outline-none placeholder-gray-300 dark:placeholder-gray-700 text-gray-900 dark:text-white p-0"
+                className="text-2xl md:text-4xl font-semibold bg-transparent border-none outline-none w-full focus:outline-none placeholder-gray-300 dark:placeholder-gray-700 text-gray-900 dark:text-white p-0"
                 placeholder="Trip Name"
               />
               
@@ -534,9 +535,18 @@ export default function TripPage() {
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Mobile View Toggle */}
+            <button
+              onClick={() => setMobileView(mobileView === 'itinerary' ? 'map' : 'itinerary')}
+              className="md:hidden p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              aria-label={mobileView === 'itinerary' ? 'Show Map' : 'Show Itinerary'}
+            >
+              {mobileView === 'itinerary' ? <Map className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+            </button>
+
             <button
               onClick={() => setShowBucketList(!showBucketList)}
-              className={`p-2.5 rounded-xl transition-all duration-200 ${
+              className={`p-2.5 rounded-xl transition-all duration-200 hidden md:flex ${
                 showBucketList
                   ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
                   : 'bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
@@ -556,11 +566,16 @@ export default function TripPage() {
       </div>
 
       {/* Split-Screen Canvas */}
-      <div className="flex h-[calc(100vh-180px)] max-w-7xl mx-auto w-full">
+      <div className="flex h-[calc(100vh-180px)] max-w-7xl mx-auto w-full relative">
         {/* Left Panel: Itinerary */}
-        <div className={`flex flex-col h-full transition-all duration-300 ${showBucketList ? 'w-1/2 lg:w-2/5' : 'w-1/2 lg:w-3/5'}`}>
+        <div className={`
+          flex flex-col h-full transition-all duration-300 
+          ${mobileView === 'itinerary' ? 'w-full' : 'hidden'} 
+          md:flex md:w-1/2 
+          ${showBucketList ? 'lg:w-2/5' : 'lg:w-3/5'}
+        `}>
           {/* Weather & Alerts Bar */}
-          <div className="px-6 md:px-10 py-4 border-b border-gray-100 dark:border-gray-800 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm">
+          <div className="px-4 md:px-10 py-4 border-b border-gray-100 dark:border-gray-800 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm">
             <TripWeatherForecast
               destination={trip.destination}
               startDate={trip.start_date}
@@ -570,11 +585,11 @@ export default function TripPage() {
           </div>
 
           {/* Day Tabs */}
-          <div className="px-6 md:px-10 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <div className="px-4 md:px-10 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2 overflow-x-auto no-scrollbar">
             <button
               onClick={() => setSelectedDay(Math.max(1, selectedDay - 1))}
               disabled={selectedDay === 1}
-              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
+              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors flex-shrink-0"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -583,7 +598,7 @@ export default function TripPage() {
                 <button
                   key={day.dayNumber}
                   onClick={() => setSelectedDay(day.dayNumber)}
-                  className={`flex flex-col items-center justify-center px-4 py-2 rounded-xl min-w-[80px] transition-all duration-200 border ${
+                  className={`flex flex-col items-center justify-center px-4 py-2 rounded-xl min-w-[80px] transition-all duration-200 border flex-shrink-0 ${
                     selectedDay === day.dayNumber
                       ? 'bg-black dark:bg-white text-white dark:text-black border-transparent shadow-md transform scale-105'
                       : 'bg-white dark:bg-gray-900 text-gray-500 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -601,14 +616,14 @@ export default function TripPage() {
             <button
               onClick={() => setSelectedDay(Math.min(days.length, selectedDay + 1))}
               disabled={selectedDay === days.length}
-              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors"
+              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors flex-shrink-0"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
 
           {/* Day Summary & Actions */}
-          <div className="px-6 md:px-10 py-4 flex items-center justify-between gap-4 bg-white dark:bg-gray-950 sticky top-0 z-20">
+          <div className="px-4 md:px-10 py-4 flex items-center justify-between gap-4 bg-white dark:bg-gray-950 sticky top-0 z-20">
             {/* Timeline summary */}
             <div className="flex-1 min-w-0">
               {timelineItems.length > 0 ? (
@@ -622,7 +637,7 @@ export default function TripPage() {
             <div className="flex gap-2 flex-shrink-0">
               <UMActionPill onClick={() => openFlightDrawer(selectedDay)} className="!bg-white dark:!bg-gray-900 border !border-gray-200 dark:!border-gray-800">
                 <Plane className="w-3.5 h-3.5 mr-1.5" />
-                Flight
+                <span className="hidden sm:inline">Flight</span>
               </UMActionPill>
               <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)}>
                 <Plus className="w-3.5 h-3.5 mr-1.5" />
@@ -632,7 +647,7 @@ export default function TripPage() {
           </div>
 
           {/* Itinerary Items */}
-          <div className="flex-1 overflow-y-auto px-6 md:px-10 pb-10 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-4 md:px-10 pb-10 custom-scrollbar">
             {currentDay && currentDay.items.length > 0 ? (
               <DndContext
                 sensors={sensors}
@@ -710,8 +725,13 @@ export default function TripPage() {
           </div>
         </div>
 
-        {/* Right Panel: Map (always visible) */}
-        <div className={`border-l border-gray-200 dark:border-gray-800 transition-all duration-300 ${showBucketList ? 'w-1/4 lg:w-2/5' : 'w-1/2 lg:w-2/5'}`}>
+        {/* Right Panel: Map */}
+        <div className={`
+          border-l border-gray-200 dark:border-gray-800 transition-all duration-300
+          ${mobileView === 'map' ? 'w-full h-full absolute inset-0 z-20 bg-white dark:bg-gray-950' : 'hidden'} 
+          md:block md:relative md:w-1/2 md:inset-auto md:z-0
+          ${showBucketList ? 'lg:w-2/5' : 'lg:w-2/5'}
+        `}>
           <TripMapView
             places={mapPlaces}
             className="h-full w-full"
@@ -720,7 +740,7 @@ export default function TripPage() {
 
         {/* Right Sidebar: Bucket List */}
         {showBucketList && (
-          <div className="w-1/4 lg:w-1/5 border-l border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 backdrop-blur-xl">
+          <div className="hidden md:block w-1/4 lg:w-1/5 border-l border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 backdrop-blur-xl">
             <TripBucketList
               items={bucketItems}
               onAdd={handleAddBucketItem}
