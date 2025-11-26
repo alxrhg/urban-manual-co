@@ -620,6 +620,8 @@ export default function Home() {
       type: "user" | "assistant";
       content: string;
       contextPrompt?: string;
+      tripId?: string; // Link to a created trip
+      tripTitle?: string;
     }>
   >([]);
 
@@ -1968,16 +1970,18 @@ export default function Home() {
           setFollowUpSuggestions([]);
         }
 
-        // Handle trip planning intent - create trip and redirect
+        // Handle trip planning intent - create trip with itinerary
         if (data.tripPlanning?.isTrip) {
           if (user) {
-            // User is logged in - create trip and redirect
+            // User is logged in - create trip with itinerary items
             try {
               const supabaseClient = createClient();
               const tripTitle = data.tripPlanning.suggestedTitle ||
                 `Trip to ${data.tripPlanning.destination || data.intent?.city || 'your destination'}`;
               const tripDestination = data.tripPlanning.destination || data.intent?.city || null;
+              const tripDuration = data.tripPlanning.duration || 2; // Default to 2 days
 
+              // Create the trip
               const { data: tripData, error: tripError } = await supabaseClient
                 .from('trips')
                 .insert({
@@ -1986,15 +1990,75 @@ export default function Home() {
                   status: 'planning',
                   user_id: user.id,
                   is_public: false,
-                  description: `Created from: "${query}"`,
+                  description: `AI-planned trip: "${query}"`,
                 })
                 .select()
                 .single();
 
-              if (!tripError && tripData) {
-                // Redirect to the new trip page
-                router.push(`/trips/${tripData.id}`);
-                return; // Exit early since we're redirecting
+              if (!tripError && tripData && destinations.length > 0) {
+                // Create itinerary items from destinations, spreading across days
+                const itemsPerDay = Math.ceil(destinations.length / tripDuration);
+                const itineraryItems = destinations.slice(0, Math.min(destinations.length, tripDuration * 5)).map((dest: Destination, index: number) => {
+                  const day = Math.floor(index / itemsPerDay) + 1;
+                  const orderInDay = index % itemsPerDay;
+                  // Estimate times: start at 9am, each activity ~2 hours apart
+                  const hour = 9 + (orderInDay * 2);
+                  const time = hour < 22 ? `${hour.toString().padStart(2, '0')}:00` : null;
+
+                  return {
+                    trip_id: tripData.id,
+                    destination_slug: dest.slug || null,
+                    day: Math.min(day, tripDuration),
+                    order_index: orderInDay,
+                    time,
+                    title: dest.name,
+                    description: dest.category || null,
+                    notes: JSON.stringify({
+                      type: 'place',
+                      image: dest.image || null,
+                      city: dest.city || tripDestination,
+                      category: dest.category || null,
+                      slug: dest.slug || null,
+                      latitude: dest.latitude || null,
+                      longitude: dest.longitude || null,
+                    }),
+                  };
+                });
+
+                // Insert all itinerary items
+                if (itineraryItems.length > 0) {
+                  await supabaseClient.from('itinerary_items').insert(itineraryItems);
+                }
+
+                // Show response with trip link (don't redirect)
+                const tripMessage = `I've planned your ${tripTitle.toLowerCase()}! I've added ${itineraryItems.length} places to your itinerary across ${tripDuration} day${tripDuration > 1 ? 's' : ''}.`;
+                setChatResponse(tripMessage);
+                setChatMessages(prev => [
+                  ...prev,
+                  { type: "user", content: query },
+                  {
+                    type: "assistant",
+                    content: tripMessage,
+                    tripId: tripData.id,
+                    tripTitle: tripTitle,
+                  },
+                ]);
+                return; // Exit early since we handled the message
+              } else if (!tripError && tripData) {
+                // Trip created but no destinations to add
+                const tripMessage = `I've created your ${tripTitle.toLowerCase()}! You can now add places to your itinerary.`;
+                setChatResponse(tripMessage);
+                setChatMessages(prev => [
+                  ...prev,
+                  { type: "user", content: query },
+                  {
+                    type: "assistant",
+                    content: tripMessage,
+                    tripId: tripData.id,
+                    tripTitle: tripTitle,
+                  },
+                ]);
+                return;
               }
             } catch (tripCreateError) {
               console.error('Failed to create trip:', tripCreateError);
@@ -2053,7 +2117,7 @@ export default function Home() {
         setSearching(false);
       }
     },
-    [user, searching, conversationHistory, trackAction, submittedQuery, router]
+    [user, searching, conversationHistory, trackAction, submittedQuery]
   );
 
   // Convert inferredTags to RefinementTag array
@@ -2497,9 +2561,22 @@ export default function Home() {
                                         {message.contextPrompt}
                                       </div>
                                     )}
+                                    {/* Show View Trip button when a trip was created */}
+                                    {message.tripId && (
+                                      <div className="pt-2">
+                                        <Link
+                                          href={`/trips/${message.tripId}`}
+                                          className="inline-flex items-center gap-2 px-4 py-2 text-xs uppercase tracking-[2px] font-medium bg-black text-white dark:bg-white dark:text-black hover:opacity-80 transition-opacity"
+                                        >
+                                          <Map className="w-4 h-4" />
+                                          View Trip
+                                        </Link>
+                                      </div>
+                                    )}
                                     {/* Show follow-up suggestions after the last assistant message */}
                                     {index === chatMessages.length - 1 &&
-                                      followUpSuggestions.length > 0 && (
+                                      followUpSuggestions.length > 0 &&
+                                      !message.tripId && (
                                         <FollowUpSuggestions
                                           suggestions={followUpSuggestions}
                                           onSuggestionClick={suggestion => {
