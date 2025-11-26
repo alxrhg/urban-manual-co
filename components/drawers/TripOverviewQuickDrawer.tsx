@@ -64,6 +64,7 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
   const endDate = formatTripDateWithYear((displayTrip as any).endDate || displayTrip.end_date);
   const days = (displayTrip as any).days || [];
   const hotels = (displayTrip as any).hotels || [];
+  const flights = (displayTrip as any).flights || [];
   const coverImage = (displayTrip as any).coverImage || displayTrip.cover_image;
 
   const handleDayClick = (day: any, index: number) => {
@@ -203,6 +204,50 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+            {/* FLIGHTS SECTION */}
+            {flights.length > 0 && (
+              <div className="px-4 mb-8">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3 px-1">Flights</h3>
+                <div className="space-y-2">
+                  {flights.map((flight: any, idx: number) => {
+                    const from = flight.from || flight.departure || flight.depart || '';
+                    const to = flight.to || flight.arrival || flight.arrive || '';
+                    const time = flight.departureTime && flight.arrivalTime 
+                      ? `${flight.departureTime} – ${flight.arrivalTime}`
+                      : flight.departureTime || '';
+
+                    return (
+                      <div key={idx} className="p-4 rounded-xl border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-lg font-semibold text-gray-900 dark:text-white">{from}</span>
+                              <span className="text-gray-400">→</span>
+                              <span className="text-lg font-semibold text-gray-900 dark:text-white">{to}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {time || 'Time TBD'}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-medium text-gray-900 dark:text-white">{flight.airline}</p>
+                            {flight.flightNumber && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{flight.flightNumber}</p>
+                            )}
+                          </div>
+                        </div>
+                        {flight.confirmationNumber && (
+                          <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                            <span className="text-xs text-gray-500">Confirmation</span>
+                            <span className="text-xs font-mono font-medium">{flight.confirmationNumber}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

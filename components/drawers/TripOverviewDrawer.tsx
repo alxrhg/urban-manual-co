@@ -254,26 +254,42 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
           <section className="space-y-4">
             <UMSectionTitle>Flights</UMSectionTitle>
             <div className="space-y-4">
-              {flights.map((flight, idx) => {
-                const depart = flight.departure || flight.depart || '';
-                const arrive = flight.arrival || flight.arrive || '';
+            {flights.map((flight, idx) => {
+              const from = flight.from || flight.departure || flight.depart || '';
+              const to = flight.to || flight.arrival || flight.arrive || '';
+              const time = flight.departureTime && flight.arrivalTime 
+                ? `${flight.departureTime} – ${flight.arrivalTime}`
+                : flight.departureTime || '';
 
-                return (
-                  <UMCard key={idx} className="p-4 space-y-1">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {flight.airline}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {depart && arrive ? `${depart} → ${arrive}` : depart || arrive}
-                    </p>
-                    {flight.flightNumber && (
+              return (
+                <UMCard key={idx} className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-lg font-semibold text-gray-900 dark:text-white">{from}</span>
+                        <span className="text-gray-400">→</span>
+                        <span className="text-lg font-semibold text-gray-900 dark:text-white">{to}</span>
+                      </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {flight.flightNumber}
+                        {time || 'Time TBD'}
                       </p>
-                    )}
-                  </UMCard>
-                );
-              })}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white">{flight.airline}</p>
+                      {flight.flightNumber && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{flight.flightNumber}</p>
+                      )}
+                    </div>
+                  </div>
+                  {flight.confirmationNumber && (
+                    <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                      <span className="text-xs text-gray-500">Confirmation</span>
+                      <span className="text-xs font-mono font-medium">{flight.confirmationNumber}</span>
+                    </div>
+                  )}
+                </UMCard>
+              );
+            })}
             </div>
           </section>
         )}
