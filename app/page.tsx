@@ -1968,6 +1968,55 @@ export default function Home() {
           setFollowUpSuggestions([]);
         }
 
+        // Handle trip planning intent - create trip and redirect
+        if (data.tripPlanning?.isTrip) {
+          if (user) {
+            // User is logged in - create trip and redirect
+            try {
+              const supabaseClient = createClient();
+              const tripTitle = data.tripPlanning.suggestedTitle ||
+                `Trip to ${data.tripPlanning.destination || data.intent?.city || 'your destination'}`;
+              const tripDestination = data.tripPlanning.destination || data.intent?.city || null;
+
+              const { data: tripData, error: tripError } = await supabaseClient
+                .from('trips')
+                .insert({
+                  title: tripTitle,
+                  destination: tripDestination,
+                  status: 'planning',
+                  user_id: user.id,
+                  is_public: false,
+                  description: `Created from: "${query}"`,
+                })
+                .select()
+                .single();
+
+              if (!tripError && tripData) {
+                // Redirect to the new trip page
+                router.push(`/trips/${tripData.id}`);
+                return; // Exit early since we're redirecting
+              }
+            } catch (tripCreateError) {
+              console.error('Failed to create trip:', tripCreateError);
+              // Fall through to show normal response
+            }
+          } else {
+            // User not logged in - update response to suggest signing in
+            const signInMessage = data.content +
+              "\n\nTo create and save your trip itinerary, please sign in to your account.";
+            setChatResponse(signInMessage);
+            setChatMessages(prev => [
+              ...prev,
+              { type: "user", content: query },
+              {
+                type: "assistant",
+                content: signInMessage,
+              },
+            ]);
+            return; // Exit early since we handled the message
+          }
+        }
+
         // Add messages to visual chat history
         const contextPrompt = getContextAwareLoadingMessage(query);
         setChatMessages(prev => [
@@ -2004,7 +2053,7 @@ export default function Home() {
         setSearching(false);
       }
     },
-    [user, searching, conversationHistory, trackAction, submittedQuery]
+    [user, searching, conversationHistory, trackAction, submittedQuery, router]
   );
 
   // Convert inferredTags to RefinementTag array
