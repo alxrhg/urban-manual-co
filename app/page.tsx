@@ -2794,7 +2794,7 @@ export default function Home() {
                 {/* Mid Nav - Horizontal Row, Right Aligned */}
                 <div className="mb-6">
                   <div className="flex justify-start sm:justify-end">
-                    <div className="-mx-2 flex w-full max-w-full flex-nowrap items-center gap-2 overflow-x-auto px-2 pb-2 scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent sm:flex-wrap sm:justify-end sm:overflow-visible sm:gap-3">
+                    <div className="flex w-full items-center gap-3 overflow-x-auto pb-2 no-scrollbar sm:justify-end sm:overflow-visible">
                       {/* View Toggle - Single Button showing opposite mode */}
                       <button
                         onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
