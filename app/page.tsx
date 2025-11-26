@@ -1877,9 +1877,15 @@ export default function Home() {
           }
 
           // Update loading text with context-aware message based on intent
+          // Convert null to undefined for type compatibility with LoadingIntent
+          const loadingIntent = {
+            city: data.intent.city ?? undefined,
+            category: data.intent.category ?? undefined,
+            modifiers: data.intent.modifiers,
+          };
           const contextAwareText = getContextAwareLoadingMessage(
             query,
-            data.intent as ExtractedIntent,
+            loadingIntent,
             seasonData,
             userContext
           );
