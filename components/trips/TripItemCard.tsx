@@ -190,8 +190,8 @@ export const TripItemCard = memo(function TripItemCard({
               <NearbyDiscoveries
                 currentPlace={{
                   name: item.title,
-                  latitude: item.parsedNotes?.latitude ?? item.destination?.latitude,
-                  longitude: item.parsedNotes?.longitude ?? item.destination?.longitude,
+                  latitude: (item.parsedNotes?.latitude ?? item.destination?.latitude) || undefined,
+                  longitude: (item.parsedNotes?.longitude ?? item.destination?.longitude) || undefined,
                   city: item.destination?.city,
                 }}
                 excludeSlugs={[]} // This should be passed from parent if needed
