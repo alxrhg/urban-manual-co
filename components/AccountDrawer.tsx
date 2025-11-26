@@ -209,12 +209,12 @@ export function AccountDrawer() {
 
   const handleSignOut = async () => {
     await signOut();
-    closeDrawer();
+    closeLegacyDrawer();
     router.push('/');
   };
 
   const handleNavigate = (path: string) => {
-    closeDrawer();
+    closeLegacyDrawer();
     setTimeout(() => router.push(path), 200);
   };
 
@@ -222,13 +222,13 @@ export function AccountDrawer() {
 
   if (!user) {
     return (
-      <Drawer isOpen={isOpen} onClose={closeDrawer} position="right">
+      <Drawer isOpen={isOpen} onClose={closeLegacyDrawer} position="right">
         <div className="h-full flex flex-col">
           <DrawerHeader
             title="Welcome"
             rightAccessory={
               <button
-                onClick={closeDrawer}
+                onClick={closeLegacyDrawer}
                 className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 <span className="sr-only">Close</span>
@@ -263,14 +263,14 @@ export function AccountDrawer() {
   }
 
   return (
-    <Drawer isOpen={isOpen} onClose={closeDrawer} position="right">
+    <Drawer isOpen={isOpen} onClose={closeLegacyDrawer} position="right">
       <div className="h-full flex flex-col bg-white dark:bg-gray-950">
         {/* Custom Header Area */}
         <div className="px-6 pt-8 pb-6">
           <div className="flex items-start justify-between mb-6">
             <ProfileAvatar avatarUrl={avatarUrl} displayUsername={displayUsername} size="lg" />
             <button 
-              onClick={closeDrawer}
+              onClick={closeLegacyDrawer}
               className="p-2 -mr-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <span className="sr-only">Close</span>
