@@ -51,6 +51,75 @@ export default function AboutPage() {
               </ul>
             </div>
 
+            <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6 bg-white/40 dark:bg-white/5 backdrop-blur">
+              <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">Plan, Explore, Remember</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-6">
+                These are the tools we&apos;re building to make trip planning feel effortless. Create guides, talk with a local-style
+                concierge, plan with saved searches, and revisit everywhere you&apos;ve been with a personal map.
+              </p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-900/10 dark:to-white/5">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-700 dark:text-emerald-200 font-semibold">
+                      01
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-black dark:text-white">Travel Guide</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Start with curated sections for everything you need on a trip.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/10 dark:to-white/5">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-700 dark:text-indigo-200 font-semibold">
+                      02
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-black dark:text-white">Explore like a local</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Get quick, 1:1 messaging with The Urban Manual&apos;s concierge.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gradient-to-br from-amber-50 to-white dark:from-amber-900/10 dark:to-white/5">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-amber-700 dark:text-amber-200 font-semibold">
+                      03
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-black dark:text-white">Plan in detail</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Build from saved searches to quickly tailor recommendations.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gradient-to-br from-sky-50 to-white dark:from-sky-900/10 dark:to-white/5">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-sky-100 dark:bg-sky-900/40 flex items-center justify-center text-sky-700 dark:text-sky-200 font-semibold">
+                      04
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-black dark:text-white">Organize plans</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Create collections to sort destinations into trip-ready lists.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gradient-to-br from-rose-50 to-white dark:from-rose-900/10 dark:to-white/5 md:col-span-2">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-full bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center text-rose-700 dark:text-rose-200 font-semibold">
+                      05
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-black dark:text-white">See everywhere you&apos;ve visited</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Review past trips with a simple map of your explored destinations.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
               <h2 className="text-xl font-semibold mb-3 text-black dark:text-white">Our Approach</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
