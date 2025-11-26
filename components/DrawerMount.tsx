@@ -3,7 +3,7 @@
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 import { AccountDrawer } from '@/components/AccountDrawer';
-import DestinationDrawer from '@/components/DestinationDrawer';
+import DestinationDrawer from '@/src/features/detail/DestinationDrawer';
 import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
 import { QuickTripSelector } from '@/components/QuickTripSelector';
@@ -47,7 +47,7 @@ export default function DrawerMount() {
       <DestinationDrawer
         isOpen={open && type === 'destination'}
         onClose={closeDrawer}
-        place={props.place || null}
+        destination={props.place || props.destination || null}
         {...props}
       />
 
