@@ -299,15 +299,6 @@ export function AccountDrawer() {
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {/* Stats */}
-          <div className="px-6 mb-8">
-            <div className="grid grid-cols-3 gap-3">
-              <StatCard icon={MapPin} value={stats.visited} label="Visited" />
-              <StatCard icon={Bookmark} value={stats.saved} label="Saved" />
-              <StatCard icon={Compass} value={stats.trips} label="Trips" />
-            </div>
-          </div>
-
           {/* Navigation Groups */}
           <div className="px-4 space-y-8 pb-12">
             {/* Library */}
