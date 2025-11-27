@@ -87,7 +87,7 @@ export default function TripPlannerMap({
 
   // Load Google Maps script
   useEffect(() => {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
     if (!apiKey) {
       setMapError('Map not configured');
@@ -283,7 +283,7 @@ export default function TripPlannerMap({
   return (
     <div
       className={`
-        relative bg-gray-100 dark:bg-gray-900
+        relative bg-stone-100 dark:bg-stone-900
         ${isFullscreen ? 'fixed inset-0 z-50' : 'w-full h-full'}
         ${className}
       `}
@@ -296,20 +296,20 @@ export default function TripPlannerMap({
         <div className="absolute top-4 right-4 flex flex-col gap-2">
           <button
             onClick={centerOnMarkers}
-            className="p-2 bg-white dark:bg-gray-900 rounded-sm shadow-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 bg-white dark:bg-stone-900 rounded-lg shadow-md hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
             title="Center on markers"
           >
-            <Navigation className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            <Navigation className="w-4 h-4 text-stone-600 dark:text-stone-400" />
           </button>
           <button
             onClick={toggleFullscreen}
-            className="p-2 bg-white dark:bg-gray-900 rounded-sm shadow-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="p-2 bg-white dark:bg-stone-900 rounded-lg shadow-md hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
             title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
           >
             {isFullscreen ? (
-              <Minimize2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <Minimize2 className="w-4 h-4 text-stone-600 dark:text-stone-400" />
             ) : (
-              <Maximize2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <Maximize2 className="w-4 h-4 text-stone-600 dark:text-stone-400" />
             )}
           </button>
         </div>
@@ -318,14 +318,14 @@ export default function TripPlannerMap({
       {/* Loading state */}
       {!mapLoaded && googleLoaded && !mapError && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 dark:border-gray-800 dark:border-t-white rounded-full animate-spin" />
+          <div className="w-6 h-6 border-2 border-stone-200 border-t-stone-900 dark:border-stone-800 dark:border-t-white rounded-full animate-spin" />
         </div>
       )}
 
       {/* No markers fallback */}
       {markers.length === 0 && mapLoaded && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <p className="text-gray-400 dark:text-gray-600 text-sm bg-white/80 dark:bg-gray-900/80 px-4 py-2 rounded-sm">
+          <p className="text-stone-400 dark:text-stone-600 text-sm bg-white/80 dark:bg-stone-900/80 px-4 py-2 rounded-xl">
             Add stops to see them on the map
           </p>
         </div>
@@ -333,9 +333,9 @@ export default function TripPlannerMap({
 
       {/* Error state */}
       {mapError && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900">
-          <AlertTriangle className="w-8 h-8 text-gray-300 dark:text-gray-700 mb-3" />
-          <p className="text-gray-400 dark:text-gray-600 text-sm">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-stone-100 dark:bg-stone-900">
+          <AlertTriangle className="w-8 h-8 text-stone-300 dark:text-stone-700 mb-3" />
+          <p className="text-stone-400 dark:text-stone-600 text-sm">
             {mapError}
           </p>
         </div>
@@ -343,8 +343,8 @@ export default function TripPlannerMap({
 
       {/* Loading Google Maps */}
       {!googleLoaded && !mapError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
-          <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 dark:border-gray-800 dark:border-t-white rounded-full animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center bg-stone-100 dark:bg-stone-900">
+          <div className="w-6 h-6 border-2 border-stone-200 border-t-stone-900 dark:border-stone-800 dark:border-t-white rounded-full animate-spin" />
         </div>
       )}
     </div>
