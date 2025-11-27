@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Maximize2, Minimize2, Navigation } from 'lucide-react';
+import { Maximize2, Minimize2, Navigation, AlertTriangle } from 'lucide-react';
 import type { TripDay } from '@/lib/hooks/useTripEditor';
 
 interface MapMarker {
@@ -38,6 +38,7 @@ export default function TripPlannerMap({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapboxgl, setMapboxgl] = useState<any>(null);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Extract markers from days
   const markers: MapMarker[] = [];
@@ -71,6 +72,7 @@ export default function TripPlannerMap({
         setMapboxgl(mapboxModule.default);
       } catch (error) {
         console.warn('Mapbox GL not available:', error);
+        setMapError('Map library could not be loaded');
       }
     };
 
@@ -79,35 +81,54 @@ export default function TripPlannerMap({
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current || !mapboxgl || mapRef.current) return;
+    if (!mapContainer.current || !mapboxgl || mapRef.current || mapError) return;
 
     const accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+
+    // Validate token
     if (!accessToken) {
-      console.warn('Mapbox access token not configured');
+      setMapError('Map not configured');
       return;
     }
 
-    mapboxgl.accessToken = accessToken;
+    // Check for public token (pk.*) vs secret token (sk.*)
+    if (accessToken.startsWith('sk.')) {
+      setMapError('Invalid map configuration');
+      console.error('Mapbox: Use a public access token (pk.*), not a secret token (sk.*)');
+      return;
+    }
 
-    mapRef.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/light-v11',
-      center: [0, 20],
-      zoom: 2,
-      attributionControl: false,
-    });
+    try {
+      mapboxgl.accessToken = accessToken;
 
-    mapRef.current.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+      mapRef.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/light-v11',
+        center: [0, 20],
+        zoom: 2,
+        attributionControl: false,
+      });
 
-    mapRef.current.on('load', () => {
-      setMapLoaded(true);
-    });
+      mapRef.current.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
+
+      mapRef.current.on('load', () => {
+        setMapLoaded(true);
+      });
+
+      mapRef.current.on('error', (e: any) => {
+        console.error('Mapbox error:', e);
+        setMapError('Map failed to load');
+      });
+    } catch (error) {
+      console.error('Error initializing map:', error);
+      setMapError('Map failed to initialize');
+    }
 
     return () => {
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [mapboxgl]);
+  }, [mapboxgl, mapError]);
 
   // Update markers when data changes
   useEffect(() => {
@@ -291,12 +312,20 @@ export default function TripPlannerMap({
         </div>
       )}
 
-      {/* No mapbox token fallback */}
-      {!mapboxgl && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+      {/* Error state */}
+      {mapError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900">
+          <AlertTriangle className="w-8 h-8 text-gray-300 dark:text-gray-700 mb-3" />
           <p className="text-gray-400 dark:text-gray-600 text-sm">
-            Map unavailable
+            {mapError}
           </p>
+        </div>
+      )}
+
+      {/* No mapbox loaded fallback */}
+      {!mapboxgl && !mapError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+          <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 dark:border-gray-800 dark:border-t-white rounded-full animate-spin" />
         </div>
       )}
     </div>
