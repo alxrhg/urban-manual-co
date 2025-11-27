@@ -15,6 +15,7 @@ import { ItineraryItem, ItineraryItemNotes } from '@/types/trip';
 import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
 import AvailabilityAlert from '@/components/trips/AvailabilityAlert';
 import FlightStatusCard from '@/components/trips/FlightStatusCard';
+import LodgingCard from '@/components/trips/LodgingCard';
 import NearbyDiscoveries from '@/components/trips/NearbyDiscoveries';
 
 interface TripItemCardProps {
@@ -43,6 +44,10 @@ export const TripItemCard = memo(function TripItemCard({
   dragHandleProps
 }: TripItemCardProps) {
   const isFlight = item.parsedNotes?.type === 'flight';
+  const isHotel =
+    item.parsedNotes?.type === 'hotel' ||
+    item.parsedNotes?.isHotel ||
+    category?.toLowerCase() === 'hotel';
   const category = item.destination?.category || item.parsedNotes?.category;
   const estimatedDuration = getEstimatedDuration(category);
 
@@ -196,6 +201,24 @@ export const TripItemCard = memo(function TripItemCard({
               <FlightStatusCard
                 flight={item.parsedNotes}
                 departureDate={item.parsedNotes.departureDate}
+              />
+            )}
+            {isHotel && (
+              <LodgingCard
+                hotelName={item.title}
+                address={
+                  item.destination?.formatted_address ||
+                  item.destination?.vicinity ||
+                  item.destination?.city ||
+                  item.description
+                }
+                checkInDate={item.parsedNotes?.checkInDate || item.parsedNotes?.arrivalDate}
+                checkOutDate={item.parsedNotes?.checkOutDate || item.parsedNotes?.departureDate}
+                checkInTime={item.parsedNotes?.checkInTime || item.time || undefined}
+                checkOutTime={item.parsedNotes?.checkOutTime}
+                confirmationNumber={
+                  item.parsedNotes?.hotelConfirmation || item.parsedNotes?.confirmationNumber
+                }
               />
             )}
             {!isFlight && item.parsedNotes && onAddPlace && (

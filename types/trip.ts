@@ -164,6 +164,8 @@ export interface ItineraryItemNotes {
   // Hotel-specific fields
   isHotel?: boolean; // Marks this as the hotel for the night
   breakfastIncluded?: boolean; // If true, shows breakfast at top of next day
+  checkInDate?: string; // ISO date for check-in
+  checkOutDate?: string; // ISO date for check-out
   checkInTime?: string;
   checkOutTime?: string;
   hotelConfirmation?: string;
