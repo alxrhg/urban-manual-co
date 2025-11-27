@@ -19,6 +19,7 @@ import {
 import { PageLoader } from '@/components/LoadingStates';
 import TripStats from '@/components/trip/TripStats';
 import TripDaySection from '@/components/trip/TripDaySection';
+import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
 import type { FlightData } from '@/types/trip';
 import type { Destination } from '@/types/destination';
@@ -407,6 +408,17 @@ export default function TripPage() {
           </div>
         )}
       </div>
+
+      {/* Floating Action Bar */}
+      <FloatingActionBar
+        onAddPlace={() => openPlaceSelector(selectedDayNumber)}
+        onAddFlight={() => openFlightDrawer(selectedDayNumber)}
+        onAddNote={() => openDrawer('trip-notes', { tripId: trip.id })}
+        onOpenMap={() => setIsMapOpen(true)}
+        onAIPlan={handleAITripPlanning}
+        isAIPlanning={isAIPlanning}
+        isSaving={saving}
+      />
 
       {/* Map Drawer */}
       <MapDrawer
