@@ -166,6 +166,11 @@ export interface ItineraryItemNotes {
   // Travel time to/from airport (in minutes)
   travelTimeToAirport?: number;
   travelTimeFromAirport?: number;
+  // Airport coordinates for travel time calculations
+  departureAirportLat?: number;
+  departureAirportLng?: number;
+  arrivalAirportLat?: number;
+  arrivalAirportLng?: number;
   // Train-specific fields
   trainNumber?: string;
   trainLine?: string;
@@ -206,6 +211,11 @@ export interface FlightData {
   // Travel time to/from airport (in minutes)
   travelTimeToAirport?: number;
   travelTimeFromAirport?: number;
+  // Airport coordinates for travel time calculations
+  departureAirportLat?: number;
+  departureAirportLng?: number;
+  arrivalAirportLat?: number;
+  arrivalAirportLng?: number;
 }
 
 /**

@@ -905,18 +905,29 @@ export default function TripPage() {
                     {currentDay.items.map((item, index) => {
                       const isFlight = item.parsedNotes?.type === 'flight';
                       const prevItem = index > 0 ? currentDay.items[index - 1] : null;
+                      const prevIsFlight = prevItem?.parsedNotes?.type === 'flight';
                       const isExpanded = expandedItem === item.id;
-                      
+
                       // Get coordinates for transit
-                      const prevLat = prevItem?.parsedNotes?.latitude ?? prevItem?.destination?.latitude;
-                      const prevLon = prevItem?.parsedNotes?.longitude ?? prevItem?.destination?.longitude;
+                      // If previous item is a flight, use arrival airport coordinates
+                      const prevLat = prevIsFlight
+                        ? prevItem?.parsedNotes?.arrivalAirportLat
+                        : (prevItem?.parsedNotes?.latitude ?? prevItem?.destination?.latitude);
+                      const prevLon = prevIsFlight
+                        ? prevItem?.parsedNotes?.arrivalAirportLng
+                        : (prevItem?.parsedNotes?.longitude ?? prevItem?.destination?.longitude);
                       const currLat = item.parsedNotes?.latitude ?? item.destination?.latitude;
                       const currLon = item.parsedNotes?.longitude ?? item.destination?.longitude;
 
+                      // Show transit:
+                      // - When previous item exists AND current item is not a flight
+                      // - Either previous is a regular place, or previous is a flight (show transit FROM airport)
+                      const showTransit = prevItem && !isFlight && (prevLat || prevIsFlight);
+
                       return (
                         <SortableItem key={item.id} id={item.id}>
-                          {/* Transit between items */}
-                          {prevItem && !isFlight && prevItem.parsedNotes?.type !== 'flight' && (
+                          {/* Transit between items (including from flight arrival airport) */}
+                          {showTransit && (
                             <div className="pl-8 py-2">
                               <TransitOptions
                                 fromLat={prevLat}

@@ -51,6 +51,12 @@ export default function AddFlightDrawer({
   const [calculatingToAirport, setCalculatingToAirport] = useState(false);
   const [calculatingFromAirport, setCalculatingFromAirport] = useState(false);
 
+  // Airport coordinates for transit calculations to next place
+  const [departureAirportLat, setDepartureAirportLat] = useState<number | undefined>();
+  const [departureAirportLng, setDepartureAirportLng] = useState<number | undefined>();
+  const [arrivalAirportLat, setArrivalAirportLat] = useState<number | undefined>();
+  const [arrivalAirportLng, setArrivalAirportLng] = useState<number | undefined>();
+
   // Fetch user's home address on mount
   useEffect(() => {
     async function fetchHomeAddress() {
@@ -90,6 +96,11 @@ export default function AddFlightDrawer({
       if (response.ok) {
         const data = await response.json();
         setTravelTimeToAirport(String(data.durationMinutes));
+        // Store departure airport coordinates
+        if (data.airportLat && data.airportLng) {
+          setDepartureAirportLat(data.airportLat);
+          setDepartureAirportLng(data.airportLng);
+        }
       }
     } catch (error) {
       console.error('Error calculating travel time:', error);
@@ -98,7 +109,7 @@ export default function AddFlightDrawer({
     }
   }, [homeAddress, from]);
 
-  // Calculate travel time from arrival airport (using destination city as proxy)
+  // Calculate travel time from arrival airport and get coordinates
   const calculateTravelTimeFromAirport = useCallback(async () => {
     if (!to.trim()) return;
 
@@ -119,6 +130,11 @@ export default function AddFlightDrawer({
       if (response.ok) {
         const data = await response.json();
         setTravelTimeFromAirport(String(data.durationMinutes));
+        // Store arrival airport coordinates for transit to next place
+        if (data.airportLat && data.airportLng) {
+          setArrivalAirportLat(data.airportLat);
+          setArrivalAirportLng(data.airportLng);
+        }
       }
     } catch (error) {
       console.error('Error calculating travel time:', error);
@@ -174,6 +190,11 @@ export default function AddFlightDrawer({
         arrivalLounge: arrivalLounge.trim() || undefined,
         travelTimeToAirport: travelTimeToAirport ? parseInt(travelTimeToAirport, 10) : undefined,
         travelTimeFromAirport: travelTimeFromAirport ? parseInt(travelTimeFromAirport, 10) : undefined,
+        // Airport coordinates for calculating transit to next place
+        departureAirportLat,
+        departureAirportLng,
+        arrivalAirportLat,
+        arrivalAirportLng,
       };
 
       if (onAdd) {

@@ -11,6 +11,8 @@ interface TravelTimeResponse {
   durationMinutes: number;
   distanceKm: number;
   airportName: string;
+  airportLat?: number;
+  airportLng?: number;
   source: 'google' | 'estimate';
 }
 
@@ -96,7 +98,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const airport = AIRPORT_LOCATIONS[airportCodeUpper];
 
   if (!airport) {
-    // Return estimate for unknown airports
+    // Return estimate for unknown airports (no coordinates available)
     return NextResponse.json({
       durationMinutes: 60, // Default 1 hour estimate
       distanceKm: 40,
@@ -106,6 +108,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     });
   }
 
+  // Airport coordinates for transit calculations
+  const airportLat = airport.lat;
+  const airportLng = airport.lng;
+
   const apiKey = process.env.GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
   if (!apiKey) {
@@ -114,6 +120,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       durationMinutes: 45,
       distanceKm: 30,
       airportName: airport.name,
+      airportLat,
+      airportLng,
       source: 'estimate',
       message: 'Google Maps API not configured - using estimate',
     });
@@ -131,6 +139,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         durationMinutes: 45,
         distanceKm: 30,
         airportName: airport.name,
+        airportLat,
+        airportLng,
         source: 'estimate',
         message: 'Could not calculate route - using estimate',
       });
@@ -143,6 +153,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         durationMinutes: 45,
         distanceKm: 30,
         airportName: airport.name,
+        airportLat,
+        airportLng,
         source: 'estimate',
         message: 'Route not found - using estimate',
       });
@@ -155,6 +167,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       durationMinutes,
       distanceKm,
       airportName: airport.name,
+      airportLat,
+      airportLng,
       source: 'google',
     } as TravelTimeResponse);
   } catch (error) {
@@ -163,6 +177,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       durationMinutes: 45,
       distanceKm: 30,
       airportName: airport.name,
+      airportLat,
+      airportLng,
       source: 'estimate',
       message: 'API error - using estimate',
     });
