@@ -181,33 +181,36 @@ export default function TripPage() {
   };
 
   // Bucket list handlers
-  const handleAddToBucketList = useCallback((destination: Destination) => {
-    setBucketItems(prev => {
-      if (prev.some(item => item.slug === destination.slug)) return prev;
-      return [...prev, {
-        id: `bucket-${Date.now()}`,
-        slug: destination.slug,
-        name: destination.name,
-        category: destination.category,
-        image: destination.image_thumbnail || destination.image,
-        addedAt: new Date().toISOString(),
-      }];
-    });
+  const handleAddToBucketList = useCallback((item: Omit<BucketItem, 'id' | 'addedAt'>) => {
+    setBucketItems(prev => [...prev, {
+      ...item,
+      id: `bucket-${Date.now()}`,
+      addedAt: new Date().toISOString(),
+    }]);
   }, []);
 
   const handleRemoveFromBucketList = useCallback((itemId: string) => {
     setBucketItems(prev => prev.filter(item => item.id !== itemId));
   }, []);
 
-  const handleMoveBucketToItinerary = useCallback(async (item: BucketItem) => {
-    // Find the destination and add it
-    const response = await fetch(`/api/destinations/${item.slug}`);
-    if (response.ok) {
-      const destination = await response.json();
-      await addPlace(destination, selectedDayNumber);
-      handleRemoveFromBucketList(item.id);
+  const handleAssignToDay = useCallback(async (item: BucketItem, dayNumber: number) => {
+    // For place type items, try to find the destination and add it
+    if (item.type === 'place' && item.url) {
+      try {
+        const slug = item.url.split('/').pop();
+        if (slug) {
+          const response = await fetch(`/api/destinations/${slug}`);
+          if (response.ok) {
+            const destination = await response.json();
+            await addPlace(destination, dayNumber);
+            handleRemoveFromBucketList(item.id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to add place:', err);
+      }
     }
-  }, [addPlace, selectedDayNumber, handleRemoveFromBucketList]);
+  }, [addPlace, handleRemoveFromBucketList]);
 
   // Loading state
   if (loading) {
@@ -444,9 +447,11 @@ export default function TripPage() {
               </div>
               <TripBucketList
                 items={bucketItems}
+                onAdd={handleAddToBucketList}
                 onRemove={handleRemoveFromBucketList}
-                onMoveToItinerary={handleMoveBucketToItinerary}
                 onReorder={setBucketItems}
+                onAssignToDay={handleAssignToDay}
+                availableDays={days.map(d => d.dayNumber)}
               />
             </div>
           </div>
