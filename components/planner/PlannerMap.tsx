@@ -17,17 +17,27 @@ interface PlannerMapProps {
   /** Trip destination for initial centering */
   destination?: string;
   className?: string;
+  /** Enable grayscale/minimal style (Lovably aesthetic) */
+  grayscale?: boolean;
+  /** Selected place ID for highlighting */
+  selectedPlaceId?: string;
+  /** Callback when a place is selected */
+  onPlaceSelect?: (place: MapPlace | null) => void;
 }
 
 /**
  * PlannerMap - Interactive map for the split-screen planner
  * Shows numbered markers for timeline places and bucket list items
+ * Supports grayscale mode for editorial/minimal aesthetic
  */
 export default function PlannerMap({
   places,
   bucketListPlaces = [],
   destination,
   className = '',
+  grayscale = false,
+  selectedPlaceId,
+  onPlaceSelect,
 }: PlannerMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -60,21 +70,36 @@ export default function PlannerMap({
     return () => clearTimeout(timer);
   }, []);
 
+  // Handle place selection
+  const handlePlaceClick = (place: MapPlace) => {
+    setSelectedPlace(place);
+    onPlaceSelect?.(place);
+  };
+
   return (
-    <div className={`relative bg-gray-100 dark:bg-gray-900 ${className}`}>
+    <div className={`relative ${grayscale ? 'bg-gray-50 dark:bg-gray-950' : 'bg-gray-100 dark:bg-gray-900'} ${className}`}>
       {/* Map Container */}
       <div
         ref={mapRef}
-        className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800"
+        className={`absolute inset-0 ${
+          grayscale
+            ? 'bg-gray-50 dark:bg-gray-950'
+            : 'bg-gradient-to-br from-blue-50 to-green-50 dark:from-gray-900 dark:to-gray-800'
+        }`}
       >
         {/* Placeholder map background with grid */}
         <div
-          className="absolute inset-0 opacity-20"
+          className={`absolute inset-0 ${grayscale ? 'opacity-10' : 'opacity-20'}`}
           style={{
-            backgroundImage: `
-              linear-gradient(to right, #cbd5e1 1px, transparent 1px),
-              linear-gradient(to bottom, #cbd5e1 1px, transparent 1px)
-            `,
+            backgroundImage: grayscale
+              ? `
+                linear-gradient(to right, #9ca3af 1px, transparent 1px),
+                linear-gradient(to bottom, #9ca3af 1px, transparent 1px)
+              `
+              : `
+                linear-gradient(to right, #cbd5e1 1px, transparent 1px),
+                linear-gradient(to bottom, #cbd5e1 1px, transparent 1px)
+              `,
             backgroundSize: '40px 40px',
           }}
         />
@@ -94,7 +119,7 @@ export default function PlannerMap({
                 <polygon
                   points="0 0, 10 3.5, 0 7"
                   fill="currentColor"
-                  className="text-blue-500"
+                  className={grayscale ? 'text-gray-900 dark:text-white' : 'text-blue-500'}
                 />
               </marker>
             </defs>
@@ -127,9 +152,9 @@ export default function PlannerMap({
                   x2={`${x2}%`}
                   y2={`${y2}%`}
                   stroke="currentColor"
-                  className="text-blue-500"
-                  strokeWidth="2"
-                  strokeDasharray="6,4"
+                  className={grayscale ? 'text-gray-900/50 dark:text-white/50' : 'text-blue-500'}
+                  strokeWidth={grayscale ? '1' : '2'}
+                  strokeDasharray={grayscale ? undefined : '6,4'}
                   markerEnd="url(#arrowhead)"
                 />
               );
@@ -144,21 +169,39 @@ export default function PlannerMap({
 
             const x = ((place.longitude - bounds.minLng) / (bounds.maxLng - bounds.minLng || 1)) * 80 + 10;
             const y = (1 - (place.latitude - bounds.minLat) / (bounds.maxLat - bounds.minLat || 1)) * 80 + 10;
+            const isSelected = selectedPlaceId === place.blockId;
 
             return (
               <button
                 key={place.blockId || `place-${idx}`}
                 className="absolute transform -translate-x-1/2 -translate-y-full group"
                 style={{ left: `${x}%`, top: `${y}%` }}
-                onClick={() => setSelectedPlace(place)}
+                onClick={() => handlePlaceClick(place)}
               >
-                {/* Marker */}
+                {/* Marker - Grayscale: small black dots, Selected: larger circle */}
                 <div className="relative">
-                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg ring-2 ring-white dark:ring-gray-800 group-hover:scale-110 transition-transform">
-                    {place.order || idx + 1}
-                  </div>
-                  {/* Pin tail */}
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-8 border-l-transparent border-r-transparent border-t-blue-500" />
+                  {grayscale ? (
+                    <div
+                      className={`
+                        flex items-center justify-center text-white font-medium shadow-md transition-all
+                        ${isSelected
+                          ? 'w-10 h-10 bg-black dark:bg-white text-white dark:text-black text-base'
+                          : 'w-6 h-6 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs group-hover:scale-125'
+                        }
+                        rounded-full
+                      `}
+                    >
+                      {place.order || idx + 1}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg ring-2 ring-white dark:ring-gray-800 group-hover:scale-110 transition-transform">
+                        {place.order || idx + 1}
+                      </div>
+                      {/* Pin tail */}
+                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-8 border-l-transparent border-r-transparent border-t-blue-500" />
+                    </>
+                  )}
                 </div>
 
                 {/* Tooltip on hover */}
