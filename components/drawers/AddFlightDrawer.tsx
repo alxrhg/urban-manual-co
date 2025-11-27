@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
-import { Plane, Loader2, Car, Clock } from 'lucide-react';
+import { Plane, Loader2, Car, MapPin, RefreshCw } from 'lucide-react';
 import type { FlightData, TravelClass } from '@/types/trip';
 
 interface AddFlightDrawerProps {
@@ -44,6 +44,113 @@ export default function AddFlightDrawer({
   const [arrivalLounge, setArrivalLounge] = useState('');
   const [travelTimeToAirport, setTravelTimeToAirport] = useState('');
   const [travelTimeFromAirport, setTravelTimeFromAirport] = useState('');
+
+  // Home address and auto-calculation state
+  const [homeAddress, setHomeAddress] = useState<string | null>(null);
+  const [loadingHomeAddress, setLoadingHomeAddress] = useState(true);
+  const [calculatingToAirport, setCalculatingToAirport] = useState(false);
+  const [calculatingFromAirport, setCalculatingFromAirport] = useState(false);
+
+  // Fetch user's home address on mount
+  useEffect(() => {
+    async function fetchHomeAddress() {
+      try {
+        const response = await fetch('/api/account/profile');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.profile?.home_address) {
+            setHomeAddress(data.profile.home_address);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching home address:', error);
+      } finally {
+        setLoadingHomeAddress(false);
+      }
+    }
+    fetchHomeAddress();
+  }, []);
+
+  // Calculate travel time to departure airport
+  const calculateTravelTimeToAirport = useCallback(async () => {
+    if (!homeAddress || !from.trim()) return;
+
+    setCalculatingToAirport(true);
+    try {
+      const response = await fetch('/api/airport-travel-time', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin: homeAddress,
+          airportCode: from.trim(),
+          mode: 'driving',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTravelTimeToAirport(String(data.durationMinutes));
+      }
+    } catch (error) {
+      console.error('Error calculating travel time:', error);
+    } finally {
+      setCalculatingToAirport(false);
+    }
+  }, [homeAddress, from]);
+
+  // Calculate travel time from arrival airport (using destination city as proxy)
+  const calculateTravelTimeFromAirport = useCallback(async () => {
+    if (!to.trim()) return;
+
+    setCalculatingFromAirport(true);
+    try {
+      // For arrival, we estimate based on typical city center distance
+      // In a real app, you'd use the destination hotel/address
+      const response = await fetch('/api/airport-travel-time', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin: `${to.trim()} city center`, // Approximate destination
+          airportCode: to.trim(),
+          mode: 'driving',
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setTravelTimeFromAirport(String(data.durationMinutes));
+      }
+    } catch (error) {
+      console.error('Error calculating travel time:', error);
+    } finally {
+      setCalculatingFromAirport(false);
+    }
+  }, [to]);
+
+  // Auto-calculate when airport codes change (with debounce)
+  useEffect(() => {
+    if (!homeAddress || !from.trim() || from.trim().length < 3) return;
+
+    const timer = setTimeout(() => {
+      if (!travelTimeToAirport) {
+        calculateTravelTimeToAirport();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [from, homeAddress, calculateTravelTimeToAirport, travelTimeToAirport]);
+
+  useEffect(() => {
+    if (!to.trim() || to.trim().length < 3) return;
+
+    const timer = setTimeout(() => {
+      if (!travelTimeFromAirport) {
+        calculateTravelTimeFromAirport();
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [to, calculateTravelTimeFromAirport, travelTimeFromAirport]);
 
   const handleSubmit = async () => {
     if (!airline.trim() || !from.trim() || !to.trim()) return;
@@ -247,9 +354,33 @@ export default function AddFlightDrawer({
 
       {/* Travel Time To/From Airport */}
       <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-          Travel Time (minutes)
-        </label>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            Travel Time (minutes)
+          </label>
+          {!loadingHomeAddress && !homeAddress && (
+            <a
+              href="/account?tab=profile"
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              Add home address
+            </a>
+          )}
+        </div>
+
+        {/* Info message about auto-calculation */}
+        {!loadingHomeAddress && homeAddress && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            <MapPin className="w-3 h-3 inline mr-1" />
+            Auto-calculated from your home address
+          </p>
+        )}
+        {!loadingHomeAddress && !homeAddress && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            Add your home address in settings to auto-calculate travel times
+          </p>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <div className="relative">
             <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
@@ -258,9 +389,24 @@ export default function AddFlightDrawer({
               min="0"
               value={travelTimeToAirport}
               onChange={(e) => setTravelTimeToAirport(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+              className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
               placeholder="To airport"
             />
+            {homeAddress && from.trim().length >= 3 && (
+              <button
+                type="button"
+                onClick={calculateTravelTimeToAirport}
+                disabled={calculatingToAirport}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                title="Recalculate"
+              >
+                {calculatingToAirport ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+              </button>
+            )}
           </div>
           <div className="relative">
             <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
@@ -269,9 +415,24 @@ export default function AddFlightDrawer({
               min="0"
               value={travelTimeFromAirport}
               onChange={(e) => setTravelTimeFromAirport(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+              className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
               placeholder="From airport"
             />
+            {to.trim().length >= 3 && (
+              <button
+                type="button"
+                onClick={calculateTravelTimeFromAirport}
+                disabled={calculatingFromAirport}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300"
+                title="Recalculate"
+              >
+                {calculatingFromAirport ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

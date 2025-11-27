@@ -38,6 +38,7 @@ interface ProfileData {
   username: string;
   avatar_url: string | null;
   is_public: boolean;
+  home_address: string;
 }
 
 export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditorProps) {
@@ -51,6 +52,7 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
     username: '',
     avatar_url: null,
     is_public: true,
+    home_address: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -82,6 +84,7 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
           username: data.profile.username || '',
           avatar_url: data.profile.avatar_url || null,
           is_public: data.profile.is_public ?? true,
+          home_address: data.profile.home_address || '',
         });
       }
     } catch (error) {
@@ -275,6 +278,21 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
                 </Select>
                 <p className="text-xs text-gray-500 dark:text-gray-500">
                   Select your primary city from our curated list
+                </p>
+              </div>
+
+              {/* Home Address */}
+              <div className="space-y-2">
+                <Label htmlFor="home_address">Home Address</Label>
+                <Input
+                  id="home_address"
+                  type="text"
+                  value={profile.home_address}
+                  onChange={(e) => setProfile({ ...profile, home_address: e.target.value })}
+                  placeholder="e.g. 123 Main St, New York, NY 10001"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-500">
+                  Used to calculate travel time to airports for your trips. This is kept private and never shared.
                 </p>
               </div>
 
