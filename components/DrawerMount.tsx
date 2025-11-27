@@ -16,6 +16,7 @@ import TripOverviewDrawer from '@/components/drawers/TripOverviewDrawer';
 import TripOverviewQuickDrawer from '@/components/drawers/TripOverviewQuickDrawer';
 import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
 import TripSettingsDrawer from '@/components/drawers/TripSettingsDrawer';
+import TripCustomizeDrawer from '@/components/drawers/TripCustomizeDrawer';
 import AccountDrawerNew from '@/components/drawers/AccountDrawer';
 import { Drawer } from '@/components/ui/Drawer';
 import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
@@ -137,7 +138,6 @@ export default function DrawerMount() {
         <Drawer
           isOpen={open}
           onClose={closeDrawer}
-          title="Add Flight"
           style={drawerStyle}
           position="right"
           desktopWidth="420px"
@@ -145,7 +145,23 @@ export default function DrawerMount() {
           <AddFlightDrawer
             tripId={props?.tripId}
             dayNumber={props?.dayNumber}
+            defaultDate={props?.defaultDate}
             onAdd={props?.onAdd}
+          />
+        </Drawer>
+      )}
+
+      {open && type === 'trip-customize' && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          style={drawerStyle}
+          position="right"
+          desktopWidth="420px"
+        >
+          <TripCustomizeDrawer
+            settings={props?.settings}
+            onSave={props?.onSave}
           />
         </Drawer>
       )}
