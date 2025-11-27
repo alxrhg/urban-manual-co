@@ -14,8 +14,49 @@ export interface Trip {
   status: 'planning' | 'upcoming' | 'ongoing' | 'completed'; // VARCHAR(50) NOT NULL DEFAULT 'planning'
   is_public: boolean; // BOOLEAN NOT NULL DEFAULT FALSE
   cover_image: string | null; // VARCHAR(500)
+  notes: string | null; // TEXT (JSON with TripNotes structure)
   created_at: string; // TIMESTAMP WITH TIME ZONE
   updated_at: string; // TIMESTAMP WITH TIME ZONE
+}
+
+/**
+ * Trip notes item - can be a text paragraph or a checkbox item
+ */
+export interface TripNoteItem {
+  id: string;
+  type: 'text' | 'checkbox';
+  content: string;
+  checked?: boolean; // Only for checkbox items
+}
+
+/**
+ * Trip notes structure stored as JSON in the notes field
+ */
+export interface TripNotes {
+  items: TripNoteItem[];
+}
+
+/**
+ * Helper to parse trip notes JSON safely
+ */
+export function parseTripNotes(notes: string | null): TripNotes {
+  if (!notes) return { items: [] };
+  try {
+    const parsed = JSON.parse(notes);
+    if (parsed && Array.isArray(parsed.items)) {
+      return parsed;
+    }
+    return { items: [] };
+  } catch {
+    return { items: [] };
+  }
+}
+
+/**
+ * Helper to stringify trip notes for storage
+ */
+export function stringifyTripNotes(notes: TripNotes): string {
+  return JSON.stringify(notes);
 }
 
 export interface InsertTrip {
@@ -28,6 +69,7 @@ export interface InsertTrip {
   status?: 'planning' | 'upcoming' | 'ongoing' | 'completed';
   is_public?: boolean;
   cover_image?: string | null;
+  notes?: string | null;
 }
 
 export interface UpdateTrip {
@@ -39,6 +81,7 @@ export interface UpdateTrip {
   status?: 'planning' | 'upcoming' | 'ongoing' | 'completed';
   is_public?: boolean;
   cover_image?: string | null;
+  notes?: string | null;
 }
 
 export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'custom';

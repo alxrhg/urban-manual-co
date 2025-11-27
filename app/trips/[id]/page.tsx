@@ -13,6 +13,8 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Clock,
   GripVertical,
   MapPin,
@@ -25,6 +27,7 @@ import {
   Map,
   LayoutGrid,
   Loader2,
+  ListTodo,
 } from 'lucide-react';
 import {
   DndContext,
@@ -55,10 +58,11 @@ import TransitOptions from '@/components/trips/TransitOptions';
 import AvailabilityAlert from '@/components/trips/AvailabilityAlert';
 import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
 import { TripItemCard } from '@/components/trips/TripItemCard';
+import TripNotesEditor from '@/components/trips/TripNotesEditor';
 import { formatTripDate, parseDateString } from '@/lib/utils';
 import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
-import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData } from '@/types/trip';
-import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
+import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, TripNotes } from '@/types/trip';
+import { parseItineraryNotes, stringifyItineraryNotes, parseTripNotes, stringifyTripNotes } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 
 interface TripDay {
@@ -119,6 +123,8 @@ export default function TripPage() {
   const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
   const [mobileView, setMobileView] = useState<'itinerary' | 'map'>('itinerary');
   const [isAIPlanning, setIsAIPlanning] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [tripNotes, setTripNotes] = useState<TripNotes>({ items: [] });
 
   // DnD sensors
   const sensors = useSensors(
@@ -149,6 +155,7 @@ export default function TripPage() {
       }
 
       setTrip(tripData);
+      setTripNotes(parseTripNotes(tripData.notes));
 
       const { data: items, error: itemsError } = await supabase
         .from('itinerary_items')
@@ -229,6 +236,30 @@ export default function TripPage() {
       }
     } catch (err) {
       console.error('Error updating trip:', err);
+    }
+  };
+
+  const updateTripNotes = async (newNotes: TripNotes) => {
+    if (!trip || !user) return;
+
+    // Update local state immediately for responsive UI
+    setTripNotes(newNotes);
+
+    try {
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const notesJson = stringifyTripNotes(newNotes);
+      const { error } = await supabase
+        .from('trips')
+        .update({ notes: notesJson })
+        .eq('id', trip.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+      setTrip({ ...trip, notes: notesJson });
+    } catch (err) {
+      console.error('Error updating notes:', err);
     }
   };
 
@@ -731,6 +762,22 @@ export default function TripPage() {
             </button>
 
             <button
+              onClick={() => setShowNotes(!showNotes)}
+              className={`relative p-2.5 rounded-xl transition-all duration-200 ${
+                showNotes
+                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
+                  : 'bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}
+              title="Notes & Lists"
+            >
+              <ListTodo className="w-5 h-5" />
+              {tripNotes.items.length > 0 && !showNotes && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-violet-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {tripNotes.items.length}
+                </span>
+              )}
+            </button>
+            <button
               onClick={() => setShowBucketList(!showBucketList)}
               className={`p-2.5 rounded-xl transition-all duration-200 hidden md:flex ${
                 showBucketList
@@ -769,6 +816,16 @@ export default function TripPage() {
               compact
             />
           </div>
+
+          {/* Notes & Lists Panel */}
+          {showNotes && (
+            <div className="px-4 md:px-10 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+              <TripNotesEditor
+                notes={tripNotes}
+                onChange={updateTripNotes}
+              />
+            </div>
+          )}
 
           {/* Day Tabs */}
           <div className="px-4 md:px-10 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2 overflow-x-auto no-scrollbar">
