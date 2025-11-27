@@ -1,5 +1,13 @@
+/* ============================================
+   URBAN MANUAL DESIGN TOKENS
+   Centralized design system variables
+   ============================================ */
+
 :root {
-  /* Radius tokens */
+  /* ----------------------------------------
+     RADIUS TOKENS
+     ---------------------------------------- */
+  --um-radius-xs: 4px;
   --um-radius-sm: 8px;
   --um-radius-md: 12px;
   --um-radius-lg: 16px;
@@ -7,7 +15,23 @@
   --um-radius-2xl: 32px;
   --um-radius-full: 9999px;
 
-  /* Spacing tokens */
+  /* ----------------------------------------
+     SPACING TOKENS
+     ---------------------------------------- */
+  --um-space-0: 0px;
+  --um-space-1: 4px;
+  --um-space-2: 8px;
+  --um-space-3: 12px;
+  --um-space-4: 16px;
+  --um-space-5: 20px;
+  --um-space-6: 24px;
+  --um-space-8: 32px;
+  --um-space-10: 40px;
+  --um-space-12: 48px;
+  --um-space-16: 64px;
+  --um-space-20: 80px;
+
+  /* Semantic spacing */
   --um-space-xs: 8px;
   --um-space-sm: 12px;
   --um-space-md: 16px;
@@ -15,26 +39,136 @@
   --um-space-xl: 32px;
   --um-space-xxl: 48px;
 
-  /* Color tokens */
+  /* Page spacing */
+  --um-page-padding-x: 24px;
+  --um-page-padding-x-md: 40px;
+  --um-page-padding-y: 80px;
+  --um-section-gap: 48px;
+  --um-content-gap: 24px;
+
+  /* ----------------------------------------
+     COLOR TOKENS - LIGHT MODE
+     ---------------------------------------- */
+
+  /* Text colors */
   --um-text-primary: #000000;
+  --um-text-secondary: #4B5563;
   --um-text-muted: #6B7280;
   --um-text-subtle: #9CA3AF;
-  --um-border: #E5E7EB;
-  --um-border-subtle: rgba(0, 0, 0, 0.08);
+  --um-text-disabled: #D1D5DB;
+  --um-text-inverse: #FFFFFF;
+
+  /* Background colors */
   --um-bg-primary: #FFFFFF;
   --um-bg-secondary: #F9FAFB;
+  --um-bg-tertiary: #F3F4F6;
   --um-bg-card: #FFFFFF;
+  --um-bg-hover: #F9FAFB;
+  --um-bg-active: #F3F4F6;
+  --um-bg-inverse: #000000;
+
+  /* Border colors */
+  --um-border: #E5E7EB;
+  --um-border-light: #F3F4F6;
+  --um-border-subtle: rgba(0, 0, 0, 0.08);
+  --um-border-focus: #000000;
+
+  /* Status colors */
+  --um-success: #10B981;
+  --um-success-bg: #ECFDF5;
+  --um-warning: #F59E0B;
+  --um-warning-bg: #FFFBEB;
+  --um-error: #EF4444;
+  --um-error-bg: #FEF2F2;
+  --um-info: #3B82F6;
+  --um-info-bg: #EFF6FF;
+
+  /* ----------------------------------------
+     TYPOGRAPHY TOKENS
+     ---------------------------------------- */
+
+  /* Font sizes */
+  --um-text-xs: 12px;
+  --um-text-sm: 14px;
+  --um-text-base: 16px;
+  --um-text-lg: 18px;
+  --um-text-xl: 20px;
+  --um-text-2xl: 24px;
+  --um-text-3xl: 30px;
+  --um-text-4xl: 36px;
+
+  /* Line heights */
+  --um-leading-none: 1;
+  --um-leading-tight: 1.25;
+  --um-leading-snug: 1.375;
+  --um-leading-normal: 1.5;
+  --um-leading-relaxed: 1.625;
+
+  /* Font weights */
+  --um-font-light: 300;
+  --um-font-normal: 400;
+  --um-font-medium: 500;
+  --um-font-semibold: 600;
+  --um-font-bold: 700;
+
+  /* ----------------------------------------
+     SHADOW TOKENS
+     ---------------------------------------- */
+  --um-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --um-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --um-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --um-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+  /* ----------------------------------------
+     MOTION TOKENS
+     ---------------------------------------- */
+  --um-duration-fast: 150ms;
+  --um-duration-normal: 200ms;
+  --um-duration-slow: 300ms;
+  --um-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+  --um-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --um-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --um-ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ----------------------------------------
+   DARK MODE OVERRIDES
+   ---------------------------------------- */
 .dark {
+  /* Text colors */
   --um-text-primary: #FFFFFF;
+  --um-text-secondary: #9CA3AF;
   --um-text-muted: #9CA3AF;
   --um-text-subtle: #6B7280;
-  --um-border: #1F2937;
-  --um-border-subtle: rgba(255, 255, 255, 0.08);
+  --um-text-disabled: #4B5563;
+  --um-text-inverse: #000000;
+
+  /* Background colors */
   --um-bg-primary: #0F1117;
   --um-bg-secondary: #1A1C1F;
+  --um-bg-tertiary: #1F2937;
   --um-bg-card: #1A1C1F;
+  --um-bg-hover: rgba(255, 255, 255, 0.05);
+  --um-bg-active: rgba(255, 255, 255, 0.1);
+  --um-bg-inverse: #FFFFFF;
+
+  /* Border colors */
+  --um-border: #1F2937;
+  --um-border-light: #374151;
+  --um-border-subtle: rgba(255, 255, 255, 0.08);
+  --um-border-focus: #FFFFFF;
+
+  /* Status colors - dark mode */
+  --um-success-bg: rgba(16, 185, 129, 0.1);
+  --um-warning-bg: rgba(245, 158, 11, 0.1);
+  --um-error-bg: rgba(239, 68, 68, 0.1);
+  --um-info-bg: rgba(59, 130, 246, 0.1);
+
+  /* Shadows - dark mode */
+  --um-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --um-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --um-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --um-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
 }
 
 /* ============================================
@@ -42,20 +176,56 @@
    Standardized UI component classes
    ============================================ */
 
+/* ----------------------------------------
+   PAGE LAYOUT
+   ---------------------------------------- */
+
 /* PAGE CONTAINER
    Standard page layout with responsive padding
    Usage: <div class="um-page">...</div>
 */
 .um-page {
   @apply w-full px-6 md:px-10 py-20 min-h-screen;
+  background-color: var(--um-bg-primary);
+  color: var(--um-text-primary);
 }
 
+/* PAGE HEADER
+   Container for page title and actions
+   Usage: <div class="um-page-header">...</div>
+*/
+.um-page-header {
+  @apply mb-12;
+}
+
+/* SECTION
+   Grouped content section with consistent spacing
+   Usage: <section class="um-section">...</section>
+*/
+.um-section {
+  @apply mb-12;
+}
+
+/* ----------------------------------------
+   TYPOGRAPHY
+   ---------------------------------------- */
+
 /* PAGE HEADING
-   Main page title - light weight
+   Main page title - light weight (account page style)
    Usage: <h1 class="um-heading">Title</h1>
 */
 .um-heading {
   @apply text-2xl font-light mb-2;
+  color: var(--um-text-primary);
+}
+
+/* PAGE HEADING - LARGE
+   Larger heading variant (homepage style)
+   Usage: <h1 class="um-heading-lg">Title</h1>
+*/
+.um-heading-lg {
+  @apply text-3xl font-light mb-4;
+  color: var(--um-text-primary);
 }
 
 /* PAGE DESCRIPTION
@@ -63,7 +233,8 @@
    Usage: <p class="um-description">Description</p>
 */
 .um-description {
-  @apply text-xs text-gray-500 dark:text-gray-400;
+  @apply text-xs;
+  color: var(--um-text-muted);
 }
 
 /* SECTION LABEL
@@ -71,63 +242,8 @@
    Usage: <h2 class="um-section-label">Section</h2>
 */
 .um-section-label {
-  @apply text-xs font-medium text-gray-500 dark:text-gray-400;
-}
-
-/* PRIMARY BUTTON
-   Main action button - solid black/white
-   Usage: <button class="um-btn-primary">Action</button>
-*/
-.um-btn-primary {
-  @apply px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl text-xs font-medium transition hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-/* SECONDARY BUTTON
-   Secondary action - outlined
-   Usage: <button class="um-btn-secondary">Action</button>
-*/
-.um-btn-secondary {
-  @apply px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs font-medium transition hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-/* BACK BUTTON
-   Text link style for navigation back
-   Usage: <button class="um-back-btn">← Back</button>
-*/
-.um-back-btn {
-  @apply text-xs text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors;
-}
-
-/* INPUT FIELD
-   Standard text input styling
-   Usage: <input class="um-input" />
-*/
-.um-input {
-  @apply w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors;
-}
-
-/* CARD
-   Standard card container
-   Usage: <div class="um-card">...</div>
-*/
-.um-card {
-  @apply border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-[#1A1C1F];
-}
-
-/* TAB BUTTON - ACTIVE
-   Active state for tab navigation
-   Usage: <button class="um-tab um-tab-active">Tab</button>
-*/
-.um-tab {
-  @apply text-xs font-medium transition-all;
-}
-
-.um-tab-active {
-  @apply text-black dark:text-white;
-}
-
-.um-tab-inactive {
-  @apply text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300;
+  @apply text-xs font-medium mb-4;
+  color: var(--um-text-muted);
 }
 
 /* ITEM NAME
@@ -135,7 +251,8 @@
    Usage: <p class="um-item-name">Name</p>
 */
 .um-item-name {
-  @apply text-sm font-medium text-gray-900 dark:text-white;
+  @apply text-sm font-medium;
+  color: var(--um-text-primary);
 }
 
 /* ITEM SUBTITLE
@@ -143,7 +260,234 @@
    Usage: <p class="um-item-subtitle">Info</p>
 */
 .um-item-subtitle {
-  @apply text-xs text-gray-500 dark:text-gray-400;
+  @apply text-xs;
+  color: var(--um-text-muted);
+}
+
+/* TEXT MUTED
+   Muted text color utility
+   Usage: <span class="um-text-muted">...</span>
+*/
+.um-text-muted {
+  color: var(--um-text-muted);
+}
+
+/* TEXT SUBTLE
+   Subtle text color utility
+   Usage: <span class="um-text-subtle">...</span>
+*/
+.um-text-subtle {
+  color: var(--um-text-subtle);
+}
+
+/* ----------------------------------------
+   BUTTONS
+   ---------------------------------------- */
+
+/* PRIMARY BUTTON
+   Main action button - solid black/white
+   Usage: <button class="um-btn-primary">Action</button>
+*/
+.um-btn-primary {
+  @apply px-4 py-2 rounded-2xl text-xs font-medium transition-all duration-200;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  background-color: var(--um-bg-inverse);
+  color: var(--um-text-inverse);
+}
+
+.um-btn-primary:hover:not(:disabled) {
+  @apply opacity-90;
+}
+
+/* PRIMARY BUTTON - LARGE
+   Larger primary button
+   Usage: <button class="um-btn-primary-lg">Action</button>
+*/
+.um-btn-primary-lg {
+  @apply px-6 py-3 rounded-full text-sm font-medium transition-all duration-200;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  background-color: var(--um-bg-inverse);
+  color: var(--um-text-inverse);
+}
+
+.um-btn-primary-lg:hover:not(:disabled) {
+  @apply opacity-90;
+}
+
+/* SECONDARY BUTTON
+   Secondary action - outlined
+   Usage: <button class="um-btn-secondary">Action</button>
+*/
+.um-btn-secondary {
+  @apply px-4 py-2 rounded-2xl text-xs font-medium transition-all duration-200;
+  @apply disabled:opacity-50 disabled:cursor-not-allowed;
+  border: 1px solid var(--um-border);
+  background-color: transparent;
+  color: var(--um-text-primary);
+}
+
+.um-btn-secondary:hover:not(:disabled) {
+  background-color: var(--um-bg-hover);
+}
+
+/* PILL BUTTON
+   Small pill-shaped button
+   Usage: <button class="um-btn-pill">Tag</button>
+*/
+.um-btn-pill {
+  @apply px-3 py-1.5 rounded-2xl text-xs transition-all duration-200;
+  border: 1px solid var(--um-border);
+  color: var(--um-text-primary);
+}
+
+.um-btn-pill:hover {
+  background-color: var(--um-bg-hover);
+}
+
+/* ICON BUTTON
+   Button with just an icon
+   Usage: <button class="um-btn-icon"><Icon /></button>
+*/
+.um-btn-icon {
+  @apply p-2 rounded-lg transition-all duration-200;
+  color: var(--um-text-muted);
+}
+
+.um-btn-icon:hover {
+  background-color: var(--um-bg-hover);
+  color: var(--um-text-primary);
+}
+
+/* BACK BUTTON
+   Text link style for navigation back
+   Usage: <button class="um-back-btn">← Back</button>
+*/
+.um-back-btn {
+  @apply text-xs transition-colors duration-200;
+  color: var(--um-text-subtle);
+}
+
+.um-back-btn:hover {
+  color: var(--um-text-primary);
+}
+
+/* LINK BUTTON
+   Text-only button that looks like a link
+   Usage: <button class="um-btn-link">View all</button>
+*/
+.um-btn-link {
+  @apply text-xs font-medium transition-colors duration-200;
+  color: var(--um-text-muted);
+}
+
+.um-btn-link:hover {
+  color: var(--um-text-primary);
+}
+
+/* ----------------------------------------
+   FORM ELEMENTS
+   ---------------------------------------- */
+
+/* INPUT FIELD
+   Standard text input styling
+   Usage: <input class="um-input" />
+*/
+.um-input {
+  @apply w-full px-4 py-2.5 rounded-2xl text-sm transition-colors duration-200;
+  @apply focus:outline-none;
+  border: 1px solid var(--um-border);
+  background-color: var(--um-bg-primary);
+  color: var(--um-text-primary);
+}
+
+.um-input:focus {
+  border-color: var(--um-border-focus);
+}
+
+.um-input::placeholder {
+  color: var(--um-text-subtle);
+}
+
+/* TEXTAREA
+   Multi-line text input
+   Usage: <textarea class="um-textarea"></textarea>
+*/
+.um-textarea {
+  @apply w-full px-4 py-2.5 rounded-2xl text-sm transition-colors duration-200 resize-none;
+  @apply focus:outline-none;
+  border: 1px solid var(--um-border);
+  background-color: var(--um-bg-primary);
+  color: var(--um-text-primary);
+}
+
+.um-textarea:focus {
+  border-color: var(--um-border-focus);
+}
+
+/* LABEL
+   Form field label
+   Usage: <label class="um-label">Field name</label>
+*/
+.um-label {
+  @apply block text-xs font-medium mb-2;
+  color: var(--um-text-primary);
+}
+
+/* ----------------------------------------
+   CARDS & CONTAINERS
+   ---------------------------------------- */
+
+/* CARD
+   Standard card container
+   Usage: <div class="um-card">...</div>
+*/
+.um-card {
+  @apply rounded-2xl;
+  border: 1px solid var(--um-border);
+  background-color: var(--um-bg-card);
+}
+
+/* CARD WITH PADDING
+   Card with standard padding
+   Usage: <div class="um-card-padded">...</div>
+*/
+.um-card-padded {
+  @apply rounded-2xl p-4;
+  border: 1px solid var(--um-border);
+  background-color: var(--um-bg-card);
+}
+
+/* CARD INTERACTIVE
+   Clickable card with hover state
+   Usage: <button class="um-card-interactive">...</button>
+*/
+.um-card-interactive {
+  @apply rounded-2xl p-4 transition-colors duration-200 text-left;
+  border: 1px solid var(--um-border);
+  background-color: var(--um-bg-card);
+}
+
+.um-card-interactive:hover {
+  background-color: var(--um-bg-hover);
+}
+
+/* STAT CARD
+   Card for displaying statistics (account page)
+   Usage: <div class="um-stat-card">...</div>
+*/
+.um-stat-card {
+  @apply p-4 rounded-2xl;
+  border: 1px solid var(--um-border);
+}
+
+.um-stat-card .um-stat-value {
+  @apply text-2xl font-light mb-1;
+  color: var(--um-text-primary);
+}
+
+.um-stat-card .um-stat-label {
+  @apply text-xs;
+  color: var(--um-text-muted);
 }
 
 /* ICON BOX
@@ -151,6 +495,257 @@
    Usage: <div class="um-icon-box">...</div>
 */
 .um-icon-box {
-  @apply flex h-9 w-9 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400;
+  @apply flex h-9 w-9 items-center justify-center rounded-2xl;
+  background-color: var(--um-bg-secondary);
+  color: var(--um-text-muted);
+}
+
+/* ----------------------------------------
+   TABS & NAVIGATION
+   ---------------------------------------- */
+
+/* TAB NAVIGATION CONTAINER
+   Container for horizontal tabs
+   Usage: <div class="um-tabs">...</div>
+*/
+.um-tabs {
+  @apply flex flex-wrap gap-x-4 gap-y-2 text-xs;
+}
+
+/* TAB BUTTON
+   Individual tab button
+   Usage: <button class="um-tab">Tab</button>
+*/
+.um-tab {
+  @apply text-xs font-medium transition-all duration-200;
+}
+
+.um-tab-active {
+  color: var(--um-text-primary);
+}
+
+.um-tab-inactive {
+  color: var(--um-text-subtle);
+}
+
+.um-tab-inactive:hover {
+  color: var(--um-text-muted);
+}
+
+/* ----------------------------------------
+   LIST ITEMS
+   ---------------------------------------- */
+
+/* LIST ITEM
+   Clickable list item
+   Usage: <button class="um-list-item">...</button>
+*/
+.um-list-item {
+  @apply w-full flex items-center gap-4 p-3 rounded-2xl transition-colors duration-200 text-left;
+}
+
+.um-list-item:hover {
+  background-color: var(--um-bg-hover);
+}
+
+/* LIST ITEM IMAGE
+   Thumbnail in list item
+   Usage: <div class="um-list-item-image">...</div>
+*/
+.um-list-item-image {
+  @apply relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden;
+  background-color: var(--um-bg-secondary);
+}
+
+/* ----------------------------------------
+   BADGES & STATUS
+   ---------------------------------------- */
+
+/* BADGE BASE
+   Base badge styling
+   Usage: <span class="um-badge um-badge-neutral">Tag</span>
+*/
+.um-badge {
+  @apply px-3 py-1 rounded-full text-xs font-medium;
+}
+
+.um-badge-neutral {
+  border: 1px solid var(--um-border);
+  color: var(--um-text-muted);
+}
+
+.um-badge-success {
+  background-color: var(--um-success-bg);
+  color: var(--um-success);
+}
+
+.um-badge-warning {
+  background-color: var(--um-warning-bg);
+  color: var(--um-warning);
+}
+
+.um-badge-error {
+  background-color: var(--um-error-bg);
+  color: var(--um-error);
+}
+
+.um-badge-info {
+  background-color: var(--um-info-bg);
+  color: var(--um-info);
+}
+
+/* STATUS PILL
+   Small status indicator (account page trips)
+   Usage: <span class="um-status-pill">planning</span>
+*/
+.um-status-pill {
+  @apply capitalize text-xs px-2 py-0.5 rounded-full;
+  background-color: var(--um-bg-secondary);
+  color: var(--um-text-muted);
+}
+
+/* ----------------------------------------
+   MODAL & OVERLAY
+   ---------------------------------------- */
+
+/* MODAL OVERLAY
+   Backdrop for modals
+   Usage: <div class="um-modal-overlay">...</div>
+*/
+.um-modal-overlay {
+  @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* MODAL CONTENT
+   Modal container
+   Usage: <div class="um-modal">...</div>
+*/
+.um-modal {
+  @apply rounded-2xl p-6 w-full max-w-md;
+  background-color: var(--um-bg-primary);
+  box-shadow: var(--um-shadow-xl);
+}
+
+/* MODAL HEADER
+   Modal title section
+   Usage: <div class="um-modal-header">...</div>
+*/
+.um-modal-header {
+  @apply flex items-center justify-between mb-4;
+}
+
+.um-modal-title {
+  @apply text-xl font-light;
+  color: var(--um-text-primary);
+}
+
+/* MODAL ACTIONS
+   Modal footer with buttons
+   Usage: <div class="um-modal-actions">...</div>
+*/
+.um-modal-actions {
+  @apply flex gap-2 pt-4;
+}
+
+/* ----------------------------------------
+   LOADING & EMPTY STATES
+   ---------------------------------------- */
+
+/* SPINNER
+   Loading spinner
+   Usage: <div class="um-spinner"></div>
+*/
+.um-spinner {
+  @apply animate-spin rounded-full h-6 w-6 border-b-2;
+  border-color: var(--um-text-primary);
+}
+
+/* SKELETON
+   Loading placeholder
+   Usage: <div class="um-skeleton"></div>
+*/
+.um-skeleton {
+  @apply animate-pulse rounded;
+  background-color: var(--um-bg-secondary);
+}
+
+/* EMPTY STATE
+   Container for empty state messages
+   Usage: <div class="um-empty-state">...</div>
+*/
+.um-empty-state {
+  @apply text-center py-12 rounded-2xl;
+  border: 1px dashed var(--um-border);
+}
+
+.um-empty-state-icon {
+  @apply h-12 w-12 mx-auto mb-4;
+  color: var(--um-text-subtle);
+}
+
+.um-empty-state-text {
+  @apply text-sm mb-4;
+  color: var(--um-text-muted);
+}
+
+/* ----------------------------------------
+   PROGRESS
+   ---------------------------------------- */
+
+/* PROGRESS BAR
+   Progress indicator (account page curation)
+   Usage: <div class="um-progress"><div class="um-progress-bar" style="width: 50%"></div></div>
+*/
+.um-progress {
+  @apply w-full h-2 rounded-full overflow-hidden;
+  background-color: var(--um-bg-secondary);
+}
+
+.um-progress-bar {
+  @apply h-full transition-all duration-500 ease-out;
+  background-color: var(--um-bg-inverse);
+}
+
+/* ----------------------------------------
+   DIVIDERS
+   ---------------------------------------- */
+
+/* DIVIDER
+   Horizontal divider
+   Usage: <hr class="um-divider" />
+*/
+.um-divider {
+  @apply border-0 h-px my-4;
+  background-color: var(--um-border);
+}
+
+/* ----------------------------------------
+   GRIDS
+   ---------------------------------------- */
+
+/* STATS GRID
+   Grid for stat cards (account page)
+   Usage: <div class="um-stats-grid">...</div>
+*/
+.um-stats-grid {
+  @apply grid grid-cols-2 md:grid-cols-4 gap-4;
+}
+
+/* CARDS GRID
+   Grid for card items (collections, trips)
+   Usage: <div class="um-cards-grid">...</div>
+*/
+.um-cards-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+}
+
+/* DESTINATIONS GRID
+   Grid for destination cards (homepage)
+   Usage: <div class="um-destinations-grid">...</div>
+*/
+.um-destinations-grid {
+  @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6;
 }
 

@@ -400,7 +400,7 @@ export default function Account() {
   // Show loading
   if (!authChecked || isLoadingData) {
     return (
-      <main className="w-full px-6 md:px-10 py-20">
+      <main className="um-page">
         <PageLoader />
       </main>
     );
@@ -409,16 +409,16 @@ export default function Account() {
   // Show sign in screen
   if (!user) {
     return (
-      <main className="w-full px-6 md:px-10 py-20">
+      <main className="um-page">
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="w-full max-w-sm">
-            <h1 className="text-2xl font-light mb-8">Account</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
+            <h1 className="um-heading mb-8">Account</h1>
+            <p className="um-description mb-6">
               Sign in to save places, track visits, and create collections
             </p>
             <button
               onClick={() => router.push('/auth/login')}
-              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-sm hover:opacity-80 transition-opacity"
+              className="w-full um-btn-primary-lg"
             >
               Sign In
             </button>
@@ -429,33 +429,33 @@ export default function Account() {
   }
 
   return (
-    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+    <main className="um-page">
       <div className="w-full">
         {/* Header - Matches homepage spacing and style */}
-        <div className="mb-12">
+        <div className="um-page-header">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-light">Account</h1>
+            <h1 className="um-heading">Account</h1>
             <button
               onClick={handleSignOut}
-              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+              className="um-btn-link"
             >
               Sign Out
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
+          <p className="um-description">{user.email}</p>
         </div>
 
         {/* Tab Navigation - Minimal, matches homepage city/category style */}
-        <div className="mb-12">
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+        <div className="um-section">
+          <div className="um-tabs">
             {(['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'preferences', 'settings'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`transition-all ${
+                className={`um-tab ${
                   activeTab === tab
-                    ? "font-medium text-black dark:text-white"
-                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                    ? "um-tab-active"
+                    : "um-tab-inactive"
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -479,9 +479,9 @@ export default function Account() {
                 </div>
               </div>
               {/* Progress bar */}
-              <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+              <div className="um-progress">
                 <div
-                  className="h-full bg-black dark:bg-white transition-all duration-500 ease-out"
+                  className="um-progress-bar"
                   style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }}
                 />
               </div>
@@ -506,22 +506,22 @@ export default function Account() {
             </div>
 
             {/* Stats Grid - Minimal, like homepage cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.visitedCount}</div>
-                <div className="text-xs text-gray-500">Visited</div>
+            <div className="um-stats-grid">
+              <div className="um-stat-card">
+                <div className="um-stat-value">{stats.visitedCount}</div>
+                <div className="um-stat-label">Visited</div>
               </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.savedCount}</div>
-                <div className="text-xs text-gray-500">Saved</div>
+              <div className="um-stat-card">
+                <div className="um-stat-value">{stats.savedCount}</div>
+                <div className="um-stat-label">Saved</div>
               </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.uniqueCities.size}</div>
-                <div className="text-xs text-gray-500">Cities</div>
+              <div className="um-stat-card">
+                <div className="um-stat-value">{stats.uniqueCities.size}</div>
+                <div className="um-stat-label">Cities</div>
               </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.uniqueCountries.size}</div>
-                <div className="text-xs text-gray-500">Countries</div>
+              <div className="um-stat-card">
+                <div className="um-stat-value">{stats.uniqueCountries.size}</div>
+                <div className="um-stat-label">Countries</div>
               </div>
             </div>
 
@@ -529,14 +529,14 @@ export default function Account() {
             {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Travel Map</h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <h2 className="um-section-label mb-0">Travel Map</h2>
+                  <p className="um-description">
                     {stats.uniqueCountries.size > 0 && `${stats.uniqueCountries.size} ${stats.uniqueCountries.size === 1 ? 'country' : 'countries'}`}
                     {stats.uniqueCountries.size > 0 && stats.uniqueCities.size > 0 && ' • '}
                     {stats.uniqueCities.size > 0 && `${stats.uniqueCities.size} ${stats.uniqueCities.size === 1 ? 'city' : 'cities'}`}
                   </p>
                 </div>
-                <WorldMapVisualization 
+                <WorldMapVisualization
                   visitedCountries={stats.uniqueCountries}
                   visitedDestinations={stats.visitedDestinationsWithCoords}
                 />
@@ -546,16 +546,16 @@ export default function Account() {
             {/* Recent Visits */}
             {visitedPlaces.length > 0 && (
               <div>
-                <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Recent Visits</h2>
+                <h2 className="um-section-label">Recent Visits</h2>
                 <div className="space-y-2">
                   {visitedPlaces.slice(0, 5).map((place) => (
                     <button
                       key={place.destination_slug}
                       onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                      className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
+                      className="um-list-item"
                     >
                       {place.destination?.image && (
-                        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <div className="um-list-item-image">
                           <Image
                             src={place.destination.image}
                             alt={place.destination.name}
@@ -566,11 +566,11 @@ export default function Account() {
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium truncate">{place.destination?.name}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">
+                        <div className="um-item-name truncate">{place.destination?.name}</div>
+                        <div className="um-item-subtitle mt-0.5">
                           {place.destination && capitalizeCity(place.destination.city)} • {place.destination?.category}
                         </div>
-                        <div className="text-xs text-gray-400 mt-0.5">
+                        <div className="um-text-subtle text-xs mt-0.5">
                           {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
                         </div>
                       </div>
@@ -609,26 +609,26 @@ export default function Account() {
                 <div className="flex justify-end mb-4">
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+                    className="um-btn-primary"
                   >
                     + New Collection
                   </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="um-cards-grid">
                   {collections.map((collection) => (
                     <button
                       key={collection.id}
                       onClick={() => router.push(`/collection/${collection.id}`)}
-                      className="text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      className="um-card-interactive"
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-2xl">{collection.emoji || '📚'}</span>
-                        <h3 className="font-medium text-sm flex-1">{collection.name}</h3>
+                        <h3 className="um-item-name flex-1">{collection.name}</h3>
                       </div>
                       {collection.description && (
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{collection.description}</p>
+                        <p className="um-item-subtitle line-clamp-2 mb-2">{collection.description}</p>
                       )}
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <div className="flex items-center gap-2 um-text-subtle text-xs">
                         <span>{collection.destination_count || 0} places</span>
                         {collection.is_public && <span>• Public</span>}
                       </div>
@@ -653,7 +653,7 @@ export default function Account() {
                     setShowTripDialog(true);
                   }
                 }}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity flex items-center gap-2"
+                className="um-btn-primary flex items-center gap-2"
               >
                 <Plus className="h-3 w-3" />
                 {user ? "New Trip" : "Sign in to create trip"}
@@ -661,9 +661,9 @@ export default function Account() {
             </div>
 
             {trips.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-                <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
+              <div className="um-empty-state">
+                <MapPin className="um-empty-state-icon" />
+                <p className="um-empty-state-text">No trips yet</p>
                 <button
                   onClick={() => {
                     if (!user) {
@@ -673,27 +673,27 @@ export default function Account() {
                       setShowTripDialog(true);
                     }
                   }}
-                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+                  className="um-btn-primary"
                 >
                   {user ? "Create your first trip" : "Sign in to create trip"}
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="um-cards-grid">
                 {trips.map((trip) => (
                   <div
                     key={trip.id}
-                    className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    className="um-card flex flex-col overflow-hidden"
                   >
                     <button
                       onClick={() => router.push(`/trips/${trip.id}`)}
-                      className="text-left p-4 flex-1"
+                      className="text-left p-4 flex-1 hover:bg-[var(--um-bg-hover)] transition-colors"
                     >
-                      <h3 className="font-medium text-sm mb-2 line-clamp-2">{trip.title}</h3>
+                      <h3 className="um-item-name mb-2 line-clamp-2">{trip.title}</h3>
                       {trip.description && (
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{trip.description}</p>
+                        <p className="um-item-subtitle line-clamp-2 mb-2">{trip.description}</p>
                       )}
-                      <div className="space-y-1 text-xs text-gray-400">
+                      <div className="space-y-1 um-text-subtle text-xs">
                         {trip.destination && (
                           <div className="flex items-center gap-2">
                             <MapPin className="h-3 w-3" />
@@ -711,20 +711,20 @@ export default function Account() {
                         )}
                         {trip.status && (
                           <div>
-                            <span className="capitalize text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800">
+                            <span className="um-status-pill">
                               {trip.status}
                             </span>
                           </div>
                         )}
                       </div>
                     </button>
-                    <div className="flex items-center gap-2 p-4 pt-0 border-t border-gray-200 dark:border-gray-800">
+                    <div className="flex items-center gap-2 p-4 pt-0 border-t border-[var(--um-border)]">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           router.push(`/trips/${trip.id}`);
                         }}
-                        className="flex-1 text-xs font-medium py-2 px-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        className="flex-1 text-xs font-medium py-2 px-3 rounded-xl hover:bg-[var(--um-bg-hover)] transition-colors"
                       >
                         View
                       </button>
@@ -734,7 +734,7 @@ export default function Account() {
                           setEditingTripId(trip.id);
                           setShowTripDialog(true);
                         }}
-                        className="p-2 rounded-xl text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="um-btn-icon"
                         aria-label={`Edit ${trip.title}`}
                       >
                         <Edit2 className="h-3 w-3" />
@@ -756,7 +756,7 @@ export default function Account() {
                             }
                           }
                         }}
-                        className="p-2 rounded-xl text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="p-2 rounded-xl text-[var(--um-error)] transition-colors hover:bg-[var(--um-error-bg)]"
                         aria-label={`Delete ${trip.title}`}
                       >
                         <Trash2 className="h-3 w-3" />
@@ -822,18 +822,18 @@ export default function Account() {
       {/* Create Collection Modal */}
       {showCreateModal && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="um-modal-overlay"
           onClick={() => setShowCreateModal(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md"
+            className="um-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-light">Create Collection</h2>
+            <div className="um-modal-header">
+              <h2 className="um-modal-title">Create Collection</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="p-2 hover:opacity-60 transition-opacity"
+                className="um-btn-icon"
               >
                 <span className="text-lg">×</span>
               </button>
@@ -841,26 +841,26 @@ export default function Account() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium mb-2">Collection Name *</label>
+                <label className="um-label">Collection Name *</label>
                 <input
                   type="text"
                   value={newCollectionName}
                   onChange={(e) => setNewCollectionName(e.target.value)}
                   placeholder="e.g., Tokyo Favorites"
-                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
+                  className="um-input"
                   autoFocus
                   maxLength={50}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium mb-2">Description</label>
+                <label className="um-label">Description</label>
                 <textarea
                   value={newCollectionDescription}
                   onChange={(e) => setNewCollectionDescription(e.target.value)}
                   placeholder="Optional description..."
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
+                  className="um-textarea"
                   maxLength={200}
                 />
               </div>
@@ -878,10 +878,10 @@ export default function Account() {
                 </label>
               </div>
 
-              <div className="flex gap-2 pt-4">
+              <div className="um-modal-actions">
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
+                  className="flex-1 um-btn-secondary py-2.5"
                   disabled={creatingCollection}
                 >
                   Cancel
@@ -889,7 +889,7 @@ export default function Account() {
                 <button
                   onClick={handleCreateCollection}
                   disabled={!newCollectionName.trim() || creatingCollection}
-                  className="flex-1 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  className="flex-1 um-btn-primary py-2.5"
                 >
                   {creatingCollection ? 'Creating...' : 'Create'}
                 </button>
