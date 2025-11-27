@@ -16,6 +16,7 @@ export interface Architect {
   movements?: string[] | null; // Movement slugs
   influences?: string[] | null; // Architect IDs
   influenced_by?: string[] | null; // Architect IDs
+  awards?: Array<{ name: string; year?: number }> | null; // e.g., Pritzker Prize
   image_url?: string | null;
   created_at: string;
   updated_at: string;

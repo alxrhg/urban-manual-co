@@ -14,6 +14,7 @@ interface ArchitectStats {
   slug: string;
   count: number;
   featuredImage?: string;
+  awards?: Array<{ name: string; year?: number }>;
 }
 
 export default function ArchitectsPage() {
@@ -57,13 +58,27 @@ export default function ArchitectsPage() {
         return acc;
       }, {} as Record<string, { count: number; featuredImage?: string }>);
 
+      // Fetch architect information including awards
+      const { data: architectsData } = await supabase
+        .from('architects')
+        .select('slug, awards');
+
+      const architectAwardsMap = (architectsData || []).reduce((acc: Record<string, any>, arch: any) => {
+        acc[arch.slug] = arch.awards;
+        return acc;
+      }, {});
+
       const stats = Object.entries(architectData)
-        .map(([architect, data]) => ({
-          architect,
-          slug: architectNameToSlug(architect),
-          count: data.count,
-          featuredImage: data.featuredImage,
-        }))
+        .map(([architect, data]) => {
+          const slug = architectNameToSlug(architect);
+          return {
+            architect,
+            slug,
+            count: data.count,
+            featuredImage: data.featuredImage,
+            awards: architectAwardsMap[slug],
+          };
+        })
         .sort((a, b) => b.count - a.count); // Sort by count descending
 
       setArchitectStats(stats);
@@ -107,7 +122,7 @@ export default function ArchitectsPage() {
               Architects & Designers
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
-              Discover destinations designed by renowned architects and designers. Explore the work of visionaries who shape our built environment.
+              Discover destinations designed by the world's most celebrated architects and designers. From Pritzker Prize winners to influential modernists, explore the work of visionaries who have shaped our built environment. Each architect in our collection has created remarkable spaces worth visiting—places that represent innovation, artistry, and cultural significance.
             </p>
             <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">
               {architectStats.length} architects • {architectStats.reduce((sum, a) => sum + a.count, 0)} destinations
@@ -125,7 +140,8 @@ export default function ArchitectsPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {featuredArchitects.map((architectData) => {
-                  const { architect, slug, count, featuredImage } = architectData;
+                  const { architect, slug, count, featuredImage, awards } = architectData;
+                  const pritzkerWinner = awards?.some(a => a.name.toLowerCase().includes('pritzker'));
                   return (
                     <button
                       key={slug}
@@ -148,9 +164,19 @@ export default function ArchitectsPage() {
                           </div>
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                        {pritzkerWinner && (
+                          <div className="absolute top-2 right-2 bg-amber-500/90 text-white px-2 py-1 rounded text-xs font-semibold">
+                            Pritzker Prize
+                          </div>
+                        )}
                       </div>
                       <h3 className="text-sm font-medium mb-1 text-black dark:text-white">{architect}</h3>
                       <p className="text-xs text-gray-400 dark:text-gray-500">{count} {count === 1 ? 'destination' : 'destinations'}</p>
+                      {awards && awards.length > 0 && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                          Award-winning architect
+                        </p>
+                      )}
                     </button>
                   );
                 })}
@@ -173,7 +199,8 @@ export default function ArchitectsPage() {
                 items={architectStats.slice(0, displayCount)}
                 gap="sm"
                 renderItem={(architectData) => {
-                  const { architect, slug, count, featuredImage } = architectData;
+                  const { architect, slug, count, featuredImage, awards } = architectData;
+                  const pritzkerWinner = awards?.some(a => a.name.toLowerCase().includes('pritzker'));
                   return (
                     <button
                       key={slug}
@@ -196,10 +223,17 @@ export default function ArchitectsPage() {
                             <Building2 className="h-12 w-12 opacity-20" />
                           </div>
                         )}
-                        
+
                         {/* Overlay gradient */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        
+
+                        {/* Prize badge */}
+                        {pritzkerWinner && (
+                          <div className="absolute top-2 right-2 bg-amber-500/90 text-white px-2 py-0.5 rounded text-xs font-semibold">
+                            Prize
+                          </div>
+                        )}
+
                         {/* Count badge */}
                         <div className="absolute bottom-2 right-2 bg-white/90 dark:bg-black/90 backdrop-blur-sm text-gray-700 dark:text-gray-300 px-2 py-1 rounded-2xl text-xs font-medium border border-gray-200/50 dark:border-gray-700/50">
                           {count}
@@ -214,6 +248,11 @@ export default function ArchitectsPage() {
                         <p className="text-xs text-gray-400 dark:text-gray-500">
                           {count} {count === 1 ? 'destination' : 'destinations'}
                         </p>
+                        {pritzkerWinner && (
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            Pritzker Prize winner
+                          </p>
+                        )}
                       </div>
                     </button>
                   );
