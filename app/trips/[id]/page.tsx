@@ -326,8 +326,8 @@ export default function TripPage() {
               destination={trip.destination}
               startDate={trip.start_date}
               endDate={trip.end_date}
-              latitude={firstDestination?.latitude}
-              longitude={firstDestination?.longitude}
+              latitude={firstDestination?.latitude ?? undefined}
+              longitude={firstDestination?.longitude ?? undefined}
               compact
             />
           </div>
@@ -425,8 +425,8 @@ export default function TripPage() {
                 destination={trip.destination}
                 startDate={trip.start_date}
                 endDate={trip.end_date}
-                latitude={firstDestination?.latitude}
-                longitude={firstDestination?.longitude}
+                latitude={firstDestination?.latitude ?? undefined}
+                longitude={firstDestination?.longitude ?? undefined}
               />
             </div>
 
