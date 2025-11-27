@@ -20,11 +20,12 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Plus, Plane, Sparkles, Clock, MapPin } from 'lucide-react';
+import { Plus, Plane, Sparkles, Clock, MapPin, Zap } from 'lucide-react';
 import TimeBlockCard from './TimeBlockCard';
 import type { TimeBlock, DayPlan, DayPlanStats } from '@/lib/intelligence/types';
 import { estimateTransit } from '@/lib/intelligence/transit';
 import { calculateDayStats, formatTimeFromMinutes, parseTimeToMinutes } from '@/lib/intelligence/types';
+import { fillGapsInTimeline, applyFillSuggestions } from '@/lib/intelligence/autoFill';
 
 interface TimelineCanvasProps {
   dayPlan: DayPlan;
@@ -34,7 +35,12 @@ interface TimelineCanvasProps {
   onAddPlace?: () => void;
   onAddFlight?: () => void;
   onAIPlan?: () => void;
+  /** Callback for smart route optimization */
+  onSmartOptimize?: () => void;
   isAIPlanning?: boolean;
+  isOptimizing?: boolean;
+  /** Starting location for route optimization (e.g., hotel) */
+  startingLocation?: { lat: number; lng: number };
   className?: string;
 }
 
@@ -115,7 +121,10 @@ export default function TimelineCanvas({
   onAddPlace,
   onAddFlight,
   onAIPlan,
+  onSmartOptimize,
   isAIPlanning,
+  isOptimizing,
+  startingLocation,
   className = '',
 }: TimelineCanvasProps) {
   const [expandedBlockId, setExpandedBlockId] = useState<string | null>(null);
@@ -234,6 +243,73 @@ export default function TimelineCanvas({
     },
     [dayPlan.blocks, onBlocksChange]
   );
+
+  // Handle smart route optimization (TSP-lite nearest neighbor)
+  const handleSmartOptimize = useCallback(() => {
+    if (onSmartOptimize) {
+      onSmartOptimize();
+      return;
+    }
+
+    // Client-side nearest neighbor optimization
+    const activities = activityBlocks.filter((b) => !b.isLocked && b.place?.latitude && b.place?.longitude);
+    const lockedBlocks = activityBlocks.filter((b) => b.isLocked);
+
+    if (activities.length < 2) return;
+
+    // Start from hotel/starting location or first block
+    const start = startingLocation || (activities[0].place
+      ? { lat: activities[0].place.latitude!, lng: activities[0].place.longitude! }
+      : null);
+
+    if (!start) return;
+
+    // Nearest neighbor sort
+    const sorted: TimeBlock[] = [];
+    const remaining = [...activities];
+    let current = start;
+
+    while (remaining.length > 0) {
+      let nearestIdx = 0;
+      let nearestDist = Infinity;
+
+      for (let i = 0; i < remaining.length; i++) {
+        const block = remaining[i];
+        if (!block.place?.latitude || !block.place?.longitude) continue;
+
+        const dist = Math.sqrt(
+          Math.pow(block.place.latitude - current.lat, 2) +
+          Math.pow(block.place.longitude - current.lng, 2)
+        );
+
+        if (dist < nearestDist) {
+          nearestDist = dist;
+          nearestIdx = i;
+        }
+      }
+
+      const nearest = remaining.splice(nearestIdx, 1)[0];
+      sorted.push(nearest);
+      current = { lat: nearest.place!.latitude!, lng: nearest.place!.longitude! };
+    }
+
+    // Merge locked blocks back in their original positions
+    const optimized = [...sorted, ...lockedBlocks];
+
+    // Recalculate timeline with new order
+    const newBlocks = recalculateTimeline(optimized);
+    onBlocksChange(newBlocks);
+  }, [activityBlocks, onBlocksChange, onSmartOptimize, startingLocation, recalculateTimeline]);
+
+  // Handle auto-fill gaps
+  const handleAutoFill = useCallback(() => {
+    const suggestions = fillGapsInTimeline(dayPlan.blocks);
+    if (suggestions.length > 0) {
+      const filledBlocks = applyFillSuggestions(dayPlan.blocks, suggestions);
+      const recalculated = recalculateTimeline(filledBlocks.filter(b => b.type !== 'transit'));
+      onBlocksChange(recalculated);
+    }
+  }, [dayPlan.blocks, onBlocksChange, recalculateTimeline]);
 
   // Stats display
   const stats = dayPlan.stats;
@@ -367,14 +443,25 @@ export default function TimelineCanvas({
         <button
           onClick={onAddFlight}
           className="px-4 py-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          title="Add flight"
         >
           <Plane className="w-4 h-4" />
+        </button>
+        {/* Smart Optimize Button - TSP-lite nearest neighbor */}
+        <button
+          onClick={handleSmartOptimize}
+          disabled={isOptimizing || activityBlocks.length < 2}
+          className="px-4 py-2.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-sm font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900/50 disabled:opacity-50 transition-colors"
+          title="Optimize route order"
+        >
+          <Zap className={`w-4 h-4 ${isOptimizing ? 'animate-pulse' : ''}`} />
         </button>
         {onAIPlan && (
           <button
             onClick={onAIPlan}
             disabled={isAIPlanning}
             className="px-4 py-2.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white text-sm font-medium rounded-xl hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 transition-all"
+            title="AI Plan"
           >
             <Sparkles className={`w-4 h-4 ${isAIPlanning ? 'animate-spin' : ''}`} />
           </button>

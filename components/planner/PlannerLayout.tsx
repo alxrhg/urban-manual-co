@@ -164,12 +164,12 @@ export default function PlannerLayout({
 
       {/* Split Screen Content */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Timeline Panel (40% on desktop) */}
+        {/* Timeline Panel (35% on desktop per v2.1.0 spec) */}
         <div
           className={`
             flex-shrink-0 border-r border-gray-200 dark:border-gray-800 overflow-hidden
             ${mobileView === 'timeline' ? 'w-full' : 'hidden'}
-            md:block md:w-[40%] lg:w-[45%]
+            md:block md:w-[35%]
           `}
         >
           {currentDay && (
@@ -187,12 +187,12 @@ export default function PlannerLayout({
           )}
         </div>
 
-        {/* Map Panel (60% on desktop) */}
+        {/* Map Panel (65% on desktop per v2.1.0 spec) */}
         <div
           className={`
             flex-1 overflow-hidden
             ${mobileView === 'map' ? 'w-full' : 'hidden'}
-            md:block
+            md:block md:w-[65%]
           `}
         >
           <PlannerMap

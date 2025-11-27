@@ -42,8 +42,25 @@ export interface SmartBlockData {
 }
 
 /**
+ * Transit information calculated automatically
+ */
+export interface TransitToNext {
+  mode: 'walk' | 'drive' | 'transit';
+  duration: number;
+  distanceKm: number;
+}
+
+/**
+ * Smart insights from ForecastingService
+ */
+export interface SmartInsights {
+  crowdLevel?: 'low' | 'moderate' | 'high';
+  weatherWarning?: string;
+}
+
+/**
  * A single time block in the itinerary
- * Replaces the old fixed meal slot system
+ * Replaces the old fixed meal slot system (breakfast/lunch/dinner)
  */
 export interface TimeBlock {
   id: string;
@@ -61,11 +78,15 @@ export interface TimeBlock {
   durationMinutes: number;
   /** If true, optimizer won't move this block */
   isLocked: boolean;
+  /** Transit info to next block (calculated automatically) */
+  transitToNext?: TransitToNext;
+  /** Smart insights from ForecastingService */
+  smartInsights?: SmartInsights;
   /** Category for display */
   category?: string;
   /** User notes */
   notes?: string;
-  /** Smart contextual data */
+  /** Smart contextual data (extended) */
   smartData?: SmartBlockData;
 }
 
