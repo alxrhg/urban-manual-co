@@ -37,7 +37,10 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
   // Fetch trip and items
   const fetchTrip = useCallback(async (isInitialLoad = false) => {
-    if (!tripId || !userId) return;
+    if (!tripId || !userId) {
+      // Don't set loading if we don't have required params yet
+      return;
+    }
 
     try {
       // Only show loading on initial load, not refreshes
@@ -45,7 +48,10 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
         setLoading(true);
       }
       const supabase = createClient();
-      if (!supabase) return;
+      if (!supabase) {
+        setLoading(false);
+        return;
+      }
 
       // Fetch trip
       const { data: tripData, error: tripError } = await supabase
@@ -120,10 +126,16 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
   }, [tripId, userId, onError, initialized]);
 
   useEffect(() => {
-    if (!initialized) {
+    // Wait for auth to load before fetching
+    if (!userId) {
+      // Still waiting for auth - keep loading state
+      return;
+    }
+
+    if (!initialized && tripId) {
       fetchTrip(true);
     }
-  }, [tripId, userId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tripId, userId, initialized, fetchTrip]);
 
   // Update trip metadata
   const updateTrip = useCallback(async (updates: Partial<Trip>) => {
