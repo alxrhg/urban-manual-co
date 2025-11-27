@@ -28,6 +28,12 @@ const buttonVariants = cva(
         // Ghost: No background, minimal hover
         ghost:
           "text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800",
+        // Muted: Bordered with subtle background
+        muted:
+          "border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-black dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
+        // Subtle: Text with subtle hover
+        subtle:
+          "text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800",
         // Link: Text only with underline
         link:
           "text-black dark:text-white underline-offset-4 hover:underline",
