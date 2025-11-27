@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,39 +8,24 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  rectSortingStrategy,
-  arrayMove,
-} from '@dnd-kit/sortable';
-import {
   ArrowLeft,
   Settings,
-  Calendar,
-  MapPin,
+  Sparkles,
+  Map,
   Plus,
+  Loader2,
+  MapPin,
 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
 import { PageLoader } from '@/components/LoadingStates';
-import ItineraryCard from '@/components/trip/ItineraryCard';
-import DayTabNav from '@/components/trip/DayTabNav';
-import FloatingActionBar from '@/components/trip/FloatingActionBar';
+import TripStats from '@/components/trip/TripStats';
+import TripDaySection from '@/components/trip/TripDaySection';
 import MapDrawer from '@/components/trip/MapDrawer';
 import type { FlightData } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 
 /**
- * TripPage - Fresh Journal-style trip planner
- * Immersive imagery, elegant typography, floating interactions
+ * TripPage - Unified design matching Account page and Destination drawer
+ * Features: Stats grid, collapsible day sections, text-based tabs, rounded-2xl cards
  */
 export default function TripPage() {
   const params = useParams();
@@ -60,7 +45,6 @@ export default function TripPage() {
     addPlace,
     addFlight,
     removeItem,
-    updateItemTime,
     refresh,
   } = useTripEditor({
     tripId,
@@ -73,22 +57,7 @@ export default function TripPage() {
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isAIPlanning, setIsAIPlanning] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  // Animation trigger
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // DnD Sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 10 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  // Get current day's items
-  const currentDay = days.find((d) => d.dayNumber === selectedDayNumber);
-  const currentItems = currentDay?.items || [];
+  const [activeTab, setActiveTab] = useState<'itinerary' | 'overview'>('itinerary');
 
   // Callbacks
   const openPlaceSelector = useCallback((dayNumber: number) => {
@@ -134,16 +103,6 @@ export default function TripPage() {
     }
     setActiveItemId(item.id);
   }, [openDrawer]);
-
-  const handleDragEnd = useCallback((event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      const oldIndex = currentItems.findIndex((item) => item.id === active.id);
-      const newIndex = currentItems.findIndex((item) => item.id === over.id);
-      const newItems = arrayMove(currentItems, oldIndex, newIndex);
-      reorderItems(selectedDayNumber, newItems);
-    }
-  }, [currentItems, reorderItems, selectedDayNumber]);
 
   const handleAITripPlanning = async () => {
     if (!trip || !user) return;
@@ -210,7 +169,7 @@ export default function TripPage() {
   // Loading state
   if (loading) {
     return (
-      <main className="w-full min-h-screen bg-[#faf9f7] dark:bg-[#0a0a0a]">
+      <main className="w-full px-6 md:px-10 py-20">
         <PageLoader />
       </main>
     );
@@ -219,12 +178,17 @@ export default function TripPage() {
   // Not found
   if (!trip) {
     return (
-      <main className="w-full min-h-screen bg-[#faf9f7] dark:bg-[#0a0a0a] flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-stone-400 mb-4">Trip not found</p>
-          <Link href="/trips" className="text-sm text-stone-900 dark:text-white hover:underline">
-            Back to trips
-          </Link>
+      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">Trip not found</p>
+            <Link
+              href="/trips"
+              className="text-sm text-gray-900 dark:text-white hover:underline"
+            >
+              Back to trips
+            </Link>
+          </div>
         </div>
       </main>
     );
@@ -235,215 +199,217 @@ export default function TripPage() {
     .flatMap(d => d.items)
     .find(item => item.destination?.image)?.destination?.image;
 
-  // Format date range
-  const dateRange = trip.start_date && trip.end_date
-    ? `${format(parseISO(trip.start_date), 'MMM d')} — ${format(parseISO(trip.end_date), 'MMM d, yyyy')}`
-    : null;
-
   return (
-    <main className="w-full min-h-screen bg-[#faf9f7] dark:bg-[#0a0a0a]">
-      {/* Hero Section */}
-      <header className="relative h-[50vh] min-h-[400px] overflow-hidden">
-        {/* Background Image */}
-        {coverImage ? (
-          <Image
-            src={coverImage}
-            alt={trip.title}
-            fill
-            className="object-cover"
-            priority
-          />
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-stone-300 to-stone-400 dark:from-stone-800 dark:to-stone-900" />
-        )}
-
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#faf9f7] via-[#faf9f7]/50 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/50" />
-
-        {/* Top Navigation */}
-        <nav className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 md:p-6">
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <div className="w-full max-w-4xl mx-auto">
+        {/* Header - Matches Account page style */}
+        <div className="mb-12">
+          {/* Back Link */}
           <Link
             href="/trips"
-            className={`
-              flex items-center gap-2 px-3 py-2 rounded-full
-              bg-white/80 dark:bg-black/60 backdrop-blur-sm
-              text-sm text-stone-600 dark:text-stone-300
-              hover:bg-white dark:hover:bg-black transition-colors
-              shadow-lg
-              opacity-0 ${mounted ? 'animate-fade-in' : ''}
-            `}
-            style={{ animationDelay: '0.1s' }}
+            className="inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors mb-6"
           >
-            <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Trips</span>
+            <ArrowLeft className="w-3 h-3" />
+            Back to Trips
           </Link>
 
-          <button
-            onClick={() => openDrawer('trip-settings', {
-              trip,
-              onUpdate: updateTrip,
-              onDelete: () => router.push('/trips'),
-            })}
-            className={`
-              w-10 h-10 rounded-full flex items-center justify-center
-              bg-white/80 dark:bg-black/60 backdrop-blur-sm
-              text-stone-600 dark:text-stone-300
-              hover:bg-white dark:hover:bg-black transition-colors
-              shadow-lg
-              opacity-0 ${mounted ? 'animate-fade-in' : ''}
-            `}
-            style={{ animationDelay: '0.2s' }}
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        </nav>
-
-        {/* Hero Content */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 p-6 md:p-10">
-          <div className="max-w-4xl mx-auto">
-            {/* Destination Tag */}
-            {trip.destination && (
-              <div
-                className={`
-                  inline-flex items-center gap-1.5 mb-4
-                  text-xs uppercase tracking-[0.2em] font-medium
-                  text-stone-500 dark:text-stone-400
-                  opacity-0 ${mounted ? 'animate-fade-in' : ''}
-                `}
-                style={{ animationDelay: '0.1s' }}
-              >
-                <MapPin className="w-3 h-3" />
-                {trip.destination}
-              </div>
-            )}
-
-            {/* Title */}
-            <h1
-              className={`
-                text-4xl md:text-6xl lg:text-7xl font-display
-                text-stone-900 dark:text-white
-                leading-[1.1] tracking-tight
-                opacity-0 ${mounted ? 'animate-slide-up' : ''}
-              `}
-              style={{ animationDelay: '0.2s' }}
-            >
-              {trip.title}
-            </h1>
-
-            {/* Date Range */}
-            {dateRange && (
-              <div
-                className={`
-                  flex items-center gap-2 mt-4
-                  text-sm text-stone-500 dark:text-stone-400
-                  opacity-0 ${mounted ? 'animate-fade-in' : ''}
-                `}
-                style={{ animationDelay: '0.3s' }}
-              >
-                <Calendar className="w-4 h-4" />
-                {dateRange}
-                <span className="text-stone-300 dark:text-stone-600">·</span>
-                <span>{days.length} days</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Day Navigation */}
-      <div
-        className={`
-          sticky top-0 z-30
-          bg-[#faf9f7]/95 dark:bg-[#0a0a0a]/95 backdrop-blur-sm
-          border-b border-stone-200/50 dark:border-stone-800/50
-          opacity-0 ${mounted ? 'animate-fade-in' : ''}
-        `}
-        style={{ animationDelay: '0.4s' }}
-      >
-        <div className="max-w-4xl mx-auto">
-          <DayTabNav
-            days={days}
-            selectedDayNumber={selectedDayNumber}
-            onSelectDay={setSelectedDayNumber}
-          />
-        </div>
-      </div>
-
-      {/* Content Grid */}
-      <section className="max-w-4xl mx-auto px-4 md:px-6 py-8 pb-32">
-        {currentItems.length === 0 ? (
-          /* Empty State */
-          <div
-            className={`
-              flex flex-col items-center justify-center py-20 text-center
-              opacity-0 ${mounted ? 'animate-fade-in' : ''}
-            `}
-            style={{ animationDelay: '0.5s' }}
-          >
-            <div className="w-16 h-16 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
-              <Plus className="w-6 h-6 text-stone-400" />
+          {/* Title Row */}
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div className="flex-1 min-w-0">
+              {/* Destination Tag */}
+              {trip.destination && (
+                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-2">
+                  <MapPin className="w-3 h-3" />
+                  {trip.destination}
+                </div>
+              )}
+              {/* Trip Title */}
+              <h1 className="text-2xl font-light text-gray-900 dark:text-white truncate">
+                {trip.title}
+              </h1>
             </div>
-            <h3 className="text-lg font-display text-stone-900 dark:text-white mb-2">
-              Day {selectedDayNumber} is empty
-            </h3>
-            <p className="text-sm text-stone-500 dark:text-stone-400 mb-6 max-w-xs">
-              Add your first stop to start planning this day of your trip.
-            </p>
-            <button
-              onClick={() => openPlaceSelector(selectedDayNumber)}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-medium text-sm hover:scale-105 transition-transform shadow-lg"
-            >
-              <Plus className="w-4 h-4" />
-              Add a place
-            </button>
-          </div>
-        ) : (
-          /* Itinerary Grid */
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={currentItems.map((item) => item.id)}
-              strategy={rectSortingStrategy}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {currentItems.map((item, index) => (
-                  <div
-                    key={item.id}
-                    className={`
-                      opacity-0 ${mounted ? 'animate-fade-in' : ''}
-                      ${index === 0 ? 'md:col-span-2' : ''}
-                    `}
-                    style={{ animationDelay: `${0.5 + index * 0.1}s` }}
-                  >
-                    <ItineraryCard
-                      item={item}
-                      index={index}
-                      variant={index === 0 ? 'featured' : 'default'}
-                      onEdit={handleEditItem}
-                      onRemove={removeItem}
-                      isActive={item.id === activeItemId}
-                    />
-                  </div>
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        )}
-      </section>
 
-      {/* Floating Action Bar */}
-      <FloatingActionBar
-        onAddPlace={() => openPlaceSelector(selectedDayNumber)}
-        onAddFlight={() => openFlightDrawer(selectedDayNumber)}
-        onAddNote={() => openDrawer('trip-notes', { tripId: trip.id })}
-        onOpenMap={() => setIsMapOpen(true)}
-        onAIPlan={handleAITripPlanning}
-        isAIPlanning={isAIPlanning}
-        isSaving={saving}
-      />
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => setIsMapOpen(true)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                title="View Map"
+              >
+                <Map className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              </button>
+              <button
+                onClick={() => openDrawer('trip-settings', {
+                  trip,
+                  onUpdate: updateTrip,
+                  onDelete: () => router.push('/trips'),
+                })}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                title="Settings"
+              >
+                <Settings className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              </button>
+            </div>
+          </div>
+
+          {/* Cover Image (optional) */}
+          {coverImage && (
+            <div className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden mb-6">
+              <Image
+                src={coverImage}
+                alt={trip.title}
+                fill
+                className="object-cover"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+            </div>
+          )}
+        </div>
+
+        {/* Stats Grid - Matches Account page */}
+        <TripStats
+          days={days}
+          destination={trip.destination}
+          startDate={trip.start_date}
+          endDate={trip.end_date}
+          className="mb-12"
+        />
+
+        {/* Tab Navigation - Matches Account page style */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex gap-x-4 text-xs">
+              {(['itinerary', 'overview'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`transition-all ${
+                    activeTab === tab
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleAITripPlanning}
+                disabled={isAIPlanning || saving}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-black dark:bg-white dark:text-black rounded-2xl hover:opacity-80 disabled:opacity-50 transition-opacity"
+              >
+                {isAIPlanning ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3 h-3" />
+                )}
+                {isAIPlanning ? 'Planning...' : 'AI Plan'}
+              </button>
+              <button
+                onClick={() => openPlaceSelector(selectedDayNumber)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Plus className="w-3 h-3" />
+                Add Stop
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Itinerary Tab */}
+        {activeTab === 'itinerary' && (
+          <div className="space-y-4 fade-in">
+            {days.length === 0 ? (
+              /* Empty State */
+              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
+                <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No days in your trip yet</p>
+                <button
+                  onClick={() => openPlaceSelector(1)}
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+                >
+                  Add your first stop
+                </button>
+              </div>
+            ) : (
+              /* Day Sections */
+              days.map((day) => (
+                <TripDaySection
+                  key={day.dayNumber}
+                  day={day}
+                  isSelected={day.dayNumber === selectedDayNumber}
+                  onSelect={() => setSelectedDayNumber(day.dayNumber)}
+                  onReorderItems={reorderItems}
+                  onRemoveItem={removeItem}
+                  onEditItem={handleEditItem}
+                  onAddItem={openPlaceSelector}
+                  activeItemId={activeItemId}
+                />
+              ))
+            )}
+          </div>
+        )}
+
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="fade-in">
+            <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl">
+              <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Trip Summary</h3>
+              <div className="space-y-4">
+                {trip.description ? (
+                  <p className="text-sm text-gray-600 dark:text-gray-300">{trip.description}</p>
+                ) : (
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    No description added yet. Edit your trip to add one.
+                  </p>
+                )}
+
+                <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+                  <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">All Stops</h4>
+                  <div className="space-y-2">
+                    {days.flatMap(day =>
+                      day.items.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => handleEditItem(item)}
+                          className="w-full text-left p-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-gray-400 w-8">D{day.dayNumber}</span>
+                            <span className="text-sm text-gray-900 dark:text-white truncate flex-1">
+                              {item.title}
+                            </span>
+                            <span className="text-xs text-gray-400 capitalize">
+                              {item.parsedNotes?.category || item.destination?.category}
+                            </span>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                    {days.flatMap(d => d.items).length === 0 && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 py-4 text-center">
+                        No stops added yet
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Saving Indicator */}
+        {saving && (
+          <div className="fixed bottom-6 right-6 flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-2xl shadow-lg text-xs font-medium">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Saving...
+          </div>
+        )}
+      </div>
 
       {/* Map Drawer */}
       <MapDrawer
