@@ -4,41 +4,57 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Button variants following Lovably editorial aesthetic
+ * Sharp corners or full pill. No medium rounded. Black/white primary colors.
+ */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-950 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive active:scale-[0.98]",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap font-body text-sm font-medium transition-all duration-200 ease-out disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white focus-visible:ring-offset-2 active:scale-[0.98]",
   {
     variants: {
       variant: {
-        default: "border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-white/15 dark:bg-[#1A1C1F] dark:text-white/90 dark:hover:bg-white/5",
+        // Primary: Solid black (light) / white (dark) background
+        default:
+          "bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200",
+        // Destructive: Red variant
         destructive:
-          "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 rounded-xl",
+          "bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600",
+        // Outline: Border only, transparent background
         outline:
-          "border border-neutral-200 dark:border-white/15 bg-transparent hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-800 dark:text-white/90",
+          "border border-black dark:border-white bg-transparent text-black dark:text-white hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black",
+        // Secondary: Subtle gray background
         secondary:
-          "border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-white/15 dark:bg-[#1A1C1F] dark:text-white/90 dark:hover:bg-white/5",
+          "bg-gray-100 text-black hover:bg-gray-200 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700",
+        // Ghost: No background, minimal hover
         ghost:
-          "hover:bg-neutral-50 dark:hover:bg-white/5",
-        muted:
-          "border border-neutral-200 dark:border-white/15 bg-white dark:bg-[#1A1C1F] text-neutral-800 dark:text-white/90 hover:bg-neutral-50 dark:hover:bg-white/5",
-        subtle:
-          "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-white/90 hover:bg-neutral-50 dark:hover:bg-white/5",
+          "text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800",
+        // Link: Text only with underline
+        link:
+          "text-black dark:text-white underline-offset-4 hover:underline",
+        // Pill: Full rounded, outline style
         pill:
-          "rounded-full border border-neutral-200 dark:border-white/15 bg-white dark:bg-[#1A1C1F] text-xs font-medium text-neutral-800 dark:text-white/90 hover:bg-neutral-50 dark:hover:bg-white/5",
-        link: "text-primary underline-offset-4 hover:underline",
+          "rounded-full border border-black dark:border-white bg-transparent text-black dark:text-white text-xs uppercase tracking-widest hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black",
       },
       size: {
-        default: "h-10 px-5 py-2 has-[>svg]:px-4",
-        sm: "h-9 rounded-2xl gap-1.5 px-3.5 has-[>svg]:px-3",
-        lg: "h-11 rounded-2xl px-7 has-[>svg]:px-5",
-        xs: "h-8 rounded-xl px-3 text-xs gap-1.5 has-[>svg]:px-2.5",
+        default: "h-10 px-5 py-2",
+        sm: "h-9 px-4 text-xs",
+        lg: "h-12 px-8 text-base",
+        xs: "h-8 px-3 text-xs",
         icon: "size-10",
         "icon-sm": "size-9",
-        "icon-lg": "size-11",
+        "icon-lg": "size-12",
+      },
+      // Shape variants: sharp (square corners) or pill (full rounded)
+      shape: {
+        sharp: "rounded-none",
+        rounded: "rounded-md",
+        pill: "rounded-full",
       },
     },
     defaultVariants: {
       variant: "default",
       size: "default",
+      shape: "sharp",
     },
   }
 );
@@ -47,6 +63,7 @@ function Button({
   className,
   variant,
   size,
+  shape,
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
@@ -58,7 +75,7 @@ function Button({
   return (
     <Comp
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size, shape, className }))}
       {...props}
     />
   );

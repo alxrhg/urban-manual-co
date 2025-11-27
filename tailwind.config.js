@@ -2,11 +2,27 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // Distinctive typography - avoid generic AI aesthetics
+        // Editorial typography - Lovably aesthetic
         sans: ['Outfit', 'system-ui', '-apple-system', 'sans-serif'],
         serif: ['Playfair Display', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'Menlo', 'monospace'],
-        display: ['Instrument Serif', 'Playfair Display', 'Georgia', 'serif'],
+        display: ['Playfair Display', 'Georgia', 'serif'],
+        body: ['Outfit', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      colors: {
+        gray: {
+          50: '#FAFAFA',
+          100: '#F5F5F5',
+          200: '#E5E5E5',
+          300: '#D4D4D4',
+          400: '#A3A3A3',
+          500: '#737373',
+          600: '#525252',
+          700: '#404040',
+          800: '#262626',
+          900: '#171717',
+          950: '#0A0A0A', // Deep black for dark mode
+        },
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out forwards',

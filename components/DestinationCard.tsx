@@ -6,7 +6,6 @@ import { MapPin, Check } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
-import { DestinationBadges } from './DestinationBadges';
 import { QuickActions } from './QuickActions';
 
 interface DestinationCardProps {
@@ -14,22 +13,21 @@ interface DestinationCardProps {
   onClick?: () => void;
   index?: number;
   isVisited?: boolean;
-  showBadges?: boolean;
   showQuickActions?: boolean;
   className?: string;
   onAddToTrip?: () => void;
 }
 
 /**
- * Enhanced Destination Card with hover interactions and progressive loading
- * Memoized to prevent unnecessary re-renders
+ * DestinationCard - Zero-UI editorial card design
+ * Features: Large imagery, serif headings, minimal overlays
+ * Lovably aesthetic with smooth hover interactions
  */
 export const DestinationCard = memo(function DestinationCard({
   destination,
   onClick,
   index = 0,
   isVisited = false,
-  showBadges = true,
   showQuickActions = true,
   className = '',
   onAddToTrip,
@@ -53,7 +51,7 @@ export const DestinationCard = memo(function DestinationCard({
         });
       },
       {
-        rootMargin: '50px', // Start loading 50px before entering viewport
+        rootMargin: '100px',
         threshold: 0.1,
       }
     );
@@ -68,9 +66,13 @@ export const DestinationCard = memo(function DestinationCard({
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    // Simply call onClick - Drawer component handles scroll locking without layout shift
     onClick?.();
   };
+
+  // Format category display
+  const categoryDisplay = destination.category
+    ? destination.category.charAt(0).toUpperCase() + destination.category.slice(1).toLowerCase()
+    : '';
 
   return (
     <button
@@ -78,43 +80,33 @@ export const DestinationCard = memo(function DestinationCard({
       onClick={handleClick}
       type="button"
       className={`
-        group relative w-full flex flex-col transition-all duration-300 ease-out
-        cursor-pointer text-left focus-ring
-        hover:scale-[1.01]
-        active:scale-[0.98]
+        group relative w-full flex flex-col text-left
+        cursor-pointer focus:outline-none
         ${className}
       `}
       aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
     >
-        {/* Image Container with Progressive Loading */}
-        <div
-          className={`
-            relative aspect-video overflow-hidden rounded-2xl
-            bg-gray-100 dark:bg-gray-800
-            border border-gray-200 dark:border-gray-800
-            transition-all duration-300 ease-out
-            mb-3
-            ${isLoaded ? 'opacity-100' : 'opacity-0'}
-          `}
-        >
+      {/* Image Container - Zero-UI: No borders, minimal styling */}
+      <div
+        className={`
+          relative aspect-[4/5] overflow-hidden bg-gray-100 dark:bg-gray-900 mb-4
+          transition-opacity duration-500
+          ${isLoaded ? 'opacity-100' : 'opacity-0'}
+        `}
+      >
         {/* Skeleton while loading */}
         {!isLoaded && isInView && (
-          <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
+          <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-800" />
         )}
 
-        {/* Actual Image - Use thumbnail for cards, fallback to full image */}
+        {/* Image with smooth hover zoom */}
         {isInView && (destination.image_thumbnail || destination.image) && !imageError ? (
           <Image
             src={destination.image_thumbnail || destination.image!}
             alt={`${destination.name} in ${capitalizeCity(destination.city)}${destination.category ? ` - ${destination.category}` : ''}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className={`
-              object-cover
-              transition-all duration-500 ease-out
-              group-hover:scale-105
-              ${isLoaded ? 'opacity-100' : 'opacity-0'}
-            `}
+            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             quality={80}
             loading={index < 6 ? 'eager' : 'lazy'}
             fetchPriority={index === 0 ? 'high' : 'auto'}
@@ -126,30 +118,14 @@ export const DestinationCard = memo(function DestinationCard({
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-            <MapPin className="h-12 w-12 opacity-20 transition-transform duration-300 group-hover:scale-105" />
+            <MapPin className="h-12 w-12 opacity-20" />
           </div>
         )}
 
-        {/* Hover Overlay */}
-        <div
-          className={`
-            absolute inset-0
-            bg-gradient-to-t from-black/60 via-transparent to-transparent
-            opacity-0 group-hover:opacity-100
-            transition-opacity duration-300
-            pointer-events-none
-          `}
-        />
-
-        {/* Quick Actions - Top Right on Hover */}
+        {/* Quick Actions - Appear on hover, top right */}
         {showQuickActions && destination.slug && (
           <div
-            className={`
-              absolute top-2 right-2 z-20
-              opacity-0 group-hover:opacity-100
-              translate-y-1 group-hover:translate-y-0
-              transition-all duration-200
-            `}
+            className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-200"
           >
             <QuickActions
               destinationId={destination.id}
@@ -163,92 +139,54 @@ export const DestinationCard = memo(function DestinationCard({
           </div>
         )}
 
-        {/* Visited Check Badge - Center */}
+        {/* Visited Badge - Subtle center overlay */}
         {isVisited && (
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-10 h-10 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
-            <Check className="w-5 h-5 text-gray-900 dark:text-white stroke-[3]" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-full flex items-center justify-center">
+            <Check className="w-6 h-6 text-black dark:text-white stroke-[2.5]" />
           </div>
         )}
 
-        {/* Badges - Animated on hover */}
-        {showBadges && (
-          <>
-            {/* Michelin Stars - Bottom Left */}
-            {typeof destination.michelin_stars === 'number' &&
-              destination.michelin_stars > 0 && (
-                <div
-                  className={`
-                    absolute bottom-2 left-2 z-10
-                    px-3 py-1 border border-gray-200 dark:border-gray-800
-                    rounded-2xl text-gray-600 dark:text-gray-400 text-xs
-                    bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
-                    flex items-center gap-1.5
-                    transform scale-100 group-hover:scale-[1.02]
-                    transition-transform duration-300
-                    shadow-sm group-hover:shadow-md
-                  `}
-                >
-                  <img
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                    alt="Michelin star"
-                    className="h-3 w-3"
-                    onError={(e) => {
-                      // Fallback to local file if external URL fails
-                      const target = e.currentTarget;
-                      if (target.src !== '/michelin-star.svg') {
-                        target.src = '/michelin-star.svg';
-                      }
-                    }}
-                  />
-                  <span>{destination.michelin_stars}</span>
-                </div>
-              )}
-          </>
+        {/* Michelin Stars - Bottom left, subtle */}
+        {typeof destination.michelin_stars === 'number' && destination.michelin_stars > 0 && (
+          <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 px-2.5 py-1 bg-white/90 dark:bg-black/90 backdrop-blur-sm text-xs font-body">
+            <img
+              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+              alt="Michelin star"
+              className="h-3 w-3"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src !== '/michelin-star.svg') {
+                  target.src = '/michelin-star.svg';
+                }
+              }}
+            />
+            <span className="text-black dark:text-white">{destination.michelin_stars}</span>
+          </div>
         )}
       </div>
 
-      {/* Info Section */}
+      {/* Text Content - Editorial typography */}
       <div className="flex-1 flex flex-col">
-        <div>
-        <h3
-          className={`
-            text-sm font-medium text-gray-900 dark:text-white
-              line-clamp-2
-            transition-colors duration-200
-            group-hover:text-gray-700 dark:group-hover:text-gray-200
-          `}
-        >
+        {/* Name - Serif display font with hover underline */}
+        <h3 className="font-display text-xl md:text-2xl text-black dark:text-white leading-tight mb-1 group-hover:underline decoration-1 underline-offset-4">
           {destination.name}
         </h3>
 
-        {/* Micro Description - Always show with fallback, stuck to title */}
-        <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">
-          {destination.micro_description ||
-           (destination.category && destination.city
-             ? `${destination.category} in ${capitalizeCity(destination.city)}`
-             : destination.city
-               ? `Located in ${capitalizeCity(destination.city)}`
-               : destination.category || '')}
-        </div>
-
-        {/* ML Forecasting Badges */}
-        {showBadges && destination.id && (
-          <div className="mt-2">
-            <DestinationBadges destinationId={destination.id} compact={true} showTiming={false} />
-          </div>
-        )}
-        </div>
+        {/* Location & Category - Sans-serif, uppercase, subtle */}
+        <p className="font-body text-xs uppercase tracking-widest text-gray-500 dark:text-gray-400">
+          {capitalizeCity(destination.city)}
+          {categoryDisplay && (
+            <>
+              <span className="mx-2">&mdash;</span>
+              {categoryDisplay}
+            </>
+          )}
+        </p>
       </div>
 
       {/* Focus Ring for Accessibility */}
       <div
-        className={`
-          absolute inset-0 rounded-2xl
-          ring-2 ring-offset-2 ring-black dark:ring-white
-          opacity-0 focus-within:opacity-100
-          transition-opacity duration-200
-          pointer-events-none
-        `}
+        className="absolute inset-0 ring-2 ring-offset-2 ring-black dark:ring-white opacity-0 focus-within:opacity-100 transition-opacity duration-200 pointer-events-none"
       />
     </button>
   );
@@ -274,7 +212,7 @@ export function LazyDestinationCard(props: DestinationCardProps) {
         });
       },
       {
-        rootMargin: '100px', // Start loading 100px before entering viewport
+        rootMargin: '100px',
         threshold: 0.01,
       }
     );
@@ -296,4 +234,3 @@ export function LazyDestinationCard(props: DestinationCardProps) {
     </div>
   );
 }
-
