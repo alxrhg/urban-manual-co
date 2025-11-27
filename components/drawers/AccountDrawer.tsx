@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -17,8 +17,28 @@ import {
   ChevronRight,
   User,
   Edit3,
+  Sparkles,
+  Send,
+  ArrowLeft,
 } from 'lucide-react';
 import Image from 'next/image';
+
+// Types for AI Chat
+interface Destination {
+  slug: string;
+  name: string;
+  city: string;
+  category: string;
+  image: string | null;
+  michelin_stars: number | null;
+  crown: boolean;
+}
+
+interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+  destinations?: Destination[];
+}
 
 interface UserStats {
   visited: number;
@@ -157,6 +177,81 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     trips: 0,
   });
 
+  // View state: 'account' or 'chat'
+  const [view, setView] = useState<'account' | 'chat'>('account');
+
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    if (view === 'chat') {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages, view]);
+
+  // Focus chat input when switching to chat view
+  useEffect(() => {
+    if (view === 'chat' && chatInputRef.current) {
+      setTimeout(() => chatInputRef.current?.focus(), 100);
+    }
+  }, [view]);
+
+  // Reset view when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setView('account');
+    }
+  }, [isOpen]);
+
+  const handleChatSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatInput.trim() || isChatLoading) return;
+
+    const userMessage = chatInput.trim();
+    setChatInput("");
+    setChatMessages(prev => [...prev, { role: "user", content: userMessage }]);
+    setIsChatLoading(true);
+
+    try {
+      const conversationHistory = chatMessages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }));
+
+      const response = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: userMessage,
+          userId: user?.id,
+          conversationHistory,
+        }),
+      });
+
+      if (!response.ok) throw new Error('AI chat failed');
+
+      const data = await response.json();
+      setChatMessages(prev => [...prev, {
+        role: "assistant",
+        content: data.content || '',
+        destinations: data.destinations
+      }]);
+    } catch (error) {
+      console.error("AI error:", error);
+      setChatMessages(prev => [...prev, {
+        role: "assistant",
+        content: "Sorry, I encountered an error. Please try again."
+      }]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
   useEffect(() => {
     async function fetchProfileAndStats() {
       if (!user?.id) {
@@ -274,13 +369,189 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     );
   }
 
+  // Chat View
+  if (view === 'chat') {
+    return (
+      <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+        {/* Chat Header */}
+        <div className="px-4 py-4 border-b border-gray-100 dark:border-gray-900">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setView('account')}
+              className="p-2 -ml-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-gray-900 dark:text-white" />
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">AI Chat</h2>
+            </div>
+          </div>
+        </div>
+
+        {/* Chat Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          {chatMessages.length === 0 && !isChatLoading && (
+            <div className="text-center py-8">
+              <div className="w-16 h-16 rounded-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="h-7 w-7 text-gray-400" />
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                Ask about destinations, restaurants, or travel tips.
+              </p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {["Best restaurants in Tokyo", "Michelin-starred spots", "Cafes in Paris"].map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    onClick={() => setChatInput(suggestion)}
+                    className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {chatMessages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              <div
+                className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                  message.role === 'user'
+                    ? 'bg-black dark:bg-white text-white dark:text-black'
+                    : 'bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white'
+                }`}
+              >
+                {message.role === 'assistant' && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span className="text-xs font-medium opacity-70">AI Assistant</span>
+                  </div>
+                )}
+                <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                  {message.content.split('\n').map((line, i) => {
+                    const parts = line.split(/(\*\*.*?\*\*)/g);
+                    return (
+                      <div key={i}>
+                        {parts.map((part, j) => {
+                          if (part.startsWith('**') && part.endsWith('**')) {
+                            return <strong key={j}>{part.slice(2, -2)}</strong>;
+                          }
+                          return <span key={j}>{part}</span>;
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Destination Cards */}
+                {message.destinations && message.destinations.length > 0 && (
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {message.destinations.map((dest) => (
+                      <a
+                        key={dest.slug}
+                        href={`/destination/${dest.slug}`}
+                        className="group block"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          onClose();
+                          router.push(`/destination/${dest.slug}`);
+                        }}
+                      >
+                        <div className="relative aspect-square bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden mb-1.5">
+                          {dest.image ? (
+                            <img
+                              src={dest.image}
+                              alt={dest.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-gray-300">
+                              <MapPin className="h-6 w-6 opacity-20" />
+                            </div>
+                          )}
+                          {dest.crown && (
+                            <div className="absolute top-1.5 left-1.5 text-sm">👑</div>
+                          )}
+                          {dest.michelin_stars && dest.michelin_stars > 0 && (
+                            <div className="absolute bottom-1.5 left-1.5 bg-white dark:bg-gray-900 px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center gap-0.5">
+                              <span>⭐</span>
+                              <span>{dest.michelin_stars}</span>
+                            </div>
+                          )}
+                        </div>
+                        <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-0.5">
+                          {dest.name}
+                        </h4>
+                        <span className="text-[10px] text-gray-500 capitalize">
+                          {dest.city.replace(/-/g, ' ')} · {dest.category}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {isChatLoading && (
+            <div className="flex justify-start">
+              <div className="bg-gray-100 dark:bg-gray-900 rounded-2xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Chat Input */}
+        <div className="border-t border-gray-100 dark:border-gray-900 p-4">
+          <form onSubmit={handleChatSubmit} className="flex items-end gap-2">
+            <textarea
+              ref={chatInputRef}
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleChatSubmit(e);
+                }
+              }}
+              placeholder="Ask about destinations..."
+              rows={1}
+              className="flex-1 px-4 py-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm resize-none focus:outline-none focus:border-black dark:focus:border-white transition-colors"
+              style={{ maxHeight: '100px' }}
+            />
+            <button
+              type="submit"
+              disabled={!chatInput.trim() || isChatLoading}
+              className="p-2.5 bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // Account View (default)
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-950">
       {/* Custom Header Area */}
       <div className="px-6 pt-8 pb-6">
         <div className="flex items-start justify-between mb-6">
           <ProfileAvatar avatarUrl={avatarUrl} displayUsername={displayUsername} size="lg" />
-          <button 
+          <button
             onClick={onClose}
             className="p-2 -mr-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
@@ -290,7 +561,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
             </svg>
           </button>
         </div>
-        
+
         <div>
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white tracking-tight">
             {displayUsername}
@@ -312,6 +583,21 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         <div className="flex-1 overflow-y-auto custom-scrollbar">
           {/* Navigation Groups */}
           <div className="px-4 space-y-8 pb-12">
+          {/* AI */}
+          <div>
+            <h3 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+              AI
+            </h3>
+            <div className="space-y-1">
+              <NavItem
+                icon={Sparkles}
+                label="AI Chat"
+                description="Get personalized recommendations"
+                onClick={() => setView('chat')}
+              />
+            </div>
+          </div>
+
           {/* Library */}
           <div>
             <h3 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
