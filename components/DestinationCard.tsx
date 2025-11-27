@@ -13,6 +13,8 @@ interface DestinationCardProps {
   onClick?: () => void;
   index?: number;
   isVisited?: boolean;
+  /** @deprecated Badges are now minimized in the editorial design */
+  showBadges?: boolean;
   showQuickActions?: boolean;
   className?: string;
   onAddToTrip?: () => void;
@@ -28,6 +30,7 @@ export const DestinationCard = memo(function DestinationCard({
   onClick,
   index = 0,
   isVisited = false,
+  showBadges: _showBadges = true, // Kept for backward compatibility
   showQuickActions = true,
   className = '',
   onAddToTrip,
