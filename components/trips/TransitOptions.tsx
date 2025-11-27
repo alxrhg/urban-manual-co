@@ -104,14 +104,14 @@ export default function TransitOptions({
   // Compact: single line with options
   if (compact) {
     return (
-      <div className={`flex items-center gap-3 py-1.5 text-[10px] text-gray-400 ${className}`}>
+      <div className={`flex items-center gap-3 py-1.5 text-[10px] text-stone-400 ${className}`}>
         <Navigation className="w-3 h-3" />
         {filteredOptions.map((opt, i) => (
           <span key={opt.id} className="flex items-center gap-1">
             {opt.icon}
             <span>{formatTime(opt.minutes)}</span>
             {opt.cost > 0 && <span className="opacity-60">{formatCost(opt.cost)}</span>}
-            {i < filteredOptions.length - 1 && <span className="mx-1 text-gray-300">·</span>}
+            {i < filteredOptions.length - 1 && <span className="mx-1 text-stone-300">·</span>}
           </span>
         ))}
       </div>
@@ -120,17 +120,17 @@ export default function TransitOptions({
 
   // Expanded: simple list
   return (
-    <div className={`py-2 border-t border-gray-100 dark:border-gray-800 ${className}`}>
-      <div className="flex items-center gap-1.5 text-[10px] text-gray-400 mb-2">
+    <div className={`py-2 border-t border-stone-100 dark:border-stone-800 ${className}`}>
+      <div className="flex items-center gap-1.5 text-[10px] text-stone-400 mb-2">
         <Navigation className="w-3 h-3" />
         <span>{formatDistance(distance)}</span>
       </div>
       <div className="flex gap-4">
         {filteredOptions.map((opt) => (
-          <div key={opt.id} className="flex items-center gap-1.5 text-xs text-gray-500">
-            <span className="text-gray-400">{opt.icon}</span>
-            <span className="font-medium text-gray-700 dark:text-gray-300">{formatTime(opt.minutes)}</span>
-            {opt.cost > 0 && <span className="text-gray-400">{formatCost(opt.cost)}</span>}
+          <div key={opt.id} className="flex items-center gap-1.5 text-xs text-stone-500">
+            <span className="text-stone-400">{opt.icon}</span>
+            <span className="font-medium text-stone-700 dark:text-stone-300">{formatTime(opt.minutes)}</span>
+            {opt.cost > 0 && <span className="text-stone-400">{formatCost(opt.cost)}</span>}
           </div>
         ))}
       </div>

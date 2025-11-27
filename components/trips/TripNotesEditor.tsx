@@ -101,7 +101,7 @@ function SortableNoteItem({
       <button
         {...attributes}
         {...listeners}
-        className="mt-1 p-0.5 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
+        className="mt-1 p-0.5 text-stone-300 dark:text-stone-600 hover:text-stone-500 dark:hover:text-stone-400 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
       >
         <GripVertical className="w-3.5 h-3.5" />
       </button>
@@ -113,7 +113,7 @@ function SortableNoteItem({
           className={`mt-0.5 flex-shrink-0 transition-colors ${
             item.checked
               ? 'text-green-600 dark:text-green-500'
-              : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'
+              : 'text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-400'
           }`}
         >
           {item.checked ? (
@@ -124,7 +124,7 @@ function SortableNoteItem({
         </button>
       ) : (
         <span className="mt-1 w-4 h-4 flex-shrink-0 flex items-center justify-center">
-          <span className="w-1.5 h-1.5 rounded-full bg-gray-400 dark:bg-gray-500" />
+          <span className="w-1.5 h-1.5 rounded-full bg-stone-400 dark:bg-stone-500" />
         </span>
       )}
 
@@ -137,25 +137,25 @@ function SortableNoteItem({
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
-          className="flex-1 text-sm bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-gray-900 dark:focus:border-white outline-none py-0.5 text-gray-900 dark:text-white"
+          className="flex-1 text-sm bg-transparent border-b border-stone-300 dark:border-stone-600 focus:border-stone-900 dark:focus:border-white outline-none py-0.5 text-stone-900 dark:text-white"
         />
       ) : (
         <span
           onClick={() => setIsEditing(true)}
           className={`flex-1 text-sm cursor-text py-0.5 ${
             item.type === 'checkbox' && item.checked
-              ? 'line-through text-gray-400 dark:text-gray-500'
-              : 'text-gray-700 dark:text-gray-300'
+              ? 'line-through text-stone-400 dark:text-stone-500'
+              : 'text-stone-700 dark:text-stone-300'
           }`}
         >
-          {item.content || <span className="text-gray-400 italic">Empty item</span>}
+          {item.content || <span className="text-stone-400 italic">Empty item</span>}
         </span>
       )}
 
       {/* Delete button */}
       <button
         onClick={onDelete}
-        className="mt-0.5 p-0.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+        className="mt-0.5 p-0.5 text-stone-300 dark:text-stone-600 hover:text-red-500 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
       >
         <Trash2 className="w-3.5 h-3.5" />
       </button>
@@ -255,11 +255,11 @@ export default function TripNotesEditor({
     <div className={`${className}`}>
       {/* Header with progress */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+        <h3 className="text-sm font-medium text-stone-900 dark:text-white">
           Notes & Lists
         </h3>
         {checkboxCount > 0 && (
-          <span className="text-xs text-gray-500 dark:text-gray-400">
+          <span className="text-xs text-stone-500 dark:text-stone-400">
             {checkedCount}/{checkboxCount} done
           </span>
         )}
@@ -290,7 +290,7 @@ export default function TripNotesEditor({
           </SortableContext>
         </DndContext>
       ) : (
-        <p className="text-xs text-gray-400 dark:text-gray-500 italic mb-4">
+        <p className="text-xs text-stone-400 dark:text-stone-500 italic mb-4">
           Add notes or checklist items for your trip...
         </p>
       )}
@@ -298,13 +298,13 @@ export default function TripNotesEditor({
       {/* Add new item */}
       <div className="flex items-center gap-2">
         {/* Type toggle */}
-        <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5">
+        <div className="flex bg-stone-100 dark:bg-stone-800 rounded-lg p-0.5">
           <button
             onClick={() => setNewItemType('checkbox')}
             className={`p-1.5 rounded-md transition-colors ${
               newItemType === 'checkbox'
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-sm'
+                : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'
             }`}
             title="Add checkbox item"
           >
@@ -314,8 +314,8 @@ export default function TripNotesEditor({
             onClick={() => setNewItemType('text')}
             className={`p-1.5 rounded-md transition-colors ${
               newItemType === 'text'
-                ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-sm'
+                : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'
             }`}
             title="Add text note"
           >
@@ -334,7 +334,7 @@ export default function TripNotesEditor({
             placeholder={
               newItemType === 'checkbox' ? 'Add item...' : 'Add note...'
             }
-            className="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white focus:ring-offset-1"
+            className="w-full text-sm px-3 py-1.5 rounded-lg border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-white placeholder-stone-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white focus:ring-offset-1"
           />
         </div>
 
@@ -342,7 +342,7 @@ export default function TripNotesEditor({
         <button
           onClick={handleAddItem}
           disabled={!newItemValue.trim()}
-          className="p-1.5 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+          className="p-1.5 rounded-lg bg-stone-900 dark:bg-white text-white dark:text-stone-900 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
         >
           <Plus className="w-4 h-4" />
         </button>

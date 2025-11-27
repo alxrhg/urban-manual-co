@@ -167,7 +167,7 @@ export default function TripWeatherForecast({
       case 'snow':
         return <CloudSnow className="w-5 h-5 text-blue-300" />;
       default:
-        return <Cloud className="w-5 h-5 text-gray-400" />;
+        return <Cloud className="w-5 h-5 text-stone-400" />;
     }
   };
 
@@ -180,7 +180,7 @@ export default function TripWeatherForecast({
   if (loading) {
     if (compact) {
       return (
-        <div className="flex items-center gap-2 text-xs text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-stone-400">
           <Loader2 className="w-3 h-3 animate-spin" />
           <span>Loading weather...</span>
         </div>
@@ -188,7 +188,7 @@ export default function TripWeatherForecast({
     }
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
       </div>
     );
   }
@@ -196,16 +196,16 @@ export default function TripWeatherForecast({
   if (error) {
     if (compact) {
       return (
-        <div className="flex items-center gap-2 text-xs text-gray-400">
+        <div className="flex items-center gap-2 text-xs text-stone-400">
           <Cloud className="w-3 h-3" />
           <span>{error}</span>
         </div>
       );
     }
     return (
-      <div className="text-center py-6 px-4 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-        <Cloud className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-        <p className="text-xs text-gray-500">{error}</p>
+      <div className="text-center py-6 px-4 border border-dashed border-stone-200 dark:border-stone-800 rounded-2xl">
+        <Cloud className="w-8 h-8 text-stone-300 mx-auto mb-2" />
+        <p className="text-xs text-stone-500">{error}</p>
       </div>
     );
   }
@@ -218,12 +218,12 @@ export default function TripWeatherForecast({
     return (
       <div className="flex items-center gap-4 overflow-x-auto">
         {/* Summary */}
-        <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 flex-shrink-0">
+        <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-400 flex-shrink-0">
           <Sun className="w-4 h-4 text-yellow-500" />
           <span className="font-medium">{avgTemp}°C avg</span>
           {rainyDays > 0 && (
             <>
-              <span className="text-gray-300">|</span>
+              <span className="text-stone-300">|</span>
               <CloudRain className="w-4 h-4 text-blue-500" />
               <span>{rainyDays} rainy {rainyDays === 1 ? 'day' : 'days'}</span>
             </>
@@ -235,7 +235,7 @@ export default function TripWeatherForecast({
           {weather.slice(0, 7).map((day) => (
             <div
               key={day.date}
-              className="flex items-center gap-1 px-2 py-1 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 flex-shrink-0"
+              className="flex items-center gap-1 px-2 py-1 bg-white dark:bg-stone-800 rounded-lg border border-stone-200 dark:border-stone-700 flex-shrink-0"
             >
               {getWeatherIcon(day.icon)}
               <span className="text-[10px] font-medium">{day.temp.max}°</span>
@@ -248,19 +248,19 @@ export default function TripWeatherForecast({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">Weather Forecast</h3>
+      <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400">Weather Forecast</h3>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
         {weather.map((day) => (
           <div
             key={day.date}
-            className="p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-center"
+            className="p-3 rounded-xl border border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 text-center"
           >
-            <p className="text-[10px] text-gray-500 mb-1">{formatDate(day.date)}</p>
+            <p className="text-[10px] text-stone-500 mb-1">{formatDate(day.date)}</p>
             <div className="flex justify-center mb-1">{getWeatherIcon(day.icon)}</div>
             <p className="text-xs font-medium">
               {day.temp.max}° / {day.temp.min}°
             </p>
-            <p className="text-[10px] text-gray-500 mt-1">{day.condition}</p>
+            <p className="text-[10px] text-stone-500 mt-1">{day.condition}</p>
             {day.precipitation > 0 && (
               <p className="text-[10px] text-blue-500 mt-0.5">{day.precipitation}mm</p>
             )}
@@ -270,7 +270,7 @@ export default function TripWeatherForecast({
 
       {/* Weather summary */}
       {weather.length > 0 && (
-        <div className="flex flex-wrap gap-4 text-xs text-gray-500 pt-2">
+        <div className="flex flex-wrap gap-4 text-xs text-stone-500 pt-2">
           <div className="flex items-center gap-1">
             <Sun className="w-3 h-3" />
             <span>

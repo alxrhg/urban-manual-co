@@ -120,24 +120,24 @@ export default function TripSettingsDrawer({
   };
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-5 space-y-6">
       {/* Title */}
       <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+        <label className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide">
           Trip Name
         </label>
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+          className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white transition-all"
           placeholder="Trip name"
         />
       </div>
 
       {/* Destination with Autocomplete */}
       <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+        <label className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide">
           Destination
         </label>
         <CityAutocompleteInput
@@ -151,18 +151,18 @@ export default function TripSettingsDrawer({
       {/* Dates */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+          <label className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide">
             Start Date
           </label>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+            className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white transition-all"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+          <label className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide">
             End Date
           </label>
           <input
@@ -170,7 +170,7 @@ export default function TripSettingsDrawer({
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             min={startDate}
-            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+            className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white transition-all"
           />
         </div>
       </div>
@@ -179,30 +179,30 @@ export default function TripSettingsDrawer({
       <button
         onClick={handleSave}
         disabled={saving || !title.trim()}
-        className="w-full py-3 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+        className="w-full py-3 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-sm font-medium disabled:opacity-50 hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
       >
         {saving && <Loader2 className="w-4 h-4 animate-spin" />}
         Save Changes
       </button>
 
       {/* Delete Section */}
-      <div className="pt-6 border-t border-neutral-200 dark:border-neutral-800">
+      <div className="pt-6 border-t border-stone-200 dark:border-stone-800">
         {showDeleteConfirm ? (
           <div className="space-y-3">
-            <p className="text-sm text-neutral-600 dark:text-neutral-400">
+            <p className="text-sm text-stone-600 dark:text-stone-400">
               Are you sure? This will delete the trip and all its items.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm font-medium text-neutral-700 dark:text-neutral-300"
+                className="flex-1 py-2.5 rounded-full border border-stone-200 dark:border-stone-700 text-sm font-medium text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex-1 py-2.5 rounded-xl bg-red-600 text-white text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 rounded-full bg-red-600 text-white text-sm font-medium disabled:opacity-50 hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
               >
                 {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
                 Delete
@@ -212,7 +212,7 @@ export default function TripSettingsDrawer({
         ) : (
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-red-600 hover:text-red-700"
+            className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-red-600 hover:text-red-700 transition-colors"
           >
             <Trash2 className="w-4 h-4" />
             Delete Trip

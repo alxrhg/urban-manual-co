@@ -78,7 +78,7 @@ export default function CrowdIndicator({
       </div>
 
       {prediction.suggestion && (
-        <p className="text-[11px] text-gray-600 dark:text-gray-400 mb-2">
+        <p className="text-[11px] text-stone-600 dark:text-stone-400 mb-2">
           {prediction.suggestion}
         </p>
       )}
@@ -86,7 +86,7 @@ export default function CrowdIndicator({
       {prediction.bestTimes && prediction.bestTimes.length > 0 && (
         <div className="flex items-center gap-1.5 flex-wrap">
           <TrendingDown className="w-3 h-3 text-green-500" />
-          <span className="text-[10px] text-gray-500">Better times:</span>
+          <span className="text-[10px] text-stone-500">Better times:</span>
           {prediction.bestTimes.map((time) => (
             <button
               key={time}

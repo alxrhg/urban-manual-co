@@ -1,112 +1,39 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
+import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import {
   ArrowLeft,
-  Bookmark,
-  Calendar,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-  Clock,
-  GripVertical,
-  MapPin,
-  Plane,
-  Plus,
   Settings,
   Sparkles,
-  Trash2,
-  Users,
   Map,
-  LayoutGrid,
+  Plus,
   Loader2,
-  ListTodo,
+  MapPin,
+  Cloud,
+  Shield,
+  ListChecks,
 } from 'lucide-react';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { PageLoader } from '@/components/LoadingStates';
-import UMActionPill from '@/components/ui/UMActionPill';
-import TripMapView from '@/components/trips/TripMapView';
+import TripStats from '@/components/trip/TripStats';
+import TripDaySection from '@/components/trip/TripDaySection';
+import FloatingActionBar from '@/components/trip/FloatingActionBar';
+import MapDrawer from '@/components/trip/MapDrawer';
 import TripWeatherForecast from '@/components/trips/TripWeatherForecast';
 import TripSafetyAlerts from '@/components/trips/TripSafetyAlerts';
-import NearbyDiscoveries from '@/components/trips/NearbyDiscoveries';
-import FlightStatusCard from '@/components/trips/FlightStatusCard';
-import DayTimelineAnalysis from '@/components/trips/DayTimelineAnalysis';
-import TransitOptions from '@/components/trips/TransitOptions';
-import AvailabilityAlert from '@/components/trips/AvailabilityAlert';
 import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
-import { TripItemCard } from '@/components/trips/TripItemCard';
-import TripNotesEditor from '@/components/trips/TripNotesEditor';
-import { formatTripDate, parseDateString } from '@/lib/utils';
-import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
-import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, TripNotes } from '@/types/trip';
-import { parseItineraryNotes, stringifyItineraryNotes, parseTripNotes, stringifyTripNotes } from '@/types/trip';
+import type { FlightData } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 
-interface TripDay {
-  dayNumber: number;
-  date: string | null;
-  items: (ItineraryItem & { destination?: Destination; parsedNotes?: ItineraryItemNotes })[];
-}
-
-// Sortable item wrapper for drag-and-drop
-function SortableItem({ id, children }: { id: string; children: React.ReactNode }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : 'auto',
-  };
-
-  // Pass drag handle props to children
-  const childrenWithProps = React.Children.map(children, child => {
-    if (React.isValidElement(child)) {
-      return React.cloneElement(child as React.ReactElement<any>, { 
-        dragHandleProps: { ...attributes, ...listeners },
-        isDragging
-      });
-    }
-    return child;
-  });
-
-  return (
-    <div ref={setNodeRef} style={style}>
-      {childrenWithProps}
-    </div>
-  );
-}
-
+/**
+ * TripPage - Clean, minimal design with stone palette
+ * Features: Stats grid, collapsible day sections, travel intelligence
+ */
 export default function TripPage() {
   const params = useParams();
   const router = useRouter();
@@ -114,405 +41,101 @@ export default function TripPage() {
   const { user } = useAuth();
   const openDrawer = useDrawerStore((s) => s.openDrawer);
 
-  const [trip, setTrip] = useState<Trip | null>(null);
-  const [days, setDays] = useState<TripDay[]>([]);
-  const [selectedDay, setSelectedDay] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [expandedItem, setExpandedItem] = useState<string | null>(null);
-  const [showBucketList, setShowBucketList] = useState(false);
-  const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
-  const [mobileView, setMobileView] = useState<'itinerary' | 'map'>('itinerary');
+  // Trip Editor Hook
+  const {
+    trip,
+    days,
+    loading,
+    saving,
+    updateTrip,
+    reorderItems,
+    addPlace,
+    addFlight,
+    removeItem,
+    refresh,
+  } = useTripEditor({
+    tripId,
+    userId: user?.id,
+    onError: (error) => console.error('Trip editor error:', error),
+  });
+
+  // UI State
+  const [selectedDayNumber, setSelectedDayNumber] = useState(1);
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const [isAIPlanning, setIsAIPlanning] = useState(false);
-  const [showNotes, setShowNotes] = useState(false);
-  const [tripNotes, setTripNotes] = useState<TripNotes>({ items: [] });
+  const [activeTab, setActiveTab] = useState<'itinerary' | 'insights' | 'overview'>('itinerary');
+  const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
 
-  // DnD sensors
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
+  // Get first destination coordinates for weather
+  const firstDestination = useMemo(() => {
+    const firstItem = days.flatMap(d => d.items).find(item => item.destination?.latitude);
+    return firstItem?.destination;
+  }, [days]);
 
-  // Fetch trip and items
-  const fetchTrip = useCallback(async () => {
-    if (!tripId || !user) return;
-
-    try {
-      setLoading(true);
-      const supabase = createClient();
-      if (!supabase) return;
-
-      const { data: tripData, error: tripError } = await supabase
-        .from('trips')
-        .select('*')
-        .eq('id', tripId)
-        .eq('user_id', user.id)
-        .single();
-
-      if (tripError) throw tripError;
-      if (!tripData) {
-        router.push('/trips');
-        return;
-      }
-
-      setTrip(tripData);
-      setTripNotes(parseTripNotes(tripData.notes));
-
-      const { data: items, error: itemsError } = await supabase
-        .from('itinerary_items')
-        .select('*')
-        .eq('trip_id', tripId)
-        .order('day', { ascending: true })
-        .order('order_index', { ascending: true });
-
-      if (itemsError) throw itemsError;
-
-      const slugs = (items || [])
-        .map((i) => i.destination_slug)
-        .filter((s): s is string => Boolean(s));
-
-      const destinationsMap: Record<string, Destination> = {};
-      if (slugs.length > 0) {
-        const { data: destinations } = await supabase
-          .from('destinations')
-          .select('slug, name, city, neighborhood, category, description, image, image_thumbnail, latitude, longitude, rating, user_ratings_total, michelin_stars, price_level, formatted_address, website')
-          .in('slug', slugs);
-
-        destinations?.forEach((d) => {
-          destinationsMap[d.slug] = d;
-        });
-      }
-
-      const numDays = calculateDays(tripData.start_date, tripData.end_date);
-      const daysArray: TripDay[] = [];
-
-      for (let i = 1; i <= Math.max(numDays, 1); i++) {
-        const dayItems = (items || [])
-          .filter((item) => item.day === i)
-          .map((item) => ({
-            ...item,
-            destination: item.destination_slug
-              ? destinationsMap[item.destination_slug]
-              : undefined,
-            parsedNotes: parseItineraryNotes(item.notes),
-          }));
-
-        daysArray.push({
-          dayNumber: i,
-          date: tripData.start_date ? addDays(tripData.start_date, i - 1) : null,
-          items: dayItems,
-        });
-      }
-
-      setDays(daysArray);
-    } catch (err) {
-      console.error('Error fetching trip:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [tripId, user, router]);
-
-  useEffect(() => {
-    fetchTrip();
-  }, [fetchTrip]);
-
-  const updateTrip = async (updates: Partial<Trip>) => {
-    if (!trip || !user) return;
-
-    try {
-      const supabase = createClient();
-      if (!supabase) return;
-
-      const { error } = await supabase
-        .from('trips')
-        .update(updates)
-        .eq('id', trip.id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-      setTrip({ ...trip, ...updates });
-
-      if (updates.start_date || updates.end_date) {
-        fetchTrip();
-      }
-    } catch (err) {
-      console.error('Error updating trip:', err);
-    }
-  };
-
-  const updateTripNotes = async (newNotes: TripNotes) => {
-    if (!trip || !user) return;
-
-    // Update local state immediately for responsive UI
-    setTripNotes(newNotes);
-
-    try {
-      const supabase = createClient();
-      if (!supabase) return;
-
-      const notesJson = stringifyTripNotes(newNotes);
-      const { error } = await supabase
-        .from('trips')
-        .update({ notes: notesJson })
-        .eq('id', trip.id)
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-      setTrip({ ...trip, notes: notesJson });
-    } catch (err) {
-      console.error('Error updating notes:', err);
-    }
-  };
-
-  const addItem = async (dayNumber: number, destination: Destination) => {
-    if (!trip || !user) return;
-
-    try {
-      const supabase = createClient();
-      if (!supabase) return;
-
-      const currentDay = days.find((d) => d.dayNumber === dayNumber);
-      const orderIndex = currentDay?.items.length || 0;
-
-      const notesData: ItineraryItemNotes = {
-        type: 'place',
-        latitude: destination.latitude ?? undefined,
-        longitude: destination.longitude ?? undefined,
-        category: destination.category ?? undefined,
-        image: destination.image_thumbnail || destination.image || undefined,
-      };
-
-      const { error } = await supabase.from('itinerary_items').insert({
-        trip_id: trip.id,
-        destination_slug: destination.slug,
-        day: dayNumber,
-        order_index: orderIndex,
-        title: destination.name,
-        description: destination.city,
-        notes: stringifyItineraryNotes(notesData),
-      });
-
-      if (error) throw error;
-      fetchTrip();
-    } catch (err) {
-      console.error('Error adding item:', err);
-    }
-  };
-
-  const addFlight = async (dayNumber: number, flightData: FlightData) => {
-    if (!trip || !user) return;
-
-    try {
-      const supabase = createClient();
-      if (!supabase) return;
-
-      const currentDay = days.find((d) => d.dayNumber === dayNumber);
-      const orderIndex = currentDay?.items.length || 0;
-
-      const notesData: ItineraryItemNotes = {
-        type: 'flight',
-        airline: flightData.airline,
-        flightNumber: flightData.flightNumber,
-        from: flightData.from,
-        to: flightData.to,
-        departureDate: flightData.departureDate,
-        departureTime: flightData.departureTime,
-        arrivalDate: flightData.arrivalDate,
-        arrivalTime: flightData.arrivalTime,
-        confirmationNumber: flightData.confirmationNumber,
-        raw: flightData.notes,
-      };
-
-      const { error } = await supabase.from('itinerary_items').insert({
-        trip_id: trip.id,
-        destination_slug: null,
-        day: dayNumber,
-        order_index: orderIndex,
-        time: flightData.departureTime,
-        title: `${flightData.airline} ${flightData.flightNumber || 'Flight'}`,
-        description: `${flightData.from} → ${flightData.to}`,
-        notes: stringifyItineraryNotes(notesData),
-      });
-
-      if (error) throw error;
-      fetchTrip();
-    } catch (err) {
-      console.error('Error adding flight:', err);
-    }
-  };
-
-  const updateItemTime = async (itemId: string, time: string) => {
-    try {
-      const supabase = createClient();
-      if (!supabase) return;
-
-      const { error } = await supabase
-        .from('itinerary_items')
-        .update({ time })
-        .eq('id', itemId);
-
-      if (error) throw error;
-      fetchTrip();
-    } catch (err) {
-      console.error('Error updating time:', err);
-    }
-  };
-
-  const removeItem = async (itemId: string) => {
-    try {
-      const supabase = createClient();
-      if (!supabase) return;
-
-      const { error } = await supabase
-        .from('itinerary_items')
-        .delete()
-        .eq('id', itemId);
-
-      if (error) throw error;
-      fetchTrip();
-    } catch (err) {
-      console.error('Error removing item:', err);
-    }
-  };
-
-  const openPlaceSelector = (dayNumber: number) => {
+  // Callbacks
+  const openPlaceSelector = useCallback((dayNumber: number) => {
     openDrawer('place-selector', {
       tripId: trip?.id,
       dayNumber,
       city: trip?.destination,
-      onSelect: (destination: Destination) => addItem(dayNumber, destination),
+      onSelect: (destination: Destination) => addPlace(destination, dayNumber),
     });
-  };
+  }, [trip?.id, trip?.destination, openDrawer, addPlace]);
 
-  const openFlightDrawer = (dayNumber: number) => {
+  const openFlightDrawer = useCallback((dayNumber: number) => {
     openDrawer('add-flight', {
       tripId: trip?.id,
       dayNumber,
-      onAdd: (flightData: FlightData) => addFlight(dayNumber, flightData),
+      onAdd: (flightData: FlightData) => addFlight(flightData, dayNumber),
     });
-  };
+  }, [trip?.id, openDrawer, addFlight]);
 
-  // Handle drag-and-drop reordering
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const currentDayData = days.find((d) => d.dayNumber === selectedDay);
-    if (!currentDayData) return;
-
-    const oldIndex = currentDayData.items.findIndex((i) => i.id === active.id);
-    const newIndex = currentDayData.items.findIndex((i) => i.id === over.id);
-
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    const newItems = arrayMove(currentDayData.items, oldIndex, newIndex);
-    setDays((prev) =>
-      prev.map((d) =>
-        d.dayNumber === selectedDay ? { ...d, items: newItems } : d
-      )
-    );
-
-    try {
-      const supabase = createClient();
-      if (!supabase) return;
-
-      await Promise.all(
-        newItems.map((item, index) =>
-          supabase
-            .from('itinerary_items')
-            .update({ order_index: index })
-            .eq('id', item.id)
-        )
-      );
-    } catch (err) {
-      console.error('Error reordering:', err);
-      fetchTrip();
-    }
-  };
-
-  // Open destination drawer for a place
-  const openDestinationDrawer = (item: ItineraryItem & { destination?: Destination }) => {
+  const handleEditItem = useCallback((item: EnrichedItineraryItem) => {
     if (item.destination) {
-      const dest = item.destination;
       openDrawer('destination', {
         place: {
-          name: dest.name,
-          category: dest.category,
-          neighborhood: dest.neighborhood ?? undefined,
-          city: dest.city ?? undefined,
-          michelinRating: dest.michelin_stars ?? undefined,
-          hasMichelin: !!dest.michelin_stars,
-          googleRating: dest.rating ?? undefined,
-          googleReviews: dest.user_ratings_total ?? undefined,
-          priceLevel: dest.price_level ?? undefined,
-          description: dest.description ?? undefined,
-          image: dest.image ?? undefined,
-          image_thumbnail: dest.image_thumbnail ?? undefined,
-          latitude: dest.latitude ?? undefined,
-          longitude: dest.longitude ?? undefined,
-          address: dest.formatted_address ?? undefined,
-          website: dest.website ?? undefined,
+          name: item.destination.name,
+          category: item.destination.category,
+          neighborhood: item.destination.neighborhood ?? undefined,
+          city: item.destination.city ?? undefined,
+          michelinRating: item.destination.michelin_stars ?? undefined,
+          hasMichelin: !!item.destination.michelin_stars,
+          googleRating: item.destination.rating ?? undefined,
+          googleReviews: item.destination.user_ratings_total ?? undefined,
+          priceLevel: item.destination.price_level ?? undefined,
+          description: item.destination.description ?? undefined,
+          image: item.destination.image ?? undefined,
+          image_thumbnail: item.destination.image_thumbnail ?? undefined,
+          latitude: item.destination.latitude ?? undefined,
+          longitude: item.destination.longitude ?? undefined,
+          address: item.destination.formatted_address ?? undefined,
+          website: item.destination.website ?? undefined,
         },
         hideAddToTrip: true,
       });
     }
-  };
+    setActiveItemId(item.id);
+  }, [openDrawer]);
 
-  // Bucket list handlers
-  const handleAddBucketItem = (item: Omit<BucketItem, 'id' | 'addedAt'>) => {
-    const newItem: BucketItem = {
-      ...item,
-      id: crypto.randomUUID(),
-      addedAt: new Date().toISOString(),
-    };
-    setBucketItems((prev) => [...prev, newItem]);
-  };
-
-  const handleRemoveBucketItem = (id: string) => {
-    setBucketItems((prev) => prev.filter((i) => i.id !== id));
-  };
-
-  const handleReorderBucketItems = (items: BucketItem[]) => {
-    setBucketItems(items);
-  };
-
-  const handleAssignBucketItemToDay = (item: BucketItem, dayNumber: number) => {
-    // For now, just remove from bucket list
-    // In a full implementation, you'd add it to the day's itinerary
-    handleRemoveBucketItem(item.id);
-  };
-
-  // AI Trip Planning - fill empty days with AI-generated itinerary
   const handleAITripPlanning = async () => {
     if (!trip || !user) return;
-
-    // Check if trip has required fields
-    if (!trip.destination) {
-      alert('Please add a destination to your trip first');
+    if (!trip.destination || !trip.start_date || !trip.end_date) {
+      openDrawer('trip-settings', { trip, onUpdate: updateTrip });
       return;
     }
-    if (!trip.start_date || !trip.end_date) {
-      alert('Please add dates to your trip first');
-      return;
-    }
-
-    // Check if there are already items in the trip
-    const allItems = days.flatMap(day => day.items);
-    const totalItems = allItems.length;
 
     try {
       setIsAIPlanning(true);
-      const supabase = createClient();
-      if (!supabase) return;
+      const allItems = days.flatMap(day => day.items);
 
-      if (totalItems > 0) {
-        // Use smart-fill API for contextual recommendations
+      if (allItems.length > 0) {
         const existingItemsForAPI = allItems.map(item => ({
           day: days.find(d => d.items.includes(item))?.dayNumber || 1,
           time: item.time,
           title: item.title,
           destination_slug: item.destination_slug,
           category: item.parsedNotes?.category || item.destination?.category,
-          parsedNotes: item.parsedNotes,
         }));
 
         const response = await fetch('/api/intelligence/smart-fill', {
@@ -525,50 +148,15 @@ export default function TripPage() {
           }),
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to get AI suggestions');
-        }
+        if (!response.ok) throw new Error('Failed to get AI suggestions');
 
         const result = await response.json();
-
-        if (!result.suggestions || result.suggestions.length === 0) {
-          alert('Your trip looks complete! No additional suggestions needed.');
-          return;
-        }
-
-        // Insert smart suggestions into the database
-        for (const suggestion of result.suggestions) {
-          const dest = suggestion.destination;
-          if (!dest) continue;
-
-          // Find the current max order_index for this day
-          const dayItems = days.find(d => d.dayNumber === suggestion.day)?.items || [];
-          const maxOrder = dayItems.length > 0
-            ? Math.max(...dayItems.map(i => i.order_index || 0))
-            : -1;
-
-          const notesData: ItineraryItemNotes = {
-            type: 'place',
-            latitude: dest.latitude ?? undefined,
-            longitude: dest.longitude ?? undefined,
-            category: dest.category ?? undefined,
-            image: dest.image_thumbnail || dest.image || undefined,
-          };
-
-          await supabase.from('itinerary_items').insert({
-            trip_id: trip.id,
-            destination_slug: dest.slug,
-            day: suggestion.day,
-            order_index: maxOrder + 1 + (suggestion.order || 0),
-            time: suggestion.startTime,
-            title: dest.name,
-            description: `${dest.category ? dest.category + ' • ' : ''}${suggestion.reason || 'AI suggested'}`,
-            notes: stringifyItineraryNotes(notesData),
-          });
+        for (const suggestion of result.suggestions || []) {
+          if (suggestion.destination) {
+            await addPlace(suggestion.destination, suggestion.day, suggestion.startTime);
+          }
         }
       } else {
-        // Use multi-day planning API for empty trips
         const response = await fetch('/api/intelligence/multi-day-plan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -580,441 +168,372 @@ export default function TripPage() {
           }),
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to generate trip plan');
-        }
-
-        const plan = await response.json();
-
-        if (!plan.days || plan.days.length === 0) {
-          throw new Error('No itinerary generated');
-        }
-
-        // Fetch destination details for the generated items
-        const destinationIds = plan.days.flatMap((day: any) =>
-          day.items.map((item: any) => item.destinationId)
-        ).filter(Boolean);
-
-        let destinationsMap: Record<number, any> = {};
-        if (destinationIds.length > 0) {
-          const { data: destinations } = await supabase
-            .from('destinations')
-            .select('id, slug, name, city, category, image, image_thumbnail, latitude, longitude')
-            .in('id', destinationIds);
-
-          if (destinations) {
-            destinations.forEach((d) => {
-              destinationsMap[d.id] = d;
-            });
-          }
-        }
-
-        // Insert items for each day
-        for (const day of plan.days) {
-          for (const item of day.items) {
-            const destination = destinationsMap[item.destinationId];
-            if (!destination) continue;
-
-            const notesData: ItineraryItemNotes = {
-              type: 'place',
-              latitude: destination.latitude ?? undefined,
-              longitude: destination.longitude ?? undefined,
-              category: destination.category ?? undefined,
-              image: destination.image_thumbnail || destination.image || undefined,
-              duration: item.durationMinutes,
-            };
-
-            await supabase.from('itinerary_items').insert({
-              trip_id: trip.id,
-              destination_slug: destination.slug,
-              day: day.dayNumber,
-              order_index: item.order,
-              time: item.startTime,
-              title: destination.name,
-              description: destination.city,
-              notes: stringifyItineraryNotes(notesData),
-            });
-          }
-        }
+        if (!response.ok) throw new Error('Failed to generate trip plan');
+        await refresh();
       }
 
-      // Refresh trip data
-      await fetchTrip();
-    } catch (err: any) {
-      console.error('Error with AI trip planning:', err);
-      alert(err.message || 'Failed to generate AI trip plan. Please try again.');
+      await refresh();
+    } catch (err: unknown) {
+      console.error('AI Planning error:', err);
     } finally {
       setIsAIPlanning(false);
     }
   };
 
+  // Bucket list handlers
+  const handleAddToBucketList = useCallback((item: Omit<BucketItem, 'id' | 'addedAt'>) => {
+    setBucketItems(prev => [...prev, {
+      ...item,
+      id: `bucket-${Date.now()}`,
+      addedAt: new Date().toISOString(),
+    }]);
+  }, []);
+
+  const handleRemoveFromBucketList = useCallback((itemId: string) => {
+    setBucketItems(prev => prev.filter(item => item.id !== itemId));
+  }, []);
+
+  const handleAssignToDay = useCallback(async (item: BucketItem, dayNumber: number) => {
+    // For place type items, try to find the destination and add it
+    if (item.type === 'place' && item.url) {
+      try {
+        const slug = item.url.split('/').pop();
+        if (slug) {
+          const response = await fetch(`/api/destinations/${slug}`);
+          if (response.ok) {
+            const destination = await response.json();
+            await addPlace(destination, dayNumber);
+            handleRemoveFromBucketList(item.id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to add place:', err);
+      }
+    }
+  }, [addPlace, handleRemoveFromBucketList]);
+
+  // Loading state
   if (loading) {
     return (
-      <main className="w-full px-4 md:px-10 py-20">
+      <main className="w-full px-6 md:px-10 py-20 bg-stone-50 dark:bg-stone-950 min-h-screen">
         <PageLoader />
       </main>
     );
   }
 
+  // Not found
   if (!trip) {
     return (
-      <main className="w-full px-4 md:px-10 py-20">
+      <main className="w-full px-6 md:px-10 py-20 min-h-screen bg-stone-50 dark:bg-stone-950">
         <div className="min-h-[60vh] flex items-center justify-center">
-          <p className="text-gray-500">Trip not found</p>
+          <div className="text-center">
+            <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">Trip not found</p>
+            <Link
+              href="/trips"
+              className="text-sm text-stone-900 dark:text-white hover:underline"
+            >
+              Back to trips
+            </Link>
+          </div>
         </div>
       </main>
     );
   }
 
-  const currentDay = days.find((d) => d.dayNumber === selectedDay) || days[0];
-
-  // Prepare items for timeline analysis
-  const timelineItems = currentDay?.items
-    .filter((item) => item.parsedNotes?.type !== 'flight')
-    .map((item) => ({
-      id: item.id,
-      title: item.title,
-      time: item.time,
-      category: item.destination?.category || item.parsedNotes?.category,
-      latitude: item.parsedNotes?.latitude ?? item.destination?.latitude,
-      longitude: item.parsedNotes?.longitude ?? item.destination?.longitude,
-    })) || [];
-
-  // Prepare map places
-  const mapPlaces = currentDay?.items
-    .filter((item) => item.parsedNotes?.type !== 'flight')
-    .map((item, index) => ({
-      id: item.id,
-      name: item.title,
-      latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
-      longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
-      category: item.destination?.category || item.parsedNotes?.category,
-      order: index + 1,
-    })) || [];
+  // Cover image from first destination
+  const coverImage = days
+    .flatMap(d => d.items)
+    .find(item => item.destination?.image)?.destination?.image;
 
   return (
-    <main className="w-full min-h-screen bg-white dark:bg-gray-950">
-      {/* Header */}
-      <div className="px-4 md:px-10 py-6 md:py-8 border-b border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md sticky top-0 z-30">
-        <div className="flex items-start justify-between gap-4 max-w-7xl mx-auto w-full">
-          <div className="flex-1 space-y-4">
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen bg-stone-50 dark:bg-stone-950">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          {/* Top Row: Back + Title + Actions */}
+          <div className="flex items-center gap-4 mb-6">
+            {/* Back Button */}
             <Link
               href="/trips"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors group"
+              className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white transition-colors"
             >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-              Back to Trips
+              <ArrowLeft className="w-4 h-4" />
+              <span>Trips</span>
             </Link>
-            
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={trip.title}
-                onChange={(e) => updateTrip({ title: e.target.value })}
-                className="text-2xl md:text-4xl font-semibold bg-transparent border-none outline-none w-full focus:outline-none placeholder-gray-300 dark:placeholder-gray-700 text-gray-900 dark:text-white p-0"
-                placeholder="Trip Name"
-              />
-              
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-medium text-gray-700 dark:text-gray-300"
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  {trip.destination || 'Add destination'}
-                </button>
-                <button
-                  onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-medium text-gray-700 dark:text-gray-300"
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                  {trip.start_date ? formatTripDate(trip.start_date) : 'Add dates'}
-                  {trip.end_date && ` – ${formatTripDate(trip.end_date)}`}
-                </button>
-              </div>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Trip Title */}
+            <h1 className="text-2xl font-light text-stone-900 dark:text-white truncate">
+              {trip.title}
+            </h1>
+
+            {/* Spacer */}
+            <div className="flex-1" />
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => setIsMapOpen(true)}
+                className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
+                title="View Map"
+              >
+                <Map className="w-5 h-5 text-stone-500 dark:text-stone-400" />
+              </button>
+              <button
+                onClick={() => openDrawer('trip-settings', {
+                  trip,
+                  onUpdate: updateTrip,
+                  onDelete: () => router.push('/trips'),
+                })}
+                className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
+                title="Settings"
+              >
+                <Settings className="w-5 h-5 text-stone-500 dark:text-stone-400" />
+              </button>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2">
-            {/* Mobile View Toggle */}
-            <button
-              onClick={() => setMobileView(mobileView === 'itinerary' ? 'map' : 'itinerary')}
-              className="md:hidden p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              aria-label={mobileView === 'itinerary' ? 'Show Map' : 'Show Itinerary'}
-            >
-              {mobileView === 'itinerary' ? <Map className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
-            </button>
 
-            {/* AI Trip Planner Button */}
-            <button
-              onClick={handleAITripPlanning}
-              disabled={isAIPlanning}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium text-sm hover:from-violet-600 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
-              title="Fill trip with AI-recommended places"
-            >
-              {isAIPlanning ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-              <span className="hidden sm:inline">{isAIPlanning ? 'Planning...' : 'AI Plan'}</span>
-            </button>
-
-            <button
-              onClick={() => setShowNotes(!showNotes)}
-              className={`relative p-2.5 rounded-xl transition-all duration-200 ${
-                showNotes
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
-                  : 'bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-              title="Notes & Lists"
-            >
-              <ListTodo className="w-5 h-5" />
-              {tripNotes.items.length > 0 && !showNotes && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-violet-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {tripNotes.items.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setShowBucketList(!showBucketList)}
-              className={`p-2.5 rounded-xl transition-all duration-200 hidden md:flex ${
-                showBucketList
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
-                  : 'bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-              title="Bucket List"
-            >
-              <Bookmark className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-              className="p-2.5 bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-xl transition-all duration-200"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
+          {/* Cover Image (optional) */}
+          {coverImage && (
+            <div className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden mb-6">
+              <Image
+                src={coverImage}
+                alt={trip.title}
+                fill
+                className="object-cover"
+                priority
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Split-Screen Canvas */}
-      <div className="flex h-[calc(100vh-180px)] max-w-7xl mx-auto w-full relative">
-        {/* Left Panel: Itinerary */}
-        <div className={`
-          flex flex-col h-full transition-all duration-300 
-          ${mobileView === 'itinerary' ? 'w-full' : 'hidden'} 
-          md:flex md:w-1/2 
-          ${showBucketList ? 'lg:w-2/5' : 'lg:w-3/5'}
-        `}>
-          {/* Weather & Alerts Bar */}
-          <div className="px-4 md:px-10 py-4 border-b border-gray-100 dark:border-gray-800 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm">
+        {/* Stats Grid */}
+        <TripStats
+          days={days}
+          destination={trip.destination}
+          startDate={trip.start_date}
+          endDate={trip.end_date}
+          className="mb-8"
+        />
+
+        {/* Weather Preview (compact) */}
+        {trip.destination && trip.start_date && (
+          <div className="mb-8 p-4 border border-stone-200 dark:border-stone-800 rounded-2xl">
             <TripWeatherForecast
               destination={trip.destination}
               startDate={trip.start_date}
               endDate={trip.end_date}
+              latitude={firstDestination?.latitude ?? undefined}
+              longitude={firstDestination?.longitude ?? undefined}
               compact
             />
           </div>
+        )}
 
-          {/* Notes & Lists Panel */}
-          {showNotes && (
-            <div className="px-4 md:px-10 py-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-              <TripNotesEditor
-                notes={tripNotes}
-                onChange={updateTripNotes}
-              />
-            </div>
-          )}
-
-          {/* Day Tabs */}
-          <div className="px-4 md:px-10 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center gap-2 overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setSelectedDay(Math.max(1, selectedDay - 1))}
-              disabled={selectedDay === 1}
-              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors flex-shrink-0"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <div className="flex gap-2 flex-1 overflow-x-auto no-scrollbar px-2">
-              {days.map((day) => (
+        {/* Tab Navigation */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex gap-x-4 text-xs">
+              {(['itinerary', 'insights', 'overview'] as const).map((tab) => (
                 <button
-                  key={day.dayNumber}
-                  onClick={() => setSelectedDay(day.dayNumber)}
-                  className={`flex flex-col items-center justify-center px-4 py-2 rounded-xl min-w-[80px] transition-all duration-200 border flex-shrink-0 ${
-                    selectedDay === day.dayNumber
-                      ? 'bg-black dark:bg-white text-white dark:text-black border-transparent shadow-md transform scale-105'
-                      : 'bg-white dark:bg-gray-900 text-gray-500 border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`transition-all flex items-center gap-1.5 ${
+                    activeTab === tab
+                      ? 'font-medium text-stone-900 dark:text-white'
+                      : 'font-medium text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'
                   }`}
                 >
-                  <span className="text-xs font-bold uppercase tracking-wider">Day {day.dayNumber}</span>
-                  {day.date && (
-                    <span className={`text-[10px] mt-0.5 ${selectedDay === day.dayNumber ? 'opacity-80' : 'opacity-60'}`}>
-                      {formatTripDate(day.date) ?? ''}
-                    </span>
-                  )}
+                  {tab === 'insights' && <Cloud className="w-3 h-3" />}
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
             </div>
-            <button
-              onClick={() => setSelectedDay(Math.min(days.length, selectedDay + 1))}
-              disabled={selectedDay === days.length}
-              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 disabled:opacity-30 transition-colors flex-shrink-0"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
 
-          {/* Day Summary & Actions */}
-          <div className="px-4 md:px-10 py-4 flex items-center justify-between gap-4 bg-white dark:bg-gray-950 sticky top-0 z-20">
-            {/* Timeline summary */}
-            <div className="flex-1 min-w-0">
-              {timelineItems.length > 0 ? (
-                <DayTimelineAnalysis items={timelineItems} />
-              ) : (
-                <span className="text-xs text-gray-400 italic">Start planning your day...</span>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-2 flex-shrink-0">
-              <UMActionPill onClick={() => openFlightDrawer(selectedDay)} className="!bg-white dark:!bg-gray-900 border !border-gray-200 dark:!border-gray-800">
-                <Plane className="w-3.5 h-3.5 mr-1.5" />
-                <span className="hidden sm:inline">Flight</span>
-              </UMActionPill>
-              <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)}>
-                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                Place
-              </UMActionPill>
-            </div>
-          </div>
-
-          {/* Itinerary Items */}
-          <div className="flex-1 overflow-y-auto px-4 md:px-10 pb-10 custom-scrollbar">
-            {currentDay && currentDay.items.length > 0 ? (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleAITripPlanning}
+                disabled={isAIPlanning || saving}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-stone-900 dark:bg-white dark:text-stone-900 rounded-full hover:opacity-80 disabled:opacity-50 transition-opacity"
               >
-                <SortableContext
-                  items={currentDay.items.map((i) => i.id)}
-                  strategy={verticalListSortingStrategy}
+                {isAIPlanning ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Sparkles className="w-3 h-3" />
+                )}
+                {isAIPlanning ? 'Planning...' : 'AI Plan'}
+              </button>
+              <button
+                onClick={() => openPlaceSelector(selectedDayNumber)}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-stone-200 dark:border-stone-800 rounded-full hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+              >
+                <Plus className="w-3 h-3" />
+                Add Stop
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Itinerary Tab */}
+        {activeTab === 'itinerary' && (
+          <div className="space-y-4 fade-in">
+            {days.length === 0 ? (
+              /* Empty State */
+              <div className="text-center py-12 border border-dashed border-stone-200 dark:border-stone-800 rounded-2xl">
+                <MapPin className="h-12 w-12 mx-auto text-stone-300 dark:text-stone-700 mb-4" />
+                <p className="text-sm text-stone-500 dark:text-stone-400 mb-4">No days in your trip yet</p>
+                <button
+                  onClick={() => openPlaceSelector(1)}
+                  className="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
                 >
-                  <div className="space-y-3 pb-20">
-                    {currentDay.items.map((item, index) => {
-                      const isFlight = item.parsedNotes?.type === 'flight';
-                      const prevItem = index > 0 ? currentDay.items[index - 1] : null;
-                      const isExpanded = expandedItem === item.id;
-                      
-                      // Get coordinates for transit
-                      const prevLat = prevItem?.parsedNotes?.latitude ?? prevItem?.destination?.latitude;
-                      const prevLon = prevItem?.parsedNotes?.longitude ?? prevItem?.destination?.longitude;
-                      const currLat = item.parsedNotes?.latitude ?? item.destination?.latitude;
-                      const currLon = item.parsedNotes?.longitude ?? item.destination?.longitude;
-
-                      return (
-                        <SortableItem key={item.id} id={item.id}>
-                          {/* Transit between items */}
-                          {prevItem && !isFlight && prevItem.parsedNotes?.type !== 'flight' && (
-                            <div className="pl-8 py-2">
-                              <TransitOptions
-                                fromLat={prevLat}
-                                fromLon={prevLon}
-                                toLat={currLat}
-                                toLon={currLon}
-                                compact
-                              />
-                            </div>
-                          )}
-
-                          <TripItemCard 
-                            item={item}
-                            isExpanded={isExpanded}
-                            onToggleExpand={() => setExpandedItem(isExpanded ? null : item.id)}
-                            onUpdateTime={(time) => updateItemTime(item.id, time)}
-                            onRemove={() => removeItem(item.id)}
-                            onView={() => !isFlight && openDestinationDrawer(item)}
-                            onAddPlace={(destination) => addItem(selectedDay, destination)}
-                            currentDayDate={currentDay.date}
-                          />
-                        </SortableItem>
-                      );
-                    })}
-                  </div>
-                </SortableContext>
-              </DndContext>
-            ) : (
-              <div className="text-center py-20 px-6 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 mt-4">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center">
-                  <MapPin className="w-8 h-8 text-gray-300 dark:text-gray-600" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Empty Day</h3>
-                <p className="text-sm text-gray-500 mb-8 max-w-xs mx-auto">
-                  Add places or flights to build your itinerary for Day {selectedDay}.
-                </p>
-                <div className="flex justify-center gap-3">
-                  <UMActionPill onClick={() => openFlightDrawer(selectedDay)} className="!py-2.5 !px-5">
-                    <Plane className="w-4 h-4 mr-2" />
-                    Add Flight
-                  </UMActionPill>
-                  <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)} className="!py-2.5 !px-5">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Place
-                  </UMActionPill>
-                </div>
+                  Add your first stop
+                </button>
               </div>
+            ) : (
+              /* Day Sections */
+              days.map((day) => (
+                <TripDaySection
+                  key={day.dayNumber}
+                  day={day}
+                  isSelected={day.dayNumber === selectedDayNumber}
+                  onSelect={() => setSelectedDayNumber(day.dayNumber)}
+                  onReorderItems={reorderItems}
+                  onRemoveItem={removeItem}
+                  onEditItem={handleEditItem}
+                  onAddItem={openPlaceSelector}
+                  activeItemId={activeItemId}
+                />
+              ))
             )}
           </div>
-        </div>
+        )}
 
-        {/* Right Panel: Map */}
-        <div className={`
-          border-l border-gray-200 dark:border-gray-800 transition-all duration-300
-          ${mobileView === 'map' ? 'w-full h-full absolute inset-0 z-20 bg-white dark:bg-gray-950' : 'hidden'} 
-          md:block md:relative md:w-1/2 md:inset-auto md:z-0
-          ${showBucketList ? 'lg:w-2/5' : 'lg:w-2/5'}
-        `}>
-          <TripMapView
-            places={mapPlaces}
-            className="h-full w-full"
-          />
-        </div>
+        {/* Insights Tab */}
+        {activeTab === 'insights' && (
+          <div className="space-y-6 fade-in">
+            {/* Weather Forecast */}
+            <div className="p-6 border border-stone-200 dark:border-stone-800 rounded-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <Cloud className="w-4 h-4 text-stone-500" />
+                <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400">Weather Forecast</h3>
+              </div>
+              <TripWeatherForecast
+                destination={trip.destination}
+                startDate={trip.start_date}
+                endDate={trip.end_date}
+                latitude={firstDestination?.latitude ?? undefined}
+                longitude={firstDestination?.longitude ?? undefined}
+              />
+            </div>
 
-        {/* Right Sidebar: Bucket List */}
-        {showBucketList && (
-          <div className="hidden md:block w-1/4 lg:w-1/5 border-l border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50 backdrop-blur-xl">
-            <TripBucketList
-              items={bucketItems}
-              onAdd={handleAddBucketItem}
-              onRemove={handleRemoveBucketItem}
-              onReorder={handleReorderBucketItems}
-              onAssignToDay={handleAssignBucketItemToDay}
-              availableDays={days.map((d) => d.dayNumber)}
-            />
+            {/* Safety Alerts */}
+            <div className="p-6 border border-stone-200 dark:border-stone-800 rounded-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="w-4 h-4 text-stone-500" />
+                <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400">Travel Advisories</h3>
+              </div>
+              <TripSafetyAlerts destination={trip.destination} />
+            </div>
+
+            {/* Bucket List */}
+            <div className="p-6 border border-stone-200 dark:border-stone-800 rounded-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <ListChecks className="w-4 h-4 text-stone-500" />
+                <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400">Bucket List</h3>
+              </div>
+              <TripBucketList
+                items={bucketItems}
+                onAdd={handleAddToBucketList}
+                onRemove={handleRemoveFromBucketList}
+                onReorder={setBucketItems}
+                onAssignToDay={handleAssignToDay}
+                availableDays={days.map(d => d.dayNumber)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div className="fade-in">
+            <div className="p-6 border border-stone-200 dark:border-stone-800 rounded-2xl">
+              <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400 mb-4">Trip Summary</h3>
+              <div className="space-y-4">
+                {trip.description ? (
+                  <p className="text-sm text-stone-600 dark:text-stone-300">{trip.description}</p>
+                ) : (
+                  <p className="text-xs text-stone-400 dark:text-stone-500">
+                    No description added yet. Edit your trip to add one.
+                  </p>
+                )}
+
+                <div className="pt-4 border-t border-stone-100 dark:border-stone-800">
+                  <h4 className="text-xs font-medium text-stone-500 dark:text-stone-400 mb-3">All Stops</h4>
+                  <div className="space-y-2">
+                    {days.flatMap(day =>
+                      day.items.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => handleEditItem(item)}
+                          className="w-full text-left p-2 hover:bg-stone-50 dark:hover:bg-stone-800 rounded-xl transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs text-stone-400 w-8">D{day.dayNumber}</span>
+                            <span className="text-sm text-stone-900 dark:text-white truncate flex-1">
+                              {item.title}
+                            </span>
+                            <span className="text-xs text-stone-400 capitalize">
+                              {item.parsedNotes?.category || item.destination?.category}
+                            </span>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                    {days.flatMap(d => d.items).length === 0 && (
+                      <p className="text-xs text-stone-400 dark:text-stone-500 py-4 text-center">
+                        No stops added yet
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Saving Indicator */}
+        {saving && (
+          <div className="fixed bottom-6 right-6 flex items-center gap-2 px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-full shadow-lg text-xs font-medium">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Saving...
           </div>
         )}
       </div>
+
+      {/* Floating Action Bar */}
+      <FloatingActionBar
+        onAddPlace={() => openPlaceSelector(selectedDayNumber)}
+        onAddFlight={() => openFlightDrawer(selectedDayNumber)}
+        onAddNote={() => openDrawer('trip-notes', { tripId: trip.id })}
+        onOpenMap={() => setIsMapOpen(true)}
+        onAIPlan={handleAITripPlanning}
+        isAIPlanning={isAIPlanning}
+        isSaving={saving}
+      />
+
+      {/* Map Drawer */}
+      <MapDrawer
+        isOpen={isMapOpen}
+        onClose={() => setIsMapOpen(false)}
+        days={days}
+        selectedDayNumber={selectedDayNumber}
+        activeItemId={activeItemId}
+        onMarkerClick={setActiveItemId}
+      />
     </main>
   );
-}
-
-function calculateDays(start: string | null, end: string | null): number {
-  if (!start) return 1;
-  if (!end) return 1;
-  const startDate = parseDateString(start);
-  const endDate = parseDateString(end);
-  if (!startDate || !endDate) return 1;
-  const diff = endDate.getTime() - startDate.getTime();
-  return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1);
-}
-
-function addDays(dateStr: string, days: number): string {
-  const date = parseDateString(dateStr);
-  if (!date) return dateStr;
-  date.setDate(date.getDate() + days);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }

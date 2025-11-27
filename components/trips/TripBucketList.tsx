@@ -101,36 +101,36 @@ function SortableBucketItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+      className="group relative bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden hover:border-stone-300 dark:hover:border-stone-700 transition-colors"
     >
       <div className="flex items-start gap-2 p-3">
         {/* Drag Handle */}
         <div
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 mt-0.5"
+          className="cursor-grab active:cursor-grabbing text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 mt-0.5"
         >
           <GripVertical className="w-4 h-4" />
         </div>
 
         {/* Thumbnail or Icon */}
         {item.thumbnail ? (
-          <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
+          <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-stone-100 dark:bg-stone-800">
             <img src={item.thumbnail} alt="" className="w-full h-full object-cover" />
           </div>
         ) : (
-          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
             {getIcon()}
           </div>
         )}
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+          <h4 className="text-sm font-medium text-stone-900 dark:text-white truncate">
             {item.title}
           </h4>
           {item.note && (
-            <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{item.note}</p>
+            <p className="text-xs text-stone-500 mt-0.5 line-clamp-2">{item.note}</p>
           )}
           {item.url && (
             <a
@@ -149,14 +149,14 @@ function SortableBucketItem({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => setShowDayPicker(!showDayPicker)}
-            className="p-1.5 text-gray-400 hover:text-green-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-1.5 text-stone-400 hover:text-green-500 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             title="Add to day"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
           <button
             onClick={onRemove}
-            className="p-1.5 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-1.5 text-stone-400 hover:text-red-500 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
             title="Remove"
           >
             <Trash2 className="w-4 h-4" />
@@ -166,8 +166,8 @@ function SortableBucketItem({
 
       {/* Day Picker */}
       {showDayPicker && (
-        <div className="px-3 pb-3 pt-1 border-t border-gray-100 dark:border-gray-800">
-          <p className="text-[10px] text-gray-500 mb-2">Add to day:</p>
+        <div className="px-3 pb-3 pt-1 border-t border-stone-100 dark:border-stone-800">
+          <p className="text-[10px] text-stone-500 mb-2">Add to day:</p>
           <div className="flex flex-wrap gap-1">
             {availableDays.map((day) => (
               <button
@@ -176,7 +176,7 @@ function SortableBucketItem({
                   onAssignToDay(day);
                   setShowDayPicker(false);
                 }}
-                className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                className="px-2 py-1 text-xs bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 rounded-lg transition-colors"
               >
                 Day {day}
               </button>
@@ -263,19 +263,19 @@ export default function TripBucketList({
   return (
     <div className={`flex flex-col h-full ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-200 dark:border-stone-800">
         <div className="flex items-center gap-2">
-          <Bookmark className="w-4 h-4 text-gray-500" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+          <Bookmark className="w-4 h-4 text-stone-500" />
+          <h3 className="text-sm font-medium text-stone-900 dark:text-white">
             Bucket List
           </h3>
           {items.length > 0 && (
-            <span className="text-xs text-gray-400">({items.length})</span>
+            <span className="text-xs text-stone-400">({items.length})</span>
           )}
         </div>
         <button
           onClick={() => setIsAdding(true)}
-          className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          className="p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
         </button>
@@ -283,7 +283,7 @@ export default function TripBucketList({
 
       {/* Add Form */}
       {isAdding && (
-        <form onSubmit={handleSubmit} className="p-3 border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
+        <form onSubmit={handleSubmit} className="p-3 border-b border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-800/50">
           {/* Type Toggle */}
           <div className="flex gap-1 mb-3">
             <button
@@ -292,7 +292,7 @@ export default function TripBucketList({
               className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors ${
                 newItemType === 'link'
                   ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                  : 'bg-stone-100 dark:bg-stone-800 text-stone-500'
               }`}
             >
               <LinkIcon className="w-3.5 h-3.5" />
@@ -304,7 +304,7 @@ export default function TripBucketList({
               className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition-colors ${
                 newItemType === 'note'
                   ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                  : 'bg-stone-100 dark:bg-stone-800 text-stone-500'
               }`}
             >
               <StickyNote className="w-3.5 h-3.5" />
@@ -320,7 +320,7 @@ export default function TripBucketList({
               value={newItemUrl}
               onChange={(e) => setNewItemUrl(e.target.value)}
               placeholder="Paste TikTok, Instagram, or any URL..."
-              className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+              className="w-full px-3 py-2 text-sm bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
             />
           )}
 
@@ -331,7 +331,7 @@ export default function TripBucketList({
             value={newItemTitle}
             onChange={(e) => setNewItemTitle(e.target.value)}
             placeholder={newItemType === 'link' ? 'Title (optional)' : 'What do you want to do?'}
-            className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
+            className="w-full px-3 py-2 text-sm bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2"
           />
 
           {/* Note Input */}
@@ -340,7 +340,7 @@ export default function TripBucketList({
             onChange={(e) => setNewItemNote(e.target.value)}
             placeholder="Notes (optional)"
             rows={2}
-            className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-2"
+            className="w-full px-3 py-2 text-sm bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none mb-2"
           />
 
           {/* Actions */}
@@ -348,14 +348,14 @@ export default function TripBucketList({
             <button
               type="button"
               onClick={() => setIsAdding(false)}
-              className="flex-1 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              className="flex-1 px-3 py-1.5 text-xs text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={(newItemType === 'link' && !newItemUrl) || (newItemType === 'note' && !newItemTitle)}
-              className="flex-1 px-3 py-1.5 text-xs bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+              className="flex-1 px-3 py-1.5 text-xs bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-stone-800 dark:hover:bg-stone-100 transition-colors"
             >
               Add
             </button>
@@ -367,11 +367,11 @@ export default function TripBucketList({
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {items.length === 0 ? (
           <div className="text-center py-8">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <Bookmark className="w-5 h-5 text-gray-400" />
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+              <Bookmark className="w-5 h-5 text-stone-400" />
             </div>
-            <p className="text-sm text-gray-500 mb-1">No items yet</p>
-            <p className="text-xs text-gray-400">
+            <p className="text-sm text-stone-500 mb-1">No items yet</p>
+            <p className="text-xs text-stone-400">
               Save links, TikToks, or ideas here
             </p>
           </div>

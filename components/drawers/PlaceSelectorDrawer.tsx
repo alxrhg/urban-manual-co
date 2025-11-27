@@ -154,14 +154,14 @@ export default function PlaceSelectorDrawer({
 
   return (
     <div className="h-full flex flex-col">
-      {/* Tab Switcher - Minimal style */}
+      {/* Tab Switcher */}
       <div className="px-4 pt-4 pb-3 flex gap-4 text-xs">
         <button
           onClick={() => setTab('curated')}
           className={`transition-all ${
             tab === 'curated'
-              ? 'font-medium text-black dark:text-white'
-              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+              ? 'font-medium text-stone-900 dark:text-white'
+              : 'font-medium text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'
           }`}
         >
           Curated
@@ -170,8 +170,8 @@ export default function PlaceSelectorDrawer({
           onClick={() => setTab('google')}
           className={`transition-all ${
             tab === 'google'
-              ? 'font-medium text-black dark:text-white'
-              : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+              ? 'font-medium text-stone-900 dark:text-white'
+              : 'font-medium text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'
           }`}
         >
           Google
@@ -181,15 +181,15 @@ export default function PlaceSelectorDrawer({
       {tab === 'curated' ? (
         <>
           {/* Curated Search */}
-          <div className="px-4 pb-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="px-4 pb-4 border-b border-stone-200 dark:border-stone-800">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search curated places..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-gray-100 dark:bg-gray-800 border-none text-sm text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 border-none text-sm text-stone-900 dark:text-white placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white"
               />
             </div>
 
@@ -201,8 +201,8 @@ export default function PlaceSelectorDrawer({
                   onClick={() => setCategory(cat)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${
                     category === cat
-                      ? 'bg-black text-white dark:bg-white dark:text-black'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      ? 'bg-stone-900 text-white dark:bg-white dark:text-stone-900'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
                   }`}
                 >
                   {cat}
@@ -215,15 +215,15 @@ export default function PlaceSelectorDrawer({
           <div className="flex-1 overflow-y-auto p-2">
             {loading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
               </div>
             ) : places.length === 0 ? (
               <div className="text-center py-12">
-                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <MapPin className="w-5 h-5 text-gray-400" />
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                  <MapPin className="w-5 h-5 text-stone-400" />
                 </div>
-                <p className="text-sm text-gray-500">No places found</p>
-                <p className="text-xs text-gray-400 mt-1">Try searching on Google tab</p>
+                <p className="text-sm text-stone-500">No places found</p>
+                <p className="text-xs text-stone-400 mt-1">Try searching on Google tab</p>
               </div>
             ) : (
               <div className="space-y-1">
@@ -231,9 +231,9 @@ export default function PlaceSelectorDrawer({
                   <button
                     key={place.slug}
                     onClick={() => handleSelect(place)}
-                    className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors"
+                    className="w-full flex items-center gap-3 p-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800 rounded-xl transition-colors"
                   >
-                    <div className="w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
+                    <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-stone-800 overflow-hidden flex-shrink-0">
                       {place.image_thumbnail || place.image ? (
                         <Image
                           src={place.image_thumbnail || place.image || ''}
@@ -244,16 +244,16 @@ export default function PlaceSelectorDrawer({
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <MapPin className="w-5 h-5 text-gray-400" />
+                          <MapPin className="w-5 h-5 text-stone-400" />
                         </div>
                       )}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
+                      <p className="text-sm font-medium text-stone-900 dark:text-white truncate">
                         {place.name}
                       </p>
-                      <p className="text-xs text-gray-500 truncate mt-0.5">
+                      <p className="text-xs text-stone-500 truncate mt-0.5">
                         {place.category} · {place.city}
                       </p>
                     </div>
@@ -266,16 +266,16 @@ export default function PlaceSelectorDrawer({
       ) : (
         <>
           {/* Google Search */}
-          <div className="px-4 pb-4 border-b border-gray-200 dark:border-gray-800">
+          <div className="px-4 pb-4 border-b border-stone-200 dark:border-stone-800">
             <GooglePlacesAutocomplete
               value={googleQuery}
               onChange={setGoogleQuery}
               onPlaceSelect={handleGooglePlaceSelect}
               placeholder="Search any place on Google..."
               types="establishment"
-              className="w-full px-4 py-2.5 rounded-2xl bg-gray-100 dark:bg-gray-800 border-none text-sm text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+              className="w-full px-4 py-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 border-none text-sm text-stone-900 dark:text-white placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white"
             />
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-stone-400 mt-2">
               Search for restaurants, cafes, museums, hotels, and more
             </p>
           </div>
@@ -284,12 +284,12 @@ export default function PlaceSelectorDrawer({
           <div className="flex-1 overflow-y-auto p-4">
             {googleLoading ? (
               <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+                <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
               </div>
             ) : googlePlace ? (
               <div className="space-y-4">
                 {/* Place Card */}
-                <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+                <div className="rounded-2xl overflow-hidden border border-stone-200 dark:border-stone-800">
                   {googlePlace.image && (
                     <div className="aspect-video relative">
                       <Image
@@ -301,25 +301,25 @@ export default function PlaceSelectorDrawer({
                     </div>
                   )}
                   <div className="p-4 space-y-2">
-                    <h3 className="text-sm font-medium">
+                    <h3 className="text-sm font-medium text-stone-900 dark:text-white">
                       {googlePlace.name}
                     </h3>
                     {googlePlace.address && (
-                      <p className="text-xs text-gray-500">{googlePlace.address}</p>
+                      <p className="text-xs text-stone-500">{googlePlace.address}</p>
                     )}
-                    <div className="flex flex-wrap gap-2 text-xs text-gray-500">
+                    <div className="flex flex-wrap gap-2 text-xs text-stone-500">
                       {googlePlace.category && (
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+                        <span className="px-2 py-1 bg-stone-100 dark:bg-stone-800 rounded-full">
                           {googlePlace.category}
                         </span>
                       )}
                       {googlePlace.rating && (
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+                        <span className="px-2 py-1 bg-stone-100 dark:bg-stone-800 rounded-full">
                           ★ {googlePlace.rating}
                         </span>
                       )}
                       {googlePlace.price_level && (
-                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+                        <span className="px-2 py-1 bg-stone-100 dark:bg-stone-800 rounded-full">
                           {'$'.repeat(googlePlace.price_level)}
                         </span>
                       )}
@@ -330,18 +330,18 @@ export default function PlaceSelectorDrawer({
                 {/* Add Button */}
                 <button
                   onClick={handleAddGooglePlace}
-                  className="w-full py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-90 transition"
+                  className="w-full py-3 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-sm font-medium hover:opacity-90 transition"
                 >
                   Add to Day {dayNumber || (index !== undefined ? index + 1 : '')}
                 </button>
               </div>
             ) : (
               <div className="text-center py-12">
-                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <Globe className="w-5 h-5 text-gray-400" />
+                <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                  <Globe className="w-5 h-5 text-stone-400" />
                 </div>
-                <p className="text-sm text-gray-500">Search for a place above</p>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-sm text-stone-500">Search for a place above</p>
+                <p className="text-xs text-stone-400 mt-1">
                   Results powered by Google Places
                 </p>
               </div>

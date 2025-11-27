@@ -36,7 +36,7 @@ export default function ItemNotesEditor({ notes = '', duration, onSave }: ItemNo
     return (
       <button
         onClick={() => setIsEditing(true)}
-        className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors mt-1"
+        className="flex items-center gap-1 text-[10px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors mt-1"
       >
         <StickyNote className="w-3 h-3" />
         {notes ? (
@@ -56,33 +56,33 @@ export default function ItemNotesEditor({ notes = '', duration, onSave }: ItemNo
   }
 
   return (
-    <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+    <div className="mt-2 p-2 bg-stone-50 dark:bg-stone-800 rounded-lg">
       <textarea
         ref={textareaRef}
         value={editNotes}
         onChange={(e) => setEditNotes(e.target.value)}
         placeholder="Add a note (reservations, tips, etc.)..."
-        className="w-full text-xs bg-transparent border-none resize-none focus:outline-none placeholder:text-gray-400"
+        className="w-full text-xs bg-transparent border-none resize-none focus:outline-none placeholder:text-stone-400"
         rows={2}
       />
 
-      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-stone-200 dark:border-stone-700">
         <div className="flex items-center gap-1 flex-1">
-          <Clock className="w-3 h-3 text-gray-400" />
+          <Clock className="w-3 h-3 text-stone-400" />
           <input
             type="number"
             value={editDuration}
             onChange={(e) => setEditDuration(e.target.value)}
             placeholder="Duration (min)"
-            className="w-20 text-xs bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
+            className="w-20 text-xs bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white"
           />
-          <span className="text-[10px] text-gray-400">min</span>
+          <span className="text-[10px] text-stone-400">min</span>
         </div>
 
         <div className="flex items-center gap-1">
           <button
             onClick={handleCancel}
-            className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
           >
             <X className="w-4 h-4" />
           </button>

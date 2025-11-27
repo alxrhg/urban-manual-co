@@ -93,7 +93,7 @@ export default function NearbyDiscoveries({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-2 text-xs text-gray-400">
+      <div className="flex items-center gap-2 py-2 text-xs text-stone-400">
         <Loader2 className="w-3 h-3 animate-spin" />
         <span>Finding nearby...</span>
       </div>
@@ -105,16 +105,16 @@ export default function NearbyDiscoveries({
   }
 
   return (
-    <div className="mt-2 border-t border-gray-100 dark:border-gray-800 pt-2">
+    <div className="mt-2 border-t border-stone-100 dark:border-stone-800 pt-2">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-2 text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors w-full"
+        className="flex items-center gap-2 text-xs text-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors w-full"
       >
         <Compass className="w-3 h-3" />
         <span>
           {nearby.length} place{nearby.length !== 1 ? 's' : ''} nearby
         </span>
-        <span className="text-gray-400 ml-auto">
+        <span className="text-stone-400 ml-auto">
           {expanded ? '−' : '+'}
         </span>
       </button>
@@ -124,9 +124,9 @@ export default function NearbyDiscoveries({
           {nearby.map((place) => (
             <div
               key={place.slug}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"
+              className="flex items-center gap-2 p-2 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors group"
             >
-              <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 overflow-hidden flex-shrink-0">
                 {place.image_thumbnail ? (
                   <Image
                     src={place.image_thumbnail}
@@ -137,20 +137,20 @@ export default function NearbyDiscoveries({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <MapPin className="w-3 h-3 text-gray-400" />
+                    <MapPin className="w-3 h-3 text-stone-400" />
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium truncate">{place.name}</p>
-                <p className="text-[10px] text-gray-500 truncate">
+                <p className="text-[10px] text-stone-500 truncate">
                   {place.category} · {formatDistance((place as any).distance)}
                 </p>
               </div>
               {onAddPlace && (
                 <button
                   onClick={() => onAddPlace(place)}
-                  className="p-1 text-gray-400 hover:text-gray-900 dark:hover:text-white opacity-0 group-hover:opacity-100 transition-all"
+                  className="p-1 text-stone-400 hover:text-stone-900 dark:hover:text-white opacity-0 group-hover:opacity-100 transition-all"
                   title="Add to itinerary"
                 >
                   <Plus className="w-4 h-4" />

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Calendar, MapPin, ArrowUpRight } from "lucide-react";
+import { Calendar, MapPin, ArrowUpRight, Plane, Utensils } from "lucide-react";
 import UMCard from "@/components/ui/UMCard";
 import { formatTripDateRange, calculateTripDays } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ interface Trip {
   endDate?: string;
   status?: string;
   daysCount?: number;
+  itemsCount?: number;
   [key: string]: any;
 }
 
@@ -50,9 +51,9 @@ function getStatusConfig(status?: string) {
     case 'completed':
       return {
         label: 'Completed',
-        bg: 'bg-white/10 backdrop-blur-md',
-        text: 'text-white/80',
-        dot: 'bg-white/50',
+        bg: 'bg-emerald-500/20 backdrop-blur-md',
+        text: 'text-emerald-300',
+        dot: 'bg-emerald-400',
       };
     default:
       return null;
@@ -80,8 +81,20 @@ export default function TripCard({ trip, onView, onEdit }: TripCardProps) {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-neutral-50 dark:bg-neutral-800">
-            <MapPin className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900">
+            <div className="flex flex-col items-center gap-2">
+              {trip.city ? (
+                <>
+                  <MapPin className="w-8 h-8 text-neutral-400 dark:text-neutral-500" />
+                  <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500">{trip.city}</span>
+                </>
+              ) : (
+                <>
+                  <Plane className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
+                  <span className="text-xs font-medium text-neutral-300 dark:text-neutral-600">Add cover photo</span>
+                </>
+              )}
+            </div>
           </div>
         )}
         
@@ -127,6 +140,15 @@ export default function TripCard({ trip, onView, onEdit }: TripCardProps) {
                   <Calendar className="w-3.5 h-3.5 opacity-70" />
                   {daysCount} {daysCount === 1 ? 'day' : 'days'}
                 </span>
+              )}
+              {trip.itemsCount !== undefined && trip.itemsCount > 0 && (
+                <>
+                  <span className="w-0.5 h-0.5 rounded-full bg-white/40" />
+                  <span className="flex items-center gap-1.5">
+                    <Utensils className="w-3.5 h-3.5 opacity-70" />
+                    {trip.itemsCount} {trip.itemsCount === 1 ? 'place' : 'places'}
+                  </span>
+                </>
               )}
             </div>
 

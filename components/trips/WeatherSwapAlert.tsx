@@ -58,31 +58,31 @@ export default function WeatherSwapAlert({ days, onSwap, className = '' }: Weath
           </div>
 
           {/* Swap Visualization */}
-          <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg mb-3">
+          <div className="flex items-center gap-3 p-3 bg-white dark:bg-stone-900 rounded-lg mb-3">
             {/* Outdoor activity (rainy day) */}
             <div className="flex-1 text-center">
-              <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500 mb-1">
+              <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 mb-1">
                 <CloudRain className="w-3 h-3 text-blue-400" />
                 Day {suggestion.affectedDay}
               </div>
-              <div className="text-xs font-medium text-gray-900 dark:text-white truncate px-2">
+              <div className="text-xs font-medium text-stone-900 dark:text-white truncate px-2">
                 {suggestion.affectedItem.name}
               </div>
               <div className="text-[10px] text-orange-500 mt-0.5">Outdoor</div>
             </div>
 
             {/* Swap arrow */}
-            <div className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full">
-              <ArrowLeftRight className="w-4 h-4 text-gray-500" />
+            <div className="p-2 bg-stone-100 dark:bg-stone-800 rounded-full">
+              <ArrowLeftRight className="w-4 h-4 text-stone-500" />
             </div>
 
             {/* Indoor activity (clear day) */}
             <div className="flex-1 text-center">
-              <div className="flex items-center justify-center gap-1 text-[10px] text-gray-500 mb-1">
+              <div className="flex items-center justify-center gap-1 text-[10px] text-stone-500 mb-1">
                 <Sun className="w-3 h-3 text-yellow-500" />
                 Day {suggestion.targetDay}
               </div>
-              <div className="text-xs font-medium text-gray-900 dark:text-white truncate px-2">
+              <div className="text-xs font-medium text-stone-900 dark:text-white truncate px-2">
                 {suggestion.targetItem.name}
               </div>
               <div className="text-[10px] text-green-500 mt-0.5">Indoor</div>
@@ -103,7 +103,7 @@ export default function WeatherSwapAlert({ days, onSwap, className = '' }: Weath
             </button>
             <button
               onClick={() => handleDismiss(suggestion)}
-              className="px-3 py-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-xs transition-colors"
+              className="px-3 py-2 text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 text-xs transition-colors"
             >
               Dismiss
             </button>
