@@ -12,7 +12,6 @@ interface QuickAction {
 }
 
 interface QuickActionsProps {
-  tripId: string;
   onMapClick?: () => void;
   onPlannerClick?: () => void;
   onShareClick?: () => void;
@@ -24,7 +23,6 @@ interface QuickActionsProps {
  * Lovably style: minimal icons with uppercase labels
  */
 export default function QuickActions({
-  tripId,
   onMapClick,
   onPlannerClick,
   onShareClick,
@@ -42,7 +40,6 @@ export default function QuickActions({
       label: 'Planner',
       icon: <Calendar className="h-6 w-6" />,
       onClick: onPlannerClick,
-      href: `/trips/${tripId}/planner`,
     },
     {
       id: 'share',
