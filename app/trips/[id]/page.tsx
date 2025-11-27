@@ -58,6 +58,7 @@ import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
 import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData } from '@/types/trip';
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
 import type { Destination } from '@/types/destination';
+import TripCalendar from '@/components/trips/TripCalendar';
 
 interface TripDay {
   dayNumber: number;
@@ -491,6 +492,12 @@ export default function TripPage() {
       order: index + 1,
     })) || [];
 
+  const calendarDays = days.map((day) => ({
+    dayNumber: day.dayNumber,
+    date: day.date,
+    itemCount: day.items.length,
+  }));
+
   return (
     <main className="w-full min-h-screen bg-white dark:bg-gray-950">
       {/* Header */}
@@ -581,6 +588,17 @@ export default function TripPage() {
               startDate={trip.start_date}
               endDate={trip.end_date}
               compact
+            />
+          </div>
+
+          {/* Calendar */}
+          <div className="px-4 md:px-10 py-4 border-b border-gray-100 dark:border-gray-800 bg-white/30 dark:bg-gray-900/30 backdrop-blur-sm">
+            <TripCalendar
+              startDate={trip.start_date}
+              endDate={trip.end_date}
+              days={calendarDays}
+              selectedDay={selectedDay}
+              onSelectDay={setSelectedDay}
             />
           </div>
 
