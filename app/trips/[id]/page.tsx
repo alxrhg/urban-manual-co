@@ -19,7 +19,7 @@ import {
 import {
   SortableContext,
   sortableKeyboardCoordinates,
-  rectSortingStrategy,
+  verticalListSortingStrategy,
   arrayMove,
 } from '@dnd-kit/sortable';
 import {
@@ -414,7 +414,7 @@ export default function TripPage() {
       </div>
 
       {/* Content */}
-      <section className="max-w-4xl mx-auto px-4 md:px-6 py-6 pb-32">
+      <section className="max-w-3xl mx-auto px-4 md:px-6 py-6 pb-32">
         {currentItems.length === 0 ? (
           /* Empty State */
           <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -444,23 +444,18 @@ export default function TripPage() {
           >
             <SortableContext
               items={currentItems.map((item) => item.id)}
-              strategy={rectSortingStrategy}
+              strategy={verticalListSortingStrategy}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
                 {currentItems.map((item, index) => (
-                  <div
+                  <ItineraryCard
                     key={item.id}
-                    className={index === 0 ? 'md:col-span-2' : ''}
-                  >
-                    <ItineraryCard
-                      item={item}
-                      index={index}
-                      variant={index === 0 ? 'featured' : 'default'}
-                      onEdit={handleEditItem}
-                      onRemove={removeItem}
-                      isActive={item.id === activeItemId}
-                    />
-                  </div>
+                    item={item}
+                    index={index}
+                    onEdit={handleEditItem}
+                    onRemove={removeItem}
+                    isActive={item.id === activeItemId}
+                  />
                 ))}
               </div>
             </SortableContext>

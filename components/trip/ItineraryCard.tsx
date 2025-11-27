@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Clock, MapPin, Star, ChevronRight, GripVertical, X, Plane } from 'lucide-react';
+import { Clock, MapPin, Star, GripVertical, X, Plane } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { formatTimeDisplay } from '@/lib/utils/time-calculations';
@@ -18,13 +18,12 @@ interface ItineraryCardProps {
 }
 
 /**
- * ItineraryCard - Large format card with immersive imagery
- * Journal aesthetic: Full-bleed photos, elegant typography, subtle shadows
+ * ItineraryCard - Compact row-based card for itinerary items
+ * Clean, scannable design with thumbnail, key info, and drag handle
  */
 export default function ItineraryCard({
   item,
   index,
-  variant = 'default',
   onEdit,
   onRemove,
   isActive = false,
@@ -52,150 +51,141 @@ export default function ItineraryCard({
   const neighborhood = item.destination?.neighborhood;
   const isFlight = item.parsedNotes?.type === 'flight';
 
-  const isFeatured = variant === 'featured' || index === 0;
-
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={`
         group relative
-        ${isDragging ? 'z-50 scale-[1.02]' : ''}
-        ${isActive ? 'ring-2 ring-stone-500/50' : ''}
+        ${isDragging ? 'z-50 opacity-50' : ''}
+        ${isActive ? 'ring-2 ring-stone-400/50 rounded-2xl' : ''}
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div
+      <button
+        onClick={() => onEdit?.(item)}
         className={`
-          relative overflow-hidden rounded-2xl
-          bg-stone-100 dark:bg-stone-900
-          transition-all duration-500 ease-out
-          ${isFeatured ? 'aspect-[16/10]' : 'aspect-[4/3]'}
-          ${isHovered ? 'shadow-2xl shadow-stone-900/20 dark:shadow-black/40' : 'shadow-lg shadow-stone-900/10 dark:shadow-black/20'}
+          w-full flex items-center gap-3 p-3
+          bg-white dark:bg-stone-900
+          hover:bg-stone-50 dark:hover:bg-stone-800
+          border border-stone-200 dark:border-stone-800
+          rounded-2xl
+          transition-all duration-200
+          text-left
         `}
       >
-        {/* Image */}
-        {image ? (
-          <Image
-            src={image}
-            alt={item.title || 'Destination'}
-            fill
-            className={`
-              object-cover transition-all duration-700
-              ${imageLoaded ? 'opacity-100' : 'opacity-0'}
-              ${isHovered ? 'scale-105' : 'scale-100'}
-            `}
-            onLoad={() => setImageLoaded(true)}
-          />
-        ) : isFlight ? (
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 flex items-center justify-center">
-            <Plane className="w-12 h-12 text-blue-400 dark:text-blue-300" />
-          </div>
-        ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300 dark:from-stone-800 dark:to-stone-700 flex items-center justify-center">
-            <MapPin className="w-12 h-12 text-stone-400 dark:text-stone-500" />
-          </div>
-        )}
+        {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+          className={`
+            flex-shrink-0 p-1.5 -ml-1 cursor-grab active:cursor-grabbing
+            text-stone-300 dark:text-stone-600
+            hover:text-stone-500 dark:hover:text-stone-400
+            transition-opacity duration-200
+            ${isHovered ? 'opacity-100' : 'opacity-0'}
+          `}
+        >
+          <GripVertical className="w-4 h-4" />
+        </div>
 
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        {/* Index Badge */}
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+          <span className="text-xs font-medium text-stone-600 dark:text-stone-400">
+            {index + 1}
+          </span>
+        </div>
 
-        {/* Top Bar: Index + Actions */}
-        <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between">
-          {/* Index Badge */}
-          <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-full bg-white/90 dark:bg-stone-900/80 backdrop-blur-sm flex items-center justify-center text-sm font-semibold text-stone-900 dark:text-white shadow-lg">
-              {index + 1}
-            </span>
+        {/* Thumbnail */}
+        <div className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800">
+          {image ? (
+            <Image
+              src={image}
+              alt={item.title || 'Destination'}
+              width={64}
+              height={64}
+              className={`
+                w-full h-full object-cover
+                transition-opacity duration-300
+                ${imageLoaded ? 'opacity-100' : 'opacity-0'}
+              `}
+              onLoad={() => setImageLoaded(true)}
+            />
+          ) : isFlight ? (
+            <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 flex items-center justify-center">
+              <Plane className="w-6 h-6 text-blue-400 dark:text-blue-300" />
+            </div>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <MapPin className="w-6 h-6 text-stone-400" />
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          {/* Title */}
+          <h3 className="text-sm font-medium text-stone-900 dark:text-white truncate">
+            {item.title}
+          </h3>
+
+          {/* Meta Row 1: Neighborhood & Category */}
+          <div className="flex items-center gap-2 mt-0.5">
+            {neighborhood && (
+              <span className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400 truncate">
+                <MapPin className="w-3 h-3 flex-shrink-0" />
+                {neighborhood}
+              </span>
+            )}
+            {category && (
+              <>
+                {neighborhood && <span className="text-stone-300 dark:text-stone-600">·</span>}
+                <span className="text-xs text-stone-500 dark:text-stone-400 truncate">
+                  {category}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Meta Row 2: Time & Rating */}
+          <div className="flex items-center gap-2 mt-1">
             {item.time && (
-              <span className="px-2.5 py-1 rounded-full bg-white/90 dark:bg-stone-900/80 backdrop-blur-sm text-xs font-medium text-stone-700 dark:text-stone-300 shadow-lg flex items-center gap-1">
+              <span className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
                 <Clock className="w-3 h-3" />
                 {formatTimeDisplay(item.time)}
               </span>
             )}
-          </div>
-
-          {/* Actions */}
-          <div
-            className={`
-              flex items-center gap-1 transition-opacity duration-200
-              ${isHovered ? 'opacity-100' : 'opacity-0'}
-            `}
-          >
-            <button
-              {...attributes}
-              {...listeners}
-              className="p-2 rounded-full bg-white/90 dark:bg-stone-900/80 backdrop-blur-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white cursor-grab active:cursor-grabbing shadow-lg transition-colors"
-            >
-              <GripVertical className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onRemove?.(item.id)}
-              className="p-2 rounded-full bg-white/90 dark:bg-stone-900/80 backdrop-blur-sm text-stone-600 dark:text-stone-400 hover:text-red-500 shadow-lg transition-colors"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Bottom Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-5">
-          {/* Category Tag */}
-          {category && (
-            <span className="inline-block mb-2 text-[10px] uppercase tracking-wider text-white/70 font-medium">
-              {category}
-            </span>
-          )}
-
-          {/* Title */}
-          <h3 className={`
-            font-medium text-white leading-tight mb-2
-            ${isFeatured ? 'text-2xl md:text-3xl' : 'text-xl'}
-          `}>
-            {item.title}
-          </h3>
-
-          {/* Meta Row */}
-          <div className="flex items-center gap-3 text-white/70">
-            {neighborhood && (
-              <span className="flex items-center gap-1 text-xs">
-                <MapPin className="w-3 h-3" />
-                {neighborhood}
-              </span>
-            )}
             {rating && (
-              <span className="flex items-center gap-1 text-xs">
-                <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                {rating.toFixed(1)}
-              </span>
+              <>
+                {item.time && <span className="text-stone-300 dark:text-stone-600">·</span>}
+                <span className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
+                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                  {rating.toFixed(1)}
+                </span>
+              </>
             )}
           </div>
         </div>
 
-        {/* Click to Edit Overlay */}
+        {/* Remove Button */}
         <button
-          onClick={() => onEdit?.(item)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove?.(item.id);
+          }}
           className={`
-            absolute inset-0 z-10 flex items-center justify-center
-            bg-black/0 hover:bg-black/10 transition-colors
-            cursor-pointer
+            flex-shrink-0 p-2 rounded-full
+            text-stone-300 dark:text-stone-600
+            hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
+            transition-all duration-200
+            ${isHovered ? 'opacity-100' : 'opacity-0'}
           `}
         >
-          <span
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-full
-              bg-white/90 dark:bg-stone-900/80 backdrop-blur-sm
-              text-sm font-medium text-stone-900 dark:text-white
-              shadow-lg transition-all duration-300
-              ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
-            `}
-          >
-            View Details
-            <ChevronRight className="w-4 h-4" />
-          </span>
+          <X className="w-4 h-4" />
         </button>
-      </div>
+      </button>
     </div>
   );
 }
