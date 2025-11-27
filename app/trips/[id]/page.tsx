@@ -737,21 +737,43 @@ export default function TripPage() {
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Mobile View Toggle */}
-            <button
-              onClick={() => setMobileView(mobileView === 'itinerary' ? 'map' : 'itinerary')}
-              className="md:hidden p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              aria-label={mobileView === 'itinerary' ? 'Show Map' : 'Show Itinerary'}
-            >
-              {mobileView === 'itinerary' ? <Map className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
-            </button>
+            {/* Mobile View Toggle - Segmented Control */}
+            <div className="md:hidden flex bg-gray-100 dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setMobileView('itinerary')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                  mobileView === 'itinerary'
+                    ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+                aria-label="Show Itinerary"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>List</span>
+              </button>
+              <button
+                onClick={() => setMobileView('map')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+                  mobileView === 'map'
+                    ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+                aria-label="Show Map"
+              >
+                <Map className="w-3.5 h-3.5" />
+                <span>Map</span>
+              </button>
+            </div>
 
             {/* AI Trip Planner Button */}
             <button
               onClick={handleAITripPlanning}
               disabled={isAIPlanning}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium text-sm hover:from-violet-600 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
-              title="Fill trip with AI-recommended places"
+              className="group relative flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium text-sm hover:from-violet-600 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
+              title={days.flatMap(d => d.items).length > 0
+                ? "Add AI suggestions to complement your existing itinerary"
+                : "Generate a complete AI-powered itinerary for your trip"
+              }
             >
               {isAIPlanning ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -759,6 +781,13 @@ export default function TripPage() {
                 <Sparkles className="w-4 h-4" />
               )}
               <span className="hidden sm:inline">{isAIPlanning ? 'Planning...' : 'AI Plan'}</span>
+              {/* Tooltip on hover */}
+              <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap shadow-lg z-50">
+                {days.flatMap(d => d.items).length > 0
+                  ? "Fill empty slots with AI suggestions"
+                  : "Generate complete itinerary"
+                }
+              </span>
             </button>
 
             <button
@@ -945,24 +974,56 @@ export default function TripPage() {
                 </SortableContext>
               </DndContext>
             ) : (
-              <div className="text-center py-20 px-6 rounded-3xl border-2 border-dashed border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30 mt-4">
-                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-white dark:bg-gray-800 shadow-sm flex items-center justify-center">
-                  <MapPin className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+              <div className="text-center py-12 px-6 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800 bg-gradient-to-b from-gray-50 to-white dark:from-gray-900/50 dark:to-gray-950 mt-4">
+                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-violet-100 to-purple-100 dark:from-violet-900/30 dark:to-purple-900/30 shadow-sm flex items-center justify-center">
+                  <Sparkles className="w-8 h-8 text-violet-500 dark:text-violet-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Empty Day</h3>
-                <p className="text-sm text-gray-500 mb-8 max-w-xs mx-auto">
-                  Add places or flights to build your itinerary for Day {selectedDay}.
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  Plan Day {selectedDay}
+                </h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
+                  {trip.destination
+                    ? `Start building your ${trip.destination} itinerary for this day.`
+                    : 'Add your first destination or let AI help plan your day.'}
                 </p>
-                <div className="flex justify-center gap-3">
-                  <UMActionPill onClick={() => openFlightDrawer(selectedDay)} className="!py-2.5 !px-5">
-                    <Plane className="w-4 h-4 mr-2" />
-                    Add Flight
-                  </UMActionPill>
-                  <UMActionPill variant="primary" onClick={() => openPlaceSelector(selectedDay)} className="!py-2.5 !px-5">
+
+                {/* Quick Actions */}
+                <div className="flex flex-col sm:flex-row justify-center gap-3 mb-8">
+                  <UMActionPill
+                    variant="primary"
+                    onClick={() => openPlaceSelector(selectedDay)}
+                    className="!py-3 !px-6"
+                  >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Place
                   </UMActionPill>
+                  <UMActionPill
+                    onClick={() => openFlightDrawer(selectedDay)}
+                    className="!py-3 !px-6 !bg-white dark:!bg-gray-800 border !border-gray-200 dark:!border-gray-700"
+                  >
+                    <Plane className="w-4 h-4 mr-2" />
+                    Add Flight
+                  </UMActionPill>
                 </div>
+
+                {/* AI Suggestion */}
+                {trip.destination && (
+                  <div className="pt-6 border-t border-gray-100 dark:border-gray-800">
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">Or let AI help you</p>
+                    <button
+                      onClick={handleAITripPlanning}
+                      disabled={isAIPlanning}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400 text-sm font-medium hover:from-violet-500/20 hover:to-purple-500/20 transition-all duration-200 disabled:opacity-50"
+                    >
+                      {isAIPlanning ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Sparkles className="w-4 h-4" />
+                      )}
+                      {isAIPlanning ? 'Planning...' : 'Auto-fill with AI'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

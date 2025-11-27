@@ -56,9 +56,11 @@ export const TripItemCard = memo(function TripItemCard({
     >
       <div className="flex items-start gap-3 p-3">
         {/* Drag Handle */}
-        <div 
+        <div
           {...dragHandleProps}
-          className="mt-2.5 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 dark:text-gray-600 dark:hover:text-gray-400 touch-none"
+          className="mt-2.5 p-1 -m-1 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 touch-none rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          aria-label="Drag to reorder"
+          title="Drag to reorder"
         >
           <GripVertical className="w-4 h-4" />
         </div>
@@ -66,14 +68,21 @@ export const TripItemCard = memo(function TripItemCard({
         {/* Time Input */}
         <div className="mt-1 flex-shrink-0">
           <div className="relative group/time">
-            <Clock className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+            <Clock className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 group-hover/time:text-gray-600 dark:group-hover/time:text-gray-300 pointer-events-none transition-colors" />
             <input
               type="time"
               value={item.time || ''}
               onChange={(e) => onUpdateTime?.(e.target.value)}
-              className="w-[88px] pl-6 pr-2 py-1.5 text-xs font-medium text-center bg-gray-50 dark:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-black dark:focus:ring-white transition-all text-gray-900 dark:text-gray-100"
-              placeholder="--:--"
+              className="w-[88px] pl-6 pr-2 py-1.5 text-xs font-medium text-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-gray-900 dark:text-gray-100 cursor-pointer"
+              placeholder="Set time"
+              title="Click to set time"
+              aria-label="Activity time"
             />
+            {!item.time && (
+              <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] text-gray-400 dark:text-gray-500 whitespace-nowrap opacity-0 group-hover/time:opacity-100 transition-opacity">
+                Click to set
+              </span>
+            )}
           </div>
         </div>
 
@@ -166,10 +175,13 @@ export const TripItemCard = memo(function TripItemCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onRemove?.();
+              if (window.confirm(`Remove "${item.title}" from this day?`)) {
+                onRemove?.();
+              }
             }}
-            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-            title="Remove item"
+            className="p-1.5 text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all duration-200 opacity-60 hover:opacity-100"
+            title="Remove from itinerary"
+            aria-label={`Remove ${item.title} from itinerary`}
           >
             <Trash2 className="w-4 h-4" />
           </button>
