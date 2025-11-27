@@ -173,23 +173,23 @@ export const QuickTripSelector = memo(function QuickTripSelector({
 
       {/* Modal */}
       <div
-        className="relative w-full sm:max-w-md bg-white dark:bg-gray-900 sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[80vh] overflow-hidden animate-slide-up"
+        className="relative w-full sm:max-w-md bg-white dark:bg-stone-900 sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[80vh] overflow-hidden animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between p-4 border-b border-stone-200 dark:border-stone-800">
           <div>
-            <h2 className="text-lg font-semibold">Add to Trip</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+            <h2 className="text-lg font-medium text-stone-900 dark:text-white">Add to Trip</h2>
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
               {destinationName}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+            className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors"
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-stone-600 dark:text-stone-400" />
           </button>
         </div>
 
@@ -197,7 +197,7 @@ export const QuickTripSelector = memo(function QuickTripSelector({
         <div className="p-4 space-y-2 overflow-y-auto max-h-[60vh]">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              <Loader2 className="w-6 h-6 animate-spin text-stone-400" />
             </div>
           ) : (
             <>
@@ -205,7 +205,7 @@ export const QuickTripSelector = memo(function QuickTripSelector({
               <button
                 onClick={handleCreateTrip}
                 disabled={adding !== null}
-                className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all disabled:opacity-50"
+                className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-all disabled:opacity-50"
               >
                 {adding === 'new' ? (
                   success === 'new' ? (
@@ -213,18 +213,18 @@ export const QuickTripSelector = memo(function QuickTripSelector({
                       <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                   ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                      <Loader2 className="w-5 h-5 animate-spin" />
+                    <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                      <Loader2 className="w-5 h-5 animate-spin text-stone-500" />
                     </div>
                   )
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-black dark:bg-white flex items-center justify-center">
-                    <Plus className="w-5 h-5 text-white dark:text-black" />
+                  <div className="w-10 h-10 rounded-full bg-stone-900 dark:bg-white flex items-center justify-center">
+                    <Plus className="w-5 h-5 text-white dark:text-stone-900" />
                   </div>
                 )}
                 <div className="flex-1 text-left">
-                  <p className="font-medium">Create New Trip</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="font-medium text-stone-900 dark:text-white">Create New Trip</p>
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
                     Start planning a new adventure
                   </p>
                 </div>
@@ -233,7 +233,7 @@ export const QuickTripSelector = memo(function QuickTripSelector({
               {/* Existing Trips */}
               {trips.length > 0 && (
                 <div className="pt-2">
-                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 px-1">
+                  <p className="text-xs font-medium text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-2 px-1">
                     Your Trips
                   </p>
                   {trips.map((trip) => (
@@ -241,7 +241,7 @@ export const QuickTripSelector = memo(function QuickTripSelector({
                       key={trip.id}
                       onClick={() => handleAddToTrip(trip.id)}
                       disabled={adding !== null}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-all disabled:opacity-50"
+                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-all disabled:opacity-50"
                     >
                       {adding === trip.id ? (
                         success === trip.id ? (
@@ -249,12 +249,12 @@ export const QuickTripSelector = memo(function QuickTripSelector({
                             <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                            <Loader2 className="w-5 h-5 animate-spin" />
+                          <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                            <Loader2 className="w-5 h-5 animate-spin text-stone-500" />
                           </div>
                         )
                       ) : trip.cover_image ? (
-                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-stone-100 dark:bg-stone-800">
                           <img
                             src={trip.cover_image}
                             alt={trip.name}
@@ -262,13 +262,13 @@ export const QuickTripSelector = memo(function QuickTripSelector({
                           />
                         </div>
                       ) : (
-                        <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                          <MapPin className="w-5 h-5 text-gray-400" />
+                        <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                          <MapPin className="w-5 h-5 text-stone-400" />
                         </div>
                       )}
                       <div className="flex-1 text-left min-w-0">
-                        <p className="font-medium truncate">{trip.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        <p className="font-medium text-stone-900 dark:text-white truncate">{trip.name}</p>
+                        <p className="text-xs text-stone-500 dark:text-stone-400 truncate">
                           {trip.destination || 'No destination set'}
                         </p>
                       </div>
@@ -278,7 +278,7 @@ export const QuickTripSelector = memo(function QuickTripSelector({
               )}
 
               {trips.length === 0 && (
-                <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
+                <p className="text-center text-sm text-stone-500 dark:text-stone-400 py-4">
                   You haven't created any trips yet.
                   <br />
                   Start by creating your first trip above!

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Clock, MapPin, Star, ChevronRight, GripVertical, X } from 'lucide-react';
+import { Clock, MapPin, Star, ChevronRight, GripVertical, X, Plane } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { formatTimeDisplay } from '@/lib/utils/time-calculations';
@@ -50,6 +50,7 @@ export default function ItineraryCard({
   const category = item.parsedNotes?.category || item.destination?.category;
   const rating = item.destination?.rating;
   const neighborhood = item.destination?.neighborhood;
+  const isFlight = item.parsedNotes?.type === 'flight';
 
   const isFeatured = variant === 'featured' || index === 0;
 
@@ -60,7 +61,7 @@ export default function ItineraryCard({
       className={`
         group relative
         ${isDragging ? 'z-50 scale-[1.02]' : ''}
-        ${isActive ? 'ring-2 ring-amber-500/50' : ''}
+        ${isActive ? 'ring-2 ring-stone-500/50' : ''}
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -87,8 +88,14 @@ export default function ItineraryCard({
             `}
             onLoad={() => setImageLoaded(true)}
           />
+        ) : isFlight ? (
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 flex items-center justify-center">
+            <Plane className="w-12 h-12 text-blue-400 dark:text-blue-300" />
+          </div>
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300 dark:from-stone-800 dark:to-stone-700" />
+          <div className="absolute inset-0 bg-gradient-to-br from-stone-200 to-stone-300 dark:from-stone-800 dark:to-stone-700 flex items-center justify-center">
+            <MapPin className="w-12 h-12 text-stone-400 dark:text-stone-500" />
+          </div>
         )}
 
         {/* Gradient Overlay */}
@@ -98,11 +105,11 @@ export default function ItineraryCard({
         <div className="absolute top-0 left-0 right-0 p-4 flex items-start justify-between">
           {/* Index Badge */}
           <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center text-sm font-semibold text-stone-900 dark:text-white shadow-lg">
+            <span className="w-8 h-8 rounded-full bg-white/90 dark:bg-stone-900/80 backdrop-blur-sm flex items-center justify-center text-sm font-semibold text-stone-900 dark:text-white shadow-lg">
               {index + 1}
             </span>
             {item.time && (
-              <span className="px-2.5 py-1 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-sm text-xs font-medium text-stone-700 dark:text-stone-300 shadow-lg flex items-center gap-1">
+              <span className="px-2.5 py-1 rounded-full bg-white/90 dark:bg-stone-900/80 backdrop-blur-sm text-xs font-medium text-stone-700 dark:text-stone-300 shadow-lg flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {formatTimeDisplay(item.time)}
               </span>
@@ -119,13 +126,13 @@ export default function ItineraryCard({
             <button
               {...attributes}
               {...listeners}
-              className="p-2 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white cursor-grab active:cursor-grabbing shadow-lg transition-colors"
+              className="p-2 rounded-full bg-white/90 dark:bg-stone-900/80 backdrop-blur-sm text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white cursor-grab active:cursor-grabbing shadow-lg transition-colors"
             >
               <GripVertical className="w-4 h-4" />
             </button>
             <button
               onClick={() => onRemove?.(item.id)}
-              className="p-2 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-sm text-stone-600 dark:text-stone-400 hover:text-red-500 shadow-lg transition-colors"
+              className="p-2 rounded-full bg-white/90 dark:bg-stone-900/80 backdrop-blur-sm text-stone-600 dark:text-stone-400 hover:text-red-500 shadow-lg transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -136,14 +143,14 @@ export default function ItineraryCard({
         <div className="absolute bottom-0 left-0 right-0 p-5">
           {/* Category Tag */}
           {category && (
-            <span className="inline-block mb-2 text-[10px] uppercase tracking-[0.2em] text-white/70 font-medium">
+            <span className="inline-block mb-2 text-[10px] uppercase tracking-wider text-white/70 font-medium">
               {category}
             </span>
           )}
 
           {/* Title */}
           <h3 className={`
-            font-display text-white leading-tight mb-2
+            font-medium text-white leading-tight mb-2
             ${isFeatured ? 'text-2xl md:text-3xl' : 'text-xl'}
           `}>
             {item.title}
@@ -178,7 +185,7 @@ export default function ItineraryCard({
           <span
             className={`
               flex items-center gap-2 px-4 py-2 rounded-full
-              bg-white/90 dark:bg-black/80 backdrop-blur-sm
+              bg-white/90 dark:bg-stone-900/80 backdrop-blur-sm
               text-sm font-medium text-stone-900 dark:text-white
               shadow-lg transition-all duration-300
               ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}
