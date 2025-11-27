@@ -21,6 +21,7 @@ import {
   Plane,
   Plus,
   Settings,
+  Sliders,
   Sparkles,
   Trash2,
   Users,
@@ -28,6 +29,7 @@ import {
   LayoutGrid,
   Loader2,
   ListTodo,
+  BedDouble,
 } from 'lucide-react';
 import {
   DndContext,
@@ -59,6 +61,7 @@ import AvailabilityAlert from '@/components/trips/AvailabilityAlert';
 import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
 import { TripItemCard } from '@/components/trips/TripItemCard';
 import TripNotesEditor from '@/components/trips/TripNotesEditor';
+import TripShortcuts, { ShortcutType } from '@/components/trips/TripShortcuts';
 import { formatTripDate, parseDateString } from '@/lib/utils';
 import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
 import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, TripNotes } from '@/types/trip';
@@ -125,6 +128,9 @@ export default function TripPage() {
   const [isAIPlanning, setIsAIPlanning] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [tripNotes, setTripNotes] = useState<TripNotes>({ items: [] });
+  const [activeShortcuts, setActiveShortcuts] = useState<ShortcutType[]>([
+    'flights', 'lodgings', 'places', 'dining', 'activities'
+  ]);
 
   // DnD sensors
   const sensors = useSensors(
@@ -387,7 +393,48 @@ export default function TripPage() {
     openDrawer('add-flight', {
       tripId: trip?.id,
       dayNumber,
+      defaultDate: days.find(d => d.dayNumber === dayNumber)?.date || undefined,
       onAdd: (flightData: FlightData) => addFlight(dayNumber, flightData),
+    });
+  };
+
+  const openHotelDrawer = (dayNumber: number) => {
+    openDrawer('trip-add-hotel', {
+      trip,
+      day: days.find(d => d.dayNumber === dayNumber),
+      index: 0,
+    });
+  };
+
+  const handleShortcutClick = (shortcut: ShortcutType) => {
+    switch (shortcut) {
+      case 'flights':
+        openFlightDrawer(selectedDay);
+        break;
+      case 'lodgings':
+        openHotelDrawer(selectedDay);
+        break;
+      case 'places':
+      case 'dining':
+      case 'activities':
+      case 'cafes':
+      case 'shopping':
+        openPlaceSelector(selectedDay);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const openCustomizeDrawer = () => {
+    openDrawer('trip-customize', {
+      settings: {
+        showCountryFlags: true,
+        activeShortcuts,
+      },
+      onSave: (settings: { activeShortcuts: ShortcutType[] }) => {
+        setActiveShortcuts(settings.activeShortcuts);
+      },
     });
   };
 
@@ -789,6 +836,13 @@ export default function TripPage() {
               <Bookmark className="w-5 h-5" />
             </button>
             <button
+              onClick={openCustomizeDrawer}
+              className="p-2.5 bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-xl transition-all duration-200"
+              title="Customize"
+            >
+              <Sliders className="w-5 h-5" />
+            </button>
+            <button
               onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
               className="p-2.5 bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-xl transition-all duration-200"
             >
@@ -798,8 +852,19 @@ export default function TripPage() {
         </div>
       </div>
 
+      {/* Quick Action Shortcuts */}
+      <div className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+        <div className="max-w-7xl mx-auto">
+          <TripShortcuts
+            activeShortcuts={activeShortcuts}
+            onShortcutClick={handleShortcutClick}
+            className="py-3"
+          />
+        </div>
+      </div>
+
       {/* Split-Screen Canvas */}
-      <div className="flex h-[calc(100vh-180px)] max-w-7xl mx-auto w-full relative">
+      <div className="flex h-[calc(100vh-240px)] max-w-7xl mx-auto w-full relative">
         {/* Left Panel: Itinerary */}
         <div className={`
           flex flex-col h-full transition-all duration-300 
