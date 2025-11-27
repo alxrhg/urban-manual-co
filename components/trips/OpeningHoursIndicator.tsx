@@ -65,7 +65,7 @@ export default function OpeningHoursIndicator({
     unknown: {
       icon: <Clock className="w-3 h-3" />,
       text: 'Hours unknown',
-      className: 'text-gray-400',
+      className: 'text-stone-400',
     },
   };
 
@@ -75,7 +75,7 @@ export default function OpeningHoursIndicator({
     <div className={`flex items-center gap-1 text-[10px] ${config.className}`}>
       {config.icon}
       <span>{config.text}</span>
-      {hours && <span className="text-gray-400 ml-1">({hours})</span>}
+      {hours && <span className="text-stone-400 ml-1">({hours})</span>}
     </div>
   );
 }

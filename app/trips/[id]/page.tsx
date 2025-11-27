@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -15,18 +15,24 @@ import {
   Plus,
   Loader2,
   MapPin,
+  Cloud,
+  Shield,
+  ListChecks,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import TripStats from '@/components/trip/TripStats';
 import TripDaySection from '@/components/trip/TripDaySection';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
+import TripWeatherForecast from '@/components/trips/TripWeatherForecast';
+import TripSafetyAlerts from '@/components/trips/TripSafetyAlerts';
+import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
 import type { FlightData } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 
 /**
  * TripPage - Clean, minimal design with stone palette
- * Features: Stats grid, collapsible day sections, text-based tabs
+ * Features: Stats grid, collapsible day sections, travel intelligence
  */
 export default function TripPage() {
   const params = useParams();
@@ -58,7 +64,14 @@ export default function TripPage() {
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isAIPlanning, setIsAIPlanning] = useState(false);
-  const [activeTab, setActiveTab] = useState<'itinerary' | 'overview'>('itinerary');
+  const [activeTab, setActiveTab] = useState<'itinerary' | 'insights' | 'overview'>('itinerary');
+  const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
+
+  // Get first destination coordinates for weather
+  const firstDestination = useMemo(() => {
+    const firstItem = days.flatMap(d => d.items).find(item => item.destination?.latitude);
+    return firstItem?.destination;
+  }, [days]);
 
   // Callbacks
   const openPlaceSelector = useCallback((dayNumber: number) => {
@@ -167,6 +180,35 @@ export default function TripPage() {
     }
   };
 
+  // Bucket list handlers
+  const handleAddToBucketList = useCallback((destination: Destination) => {
+    setBucketItems(prev => {
+      if (prev.some(item => item.slug === destination.slug)) return prev;
+      return [...prev, {
+        id: `bucket-${Date.now()}`,
+        slug: destination.slug,
+        name: destination.name,
+        category: destination.category,
+        image: destination.image_thumbnail || destination.image,
+        addedAt: new Date().toISOString(),
+      }];
+    });
+  }, []);
+
+  const handleRemoveFromBucketList = useCallback((itemId: string) => {
+    setBucketItems(prev => prev.filter(item => item.id !== itemId));
+  }, []);
+
+  const handleMoveBucketToItinerary = useCallback(async (item: BucketItem) => {
+    // Find the destination and add it
+    const response = await fetch(`/api/destinations/${item.slug}`);
+    if (response.ok) {
+      const destination = await response.json();
+      await addPlace(destination, selectedDayNumber);
+      handleRemoveFromBucketList(item.id);
+    }
+  }, [addPlace, selectedDayNumber, handleRemoveFromBucketList]);
+
   // Loading state
   if (loading) {
     return (
@@ -271,23 +313,38 @@ export default function TripPage() {
           destination={trip.destination}
           startDate={trip.start_date}
           endDate={trip.end_date}
-          className="mb-12"
+          className="mb-8"
         />
+
+        {/* Weather Preview (compact) */}
+        {trip.destination && trip.start_date && (
+          <div className="mb-8 p-4 border border-stone-200 dark:border-stone-800 rounded-2xl">
+            <TripWeatherForecast
+              destination={trip.destination}
+              startDate={trip.start_date}
+              endDate={trip.end_date}
+              latitude={firstDestination?.latitude}
+              longitude={firstDestination?.longitude}
+              compact
+            />
+          </div>
+        )}
 
         {/* Tab Navigation */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div className="flex gap-x-4 text-xs">
-              {(['itinerary', 'overview'] as const).map((tab) => (
+              {(['itinerary', 'insights', 'overview'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`transition-all ${
+                  className={`transition-all flex items-center gap-1.5 ${
                     activeTab === tab
                       ? 'font-medium text-stone-900 dark:text-white'
                       : 'font-medium text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'
                   }`}
                 >
+                  {tab === 'insights' && <Cloud className="w-3 h-3" />}
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
@@ -349,6 +406,49 @@ export default function TripPage() {
                 />
               ))
             )}
+          </div>
+        )}
+
+        {/* Insights Tab */}
+        {activeTab === 'insights' && (
+          <div className="space-y-6 fade-in">
+            {/* Weather Forecast */}
+            <div className="p-6 border border-stone-200 dark:border-stone-800 rounded-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <Cloud className="w-4 h-4 text-stone-500" />
+                <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400">Weather Forecast</h3>
+              </div>
+              <TripWeatherForecast
+                destination={trip.destination}
+                startDate={trip.start_date}
+                endDate={trip.end_date}
+                latitude={firstDestination?.latitude}
+                longitude={firstDestination?.longitude}
+              />
+            </div>
+
+            {/* Safety Alerts */}
+            <div className="p-6 border border-stone-200 dark:border-stone-800 rounded-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <Shield className="w-4 h-4 text-stone-500" />
+                <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400">Travel Advisories</h3>
+              </div>
+              <TripSafetyAlerts destination={trip.destination} />
+            </div>
+
+            {/* Bucket List */}
+            <div className="p-6 border border-stone-200 dark:border-stone-800 rounded-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <ListChecks className="w-4 h-4 text-stone-500" />
+                <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400">Bucket List</h3>
+              </div>
+              <TripBucketList
+                items={bucketItems}
+                onRemove={handleRemoveFromBucketList}
+                onMoveToItinerary={handleMoveBucketToItinerary}
+                onReorder={setBucketItems}
+              />
+            </div>
           </div>
         )}
 

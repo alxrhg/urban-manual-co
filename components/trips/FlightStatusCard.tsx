@@ -133,7 +133,7 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
       case 'cancelled':
         return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30';
       default:
-        return 'text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/30';
+        return 'text-stone-600 dark:text-stone-400 bg-stone-50 dark:bg-stone-900/30';
     }
   };
 
@@ -169,7 +169,7 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
         <button
           onClick={fetchFlightStatus}
           disabled={loading}
-          className="p-1 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          className="p-1 text-stone-400 hover:text-stone-900 dark:hover:text-white transition-colors"
           title="Refresh status"
         >
           {loading ? (
@@ -181,7 +181,7 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
       </div>
 
       {/* Route Info */}
-      <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 mb-3">
+      <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-400 mb-3">
         <span className="font-medium">{flight.from}</span>
         <TrendingUp className="w-3 h-3" />
         <span className="font-medium">{flight.to}</span>
@@ -190,7 +190,7 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
       {/* Times */}
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div>
-          <p className="text-[10px] text-gray-500 uppercase tracking-wide">Departure</p>
+          <p className="text-[10px] text-stone-500 uppercase tracking-wide">Departure</p>
           <p className="text-sm font-medium">
             {flightInfo?.actualDeparture || flight.departureTime || '--:--'}
           </p>
@@ -201,7 +201,7 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
           )}
         </div>
         <div>
-          <p className="text-[10px] text-gray-500 uppercase tracking-wide">Arrival</p>
+          <p className="text-[10px] text-stone-500 uppercase tracking-wide">Arrival</p>
           <p className="text-sm font-medium">
             {flightInfo?.actualArrival || flight.arrivalTime || '--:--'}
           </p>
@@ -222,7 +222,7 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
 
           {/* Gate/Terminal */}
           {(flightInfo.gate || flightInfo.terminal) && (
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-stone-500">
               {flightInfo.terminal && `Terminal ${flightInfo.terminal}`}
               {flightInfo.terminal && flightInfo.gate && ' · '}
               {flightInfo.gate && `Gate ${flightInfo.gate}`}
@@ -234,7 +234,7 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
       {/* Confirmation Number */}
       {flight.confirmationNumber && (
         <div className="mt-2 pt-2 border-t border-blue-100 dark:border-blue-800">
-          <p className="text-[10px] text-gray-500">
+          <p className="text-[10px] text-stone-500">
             Confirmation: <span className="font-mono">{flight.confirmationNumber}</span>
           </p>
         </div>
@@ -242,7 +242,7 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
 
       {/* Last Updated */}
       {flightInfo && (
-        <p className="text-[10px] text-gray-400 mt-2">
+        <p className="text-[10px] text-stone-400 mt-2">
           Updated {flightInfo.lastUpdated.toLocaleTimeString()}
         </p>
       )}

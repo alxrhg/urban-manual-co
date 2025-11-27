@@ -42,11 +42,11 @@ export default function DayTimelineAnalysis({ items, className = '' }: DayTimeli
   return (
     <div className={`flex items-center gap-4 text-xs ${className}`}>
       {/* Time summary */}
-      <div className="flex items-center gap-1.5 text-gray-500">
+      <div className="flex items-center gap-1.5 text-stone-500">
         <Clock className="w-3.5 h-3.5" />
         <span>{formatDuration(analysis.totalActivityTime)} planned</span>
         {analysis.totalTravelTime > 0 && (
-          <span className="text-gray-400">+ {formatDuration(analysis.totalTravelTime)} travel</span>
+          <span className="text-stone-400">+ {formatDuration(analysis.totalTravelTime)} travel</span>
         )}
       </div>
 
@@ -57,16 +57,16 @@ export default function DayTimelineAnalysis({ items, className = '' }: DayTimeli
           <span>Overpacked</span>
         </div>
       ) : freeTime > 0 && (
-        <span className="text-gray-400">
+        <span className="text-stone-400">
           {formatDuration(freeTime)} free
         </span>
       )}
 
       {/* Progress indicator */}
-      <div className="flex-1 max-w-[100px] h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+      <div className="flex-1 max-w-[100px] h-1 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all ${
-            analysis.isOverstuffed ? 'bg-orange-500' : 'bg-gray-300 dark:bg-gray-600'
+            analysis.isOverstuffed ? 'bg-orange-500' : 'bg-stone-300 dark:bg-stone-600'
           }`}
           style={{ width: `${Math.min(analysis.utilizationPercent, 100)}%` }}
         />

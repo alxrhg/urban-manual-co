@@ -65,7 +65,7 @@ export default function TripSafetyAlerts({ destination, countryCode }: TripSafet
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 py-2 text-xs text-gray-400">
+      <div className="flex items-center gap-2 py-2 text-xs text-stone-400">
         <Loader2 className="w-3 h-3 animate-spin" />
         <span>Checking safety info...</span>
       </div>
@@ -86,13 +86,13 @@ export default function TripSafetyAlerts({ destination, countryCode }: TripSafet
         className="flex items-center gap-2 text-xs w-full"
       >
         <Shield className="w-4 h-4 text-blue-500" />
-        <span className="font-medium text-gray-700 dark:text-gray-300">Travel Safety</span>
+        <span className="font-medium text-stone-700 dark:text-stone-300">Travel Safety</span>
         {highPriorityAlerts.length > 0 && (
           <span className="px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded text-[10px] font-medium">
             {highPriorityAlerts.length} alert{highPriorityAlerts.length !== 1 ? 's' : ''}
           </span>
         )}
-        <span className="text-gray-400 ml-auto">{expanded ? '−' : '+'}</span>
+        <span className="text-stone-400 ml-auto">{expanded ? '−' : '+'}</span>
       </button>
 
       {expanded && (
@@ -144,11 +144,11 @@ function AlertCard({ alert }: { alert: SafetyAlert }) {
         {levelIcons[alert.level]}
         <div className="flex-1 min-w-0">
           <p className="text-xs font-medium">{alert.title}</p>
-          <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5">
+          <p className="text-[10px] text-stone-600 dark:text-stone-400 mt-0.5">
             {alert.description}
           </p>
           {alert.source && (
-            <p className="text-[10px] text-gray-400 mt-1">Source: {alert.source}</p>
+            <p className="text-[10px] text-stone-400 mt-1">Source: {alert.source}</p>
           )}
         </div>
       </div>

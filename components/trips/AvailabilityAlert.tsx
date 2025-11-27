@@ -58,7 +58,7 @@ export default function AvailabilityAlert({
     }
 
     return (
-      <span className={`text-[10px] text-gray-400 ${className}`}>
+      <span className={`text-[10px] text-stone-400 ${className}`}>
         {prediction.requiresReservation ? (
           <span className="flex items-center gap-1">
             <CalendarCheck className="w-3 h-3" />
@@ -88,26 +88,26 @@ export default function AvailabilityAlert({
         <div className="flex items-center gap-2">
           {prediction.requiresReservation ? (
             <>
-              <CalendarCheck className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-gray-500">Reservation recommended</span>
+              <CalendarCheck className="w-3.5 h-3.5 text-stone-400" />
+              <span className="text-stone-500">Reservation recommended</span>
             </>
           ) : (
             <>
-              <Clock className="w-3.5 h-3.5 text-gray-400" />
-              <span className={prediction.waitMinutes > 30 ? 'text-orange-500' : 'text-gray-500'}>
+              <Clock className="w-3.5 h-3.5 text-stone-400" />
+              <span className={prediction.waitMinutes > 30 ? 'text-orange-500' : 'text-stone-500'}>
                 {prediction.waitLabel}
               </span>
             </>
           )}
         </div>
-        <ChevronDown className={`w-3.5 h-3.5 text-gray-300 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3.5 h-3.5 text-stone-300 transition-transform ${expanded ? 'rotate-180' : ''}`} />
       </button>
 
       {/* Expanded content */}
       {expanded && (
         <div className="pb-2 space-y-2">
           {prediction.suggestion && (
-            <p className="text-[11px] text-gray-500 leading-relaxed">
+            <p className="text-[11px] text-stone-500 leading-relaxed">
               {prediction.suggestion}
             </p>
           )}
@@ -116,12 +116,12 @@ export default function AvailabilityAlert({
           {prediction.alternativeTime && onTimeChange && (
             <button
               onClick={() => onTimeChange(prediction.alternativeTime!)}
-              className="flex items-center gap-2 text-[11px] text-gray-900 dark:text-white hover:underline"
+              className="flex items-center gap-2 text-[11px] text-stone-900 dark:text-white hover:underline"
             >
               <span>→</span>
               <span>Try {prediction.alternativeTime}</span>
               {prediction.alternativeTimeWait !== undefined && prediction.alternativeTimeWait < prediction.waitMinutes && (
-                <span className="text-gray-400">
+                <span className="text-stone-400">
                   ({prediction.alternativeTimeWait < 10 ? 'no wait' : `~${prediction.alternativeTimeWait}m`})
                 </span>
               )}
