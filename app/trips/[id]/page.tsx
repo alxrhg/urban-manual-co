@@ -1,34 +1,47 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import {
   ArrowLeft,
+  Settings,
   Calendar,
   MapPin,
-  Plane,
   Plus,
-  Settings,
-  Sparkles,
-  Map,
-  List,
-  Loader2,
-  Search,
 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 import { PageLoader } from '@/components/LoadingStates';
-import TimelineCanvas from '@/components/trip/TimelineCanvas';
-import TripPlannerMap from '@/components/trip/TripPlannerMap';
-import TripHero from '@/components/trip/TripHero';
-import QuickActions from '@/components/trip/QuickActions';
-import SearchOverlay from '@/components/search/SearchOverlay';
-import { formatTripDate } from '@/lib/utils';
+import ItineraryCard from '@/components/trip/ItineraryCard';
+import DayTabNav from '@/components/trip/DayTabNav';
+import FloatingActionBar from '@/components/trip/FloatingActionBar';
+import MapDrawer from '@/components/trip/MapDrawer';
 import type { FlightData } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 
+/**
+ * TripPage - Fresh Journal-style trip planner
+ * Immersive imagery, elegant typography, floating interactions
+ */
 export default function TripPage() {
   const params = useParams();
   const router = useRouter();
@@ -36,7 +49,7 @@ export default function TripPage() {
   const { user } = useAuth();
   const openDrawer = useDrawerStore((s) => s.openDrawer);
 
-  // Use centralized editor hook
+  // Trip Editor Hook
   const {
     trip,
     days,
@@ -58,11 +71,26 @@ export default function TripPage() {
   // UI State
   const [selectedDayNumber, setSelectedDayNumber] = useState(1);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
-  const [mobileView, setMobileView] = useState<'timeline' | 'map'>('timeline');
+  const [isMapOpen, setIsMapOpen] = useState(false);
   const [isAIPlanning, setIsAIPlanning] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Open place selector drawer
+  // Animation trigger
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // DnD Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  // Get current day's items
+  const currentDay = days.find((d) => d.dayNumber === selectedDayNumber);
+  const currentItems = currentDay?.items || [];
+
+  // Callbacks
   const openPlaceSelector = useCallback((dayNumber: number) => {
     openDrawer('place-selector', {
       tripId: trip?.id,
@@ -72,7 +100,6 @@ export default function TripPage() {
     });
   }, [trip?.id, trip?.destination, openDrawer, addPlace]);
 
-  // Open flight drawer
   const openFlightDrawer = useCallback((dayNumber: number) => {
     openDrawer('add-flight', {
       tripId: trip?.id,
@@ -81,7 +108,6 @@ export default function TripPage() {
     });
   }, [trip?.id, openDrawer, addFlight]);
 
-  // Open item detail drawer
   const handleEditItem = useCallback((item: EnrichedItineraryItem) => {
     if (item.destination) {
       openDrawer('destination', {
@@ -109,26 +135,28 @@ export default function TripPage() {
     setActiveItemId(item.id);
   }, [openDrawer]);
 
-  // AI Trip Planning
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = currentItems.findIndex((item) => item.id === active.id);
+      const newIndex = currentItems.findIndex((item) => item.id === over.id);
+      const newItems = arrayMove(currentItems, oldIndex, newIndex);
+      reorderItems(selectedDayNumber, newItems);
+    }
+  }, [currentItems, reorderItems, selectedDayNumber]);
+
   const handleAITripPlanning = async () => {
     if (!trip || !user) return;
-
-    if (!trip.destination) {
-      alert('Please add a destination to your trip first');
-      return;
-    }
-    if (!trip.start_date || !trip.end_date) {
-      alert('Please add dates to your trip first');
+    if (!trip.destination || !trip.start_date || !trip.end_date) {
+      openDrawer('trip-settings', { trip, onUpdate: updateTrip });
       return;
     }
 
     try {
       setIsAIPlanning(true);
-
       const allItems = days.flatMap(day => day.items);
 
       if (allItems.length > 0) {
-        // Smart-fill for existing trips
         const existingItemsForAPI = allItems.map(item => ({
           day: days.find(d => d.items.includes(item))?.dayNumber || 1,
           time: item.time,
@@ -147,26 +175,15 @@ export default function TripPage() {
           }),
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to get AI suggestions');
-        }
+        if (!response.ok) throw new Error('Failed to get AI suggestions');
 
         const result = await response.json();
-
-        if (!result.suggestions || result.suggestions.length === 0) {
-          alert('Your trip looks complete! No additional suggestions needed.');
-          return;
-        }
-
-        // Add suggestions
-        for (const suggestion of result.suggestions) {
+        for (const suggestion of result.suggestions || []) {
           if (suggestion.destination) {
             await addPlace(suggestion.destination, suggestion.day, suggestion.startTime);
           }
         }
       } else {
-        // Multi-day plan for empty trips
         const response = await fetch('/api/intelligence/multi-day-plan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -178,34 +195,22 @@ export default function TripPage() {
           }),
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to generate trip plan');
-        }
-
-        // Refresh after API adds items
+        if (!response.ok) throw new Error('Failed to generate trip plan');
         await refresh();
       }
 
       await refresh();
-    } catch (err: any) {
-      console.error('Error with AI trip planning:', err);
-      alert(err.message || 'Failed to generate AI trip plan. Please try again.');
+    } catch (err: unknown) {
+      console.error('AI Planning error:', err);
     } finally {
       setIsAIPlanning(false);
     }
   };
 
-  // Search handler
-  const handleSearch = useCallback((query: string, filters: string[]) => {
-    // Search logic would go here
-    console.log('Search:', query, filters);
-  }, []);
-
   // Loading state
   if (loading) {
     return (
-      <main className="w-full min-h-screen bg-white dark:bg-[#0a0a0a]">
+      <main className="w-full min-h-screen bg-[#faf9f7] dark:bg-[#0a0a0a]">
         <PageLoader />
       </main>
     );
@@ -214,13 +219,10 @@ export default function TripPage() {
   // Not found
   if (!trip) {
     return (
-      <main className="w-full min-h-screen bg-white dark:bg-[#0a0a0a] flex items-center justify-center">
+      <main className="w-full min-h-screen bg-[#faf9f7] dark:bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-400 dark:text-gray-600 mb-4">Trip not found</p>
-          <Link
-            href="/trips"
-            className="text-sm text-gray-900 dark:text-white hover:underline"
-          >
+          <p className="text-stone-400 mb-4">Trip not found</p>
+          <Link href="/trips" className="text-sm text-stone-900 dark:text-white hover:underline">
             Back to trips
           </Link>
         </div>
@@ -228,173 +230,230 @@ export default function TripPage() {
     );
   }
 
-  // Get trip cover image
+  // Cover image from first destination
   const coverImage = days
     .flatMap(d => d.items)
     .find(item => item.destination?.image)?.destination?.image;
 
+  // Format date range
+  const dateRange = trip.start_date && trip.end_date
+    ? `${format(parseISO(trip.start_date), 'MMM d')} — ${format(parseISO(trip.end_date), 'MMM d, yyyy')}`
+    : null;
+
   return (
-    <main className="w-full min-h-screen bg-white dark:bg-[#0a0a0a]">
-      {/* Hero Header */}
-      <TripHero
-        title={trip.title}
-        destination={trip.destination || undefined}
-        startDate={trip.start_date || undefined}
-        endDate={trip.end_date || undefined}
-        coverImage={coverImage || undefined}
-        onTitleChange={(title) => updateTrip({ title })}
-      />
+    <main className="w-full min-h-screen bg-[#faf9f7] dark:bg-[#0a0a0a]">
+      {/* Hero Section */}
+      <header className="relative h-[50vh] min-h-[400px] overflow-hidden">
+        {/* Background Image */}
+        {coverImage ? (
+          <Image
+            src={coverImage}
+            alt={trip.title}
+            fill
+            className="object-cover"
+            priority
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-stone-300 to-stone-400 dark:from-stone-800 dark:to-stone-900" />
+        )}
 
-      {/* Navigation Bar */}
-      <div className="sticky top-0 z-30 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-900">
-        <div className="flex items-center justify-between px-6 py-3">
-          {/* Left: Back + Breadcrumb */}
-          <div className="flex items-center gap-4">
-            <Link
-              href="/trips"
-              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#faf9f7] via-[#faf9f7]/50 to-transparent dark:from-[#0a0a0a] dark:via-[#0a0a0a]/50" />
+
+        {/* Top Navigation */}
+        <nav className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 md:p-6">
+          <Link
+            href="/trips"
+            className={`
+              flex items-center gap-2 px-3 py-2 rounded-full
+              bg-white/80 dark:bg-black/60 backdrop-blur-sm
+              text-sm text-stone-600 dark:text-stone-300
+              hover:bg-white dark:hover:bg-black transition-colors
+              shadow-lg
+              opacity-0 ${mounted ? 'animate-fade-in' : ''}
+            `}
+            style={{ animationDelay: '0.1s' }}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="hidden sm:inline">Trips</span>
+          </Link>
+
+          <button
+            onClick={() => openDrawer('trip-settings', {
+              trip,
+              onUpdate: updateTrip,
+              onDelete: () => router.push('/trips'),
+            })}
+            className={`
+              w-10 h-10 rounded-full flex items-center justify-center
+              bg-white/80 dark:bg-black/60 backdrop-blur-sm
+              text-stone-600 dark:text-stone-300
+              hover:bg-white dark:hover:bg-black transition-colors
+              shadow-lg
+              opacity-0 ${mounted ? 'animate-fade-in' : ''}
+            `}
+            style={{ animationDelay: '0.2s' }}
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+        </nav>
+
+        {/* Hero Content */}
+        <div className="absolute bottom-0 left-0 right-0 z-10 p-6 md:p-10">
+          <div className="max-w-4xl mx-auto">
+            {/* Destination Tag */}
+            {trip.destination && (
+              <div
+                className={`
+                  inline-flex items-center gap-1.5 mb-4
+                  text-xs uppercase tracking-[0.2em] font-medium
+                  text-stone-500 dark:text-stone-400
+                  opacity-0 ${mounted ? 'animate-fade-in' : ''}
+                `}
+                style={{ animationDelay: '0.1s' }}
+              >
+                <MapPin className="w-3 h-3" />
+                {trip.destination}
+              </div>
+            )}
+
+            {/* Title */}
+            <h1
+              className={`
+                text-4xl md:text-6xl lg:text-7xl font-display
+                text-stone-900 dark:text-white
+                leading-[1.1] tracking-tight
+                opacity-0 ${mounted ? 'animate-slide-up' : ''}
+              `}
+              style={{ animationDelay: '0.2s' }}
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              Trips
-            </Link>
-            <span className="text-gray-200 dark:text-gray-800">/</span>
-            <span className="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[150px]">
               {trip.title}
-            </span>
-          </div>
+            </h1>
 
-          {/* Center: Mobile View Toggle */}
-          <div className="md:hidden flex bg-gray-100 dark:bg-gray-900 rounded-full p-1">
-            <button
-              onClick={() => setMobileView('timeline')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                mobileView === 'timeline'
-                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-500'
-              }`}
-            >
-              <List className="w-3.5 h-3.5" />
-              Timeline
-            </button>
-            <button
-              onClick={() => setMobileView('map')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                mobileView === 'map'
-                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-500'
-              }`}
-            >
-              <Map className="w-3.5 h-3.5" />
-              Map
-            </button>
-          </div>
-
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowSearch(true)}
-              className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-            <button
-              onClick={handleAITripPlanning}
-              disabled={isAIPlanning || saving}
-              className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full hover:bg-gray-800 dark:hover:bg-gray-100 disabled:opacity-50 transition-colors"
-            >
-              {isAIPlanning ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="w-3.5 h-3.5" />
-              )}
-              <span className="hidden sm:inline">
-                {isAIPlanning ? 'Planning...' : 'AI Plan'}
-              </span>
-            </button>
-            <button
-              onClick={() => openDrawer('trip-settings', {
-                trip,
-                onUpdate: updateTrip,
-                onDelete: () => router.push('/trips'),
-              })}
-              className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
+            {/* Date Range */}
+            {dateRange && (
+              <div
+                className={`
+                  flex items-center gap-2 mt-4
+                  text-sm text-stone-500 dark:text-stone-400
+                  opacity-0 ${mounted ? 'animate-fade-in' : ''}
+                `}
+                style={{ animationDelay: '0.3s' }}
+              >
+                <Calendar className="w-4 h-4" />
+                {dateRange}
+                <span className="text-stone-300 dark:text-stone-600">·</span>
+                <span>{days.length} days</span>
+              </div>
+            )}
           </div>
         </div>
+      </header>
 
-        {/* Quick Actions */}
-        <QuickActions
-          onAddPlace={() => openPlaceSelector(selectedDayNumber)}
-          onAddFlight={() => openFlightDrawer(selectedDayNumber)}
-          onAddNote={() => openDrawer('trip-notes', { tripId: trip.id })}
-        />
-      </div>
-
-      {/* Split-Screen Layout */}
-      <div className="flex h-[calc(100vh-200px)]">
-        {/* Left: Timeline Sidebar */}
-        <div
-          className={`
-            w-full md:w-[500px] lg:w-[560px] flex-shrink-0
-            border-r border-gray-100 dark:border-gray-900
-            ${mobileView === 'timeline' ? 'block' : 'hidden md:block'}
-          `}
-        >
-          <TimelineCanvas
+      {/* Day Navigation */}
+      <div
+        className={`
+          sticky top-0 z-30
+          bg-[#faf9f7]/95 dark:bg-[#0a0a0a]/95 backdrop-blur-sm
+          border-b border-stone-200/50 dark:border-stone-800/50
+          opacity-0 ${mounted ? 'animate-fade-in' : ''}
+        `}
+        style={{ animationDelay: '0.4s' }}
+      >
+        <div className="max-w-4xl mx-auto">
+          <DayTabNav
             days={days}
             selectedDayNumber={selectedDayNumber}
             onSelectDay={setSelectedDayNumber}
-            onReorderItems={reorderItems}
-            onRemoveItem={removeItem}
-            onEditItem={handleEditItem}
-            onTimeChange={updateItemTime}
-            onAddItem={openPlaceSelector}
-            activeItemId={activeItemId}
-            className="h-full"
-          />
-        </div>
-
-        {/* Right: Map Canvas */}
-        <div
-          className={`
-            flex-1 min-w-0
-            ${mobileView === 'map' ? 'block' : 'hidden md:block'}
-          `}
-        >
-          <TripPlannerMap
-            days={days}
-            selectedDayNumber={selectedDayNumber}
-            activeItemId={activeItemId}
-            onMarkerClick={setActiveItemId}
-            className="h-full"
           />
         </div>
       </div>
 
-      {/* Search Overlay */}
-      <SearchOverlay
-        isOpen={showSearch}
-        onClose={() => setShowSearch(false)}
-        onSearch={handleSearch}
-        placeholder={`Search places in ${trip.destination || 'your trip'}...`}
-        filters={[
-          { id: 'restaurant', label: 'Restaurants' },
-          { id: 'hotel', label: 'Hotels' },
-          { id: 'museum', label: 'Museums' },
-          { id: 'bar', label: 'Bars' },
-          { id: 'cafe', label: 'Cafes' },
-        ]}
+      {/* Content Grid */}
+      <section className="max-w-4xl mx-auto px-4 md:px-6 py-8 pb-32">
+        {currentItems.length === 0 ? (
+          /* Empty State */
+          <div
+            className={`
+              flex flex-col items-center justify-center py-20 text-center
+              opacity-0 ${mounted ? 'animate-fade-in' : ''}
+            `}
+            style={{ animationDelay: '0.5s' }}
+          >
+            <div className="w-16 h-16 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-4">
+              <Plus className="w-6 h-6 text-stone-400" />
+            </div>
+            <h3 className="text-lg font-display text-stone-900 dark:text-white mb-2">
+              Day {selectedDayNumber} is empty
+            </h3>
+            <p className="text-sm text-stone-500 dark:text-stone-400 mb-6 max-w-xs">
+              Add your first stop to start planning this day of your trip.
+            </p>
+            <button
+              onClick={() => openPlaceSelector(selectedDayNumber)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 font-medium text-sm hover:scale-105 transition-transform shadow-lg"
+            >
+              <Plus className="w-4 h-4" />
+              Add a place
+            </button>
+          </div>
+        ) : (
+          /* Itinerary Grid */
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={currentItems.map((item) => item.id)}
+              strategy={rectSortingStrategy}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {currentItems.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className={`
+                      opacity-0 ${mounted ? 'animate-fade-in' : ''}
+                      ${index === 0 ? 'md:col-span-2' : ''}
+                    `}
+                    style={{ animationDelay: `${0.5 + index * 0.1}s` }}
+                  >
+                    <ItineraryCard
+                      item={item}
+                      index={index}
+                      variant={index === 0 ? 'featured' : 'default'}
+                      onEdit={handleEditItem}
+                      onRemove={removeItem}
+                      isActive={item.id === activeItemId}
+                    />
+                  </div>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+      </section>
+
+      {/* Floating Action Bar */}
+      <FloatingActionBar
+        onAddPlace={() => openPlaceSelector(selectedDayNumber)}
+        onAddFlight={() => openFlightDrawer(selectedDayNumber)}
+        onAddNote={() => openDrawer('trip-notes', { tripId: trip.id })}
+        onOpenMap={() => setIsMapOpen(true)}
+        onAIPlan={handleAITripPlanning}
+        isAIPlanning={isAIPlanning}
+        isSaving={saving}
       />
 
-      {/* Saving Indicator */}
-      {saving && (
-        <div className="fixed bottom-6 right-6 flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg text-sm">
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Saving...
-        </div>
-      )}
+      {/* Map Drawer */}
+      <MapDrawer
+        isOpen={isMapOpen}
+        onClose={() => setIsMapOpen(false)}
+        days={days}
+        selectedDayNumber={selectedDayNumber}
+        activeItemId={activeItemId}
+        onMarkerClick={setActiveItemId}
+      />
     </main>
   );
 }
