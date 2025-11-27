@@ -17,7 +17,7 @@ interface TripItemCardProps {
 }
 
 /**
- * TripItemCard - Unified card style matching Account page recent visits
+ * TripItemCard - Compact row card with stone palette
  * Uses: rounded-2xl borders, 64px thumbnails, text-sm/text-xs typography
  */
 export default function TripItemCard({
@@ -64,9 +64,9 @@ export default function TripItemCard({
         onClick={() => onEdit?.(item)}
         className={`
           w-full flex items-center gap-4 p-3
-          hover:bg-gray-50 dark:hover:bg-gray-800
+          hover:bg-stone-50 dark:hover:bg-stone-800
           rounded-2xl transition-colors text-left
-          ${isActive ? 'bg-gray-50 dark:bg-gray-800 ring-1 ring-gray-200 dark:ring-gray-700' : ''}
+          ${isActive ? 'bg-stone-50 dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-stone-700' : ''}
         `}
       >
         {/* Drag Handle */}
@@ -80,16 +80,16 @@ export default function TripItemCard({
           `}
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical className="w-4 h-4 text-gray-300 dark:text-gray-600" />
+          <GripVertical className="w-4 h-4 text-stone-300 dark:text-stone-600" />
         </div>
 
         {/* Index Badge */}
-        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{index + 1}</span>
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+          <span className="text-xs font-medium text-stone-600 dark:text-stone-400">{index + 1}</span>
         </div>
 
-        {/* Thumbnail - 64px rounded-xl like account page */}
-        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+        {/* Thumbnail - 64px rounded-xl */}
+        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800">
           {image ? (
             <Image
               src={image}
@@ -99,35 +99,35 @@ export default function TripItemCard({
               sizes="64px"
             />
           ) : isFlight ? (
-            <div className="w-full h-full flex items-center justify-center">
-              <Plane className="w-6 h-6 text-gray-400" />
+            <div className="w-full h-full flex items-center justify-center bg-blue-50 dark:bg-blue-900/30">
+              <Plane className="w-6 h-6 text-blue-400" />
             </div>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <MapPin className="w-6 h-6 text-gray-400" />
+              <MapPin className="w-6 h-6 text-stone-400" />
             </div>
           )}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium truncate text-gray-900 dark:text-white">
+          <div className="text-sm font-medium truncate text-stone-900 dark:text-white">
             {item.title}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1.5">
+          <div className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 flex items-center gap-1.5">
             {neighborhood && <span>{neighborhood}</span>}
             {neighborhood && category && <span>•</span>}
             {category && <span className="capitalize">{category}</span>}
           </div>
           <div className="flex items-center gap-3 mt-1">
             {item.time && (
-              <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+              <span className="text-xs text-stone-400 dark:text-stone-500 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 {formatTimeDisplay(item.time)}
               </span>
             )}
             {rating && (
-              <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+              <span className="text-xs text-stone-400 dark:text-stone-500 flex items-center gap-1">
                 <Star className="w-3 h-3 fill-current text-amber-400" />
                 {rating.toFixed(1)}
               </span>
@@ -143,7 +143,7 @@ export default function TripItemCard({
           }}
           className={`
             flex-shrink-0 p-2 rounded-xl
-            text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
+            text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
             transition-all duration-200
             ${isHovered ? 'opacity-100' : 'opacity-0'}
           `}

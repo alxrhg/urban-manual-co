@@ -33,7 +33,7 @@ interface TripDaySectionProps {
 }
 
 /**
- * TripDaySection - Collapsible day section matching Account page style
+ * TripDaySection - Collapsible day section with stone palette
  * Uses: text-xs uppercase labels, simple borders, smooth transitions
  */
 export default function TripDaySection({
@@ -77,9 +77,9 @@ export default function TripDaySection({
   return (
     <div
       className={`
-        border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden
+        border border-stone-200 dark:border-stone-800 rounded-2xl overflow-hidden
         transition-colors duration-200
-        ${isSelected ? 'ring-1 ring-gray-300 dark:ring-gray-700' : ''}
+        ${isSelected ? 'ring-1 ring-stone-300 dark:ring-stone-700' : ''}
       `}
     >
       {/* Day Header - Clickable to expand/collapse */}
@@ -88,24 +88,24 @@ export default function TripDaySection({
           setIsExpanded(!isExpanded);
           onSelect?.();
         }}
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors text-left"
+        className="w-full flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-colors text-left"
       >
         <div className="flex items-baseline gap-3">
-          <span className="text-lg font-light text-gray-900 dark:text-white">
+          <span className="text-lg font-light text-stone-900 dark:text-white">
             Day {day.dayNumber}
           </span>
           {formattedDate && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-stone-500 dark:text-stone-400">
               {formattedDate}
             </span>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs text-gray-400 dark:text-gray-500">
+          <span className="text-xs text-stone-400 dark:text-stone-500">
             {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
           </span>
           <ChevronDown
-            className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+            className={`w-4 h-4 text-stone-400 transition-transform duration-200 ${
               isExpanded ? 'rotate-0' : '-rotate-90'
             }`}
           />
@@ -114,16 +114,16 @@ export default function TripDaySection({
 
       {/* Day Content */}
       {isExpanded && (
-        <div className="border-t border-gray-100 dark:border-gray-800/50">
+        <div className="border-t border-stone-100 dark:border-stone-800/50">
           {day.items.length === 0 ? (
             /* Empty State */
             <div className="p-6 text-center">
-              <p className="text-xs text-gray-400 dark:text-gray-500 mb-3">
+              <p className="text-xs text-stone-400 dark:text-stone-500 mb-3">
                 No stops planned for this day
               </p>
               <button
                 onClick={() => onAddItem?.(day.dayNumber)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white transition-colors"
               >
                 <Plus className="w-3 h-3" />
                 Add a stop
@@ -161,7 +161,7 @@ export default function TripDaySection({
             <div className="px-4 pb-4">
               <button
                 onClick={() => onAddItem?.(day.dayNumber)}
-                className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-dashed border-gray-200 dark:border-gray-800 rounded-xl hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 text-xs font-medium text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white border border-dashed border-stone-200 dark:border-stone-800 rounded-xl hover:border-stone-300 dark:hover:border-stone-700 transition-colors"
               >
                 <Plus className="w-3 h-3" />
                 Add stop
