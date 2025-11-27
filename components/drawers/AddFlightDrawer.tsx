@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
-import { Plane, Loader2 } from 'lucide-react';
+import { Plane, Loader2, Car, Clock } from 'lucide-react';
+import type { FlightData, TravelClass } from '@/types/trip';
 
 interface AddFlightDrawerProps {
   tripId?: string;
@@ -10,19 +11,15 @@ interface AddFlightDrawerProps {
   onAdd?: (flightData: FlightData) => void;
 }
 
-export interface FlightData {
-  type: 'flight';
-  airline: string;
-  flightNumber: string;
-  from: string;
-  to: string;
-  departureDate: string;
-  departureTime: string;
-  arrivalDate: string;
-  arrivalTime: string;
-  confirmationNumber?: string;
-  notes?: string;
-}
+// Re-export FlightData for backward compatibility
+export type { FlightData } from '@/types/trip';
+
+const TRAVEL_CLASS_OPTIONS: { value: TravelClass; label: string }[] = [
+  { value: 'economy', label: 'Economy' },
+  { value: 'premium_economy', label: 'Premium Economy' },
+  { value: 'business', label: 'Business' },
+  { value: 'first', label: 'First' },
+];
 
 export default function AddFlightDrawer({
   tripId,
@@ -42,6 +39,11 @@ export default function AddFlightDrawer({
   const [arrivalTime, setArrivalTime] = useState('');
   const [confirmationNumber, setConfirmationNumber] = useState('');
   const [notes, setNotes] = useState('');
+  const [travelClass, setTravelClass] = useState<TravelClass | ''>('');
+  const [departureLounge, setDepartureLounge] = useState('');
+  const [arrivalLounge, setArrivalLounge] = useState('');
+  const [travelTimeToAirport, setTravelTimeToAirport] = useState('');
+  const [travelTimeFromAirport, setTravelTimeFromAirport] = useState('');
 
   const handleSubmit = async () => {
     if (!airline.trim() || !from.trim() || !to.trim()) return;
@@ -60,6 +62,11 @@ export default function AddFlightDrawer({
         arrivalTime,
         confirmationNumber: confirmationNumber.trim() || undefined,
         notes: notes.trim() || undefined,
+        travelClass: travelClass || undefined,
+        departureLounge: departureLounge.trim() || undefined,
+        arrivalLounge: arrivalLounge.trim() || undefined,
+        travelTimeToAirport: travelTimeToAirport ? parseInt(travelTimeToAirport, 10) : undefined,
+        travelTimeFromAirport: travelTimeFromAirport ? parseInt(travelTimeFromAirport, 10) : undefined,
       };
 
       if (onAdd) {
@@ -182,18 +189,91 @@ export default function AddFlightDrawer({
         </div>
       </div>
 
-      {/* Confirmation Number */}
+      {/* Confirmation Number & Travel Class */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+            Confirmation #
+          </label>
+          <input
+            type="text"
+            value={confirmationNumber}
+            onChange={(e) => setConfirmationNumber(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+            placeholder="Optional"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+            Class
+          </label>
+          <select
+            value={travelClass}
+            onChange={(e) => setTravelClass(e.target.value as TravelClass | '')}
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+          >
+            <option value="">Select class</option>
+            {TRAVEL_CLASS_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Lounge Access */}
       <div>
         <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-          Confirmation #
+          Lounge Access
         </label>
-        <input
-          type="text"
-          value={confirmationNumber}
-          onChange={(e) => setConfirmationNumber(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
-          placeholder="Optional"
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <input
+            type="text"
+            value={departureLounge}
+            onChange={(e) => setDepartureLounge(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+            placeholder="Departure lounge"
+          />
+          <input
+            type="text"
+            value={arrivalLounge}
+            onChange={(e) => setArrivalLounge(e.target.value)}
+            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+            placeholder="Arrival lounge"
+          />
+        </div>
+      </div>
+
+      {/* Travel Time To/From Airport */}
+      <div>
+        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+          Travel Time (minutes)
+        </label>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="relative">
+            <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <input
+              type="number"
+              min="0"
+              value={travelTimeToAirport}
+              onChange={(e) => setTravelTimeToAirport(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+              placeholder="To airport"
+            />
+          </div>
+          <div className="relative">
+            <Car className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+            <input
+              type="number"
+              min="0"
+              value={travelTimeFromAirport}
+              onChange={(e) => setTravelTimeFromAirport(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+              placeholder="From airport"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Notes */}

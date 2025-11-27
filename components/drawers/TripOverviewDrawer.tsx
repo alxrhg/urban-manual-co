@@ -42,6 +42,11 @@ interface Trip {
     depart?: string;
     arrival?: string;
     arrive?: string;
+    travelClass?: string;
+    departureLounge?: string;
+    arrivalLounge?: string;
+    travelTimeToAirport?: number;
+    travelTimeFromAirport?: number;
     [key: string]: any;
   }>;
   [key: string]: any;
@@ -257,9 +262,28 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
             {flights.map((flight, idx) => {
               const from = flight.from || flight.departure || flight.depart || '';
               const to = flight.to || flight.arrival || flight.arrive || '';
-              const time = flight.departureTime && flight.arrivalTime 
+              const time = flight.departureTime && flight.arrivalTime
                 ? `${flight.departureTime} – ${flight.arrivalTime}`
                 : flight.departureTime || '';
+
+              const formatClass = (cls?: string) => {
+                switch (cls) {
+                  case 'economy': return 'Economy';
+                  case 'premium_economy': return 'Premium Economy';
+                  case 'business': return 'Business';
+                  case 'first': return 'First';
+                  default: return null;
+                }
+              };
+
+              const formatDuration = (mins: number) => {
+                if (mins < 60) return `${mins}min`;
+                const h = Math.floor(mins / 60);
+                const m = mins % 60;
+                return m > 0 ? `${h}h ${m}m` : `${h}h`;
+              };
+
+              const classLabel = formatClass(flight.travelClass);
 
               return (
                 <UMCard key={idx} className="p-4">
@@ -272,6 +296,7 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
                       </div>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         {time || 'Time TBD'}
+                        {classLabel && <span className="ml-2 text-blue-600 dark:text-blue-400">· {classLabel}</span>}
                       </p>
                     </div>
                     <div className="text-right">
@@ -281,6 +306,33 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
                       )}
                     </div>
                   </div>
+
+                  {/* Travel times & Lounges */}
+                  {(flight.travelTimeToAirport || flight.travelTimeFromAirport || flight.departureLounge || flight.arrivalLounge) && (
+                    <div className="space-y-1.5 mb-3">
+                      {flight.travelTimeToAirport && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          🚗 {formatDuration(flight.travelTimeToAirport)} to {from}
+                        </p>
+                      )}
+                      {flight.departureLounge && (
+                        <p className="text-xs text-blue-600 dark:text-blue-400">
+                          ✈️ Lounge: {flight.departureLounge}
+                        </p>
+                      )}
+                      {flight.arrivalLounge && (
+                        <p className="text-xs text-blue-600 dark:text-blue-400">
+                          🛬 Lounge: {flight.arrivalLounge}
+                        </p>
+                      )}
+                      {flight.travelTimeFromAirport && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          🚗 {formatDuration(flight.travelTimeFromAirport)} from {to}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   {flight.confirmationNumber && (
                     <div className="pt-3 mt-1 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center">
                       <span className="text-xs text-gray-500">Confirmation</span>

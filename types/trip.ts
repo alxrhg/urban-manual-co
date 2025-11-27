@@ -158,6 +158,14 @@ export interface ItineraryItemNotes {
   arrivalDate?: string;
   arrivalTime?: string;
   confirmationNumber?: string;
+  // Travel class (defined after FlightData - using string literal here for interface ordering)
+  travelClass?: 'economy' | 'premium_economy' | 'business' | 'first';
+  // Lounge access
+  departureLounge?: string;
+  arrivalLounge?: string;
+  // Travel time to/from airport (in minutes)
+  travelTimeToAirport?: number;
+  travelTimeFromAirport?: number;
   // Train-specific fields
   trainNumber?: string;
   trainLine?: string;
@@ -176,6 +184,8 @@ export interface ItineraryItemNotes {
 /**
  * Flight data structure
  */
+export type TravelClass = 'economy' | 'premium_economy' | 'business' | 'first';
+
 export interface FlightData {
   type: 'flight';
   airline: string;
@@ -188,6 +198,14 @@ export interface FlightData {
   arrivalTime: string;
   confirmationNumber?: string;
   notes?: string;
+  // Travel class
+  travelClass?: TravelClass;
+  // Lounge access
+  departureLounge?: string;
+  arrivalLounge?: string;
+  // Travel time to/from airport (in minutes)
+  travelTimeToAirport?: number;
+  travelTimeFromAirport?: number;
 }
 
 /**

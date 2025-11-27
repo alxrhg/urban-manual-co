@@ -10,6 +10,9 @@ import {
   Loader2,
   TrendingUp,
   TrendingDown,
+  Car,
+  Armchair,
+  Crown,
 } from 'lucide-react';
 import type { ItineraryItemNotes } from '@/types/trip';
 
@@ -17,6 +20,30 @@ interface FlightStatusCardProps {
   flight: ItineraryItemNotes;
   departureDate?: string;
 }
+
+const formatTravelClass = (travelClass?: string): string => {
+  switch (travelClass) {
+    case 'economy': return 'Economy';
+    case 'premium_economy': return 'Premium Economy';
+    case 'business': return 'Business';
+    case 'first': return 'First';
+    default: return '';
+  }
+};
+
+const getTravelClassIcon = (travelClass?: string) => {
+  if (travelClass === 'first' || travelClass === 'business') {
+    return <Crown className="w-3 h-3" />;
+  }
+  return <Armchair className="w-3 h-3" />;
+};
+
+const formatDuration = (minutes: number): string => {
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
+};
 
 type FlightStatus = 'scheduled' | 'boarding' | 'departed' | 'in_flight' | 'landed' | 'delayed' | 'cancelled' | 'unknown';
 
@@ -185,7 +212,24 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
         <span className="font-medium">{flight.from}</span>
         <TrendingUp className="w-3 h-3" />
         <span className="font-medium">{flight.to}</span>
+        {flight.travelClass && (
+          <>
+            <span className="text-gray-300 dark:text-gray-600">·</span>
+            <span className="inline-flex items-center gap-1">
+              {getTravelClassIcon(flight.travelClass)}
+              {formatTravelClass(flight.travelClass)}
+            </span>
+          </>
+        )}
       </div>
+
+      {/* Travel Time To Airport */}
+      {flight.travelTimeToAirport && (
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-2 bg-gray-50 dark:bg-gray-800/50 rounded-lg px-2 py-1.5">
+          <Car className="w-3 h-3" />
+          <span>{formatDuration(flight.travelTimeToAirport)} to {flight.from}</span>
+        </div>
+      )}
 
       {/* Times */}
       <div className="grid grid-cols-2 gap-3 mb-3">
@@ -199,14 +243,32 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
               +{flightInfo.delay}min delay
             </p>
           )}
+          {flight.departureLounge && (
+            <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1">
+              Lounge: {flight.departureLounge}
+            </p>
+          )}
         </div>
         <div>
           <p className="text-[10px] text-gray-500 uppercase tracking-wide">Arrival</p>
           <p className="text-sm font-medium">
             {flightInfo?.actualArrival || flight.arrivalTime || '--:--'}
           </p>
+          {flight.arrivalLounge && (
+            <p className="text-[10px] text-blue-600 dark:text-blue-400 mt-1">
+              Lounge: {flight.arrivalLounge}
+            </p>
+          )}
         </div>
       </div>
+
+      {/* Travel Time From Airport */}
+      {flight.travelTimeFromAirport && (
+        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mb-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg px-2 py-1.5">
+          <Car className="w-3 h-3" />
+          <span>{formatDuration(flight.travelTimeFromAirport)} from {flight.to}</span>
+        </div>
+      )}
 
       {/* Status Badge */}
       {flightInfo && (
