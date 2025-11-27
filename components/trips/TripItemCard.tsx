@@ -44,11 +44,12 @@ export const TripItemCard = memo(function TripItemCard({
   dragHandleProps
 }: TripItemCardProps) {
   const category = item.destination?.category || item.parsedNotes?.category;
+  const normalizedCategory = category?.toLowerCase();
   const isFlight = item.parsedNotes?.type === 'flight';
   const isHotel =
     item.parsedNotes?.type === 'hotel' ||
     item.parsedNotes?.isHotel ||
-    category?.toLowerCase() === 'hotel';
+    normalizedCategory === 'hotel';
   const estimatedDuration = getEstimatedDuration(category);
 
   return (
