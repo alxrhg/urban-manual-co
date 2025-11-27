@@ -693,116 +693,221 @@ export default function TripPage() {
       order: index + 1,
     })) || [];
 
+  const totalDays = calculateDays(trip.start_date, trip.end_date);
+  const totalItems = days.reduce((acc, day) => acc + day.items.length, 0);
+  const flightsCount = days.reduce(
+    (acc, day) => acc + day.items.filter((item) => item.parsedNotes?.type === 'flight').length,
+    0
+  );
+  const startDate = trip.start_date ? parseDateString(trip.start_date) : null;
+  const countdownDays = startDate
+    ? Math.max(0, Math.ceil((startDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
+  const countdownLabel = countdownDays === null
+    ? 'Flexible dates'
+    : countdownDays === 0
+      ? 'Starts today'
+      : `Starts in ${countdownDays} day${countdownDays === 1 ? '' : 's'}`;
+  const coverImage =
+    trip.cover_image ||
+    currentDay?.items.find((item) => item.destination?.image)?.destination?.image ||
+    null;
+
   return (
     <main className="w-full min-h-screen bg-white dark:bg-gray-950">
-      {/* Header */}
-      <div className="px-4 md:px-10 py-6 md:py-8 border-b border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-md sticky top-0 z-30">
-        <div className="flex items-start justify-between gap-4 max-w-7xl mx-auto w-full">
-          <div className="flex-1 space-y-4">
-            <Link
-              href="/trips"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors group"
-            >
-              <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
-              Back to Trips
-            </Link>
-            
-            <div className="space-y-2">
-              <input
-                type="text"
-                value={trip.title}
-                onChange={(e) => updateTrip({ title: e.target.value })}
-                className="text-2xl md:text-4xl font-semibold bg-transparent border-none outline-none w-full focus:outline-none placeholder-gray-300 dark:placeholder-gray-700 text-gray-900 dark:text-white p-0"
-                placeholder="Trip Name"
-              />
-              
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-medium text-gray-700 dark:text-gray-300"
+      {/* Hero Header */}
+      <div className="px-4 md:px-10 pt-6 pb-4">
+        <div className="relative overflow-hidden rounded-3xl border border-gray-200/80 dark:border-gray-800 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-xl">
+          {coverImage && (
+            <Image
+              src={coverImage}
+              alt={trip.title || 'Trip cover'}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover opacity-70"
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/50" />
+
+          <div className="relative p-5 sm:p-8 lg:p-10 space-y-6">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+              <div className="flex-1 space-y-3">
+                <Link
+                  href="/trips"
+                  className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-white/80 hover:text-white transition-colors group bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full w-fit border border-white/10"
                 >
-                  <MapPin className="w-3.5 h-3.5" />
-                  {trip.destination || 'Add destination'}
-                </button>
-                <button
-                  onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-xs font-medium text-gray-700 dark:text-gray-300"
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                  {trip.start_date ? formatTripDate(trip.start_date) : 'Add dates'}
-                  {trip.end_date && ` – ${formatTripDate(trip.end_date)}`}
-                </button>
+                  <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+                  Back to Trips
+                </Link>
+
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={trip.title}
+                    onChange={(e) => updateTrip({ title: e.target.value })}
+                    className="text-3xl md:text-5xl font-semibold bg-transparent border-none outline-none w-full focus:outline-none placeholder-white/40 text-white p-0 drop-shadow-sm"
+                    placeholder="Name this adventure"
+                  />
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 hover:bg-white/20 transition-colors text-xs font-semibold text-white"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      {trip.destination || 'Add destination'}
+                    </button>
+                    <button
+                      onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 hover:bg-white/20 transition-colors text-xs font-semibold text-white"
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      {trip.start_date ? formatTripDate(trip.start_date) : 'Add dates'}
+                      {trip.end_date && ` – ${formatTripDate(trip.end_date)}`}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 text-[13px] text-white/90">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10">
+                      <Clock className="w-4 h-4" />
+                      {trip.start_date && trip.end_date ? `${totalDays} days on the road` : 'Set trip length'}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10">
+                      <Plane className="w-4 h-4" />
+                      {countdownLabel}
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/10">
+                      <Users className="w-4 h-4" />
+                      Private itinerary
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-start sm:items-end gap-3">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowNotes(!showNotes)}
+                    className={`relative p-2.5 rounded-xl transition-all duration-200 border border-white/20 bg-white/10 hover:bg-white/20 ${showNotes ? 'ring-2 ring-white/40' : ''}`}
+                    title="Notes & Lists"
+                  >
+                    <ListTodo className="w-5 h-5" />
+                    {tripNotes.items.length > 0 && !showNotes && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-400 text-black text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {tripNotes.items.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setShowBucketList(!showBucketList)}
+                    className={`p-2.5 rounded-xl transition-all duration-200 hidden md:flex border border-white/20 bg-white/10 hover:bg-white/20 ${showBucketList ? 'ring-2 ring-white/40' : ''}`}
+                    title="Bucket List"
+                  >
+                    <Bookmark className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
+                    className="p-2.5 border border-white/20 bg-white/10 hover:bg-white/20 rounded-xl transition-all duration-200"
+                  >
+                    <Settings className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setMobileView(mobileView === 'itinerary' ? 'map' : 'itinerary')}
+                    className="md:hidden p-2.5 rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors"
+                    aria-label={mobileView === 'itinerary' ? 'Show Map' : 'Show Itinerary'}
+                  >
+                    {mobileView === 'itinerary' ? <Map className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
+                  </button>
+
+                  <button
+                    onClick={handleAITripPlanning}
+                    disabled={isAIPlanning}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-black font-semibold text-sm hover:bg-orange-100 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-lg"
+                    title="Fill trip with AI-recommended places"
+                  >
+                    {isAIPlanning ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-4 h-4" />
+                    )}
+                    <span>{isAIPlanning ? 'Planning...' : 'Smart Fill'}</span>
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {/* Mobile View Toggle */}
-            <button
-              onClick={() => setMobileView(mobileView === 'itinerary' ? 'map' : 'itinerary')}
-              className="md:hidden p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              aria-label={mobileView === 'itinerary' ? 'Show Map' : 'Show Itinerary'}
-            >
-              {mobileView === 'itinerary' ? <Map className="w-5 h-5" /> : <LayoutGrid className="w-5 h-5" />}
-            </button>
 
-            {/* AI Trip Planner Button */}
-            <button
-              onClick={handleAITripPlanning}
-              disabled={isAIPlanning}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-medium text-sm hover:from-violet-600 hover:to-purple-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg"
-              title="Fill trip with AI-recommended places"
-            >
-              {isAIPlanning ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-              <span className="hidden sm:inline">{isAIPlanning ? 'Planning...' : 'AI Plan'}</span>
-            </button>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="p-3 sm:p-4 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm">
+                <p className="text-xs text-white/70">Trip status</p>
+                <p className="text-lg font-semibold mt-1 flex items-center gap-2">
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  {trip.status === 'completed' ? 'Completed' : 'Planning'}
+                </p>
+              </div>
+              <div className="p-3 sm:p-4 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm">
+                <p className="text-xs text-white/70">Itinerary items</p>
+                <p className="text-lg font-semibold mt-1">{totalItems || 'Add plans'}</p>
+                <p className="text-[11px] text-white/60">{flightsCount} flights in schedule</p>
+              </div>
+              <div className="p-3 sm:p-4 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm">
+                <p className="text-xs text-white/70">Next milestone</p>
+                <p className="text-lg font-semibold mt-1">{countdownLabel}</p>
+                <p className="text-[11px] text-white/60">{trip.destination || 'Add a city'}</p>
+              </div>
+              <div className="p-3 sm:p-4 rounded-2xl bg-white/10 border border-white/10 backdrop-blur-sm">
+                <p className="text-xs text-white/70">Dates</p>
+                <p className="text-lg font-semibold mt-1">
+                  {trip.start_date && trip.end_date
+                    ? `${formatTripDate(trip.start_date)} – ${formatTripDate(trip.end_date)}`
+                    : 'Tap to set'}
+                </p>
+                <p className="text-[11px] text-white/60">{totalDays > 1 ? `${totalDays} days` : 'Flexible length'}</p>
+              </div>
+            </div>
 
-            <button
-              onClick={() => setShowNotes(!showNotes)}
-              className={`relative p-2.5 rounded-xl transition-all duration-200 ${
-                showNotes
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
-                  : 'bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-              title="Notes & Lists"
-            >
-              <ListTodo className="w-5 h-5" />
-              {tripNotes.items.length > 0 && !showNotes && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-violet-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {tripNotes.items.length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setShowBucketList(!showBucketList)}
-              className={`p-2.5 rounded-xl transition-all duration-200 hidden md:flex ${
-                showBucketList
-                  ? 'bg-black dark:bg-white text-white dark:text-black shadow-lg'
-                  : 'bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-              }`}
-              title="Bucket List"
-            >
-              <Bookmark className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
-              className="p-2.5 bg-white dark:bg-gray-800 text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-xl transition-all duration-200"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => openPlaceSelector(selectedDay)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-black font-semibold text-sm hover:bg-orange-100 transition-all shadow-md"
+              >
+                <Plus className="w-4 h-4" />
+                New activity
+              </button>
+              <button
+                onClick={() => openFlightDrawer(selectedDay)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-white font-semibold text-sm border border-white/20 hover:bg-white/20 transition-all"
+              >
+                <Plane className="w-4 h-4" />
+                Add flight
+              </button>
+              <button
+                onClick={() => setShowNotes(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-white font-semibold text-sm border border-white/20 hover:bg-white/20 transition-all"
+              >
+                <ListTodo className="w-4 h-4" />
+                Trip notes
+              </button>
+              <button
+                onClick={() => openDrawer('trip-settings', { trip, onUpdate: updateTrip, onDelete: () => router.push('/trips') })}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-white font-semibold text-sm border border-white/20 hover:bg-white/20 transition-all"
+              >
+                <Settings className="w-4 h-4" />
+                Customize
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Split-Screen Canvas */}
-      <div className="flex h-[calc(100vh-180px)] max-w-7xl mx-auto w-full relative">
+      <div className="flex min-h-[600px] lg:h-[calc(100vh-260px)] max-w-7xl mx-auto w-full relative">
         {/* Left Panel: Itinerary */}
         <div className={`
-          flex flex-col h-full transition-all duration-300 
+          flex flex-col h-full transition-all duration-300
           ${mobileView === 'itinerary' ? 'w-full' : 'hidden'} 
           md:flex md:w-1/2 
           ${showBucketList ? 'lg:w-2/5' : 'lg:w-3/5'}
