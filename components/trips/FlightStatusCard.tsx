@@ -1,21 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Plane,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  RefreshCw,
-  Loader2,
-  TrendingUp,
-  TrendingDown,
-} from 'lucide-react';
+import { ArrowRight, RefreshCw, Loader2, CheckCircle2, Clock, AlertCircle, Plane } from 'lucide-react';
 import type { ItineraryItemNotes } from '@/types/trip';
 
 interface FlightStatusCardProps {
   flight: ItineraryItemNotes;
   departureDate?: string;
+  compact?: boolean;
 }
 
 type FlightStatus = 'scheduled' | 'boarding' | 'departed' | 'in_flight' | 'landed' | 'delayed' | 'cancelled' | 'unknown';
@@ -25,28 +17,25 @@ interface FlightInfo {
   statusText: string;
   actualDeparture?: string;
   actualArrival?: string;
-  delay?: number; // minutes
+  delay?: number;
   gate?: string;
   terminal?: string;
   lastUpdated: Date;
 }
 
-export default function FlightStatusCard({ flight, departureDate }: FlightStatusCardProps) {
+/**
+ * FlightStatusCard - Compact flight card with route-focused design
+ * Layout: Route header → Schedule row → Flight identity
+ */
+export default function FlightStatusCard({ flight, departureDate, compact = true }: FlightStatusCardProps) {
   const [flightInfo, setFlightInfo] = useState<FlightInfo | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchFlightStatus = async () => {
-    if (!flight.flightNumber || !flight.airline) {
-      setError('Missing flight info');
-      return;
-    }
+    if (!flight.flightNumber || !flight.airline) return;
 
     setLoading(true);
-    setError(null);
-
     try {
-      // Check if flight is today or in the past 24 hours or next 24 hours
       const today = new Date();
       const flightDate = departureDate || flight.departureDate;
 
@@ -55,10 +44,9 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
         const diffDays = Math.abs((today.getTime() - flightDay.getTime()) / (1000 * 60 * 60 * 24));
 
         if (diffDays > 1) {
-          // Flight is more than 1 day away or past
           setFlightInfo({
             status: 'scheduled',
-            statusText: 'Scheduled',
+            statusText: 'On Time',
             lastUpdated: new Date(),
           });
           setLoading(false);
@@ -66,8 +54,6 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
         }
       }
 
-      // Try to fetch from API (using a mock for now since most flight APIs require paid keys)
-      // In production, you'd use an API like AviationStack, FlightAware, or similar
       const response = await fetch('/api/flight-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,7 +68,7 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
         const data = await response.json();
         setFlightInfo({
           status: data.status || 'scheduled',
-          statusText: data.statusText || 'Scheduled',
+          statusText: data.statusText || 'On Time',
           actualDeparture: data.actualDeparture,
           actualArrival: data.actualArrival,
           delay: data.delay,
@@ -91,15 +77,13 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
           lastUpdated: new Date(),
         });
       } else {
-        // API not available, show scheduled status
         setFlightInfo({
           status: 'scheduled',
           statusText: 'On Time',
           lastUpdated: new Date(),
         });
       }
-    } catch (err) {
-      // API call failed, show default status
+    } catch {
       setFlightInfo({
         status: 'scheduled',
         statusText: 'On Time',
@@ -112,28 +96,54 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
 
   useEffect(() => {
     fetchFlightStatus();
-
-    // Auto-refresh every 5 minutes for flights today
     const interval = setInterval(fetchFlightStatus, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [flight.flightNumber, flight.airline, departureDate]);
+
+  // Parse airport codes from "from" and "to" fields (e.g., "EWR - Newark" or just "EWR")
+  const parseAirport = (value?: string) => {
+    if (!value) return { code: '---', city: '' };
+    const parts = value.split(/[-–—]/);
+    const code = parts[0]?.trim().toUpperCase().slice(0, 3) || '---';
+    const city = parts[1]?.trim() || '';
+    return { code, city };
+  };
+
+  const origin = parseAirport(flight.from);
+  const destination = parseAirport(flight.to);
+
+  // Format date for display
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Format time for display
+  const formatTime = (time?: string) => {
+    if (!time) return '--:--';
+    return time;
+  };
 
   const getStatusColor = (status: FlightStatus) => {
     switch (status) {
       case 'scheduled':
       case 'boarding':
-        return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30';
+      case 'landed':
+        return 'text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30';
       case 'departed':
       case 'in_flight':
-        return 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30';
-      case 'landed':
-        return 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30';
+        return 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30';
       case 'delayed':
-        return 'text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/30';
+        return 'text-orange-600 bg-orange-50 dark:text-orange-400 dark:bg-orange-900/30';
       case 'cancelled':
-        return 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30';
+        return 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30';
       default:
-        return 'text-stone-600 dark:text-stone-400 bg-stone-50 dark:bg-stone-900/30';
+        return 'text-stone-600 bg-stone-50 dark:text-stone-400 dark:bg-stone-800';
     }
   };
 
@@ -141,12 +151,11 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
     switch (status) {
       case 'scheduled':
       case 'boarding':
+      case 'landed':
         return <CheckCircle2 className="w-3 h-3" />;
       case 'departed':
       case 'in_flight':
         return <Plane className="w-3 h-3" />;
-      case 'landed':
-        return <TrendingDown className="w-3 h-3" />;
       case 'delayed':
         return <Clock className="w-3 h-3" />;
       case 'cancelled':
@@ -157,94 +166,104 @@ export default function FlightStatusCard({ flight, departureDate }: FlightStatus
   };
 
   return (
-    <div className="mt-2 p-3 rounded-xl bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
-      {/* Flight Route */}
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Plane className="w-4 h-4 text-blue-500" />
-          <span className="text-sm font-medium">
-            {flight.airline} {flight.flightNumber}
-          </span>
-        </div>
-        <button
-          onClick={fetchFlightStatus}
-          disabled={loading}
-          className="p-1 text-stone-400 hover:text-stone-900 dark:hover:text-white transition-colors"
-          title="Refresh status"
-        >
-          {loading ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            <RefreshCw className="w-3 h-3" />
-          )}
-        </button>
-      </div>
-
-      {/* Route Info */}
-      <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-400 mb-3">
-        <span className="font-medium">{flight.from}</span>
-        <TrendingUp className="w-3 h-3" />
-        <span className="font-medium">{flight.to}</span>
-      </div>
-
-      {/* Times */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
+    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-stone-800/50">
+      {/* REGION 1: Route Header (EWR → MIA) */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-4 mb-3">
+        {/* Origin */}
         <div>
-          <p className="text-[10px] text-stone-500 uppercase tracking-wide">Departure</p>
-          <p className="text-sm font-medium">
-            {flightInfo?.actualDeparture || flight.departureTime || '--:--'}
+          <p className="text-xl font-semibold text-stone-900 dark:text-white leading-tight">
+            {origin.code}
           </p>
-          {flightInfo?.delay && flightInfo.delay > 0 && (
-            <p className="text-[10px] text-orange-500">
-              +{flightInfo.delay}min delay
+          {origin.city && (
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+              {origin.city}
             </p>
           )}
         </div>
+
+        {/* Arrow */}
+        <div className="pt-1">
+          <ArrowRight className="w-4 h-4 text-stone-400" />
+        </div>
+
+        {/* Destination */}
         <div>
-          <p className="text-[10px] text-stone-500 uppercase tracking-wide">Arrival</p>
-          <p className="text-sm font-medium">
-            {flightInfo?.actualArrival || flight.arrivalTime || '--:--'}
+          <p className="text-xl font-semibold text-stone-900 dark:text-white leading-tight">
+            {destination.code}
           </p>
+          {destination.city && (
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+              {destination.city}
+            </p>
+          )}
         </div>
       </div>
 
-      {/* Status Badge */}
-      {flightInfo && (
-        <div className="flex items-center justify-between">
-          <div
-            className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-              flightInfo.status
-            )}`}
-          >
-            {getStatusIcon(flightInfo.status)}
-            {flightInfo.statusText}
-          </div>
+      {/* REGION 2: Schedule Row */}
+      <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-300 mb-3">
+        {(departureDate || flight.departureDate) && (
+          <>
+            <span>{formatDate(departureDate || flight.departureDate)}</span>
+            <span className="text-stone-400">•</span>
+          </>
+        )}
+        <span>{formatTime(flightInfo?.actualDeparture || flight.departureTime)}</span>
+        <span className="text-stone-400 px-0.5">—</span>
+        <span>{formatTime(flightInfo?.actualArrival || flight.arrivalTime)}</span>
+        {flightInfo?.delay && flightInfo.delay > 0 && (
+          <span className="text-orange-500 ml-1">+{flightInfo.delay}m</span>
+        )}
+      </div>
 
-          {/* Gate/Terminal */}
-          {(flightInfo.gate || flightInfo.terminal) && (
-            <div className="text-xs text-stone-500">
-              {flightInfo.terminal && `Terminal ${flightInfo.terminal}`}
-              {flightInfo.terminal && flightInfo.gate && ' · '}
-              {flightInfo.gate && `Gate ${flightInfo.gate}`}
+      {/* REGION 3: Flight Identity & Status */}
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+          {flight.airline} {flight.flightNumber}
+        </p>
+
+        <div className="flex items-center gap-2">
+          {/* Status Badge */}
+          {flightInfo && (
+            <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${getStatusColor(flightInfo.status)}`}>
+              {getStatusIcon(flightInfo.status)}
+              {flightInfo.statusText}
             </div>
           )}
+
+          {/* Refresh Button */}
+          <button
+            onClick={fetchFlightStatus}
+            disabled={loading}
+            className="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+            title="Refresh status"
+          >
+            {loading ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <RefreshCw className="w-3 h-3" />
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Gate/Terminal (if available) */}
+      {flightInfo && (flightInfo.gate || flightInfo.terminal) && (
+        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-stone-200 dark:border-stone-700">
+          <p className="text-[10px] text-stone-500">
+            {flightInfo.terminal && `Terminal ${flightInfo.terminal}`}
+            {flightInfo.terminal && flightInfo.gate && ' • '}
+            {flightInfo.gate && `Gate ${flightInfo.gate}`}
+          </p>
         </div>
       )}
 
       {/* Confirmation Number */}
       {flight.confirmationNumber && (
-        <div className="mt-2 pt-2 border-t border-blue-100 dark:border-blue-800">
+        <div className="mt-2 pt-2 border-t border-stone-200 dark:border-stone-700">
           <p className="text-[10px] text-stone-500">
-            Confirmation: <span className="font-mono">{flight.confirmationNumber}</span>
+            Confirmation: <span className="font-mono font-medium">{flight.confirmationNumber}</span>
           </p>
         </div>
-      )}
-
-      {/* Last Updated */}
-      {flightInfo && (
-        <p className="text-[10px] text-stone-400 mt-2">
-          Updated {flightInfo.lastUpdated.toLocaleTimeString()}
-        </p>
       )}
     </div>
   );
