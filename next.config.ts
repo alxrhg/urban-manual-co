@@ -20,7 +20,7 @@ const cspDirectives = [
   "manifest-src 'self'",
   "media-src 'self' https:",
   "object-src 'none'",
-  "frame-src https://googleads.g.doubleclick.net https://*.doubleclick.net https://tpc.googlesyndication.com https://ep2.adtrafficquality.google https://www.google.com",
+  "frame-src https://googleads.g.doubleclick.net https://*.doubleclick.net https://tpc.googlesyndication.com https://ep2.adtrafficquality.google https://www.google.com https://vercel.live",
   'upgrade-insecure-requests',
 ]
 
