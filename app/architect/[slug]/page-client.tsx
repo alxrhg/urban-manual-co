@@ -30,6 +30,15 @@ function capitalizeCategory(category: string): string {
     .join(' ');
 }
 
+interface ArchitectInfo {
+  bio?: string | null;
+  birth_year?: number | null;
+  death_year?: number | null;
+  nationality?: string | null;
+  design_philosophy?: string | null;
+  awards?: Array<{ name: string; year?: number }> | null;
+}
+
 export default function ArchitectPageClient() {
   const { user } = useAuth();
   const router = useRouter();
@@ -49,6 +58,7 @@ export default function ArchitectPageClient() {
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
+  const [architectInfo, setArchitectInfo] = useState<ArchitectInfo | null>(null);
 
   const itemsPerPage = useItemsPerPage(4);
 
@@ -57,6 +67,7 @@ export default function ArchitectPageClient() {
   useEffect(() => {
     setLoading(true);
     fetchDestinations();
+    fetchArchitectInfo();
     if (user) {
       fetchVisitedPlaces();
     } else {
@@ -64,6 +75,22 @@ export default function ArchitectPageClient() {
     }
     setCurrentPage(1);
   }, [architectSlug, user]);
+
+  const fetchArchitectInfo = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('architects')
+        .select('bio, birth_year, death_year, nationality, design_philosophy, awards')
+        .eq('slug', architectSlug)
+        .single();
+
+      if (data && !error) {
+        setArchitectInfo(data);
+      }
+    } catch (error) {
+      console.error('Error fetching architect info:', error);
+    }
+  };
 
   useEffect(() => {
     if (destinations.length > 0) {
@@ -200,15 +227,62 @@ export default function ArchitectPageClient() {
               ← Back to Architects
             </button>
 
-            <div className="mb-8">
-              <div className="flex items-start justify-between gap-4">
+            <div className="mb-12">
+              <div className="flex items-start justify-between gap-4 mb-6">
                 <div className="flex-1">
-                  <h1 className="text-2xl font-light text-black dark:text-white mb-1">{architectName}</h1>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <h1 className="text-4xl md:text-5xl font-bold leading-tight text-black dark:text-white mb-2">{architectName}</h1>
+                  {architectInfo?.nationality && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{architectInfo.nationality}</p>
+                  )}
+                  {(architectInfo?.birth_year || architectInfo?.death_year) && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                      {architectInfo.birth_year && `b. ${architectInfo.birth_year}`}
+                      {architectInfo.birth_year && architectInfo.death_year && ' — '}
+                      {architectInfo.death_year && `d. ${architectInfo.death_year}`}
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">
                     {filteredDestinations.length} {filteredDestinations.length === 1 ? 'destination' : 'destinations'}
                   </p>
                 </div>
               </div>
+
+              {/* Architect Biography & Philosophy */}
+              {(architectInfo?.bio || architectInfo?.design_philosophy || architectInfo?.awards) && (
+                <div className="mb-8 pb-8 border-b border-gray-200 dark:border-gray-800 space-y-4">
+                  {architectInfo?.bio && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                      {architectInfo.bio}
+                    </p>
+                  )}
+                  {architectInfo?.design_philosophy && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Design Philosophy</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                        {architectInfo.design_philosophy}
+                      </p>
+                    </div>
+                  )}
+                  {architectInfo?.awards && architectInfo.awards.length > 0 && (
+                    <div>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Awards & Honors</p>
+                      <div className="flex flex-wrap gap-2">
+                        {architectInfo.awards.map((award, idx) => (
+                          <div
+                            key={idx}
+                            className="px-3 py-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-full"
+                          >
+                            <p className="text-xs font-medium text-amber-900 dark:text-amber-100">
+                              {award.name}
+                              {award.year && ` (${award.year})`}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Filters - Matching city page style */}
