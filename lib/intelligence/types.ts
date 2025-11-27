@@ -106,6 +106,7 @@ export interface Place {
   rating?: number;
   priceLevel?: number;
   description?: string;
+  address?: string;
 }
 
 // =============================================================================
