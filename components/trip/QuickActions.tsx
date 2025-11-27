@@ -22,8 +22,8 @@ interface QuickActionsProps {
 }
 
 /**
- * QuickActions - 3-column grid with gap-px borders
- * Lovably style: minimal icons with uppercase labels
+ * QuickActions - Editorial 3-column grid with refined hover states
+ * Features asymmetric icons, subtle borders, and smooth micro-interactions
  */
 export default function QuickActions({
   onAddPlace,
@@ -38,20 +38,20 @@ export default function QuickActions({
   const newStyleActions: QuickAction[] | null = (onAddPlace || onAddFlight || onAddNote) ? [
     {
       id: 'place',
-      label: 'Add Place',
-      icon: <MapPin className="h-5 w-5" />,
+      label: 'Place',
+      icon: <MapPin className="h-[18px] w-[18px]" strokeWidth={1.5} />,
       onClick: onAddPlace,
     },
     {
       id: 'flight',
-      label: 'Add Flight',
-      icon: <Plane className="h-5 w-5" />,
+      label: 'Flight',
+      icon: <Plane className="h-[18px] w-[18px]" strokeWidth={1.5} />,
       onClick: onAddFlight,
     },
     {
       id: 'note',
-      label: 'Add Note',
-      icon: <StickyNote className="h-5 w-5" />,
+      label: 'Note',
+      icon: <StickyNote className="h-[18px] w-[18px]" strokeWidth={1.5} />,
       onClick: onAddNote,
     },
   ] : null;
@@ -60,19 +60,19 @@ export default function QuickActions({
     {
       id: 'map',
       label: 'Map',
-      icon: <Map className="h-6 w-6" />,
+      icon: <Map className="h-5 w-5" strokeWidth={1.5} />,
       onClick: onMapClick,
     },
     {
       id: 'planner',
       label: 'Planner',
-      icon: <Calendar className="h-6 w-6" />,
+      icon: <Calendar className="h-5 w-5" strokeWidth={1.5} />,
       onClick: onPlannerClick,
     },
     {
       id: 'share',
       label: 'Share',
-      icon: <Users className="h-6 w-6" />,
+      icon: <Users className="h-5 w-5" strokeWidth={1.5} />,
       onClick: onShareClick,
     },
   ];
@@ -80,25 +80,38 @@ export default function QuickActions({
   const actions = customActions || newStyleActions || defaultActions;
 
   return (
-    <div className="grid grid-cols-3 gap-px bg-gray-200 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-800">
-      {actions.map((action) => {
+    <div className="grid grid-cols-3 border-y border-stone-100 dark:border-stone-800/50">
+      {actions.map((action, index) => {
+        const isFirst = index === 0;
+        const isLast = index === actions.length - 1;
+
         const content = (
-          <>
-            <span className="text-gray-900 dark:text-white mb-3">
+          <div className="flex items-center justify-center gap-2.5">
+            <span className="text-stone-500 dark:text-stone-400 transition-colors duration-200 group-hover:text-stone-900 dark:group-hover:text-white">
               {action.icon}
             </span>
-            <span className="text-[10px] uppercase tracking-widest font-medium text-gray-600 dark:text-gray-400">
+            <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-stone-400 dark:text-stone-500 transition-colors duration-200 group-hover:text-stone-700 dark:group-hover:text-stone-300">
               {action.label}
             </span>
-          </>
+          </div>
         );
+
+        const baseClass = `
+          group relative
+          py-4 px-6
+          flex items-center justify-center
+          bg-white dark:bg-[#0a0a0a]
+          transition-all duration-200
+          hover:bg-stone-50 dark:hover:bg-stone-900/50
+          ${!isLast ? 'border-r border-stone-100 dark:border-stone-800/50' : ''}
+        `;
 
         if (action.href) {
           return (
             <a
               key={action.id}
               href={action.href}
-              className="bg-white dark:bg-[#0a0a0a] p-6 flex flex-col items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+              className={baseClass}
             >
               {content}
             </a>
@@ -109,7 +122,7 @@ export default function QuickActions({
           <button
             key={action.id}
             onClick={action.onClick}
-            className="bg-white dark:bg-[#0a0a0a] p-6 flex flex-col items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+            className={baseClass}
           >
             {content}
           </button>

@@ -147,13 +147,14 @@ export default function TimelineCanvas({
                   toggleDay(day.dayNumber);
                   onSelectDay?.(day.dayNumber);
                 }}
-                className="w-full"
+                className="w-full text-left"
               >
                 <DayHeader
                   dayNumber={day.dayNumber}
                   date={day.date}
                   itemCount={day.items.length}
                   isSticky={false}
+                  isExpanded={isExpanded}
                 />
               </button>
 
@@ -173,6 +174,7 @@ export default function TimelineCanvas({
                         <div key={item.id}>
                           <TimeBlockCard
                             item={item}
+                            index={index}
                             onRemove={onRemoveItem}
                             onEdit={onEditItem}
                             onTimeChange={onTimeChange}

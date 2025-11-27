@@ -27,8 +27,8 @@ const modeLabels: Record<TransitMode, string> = {
 };
 
 /**
- * TransitConnector - Travel time connector between items
- * Lovably style: dotted line with transit info
+ * TransitConnector - Refined travel time connector between timeline items
+ * Featuring subtle dotted line and minimal transit pill
  */
 export default function TransitConnector({
   durationMinutes,
@@ -41,30 +41,41 @@ export default function TransitConnector({
   return (
     <div
       className={`
-        relative flex items-center gap-3
-        pl-[88px] pr-6 py-2
+        relative flex items-center
+        ml-20 pl-8 pr-6 py-1.5
         ${className}
       `}
     >
-      {/* Dotted Line */}
-      <div className="absolute left-[45px] top-0 bottom-0 w-px border-l border-dashed border-gray-200 dark:border-gray-800" />
+      {/* Connecting Line - Refined dotted style */}
+      <div
+        className="absolute left-[22px] top-0 bottom-0 w-px"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, var(--line-color) 50%, transparent 50%)`,
+          backgroundSize: '1px 6px',
+          // Use CSS variable for theming
+          ['--line-color' as string]: 'rgb(214 211 209)', // stone-300
+        }}
+      />
 
-      {/* Transit Info */}
-      <div className="relative flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-gray-900/50 rounded-full">
-        <Icon className="w-3 h-3 text-gray-400" />
+      {/* Transit Info Pill */}
+      <div className="relative flex items-center gap-1.5 px-2.5 py-1 bg-stone-50 dark:bg-stone-900/30 rounded-full border border-stone-100 dark:border-stone-800/50">
+        <Icon className="w-3 h-3 text-stone-400 dark:text-stone-500" strokeWidth={1.5} />
         {durationMinutes ? (
-          <span className="text-[11px] text-gray-500 dark:text-gray-400">
+          <span className="text-[10px] text-stone-500 dark:text-stone-400 font-medium tabular-nums">
             {formatDuration(durationMinutes)}
           </span>
         ) : (
-          <span className="text-[11px] text-gray-400 dark:text-gray-600">
+          <span className="text-[10px] text-stone-400 dark:text-stone-500 font-medium">
             {modeLabels[mode]}
           </span>
         )}
         {distanceKm && (
-          <span className="text-[10px] text-gray-400 dark:text-gray-600">
-            ({distanceKm.toFixed(1)} km)
-          </span>
+          <>
+            <span className="text-stone-300 dark:text-stone-600">·</span>
+            <span className="text-[10px] text-stone-400 dark:text-stone-500 tabular-nums">
+              {distanceKm.toFixed(1)} km
+            </span>
+          </>
         )}
       </div>
     </div>

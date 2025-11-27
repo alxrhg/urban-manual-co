@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Clock, MapPin, Plane, MoreHorizontal, Trash2, Edit2 } from 'lucide-react';
+import { GripVertical, Clock, MapPin, Plane, Trash2, Edit2, ChevronRight } from 'lucide-react';
 import { formatTimeDisplay, formatDuration } from '@/lib/utils/time-calculations';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
 interface TimeBlockCardProps {
   item: EnrichedItineraryItem;
+  index?: number;
   onRemove?: (id: string) => void;
   onEdit?: (item: EnrichedItineraryItem) => void;
   onTimeChange?: (id: string, time: string) => void;
@@ -17,18 +18,19 @@ interface TimeBlockCardProps {
 }
 
 /**
- * TimeBlockCard - Minimalist row layout for itinerary items
- * Lovably style: horizontal row, grayscale image, hover actions
+ * TimeBlockCard - Editorial itinerary item with distinctive styling
+ * Features asymmetric layout, hover micro-interactions, and refined typography
  */
 export default function TimeBlockCard({
   item,
+  index = 0,
   onRemove,
   onEdit,
   onTimeChange,
   isActive = false,
   className = '',
 }: TimeBlockCardProps) {
-  const [showActions, setShowActions] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const {
     attributes,
@@ -53,118 +55,160 @@ export default function TimeBlockCard({
       ref={setNodeRef}
       style={style}
       className={`
-        group relative flex items-center gap-4 p-4
-        bg-white dark:bg-[#0a0a0a]
-        border border-transparent
-        hover:border-gray-100 dark:hover:border-gray-900
-        rounded-sm transition-all duration-200
-        ${isDragging ? 'opacity-50 shadow-lg z-50' : ''}
-        ${isActive ? 'ring-1 ring-gray-900 dark:ring-white' : ''}
+        group relative
+        transition-all duration-300 ease-out
+        ${isDragging ? 'opacity-50 scale-[1.02] shadow-2xl z-50' : ''}
+        ${isActive ? 'bg-stone-50 dark:bg-stone-900/50' : ''}
         ${className}
       `}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Drag Handle */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="flex-shrink-0 p-1 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        <GripVertical className="w-4 h-4 text-gray-300 dark:text-gray-700" />
-      </button>
+      {/* Main Card Container */}
+      <div className={`
+        flex items-stretch gap-0
+        border-b border-stone-100 dark:border-stone-800/50
+        transition-colors duration-200
+        ${isActive ? 'border-stone-200 dark:border-stone-700' : ''}
+      `}>
+        {/* Left: Time Column - Fixed Width */}
+        <div className="flex-shrink-0 w-20 py-5 pl-4 pr-3 flex flex-col items-end justify-start border-r border-stone-100 dark:border-stone-800/50">
+          {item.time ? (
+            <span className="text-sm font-medium text-stone-800 dark:text-stone-200 tabular-nums">
+              {formatTimeDisplay(item.time)}
+            </span>
+          ) : (
+            <button
+              onClick={() => onTimeChange?.(item.id, '09:00')}
+              className="text-[11px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+            >
+              + time
+            </button>
+          )}
+          {item.parsedNotes?.duration && (
+            <span className="text-[10px] text-stone-400 dark:text-stone-500 mt-1 flex items-center gap-1">
+              <Clock className="w-2.5 h-2.5" />
+              {formatDuration(item.parsedNotes.duration)}
+            </span>
+          )}
+        </div>
 
-      {/* Time */}
-      <div className="flex-shrink-0 w-16 text-right">
-        {item.time ? (
-          <span className="text-sm font-medium text-gray-900 dark:text-white">
-            {formatTimeDisplay(item.time)}
-          </span>
-        ) : (
+        {/* Center: Content */}
+        <div className="flex-1 min-w-0 py-5 px-4 flex items-center gap-4">
+          {/* Drag Handle - Only visible on hover */}
           <button
-            onClick={() => onTimeChange?.(item.id, '09:00')}
-            className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            {...attributes}
+            {...listeners}
+            className={`
+              flex-shrink-0 p-1 cursor-grab active:cursor-grabbing
+              transition-opacity duration-200
+              ${isHovered ? 'opacity-100' : 'opacity-0'}
+            `}
           >
-            + time
+            <GripVertical className="w-4 h-4 text-stone-300 dark:text-stone-600" />
           </button>
-        )}
-      </div>
 
-      {/* Image or Icon */}
-      <div className="flex-shrink-0 w-12 h-12 rounded-sm overflow-hidden bg-gray-100 dark:bg-gray-900">
-        {image ? (
-          <img
-            src={image}
-            alt={item.title || ''}
-            className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
-          />
-        ) : isFlight ? (
-          <div className="w-full h-full flex items-center justify-center">
-            <Plane className="w-5 h-5 text-gray-400" />
+          {/* Image/Icon Container - Asymmetric with overlap effect */}
+          <div className="relative flex-shrink-0">
+            <div className={`
+              w-14 h-14 rounded-lg overflow-hidden
+              bg-stone-100 dark:bg-stone-800
+              ring-2 ring-white dark:ring-stone-900
+              shadow-sm
+              transition-all duration-300
+              ${isHovered ? 'shadow-md scale-105' : ''}
+            `}>
+              {image ? (
+                <img
+                  src={image}
+                  alt={item.title || ''}
+                  className={`
+                    w-full h-full object-cover
+                    transition-all duration-500
+                    ${isHovered ? 'grayscale-0 scale-105' : 'grayscale-[40%]'}
+                  `}
+                />
+              ) : isFlight ? (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-800 dark:to-stone-700">
+                  <Plane className="w-5 h-5 text-stone-400 dark:text-stone-500" />
+                </div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-800 dark:to-stone-700">
+                  <MapPin className="w-5 h-5 text-stone-400 dark:text-stone-500" />
+                </div>
+              )}
+            </div>
+            {/* Index badge - overlapping */}
+            <div className="absolute -top-1 -left-1 w-5 h-5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-[10px] font-semibold flex items-center justify-center shadow-sm">
+              {index + 1}
+            </div>
           </div>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-gray-400" />
+
+          {/* Text Content */}
+          <div className="flex-1 min-w-0">
+            <h4 className="font-medium text-stone-900 dark:text-white truncate leading-tight">
+              {item.title}
+            </h4>
+            <div className="flex items-center gap-2 mt-1">
+              {item.description && (
+                <span className="text-xs text-stone-500 dark:text-stone-400 truncate">
+                  {item.description}
+                </span>
+              )}
+              {category && (
+                <>
+                  {item.description && <span className="text-stone-300 dark:text-stone-600">·</span>}
+                  <span className="text-[10px] uppercase tracking-wider text-stone-400 dark:text-stone-500 font-medium">
+                    {category}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <h4 className="font-medium text-gray-900 dark:text-white truncate">
-          {item.title}
-        </h4>
-        <div className="flex items-center gap-2 mt-0.5">
-          {item.description && (
-            <span className="text-xs text-gray-500 truncate">
-              {item.description}
-            </span>
-          )}
-          {category && (
-            <span className="text-[10px] uppercase tracking-widest text-gray-400 dark:text-gray-600">
-              {category}
-            </span>
-          )}
+          {/* Action Button - Clean reveal on hover */}
+          <button
+            onClick={() => onEdit?.(item)}
+            className={`
+              flex-shrink-0 p-2 rounded-lg
+              transition-all duration-200
+              ${isHovered
+                ? 'opacity-100 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300'
+                : 'opacity-0'
+              }
+            `}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
-      </div>
 
-      {/* Duration Badge */}
-      {item.parsedNotes?.duration && (
-        <div className="flex-shrink-0 flex items-center gap-1 text-xs text-gray-400">
-          <Clock className="w-3 h-3" />
-          <span>{formatDuration(item.parsedNotes.duration)}</span>
-        </div>
-      )}
-
-      {/* Actions */}
-      <div
-        className={`
-          flex-shrink-0 flex items-center gap-1
+        {/* Right: Actions Column */}
+        <div className={`
+          flex-shrink-0 flex items-center gap-1 px-3
           transition-opacity duration-200
-          ${showActions ? 'opacity-100' : 'opacity-0'}
-        `}
-      >
-        <button
-          onClick={() => onEdit?.(item)}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-sm transition-colors"
-          title="Edit"
-        >
-          <Edit2 className="w-4 h-4 text-gray-400" />
-        </button>
-        <button
-          onClick={() => onRemove?.(item.id)}
-          className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm transition-colors"
-          title="Remove"
-        >
-          <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
-        </button>
-        <button
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-sm transition-colors"
-          title="More"
-        >
-          <MoreHorizontal className="w-4 h-4 text-gray-400" />
-        </button>
+          ${isHovered ? 'opacity-100' : 'opacity-0'}
+        `}>
+          <button
+            onClick={() => onEdit?.(item)}
+            className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
+            title="Edit"
+          >
+            <Edit2 className="w-4 h-4 text-stone-400 dark:text-stone-500" />
+          </button>
+          <button
+            onClick={() => onRemove?.(item.id)}
+            className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group/delete"
+            title="Remove"
+          >
+            <Trash2 className="w-4 h-4 text-stone-400 dark:text-stone-500 group-hover/delete:text-red-500" />
+          </button>
+        </div>
       </div>
+
+      {/* Active indicator - Subtle left border accent */}
+      {isActive && (
+        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-stone-900 dark:bg-white" />
+      )}
     </div>
   );
 }
