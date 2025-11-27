@@ -165,8 +165,12 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
     }
   };
 
+  const containerClasses = compact
+    ? 'rounded-xl bg-stone-50 p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-800/70 dark:ring-stone-700/60'
+    : 'rounded-2xl bg-white p-5 shadow-md ring-1 ring-stone-200 dark:bg-stone-900/70 dark:ring-stone-700/60';
+
   return (
-    <div className="rounded-xl bg-stone-50 p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-800/60 dark:ring-stone-700/60">
+    <div className={containerClasses}>
       {/* REGION 1: Route Header (EWR → MIA) */}
       <div className="grid grid-cols-[auto_min-content_auto] items-start gap-4">
         {/* Origin */}

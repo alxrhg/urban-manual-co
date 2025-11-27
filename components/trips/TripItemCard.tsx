@@ -43,16 +43,16 @@ export const TripItemCard = memo(function TripItemCard({
   currentDayDate,
   dragHandleProps
 }: TripItemCardProps) {
+  const category = item.destination?.category || item.parsedNotes?.category;
   const isFlight = item.parsedNotes?.type === 'flight';
   const isHotel =
     item.parsedNotes?.type === 'hotel' ||
     item.parsedNotes?.isHotel ||
     category?.toLowerCase() === 'hotel';
-  const category = item.destination?.category || item.parsedNotes?.category;
   const estimatedDuration = getEstimatedDuration(category);
 
   return (
-    <div 
+    <div
       className={`
         group relative rounded-2xl border transition-all duration-200
         ${isDragging ? 'shadow-lg border-black/10 dark:border-white/20 bg-white dark:bg-gray-800 z-10' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700'}
@@ -92,7 +92,7 @@ export const TripItemCard = memo(function TripItemCard({
         </div>
 
         {/* Content Container */}
-        <div 
+        <div
           className={`flex-1 min-w-0 flex gap-3 ${!isFlight && onView ? 'cursor-pointer' : ''}`}
           onClick={(e) => {
             // Prevent expanding if clicking controls
@@ -125,41 +125,50 @@ export const TripItemCard = memo(function TripItemCard({
           </div>
 
           {/* Info */}
-          <div className="flex-1 min-w-0 py-0.5">
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-              {item.title}
-            </h4>
-            
-            <div className="flex items-center gap-2 mt-0.5">
-              {item.description && (
-                <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">
-                  {item.description}
-                </span>
-              )}
-              
-              {!isFlight && (
-                <>
-                  <span className="w-0.5 h-0.5 rounded-full bg-gray-300 dark:bg-gray-600" />
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                    ~{formatDuration(estimatedDuration)}
+          {isFlight && item.parsedNotes ? (
+            <div className="flex-1 min-w-0">
+              <FlightStatusCard
+                flight={item.parsedNotes}
+                departureDate={item.parsedNotes.departureDate}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 min-w-0 py-0.5">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                {item.title}
+              </h4>
+
+              <div className="flex items-center gap-2 mt-0.5">
+                {item.description && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">
+                    {item.description}
                   </span>
-                </>
+                )}
+
+                {!isFlight && (
+                  <>
+                    <span className="w-0.5 h-0.5 rounded-full bg-gray-300 dark:bg-gray-600" />
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                      ~{formatDuration(estimatedDuration)}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Availability Alert (Compact) */}
+              {!isFlight && item.time && (
+                <div className="mt-1.5">
+                  <AvailabilityAlert
+                    placeName={item.title}
+                    category={category}
+                    scheduledTime={item.time}
+                    scheduledDate={currentDayDate}
+                    compact
+                  />
+                </div>
               )}
             </div>
-
-            {/* Availability Alert (Compact) */}
-            {!isFlight && item.time && (
-              <div className="mt-1.5">
-                <AvailabilityAlert
-                  placeName={item.title}
-                  category={category}
-                  scheduledTime={item.time}
-                  scheduledDate={currentDayDate}
-                  compact
-                />
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -194,15 +203,9 @@ export const TripItemCard = memo(function TripItemCard({
       </div>
 
       {/* Expanded Content */}
-      {isExpanded && (
+      {isExpanded && !isFlight && (
         <div className="px-3 pb-3 pt-0 animate-in slide-in-from-top-2 duration-200">
           <div className="pl-[88px] pt-2 border-t border-gray-100 dark:border-gray-800/50">
-            {isFlight && item.parsedNotes && (
-              <FlightStatusCard
-                flight={item.parsedNotes}
-                departureDate={item.parsedNotes.departureDate}
-              />
-            )}
             {isHotel && (
               <LodgingCard
                 hotelName={item.title}
