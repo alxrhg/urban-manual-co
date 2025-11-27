@@ -149,13 +149,13 @@ export default function IntelligenceWarnings({
                     </p>
 
                     {/* Alternative place suggestion */}
-                    {warning.alternativePlace && (
+                    {warning.alternative?.newPlace && (
                       <div className="bg-white dark:bg-gray-800 rounded-md p-2 flex items-center gap-2">
                         <div className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                          {warning.alternativePlace.image ? (
+                          {warning.alternative.newPlace.image ? (
                             <img
-                              src={warning.alternativePlace.image}
-                              alt={warning.alternativePlace.name}
+                              src={warning.alternative.newPlace.image}
+                              alt={warning.alternative.newPlace.name}
                               className="w-full h-full object-cover rounded-md"
                             />
                           ) : (
@@ -164,10 +164,10 @@ export default function IntelligenceWarnings({
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
-                            {warning.alternativePlace.name}
+                            {warning.alternative.newPlace.name}
                           </p>
                           <p className="text-[10px] text-gray-500 capitalize">
-                            {warning.alternativePlace.category}
+                            {warning.alternative.newPlace.category}
                           </p>
                         </div>
                       </div>

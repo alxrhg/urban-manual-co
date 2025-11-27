@@ -178,8 +178,8 @@ export interface TripPreferences {
  */
 export interface PlannerWarning {
   id: string;
-  type: 'weather' | 'crowd' | 'timing' | 'distance' | 'availability';
-  severity: 'info' | 'warning' | 'error';
+  type: 'weather' | 'crowd' | 'timing' | 'distance' | 'availability' | 'transit';
+  severity: 'high' | 'medium' | 'low';
   message: string;
   /** Affected block ID */
   blockId?: string;
