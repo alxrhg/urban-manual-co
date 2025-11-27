@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { Map, Calendar, Users, Plane, Receipt, Settings } from 'lucide-react';
+import { MapPin, Plane, StickyNote, Map, Calendar, Users } from 'lucide-react';
 
 interface QuickAction {
   id: string;
@@ -12,6 +12,9 @@ interface QuickAction {
 }
 
 interface QuickActionsProps {
+  onAddPlace?: () => void;
+  onAddFlight?: () => void;
+  onAddNote?: () => void;
   onMapClick?: () => void;
   onPlannerClick?: () => void;
   onShareClick?: () => void;
@@ -23,11 +26,36 @@ interface QuickActionsProps {
  * Lovably style: minimal icons with uppercase labels
  */
 export default function QuickActions({
+  onAddPlace,
+  onAddFlight,
+  onAddNote,
   onMapClick,
   onPlannerClick,
   onShareClick,
   customActions,
 }: QuickActionsProps) {
+  // If new action props are provided, use them
+  const newStyleActions: QuickAction[] | null = (onAddPlace || onAddFlight || onAddNote) ? [
+    {
+      id: 'place',
+      label: 'Add Place',
+      icon: <MapPin className="h-5 w-5" />,
+      onClick: onAddPlace,
+    },
+    {
+      id: 'flight',
+      label: 'Add Flight',
+      icon: <Plane className="h-5 w-5" />,
+      onClick: onAddFlight,
+    },
+    {
+      id: 'note',
+      label: 'Add Note',
+      icon: <StickyNote className="h-5 w-5" />,
+      onClick: onAddNote,
+    },
+  ] : null;
+
   const defaultActions: QuickAction[] = [
     {
       id: 'map',
@@ -49,7 +77,7 @@ export default function QuickActions({
     },
   ];
 
-  const actions = customActions || defaultActions;
+  const actions = customActions || newStyleActions || defaultActions;
 
   return (
     <div className="grid grid-cols-3 gap-px bg-gray-200 dark:bg-gray-800 border-y border-gray-200 dark:border-gray-800">

@@ -1,12 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
+import { format, parseISO } from 'date-fns';
 
 interface TripHeroProps {
   title: string;
   destination?: string;
-  dates?: string;
-  image?: string;
+  startDate?: string;
+  endDate?: string;
+  coverImage?: string;
+  onTitleChange?: (title: string) => void;
   onTitleClick?: () => void;
 }
 
@@ -17,22 +21,47 @@ interface TripHeroProps {
 export default function TripHero({
   title,
   destination,
-  dates,
-  image,
+  startDate,
+  endDate,
+  coverImage,
+  onTitleChange,
   onTitleClick,
 }: TripHeroProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(title);
+
+  // Format dates
+  const formatDate = (dateStr: string) => {
+    try {
+      return format(parseISO(dateStr), 'MMM d');
+    } catch {
+      return dateStr;
+    }
+  };
+
   // Format subtitle
   const subtitleParts: string[] = [];
   if (destination) subtitleParts.push(destination);
-  if (dates) subtitleParts.push(dates);
+  if (startDate && endDate) {
+    subtitleParts.push(`${formatDate(startDate)} - ${formatDate(endDate)}`);
+  } else if (startDate) {
+    subtitleParts.push(formatDate(startDate));
+  }
   const subtitle = subtitleParts.join(' \u2022 ');
+
+  const handleTitleSubmit = () => {
+    if (editTitle.trim() && editTitle !== title) {
+      onTitleChange?.(editTitle.trim());
+    }
+    setIsEditing(false);
+  };
 
   return (
     <div className="relative h-[40vh] w-full overflow-hidden">
       {/* Background Image */}
-      {image ? (
+      {coverImage ? (
         <Image
-          src={image}
+          src={coverImage}
           alt={title}
           fill
           className="absolute inset-0 z-0 object-cover grayscale-[50%]"
@@ -53,15 +82,27 @@ export default function TripHero({
               {subtitle}
             </p>
           )}
-          <h1
-            onClick={onTitleClick}
-            className={`
-              text-4xl md:text-5xl font-serif text-gray-900 dark:text-white leading-tight
-              ${onTitleClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}
-            `}
-          >
-            {title}
-          </h1>
+          {isEditing && onTitleChange ? (
+            <input
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={handleTitleSubmit}
+              onKeyDown={(e) => e.key === 'Enter' && handleTitleSubmit()}
+              className="text-4xl md:text-5xl font-serif text-gray-900 dark:text-white leading-tight bg-transparent border-none outline-none w-full focus:ring-0"
+              autoFocus
+            />
+          ) : (
+            <h1
+              onClick={() => onTitleChange ? setIsEditing(true) : onTitleClick?.()}
+              className={`
+                text-4xl md:text-5xl font-serif text-gray-900 dark:text-white leading-tight
+                ${onTitleChange || onTitleClick ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}
+              `}
+            >
+              {title}
+            </h1>
+          )}
         </div>
       </div>
     </div>
