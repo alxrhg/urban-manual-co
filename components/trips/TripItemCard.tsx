@@ -13,12 +13,11 @@ import {
   Hotel
 } from 'lucide-react';
 import { Destination } from '@/types/destination';
-import { ItineraryItem, ItineraryItemNotes, MealType } from '@/types/trip';
+import { ItineraryItem, ItineraryItemNotes } from '@/types/trip';
 import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
 import AvailabilityAlert from '@/components/trips/AvailabilityAlert';
 import FlightStatusCard from '@/components/trips/FlightStatusCard';
 import NearbyDiscoveries from '@/components/trips/NearbyDiscoveries';
-import ItemNotesEditor from '@/components/trips/ItemNotesEditor';
 
 interface TripItemCardProps {
   item: ItineraryItem & { destination?: Destination; parsedNotes?: ItineraryItemNotes };
@@ -26,7 +25,6 @@ interface TripItemCardProps {
   isExpanded?: boolean;
   onToggleExpand?: () => void;
   onUpdateTime?: (time: string) => void;
-  onUpdateNotes?: (rawNotes: string, duration?: number, mealType?: MealType, isHotel?: boolean) => void;
   onRemove?: () => void;
   onView?: () => void;
   onAddPlace?: (destination: Destination) => void;
@@ -40,7 +38,6 @@ export const TripItemCard = memo(function TripItemCard({
   isExpanded,
   onToggleExpand,
   onUpdateTime,
-  onUpdateNotes,
   onRemove,
   onView,
   onAddPlace,
@@ -184,17 +181,6 @@ export const TripItemCard = memo(function TripItemCard({
               </div>
             )}
 
-            {/* Notes Editor */}
-            {!isFlight && onUpdateNotes && (
-              <ItemNotesEditor
-                notes={item.parsedNotes?.raw}
-                duration={item.parsedNotes?.duration}
-                mealType={item.parsedNotes?.mealType}
-                isHotel={item.parsedNotes?.isHotel}
-                category={category}
-                onSave={onUpdateNotes}
-              />
-            )}
           </div>
         </div>
 

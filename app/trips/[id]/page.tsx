@@ -434,7 +434,7 @@ export default function TripPage() {
   };
 
   // Open destination drawer for a place
-  const openDestinationDrawer = (item: ItineraryItem & { destination?: Destination }) => {
+  const openDestinationDrawer = (item: ItineraryItem & { destination?: Destination; parsedNotes?: ItineraryItemNotes }) => {
     if (item.destination) {
       const dest = item.destination;
       openDrawer('destination', {
@@ -457,6 +457,11 @@ export default function TripPage() {
           website: dest.website ?? undefined,
         },
         hideAddToTrip: true,
+        // Trip item settings
+        tripItemId: item.id,
+        tripItemNotes: item.parsedNotes,
+        onUpdateTripItem: (rawNotes: string, duration?: number, mealType?: MealType, isHotel?: boolean) =>
+          updateItemNotes(item.id, rawNotes, duration, mealType, isHotel),
       });
     }
   };
@@ -911,9 +916,6 @@ export default function TripPage() {
                             isExpanded={isExpanded}
                             onToggleExpand={() => setExpandedItem(isExpanded ? null : item.id)}
                             onUpdateTime={(time) => updateItemTime(item.id, time)}
-                            onUpdateNotes={(rawNotes, duration, mealType, isHotel) =>
-                              updateItemNotes(item.id, rawNotes, duration, mealType, isHotel)
-                            }
                             onRemove={() => removeItem(item.id)}
                             onView={() => !isFlight && openDestinationDrawer(item)}
                             onAddPlace={(destination) => addItem(selectedDay, destination)}

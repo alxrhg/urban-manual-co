@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Destination } from '@/types/destination';
-import type { ItineraryItemNotes } from '@/types/trip';
+import type { ItineraryItemNotes, MealType } from '@/types/trip';
 import { useAuth } from '@/contexts/AuthContext';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
@@ -83,6 +83,11 @@ interface DestinationDrawerProps {
   onDestinationClick?: (slug: string) => void;
   onEdit?: (destination: Destination) => void; // Callback for editing destination
   onDestinationUpdate?: () => void; // Callback when destination is updated/deleted
+  // Trip item settings (when opened from trip itinerary)
+  tripItemId?: string;
+  tripItemNotes?: ItineraryItemNotes;
+  onUpdateTripItem?: (rawNotes: string, duration?: number, mealType?: MealType, isHotel?: boolean) => void;
+  hideAddToTrip?: boolean;
 }
 
 function capitalizeCity(city: string): string {
@@ -201,7 +206,7 @@ function parseTime(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
-export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick, onEdit, onDestinationUpdate }: DestinationDrawerProps) {
+export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick, onEdit, onDestinationUpdate, tripItemId, tripItemNotes, onUpdateTripItem, hideAddToTrip }: DestinationDrawerProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isReviewersExpanded, setIsReviewersExpanded] = useState(false);
   const [isContactExpanded, setIsContactExpanded] = useState(false);
@@ -229,6 +234,36 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [reviewSummary, setReviewSummary] = useState<string | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+
+  // Trip item settings state
+  type ItemTag = MealType | 'stay' | '';
+  const getInitialTag = (): ItemTag => {
+    if (tripItemNotes?.isHotel) return 'stay';
+    if (tripItemNotes?.mealType) return tripItemNotes.mealType;
+    return '';
+  };
+  const [tripItemTag, setTripItemTag] = useState<ItemTag>(getInitialTag());
+  const [tripItemRawNotes, setTripItemRawNotes] = useState(tripItemNotes?.raw || '');
+  const [tripItemDuration, setTripItemDuration] = useState(tripItemNotes?.duration?.toString() || '');
+
+  // Reset trip item state when props change
+  useEffect(() => {
+    setTripItemTag(getInitialTag());
+    setTripItemRawNotes(tripItemNotes?.raw || '');
+    setTripItemDuration(tripItemNotes?.duration?.toString() || '');
+  }, [tripItemId, tripItemNotes]);
+
+  const handleSaveTripItemSettings = () => {
+    if (!onUpdateTripItem) return;
+    const mealType = tripItemTag === 'breakfast' || tripItemTag === 'lunch' || tripItemTag === 'dinner' ? tripItemTag : undefined;
+    const isHotel = tripItemTag === 'stay';
+    onUpdateTripItem(
+      tripItemRawNotes,
+      tripItemDuration ? parseInt(tripItemDuration, 10) : undefined,
+      mealType,
+      isHotel
+    );
+  };
 
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
@@ -1718,6 +1753,66 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 {addToTripError && <p className="font-medium">{addToTripError}</p>}
                 {actionError && <p className="font-medium">{actionError}</p>}
                 <p className="text-[11px] text-red-700/80 dark:text-red-200/80">You can retry without closing the drawer.</p>
+              </div>
+            </div>
+          )}
+
+          {/* TRIP ITEM SETTINGS - shown when viewing from trip itinerary */}
+          {onUpdateTripItem && (
+            <div className="mb-6 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900/50">
+              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Trip Settings</h3>
+
+              <div className="space-y-3">
+                {/* Tag Dropdown */}
+                <div className="flex items-center gap-3">
+                  <label className="text-xs text-gray-600 dark:text-gray-400 w-16">Type</label>
+                  <select
+                    value={tripItemTag}
+                    onChange={(e) => setTripItemTag(e.target.value as ItemTag)}
+                    className="flex-1 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                  >
+                    <option value="">None</option>
+                    <option value="breakfast">Breakfast</option>
+                    <option value="lunch">Lunch</option>
+                    <option value="dinner">Dinner</option>
+                    <option value="stay">Stay</option>
+                  </select>
+                </div>
+
+                {/* Duration */}
+                <div className="flex items-center gap-3">
+                  <label className="text-xs text-gray-600 dark:text-gray-400 w-16">Duration</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={tripItemDuration}
+                      onChange={(e) => setTripItemDuration(e.target.value)}
+                      placeholder="60"
+                      className="w-20 text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white"
+                    />
+                    <span className="text-xs text-gray-500">min</span>
+                  </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Notes</label>
+                  <textarea
+                    value={tripItemRawNotes}
+                    onChange={(e) => setTripItemRawNotes(e.target.value)}
+                    placeholder="Reservation details, tips, etc..."
+                    className="w-full text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none"
+                    rows={2}
+                  />
+                </div>
+
+                {/* Save Button */}
+                <button
+                  onClick={handleSaveTripItemSettings}
+                  className="w-full py-2 px-4 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+                >
+                  Save Trip Settings
+                </button>
               </div>
             </div>
           )}
