@@ -361,16 +361,228 @@ export class AdvancedRecommendationEngine {
   }
 
   /**
-   * AI-based personalization scores
+   * AI-based personalization scores using vector embeddings
+   * Computes cosine similarity between user profile embedding and destination embeddings
    */
   private async getAIPersonalizationScores(
     userId: string,
     options?: { city?: string; category?: string }
   ): Promise<Map<string, number>> {
-    // For now, return empty map - can be enhanced with Gemini embeddings
-    // In production, use text-embedding-004 to create user and destination embeddings
-    // Then compute cosine similarity
-    return new Map();
+    if (!this.supabase) return new Map();
+
+    try {
+      // Step 1: Build user profile text from their interactions and preferences
+      const userProfileText = await this.buildUserProfileText(userId);
+      if (!userProfileText) {
+        return new Map();
+      }
+
+      // Step 2: Generate embedding for user profile
+      const { embedText } = await import('@/lib/llm');
+      const userEmbedding = await embedText(userProfileText);
+      if (!userEmbedding) {
+        console.warn('Could not generate user embedding');
+        return new Map();
+      }
+
+      // Step 3: Query destinations with embeddings using vector similarity
+      // Build filter conditions
+      let query = this.supabase
+        .from('destinations')
+        .select('id, name, city, category, vector_embedding')
+        .not('vector_embedding', 'is', null);
+
+      if (options?.city) {
+        query = query.ilike('city', `%${options.city}%`);
+      }
+      if (options?.category) {
+        query = query.ilike('category', `%${options.category}%`);
+      }
+
+      const { data: destinations, error } = await query.limit(200);
+
+      if (error || !destinations) {
+        console.error('Error fetching destinations for AI scoring:', error);
+        return new Map();
+      }
+
+      // Step 4: Compute cosine similarity scores
+      const scores = new Map<string, number>();
+
+      for (const dest of destinations) {
+        if (!dest.vector_embedding) continue;
+
+        // Parse embedding if stored as string
+        const destEmbedding = typeof dest.vector_embedding === 'string'
+          ? JSON.parse(dest.vector_embedding)
+          : dest.vector_embedding;
+
+        if (!Array.isArray(destEmbedding) || destEmbedding.length !== userEmbedding.length) {
+          continue;
+        }
+
+        const similarity = this.cosineSimilarity(userEmbedding, destEmbedding);
+        // Normalize to 0-1 range (cosine similarity is -1 to 1)
+        const normalizedScore = (similarity + 1) / 2;
+        scores.set(dest.id, normalizedScore);
+      }
+
+      return scores;
+    } catch (error) {
+      console.error('Error in AI personalization scoring:', error);
+      return new Map();
+    }
+  }
+
+  /**
+   * Build a text representation of user preferences for embedding
+   */
+  private async buildUserProfileText(userId: string): Promise<string | null> {
+    if (!this.supabase) return null;
+
+    try {
+      // Get user's saved and visited destinations
+      const [savedData, visitedData, preferencesData] = await Promise.all([
+        this.supabase
+          .from('saved_places')
+          .select('destination_slug')
+          .eq('user_id', userId)
+          .limit(50),
+        this.supabase
+          .from('visited_places')
+          .select('destination_slug')
+          .eq('user_id', userId)
+          .limit(50),
+        this.supabase
+          .from('user_preferences')
+          .select('*')
+          .eq('user_id', userId)
+          .single(),
+      ]);
+
+      const slugs = [
+        ...(savedData.data || []).map((s: any) => s.destination_slug),
+        ...(visitedData.data || []).map((v: any) => v.destination_slug),
+      ].filter(Boolean);
+
+      if (slugs.length === 0) {
+        return null;
+      }
+
+      // Get destination details
+      const { data: destinations } = await this.supabase
+        .from('destinations')
+        .select('name, city, country, category, description, tags')
+        .in('slug', slugs);
+
+      if (!destinations || destinations.length === 0) {
+        return null;
+      }
+
+      // Build profile text
+      const categories = new Map<string, number>();
+      const cities = new Map<string, number>();
+      const countries = new Map<string, number>();
+      const allTags: string[] = [];
+      const descriptions: string[] = [];
+
+      for (const dest of destinations) {
+        if (dest.category) {
+          categories.set(dest.category, (categories.get(dest.category) || 0) + 1);
+        }
+        if (dest.city) {
+          cities.set(dest.city, (cities.get(dest.city) || 0) + 1);
+        }
+        if (dest.country) {
+          countries.set(dest.country, (countries.get(dest.country) || 0) + 1);
+        }
+        if (dest.tags && Array.isArray(dest.tags)) {
+          allTags.push(...dest.tags);
+        }
+        if (dest.description) {
+          descriptions.push(dest.description.slice(0, 200));
+        }
+      }
+
+      // Sort by frequency and take top items
+      const topCategories = [...categories.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([cat]) => cat);
+
+      const topCities = [...cities.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([city]) => city);
+
+      const topCountries = [...countries.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([country]) => country);
+
+      // Count tag frequency
+      const tagCounts = new Map<string, number>();
+      allTags.forEach(tag => {
+        tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+      });
+      const topTags = [...tagCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([tag]) => tag);
+
+      // Add explicit preferences if available
+      const preferences = preferencesData.data;
+      let preferencesText = '';
+      if (preferences) {
+        if (preferences.travel_style) {
+          preferencesText += `Travel style: ${preferences.travel_style}. `;
+        }
+        if (preferences.dietary_preferences) {
+          preferencesText += `Dietary preferences: ${preferences.dietary_preferences.join(', ')}. `;
+        }
+        if (preferences.budget_level) {
+          preferencesText += `Budget: ${preferences.budget_level}. `;
+        }
+      }
+
+      // Compose the profile text
+      const profileText = `
+        Travel preferences profile:
+        ${preferencesText}
+        Favorite categories: ${topCategories.join(', ')}.
+        Preferred cities: ${topCities.join(', ')}.
+        Countries of interest: ${topCountries.join(', ')}.
+        Interests and themes: ${topTags.join(', ')}.
+        Sample places enjoyed: ${descriptions.slice(0, 3).join(' ')}
+      `.trim().replace(/\s+/g, ' ');
+
+      return profileText;
+    } catch (error) {
+      console.error('Error building user profile text:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Compute cosine similarity between two vectors
+   */
+  private cosineSimilarity(a: number[], b: number[]): number {
+    if (a.length !== b.length) return 0;
+
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    for (let i = 0; i < a.length; i++) {
+      dotProduct += a[i] * b[i];
+      normA += a[i] * a[i];
+      normB += b[i] * b[i];
+    }
+
+    const denominator = Math.sqrt(normA) * Math.sqrt(normB);
+    if (denominator === 0) return 0;
+
+    return dotProduct / denominator;
   }
 
   /**
@@ -584,13 +796,20 @@ export class AdvancedRecommendationEngine {
   ): string {
     const reasons: string[] = [];
 
-    if (relationship > 0.6) {
+    // AI personalization gets priority if strong match
+    if (ai > 0.7) {
+      reasons.push('AI-matched to your taste profile');
+    } else if (relationship > 0.6) {
       reasons.push('Related to places you love');
     } else if (collab > 0.5) {
       reasons.push('Users with similar tastes loved this');
     }
+
     if (content > 0.5) {
       reasons.push('Matches your preferences');
+    }
+    if (ai > 0.5 && ai <= 0.7) {
+      reasons.push('Semantically similar to your favorites');
     }
     if (pop > 0.7) {
       reasons.push('Highly popular');
