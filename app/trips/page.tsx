@@ -9,6 +9,7 @@ import { Plus, Loader2, MapPin, Calendar, Plane } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import UMActionPill from '@/components/ui/UMActionPill';
 import TripCard from '@/components/trips/TripCard';
+import TripsOverviewCalendar from '@/components/trips/TripsOverviewCalendar';
 import type { Trip } from '@/types/trip';
 
 export default function TripsPage() {
@@ -132,24 +133,37 @@ export default function TripsPage() {
 
         {/* Stats - Like account page */}
         {trips.length > 0 && (
-          <div className="grid grid-cols-3 gap-4 mb-12">
-            <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-              <div className="text-2xl font-light mb-1">{trips.length}</div>
-              <div className="text-xs text-gray-500">Total Trips</div>
-            </div>
-            <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-              <div className="text-2xl font-light mb-1">
-                {trips.filter(t => t.status === 'planning').length}
+          <>
+            <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-2xl font-light mb-1">{trips.length}</div>
+                <div className="text-xs text-gray-500">Total Trips</div>
               </div>
-              <div className="text-xs text-gray-500">Planning</div>
-            </div>
-            <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-              <div className="text-2xl font-light mb-1">
-                {trips.filter(t => t.status === 'completed').length}
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-2xl font-light mb-1">
+                  {trips.filter((t) => t.status === 'planning').length}
+                </div>
+                <div className="text-xs text-gray-500">Planning</div>
               </div>
-              <div className="text-xs text-gray-500">Completed</div>
+              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-2xl font-light mb-1">
+                  {trips.filter((t) => t.status === 'completed').length}
+                </div>
+                <div className="text-xs text-gray-500">Completed</div>
+              </div>
             </div>
-          </div>
+
+            <div className="mb-12">
+              <TripsOverviewCalendar
+                trips={trips.map((trip) => ({
+                  id: trip.id,
+                  title: trip.title,
+                  startDate: trip.start_date,
+                  endDate: trip.end_date,
+                }))}
+              />
+            </div>
+          </>
         )}
 
         {/* Trip List */}
