@@ -15,6 +15,7 @@ import { ItineraryItem, ItineraryItemNotes } from '@/types/trip';
 import { getEstimatedDuration, formatDuration } from '@/lib/trip-intelligence';
 import AvailabilityAlert from '@/components/trips/AvailabilityAlert';
 import FlightStatusCard from '@/components/trips/FlightStatusCard';
+import LodgingCard from '@/components/trips/LodgingCard';
 import NearbyDiscoveries from '@/components/trips/NearbyDiscoveries';
 
 interface TripItemCardProps {
@@ -42,19 +43,31 @@ export const TripItemCard = memo(function TripItemCard({
   currentDayDate,
   dragHandleProps
 }: TripItemCardProps) {
-  const isFlight = item.parsedNotes?.type === 'flight';
   const category = item.destination?.category || item.parsedNotes?.category;
+  const normalizedCategory = category?.toLowerCase();
+  const noteType = item.parsedNotes?.type?.toLowerCase();
+  const noteCategory = item.parsedNotes?.category?.toLowerCase();
+  const isFlight =
+    noteType === 'flight' ||
+    noteCategory === 'flight' ||
+    normalizedCategory === 'flight' ||
+    Boolean(item.parsedNotes?.flightNumber && item.parsedNotes?.airline);
+  const isHotel =
+    noteType === 'hotel' ||
+    item.parsedNotes?.isHotel ||
+    noteCategory === 'hotel' ||
+    normalizedCategory === 'hotel';
   const estimatedDuration = getEstimatedDuration(category);
 
   return (
-    <div 
+    <div
       className={`
         group relative rounded-2xl border transition-all duration-200
         ${isDragging ? 'shadow-lg border-black/10 dark:border-white/20 bg-white dark:bg-gray-800 z-10' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700'}
         ${isFlight ? 'bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' : ''}
       `}
     >
-      <div className="flex items-start gap-3 p-3">
+      <div className="flex flex-wrap items-start gap-3 p-3 sm:flex-nowrap">
         {/* Drag Handle */}
         <div
           {...dragHandleProps}
@@ -73,7 +86,7 @@ export const TripItemCard = memo(function TripItemCard({
               type="time"
               value={item.time || ''}
               onChange={(e) => onUpdateTime?.(e.target.value)}
-              className="w-[88px] pl-6 pr-2 py-1.5 text-xs font-medium text-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-gray-900 dark:text-gray-100 cursor-pointer"
+              className="w-[88px] min-w-[88px] pl-6 pr-2 py-1.5 text-xs font-medium text-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all text-gray-900 dark:text-gray-100 cursor-pointer"
               placeholder="Set time"
               title="Click to set time"
               aria-label="Activity time"
@@ -87,8 +100,10 @@ export const TripItemCard = memo(function TripItemCard({
         </div>
 
         {/* Content Container */}
-        <div 
-          className={`flex-1 min-w-0 flex gap-3 ${!isFlight && onView ? 'cursor-pointer' : ''}`}
+        <div
+          className={`flex-1 min-w-0 flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4 ${
+            !isFlight && onView ? 'cursor-pointer' : ''
+          }`}
           onClick={(e) => {
             // Prevent expanding if clicking controls
             if ((e.target as HTMLElement).closest('input, button')) return;
@@ -96,10 +111,12 @@ export const TripItemCard = memo(function TripItemCard({
           }}
         >
           {/* Thumbnail */}
-          <div className={`
+          <div
+            className={`
             relative w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden border border-gray-100 dark:border-gray-800
             ${isFlight ? 'bg-blue-100 dark:bg-blue-900/30' : 'bg-gray-100 dark:bg-gray-800'}
-          `}>
+          `}
+          >
             {isFlight ? (
               <div className="w-full h-full flex items-center justify-center">
                 <Plane className="w-5 h-5 text-blue-500 dark:text-blue-400" />
@@ -120,41 +137,48 @@ export const TripItemCard = memo(function TripItemCard({
           </div>
 
           {/* Info */}
-          <div className="flex-1 min-w-0 py-0.5">
-            <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-              {item.title}
-            </h4>
-            
-            <div className="flex items-center gap-2 mt-0.5">
-              {item.description && (
-                <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">
-                  {item.description}
-                </span>
-              )}
-              
-              {!isFlight && (
-                <>
-                  <span className="w-0.5 h-0.5 rounded-full bg-gray-300 dark:bg-gray-600" />
-                  <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                    ~{formatDuration(estimatedDuration)}
-                  </span>
-                </>
+          {isFlight && item.parsedNotes ? (
+            <div className="flex-1 min-w-0">
+              <FlightStatusCard
+                flight={item.parsedNotes}
+                departureDate={item.parsedNotes.departureDate}
+              />
+            </div>
+          ) : (
+            <div className="flex-1 min-w-0 py-0.5">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                {item.title}
+              </h4>
+
+              <div className="flex flex-wrap items-center gap-2 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                {item.description && (
+                  <span className="truncate max-w-[220px] sm:max-w-none">{item.description}</span>
+                )}
+
+                {!isFlight && (
+                  <>
+                    <span className="w-0.5 h-0.5 rounded-full bg-gray-300 dark:bg-gray-600" />
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                      ~{formatDuration(estimatedDuration)}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* Availability Alert (Compact) */}
+              {!isFlight && item.time && (
+                <div className="mt-1.5">
+                  <AvailabilityAlert
+                    placeName={item.title}
+                    category={category}
+                    scheduledTime={item.time}
+                    scheduledDate={currentDayDate}
+                    compact
+                  />
+                </div>
               )}
             </div>
-
-            {/* Availability Alert (Compact) */}
-            {!isFlight && item.time && (
-              <div className="mt-1.5">
-                <AvailabilityAlert
-                  placeName={item.title}
-                  category={category}
-                  scheduledTime={item.time}
-                  scheduledDate={currentDayDate}
-                  compact
-                />
-              </div>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -189,13 +213,25 @@ export const TripItemCard = memo(function TripItemCard({
       </div>
 
       {/* Expanded Content */}
-      {isExpanded && (
+      {isExpanded && !isFlight && (
         <div className="px-3 pb-3 pt-0 animate-in slide-in-from-top-2 duration-200">
           <div className="pl-[88px] pt-2 border-t border-gray-100 dark:border-gray-800/50">
-            {isFlight && item.parsedNotes && (
-              <FlightStatusCard
-                flight={item.parsedNotes}
-                departureDate={item.parsedNotes.departureDate}
+            {isHotel && (
+              <LodgingCard
+                hotelName={item.title}
+                address={
+                  item.destination?.formatted_address ||
+                  item.destination?.vicinity ||
+                  item.destination?.city ||
+                  item.description
+                }
+                checkInDate={item.parsedNotes?.checkInDate || item.parsedNotes?.arrivalDate}
+                checkOutDate={item.parsedNotes?.checkOutDate || item.parsedNotes?.departureDate}
+                checkInTime={item.parsedNotes?.checkInTime || item.time || undefined}
+                checkOutTime={item.parsedNotes?.checkOutTime}
+                confirmationNumber={
+                  item.parsedNotes?.hotelConfirmation || item.parsedNotes?.confirmationNumber
+                }
               />
             )}
             {!isFlight && item.parsedNotes && onAddPlace && (

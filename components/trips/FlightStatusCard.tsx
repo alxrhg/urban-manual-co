@@ -165,34 +165,38 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
     }
   };
 
+  const containerClasses = compact
+    ? 'rounded-xl bg-stone-50 p-4 shadow-sm ring-1 ring-stone-200 dark:bg-stone-800/70 dark:ring-stone-700/60'
+    : 'rounded-2xl bg-white p-5 shadow-md ring-1 ring-stone-200 dark:bg-stone-900/70 dark:ring-stone-700/60';
+
   return (
-    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-stone-800/50">
+    <div className={containerClasses}>
       {/* REGION 1: Route Header (EWR → MIA) */}
-      <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-4 mb-3">
+      <div className="grid grid-cols-[auto_min-content_auto] items-start gap-4">
         {/* Origin */}
-        <div>
-          <p className="text-xl font-semibold text-stone-900 dark:text-white leading-tight">
+        <div className="space-y-0.5">
+          <p className="text-xl font-semibold leading-tight text-stone-900 dark:text-white">
             {origin.code}
           </p>
           {origin.city && (
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+            <p className="text-xs text-stone-500 dark:text-stone-400">
               {origin.city}
             </p>
           )}
         </div>
 
         {/* Arrow */}
-        <div className="pt-1">
+        <div className="pt-1 text-stone-400">
           <ArrowRight className="w-4 h-4 text-stone-400" />
         </div>
 
         {/* Destination */}
-        <div>
-          <p className="text-xl font-semibold text-stone-900 dark:text-white leading-tight">
+        <div className="space-y-0.5 text-right">
+          <p className="text-xl font-semibold leading-tight text-stone-900 dark:text-white">
             {destination.code}
           </p>
           {destination.city && (
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+            <p className="text-xs text-stone-500 dark:text-stone-400">
               {destination.city}
             </p>
           )}
@@ -200,7 +204,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
       </div>
 
       {/* REGION 2: Schedule Row */}
-      <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-300 mb-3">
+      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs text-stone-600 dark:text-stone-300">
         {(departureDate || flight.departureDate) && (
           <>
             <span>{formatDate(departureDate || flight.departureDate)}</span>
@@ -208,7 +212,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
           </>
         )}
         <span>{formatTime(flightInfo?.actualDeparture || flight.departureTime)}</span>
-        <span className="text-stone-400 px-0.5">—</span>
+        <span className="px-0.5 text-stone-400">—</span>
         <span>{formatTime(flightInfo?.actualArrival || flight.arrivalTime)}</span>
         {flightInfo?.delay && flightInfo.delay > 0 && (
           <span className="text-orange-500 ml-1">+{flightInfo.delay}m</span>
@@ -216,7 +220,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
       </div>
 
       {/* REGION 3: Flight Identity & Status */}
-      <div className="flex items-center justify-between">
+      <div className="mt-2 flex items-center justify-between">
         <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
           {flight.airline} {flight.flightNumber}
         </p>
