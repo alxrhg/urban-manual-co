@@ -1,30 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  Trash2,
-  Loader2,
-  Globe,
-  Lock,
-  Users,
-  Wallet,
-  Clock,
-  ImageIcon,
-  Sparkles,
-  ChevronDown,
-  Check,
-  Plane,
-  Utensils,
-  Mountain,
-  Building2,
-  Heart,
-  Camera
-} from 'lucide-react';
+import { Trash2, Loader2, Globe, Lock, ImageIcon, Calendar, Zap } from 'lucide-react';
 import type { Trip } from '@/types/trip';
 import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { DrawerSection } from '@/components/ui/DrawerSection';
+import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
 
 interface TripSettingsDrawerProps {
   trip: Trip;
@@ -32,67 +20,54 @@ interface TripSettingsDrawerProps {
   onDelete?: () => void;
 }
 
-// Trip status options with styling
-const STATUS_OPTIONS = [
-  { value: 'planning', label: 'Planning', color: 'bg-blue-500', description: 'Still planning details' },
-  { value: 'upcoming', label: 'Upcoming', color: 'bg-amber-500', description: 'Trip is booked' },
-  { value: 'ongoing', label: 'Ongoing', color: 'bg-green-500', description: 'Currently traveling' },
-  { value: 'completed', label: 'Completed', color: 'bg-neutral-400', description: 'Trip finished' },
-] as const;
+// Smart status detection based on dates
+function detectTripStatus(startDate: string | null, endDate: string | null): Trip['status'] {
+  if (!startDate) return 'planning';
 
-// Travel style tags
-const TRAVEL_STYLES = [
-  { id: 'luxury', label: 'Luxury', icon: Sparkles },
-  { id: 'adventure', label: 'Adventure', icon: Mountain },
-  { id: 'foodie', label: 'Foodie', icon: Utensils },
-  { id: 'cultural', label: 'Cultural', icon: Building2 },
-  { id: 'romantic', label: 'Romantic', icon: Heart },
-  { id: 'photography', label: 'Photography', icon: Camera },
-] as const;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-// Budget levels
-const BUDGET_LEVELS = [
-  { value: 'budget', label: 'Budget', description: '$' },
-  { value: 'moderate', label: 'Moderate', description: '$$' },
-  { value: 'luxury', label: 'Luxury', description: '$$$' },
-  { value: 'ultra', label: 'Ultra Luxury', description: '$$$$' },
-] as const;
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
 
-// Pace options
-const PACE_OPTIONS = [
-  { value: 'relaxed', label: 'Relaxed', description: '2-3 activities/day' },
-  { value: 'moderate', label: 'Moderate', description: '4-5 activities/day' },
-  { value: 'packed', label: 'Packed', description: '6+ activities/day' },
-] as const;
+  const end = endDate ? new Date(endDate) : start;
+  end.setHours(23, 59, 59, 999);
 
-// Parse trip metadata from notes
-function parseTripMetadata(notes: string | null): TripMetadata {
-  if (!notes) return {};
-  try {
-    const parsed = JSON.parse(notes);
-    return parsed.metadata || {};
-  } catch {
-    return {};
-  }
+  if (today < start) return 'upcoming';
+  if (today >= start && today <= end) return 'ongoing';
+  if (today > end) return 'completed';
+
+  return 'planning';
 }
 
-// Merge metadata back into notes
-function mergeTripMetadata(notes: string | null, metadata: TripMetadata): string {
-  try {
-    const parsed = notes ? JSON.parse(notes) : {};
-    return JSON.stringify({ ...parsed, metadata });
-  } catch {
-    return JSON.stringify({ metadata });
-  }
+// Calculate trip duration and days info
+function getTripInfo(startDate: string | null, endDate: string | null) {
+  if (!startDate) return null;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+
+  const end = endDate ? new Date(endDate) : start;
+  end.setHours(0, 0, 0, 0);
+
+  const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const daysUntil = Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  const daysSince = Math.ceil((today.getTime() - end.getTime()) / (1000 * 60 * 60 * 24));
+  const currentDay = Math.ceil((today.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+  return { duration, daysUntil, daysSince, currentDay };
 }
 
-interface TripMetadata {
-  travelers?: number;
-  budgetLevel?: string;
-  pace?: string;
-  travelStyles?: string[];
-  timezone?: string;
-}
+// Status display config
+const STATUS_CONFIG = {
+  planning: { label: 'Planning', color: 'bg-blue-500', textColor: 'text-blue-600 dark:text-blue-400', bgLight: 'bg-blue-50 dark:bg-blue-900/20' },
+  upcoming: { label: 'Upcoming', color: 'bg-amber-500', textColor: 'text-amber-600 dark:text-amber-400', bgLight: 'bg-amber-50 dark:bg-amber-900/20' },
+  ongoing: { label: 'Ongoing', color: 'bg-green-500', textColor: 'text-green-600 dark:text-green-400', bgLight: 'bg-green-50 dark:bg-green-900/20' },
+  completed: { label: 'Completed', color: 'bg-neutral-400', textColor: 'text-neutral-600 dark:text-neutral-400', bgLight: 'bg-neutral-100 dark:bg-neutral-800' },
+};
 
 // Format date string for HTML date input (YYYY-MM-DD format)
 function formatDateForInput(dateStr: string | null | undefined): string {
@@ -137,34 +112,38 @@ export default function TripSettingsDrawer({
 
   // Basic info
   const [title, setTitle] = useState(trip.title);
-  const [description, setDescription] = useState(trip.description || '');
   const [destination, setDestination] = useState(trip.destination || '');
   const [startDate, setStartDate] = useState(formatDateForInput(trip.start_date));
   const [endDate, setEndDate] = useState(formatDateForInput(trip.end_date));
-  const [status, setStatus] = useState<Trip['status']>(trip.status);
   const [isPublic, setIsPublic] = useState(trip.is_public);
   const [coverImage, setCoverImage] = useState(trip.cover_image || '');
-
-  // Trip metadata
-  const initialMetadata = parseTripMetadata(trip.notes);
-  const [travelers, setTravelers] = useState(initialMetadata.travelers || 1);
-  const [budgetLevel, setBudgetLevel] = useState(initialMetadata.budgetLevel || 'moderate');
-  const [pace, setPace] = useState(initialMetadata.pace || 'moderate');
-  const [travelStyles, setTravelStyles] = useState<string[]>(initialMetadata.travelStyles || []);
 
   // UI state
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
 
-  const toggleTravelStyle = (styleId: string) => {
-    setTravelStyles(prev =>
-      prev.includes(styleId)
-        ? prev.filter(s => s !== styleId)
-        : [...prev, styleId]
-    );
+  // Smart auto-detected status based on dates
+  const smartStatus = useMemo(() => detectTripStatus(startDate, endDate), [startDate, endDate]);
+  const statusConfig = STATUS_CONFIG[smartStatus];
+
+  // Smart trip info (duration, countdown, etc.)
+  const tripInfo = useMemo(() => getTripInfo(startDate, endDate), [startDate, endDate]);
+
+  // Smart info text
+  const getSmartInfoText = () => {
+    if (!tripInfo) return null;
+
+    if (smartStatus === 'upcoming' && tripInfo.daysUntil > 0) {
+      return `${tripInfo.daysUntil} day${tripInfo.daysUntil === 1 ? '' : 's'} away`;
+    }
+    if (smartStatus === 'ongoing') {
+      return `Day ${tripInfo.currentDay} of ${tripInfo.duration}`;
+    }
+    if (smartStatus === 'completed' && tripInfo.daysSince > 0) {
+      return `${tripInfo.daysSince} day${tripInfo.daysSince === 1 ? '' : 's'} ago`;
+    }
+    return null;
   };
 
   const handleSave = async () => {
@@ -175,27 +154,14 @@ export default function TripSettingsDrawer({
       const supabase = createClient();
       if (!supabase) return;
 
-      // Build metadata
-      const metadata: TripMetadata = {
-        travelers,
-        budgetLevel,
-        pace,
-        travelStyles,
-      };
-
-      // Merge metadata into existing notes
-      const updatedNotes = mergeTripMetadata(trip.notes, metadata);
-
       const updates: Partial<Trip> = {
         title,
-        description: description || null,
         destination: destination || null,
         start_date: startDate || null,
         end_date: endDate || null,
-        status,
+        status: smartStatus, // Auto-set status based on dates
         is_public: isPublic,
         cover_image: coverImage || null,
-        notes: updatedNotes,
       };
 
       const { error } = await supabase
@@ -240,63 +206,57 @@ export default function TripSettingsDrawer({
     }
   };
 
-  const currentStatus = STATUS_OPTIONS.find(s => s.value === status);
+  const smartInfoText = getSmartInfoText();
 
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto">
-        <div className="p-5 space-y-6">
+        {/* Smart Status Banner */}
+        <div className={`px-4 py-3 ${statusConfig.bgLight} flex items-center justify-between`}>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${statusConfig.color} ${smartStatus === 'ongoing' ? 'animate-pulse' : ''}`} />
+            <span className={`text-sm font-medium ${statusConfig.textColor}`}>{statusConfig.label}</span>
+            {smartInfoText && (
+              <span className="text-sm text-gray-500 dark:text-gray-400">· {smartInfoText}</span>
+            )}
+          </div>
+          {tripInfo && (
+            <Badge variant="outline" className="gap-1">
+              <Calendar className="w-3 h-3" />
+              {tripInfo.duration} day{tripInfo.duration !== 1 ? 's' : ''}
+            </Badge>
+          )}
+        </div>
+
+        <DrawerSection bordered>
           {/* Cover Image Preview */}
           {coverImage && (
-            <div className="relative w-full h-32 rounded-2xl overflow-hidden bg-neutral-100 dark:bg-neutral-800">
-              <img
-                src={coverImage}
-                alt="Trip cover"
-                className="w-full h-full object-cover"
-              />
+            <div className="relative w-full h-24 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-4">
+              <img src={coverImage} alt="Trip cover" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-              <button
+              <Button
+                size="icon-sm"
+                variant="ghost"
                 onClick={() => setCoverImage('')}
-                className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+                className="absolute top-2 right-2 bg-black/50 text-white hover:bg-black/70"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              </Button>
             </div>
           )}
 
-          {/* Trip Name */}
-          <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Trip Name
-            </label>
-            <input
-              type="text"
+          <div className="space-y-1">
+            <Label>Trip Name</Label>
+            <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/50 text-neutral-900 dark:text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white transition-shadow"
               placeholder="My Amazing Trip"
+              className="h-11"
             />
           </div>
 
-          {/* Description */}
-          <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Description
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={2}
-              className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/50 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white transition-shadow resize-none"
-              placeholder="A short description of your trip..."
-            />
-          </div>
-
-          {/* Destination */}
-          <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Destination
-            </label>
+          <div className="space-y-1">
+            <Label>Destination</Label>
             <CityAutocompleteInput
               value={destination}
               onChange={setDestination}
@@ -305,291 +265,86 @@ export default function TripSettingsDrawer({
             />
           </div>
 
-          {/* Dates */}
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-                Start Date
-              </label>
-              <input
+            <div className="space-y-1">
+              <Label>Start</Label>
+              <Input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/50 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white transition-shadow"
               />
             </div>
-            <div>
-              <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-                End Date
-              </label>
-              <input
+            <div className="space-y-1">
+              <Label>End</Label>
+              <Input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 min={startDate}
-                className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/50 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white transition-shadow"
               />
             </div>
           </div>
 
-          {/* Status & Visibility Row */}
           <div className="grid grid-cols-2 gap-3">
-            {/* Status Selector */}
-            <div>
-              <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-                Status
-              </label>
-              <div className="relative">
-                <button
-                  onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-                  className="w-full px-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/50 text-left flex items-center gap-2 hover:border-neutral-300 dark:hover:border-neutral-600 transition-colors"
-                >
-                  <span className={`w-2 h-2 rounded-full ${currentStatus?.color}`} />
-                  <span className="flex-1 text-sm font-medium text-neutral-900 dark:text-white">
-                    {currentStatus?.label}
-                  </span>
-                  <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform ${showStatusDropdown ? 'rotate-180' : ''}`} />
-                </button>
-                {showStatusDropdown && (
-                  <div className="absolute z-20 top-full left-0 right-0 mt-1 py-1 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 shadow-lg">
-                    {STATUS_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => {
-                          setStatus(option.value);
-                          setShowStatusDropdown(false);
-                        }}
-                        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors"
-                      >
-                        <span className={`w-2 h-2 rounded-full ${option.color}`} />
-                        <div className="flex-1 text-left">
-                          <div className="text-sm font-medium text-neutral-900 dark:text-white">{option.label}</div>
-                          <div className="text-xs text-neutral-500 dark:text-neutral-400">{option.description}</div>
-                        </div>
-                        {status === option.value && (
-                          <Check className="w-4 h-4 text-neutral-900 dark:text-white" />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Visibility Toggle */}
-            <div>
-              <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-                Visibility
-              </label>
-              <button
+            <div className="space-y-1">
+              <Label>Visibility</Label>
+              <Button
+                variant={isPublic ? 'default' : 'outline'}
                 onClick={() => setIsPublic(!isPublic)}
-                className={`w-full px-4 py-3 rounded-xl border flex items-center gap-2 transition-all ${
-                  isPublic
-                    ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
-                    : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/50'
-                }`}
+                className={`w-full justify-start ${isPublic ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800 hover:bg-green-100 dark:hover:bg-green-900/30' : ''}`}
               >
-                {isPublic ? (
-                  <>
-                    <Globe className="w-4 h-4 text-green-600 dark:text-green-400" />
-                    <span className="text-sm font-medium text-green-700 dark:text-green-300">Public</span>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-4 h-4 text-neutral-500 dark:text-neutral-400" />
-                    <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Private</span>
-                  </>
-                )}
-              </button>
+                {isPublic ? <Globe className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                {isPublic ? 'Public' : 'Private'}
+              </Button>
             </div>
-          </div>
-
-          {/* Cover Image URL */}
-          <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Cover Image
-            </label>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                <input
+            <div className="space-y-1">
+              <Label>Cover</Label>
+              <div className="relative">
+                <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none z-10" />
+                <Input
                   type="url"
                   value={coverImage}
                   onChange={(e) => setCoverImage(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800/50 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white transition-shadow"
-                  placeholder="Image URL..."
+                  placeholder="URL..."
+                  className="pl-9"
                 />
               </div>
             </div>
           </div>
+        </DrawerSection>
 
-          {/* Divider */}
-          <div className="relative py-2">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-neutral-200 dark:border-neutral-800" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="px-3 text-xs font-medium text-neutral-400 dark:text-neutral-500 bg-white dark:bg-neutral-900 uppercase tracking-wider">
-                Trip Preferences
-              </span>
-            </div>
-          </div>
-
-          {/* Travelers */}
-          <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Travelers
-            </label>
-            <div className="flex items-center gap-3">
-              <Users className="w-4 h-4 text-neutral-400" />
-              <div className="flex-1 flex items-center gap-2">
-                <button
-                  onClick={() => setTravelers(Math.max(1, travelers - 1))}
-                  className="w-10 h-10 rounded-xl border border-neutral-200 dark:border-neutral-700 flex items-center justify-center text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors text-lg font-medium"
-                >
-                  −
-                </button>
-                <span className="w-12 text-center text-lg font-semibold text-neutral-900 dark:text-white">
-                  {travelers}
-                </span>
-                <button
-                  onClick={() => setTravelers(travelers + 1)}
-                  className="w-10 h-10 rounded-xl border border-neutral-200 dark:border-neutral-700 flex items-center justify-center text-neutral-600 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors text-lg font-medium"
-                >
-                  +
-                </button>
-              </div>
-              <span className="text-sm text-neutral-500 dark:text-neutral-400">
-                {travelers === 1 ? 'Solo' : travelers === 2 ? 'Couple' : 'Group'}
-              </span>
-            </div>
-          </div>
-
-          {/* Budget Level */}
-          <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Budget Level
-            </label>
-            <div className="flex items-center gap-2">
-              <Wallet className="w-4 h-4 text-neutral-400 flex-shrink-0" />
-              <div className="flex-1 grid grid-cols-4 gap-1.5">
-                {BUDGET_LEVELS.map((level) => (
-                  <button
-                    key={level.value}
-                    onClick={() => setBudgetLevel(level.value)}
-                    className={`px-3 py-2.5 rounded-xl text-center transition-all ${
-                      budgetLevel === level.value
-                        ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-sm'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-                    }`}
-                  >
-                    <div className="text-xs font-semibold">{level.description}</div>
-                  </button>
-                ))}
+        {/* Delete Section */}
+        <DrawerSection>
+          {showDeleteConfirm ? (
+            <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 space-y-3">
+              <p className="text-sm text-red-700 dark:text-red-300">
+                Delete this trip and all items?
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={handleDelete} disabled={deleting} className="flex-1">
+                  {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Delete
+                </Button>
               </div>
             </div>
-          </div>
-
-          {/* Pace */}
-          <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Trip Pace
-            </label>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-neutral-400 flex-shrink-0" />
-              <div className="flex-1 grid grid-cols-3 gap-1.5">
-                {PACE_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setPace(option.value)}
-                    className={`px-3 py-2.5 rounded-xl text-center transition-all ${
-                      pace === option.value
-                        ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-sm'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-                    }`}
-                  >
-                    <div className="text-xs font-semibold">{option.label}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Travel Style Tags */}
-          <div>
-            <label className="block text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-2">
-              Travel Style
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {TRAVEL_STYLES.map((style) => {
-                const Icon = style.icon;
-                const isSelected = travelStyles.includes(style.id);
-                return (
-                  <button
-                    key={style.id}
-                    onClick={() => toggleTravelStyle(style.id)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
-                      isSelected
-                        ? 'bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 shadow-sm'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    {style.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Delete Section */}
-          <div className="pt-4 border-t border-neutral-200 dark:border-neutral-800">
-            {showDeleteConfirm ? (
-              <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 space-y-3">
-                <p className="text-sm text-red-700 dark:text-red-300">
-                  Are you sure? This will permanently delete the trip and all its items.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="flex-1 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleDelete}
-                    disabled={deleting}
-                    className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2 transition-colors"
-                  >
-                    {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                    Delete Forever
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-                Delete Trip
-              </button>
-            )}
-          </div>
-        </div>
+          ) : (
+            <Button variant="ghost" onClick={() => setShowDeleteConfirm(true)} className="w-full text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20">
+              <Trash2 className="w-4 h-4" />
+              Delete Trip
+            </Button>
+          )}
+        </DrawerSection>
       </div>
 
-      {/* Sticky Save Button */}
-      <div className="flex-shrink-0 p-4 border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900">
-        <button
-          onClick={handleSave}
-          disabled={saving || !title.trim()}
-          className="w-full py-3.5 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-semibold disabled:opacity-50 flex items-center justify-center gap-2 hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-colors shadow-sm"
-        >
+      <DrawerActionBar>
+        <Button onClick={handleSave} disabled={saving || !title.trim()} className="w-full bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-100">
           {saving && <Loader2 className="w-4 h-4 animate-spin" />}
           Save Changes
-        </button>
-      </div>
+        </Button>
+      </DrawerActionBar>
     </div>
   );
 }
