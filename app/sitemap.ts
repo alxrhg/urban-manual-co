@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
+import { toKebabCase } from '@/lib/slug';
 import { Destination } from '@/types/destination';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -43,6 +44,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     },
     {
+      url: `${baseUrl}/destinations`,
+      lastModified: currentDate,
+      changeFrequency: 'daily',
+      priority: 0.95,
+    },
+    {
       url: `${baseUrl}/explore`,
       lastModified: currentDate,
       changeFrequency: 'daily',
@@ -79,12 +86,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   // City pages - important for discovery
-  const cityPages: MetadataRoute.Sitemap = cities.map(city => ({
-    url: `${baseUrl}/city/${encodeURIComponent(city)}`,
-    lastModified: currentDate,
-    changeFrequency: 'weekly',
-    priority: 0.85,
-  }));
+  const cityPages: MetadataRoute.Sitemap = cities.flatMap(city => {
+    const slug = toKebabCase(city);
+    const entries: MetadataRoute.Sitemap = [
+      {
+        url: `${baseUrl}/city/${encodeURIComponent(city)}`,
+        lastModified: currentDate,
+        changeFrequency: 'weekly',
+        priority: 0.85,
+      },
+    ];
+
+    if (slug) {
+      entries.push({
+        url: `${baseUrl}/destinations/${slug}`,
+        lastModified: currentDate,
+        changeFrequency: 'weekly',
+        priority: 0.85,
+      });
+    }
+
+    return entries;
+  });
 
   // Destination pages - core content with high priority
   const destinationPages: MetadataRoute.Sitemap = destinationData.map(dest => {
@@ -92,11 +115,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const isPrimaryCategory = ['restaurant', 'cafe', 'bar', 'hotel'].includes(dest.category?.toLowerCase() || '');
 
     return {
-      url: `${baseUrl}/destination/${dest.slug}`,
+      url: `${baseUrl}/places/${dest.slug}`,
       lastModified: currentDate,
       changeFrequency: 'monthly',
       priority: isPrimaryCategory ? 0.75 : 0.65,
     };
+  });
+
+  const guideTemplates = ['best-restaurants', 'best-hotels', 'best-cafes'];
+  const guidePages: MetadataRoute.Sitemap = cities.flatMap(city => {
+    const slug = toKebabCase(city);
+    if (!slug) return [];
+
+    return guideTemplates.map(template => ({
+      url: `${baseUrl}/guides/${template}-${slug}`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    }));
   });
 
   // Legal/static pages
@@ -114,6 +150,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...featurePages,
     ...cityPages,
     ...destinationPages,
+    ...guidePages,
     ...staticPages,
   ];
 }

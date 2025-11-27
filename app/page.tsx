@@ -69,6 +69,7 @@ import { useDestinationLoading } from '@/hooks/useDestinationLoading';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 import { AIAssistant } from '@/components/AIAssistant';
+import FlightItinerary from '@/components/flight-itinerary';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -2316,6 +2317,7 @@ export default function Home() {
         className="relative min-h-screen dark:text-white"
         role="main"
       >
+        <FlightItinerary />
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">
           Discover the World's Best Hotels, Restaurants & Travel Destinations -

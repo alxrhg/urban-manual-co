@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { createServerClient } from './supabase-server';
 import { Destination } from '@/types/destination';
+import { formatCityName } from '@/lib/slug';
 
 /**
  * Generate SEO-optimized metadata for destination pages
@@ -47,7 +48,7 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
     }
 
     // Generate canonical URL
-    const canonicalUrl = `https://www.urbanmanual.co/destination/${slug}`;
+    const canonicalUrl = `https://www.urbanmanual.co/places/${slug}`;
 
     // Generate Open Graph image
     const ogImage = dest.image || 'https://www.urbanmanual.co/og-default.jpg';
@@ -118,6 +119,143 @@ export async function generateCityMetadata(city: string): Promise<Metadata> {
       title,
       description,
     },
+  };
+}
+
+export function generateDestinationsIndexMetadata(): Metadata {
+  const title = 'Destinations | The Urban Manual';
+  const description =
+    'Browse our curated destinations sorted by city, category, and vibe. Discover the best hotels, restaurants, cafes, and cultural experiences for your next trip.';
+  const canonicalUrl = 'https://www.urbanmanual.co/destinations';
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: 'The Urban Manual',
+      locale: 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
+}
+
+export function generateDestinationsCityMetadata(citySlug: string): Metadata {
+  const cityName = formatCityName(citySlug);
+  const title = `${cityName} Destinations | The Urban Manual`;
+  const description = `Explore the most curated hotels, restaurants, and cultural hotspots in ${cityName}.`;
+  const canonicalUrl = `https://www.urbanmanual.co/destinations/${encodeURIComponent(citySlug)}`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: 'The Urban Manual',
+      locale: 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
+}
+
+export function generateGuideMetadata({
+  guideSlug,
+  cityDisplayName,
+  categoryLabel,
+  heroImage,
+}: {
+  guideSlug: string;
+  cityDisplayName: string;
+  categoryLabel: string;
+  heroImage?: string;
+}): Metadata {
+  const title = `${categoryLabel} in ${cityDisplayName} | Urban Manual Guide`;
+  const description = `Plan your trip to ${cityDisplayName} with our curated ${categoryLabel.toLowerCase()}.`;
+  const canonicalUrl = `https://www.urbanmanual.co/guides/${guideSlug}`;
+  const ogImage = heroImage || 'https://www.urbanmanual.co/og-default.jpg';
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: 'The Urban Manual',
+      locale: 'en_US',
+      type: 'article',
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: `${categoryLabel} in ${cityDisplayName}`,
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [ogImage],
+    },
+  };
+}
+
+export function generateGuideBreadcrumb(citySlug: string, guideSlug: string, categoryLabel: string) {
+  const cityName = formatCityName(citySlug);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://www.urbanmanual.co',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Destinations',
+        item: 'https://www.urbanmanual.co/destinations',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: cityName,
+        item: `https://www.urbanmanual.co/destinations/${encodeURIComponent(citySlug)}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 4,
+        name: `${categoryLabel} Guide`,
+        item: `https://www.urbanmanual.co/guides/${guideSlug}`,
+      },
+    ],
   };
 }
 
@@ -221,14 +359,20 @@ export function generateDestinationBreadcrumb(destination: Destination) {
       {
         '@type': 'ListItem',
         position: 2,
-        name: cityName,
-        item: `https://www.urbanmanual.co/city/${destination.city}`,
+        name: 'Destinations',
+        item: 'https://www.urbanmanual.co/destinations',
       },
       {
         '@type': 'ListItem',
         position: 3,
+        name: cityName,
+        item: `https://www.urbanmanual.co/destinations/${destination.city}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 4,
         name: destination.name,
-        item: `https://www.urbanmanual.co/destination/${destination.slug}`,
+        item: `https://www.urbanmanual.co/places/${destination.slug}`,
       },
     ],
   };
@@ -254,11 +398,40 @@ export function generateCityBreadcrumb(city: string) {
         name: 'Home',
         item: 'https://www.urbanmanual.co',
       },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: cityName,
+      item: `https://www.urbanmanual.co/city/${encodeURIComponent(city)}`,
+    },
+  ],
+};
+}
+
+export function generateDestinationsBreadcrumb(city: string) {
+  const cityName = formatCityName(city);
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://www.urbanmanual.co',
+      },
       {
         '@type': 'ListItem',
         position: 2,
+        name: 'Destinations',
+        item: 'https://www.urbanmanual.co/destinations',
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
         name: cityName,
-        item: `https://www.urbanmanual.co/city/${encodeURIComponent(city)}`,
+        item: `https://www.urbanmanual.co/destinations/${encodeURIComponent(city)}`,
       },
     ],
   };
@@ -331,4 +504,3 @@ export function generateDestinationFAQ(destination: Destination) {
     })),
   };
 }
-

@@ -36,14 +36,14 @@ export async function GET() {
       <title>The Urban Manual</title>
       <link>${baseUrl}</link>
     </image>
-${(destinations || []).map((dest: Destination) => {
+  ${(destinations || []).map((dest: Destination) => {
   const cityName = dest.city
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 
   const title = `${dest.name} - ${dest.category} in ${cityName}`;
-  const link = `${baseUrl}/destination/${dest.slug}`;
+  const link = `${baseUrl}/places/${dest.slug}`;
   const pubDate = buildDate; // Use build date for all items
 
   // Clean description

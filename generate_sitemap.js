@@ -14,6 +14,17 @@ const DESTINATIONS_FILE = path.join(__dirname, 'public', 'destinations.json');
 const SITEMAP_OUTPUT = path.join(__dirname, 'public', 'sitemap.xml');
 const BASE_URL = 'https://www.urbanmanual.co';
 
+function slugify(value) {
+  return value
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\\s-]/g, '')
+    .replace(/\\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function generateSitemap() {
   console.log('🗺️  Generating sitemap...\n');
   
@@ -30,6 +41,7 @@ function generateSitemap() {
   // Static pages
   const staticPages = [
     { url: '/', priority: '1.0', changefreq: 'daily' },
+    { url: '/destinations', priority: '0.95', changefreq: 'daily' },
     { url: '/cities', priority: '0.9', changefreq: 'weekly' },
     { url: '/explore', priority: '0.8', changefreq: 'weekly' },
     { url: '/editorial', priority: '0.7', changefreq: 'weekly' },
@@ -44,6 +56,20 @@ function generateSitemap() {
     xml += `    <priority>${page.priority}</priority>\n`;
     xml += '  </url>\n';
   });
+
+  const guideTemplates = ['best-restaurants', 'best-hotels', 'best-cafes'];
+  cities.forEach(city => {
+    const citySlug = slugify(city);
+    if (!citySlug) return;
+
+    guideTemplates.forEach(template => {
+      xml += '  <url>\n';
+      xml += `    <loc>${BASE_URL}/guides/${template}-${citySlug}</loc>\n`;
+      xml += `    <changefreq>monthly</changefreq>\n`;
+      xml += `    <priority>0.7</priority>\n`;
+      xml += '  </url>\n';
+    });
+  });
   
   // City pages
   cities.forEach(city => {
@@ -52,13 +78,22 @@ function generateSitemap() {
     xml += `    <changefreq>weekly</changefreq>\n`;
     xml += `    <priority>0.8</priority>\n`;
     xml += '  </url>\n';
+
+    const citySlug = slugify(city);
+    if (citySlug) {
+      xml += '  <url>\n';
+      xml += `    <loc>${BASE_URL}/destinations/${citySlug}</loc>\n`;
+      xml += `    <changefreq>weekly</changefreq>\n`;
+      xml += `    <priority>0.8</priority>\n`;
+      xml += '  </url>\n';
+    }
   });
   
   // Destination pages
   destinations.forEach(dest => {
     if (dest.slug && dest.slug !== '') {
       xml += '  <url>\n';
-      xml += `    <loc>${BASE_URL}/destination/${dest.slug}</loc>\n`;
+      xml += `    <loc>${BASE_URL}/places/${dest.slug}</loc>\n`;
       xml += `    <changefreq>monthly</changefreq>\n`;
       xml += `    <priority>0.7</priority>\n`;
       xml += '  </url>\n';
@@ -73,10 +108,16 @@ function generateSitemap() {
   
   console.log('✅ Sitemap generated!\n');
   console.log(`📄 File: ${SITEMAP_OUTPUT}`);
-  console.log(`📊 URLs: ${staticPages.length + cities.length + destinations.filter(d => d.slug).length}`);
+  const destinationCount = destinations.filter(d => d.slug && d.slug !== '').length;
+  const citySlugCount = cities.filter(city => slugify(city)).length;
+  const guidePageCount = citySlugCount * guideTemplates.length;
+  const totalUrls = staticPages.length + cities.length * 2 + destinationCount + guidePageCount;
+
+  console.log(`📊 URLs: ${totalUrls}`);
   console.log(`   - Static pages: ${staticPages.length}`);
-  console.log(`   - City pages: ${cities.length}`);
-  console.log(`   - Destination pages: ${destinations.filter(d => d.slug).length}\n`);
+  console.log(`   - City pages: ${cities.length} (+${citySlugCount} destinations entries)`);
+  console.log(`   - Destination pages: ${destinationCount}`);
+  console.log(`   - Guide pages: ${guidePageCount}\n`);
   console.log(`🌐 Sitemap URL: ${BASE_URL}/sitemap.xml\n`);
   console.log('Next steps:');
   console.log('1. Commit and push sitemap.xml');
@@ -85,4 +126,3 @@ function generateSitemap() {
 }
 
 generateSitemap();
-

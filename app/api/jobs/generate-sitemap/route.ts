@@ -11,6 +11,7 @@ import { requireQStashSignature } from '@/lib/qstash-middleware';
 import { createClient } from '@supabase/supabase-js';
 import { writeFile } from 'fs/promises';
 import path from 'path';
+import { toKebabCase } from '@/lib/slug';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -45,8 +46,9 @@ async function handleGenerateSitemapJob(request: NextRequest, body: any) {
 
     // Static pages
     const staticPages = [
-      { url: '/', priority: '1.0', changefreq: 'daily' },
-      { url: '/discover', priority: '0.9', changefreq: 'weekly' },
+    { url: '/', priority: '1.0', changefreq: 'daily' },
+    { url: '/destinations', priority: '0.95', changefreq: 'daily' },
+    { url: '/discover', priority: '0.9', changefreq: 'weekly' },
       { url: '/explore', priority: '0.8', changefreq: 'weekly' },
       { url: '/account', priority: '0.6', changefreq: 'monthly' },
       { url: '/privacy', priority: '0.5', changefreq: 'yearly' },
@@ -67,13 +69,37 @@ async function handleGenerateSitemapJob(request: NextRequest, body: any) {
       xml += `    <changefreq>weekly</changefreq>\n`;
       xml += `    <priority>0.8</priority>\n`;
       xml += '  </url>\n';
+
+      const slug = toKebabCase(city);
+      if (slug) {
+        xml += '  <url>\n';
+        xml += `    <loc>${BASE_URL}/destinations/${slug}</loc>\n`;
+        xml += `    <changefreq>weekly</changefreq>\n`;
+        xml += `    <priority>0.8</priority>\n`;
+        xml += '  </url>\n';
+      }
+    });
+
+    const guideTemplates = ['best-restaurants', 'best-hotels', 'best-cafes'];
+    // Guide pages
+    cities.forEach(city => {
+      const slug = toKebabCase(city);
+      if (!slug) return;
+
+      guideTemplates.forEach(template => {
+        xml += '  <url>\n';
+        xml += `    <loc>${BASE_URL}/guides/${template}-${slug}</loc>\n`;
+        xml += `    <changefreq>monthly</changefreq>\n`;
+        xml += `    <priority>0.7</priority>\n`;
+        xml += '  </url>\n';
+      });
     });
 
     // Destination pages
     destinations?.forEach(dest => {
       if (dest.slug) {
         xml += '  <url>\n';
-        xml += `    <loc>${BASE_URL}/destination/${dest.slug}</loc>\n`;
+      xml += `    <loc>${BASE_URL}/places/${dest.slug}</loc>\n`;
         if (dest.updated_at) {
           xml += `    <lastmod>${new Date(dest.updated_at).toISOString().split('T')[0]}</lastmod>\n`;
         }
@@ -86,11 +112,17 @@ async function handleGenerateSitemapJob(request: NextRequest, body: any) {
     // Close XML
     xml += '</urlset>\n';
 
+    const guidePageCount = cities.reduce(
+      (count, city) => count + (toKebabCase(city) ? guideTemplates.length : 0),
+      0
+    );
+
     const stats = {
-      total: staticPages.length + cities.length + (destinations?.length || 0),
+      total: staticPages.length + cities.length * 2 + (destinations?.length || 0) + guidePageCount,
       staticPages: staticPages.length,
       cityPages: cities.length,
       destinationPages: destinations?.length || 0,
+      guidePages: guidePageCount,
     };
 
     if (!dryRun) {
