@@ -21,8 +21,30 @@ interface TripPlannerMapProps {
   className?: string;
 }
 
+// Grayscale map style for Google Maps
+const GRAYSCALE_STYLES: google.maps.MapTypeStyle[] = [
+  { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
+  { elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#f5f5f5' }] },
+  { featureType: 'administrative.land_parcel', elementType: 'labels.text.fill', stylers: [{ color: '#bdbdbd' }] },
+  { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#eeeeee' }] },
+  { featureType: 'poi', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+  { featureType: 'poi.park', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] },
+  { featureType: 'poi.park', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road.arterial', elementType: 'labels.text.fill', stylers: [{ color: '#757575' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#dadada' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#616161' }] },
+  { featureType: 'road.local', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
+  { featureType: 'transit.line', elementType: 'geometry', stylers: [{ color: '#e5e5e5' }] },
+  { featureType: 'transit.station', elementType: 'geometry', stylers: [{ color: '#eeeeee' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#c9c9c9' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#9e9e9e' }] },
+];
+
 /**
- * TripPlannerMap - Grayscale map for trip planner
+ * TripPlannerMap - Grayscale map for trip planner using Google Maps
  * Lovably style: desaturated tiles, numbered markers, route lines
  */
 export default function TripPlannerMap({
@@ -33,12 +55,13 @@ export default function TripPlannerMap({
   className = '',
 }: TripPlannerMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const polylineRef = useRef<google.maps.Polyline | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [mapLoaded, setMapLoaded] = useState(false);
-  const [mapboxgl, setMapboxgl] = useState<any>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  const [googleLoaded, setGoogleLoaded] = useState(false);
 
   // Extract markers from days
   const markers: MapMarker[] = [];
@@ -62,177 +85,177 @@ export default function TripPlannerMap({
     });
   });
 
-  // Load mapbox-gl dynamically
+  // Load Google Maps script
   useEffect(() => {
-    const loadMapbox = async () => {
-      try {
-        const mapboxModule = await import('mapbox-gl');
-        // @ts-ignore - CSS import works at runtime
-        await import('mapbox-gl/dist/mapbox-gl.css');
-        setMapboxgl(mapboxModule.default);
-      } catch (error) {
-        console.warn('Mapbox GL not available:', error);
-        setMapError('Map library could not be loaded');
-      }
-    };
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-    loadMapbox();
-  }, []);
-
-  // Initialize map
-  useEffect(() => {
-    if (!mapContainer.current || !mapboxgl || mapRef.current || mapError) return;
-
-    const accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-
-    // Validate token
-    if (!accessToken) {
+    if (!apiKey) {
       setMapError('Map not configured');
       return;
     }
 
-    // Check for public token (pk.*) vs secret token (sk.*)
-    if (accessToken.startsWith('sk.')) {
-      setMapError('Invalid map configuration');
-      console.error('Mapbox: Use a public access token (pk.*), not a secret token (sk.*)');
+    // Check if already loaded
+    if (window.google?.maps) {
+      setGoogleLoaded(true);
       return;
     }
 
+    // Load Google Maps script
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=marker&v=weekly`;
+    script.async = true;
+    script.defer = true;
+
+    script.onload = () => {
+      setGoogleLoaded(true);
+    };
+
+    script.onerror = () => {
+      setMapError('Failed to load Google Maps');
+    };
+
+    document.head.appendChild(script);
+
+    return () => {
+      // Don't remove script on unmount as it may be used by other components
+    };
+  }, []);
+
+  // Initialize map
+  useEffect(() => {
+    if (!mapContainer.current || !googleLoaded || mapRef.current || mapError) return;
+
     try {
-      mapboxgl.accessToken = accessToken;
-
-      mapRef.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11',
-        center: [0, 20],
+      mapRef.current = new google.maps.Map(mapContainer.current, {
+        center: { lat: 20, lng: 0 },
         zoom: 2,
-        attributionControl: false,
+        styles: GRAYSCALE_STYLES,
+        disableDefaultUI: true,
+        zoomControl: true,
+        zoomControlOptions: {
+          position: google.maps.ControlPosition.RIGHT_BOTTOM,
+        },
+        mapId: 'trip-planner-map', // Required for Advanced Markers
       });
 
-      mapRef.current.addControl(new mapboxgl.NavigationControl(), 'bottom-right');
-
-      mapRef.current.on('load', () => {
-        setMapLoaded(true);
-      });
-
-      mapRef.current.on('error', (e: any) => {
-        console.error('Mapbox error:', e);
-        setMapError('Map failed to load');
-      });
+      setMapLoaded(true);
     } catch (error) {
-      console.error('Error initializing map:', error);
+      console.error('Error initializing Google Maps:', error);
       setMapError('Map failed to initialize');
     }
 
     return () => {
-      mapRef.current?.remove();
+      // Cleanup markers
+      markersRef.current.forEach((m) => (m.map = null));
+      markersRef.current = [];
+      polylineRef.current?.setMap(null);
       mapRef.current = null;
     };
-  }, [mapboxgl, mapError]);
+  }, [googleLoaded, mapError]);
 
   // Update markers when data changes
   useEffect(() => {
-    if (!mapRef.current || !mapLoaded || !mapboxgl) return;
+    if (!mapRef.current || !mapLoaded || !googleLoaded) return;
 
     // Clear existing markers
-    markersRef.current.forEach((m) => m.remove());
+    markersRef.current.forEach((m) => (m.map = null));
     markersRef.current = [];
+
+    // Clear existing polyline
+    polylineRef.current?.setMap(null);
+    polylineRef.current = null;
 
     if (markers.length === 0) return;
 
     // Add new markers
     markers.forEach((marker) => {
-      const el = document.createElement('div');
-      el.className = 'trip-marker';
-      el.innerHTML = `
-        <div style="
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          ${marker.id === activeItemId
-            ? 'background: #111827; color: white;'
-            : 'background: white; color: #111827; border: 1px solid #e5e7eb;'}
-          font-weight: 500;
-          font-size: 14px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          cursor: pointer;
-          transition: transform 0.2s;
-        ">
-          ${marker.index}
-        </div>
+      // Create custom marker element
+      const markerEl = document.createElement('div');
+      markerEl.className = 'trip-marker';
+      markerEl.style.cssText = `
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        ${marker.id === activeItemId
+          ? 'background: #111827; color: white;'
+          : 'background: white; color: #111827; border: 1px solid #e5e7eb;'}
+        font-weight: 500;
+        font-size: 14px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition: transform 0.2s;
       `;
+      markerEl.textContent = String(marker.index);
 
-      el.addEventListener('click', () => {
+      markerEl.addEventListener('mouseenter', () => {
+        markerEl.style.transform = 'scale(1.1)';
+      });
+
+      markerEl.addEventListener('mouseleave', () => {
+        markerEl.style.transform = 'scale(1)';
+      });
+
+      const advancedMarker = new google.maps.marker.AdvancedMarkerElement({
+        map: mapRef.current,
+        position: { lat: marker.lat, lng: marker.lng },
+        content: markerEl,
+        title: marker.label,
+      });
+
+      advancedMarker.addListener('click', () => {
         onMarkerClick?.(marker.id);
       });
 
-      el.addEventListener('mouseenter', () => {
-        el.style.transform = 'scale(1.1)';
-      });
-
-      el.addEventListener('mouseleave', () => {
-        el.style.transform = 'scale(1)';
-      });
-
-      const mapMarker = new mapboxgl.Marker({ element: el })
-        .setLngLat([marker.lng, marker.lat])
-        .addTo(mapRef.current);
-
-      markersRef.current.push(mapMarker);
+      markersRef.current.push(advancedMarker);
     });
 
     // Fit bounds to markers
     if (markers.length > 0) {
-      const bounds = new mapboxgl.LngLatBounds();
-      markers.forEach((m) => bounds.extend([m.lng, m.lat]));
-      mapRef.current.fitBounds(bounds, {
-        padding: { top: 50, bottom: 50, left: 50, right: 50 },
-        maxZoom: 14,
+      const bounds = new google.maps.LatLngBounds();
+      markers.forEach((m) => bounds.extend({ lat: m.lat, lng: m.lng }));
+      mapRef.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
+
+      // Don't zoom too far in
+      const listener = google.maps.event.addListener(mapRef.current, 'idle', () => {
+        const zoom = mapRef.current?.getZoom();
+        if (zoom && zoom > 15) {
+          mapRef.current?.setZoom(15);
+        }
+        google.maps.event.removeListener(listener);
       });
     }
 
     // Draw route line
     if (markers.length > 1) {
-      const routeId = 'trip-route';
-
-      // Remove existing route
-      if (mapRef.current.getSource(routeId)) {
-        mapRef.current.removeLayer(routeId);
-        mapRef.current.removeSource(routeId);
-      }
-
-      // Add route line
-      mapRef.current.addSource(routeId, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: markers.map((m) => [m.lng, m.lat]),
-          },
-        },
+      polylineRef.current = new google.maps.Polyline({
+        path: markers.map((m) => ({ lat: m.lat, lng: m.lng })),
+        geodesic: true,
+        strokeColor: '#6b7280',
+        strokeOpacity: 1.0,
+        strokeWeight: 2,
+        map: mapRef.current,
       });
 
-      mapRef.current.addLayer({
-        id: routeId,
-        type: 'line',
-        source: routeId,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round',
-        },
-        paint: {
-          'line-color': '#6b7280',
-          'line-width': 2,
-          'line-dasharray': [2, 2],
-        },
+      // Make it dashed using icons
+      polylineRef.current.setOptions({
+        icons: [
+          {
+            icon: {
+              path: 'M 0,-1 0,1',
+              strokeOpacity: 1,
+              scale: 3,
+            },
+            offset: '0',
+            repeat: '10px',
+          },
+        ],
+        strokeOpacity: 0,
       });
     }
-  }, [markers, mapLoaded, activeItemId, onMarkerClick, mapboxgl]);
+  }, [markers, mapLoaded, activeItemId, onMarkerClick, googleLoaded]);
 
   // Focus on active item
   useEffect(() => {
@@ -240,11 +263,8 @@ export default function TripPlannerMap({
 
     const activeMarker = markers.find((m) => m.id === activeItemId);
     if (activeMarker) {
-      mapRef.current.flyTo({
-        center: [activeMarker.lng, activeMarker.lat],
-        zoom: 15,
-        duration: 1000,
-      });
+      mapRef.current.panTo({ lat: activeMarker.lat, lng: activeMarker.lng });
+      mapRef.current.setZoom(15);
     }
   }, [activeItemId, markers, mapLoaded]);
 
@@ -253,15 +273,12 @@ export default function TripPlannerMap({
   };
 
   const centerOnMarkers = useCallback(() => {
-    if (!mapRef.current || !mapboxgl || markers.length === 0) return;
+    if (!mapRef.current || markers.length === 0) return;
 
-    const bounds = new mapboxgl.LngLatBounds();
-    markers.forEach((m) => bounds.extend([m.lng, m.lat]));
-    mapRef.current.fitBounds(bounds, {
-      padding: { top: 50, bottom: 50, left: 50, right: 50 },
-      maxZoom: 14,
-    });
-  }, [markers, mapboxgl]);
+    const bounds = new google.maps.LatLngBounds();
+    markers.forEach((m) => bounds.extend({ lat: m.lat, lng: m.lng }));
+    mapRef.current.fitBounds(bounds, { top: 50, bottom: 50, left: 50, right: 50 });
+  }, [markers]);
 
   return (
     <div
@@ -275,29 +292,31 @@ export default function TripPlannerMap({
       <div ref={mapContainer} className="w-full h-full" />
 
       {/* Map Controls */}
-      <div className="absolute top-4 right-4 flex flex-col gap-2">
-        <button
-          onClick={centerOnMarkers}
-          className="p-2 bg-white dark:bg-gray-900 rounded-sm shadow-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          title="Center on markers"
-        >
-          <Navigation className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-        </button>
-        <button
-          onClick={toggleFullscreen}
-          className="p-2 bg-white dark:bg-gray-900 rounded-sm shadow-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-        >
-          {isFullscreen ? (
-            <Minimize2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-          ) : (
-            <Maximize2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-          )}
-        </button>
-      </div>
+      {mapLoaded && !mapError && (
+        <div className="absolute top-4 right-4 flex flex-col gap-2">
+          <button
+            onClick={centerOnMarkers}
+            className="p-2 bg-white dark:bg-gray-900 rounded-sm shadow-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            title="Center on markers"
+          >
+            <Navigation className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+          </button>
+          <button
+            onClick={toggleFullscreen}
+            className="p-2 bg-white dark:bg-gray-900 rounded-sm shadow-md hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+          >
+            {isFullscreen ? (
+              <Minimize2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <Maximize2 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Loading state */}
-      {!mapLoaded && mapboxgl && (
+      {!mapLoaded && googleLoaded && !mapError && (
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 dark:border-gray-800 dark:border-t-white rounded-full animate-spin" />
         </div>
@@ -322,8 +341,8 @@ export default function TripPlannerMap({
         </div>
       )}
 
-      {/* No mapbox loaded fallback */}
-      {!mapboxgl && !mapError && (
+      {/* Loading Google Maps */}
+      {!googleLoaded && !mapError && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900">
           <div className="w-6 h-6 border-2 border-gray-200 border-t-gray-900 dark:border-gray-800 dark:border-t-white rounded-full animate-spin" />
         </div>
@@ -331,3 +350,4 @@ export default function TripPlannerMap({
     </div>
   );
 }
+
