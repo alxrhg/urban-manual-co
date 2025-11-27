@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Clock, GripVertical, X, Star, MapPin, Plane } from 'lucide-react';
+import FlightStatusCard from '@/components/trips/FlightStatusCard';
 import { formatTimeDisplay } from '@/lib/utils/time-calculations';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
@@ -48,6 +49,8 @@ export default function TripItemCard({
   const neighborhood = item.destination?.neighborhood;
   const rating = item.destination?.rating;
   const isFlight = item.parsedNotes?.type === 'flight';
+  const normalizedCategory = category?.toLowerCase();
+  const isHotel = item.parsedNotes?.type === 'hotel' || item.parsedNotes?.isHotel || normalizedCategory === 'hotel';
 
   return (
     <div
@@ -66,7 +69,12 @@ export default function TripItemCard({
           w-full flex items-center gap-4 p-3
           hover:bg-stone-50 dark:hover:bg-stone-800
           rounded-2xl transition-colors text-left
-          ${isActive ? 'bg-stone-50 dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-stone-700' : ''}
+          ${
+            isActive
+              ? 'bg-stone-50 dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-stone-700'
+              : 'ring-1 ring-stone-100 dark:ring-stone-800'
+          }
+          ${isFlight ? 'bg-blue-50/40 dark:bg-blue-900/10 ring-blue-100 dark:ring-blue-900/30' : ''}
         `}
       >
         {/* Drag Handle */}
@@ -111,28 +119,50 @@ export default function TripItemCard({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium truncate text-stone-900 dark:text-white">
-            {item.title}
-          </div>
-          <div className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 flex items-center gap-1.5">
-            {neighborhood && <span>{neighborhood}</span>}
-            {neighborhood && category && <span>•</span>}
-            {category && <span className="capitalize">{category}</span>}
-          </div>
-          <div className="flex items-center gap-3 mt-1">
-            {item.time && (
-              <span className="text-xs text-stone-400 dark:text-stone-500 flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {formatTimeDisplay(item.time)}
-              </span>
-            )}
-            {rating && (
-              <span className="text-xs text-stone-400 dark:text-stone-500 flex items-center gap-1">
-                <Star className="w-3 h-3 fill-current text-amber-400" />
-                {rating.toFixed(1)}
-              </span>
-            )}
-          </div>
+          {isFlight && item.parsedNotes ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-wide text-blue-700 dark:text-blue-300">
+                <Plane className="w-3 h-3" />
+                <span>Flight</span>
+              </div>
+              <FlightStatusCard
+                flight={item.parsedNotes}
+                departureDate={item.parsedNotes.departureDate}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <div className="text-sm font-medium truncate text-stone-900 dark:text-white">
+                  {item.title}
+                </div>
+                {isHotel && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-200 ring-1 ring-amber-100 dark:ring-amber-800">
+                    Hotel
+                  </span>
+                )}
+              </div>
+              <div className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 flex items-center gap-1.5">
+                {neighborhood && <span>{neighborhood}</span>}
+                {neighborhood && category && <span>•</span>}
+                {category && <span className="capitalize">{category}</span>}
+              </div>
+              <div className="flex items-center gap-3 mt-1">
+                {item.time && (
+                  <span className="text-xs text-stone-400 dark:text-stone-500 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {formatTimeDisplay(item.time)}
+                  </span>
+                )}
+                {rating && (
+                  <span className="text-xs text-stone-400 dark:text-stone-500 flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-current text-amber-400" />
+                    {rating.toFixed(1)}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Remove Button */}
