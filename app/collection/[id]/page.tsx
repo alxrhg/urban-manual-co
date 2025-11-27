@@ -183,7 +183,7 @@ export default function CollectionDetailPage() {
 
   if (loading) {
     return (
-      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <main className="um-page">
         <PageLoader />
       </main>
     );
@@ -191,7 +191,7 @@ export default function CollectionDetailPage() {
 
   if (!collection) {
     return (
-      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <main className="um-page">
         <EmptyState
           icon="❓"
           title="Collection not found"
@@ -213,7 +213,7 @@ export default function CollectionDetailPage() {
         <div className="mb-12">
           <button
             onClick={() => router.push('/account')}
-            className="mb-6 text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors flex items-center gap-1"
+            className="um-back-btn mb-6 flex items-center gap-1"
             aria-label="Back to Account"
           >
             <ArrowLeft className="w-3 h-3" />
@@ -258,14 +258,14 @@ export default function CollectionDetailPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowEditModal(true)}
-                className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-xl transition-colors text-xs font-medium flex items-center gap-2 shadow-sm"
+                className="um-btn-secondary flex items-center gap-2"
               >
                 <Edit2 className="h-3 w-3" />
                 Edit
               </button>
               <button
                 onClick={handleDeleteCollection}
-                className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 hover:border-red-100 dark:hover:border-red-900/30 rounded-xl transition-colors text-xs font-medium flex items-center gap-2 shadow-sm text-gray-600 dark:text-gray-400"
+                className="um-btn-secondary hover:text-[var(--um-error)] hover:bg-[var(--um-error-bg)] flex items-center gap-2"
               >
                 <Trash2 className="h-3 w-3" />
                 Delete
@@ -316,18 +316,18 @@ export default function CollectionDetailPage() {
       {/* Edit Collection Modal */}
       {showEditModal && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="um-modal-overlay"
           onClick={() => setShowEditModal(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-gray-100 dark:border-gray-800"
+            className="um-modal"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Edit Collection</h2>
+            <div className="um-modal-header">
+              <h2 className="um-modal-title">Edit Collection</h2>
               <button
                 onClick={() => setShowEditModal(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+                className="um-btn-icon"
               >
                 <span className="text-xl leading-none">&times;</span>
               </button>
@@ -335,23 +335,23 @@ export default function CollectionDetailPage() {
 
             <div className="space-y-5">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Name</label>
+                <label className="um-label">Name</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm"
+                  className="um-input"
                   maxLength={50}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Description</label>
+                <label className="um-label">Description</label>
                 <textarea
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none text-sm"
+                  className="um-textarea"
                   maxLength={200}
                 />
               </div>
@@ -362,17 +362,17 @@ export default function CollectionDetailPage() {
                   id="edit-public"
                   checked={editPublic}
                   onChange={(e) => setEditPublic(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-black focus:ring-black"
+                  className="h-4 w-4 rounded"
                 />
                 <label htmlFor="edit-public" className="text-sm font-medium cursor-pointer">
                   Make this collection public
                 </label>
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="um-modal-actions">
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm font-medium"
+                  className="flex-1 um-btn-secondary py-3"
                   disabled={updating}
                 >
                   Cancel
@@ -380,7 +380,7 @@ export default function CollectionDetailPage() {
                 <button
                   onClick={handleUpdateCollection}
                   disabled={!editName.trim() || updating}
-                  className="flex-1 px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  className="flex-1 um-btn-primary py-3"
                 >
                   {updating ? 'Saving...' : 'Save Changes'}
                 </button>

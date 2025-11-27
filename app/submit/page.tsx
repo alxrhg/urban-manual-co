@@ -8,21 +8,20 @@ export const metadata: Metadata = {
 
 export default function SubmitPage() {
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <div className="w-full px-6 md:px-10 lg:px-12 py-20">
-        <div className="max-w-2xl mx-auto">
-        <h1 className="text-4xl font-bold mb-4">Submit a Place</h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-8">
+    <article className="um-page">
+      <div className="max-w-2xl mx-auto">
+        <h1 className="um-heading-lg text-4xl font-bold mb-4">Submit a Place</h1>
+        <p className="um-item-subtitle mb-8">
           Help us grow our collection by suggesting amazing places to visit.
         </p>
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 mb-8">
+        <div className="um-card-padded p-8 mb-8">
           <h2 className="text-2xl font-semibold mb-4">How to Submit</h2>
-          <p className="text-gray-700 dark:text-gray-300 mb-6">
+          <p className="um-item-subtitle mb-6">
             We're always looking to add new destinations to our guide. To submit a place:
           </p>
-          
-          <ol className="list-decimal pl-6 space-y-4 text-gray-700 dark:text-gray-300">
+
+          <ol className="list-decimal pl-6 space-y-4 um-item-subtitle">
             <li>
               <strong>Find the place on Google Maps</strong> - Make sure the place exists and has accurate information
             </li>
@@ -35,9 +34,9 @@ export default function SubmitPage() {
           </ol>
         </div>
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8 mb-8">
+        <div className="um-card-padded p-8 mb-8">
           <h2 className="text-2xl font-semibold mb-4">What We're Looking For</h2>
-          <ul className="list-disc pl-6 space-y-2 text-gray-700 dark:text-gray-300">
+          <ul className="list-disc pl-6 space-y-2 um-item-subtitle">
             <li>Restaurants, cafes, bars, and dining experiences</li>
             <li>Hotels, accommodations, and unique stays</li>
             <li>Museums, galleries, and cultural sites</li>
@@ -47,12 +46,12 @@ export default function SubmitPage() {
           </ul>
         </div>
 
-        <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-8">
+        <div className="um-card-padded p-8">
           <h2 className="text-2xl font-semibold mb-4">Get in Touch</h2>
-          <p className="text-gray-700 dark:text-gray-300 mb-4">
+          <p className="um-item-subtitle mb-4">
             Ready to submit a place? Contact us with the details:
           </p>
-          <div className="space-y-2 text-gray-700 dark:text-gray-300">
+          <div className="space-y-2 um-item-subtitle">
             <p>
               <strong>Email:</strong> submit@urbanmanual.com
             </p>
@@ -62,17 +61,16 @@ export default function SubmitPage() {
           </div>
         </div>
 
-        <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
-          <Link 
+        <div className="mt-8">
+          <Link
             href="/"
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="um-back-btn"
           >
             ← Back to home
           </Link>
         </div>
-        </div>
       </div>
-    </div>
+    </article>
   );
 }
 

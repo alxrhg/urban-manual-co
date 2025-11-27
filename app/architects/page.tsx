@@ -76,9 +76,9 @@ export default function ArchitectsPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-white dark:bg-gray-900">
+      <main className="um-page">
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-sm text-gray-600 dark:text-gray-400">Loading architects…</div>
+          <div className="um-spinner" />
         </div>
       </main>
     );
@@ -95,7 +95,7 @@ export default function ArchitectsPage() {
           {/* Back Button */}
           <button
             onClick={() => router.push('/')}
-            className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all duration-200 ease-out mb-8"
+            className="um-back-btn flex items-center gap-2 mb-8"
           >
             <ArrowLeft className="h-3 w-3" />
             <span>Back to Discovery</span>
@@ -225,7 +225,7 @@ export default function ArchitectsPage() {
                 <div className="mt-8 flex justify-center">
                   <button
                     onClick={() => setDisplayCount(prev => prev + itemsPerPage)}
-                    className="px-6 py-3 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-60 transition-all duration-200 ease-out text-gray-900 dark:text-white"
+                    className="um-btn-secondary px-6 py-3"
                   >
                     Show More ({architectStats.length - displayCount} remaining)
                   </button>

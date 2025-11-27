@@ -78,7 +78,7 @@ export default function TripsPage() {
   // Loading state
   if (authLoading || loading) {
     return (
-      <main className="w-full px-6 md:px-10 py-20">
+      <main className="um-page">
         <PageLoader />
       </main>
     );
@@ -87,19 +87,19 @@ export default function TripsPage() {
   // Not logged in
   if (!user) {
     return (
-      <main className="w-full px-6 md:px-10 py-20">
+      <main className="um-page">
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="w-full max-w-sm text-center">
-            <div className="w-20 h-20 rounded-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center mb-6 mx-auto">
-              <Plane className="h-8 w-8 text-gray-400" />
+            <div className="um-icon-box w-20 h-20 rounded-full mb-6 mx-auto">
+              <Plane className="h-8 w-8" />
             </div>
-            <h1 className="text-2xl font-light mb-4">Trips</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-8">
+            <h1 className="um-heading text-center">Trips</h1>
+            <p className="um-description mb-8">
               Sign in to plan and organize your travels
             </p>
             <button
               onClick={() => router.push('/auth/login')}
-              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-xl hover:opacity-80 transition-opacity"
+              className="w-full um-btn-primary-lg"
             >
               Sign In
             </button>
@@ -110,12 +110,12 @@ export default function TripsPage() {
   }
 
   return (
-    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+    <main className="um-page">
       <div className="w-full max-w-7xl mx-auto">
         {/* Header - Matches account page */}
-        <div className="mb-12">
+        <div className="um-page-header">
           <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-light">Trips</h1>
+            <h1 className="um-heading">Trips</h1>
             <UMActionPill variant="primary" onClick={createTrip} disabled={creating}>
               {creating ? (
                 <Loader2 className="w-4 h-4 animate-spin mr-1" />
@@ -125,7 +125,7 @@ export default function TripsPage() {
               New Trip
             </UMActionPill>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="um-description">
             Plan and organize your travels
           </p>
         </div>
@@ -133,35 +133,35 @@ export default function TripsPage() {
         {/* Stats - Like account page */}
         {trips.length > 0 && (
           <div className="grid grid-cols-3 gap-4 mb-12">
-            <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-              <div className="text-2xl font-light mb-1">{trips.length}</div>
-              <div className="text-xs text-gray-500">Total Trips</div>
+            <div className="um-stat-card">
+              <div className="um-stat-value">{trips.length}</div>
+              <div className="um-stat-label">Total Trips</div>
             </div>
-            <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-              <div className="text-2xl font-light mb-1">
+            <div className="um-stat-card">
+              <div className="um-stat-value">
                 {trips.filter(t => t.status === 'planning').length}
               </div>
-              <div className="text-xs text-gray-500">Planning</div>
+              <div className="um-stat-label">Planning</div>
             </div>
-            <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-              <div className="text-2xl font-light mb-1">
+            <div className="um-stat-card">
+              <div className="um-stat-value">
                 {trips.filter(t => t.status === 'completed').length}
               </div>
-              <div className="text-xs text-gray-500">Completed</div>
+              <div className="um-stat-label">Completed</div>
             </div>
           </div>
         )}
 
         {/* Trip List */}
         {trips.length === 0 ? (
-          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-              <Plane className="w-8 h-8 text-neutral-400 dark:text-neutral-500" />
+          <div className="um-empty-state">
+            <div className="um-icon-box w-16 h-16 rounded-full mx-auto mb-6">
+              <Plane className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            <h3 className="text-lg font-medium mb-2">
               No trips yet
             </h3>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6 max-w-sm mx-auto">
+            <p className="um-empty-state-text max-w-sm mx-auto">
               Start planning your next adventure by creating your first trip.
             </p>
             <UMActionPill variant="primary" onClick={createTrip} disabled={creating}>
@@ -170,7 +170,7 @@ export default function TripsPage() {
             </UMActionPill>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="um-cards-grid">
             {trips.map((trip) => (
               <TripCard
                 key={trip.id}
