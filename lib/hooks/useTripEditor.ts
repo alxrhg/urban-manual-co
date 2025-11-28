@@ -180,9 +180,11 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       const supabase = createClient();
       if (!supabase) return;
 
-      // Update order_index for each item
+      // Update order_index for each item (skip temp IDs that haven't been saved yet)
+      const itemsToUpdate = newItems.filter(item => !item.id.startsWith('temp-'));
+
       await Promise.all(
-        newItems.map((item, index) =>
+        itemsToUpdate.map((item, index) =>
           supabase
             .from('itinerary_items')
             .update({ order_index: index })

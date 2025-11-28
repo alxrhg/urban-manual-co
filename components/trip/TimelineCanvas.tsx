@@ -185,10 +185,10 @@ export default function TimelineCanvas({
                             {/* Transit Connector (between items) */}
                             {nextItem && (
                               <TransitConnector
-                                fromLat={item.destination?.latitude}
-                                fromLng={item.destination?.longitude}
-                                toLat={nextItem.destination?.latitude}
-                                toLng={nextItem.destination?.longitude}
+                                fromLat={item.destination?.latitude ?? item.parsedNotes?.latitude}
+                                fromLng={item.destination?.longitude ?? item.parsedNotes?.longitude}
+                                toLat={nextItem.destination?.latitude ?? nextItem.parsedNotes?.latitude}
+                                toLng={nextItem.destination?.longitude ?? nextItem.parsedNotes?.longitude}
                               />
                             )}
                           </div>

@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
-import { format, parseISO } from 'date-fns';
 import type { TripDay } from '@/lib/hooks/useTripEditor';
 
 interface DayTabNavProps {
@@ -12,8 +11,7 @@ interface DayTabNavProps {
 }
 
 /**
- * DayTabNav - Horizontal scrolling day tabs with text-based design
- * Clean, minimal text tabs that scroll horizontally
+ * DayTabNav - Horizontal scrolling day tabs matching main tab navigation design
  */
 export default function DayTabNav({
   days,
@@ -34,30 +32,15 @@ export default function DayTabNav({
     }
   }, [selectedDayNumber]);
 
-  const formatDayDate = (dateStr: string | null) => {
-    if (!dateStr) return null;
-    try {
-      const date = parseISO(dateStr);
-      return format(date, 'EEE d');
-    } catch {
-      return null;
-    }
-  };
-
   return (
     <div className={`relative ${className}`}>
-      {/* Fade edges */}
-      <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-stone-50 dark:from-gray-950 to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-stone-50 dark:from-gray-950 to-transparent z-10 pointer-events-none" />
-
-      {/* Tabs Container */}
+      {/* Tabs Container - matching main tab navigation style */}
       <div
         ref={scrollRef}
-        className="flex gap-1 overflow-x-auto no-scrollbar px-2 py-1 scroll-smooth"
+        className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1"
       >
         {days.map((day) => {
           const isSelected = day.dayNumber === selectedDayNumber;
-          const dateInfo = formatDayDate(day.date);
 
           return (
             <button
@@ -65,20 +48,16 @@ export default function DayTabNav({
               ref={isSelected ? selectedRef : undefined}
               onClick={() => onSelectDay(day.dayNumber)}
               className={`
-                flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium
-                transition-all duration-200 whitespace-nowrap
+                transition-all flex items-center gap-1.5 whitespace-nowrap
+                px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
+                min-h-[40px] sm:min-h-0
                 ${isSelected
-                  ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
-                  : 'text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-gray-800'
+                  ? 'font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
+                  : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
                 }
               `}
             >
-              {dateInfo || `Day ${day.dayNumber}`}
-              {day.items.length > 0 && (
-                <span className={`ml-1.5 ${isSelected ? 'text-white/60 dark:text-gray-900/60' : 'text-stone-400 dark:text-gray-500'}`}>
-                  ({day.items.length})
-                </span>
-              )}
+              Day {day.dayNumber}
             </button>
           );
         })}

@@ -88,12 +88,11 @@ export default function TripDaySection({
 
   const formattedDate = formatDayDate(day.date);
 
-  // Helper to get coordinates from item
+  // Helper to get coordinates from item (check destination first, then parsedNotes)
   const getItemCoords = (item: EnrichedItineraryItem) => {
-    return {
-      lat: item.destination?.latitude ?? null,
-      lng: item.destination?.longitude ?? null,
-    };
+    const lat = item.destination?.latitude ?? item.parsedNotes?.latitude ?? null;
+    const lng = item.destination?.longitude ?? item.parsedNotes?.longitude ?? null;
+    return { lat, lng };
   };
 
   // Render items with TransitConnector between them

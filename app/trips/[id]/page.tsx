@@ -19,6 +19,9 @@ import {
   Shield,
   ListChecks,
   StickyNote,
+  Square,
+  CheckSquare,
+  X,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import TripStats from '@/components/trip/TripStats';
@@ -68,6 +71,8 @@ export default function TripPage() {
   const [isAIPlanning, setIsAIPlanning] = useState(false);
   const [activeTab, setActiveTab] = useState<'itinerary' | 'notes' | 'insights' | 'overview'>('itinerary');
   const [tripNotes, setTripNotes] = useState('');
+  const [checklistItems, setChecklistItems] = useState<{ id: string; text: string; checked: boolean }[]>([]);
+  const [newChecklistItem, setNewChecklistItem] = useState('');
   const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
 
   // Get first destination coordinates for weather
@@ -451,17 +456,100 @@ export default function TripPage() {
 
         {/* Notes Tab */}
         {activeTab === 'notes' && (
-          <div className="fade-in">
+          <div className="fade-in space-y-6">
+            {/* Checklist / Todo List */}
+            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <ListChecks className="w-4 h-4 text-stone-500" />
+                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Checklist</h3>
+              </div>
+
+              {/* Add new item */}
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="text"
+                  value={newChecklistItem}
+                  onChange={(e) => setNewChecklistItem(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newChecklistItem.trim()) {
+                      setChecklistItems(prev => [...prev, {
+                        id: `item-${Date.now()}`,
+                        text: newChecklistItem.trim(),
+                        checked: false,
+                      }]);
+                      setNewChecklistItem('');
+                    }
+                  }}
+                  placeholder="Add item (press Enter)"
+                  className="flex-1 px-3 py-2 text-sm text-stone-700 dark:text-gray-300 bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-lg placeholder:text-stone-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-700"
+                />
+                <button
+                  onClick={() => {
+                    if (newChecklistItem.trim()) {
+                      setChecklistItems(prev => [...prev, {
+                        id: `item-${Date.now()}`,
+                        text: newChecklistItem.trim(),
+                        checked: false,
+                      }]);
+                      setNewChecklistItem('');
+                    }
+                  }}
+                  className="px-3 py-2 text-sm font-medium text-white bg-stone-900 dark:bg-white dark:text-gray-900 rounded-lg hover:opacity-80 transition-opacity"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Checklist items */}
+              <div className="space-y-2">
+                {checklistItems.length === 0 ? (
+                  <p className="text-xs text-stone-400 dark:text-gray-500 text-center py-4">
+                    No items yet. Add packing items, reminders, or tasks.
+                  </p>
+                ) : (
+                  checklistItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50 dark:hover:bg-gray-800/50 group"
+                    >
+                      <button
+                        onClick={() => setChecklistItems(prev =>
+                          prev.map(i => i.id === item.id ? { ...i, checked: !i.checked } : i)
+                        )}
+                        className="flex-shrink-0"
+                      >
+                        {item.checked ? (
+                          <CheckSquare className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <Square className="w-5 h-5 text-stone-400 dark:text-gray-500" />
+                        )}
+                      </button>
+                      <span className={`flex-1 text-sm ${item.checked ? 'text-stone-400 dark:text-gray-500 line-through' : 'text-stone-700 dark:text-gray-300'}`}>
+                        {item.text}
+                      </span>
+                      <button
+                        onClick={() => setChecklistItems(prev => prev.filter(i => i.id !== item.id))}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-stone-400 hover:text-red-500 transition-all"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Free-form Notes */}
             <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
               <div className="flex items-center gap-2 mb-4">
                 <StickyNote className="w-4 h-4 text-stone-500" />
-                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Trip Notes</h3>
+                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Notes</h3>
               </div>
               <textarea
                 value={tripNotes}
                 onChange={(e) => setTripNotes(e.target.value)}
-                placeholder="Add notes for your trip... packing lists, reservations, reminders, etc."
-                className="w-full min-h-[200px] p-4 text-sm text-stone-700 dark:text-gray-300 bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl resize-y placeholder:text-stone-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-700"
+                placeholder="Add notes for your trip... reservations, reminders, etc."
+                className="w-full min-h-[150px] p-4 text-sm text-stone-700 dark:text-gray-300 bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl resize-y placeholder:text-stone-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-700"
               />
             </div>
           </div>
