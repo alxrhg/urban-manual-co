@@ -35,7 +35,7 @@ interface Suggestion {
 
 interface SmartSuggestionsProps {
   days: TripDay[];
-  destination?: string;
+  destination?: string | null;
   onAddPlace?: (dayNumber: number, category?: string) => void;
   className?: string;
 }
