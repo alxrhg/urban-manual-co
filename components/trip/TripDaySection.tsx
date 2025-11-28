@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { format, parseISO } from 'date-fns';
-import { ChevronDown, Plus } from 'lucide-react';
+import { ChevronDown, Plus, Pencil, Check } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -20,6 +20,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import TripItemCard from './TripItemCard';
+import TransitConnector from './TransitConnector';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
 interface TripDaySectionProps {
@@ -35,7 +36,7 @@ interface TripDaySectionProps {
 
 /**
  * TripDaySection - Mobile-optimized collapsible day section
- * Features: Touch-friendly drag, larger tap targets, smooth animations
+ * Features: View mode by default, edit mode toggle, transit connectors
  */
 export default function TripDaySection({
   day,
@@ -48,6 +49,7 @@ export default function TripDaySection({
   activeItemId,
 }: TripDaySectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Sensors configured for both touch and pointer with appropriate delays
   const sensors = useSensors(
@@ -86,6 +88,46 @@ export default function TripDaySection({
 
   const formattedDate = formatDayDate(day.date);
 
+  // Helper to get location from item (check destination first, then parsedNotes)
+  const getItemLocation = (item: EnrichedItineraryItem) => {
+    const lat = item.destination?.latitude ?? item.parsedNotes?.latitude;
+    const lng = item.destination?.longitude ?? item.parsedNotes?.longitude;
+    if (lat && lng) {
+      return { latitude: lat, longitude: lng };
+    }
+    return undefined;
+  };
+
+  // Render items with TransitConnector between them
+  const renderItemsWithConnectors = () => {
+    return day.items.map((item, index) => {
+      const nextItem = day.items[index + 1];
+      const fromLocation = getItemLocation(item);
+      const toLocation = nextItem ? getItemLocation(nextItem) : undefined;
+
+      return (
+        <div key={item.id}>
+          <TripItemCard
+            item={item}
+            index={index}
+            onEdit={onEditItem}
+            onRemove={undefined}
+            isActive={item.id === activeItemId}
+            isViewOnly={true}
+          />
+          {/* Transit connector between items */}
+          {index < day.items.length - 1 && (
+            <TransitConnector
+              from={fromLocation}
+              to={toLocation}
+              mode="walk"
+            />
+          )}
+        </div>
+      );
+    });
+  };
+
   return (
     <div
       className={`
@@ -95,34 +137,55 @@ export default function TripDaySection({
       `}
     >
       {/* Day Header - Larger touch target on mobile */}
-      <button
-        onClick={() => {
-          setIsExpanded(!isExpanded);
-          onSelect?.();
-        }}
-        className="w-full flex items-center justify-between p-4 sm:p-4 min-h-[56px] hover:bg-stone-50 dark:hover:bg-gray-800/50 active:bg-stone-100 dark:active:bg-gray-800 transition-colors text-left"
-      >
-        <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-3">
-          <span className="text-base sm:text-lg font-light text-stone-900 dark:text-white">
-            Day {day.dayNumber}
-          </span>
-          {formattedDate && (
-            <span className="text-[11px] sm:text-xs text-stone-500 dark:text-gray-400">
-              {formattedDate}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => {
+            setIsExpanded(!isExpanded);
+            onSelect?.();
+          }}
+          className="flex-1 flex items-center justify-between p-4 sm:p-4 min-h-[56px] hover:bg-stone-50 dark:hover:bg-gray-800/50 active:bg-stone-100 dark:active:bg-gray-800 transition-colors text-left"
+        >
+          <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-3">
+            <span className="text-base sm:text-lg font-light text-stone-900 dark:text-white">
+              Day {day.dayNumber}
             </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <span className="text-[11px] sm:text-xs text-stone-400 dark:text-gray-500">
-            {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
-          </span>
-          <ChevronDown
-            className={`w-5 h-5 sm:w-4 sm:h-4 text-stone-400 transition-transform duration-200 ${
-              isExpanded ? 'rotate-0' : '-rotate-90'
+            {formattedDate && (
+              <span className="text-[11px] sm:text-xs text-stone-500 dark:text-gray-400">
+                {formattedDate}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="text-[11px] sm:text-xs text-stone-400 dark:text-gray-500">
+              {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
+            </span>
+            <ChevronDown
+              className={`w-5 h-5 sm:w-4 sm:h-4 text-stone-400 transition-transform duration-200 ${
+                isExpanded ? 'rotate-0' : '-rotate-90'
+              }`}
+            />
+          </div>
+        </button>
+
+        {/* Edit Mode Toggle */}
+        {day.items.length > 0 && (
+          <button
+            onClick={() => setIsEditMode(!isEditMode)}
+            className={`mr-2 p-2 rounded-lg transition-colors ${
+              isEditMode
+                ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
+                : 'hover:bg-stone-100 dark:hover:bg-gray-800 text-stone-500 dark:text-gray-400'
             }`}
-          />
-        </div>
-      </button>
+            title={isEditMode ? 'Done editing' : 'Edit day'}
+          >
+            {isEditMode ? (
+              <Check className="w-4 h-4" />
+            ) : (
+              <Pencil className="w-4 h-4" />
+            )}
+          </button>
+        )}
+      </div>
 
       {/* Day Content */}
       {isExpanded && (
@@ -141,8 +204,8 @@ export default function TripDaySection({
                 Add a stop
               </button>
             </div>
-          ) : (
-            /* Items List */
+          ) : isEditMode ? (
+            /* Edit Mode - Draggable Items */
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -161,11 +224,17 @@ export default function TripDaySection({
                       onEdit={onEditItem}
                       onRemove={onRemoveItem}
                       isActive={item.id === activeItemId}
+                      isViewOnly={false}
                     />
                   ))}
                 </div>
               </SortableContext>
             </DndContext>
+          ) : (
+            /* View Mode - With Transit Connectors */
+            <div className="p-2 sm:p-2">
+              {renderItemsWithConnectors()}
+            </div>
           )}
 
           {/* Add Stop Button (when items exist) - Larger touch target */}

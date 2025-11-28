@@ -170,25 +170,35 @@ export default function TimelineCanvas({
                       items={day.items.map((item) => item.id)}
                       strategy={verticalListSortingStrategy}
                     >
-                      {day.items.map((item, index) => (
-                        <div key={item.id}>
-                          <TimeBlockCard
-                            item={item}
-                            index={index}
-                            onRemove={onRemoveItem}
-                            onEdit={onEditItem}
-                            onTimeChange={onTimeChange}
-                            isActive={item.id === activeItemId}
-                          />
-                          {/* Transit Connector (between items) */}
-                          {index < day.items.length - 1 && (
-                            <TransitConnector
-                              mode="walk"
-                              durationMinutes={15}
+                      {day.items.map((item, index) => {
+                        const nextItem = index < day.items.length - 1 ? day.items[index + 1] : null;
+                        return (
+                          <div key={item.id}>
+                            <TimeBlockCard
+                              item={item}
+                              index={index}
+                              onRemove={onRemoveItem}
+                              onEdit={onEditItem}
+                              onTimeChange={onTimeChange}
+                              isActive={item.id === activeItemId}
                             />
-                          )}
-                        </div>
-                      ))}
+                            {/* Transit Connector (between items) */}
+                            {nextItem && (
+                              <TransitConnector
+                                from={{
+                                  latitude: item.destination?.latitude ?? item.parsedNotes?.latitude,
+                                  longitude: item.destination?.longitude ?? item.parsedNotes?.longitude,
+                                }}
+                                to={{
+                                  latitude: nextItem.destination?.latitude ?? nextItem.parsedNotes?.latitude,
+                                  longitude: nextItem.destination?.longitude ?? nextItem.parsedNotes?.longitude,
+                                }}
+                                mode="walk"
+                              />
+                            )}
+                          </div>
+                        );
+                      })}
                     </SortableContext>
                   </DndContext>
 
