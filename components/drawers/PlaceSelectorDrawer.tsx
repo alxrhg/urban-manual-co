@@ -297,6 +297,7 @@ export default function PlaceSelectorDrawer({
                         alt={googlePlace.name}
                         fill
                         className="object-cover"
+                        unoptimized={googlePlace.image.startsWith('/api/')}
                       />
                     </div>
                   )}
