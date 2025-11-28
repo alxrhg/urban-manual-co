@@ -12,8 +12,8 @@ interface TripDay {
     destination_slug?: string | null;
     destination?: {
       category?: string;
-      latitude?: number;
-      longitude?: number;
+      latitude?: number | null;
+      longitude?: number | null;
     } | null;
     time?: string | null;
     parsedNotes?: {
