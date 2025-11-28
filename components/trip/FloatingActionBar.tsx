@@ -160,7 +160,7 @@ export default function FloatingActionBar({
                   }
                   disabled:opacity-50
                 `}
-                aria-label="AI Planning"
+                aria-label="Autopilot"
               >
                 <Sparkles className={`w-5 h-5 ${isAIPlanning ? 'animate-pulse' : ''}`} />
               </button>
@@ -180,7 +180,7 @@ export default function FloatingActionBar({
             {/* Saving/Planning Indicator */}
             {(isSaving || isAIPlanning) && (
               <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium shadow-lg whitespace-nowrap">
-                {isAIPlanning ? 'AI Planning...' : 'Saving...'}
+                {isAIPlanning ? 'Autopilot...' : 'Saving...'}
               </div>
             )}
           </div>

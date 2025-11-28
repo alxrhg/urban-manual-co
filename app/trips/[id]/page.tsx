@@ -18,10 +18,12 @@ import {
   Cloud,
   Shield,
   ListChecks,
+  StickyNote,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import TripStats from '@/components/trip/TripStats';
 import TripDaySection from '@/components/trip/TripDaySection';
+import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
 import TripWeatherForecast from '@/components/trips/TripWeatherForecast';
@@ -64,7 +66,8 @@ export default function TripPage() {
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isAIPlanning, setIsAIPlanning] = useState(false);
-  const [activeTab, setActiveTab] = useState<'itinerary' | 'insights' | 'overview'>('itinerary');
+  const [activeTab, setActiveTab] = useState<'itinerary' | 'notes' | 'insights' | 'overview'>('itinerary');
+  const [tripNotes, setTripNotes] = useState('');
   const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
 
   // Get first destination coordinates for weather
@@ -356,7 +359,7 @@ export default function TripPage() {
           <div className="flex items-center justify-between gap-4">
             {/* Tabs - Scrollable on mobile */}
             <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
-              {(['itinerary', 'insights', 'overview'] as const).map((tab) => (
+              {(['itinerary', 'notes', 'insights', 'overview'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -370,6 +373,7 @@ export default function TripPage() {
                     }
                   `}
                 >
+                  {tab === 'notes' && <StickyNote className="w-3.5 h-3.5 sm:w-3 sm:h-3" />}
                   {tab === 'insights' && <Cloud className="w-3.5 h-3.5 sm:w-3 sm:h-3" />}
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
@@ -388,7 +392,7 @@ export default function TripPage() {
                 ) : (
                   <Sparkles className="w-3 h-3" />
                 )}
-                {isAIPlanning ? 'Planning...' : 'AI Plan'}
+                {isAIPlanning ? 'Autopilot...' : 'Autopilot'}
               </button>
               <button
                 onClick={() => openPlaceSelector(selectedDayNumber)}
@@ -417,21 +421,49 @@ export default function TripPage() {
                 </button>
               </div>
             ) : (
-              /* Day Sections */
-              days.map((day) => (
-                <TripDaySection
-                  key={day.dayNumber}
-                  day={day}
-                  isSelected={day.dayNumber === selectedDayNumber}
-                  onSelect={() => setSelectedDayNumber(day.dayNumber)}
-                  onReorderItems={reorderItems}
-                  onRemoveItem={removeItem}
-                  onEditItem={handleEditItem}
-                  onAddItem={openPlaceSelector}
-                  activeItemId={activeItemId}
+              <>
+                {/* Horizontal Day Tabs */}
+                <DayTabNav
+                  days={days}
+                  selectedDayNumber={selectedDayNumber}
+                  onSelectDay={setSelectedDayNumber}
+                  className="mb-4"
                 />
-              ))
+
+                {/* Day Sections */}
+                {days.map((day) => (
+                  <TripDaySection
+                    key={day.dayNumber}
+                    day={day}
+                    isSelected={day.dayNumber === selectedDayNumber}
+                    onSelect={() => setSelectedDayNumber(day.dayNumber)}
+                    onReorderItems={reorderItems}
+                    onRemoveItem={removeItem}
+                    onEditItem={handleEditItem}
+                    onAddItem={openPlaceSelector}
+                    activeItemId={activeItemId}
+                  />
+                ))}
+              </>
             )}
+          </div>
+        )}
+
+        {/* Notes Tab */}
+        {activeTab === 'notes' && (
+          <div className="fade-in">
+            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <StickyNote className="w-4 h-4 text-stone-500" />
+                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Trip Notes</h3>
+              </div>
+              <textarea
+                value={tripNotes}
+                onChange={(e) => setTripNotes(e.target.value)}
+                placeholder="Add notes for your trip... packing lists, reservations, reminders, etc."
+                className="w-full min-h-[200px] p-4 text-sm text-stone-700 dark:text-gray-300 bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl resize-y placeholder:text-stone-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-700"
+              />
+            </div>
           </div>
         )}
 
