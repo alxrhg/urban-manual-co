@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface UseQuickSaveOptions {
   destinationId?: number;
   destinationSlug: string;
+  onSaveChange?: (isSaved: boolean) => void;
+  onVisitChange?: (isVisited: boolean) => void;
 }
 
 interface UseQuickSaveReturn {
@@ -20,15 +22,25 @@ interface UseQuickSaveReturn {
 }
 
 /**
- * Hook for quick one-click save/visited actions
+ * Hook for quick one-click save/visited actions with optimistic UI updates
  * Reduces friction by not requiring collection selection
+ * Updates UI immediately and reverts on error for better UX
  */
-export function useQuickSave({ destinationId, destinationSlug }: UseQuickSaveOptions): UseQuickSaveReturn {
+export function useQuickSave({
+  destinationId,
+  destinationSlug,
+  onSaveChange,
+  onVisitChange,
+}: UseQuickSaveOptions): UseQuickSaveReturn {
   const { user } = useAuth();
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isMarkingVisited, setIsMarkingVisited] = useState(false);
+
+  // Track pending operations to prevent race conditions
+  const pendingSaveRef = useRef(false);
+  const pendingVisitRef = useRef(false);
 
   // Load initial state
   useEffect(() => {
@@ -37,25 +49,24 @@ export function useQuickSave({ destinationId, destinationSlug }: UseQuickSaveOpt
     async function loadState() {
       const supabaseClient = createClient();
 
-      // Check if saved
-      const { data: savedData } = await supabaseClient
-        .from('saved_places')
-        .select('id')
-        .eq('user_id', user!.id)
-        .eq('destination_slug', destinationSlug)
-        .maybeSingle();
+      // Run both queries in parallel
+      const [savedResult, visitedResult] = await Promise.all([
+        supabaseClient
+          .from('saved_places')
+          .select('id')
+          .eq('user_id', user!.id)
+          .eq('destination_slug', destinationSlug)
+          .maybeSingle(),
+        supabaseClient
+          .from('visited_places')
+          .select('id')
+          .eq('user_id', user!.id)
+          .eq('destination_slug', destinationSlug)
+          .maybeSingle(),
+      ]);
 
-      setIsSaved(!!savedData);
-
-      // Check if visited
-      const { data: visitedData } = await supabaseClient
-        .from('visited_places')
-        .select('id')
-        .eq('user_id', user!.id)
-        .eq('destination_slug', destinationSlug)
-        .maybeSingle();
-
-      setIsVisited(!!visitedData);
+      setIsSaved(!!savedResult.data);
+      setIsVisited(!!visitedResult.data);
     }
 
     loadState();
@@ -63,18 +74,28 @@ export function useQuickSave({ destinationId, destinationSlug }: UseQuickSaveOpt
 
   const toggleSave = useCallback(async () => {
     if (!user?.id) return;
+    if (pendingSaveRef.current) return; // Prevent double-clicks
 
+    pendingSaveRef.current = true;
+    const previousState = isSaved;
+
+    // Optimistic update - update UI immediately
+    setIsSaved(!isSaved);
     setIsSaving(true);
+    onSaveChange?.(!isSaved);
+
     try {
       const supabaseClient = createClient();
 
-      if (isSaved) {
+      if (previousState) {
         // Unsave
-        await supabaseClient
+        const { error } = await supabaseClient
           .from('saved_places')
           .delete()
           .eq('user_id', user.id)
           .eq('destination_slug', destinationSlug);
+
+        if (error) throw error;
 
         // Also remove from saved_destinations if exists
         if (destinationId) {
@@ -84,18 +105,18 @@ export function useQuickSave({ destinationId, destinationSlug }: UseQuickSaveOpt
             .eq('user_id', user.id)
             .eq('destination_id', destinationId);
         }
-
-        setIsSaved(false);
       } else {
         // Quick save (no collection required)
-        await supabaseClient
+        const { error } = await supabaseClient
           .from('saved_places')
           .upsert({
             user_id: user.id,
             destination_slug: destinationSlug,
           });
 
-        // Track save event for recommendations
+        if (error) throw error;
+
+        // Track save event for recommendations (fire and forget)
         fetch('/api/discovery/track-event', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -105,35 +126,45 @@ export function useQuickSave({ destinationId, destinationSlug }: UseQuickSaveOpt
             documentId: destinationSlug,
           }),
         }).catch(() => {});
-
-        setIsSaved(true);
       }
     } catch (error) {
+      // Revert optimistic update on error
       console.error('Error toggling save:', error);
+      setIsSaved(previousState);
+      onSaveChange?.(previousState);
     } finally {
       setIsSaving(false);
+      pendingSaveRef.current = false;
     }
-  }, [user?.id, destinationId, destinationSlug, isSaved]);
+  }, [user?.id, destinationId, destinationSlug, isSaved, onSaveChange]);
 
   const toggleVisited = useCallback(async () => {
     if (!user?.id) return;
+    if (pendingVisitRef.current) return; // Prevent double-clicks
 
+    pendingVisitRef.current = true;
+    const previousState = isVisited;
+
+    // Optimistic update - update UI immediately
+    setIsVisited(!isVisited);
     setIsMarkingVisited(true);
+    onVisitChange?.(!isVisited);
+
     try {
       const supabaseClient = createClient();
 
-      if (isVisited) {
+      if (previousState) {
         // Unmark visited
-        await supabaseClient
+        const { error } = await supabaseClient
           .from('visited_places')
           .delete()
           .eq('user_id', user.id)
           .eq('destination_slug', destinationSlug);
 
-        setIsVisited(false);
+        if (error) throw error;
       } else {
         // Mark as visited
-        await supabaseClient
+        const { error } = await supabaseClient
           .from('visited_places')
           .upsert({
             user_id: user.id,
@@ -141,7 +172,9 @@ export function useQuickSave({ destinationId, destinationSlug }: UseQuickSaveOpt
             visited_at: new Date().toISOString(),
           });
 
-        // Track visit event
+        if (error) throw error;
+
+        // Track visit event (fire and forget)
         fetch('/api/discovery/track-event', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -151,15 +184,17 @@ export function useQuickSave({ destinationId, destinationSlug }: UseQuickSaveOpt
             documentId: destinationSlug,
           }),
         }).catch(() => {});
-
-        setIsVisited(true);
       }
     } catch (error) {
+      // Revert optimistic update on error
       console.error('Error toggling visited:', error);
+      setIsVisited(previousState);
+      onVisitChange?.(previousState);
     } finally {
       setIsMarkingVisited(false);
+      pendingVisitRef.current = false;
     }
-  }, [user?.id, destinationSlug, isVisited]);
+  }, [user?.id, destinationSlug, isVisited, onVisitChange]);
 
   return {
     isSaved,

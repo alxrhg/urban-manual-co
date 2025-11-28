@@ -100,6 +100,42 @@ const nextConfig: NextConfig = {
   // Next.js 16 also uses Turbopack by default which handles chunk splitting automatically
   // Webpack config removed to avoid conflicts with Turbopack
 
+  // Consolidate redirect-only routes
+  async redirects() {
+    return [
+      {
+        source: '/places/:slug',
+        destination: '/destination/:slug',
+        permanent: true,
+      },
+      {
+        source: '/profile',
+        destination: '/account?tab=preferences',
+        permanent: false,
+      },
+      {
+        source: '/collections',
+        destination: '/account?tab=collections',
+        permanent: false,
+      },
+      {
+        source: '/saved',
+        destination: '/account?tab=saved',
+        permanent: false,
+      },
+      {
+        source: '/recent',
+        destination: '/account?tab=visited',
+        permanent: false,
+      },
+      {
+        source: '/itineraries',
+        destination: '/trips',
+        permanent: true,
+      },
+    ];
+  },
+
   // Security headers
   async headers() {
     return [
