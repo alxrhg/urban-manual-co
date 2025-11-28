@@ -63,10 +63,10 @@ export default function DayTimelineAnalysis({ items, className = '' }: DayTimeli
       )}
 
       {/* Progress indicator */}
-      <div className="flex-1 max-w-[100px] h-1 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
+      <div className="flex-1 max-w-[100px] h-1 bg-stone-100 dark:bg-gray-800 rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full transition-all ${
-            analysis.isOverstuffed ? 'bg-orange-500' : 'bg-stone-300 dark:bg-stone-600'
+            analysis.isOverstuffed ? 'bg-orange-500' : 'bg-stone-300 dark:bg-gray-600'
           }`}
           style={{ width: `${Math.min(analysis.utilizationPercent, 100)}%` }}
         />

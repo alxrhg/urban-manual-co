@@ -6,8 +6,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useDrawer } from '@/contexts/DrawerContext';
-import { DrawerHeader } from "@/components/ui/DrawerHeader";
-import { DrawerSection } from "@/components/ui/DrawerSection";
 import {
   Settings,
   MapPin,
@@ -16,7 +14,8 @@ import {
   Bookmark,
   ChevronRight,
   User,
-  Edit3,
+  X,
+  Sparkles,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -31,115 +30,106 @@ interface AccountDrawerProps {
   onClose: () => void;
 }
 
-function ProfileAvatar({
-  avatarUrl,
-  displayUsername,
-  size = "lg"
-}: {
-  avatarUrl: string | null;
-  displayUsername: string;
-  size?: "sm" | "lg";
-}) {
-  const sizeClasses = size === "lg" ? "h-16 w-16" : "h-10 w-10";
-  const textClasses = size === "lg" ? "text-2xl" : "text-sm";
-
+// Minimal close button
+function CloseButton({ onClick }: { onClick: () => void }) {
   return (
-    <div className={`relative ${sizeClasses} flex items-center justify-center overflow-hidden rounded-full border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900`}>
-      {avatarUrl ? (
-        <Image
-          src={avatarUrl}
-          alt="Profile"
-          fill
-          className="object-cover"
-          sizes={size === "lg" ? "64px" : "40px"}
-        />
-      ) : (
-        <span className={`${textClasses} font-medium text-gray-400 dark:text-gray-500`}>
-          {displayUsername.charAt(0).toUpperCase()}
-        </span>
-      )}
+    <button
+      onClick={onClick}
+      className="p-2.5 sm:p-2 rounded-full bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700 hover:text-stone-900 dark:hover:text-white active:scale-95 transition-all min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+    >
+      <X className="w-5 h-5 sm:w-4 sm:h-4" />
+    </button>
+  );
+}
+
+// Quick stat pill
+function StatPill({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 dark:bg-gray-800">
+      <span className="text-sm sm:text-xs font-semibold text-stone-900 dark:text-white">{value}</span>
+      <span className="text-xs text-stone-500 dark:text-gray-400">{label}</span>
     </div>
   );
 }
 
-function StatCard({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: React.ElementType;
-  value: number;
-  label: string;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-1 p-4 rounded-2xl bg-gray-50/50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
-      <div className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm mb-1">
-        <Icon className="h-4 w-4 text-gray-900 dark:text-white" />
-      </div>
-      <span className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
-        {value}
-      </span>
-      <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{label}</span>
-    </div>
-  );
-}
-
-function NavItem({
+// Quick action card
+function QuickAction({
   icon: Icon,
   label,
-  description,
+  count,
   onClick,
-  isDanger = false,
+  accent = false,
 }: {
   icon: React.ElementType;
   label: string;
-  description?: string;
+  count?: number;
   onClick: () => void;
-  isDanger?: boolean;
+  accent?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`group w-full flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-gray-100 dark:hover:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 text-left ${
-        isDanger ? 'hover:bg-red-50 dark:hover:bg-red-900/10 hover:border-red-100 dark:hover:border-red-900/30' : ''
+      className={`group flex flex-col items-center justify-center gap-2 p-5 sm:p-4 rounded-2xl border transition-all duration-200 active:scale-[0.98] min-h-[100px] sm:min-h-[88px] ${
+        accent
+          ? 'bg-stone-900 dark:bg-white border-stone-900 dark:border-white hover:bg-stone-800 dark:hover:bg-gray-100'
+          : 'bg-white dark:bg-gray-900 border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-stone-700 hover:shadow-sm'
       }`}
     >
-      <div
-        className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
-          isDanger
-            ? 'bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-400'
-            : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 group-hover:bg-white dark:group-hover:bg-black group-hover:text-black dark:group-hover:text-white group-hover:shadow-sm'
-        }`}
-      >
-        <Icon className="h-5 w-5" />
+      <div className={`p-2.5 sm:p-2 rounded-xl transition-transform group-hover:scale-110 ${
+        accent
+          ? 'bg-white/20 dark:bg-gray-900/20'
+          : 'bg-stone-100 dark:bg-gray-800'
+      }`}>
+        <Icon className={`w-5 h-5 sm:w-4 sm:h-4 ${
+          accent ? 'text-white dark:text-gray-900' : 'text-stone-600 dark:text-gray-300'
+        }`} />
       </div>
-      <div className="flex-1 min-w-0">
-        <p
-          className={`text-sm font-medium ${
-            isDanger
-              ? 'text-red-600 dark:text-red-400'
-              : 'text-gray-900 dark:text-white'
-          }`}
-        >
+      <div className="text-center">
+        <p className={`text-sm sm:text-xs font-medium ${
+          accent ? 'text-white dark:text-gray-900' : 'text-stone-900 dark:text-white'
+        }`}>
           {label}
         </p>
-        {description && (
-          <p
-            className={`text-xs mt-0.5 ${
-              isDanger
-                ? 'text-red-500/70 dark:text-red-400/70'
-                : 'text-gray-500 dark:text-gray-400'
-            }`}
-          >
-            {description}
+        {count !== undefined && (
+          <p className={`text-xs mt-0.5 ${
+            accent ? 'text-white/70 dark:text-gray-900/70' : 'text-stone-500 dark:text-gray-400'
+          }`}>
+            {count} {count === 1 ? 'place' : 'places'}
           </p>
         )}
       </div>
-      <ChevronRight
-        className={`h-4 w-4 transition-transform group-hover:translate-x-0.5 ${
-          isDanger ? 'text-red-400' : 'text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400'
-        }`}
-      />
+    </button>
+  );
+}
+
+// Settings row item
+function SettingsItem({
+  icon: Icon,
+  label,
+  onClick,
+  danger = false,
+}: {
+  icon: React.ElementType;
+  label: string;
+  onClick: () => void;
+  danger?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`group w-full flex items-center justify-between gap-3 px-4 py-3.5 sm:py-3 rounded-xl transition-colors min-h-[52px] sm:min-h-[44px] ${
+        danger
+          ? 'text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 active:bg-red-100 dark:active:bg-red-900/20'
+          : 'text-stone-600 dark:text-gray-300 hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700'
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <Icon className="w-5 h-5 sm:w-4 sm:h-4" />
+        <span className="text-base sm:text-sm font-medium">{label}</span>
+      </div>
+      <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${
+        danger ? 'text-red-400 dark:text-red-500' : 'text-stone-400 dark:text-gray-500'
+      }`} />
     </button>
   );
 }
@@ -179,8 +169,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
           setAvatarUrl(profileData.avatar_url || null);
           setUsername(profileData.username || null);
         } else {
-           // Fallback to user_profiles if needed, but sticking to profiles for consistency
-           const { data: userProfileData } = await supabaseClient
+          const { data: userProfileData } = await supabaseClient
             .from('user_profiles')
             .select('username')
             .eq('user_id', user.id)
@@ -234,149 +223,156 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
   const displayUsername = username || user?.email?.split('@')[0] || 'User';
 
+  // Logged out state - welcoming and inviting
   if (!user) {
     return (
-      <div className="h-full flex flex-col">
-        <DrawerHeader
-          title="Welcome"
-          rightAccessory={
-            <button
-              onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              <span className="sr-only">Close</span>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          }
-        />
+      <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+        {/* Header */}
+        <div className="flex justify-end p-4 sm:p-5">
+          <CloseButton onClick={onClose} />
+        </div>
 
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-          <div className="w-20 h-20 rounded-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center mb-6">
-            <User className="h-8 w-8 text-gray-400" />
+        {/* Content */}
+        <div className="flex-1 flex flex-col items-center justify-center px-8 sm:px-10 pb-8 text-center">
+          {/* Icon */}
+          <div className="relative mb-8">
+            <div className="w-28 h-28 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-800 dark:to-stone-900 flex items-center justify-center">
+              <Sparkles className="w-12 h-12 sm:w-10 sm:h-10 text-stone-400 dark:text-gray-500" />
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-stone-900 dark:bg-white flex items-center justify-center">
+              <User className="w-5 h-5 sm:w-4 sm:h-4 text-white dark:text-gray-900" />
+            </div>
           </div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            Sign in to Urban Manual
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 max-w-xs mx-auto">
-            Unlock your personal travel guide. Save places, create trips, and sync across devices.
+
+          {/* Text */}
+          <h2 className="text-2xl sm:text-xl font-semibold text-stone-900 dark:text-white mb-3">
+            Your travel companion
+          </h2>
+          <p className="text-base sm:text-sm text-stone-500 dark:text-gray-400 mb-10 max-w-[280px] leading-relaxed">
+            Sign in to save places, plan trips, and keep track of everywhere you&apos;ve been.
           </p>
-          
+
+          {/* CTA */}
           <button
-            onClick={() => router.push('/auth/login')}
-            className="w-full py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-medium hover:opacity-90 transition-opacity"
+            onClick={() => handleNavigate('/auth/login')}
+            className="w-full max-w-[280px] py-4 sm:py-3.5 rounded-2xl sm:rounded-xl bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-base sm:text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all min-h-[56px] sm:min-h-[48px]"
           >
-            Sign In / Sign Up
+            Get Started
           </button>
+
+          <p className="text-xs text-stone-400 dark:text-gray-500 mt-4">
+            Free to use, no credit card required
+          </p>
         </div>
       </div>
     );
   }
 
+  // Logged in state - clean and functional
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-950">
-      {/* Custom Header Area */}
-      <div className="px-6 pt-8 pb-6">
-        <div className="flex items-start justify-between mb-6">
-          <ProfileAvatar avatarUrl={avatarUrl} displayUsername={displayUsername} size="lg" />
-          <button 
-            onClick={onClose}
-            className="p-2 -mr-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+      {/* Header with profile */}
+      <div className="px-5 sm:px-6 pt-6 sm:pt-5 pb-5">
+        <div className="flex items-start justify-between gap-4">
+          {/* Profile info */}
+          <button
+            onClick={() => handleNavigate('/account')}
+            className="flex items-center gap-3.5 sm:gap-3 group min-w-0 py-1"
           >
-            <span className="sr-only">Close</span>
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            {/* Avatar */}
+            <div className="relative w-14 h-14 sm:w-12 sm:h-12 flex-shrink-0 rounded-full overflow-hidden bg-stone-100 dark:bg-gray-800 ring-2 ring-stone-200 dark:ring-stone-700 group-hover:ring-stone-300 dark:group-hover:ring-stone-600 transition-all">
+              {avatarUrl ? (
+                <Image
+                  src={avatarUrl}
+                  alt="Profile"
+                  fill
+                  className="object-cover"
+                  sizes="56px"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <span className="text-xl sm:text-lg font-medium text-stone-400 dark:text-gray-500">
+                    {displayUsername.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Name and email */}
+            <div className="min-w-0 text-left">
+              <h2 className="text-lg sm:text-base font-semibold text-stone-900 dark:text-white truncate group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
+                {displayUsername}
+              </h2>
+              <p className="text-sm sm:text-xs text-stone-500 dark:text-gray-400 truncate">
+                View profile
+              </p>
+            </div>
           </button>
-        </div>
-        
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white tracking-tight">
-            {displayUsername}
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {user.email}
-          </p>
+
+          <CloseButton onClick={onClose} />
         </div>
 
-        <button
-          onClick={() => handleNavigate('/account')}
-          className="mt-4 flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
-        >
-          <Edit3 className="w-3.5 h-3.5" />
-          Edit Profile
-        </button>
-      </div>
-
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {/* Navigation Groups */}
-          <div className="px-4 space-y-8 pb-12">
-          {/* Library */}
-          <div>
-            <h3 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
-              Library
-            </h3>
-            <div className="space-y-1">
-              <NavItem
-                icon={Bookmark}
-                label="Saved Places"
-                description={`${stats.saved} curated spots`}
-                onClick={() => {
-                  onClose();
-                  openLegacyDrawer('saved-places');
-                }}
-              />
-              <NavItem
-                icon={MapPin}
-                label="Visited Places"
-                description={`${stats.visited} experiences logged`}
-                onClick={() => {
-                  onClose();
-                  openLegacyDrawer('visited-places');
-                }}
-              />
-              <NavItem
-                icon={Compass}
-                label="Trip Plans"
-                description={`${stats.trips} itineraries`}
-                onClick={() => {
-                  onClose();
-                  openSide('trip-list');
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Preferences */}
-          <div>
-            <h3 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
-              Preferences
-            </h3>
-            <div className="space-y-1">
-              <NavItem
-                icon={Settings}
-                label="Settings"
-                description="App preferences & privacy"
-                onClick={() => {
-                  onClose();
-                  openLegacyDrawer('settings');
-                }}
-              />
-            </div>
-          </div>
+        {/* Stats row */}
+        <div className="flex items-center gap-2 mt-5 overflow-x-auto no-scrollbar">
+          <StatPill value={stats.saved} label="saved" />
+          <StatPill value={stats.visited} label="visited" />
+          <StatPill value={stats.trips} label="trips" />
         </div>
       </div>
 
-      {/* Footer */}
-      <div className="p-4 border-t border-gray-100 dark:border-gray-900">
-        <button
+      {/* Quick actions grid */}
+      <div className="px-5 sm:px-6 py-4">
+        <div className="grid grid-cols-3 gap-3 sm:gap-2">
+          <QuickAction
+            icon={Bookmark}
+            label="Saved"
+            count={stats.saved}
+            onClick={() => {
+              onClose();
+              openLegacyDrawer('saved-places');
+            }}
+          />
+          <QuickAction
+            icon={MapPin}
+            label="Visited"
+            count={stats.visited}
+            onClick={() => {
+              onClose();
+              openLegacyDrawer('visited-places');
+            }}
+          />
+          <QuickAction
+            icon={Compass}
+            label="Trips"
+            count={stats.trips}
+            onClick={() => {
+              onClose();
+              openSide('trip-list');
+            }}
+            accent
+          />
+        </div>
+      </div>
+
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Bottom section */}
+      <div className="px-5 sm:px-6 pb-5 pb-safe space-y-1">
+        <SettingsItem
+          icon={Settings}
+          label="Settings"
+          onClick={() => {
+            onClose();
+            openLegacyDrawer('settings');
+          }}
+        />
+        <SettingsItem
+          icon={LogOut}
+          label="Sign out"
           onClick={handleSignOut}
-          className="flex w-full items-center justify-center gap-2 p-3 rounded-xl text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          Sign Out
-        </button>
+          danger
+        />
       </div>
     </div>
   );

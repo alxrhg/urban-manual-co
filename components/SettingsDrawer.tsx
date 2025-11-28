@@ -5,12 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { Drawer } from '@/components/ui/Drawer';
-import { DrawerHeader } from '@/components/ui/DrawerHeader';
-import { DrawerSection } from '@/components/ui/DrawerSection';
-import { DrawerActionBar } from '@/components/ui/DrawerActionBar';
-import { Settings, User, Shield, Bell, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Settings, User, Shield, Bell, ChevronLeft, ChevronRight, X, Palette, Globe } from 'lucide-react';
 
-function NavItem({
+// Settings menu item
+function MenuItem({
   icon: Icon,
   label,
   description,
@@ -24,18 +22,22 @@ function NavItem({
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-900"
+      className="group w-full flex items-center gap-4 p-4 sm:p-3.5 rounded-2xl sm:rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors text-left min-h-[64px] sm:min-h-[56px]"
     >
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-        <Icon className="h-4 w-4" />
+      <div className="flex h-11 w-11 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-stone-100 dark:bg-gray-800 group-hover:bg-white dark:group-hover:bg-stone-700 transition-colors flex-shrink-0">
+        <Icon className="h-5 w-5 text-stone-600 dark:text-gray-400" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
+        <p className="text-base sm:text-sm font-medium text-stone-900 dark:text-white">
+          {label}
+        </p>
         {description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+          <p className="text-sm sm:text-xs text-stone-500 dark:text-gray-400 mt-0.5">
+            {description}
+          </p>
         )}
       </div>
-      <ChevronRight className="h-4 w-4 text-gray-400" />
+      <ChevronRight className="h-5 w-5 sm:h-4 sm:w-4 text-stone-400 dark:text-gray-500 transition-transform group-hover:translate-x-0.5" />
     </button>
   );
 }
@@ -51,96 +53,154 @@ export function SettingsDrawer() {
     setTimeout(() => router.push(path), 200);
   };
 
-  const backButton = canGoBack ? (
-    <button
-      onClick={goBack}
-      className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-    >
-      <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-    </button>
-  ) : (
-    <Settings className="h-5 w-5 text-gray-500" />
-  );
+  const handleClose = canGoBack ? goBack : closeDrawer;
 
+  // Not logged in state
   if (!user) {
     return (
-      <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer}>
-        <DrawerHeader
-          title="Settings"
-          leftAccessory={backButton}
-        />
-
-        <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
-          <DrawerSection>
-            <div className="text-center py-12">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Sign in to access settings
-              </p>
+      <Drawer isOpen={isOpen} onClose={handleClose}>
+        <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 sm:px-6 pt-6 sm:pt-5 pb-4">
+            <div className="flex items-center gap-3">
+              {canGoBack ? (
+                <button
+                  onClick={goBack}
+                  className="p-2 -ml-2 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+                >
+                  <ChevronLeft className="w-5 h-5 text-stone-600 dark:text-gray-400" />
+                </button>
+              ) : (
+                <div className="p-2 rounded-xl bg-stone-100 dark:bg-gray-800">
+                  <Settings className="w-5 h-5 text-stone-600 dark:text-gray-400" />
+                </div>
+              )}
+              <h1 className="text-xl sm:text-lg font-semibold text-stone-900 dark:text-white">
+                Settings
+              </h1>
             </div>
-          </DrawerSection>
+            <button
+              onClick={handleClose}
+              className="p-2.5 sm:p-2 rounded-full bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700 hover:text-stone-900 dark:hover:text-white active:scale-95 transition-all min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+            >
+              <X className="w-5 h-5 sm:w-4 sm:h-4" />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="flex-1 flex flex-col items-center justify-center px-8 text-center pb-safe">
+            <div className="w-20 h-20 sm:w-16 sm:h-16 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center mb-5">
+              <Settings className="w-9 h-9 sm:w-7 sm:h-7 text-stone-400 dark:text-gray-500" />
+            </div>
+            <h3 className="text-lg sm:text-base font-semibold text-stone-900 dark:text-white mb-2">
+              Sign in required
+            </h3>
+            <p className="text-base sm:text-sm text-stone-500 dark:text-gray-400 max-w-[240px]">
+              Sign in to access your settings and preferences
+            </p>
+          </div>
         </div>
       </Drawer>
     );
   }
 
+  // Logged in state
   return (
-    <Drawer isOpen={isOpen} onClose={canGoBack ? goBack : closeDrawer}>
-      <DrawerHeader
-        title="Settings"
-        subtitle="Manage your account"
-        leftAccessory={backButton}
-      />
-
-      <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
-        <DrawerSection bordered>
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-            Account
-          </p>
-          <div className="-mx-3">
-            <NavItem
-              icon={User}
-              label="Profile"
-              description="Edit your profile information"
-              onClick={() => handleNavigate('/account?tab=profile')}
-            />
-            <NavItem
-              icon={Shield}
-              label="Privacy"
-              description="Manage your data & privacy"
-              onClick={() => handleNavigate('/account?tab=privacy')}
-            />
-            <NavItem
-              icon={Bell}
-              label="Notifications"
-              description="Email & push preferences"
-              onClick={() => handleNavigate('/account?tab=notifications')}
-            />
+    <Drawer isOpen={isOpen} onClose={handleClose}>
+      <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 sm:px-6 pt-6 sm:pt-5 pb-4">
+          <div className="flex items-center gap-3">
+            {canGoBack ? (
+              <button
+                onClick={goBack}
+                className="p-2 -ml-2 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+              >
+                <ChevronLeft className="w-5 h-5 text-stone-600 dark:text-gray-400" />
+              </button>
+            ) : (
+              <div className="p-2 rounded-xl bg-stone-100 dark:bg-gray-800">
+                <Settings className="w-5 h-5 text-stone-600 dark:text-gray-400" />
+              </div>
+            )}
+            <div>
+              <h1 className="text-xl sm:text-lg font-semibold text-stone-900 dark:text-white">
+                Settings
+              </h1>
+              <p className="text-sm sm:text-xs text-stone-500 dark:text-gray-400">
+                Manage your account
+              </p>
+            </div>
           </div>
-        </DrawerSection>
+          <button
+            onClick={handleClose}
+            className="p-2.5 sm:p-2 rounded-full bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700 hover:text-stone-900 dark:hover:text-white active:scale-95 transition-all min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+          >
+            <X className="w-5 h-5 sm:w-4 sm:h-4" />
+          </button>
+        </div>
 
-        <DrawerSection>
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
-            App
-          </p>
-          <div className="-mx-3">
-            <NavItem
-              icon={Settings}
-              label="Preferences"
-              description="Display, language & more"
-              onClick={() => handleNavigate('/account?tab=settings')}
-            />
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar pb-safe">
+          {/* Account section */}
+          <div className="px-4 sm:px-5 py-2">
+            <p className="px-4 sm:px-3.5 text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-2">
+              Account
+            </p>
+            <div className="space-y-1">
+              <MenuItem
+                icon={User}
+                label="Profile"
+                description="Edit your profile information"
+                onClick={() => handleNavigate('/account?tab=profile')}
+              />
+              <MenuItem
+                icon={Shield}
+                label="Privacy"
+                description="Manage your data & privacy"
+                onClick={() => handleNavigate('/account?tab=privacy')}
+              />
+              <MenuItem
+                icon={Bell}
+                label="Notifications"
+                description="Email & push preferences"
+                onClick={() => handleNavigate('/account?tab=notifications')}
+              />
+            </div>
           </div>
-        </DrawerSection>
+
+          {/* App section */}
+          <div className="px-4 sm:px-5 py-2 mt-4">
+            <p className="px-4 sm:px-3.5 text-xs font-medium uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-2">
+              App
+            </p>
+            <div className="space-y-1">
+              <MenuItem
+                icon={Palette}
+                label="Appearance"
+                description="Theme & display options"
+                onClick={() => handleNavigate('/account?tab=settings')}
+              />
+              <MenuItem
+                icon={Globe}
+                label="Language & Region"
+                description="Change language settings"
+                onClick={() => handleNavigate('/account?tab=settings')}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 sm:px-6 py-4 pb-safe border-t border-stone-100 dark:border-gray-900">
+          <button
+            onClick={() => handleNavigate('/account?tab=settings')}
+            className="w-full py-3.5 sm:py-3 rounded-xl bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-base sm:text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all min-h-[52px] sm:min-h-[44px]"
+          >
+            Open full settings
+          </button>
+        </div>
       </div>
-
-      <DrawerActionBar>
-        <button
-          onClick={() => handleNavigate('/account?tab=settings')}
-          className="w-full bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium"
-        >
-          Open full settings
-        </button>
-      </DrawerActionBar>
     </Drawer>
   );
 }
