@@ -260,7 +260,8 @@ export async function POST(request: NextRequest) {
       const photo = details.photos[0];
       // New Places API uses 'name' property which is a full path like 'places/ChIJ.../photos/photo_reference'
       if (photo.name) {
-        imageUrl = `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=1200&key=${GOOGLE_API_KEY}`;
+        // Use our proxy endpoint to fetch the photo (avoids CORS and auth issues)
+        imageUrl = `/api/google-place-photo?name=${encodeURIComponent(photo.name)}&maxWidth=1200`;
       } else if (photo.photo_reference) {
         // Fallback to old API format if photo_reference exists
         imageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`;
