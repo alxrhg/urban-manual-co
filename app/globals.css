@@ -341,6 +341,19 @@
   .dark .bg-\[\#0F1117\] { background-color: hsl(24 10% 6%) !important; }
   .dark .bg-\[\#171717\] { background-color: hsl(24 10% 8%) !important; }
   .dark .border-\[\#1F2937\] { border-color: hsl(24 8% 16%) !important; }
+
+  /* Warm brownish overrides for gray colors in dark mode */
+  .dark .bg-gray-900 { background-color: hsl(24 10% 10%) !important; }
+  .dark .bg-gray-800 { background-color: hsl(24 8% 14%) !important; }
+  .dark .bg-gray-700 { background-color: hsl(24 8% 20%) !important; }
+
+  .dark .border-gray-900 { border-color: hsl(24 8% 12%) !important; }
+  .dark .border-gray-800 { border-color: hsl(24 8% 16%) !important; }
+  .dark .border-gray-700 { border-color: hsl(24 8% 22%) !important; }
+
+  .dark .text-gray-400 { color: hsl(30 10% 55%) !important; }
+  .dark .text-gray-500 { color: hsl(30 8% 45%) !important; }
+  .dark .text-gray-300 { color: hsl(30 10% 70%) !important; }
   
   /* Ensure container max-width is 1280px site-wide */
   .container {

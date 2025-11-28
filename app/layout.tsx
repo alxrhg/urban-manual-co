@@ -185,7 +185,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+      <body className="antialiased bg-white dark:bg-stone-950 text-stone-900 dark:text-stone-100">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

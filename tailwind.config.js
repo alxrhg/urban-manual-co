@@ -63,11 +63,12 @@ module.exports = {
         },
       },
       colors: {
-        'dark-blue': {
-          900: '#0a1628',
-          800: '#0f1f35',
-          700: '#152438',
-          600: '#1a2a3a',
+        // Warm brownish dark theme colors
+        'dark-warm': {
+          950: 'hsl(24 10% 6%)',
+          900: 'hsl(24 10% 10%)',
+          800: 'hsl(24 8% 14%)',
+          700: 'hsl(24 8% 20%)',
         },
       },
     },
