@@ -180,8 +180,17 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       const supabase = createClient();
       if (!supabase) return;
 
-      // Update order_index for each item (skip temp IDs that haven't been saved yet)
-      const itemsToUpdate = newItems.filter(item => !item.id.startsWith('temp-'));
+      // Update order_index for each item (skip temp IDs and invalid IDs)
+      const itemsToUpdate = newItems.filter(item => {
+        const idStr = String(item.id);
+        // Skip temp IDs, empty IDs, or non-UUID-like IDs
+        if (idStr.startsWith('temp-') || !idStr || idStr === 'undefined') {
+          return false;
+        }
+        return true;
+      });
+
+      if (itemsToUpdate.length === 0) return;
 
       await Promise.all(
         itemsToUpdate.map((item, index) =>

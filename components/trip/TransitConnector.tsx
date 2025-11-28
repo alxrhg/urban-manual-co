@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Car, Footprints, Train } from 'lucide-react';
 import { formatDuration } from '@/lib/utils/time-calculations';
 
@@ -33,8 +33,34 @@ const modeLabels: Record<TransitMode, string> = {
 };
 
 /**
+ * Calculate distance between two points using Haversine formula
+ */
+function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/**
+ * Estimate travel time based on distance and mode
+ */
+function estimateTravelTime(distanceKm: number, mode: TransitMode): number {
+  const speeds: Record<TransitMode, number> = {
+    walk: 5,     // 5 km/h walking
+    transit: 25, // 25 km/h average for public transit
+    drive: 40,   // 40 km/h city driving average
+  };
+  return Math.round((distanceKm / speeds[mode]) * 60); // minutes
+}
+
+/**
  * TransitConnector - Travel time connector between timeline items
- * Calculates actual travel time via API when coordinates provided
+ * Shows travel time estimates between locations using local calculation + API
  */
 export default function TransitConnector({
   from,
@@ -44,28 +70,44 @@ export default function TransitConnector({
   className = '',
 }: TransitConnectorProps) {
   const [selectedMode, setSelectedMode] = useState<TransitMode>(mode);
-  const [durations, setDurations] = useState<Record<TransitMode, number | null>>({
+  const [apiDurations, setApiDurations] = useState<Record<TransitMode, number | null>>({
     walk: null,
     drive: null,
     transit: null,
   });
   const [loading, setLoading] = useState(false);
 
-  // Calculate travel times when coordinates change
+  // Check if we have valid coordinates
+  const hasValidCoords = Boolean(
+    from?.latitude && from?.longitude && to?.latitude && to?.longitude
+  );
+
+  // Calculate local estimates using Haversine (instant, no API call)
+  const localEstimates = useMemo(() => {
+    if (!hasValidCoords) return null;
+
+    const distance = haversineDistance(
+      from!.latitude!,
+      from!.longitude!,
+      to!.latitude!,
+      to!.longitude!
+    );
+
+    return {
+      walk: estimateTravelTime(distance, 'walk'),
+      transit: estimateTravelTime(distance, 'transit'),
+      drive: estimateTravelTime(distance, 'drive'),
+      distance,
+    };
+  }, [from?.latitude, from?.longitude, to?.latitude, to?.longitude, hasValidCoords]);
+
+  // Fetch from Distance API for more accurate times
   useEffect(() => {
     async function fetchTravelTimes() {
-      const fromLat = from?.latitude;
-      const fromLng = from?.longitude;
-      const toLat = to?.latitude;
-      const toLng = to?.longitude;
-
-      if (!fromLat || !fromLng || !toLat || !toLng) {
-        return;
-      }
+      if (!hasValidCoords) return;
 
       setLoading(true);
       try {
-        // Fetch all modes in parallel
         const modes: TransitMode[] = ['walk', 'drive', 'transit'];
         const results = await Promise.all(
           modes.map(async (m) => {
@@ -74,8 +116,8 @@ export default function TransitConnector({
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  origins: [{ lat: fromLat, lng: fromLng, name: 'From' }],
-                  destinations: [{ lat: toLat, lng: toLng, name: 'To' }],
+                  origins: [{ lat: from!.latitude, lng: from!.longitude, name: 'From' }],
+                  destinations: [{ lat: to!.latitude, lng: to!.longitude, name: 'To' }],
                   mode: m === 'walk' ? 'walking' : m === 'drive' ? 'driving' : 'transit',
                 }),
               });
@@ -94,7 +136,7 @@ export default function TransitConnector({
         results.forEach((r) => {
           newDurations[r.mode] = r.minutes;
         });
-        setDurations(newDurations);
+        setApiDurations(newDurations);
       } catch (err) {
         console.error('Error fetching travel times:', err);
       } finally {
@@ -103,24 +145,22 @@ export default function TransitConnector({
     }
 
     fetchTravelTimes();
-  }, [from?.latitude, from?.longitude, to?.latitude, to?.longitude]);
+  }, [from?.latitude, from?.longitude, to?.latitude, to?.longitude, hasValidCoords]);
 
-  const currentDuration = durations[selectedMode] ?? propDuration;
-  const Icon = modeIcons[selectedMode];
+  // Use API durations if available, otherwise local estimates
+  const getDuration = (m: TransitMode): number | null => {
+    if (apiDurations[m] !== null) return apiDurations[m];
+    if (localEstimates) return localEstimates[m];
+    return null;
+  };
 
   return (
-    <div
-      className={`
-        relative flex items-center justify-center
-        py-2
-        ${className}
-      `}
-    >
+    <div className={`relative flex items-center justify-center py-2 ${className}`}>
       {/* Mode Selector Pills */}
-      <div className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+      <div className="flex items-center gap-1 p-0.5 bg-stone-100 dark:bg-gray-800 rounded-full">
         {(['walk', 'transit', 'drive'] as TransitMode[]).map((m) => {
           const ModeIcon = modeIcons[m];
-          const duration = durations[m];
+          const duration = getDuration(m);
           const isSelected = selectedMode === m;
 
           return (
@@ -128,20 +168,20 @@ export default function TransitConnector({
               key={m}
               onClick={() => setSelectedMode(m)}
               className={`
-                flex items-center gap-1.5 px-2 py-1 rounded-full transition-all text-[10px] font-medium
+                flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all text-[11px] font-medium
                 ${isSelected
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  ? 'bg-white dark:bg-gray-700 text-stone-900 dark:text-white shadow-sm'
+                  : 'text-stone-500 dark:text-gray-400 hover:text-stone-700 dark:hover:text-gray-300'
                 }
               `}
             >
-              <ModeIcon className="w-3 h-3" strokeWidth={1.5} />
+              <ModeIcon className="w-3.5 h-3.5" strokeWidth={1.5} />
               {duration !== null ? (
                 <span className="tabular-nums">{formatDuration(duration)}</span>
               ) : loading ? (
-                <span className="w-6 h-2 bg-gray-200 dark:bg-gray-600 rounded animate-pulse" />
+                <span className="w-6 h-2 bg-stone-200 dark:bg-gray-600 rounded animate-pulse" />
               ) : (
-                <span>{modeLabels[m]}</span>
+                <span className="text-stone-400 dark:text-gray-500">--</span>
               )}
             </button>
           );
