@@ -406,6 +406,9 @@ export default function HomeClientImpl({
   // AI is enabled - backend handles fallback gracefully if OpenAI unavailable
   const [isAIEnabled, setIsAIEnabled] = useState(true);
 
+  // Track whether we received data from server - prevents unnecessary client fetches
+  const hadServerDataRef = useRef(initialDestinations.length > 0);
+
   // Initialize with server-fetched data for instant render
   const [destinations, setDestinations] = useState<Destination[]>(initialDestinations);
   const [filteredDestinations, setFilteredDestinations] = useState<
@@ -1028,14 +1031,13 @@ export default function HomeClientImpl({
     // Track homepage view
     trackPageView({ pageType: "home" });
 
-    // PERFORMANCE: Only fetch if we don't have server-provided data
+    // PERFORMANCE: Only fetch if we didn't receive server-provided data
     // When server-side rendering, data comes via props - no client fetch needed
-    if (initialDestinations.length === 0) {
+    // Use ref to track this since initialDestinations might be stale in closure
+    if (!hadServerDataRef.current) {
       // Fire-and-forget: Load data in background, don't block render
       // Page renders immediately, data loads asynchronously
-      // Prioritize fetchDestinations first (it also sets cities), then fetchFilterData for enhancement
       void fetchDestinations();
-      // fetchFilterData will enhance cities if it has more, but won't block initial display
       void fetchFilterData();
     }
   }, []);
@@ -1237,21 +1239,18 @@ export default function HomeClientImpl({
   }, [chatMessages]);
 
   // Separate useEffect for filters (only when NO search term)
-  // Fetch destinations lazily when filters are applied
+  // Re-filter destinations when filters change
   useEffect(() => {
     if (!searchTerm.trim()) {
-      // Only fetch destinations if we haven't already
-      if (destinations.length === 0) {
+      // Only fetch if we never had server data AND destinations is empty
+      // This prevents refetching after search clears or during state transitions
+      if (destinations.length === 0 && !hadServerDataRef.current) {
         fetchDestinations();
-      } else {
-        // If destinations are already loaded, just re-filter (don't re-fetch)
-        // This prevents unnecessary re-fetching when visitedSlugs changes after login
-        // Note: filterDestinationsWithData is defined later, but it's a useCallback so it's stable
-
+      } else if (destinations.length > 0) {
+        // If destinations are loaded, just re-filter (don't re-fetch)
         filterDestinations();
       }
     }
-    // Don't reset displayed count here - let the search effect handle it
   }, [
     selectedCity,
     selectedCategory,
@@ -1259,7 +1258,7 @@ export default function HomeClientImpl({
     visitedSlugs,
     destinations,
     sortBy,
-  ]); // Filters only apply when no search
+  ]);
 
   // Note: Removed circular sync effect - SearchFiltersComponent now manages advancedFilters directly
   // and updates selectedCity/selectedCategory when needed, avoiding duplicate filter initialization
@@ -2367,6 +2366,7 @@ export default function HomeClientImpl({
   };
 
   // Pinterest-like recommendation algorithm
+  // Uses deterministic scoring based on slug hash for stable ordering between renders
   const getRecommendationScore = (dest: Destination, index: number): number => {
     let score = 0;
 
@@ -2379,8 +2379,16 @@ export default function HomeClientImpl({
     const categoryBonus = (index % 7) * 5; // Rotate through categories (increased from 2)
     score += categoryBonus;
 
-    // Random discovery factor (increased for more serendipity)
-    score += Math.random() * 30;
+    // Deterministic "discovery" factor based on slug hash (stable across renders)
+    // Uses simple string hash to generate a consistent pseudo-random value
+    let hash = 0;
+    const slug = dest.slug || '';
+    for (let i = 0; i < slug.length; i++) {
+      hash = ((hash << 5) - hash) + slug.charCodeAt(i);
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    // Normalize hash to 0-30 range (same as previous Math.random() * 30)
+    score += Math.abs(hash % 31);
 
     return score;
   };
