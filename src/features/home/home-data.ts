@@ -1,10 +1,13 @@
-import { cache } from 'react';
 import type { Destination } from '@/types/destination';
 import { getHomepageDestinations, getFilterRows, type FilterRow } from '@/server/services/homepage-loaders';
 
 /**
  * Server-side data loader for homepage
- * Uses React cache for request deduplication
+ *
+ * Note: We intentionally do NOT use React's cache() here because it memoizes
+ * for the lifetime of the server process, not per-request. This would cause
+ * stale data where newly created/edited POIs never appear on the homepage
+ * until server restart, even with dynamic = 'force-dynamic'.
  */
 
 export type HomepageData = {
@@ -22,8 +25,8 @@ function extractFilters(rows: FilterRow[]): { cities: string[]; categories: stri
   const categoryLowerSet = new Set<string>();
 
   for (const row of rows) {
-    const city = (row.city ?? '').toString().trim();
-    const category = (row.category ?? '').toString().trim();
+    const city = row.city?.trim() ?? '';
+    const category = row.category?.trim() ?? '';
 
     if (city) {
       citySet.add(city);
@@ -44,10 +47,9 @@ function extractFilters(rows: FilterRow[]): { cities: string[]; categories: stri
 }
 
 /**
- * Cached function to load homepage destinations
- * Deduplicated within the same request
+ * Load homepage destinations fresh on each request
  */
-export const getDestinations = cache(async (): Promise<Destination[]> => {
+export async function getDestinations(): Promise<Destination[]> {
   try {
     const destinations = await getHomepageDestinations(5000);
     return destinations;
@@ -55,13 +57,12 @@ export const getDestinations = cache(async (): Promise<Destination[]> => {
     console.error('[Homepage] Failed to load destinations:', error);
     return [];
   }
-});
+}
 
 /**
- * Cached function to load filter options
- * Deduplicated within the same request
+ * Load filter options fresh on each request
  */
-export const getFilters = cache(async (): Promise<{ cities: string[]; categories: string[] }> => {
+export async function getFilters(): Promise<{ cities: string[]; categories: string[] }> {
   try {
     const rows = await getFilterRows(1000);
     return extractFilters(rows);
@@ -69,7 +70,7 @@ export const getFilters = cache(async (): Promise<{ cities: string[]; categories
     console.error('[Homepage] Failed to load filters:', error);
     return { cities: [], categories: [] };
   }
-});
+}
 
 /**
  * Load all homepage data in parallel

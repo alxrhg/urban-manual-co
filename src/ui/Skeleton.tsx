@@ -1,6 +1,7 @@
-'use client';
-
-import React from 'react';
+/**
+ * Skeleton components for loading states
+ * These are server components - no client JS needed for simple CSS animations
+ */
 
 export function Skeleton({ className = '' }: { className?: string }) {
   return (

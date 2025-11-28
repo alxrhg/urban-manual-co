@@ -1,5 +1,3 @@
-'use client';
-
 import { Skeleton, GridSkeleton } from '@/src/ui/Skeleton';
 
 /**
@@ -78,5 +76,3 @@ export function DestinationsGridSkeleton() {
     </div>
   );
 }
-
-export default HomeSkeleton;
