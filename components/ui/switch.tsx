@@ -27,7 +27,7 @@ function Switch({
         data-slot="switch-thumb"
         className={cn(
           "pointer-events-none block size-5 rounded-full shadow-md transition-transform",
-          "bg-white dark:bg-stone-900",
+          "bg-white dark:bg-stone-200",
           "data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0.5"
         )}
       />
