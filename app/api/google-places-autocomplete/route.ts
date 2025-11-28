@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': GOOGLE_API_KEY,
-        'X-Goog-FieldMask': 'suggestions.placePrediction.placeId,suggestions.placePrediction.text,suggestions.placePrediction.structuredFormat,suggestions.placePrediction.types,suggestions.placePrediction.matchedSubstrings',
+        'X-Goog-FieldMask': 'suggestions.placePrediction.placeId,suggestions.placePrediction.text,suggestions.placePrediction.structuredFormat,suggestions.placePrediction.types',
       },
       body: JSON.stringify(requestBody),
     });
@@ -95,7 +95,6 @@ export async function GET(request: NextRequest) {
           main_text: pred.structuredFormat?.mainText?.text || pred.text?.text?.split(',')?.[0] || '',
           secondary_text: pred.structuredFormat?.secondaryText?.text || pred.text?.text?.split(',').slice(1).join(',') || '',
           types: pred.types || [],
-          matched_substrings: pred.matchedSubstrings || [],
         };
       });
 
