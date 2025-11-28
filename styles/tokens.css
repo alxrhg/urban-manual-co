@@ -27,14 +27,15 @@
 }
 
 .dark {
-  --um-text-primary: #FFFFFF;
-  --um-text-muted: #9CA3AF;
-  --um-text-subtle: #6B7280;
-  --um-border: #1F2937;
-  --um-border-subtle: rgba(255, 255, 255, 0.08);
-  --um-bg-primary: #0F1117;
-  --um-bg-secondary: #1A1C1F;
-  --um-bg-card: #1A1C1F;
+  /* Warm brownish dark theme */
+  --um-text-primary: #F5F3F0;
+  --um-text-muted: #A8A096;
+  --um-text-subtle: #78716C;
+  --um-border: hsl(24 8% 16%);
+  --um-border-subtle: rgba(255, 248, 240, 0.08);
+  --um-bg-primary: hsl(24 10% 6%);
+  --um-bg-secondary: hsl(24 10% 10%);
+  --um-bg-card: hsl(24 10% 10%);
 }
 
 /* ============================================
@@ -111,7 +112,8 @@
    Usage: <div class="um-card">...</div>
 */
 .um-card {
-  @apply border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-[#1A1C1F];
+  @apply border border-gray-200 dark:border-gray-800 rounded-2xl bg-white;
+  background-color: var(--um-bg-card);
 }
 
 /* TAB BUTTON - ACTIVE

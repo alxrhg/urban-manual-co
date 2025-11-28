@@ -335,6 +335,12 @@
   .dark .bg-stone-800\/50 { background-color: hsl(24 8% 14% / 0.5) !important; }
   .dark .bg-stone-950\/50 { background-color: hsl(24 10% 6% / 0.5) !important; }
   .dark .bg-stone-900\/90 { background-color: hsl(24 10% 10% / 0.9) !important; }
+
+  /* Override hardcoded navy hex values with warm brownish */
+  .dark .bg-\[\#1A1C1F\] { background-color: hsl(24 10% 10%) !important; }
+  .dark .bg-\[\#0F1117\] { background-color: hsl(24 10% 6%) !important; }
+  .dark .bg-\[\#171717\] { background-color: hsl(24 10% 8%) !important; }
+  .dark .border-\[\#1F2937\] { border-color: hsl(24 8% 16%) !important; }
   
   /* Ensure container max-width is 1280px site-wide */
   .container {
@@ -400,7 +406,7 @@
   }
 
   .dark .um-input-wrap::before {
-    background: #737373;
+    background: hsl(30 8% 45%);
   }
 
   .um-input-wrap.um-input-empty::before {
@@ -419,9 +425,9 @@
   }
 
   .dark .um-input {
-    border-color: #404040;
-    background: #171717;
-    color: #FFFFFF;
+    border-color: hsl(24 8% 20%);
+    background: hsl(24 10% 8%);
+    color: #F5F3F0;
   }
 
   .um-input::placeholder {
@@ -430,7 +436,7 @@
   }
 
   .dark .um-input::placeholder {
-    color: #737373;
+    color: hsl(30 8% 45%);
   }
 
   @keyframes umBlinkCursor {
