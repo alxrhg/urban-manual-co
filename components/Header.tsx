@@ -104,9 +104,9 @@ export function Header() {
       {user ? (
         <>
           <button
-            onClick={() => openDrawer('trips')}
+            onClick={() => navigate('/trips')}
             className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
-            aria-label="Open trips drawer"
+            aria-label="View trips"
           >
             <Map className="w-4 h-4" />
             <span>Trips</span>
