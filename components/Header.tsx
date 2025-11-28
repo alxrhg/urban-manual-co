@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { User } from "lucide-react";
+import { User, Map } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
@@ -102,24 +102,34 @@ export function Header() {
       )}
 
       {user ? (
-        <button
-          onClick={() => openDrawer('account')}
-          className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
-          aria-label="Open account drawer"
-        >
-          {avatarUrl ? (
-            <span className="w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-hidden">
-              <img
-                src={avatarUrl}
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </span>
-          ) : (
-            <User className="w-4 h-4" />
-          )}
-          <span>Account</span>
-        </button>
+        <>
+          <button
+            onClick={() => openDrawer('trips')}
+            className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+            aria-label="Open trips drawer"
+          >
+            <Map className="w-4 h-4" />
+            <span>Trips</span>
+          </button>
+          <button
+            onClick={() => openDrawer('account')}
+            className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+            aria-label="Open account drawer"
+          >
+            {avatarUrl ? (
+              <span className="w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                <img
+                  src={avatarUrl}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
+                />
+              </span>
+            ) : (
+              <User className="w-4 h-4" />
+            )}
+            <span>Account</span>
+          </button>
+        </>
       ) : (
         <button
           onClick={() => openDrawer('login')}
