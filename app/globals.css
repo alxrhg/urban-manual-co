@@ -287,6 +287,14 @@
     margin-bottom: max(env(safe-area-inset-bottom), 0px);
   }
 
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   /* Touch optimization */
   .touch-manipulation {
     touch-action: manipulation;

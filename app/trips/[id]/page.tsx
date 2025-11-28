@@ -215,7 +215,7 @@ export default function TripPage() {
   // Loading state
   if (loading) {
     return (
-      <main className="w-full px-6 md:px-10 py-20 bg-stone-50 dark:bg-stone-950 min-h-screen">
+      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 bg-stone-50 dark:bg-stone-950 min-h-screen">
         <PageLoader />
       </main>
     );
@@ -224,13 +224,13 @@ export default function TripPage() {
   // Not found
   if (!trip) {
     return (
-      <main className="w-full px-6 md:px-10 py-20 min-h-screen bg-stone-50 dark:bg-stone-950">
+      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 min-h-screen bg-stone-50 dark:bg-stone-950">
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
             <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">Trip not found</p>
             <Link
               href="/trips"
-              className="text-sm text-stone-900 dark:text-white hover:underline"
+              className="text-sm text-stone-900 dark:text-white hover:underline min-h-[44px] flex items-center justify-center"
             >
               Back to trips
             </Link>
@@ -246,37 +246,55 @@ export default function TripPage() {
     .find(item => item.destination?.image)?.destination?.image;
 
   return (
-    <main className="w-full px-6 md:px-10 py-20 min-h-screen bg-stone-50 dark:bg-stone-950">
+    <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-stone-950">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          {/* Top Row: Back + Title + Actions */}
-          <div className="flex items-center gap-4 mb-6">
-            {/* Back Button */}
-            <Link
-              href="/trips"
-              className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Trips</span>
-            </Link>
+        {/* Header - Mobile optimized */}
+        <div className="mb-6 sm:mb-8">
+          {/* Mobile: Stacked layout, Desktop: Inline */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+            {/* Top row on mobile: Back + Actions */}
+            <div className="flex items-center justify-between sm:contents">
+              {/* Back Button */}
+              <Link
+                href="/trips"
+                className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white transition-colors min-h-[44px] min-w-[44px] -ml-2 pl-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Trips</span>
+              </Link>
 
-            {/* Spacer */}
-            <div className="flex-1" />
+              {/* Mobile Actions - Settings only (Map in FAB) */}
+              <div className="flex items-center gap-1 sm:hidden">
+                <button
+                  onClick={() => openDrawer('trip-settings', {
+                    trip,
+                    onUpdate: updateTrip,
+                    onDelete: () => router.push('/trips'),
+                  })}
+                  className="p-2.5 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  title="Settings"
+                >
+                  <Settings className="w-5 h-5 text-stone-500 dark:text-stone-400" />
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop: Spacer */}
+            <div className="hidden sm:block flex-1" />
 
             {/* Trip Title */}
-            <h1 className="text-2xl font-light text-stone-900 dark:text-white truncate">
+            <h1 className="text-xl sm:text-2xl font-light text-stone-900 dark:text-white truncate">
               {trip.title}
             </h1>
 
-            {/* Spacer */}
-            <div className="flex-1" />
+            {/* Desktop: Spacer */}
+            <div className="hidden sm:block flex-1" />
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Desktop Action Buttons */}
+            <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => setIsMapOpen(true)}
-                className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
+                className="p-2.5 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="View Map"
               >
                 <Map className="w-5 h-5 text-stone-500 dark:text-stone-400" />
@@ -287,7 +305,7 @@ export default function TripPage() {
                   onUpdate: updateTrip,
                   onDelete: () => router.push('/trips'),
                 })}
-                className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
+                className="p-2.5 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="Settings"
               >
                 <Settings className="w-5 h-5 text-stone-500 dark:text-stone-400" />
@@ -295,9 +313,9 @@ export default function TripPage() {
             </div>
           </div>
 
-          {/* Cover Image (optional) */}
+          {/* Cover Image (optional) - Taller on mobile for visual impact */}
           {coverImage && (
-            <div className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden mb-6">
+            <div className="relative w-full h-40 sm:h-48 md:h-64 rounded-xl sm:rounded-2xl overflow-hidden mb-4 sm:mb-6">
               <Image
                 src={coverImage}
                 alt={trip.title}
@@ -333,28 +351,33 @@ export default function TripPage() {
           </div>
         )}
 
-        {/* Tab Navigation */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-x-4 text-xs">
+        {/* Tab Navigation - Mobile optimized with horizontal scroll */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex items-center justify-between gap-4">
+            {/* Tabs - Scrollable on mobile */}
+            <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
               {(['itinerary', 'insights', 'overview'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`transition-all flex items-center gap-1.5 ${
-                    activeTab === tab
-                      ? 'font-medium text-stone-900 dark:text-white'
+                  className={`
+                    transition-all flex items-center gap-1.5 whitespace-nowrap
+                    px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
+                    min-h-[40px] sm:min-h-0
+                    ${activeTab === tab
+                      ? 'font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-stone-800 sm:bg-transparent sm:dark:bg-transparent'
                       : 'font-medium text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'
-                  }`}
+                    }
+                  `}
                 >
-                  {tab === 'insights' && <Cloud className="w-3 h-3" />}
+                  {tab === 'insights' && <Cloud className="w-3.5 h-3.5 sm:w-3 sm:h-3" />}
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
             </div>
 
-            {/* Quick Actions */}
-            <div className="flex items-center gap-2">
+            {/* Quick Actions - Hidden on mobile (use FAB instead) */}
+            <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleAITripPlanning}
                 disabled={isAIPlanning || saving}
@@ -505,13 +528,6 @@ export default function TripPage() {
           </div>
         )}
 
-        {/* Saving Indicator */}
-        {saving && (
-          <div className="fixed bottom-6 right-6 flex items-center gap-2 px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-full shadow-lg text-xs font-medium">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            Saving...
-          </div>
-        )}
       </div>
 
       {/* Floating Action Bar */}
