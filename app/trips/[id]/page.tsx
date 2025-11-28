@@ -29,6 +29,7 @@ import TripDaySection from '@/components/trip/TripDaySection';
 import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
+import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import TripWeatherForecast from '@/components/trips/TripWeatherForecast';
 import TripSafetyAlerts from '@/components/trips/TripSafetyAlerts';
 import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
@@ -357,6 +358,19 @@ export default function TripPage() {
               compact
             />
           </div>
+        )}
+
+        {/* Smart Suggestions - below weather */}
+        {days.length > 0 && (
+          <SmartSuggestions
+            days={days}
+            destination={trip.destination}
+            onAddPlace={(dayNumber, category) => {
+              setSelectedDayNumber(dayNumber);
+              openPlaceSelector(dayNumber);
+            }}
+            className="mb-8"
+          />
         )}
 
         {/* Tab Navigation - Mobile optimized with horizontal scroll */}
