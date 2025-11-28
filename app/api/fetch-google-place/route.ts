@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
@@ -163,8 +162,6 @@ function transformOpeningHours(hours: any): any {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin(request);
-
     const body = await request.json();
     const { name, city, placeId } = body;
 
@@ -279,6 +276,7 @@ export async function POST(request: NextRequest) {
       description: editorialSummary,
       content: editorialSummary,
       image: imageUrl,
+      address: details.formatted_address || '',
       formatted_address: details.formatted_address || '',
       phone: details.international_phone_number || '',
       website: details.website || '',
@@ -287,14 +285,15 @@ export async function POST(request: NextRequest) {
       opening_hours: details.current_opening_hours || details.opening_hours || null,
       place_types: details.types || [],
       cuisine_type: extractCuisineType(details.types || []),
+      // Include coordinates for transit connector
+      latitude: details.geometry?.location?.lat || null,
+      longitude: details.geometry?.location?.lng || null,
+      place_id: finalPlaceId,
     };
 
     return NextResponse.json(result);
 
   } catch (error: any) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    }
     console.error('Fetch Google Place error:', error);
     return NextResponse.json({ error: error.message || 'Failed to fetch place data' }, { status: 500 });
   }
