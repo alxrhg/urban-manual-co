@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense, useId } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { AlertCircle, CheckCircle2, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Eye, EyeOff, X } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Drawer } from '@/components/ui/Drawer';
 
@@ -82,16 +82,29 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
     }
   };
 
+  const customHeader = (
+    <div className="flex items-center justify-between w-full">
+      <button
+        onClick={onClose}
+        className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        aria-label="Close"
+      >
+        <X className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+      </button>
+      <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white">
+        {isSignUp ? 'Create Account' : 'Sign In'}
+      </h2>
+      <div className="w-9" /> {/* Spacer for balance */}
+    </div>
+  );
+
   return (
-    <Drawer isOpen={isOpen} onClose={onClose}>
+    <Drawer isOpen={isOpen} onClose={onClose} headerContent={customHeader}>
       <div className="flex flex-col h-full bg-white dark:bg-gray-900">
-        {/* Header */}
-        <div className="flex-shrink-0 px-5 sm:px-6 pt-8 sm:pt-10 pb-6">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white tracking-tight">
-            {isSignUp ? 'Create Account' : 'Welcome back'}
-          </h1>
-          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-2">
-            {isSignUp ? 'Begin your travel journey' : 'Sign in to continue'}
+        {/* Welcome text */}
+        <div className="flex-shrink-0 px-5 sm:px-6 pt-6 sm:pt-8 pb-6">
+          <p className="text-base text-gray-900 dark:text-white">
+            {isSignUp ? 'Begin your travel journey' : 'Welcome back'}
           </p>
         </div>
 
@@ -114,9 +127,9 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-200 dark:border-gray-800" />
             </div>
-            <div className="relative flex justify-center text-xs">
+            <div className="relative flex justify-center text-sm">
               <span className="px-4 bg-white dark:bg-gray-900 text-gray-400 dark:text-gray-500">
-                or continue with email
+                Or
               </span>
             </div>
           </div>
@@ -126,52 +139,45 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
             {/* Name Field (Sign Up only) */}
             {isSignUp && (
               <div>
-                <label htmlFor={`login-name-${uniqueId}`} className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">
+                <label htmlFor={`login-name-${uniqueId}`} className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
                   Name
                 </label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 sm:w-4 sm:h-4 text-gray-400" />
-                  <input
-                    id={`login-name-${uniqueId}`}
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required={isSignUp}
-                    autoComplete="name"
-                    className="w-full pl-12 sm:pl-11 pr-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
-                    placeholder="Your name"
-                  />
-                </div>
+                <input
+                  id={`login-name-${uniqueId}`}
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required={isSignUp}
+                  autoComplete="name"
+                  className="w-full px-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
+                  placeholder="Your name"
+                />
               </div>
             )}
 
             {/* Email Field */}
             <div>
-              <label htmlFor={`login-email-${uniqueId}`} className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">
+              <label htmlFor={`login-email-${uniqueId}`} className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
                 Email
               </label>
-              <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 sm:w-4 sm:h-4 text-gray-400" />
-                <input
-                  id={`login-email-${uniqueId}`}
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="w-full pl-12 sm:pl-11 pr-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
-                  placeholder="you@example.com"
-                />
-              </div>
+              <input
+                id={`login-email-${uniqueId}`}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                className="w-full px-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
+                placeholder="you@example.com"
+              />
             </div>
 
             {/* Password Field */}
             <div>
-              <label htmlFor={`login-password-${uniqueId}`} className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">
+              <label htmlFor={`login-password-${uniqueId}`} className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 sm:w-4 sm:h-4 text-gray-400" />
                 <input
                   id={`login-password-${uniqueId}`}
                   type={showPassword ? 'text' : 'password'}
@@ -180,7 +186,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                   required
                   minLength={6}
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                  className="w-full pl-12 sm:pl-11 pr-14 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
+                  className="w-full px-4 pr-14 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
                   placeholder="••••••••"
                 />
                 <button
