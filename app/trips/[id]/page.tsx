@@ -360,6 +360,19 @@ export default function TripPage() {
           </div>
         )}
 
+        {/* Smart Suggestions - below weather */}
+        {days.length > 0 && (
+          <SmartSuggestions
+            days={days}
+            destination={trip.destination}
+            onAddPlace={(dayNumber, category) => {
+              setSelectedDayNumber(dayNumber);
+              openPlaceSelector(dayNumber);
+            }}
+            className="mb-8"
+          />
+        )}
+
         {/* Tab Navigation - Mobile optimized with horizontal scroll */}
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center justify-between gap-4">
@@ -434,17 +447,6 @@ export default function TripPage() {
                   selectedDayNumber={selectedDayNumber}
                   onSelectDay={setSelectedDayNumber}
                   className="mb-4"
-                />
-
-                {/* Smart Suggestions */}
-                <SmartSuggestions
-                  days={days}
-                  destination={trip.destination}
-                  onAddPlace={(dayNumber, category) => {
-                    setSelectedDayNumber(dayNumber);
-                    openPlaceSelector(dayNumber);
-                  }}
-                  className="mb-6"
                 />
 
                 {/* Selected Day Only */}

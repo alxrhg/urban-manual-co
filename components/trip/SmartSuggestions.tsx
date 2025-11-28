@@ -26,6 +26,7 @@ interface Suggestion {
   id: string;
   text: string;
   icon: 'check' | 'sparkle';
+  priority: number;
   action?: {
     type: 'add_place' | 'add_category';
     dayNumber?: number;
@@ -40,9 +41,25 @@ interface SmartSuggestionsProps {
   className?: string;
 }
 
+type TimeSlot = 'morning' | 'afternoon' | 'evening' | 'night';
+
+function getTimeSlot(time: string | null | undefined): TimeSlot | null {
+  if (!time) return null;
+  const hour = parseInt(time.split(':')[0], 10);
+  if (isNaN(hour)) return null;
+  if (hour >= 6 && hour < 12) return 'morning';
+  if (hour >= 12 && hour < 17) return 'afternoon';
+  if (hour >= 17 && hour < 21) return 'evening';
+  return 'night';
+}
+
 /**
  * SmartSuggestions - AI-powered suggestions for improving a trip
- * Analyzes the current itinerary and suggests additions
+ * Analyzes the current itinerary and suggests additions based on:
+ * - Missing meal types (breakfast, lunch, dinner)
+ * - Empty time slots per day
+ * - Missing activity categories
+ * - Trip balance and variety
  */
 export default function SmartSuggestions({
   days,
@@ -52,113 +69,132 @@ export default function SmartSuggestions({
 }: SmartSuggestionsProps) {
   const suggestions = useMemo(() => {
     const result: Suggestion[] = [];
-
-    // Get all items across all days
     const allItems = days.flatMap(d => d.items);
 
-    // Analyze categories present
+    // No suggestions if trip is empty
+    if (allItems.length === 0) return [];
+
+    // Analyze categories present across the trip
     const categoriesPresent = new Set<string>();
     allItems.forEach(item => {
-      const cat = item.parsedNotes?.category || item.destination?.category;
-      if (cat) categoriesPresent.add(cat.toLowerCase());
+      const cat = (item.parsedNotes?.category || item.destination?.category || '').toLowerCase();
+      if (cat) categoriesPresent.add(cat);
     });
 
-    // Analyze items per day
-    const itemsPerDay: Record<number, number> = {};
-    const categoriesPerDay: Record<number, Set<string>> = {};
-
+    // Analyze time slots filled per day
+    const timeSlotsByDay: Record<number, Set<TimeSlot>> = {};
     days.forEach(day => {
-      itemsPerDay[day.dayNumber] = day.items.length;
-      categoriesPerDay[day.dayNumber] = new Set();
+      timeSlotsByDay[day.dayNumber] = new Set();
       day.items.forEach(item => {
-        const cat = item.parsedNotes?.category || item.destination?.category;
-        if (cat) categoriesPerDay[day.dayNumber].add(cat.toLowerCase());
+        const slot = getTimeSlot(item.time);
+        if (slot) timeSlotsByDay[day.dayNumber].add(slot);
       });
     });
 
-    // Check for morning activities (breakfast/cafe)
-    const hasBreakfast = Array.from(categoriesPresent).some(cat =>
-      cat.includes('cafe') || cat.includes('coffee') || cat.includes('breakfast') || cat.includes('bakery')
-    );
-
-    // Get first destination for location context
+    // Get first destination for proximity context
     const firstDestWithLocation = allItems.find(item =>
       item.destination?.latitude && item.destination?.longitude
     );
 
-    // Suggestion 1: Breakfast spots
-    if (!hasBreakfast && allItems.length > 0) {
-      result.push({
-        id: 'breakfast',
-        text: firstDestWithLocation
-          ? 'Add breakfast spots near your first destination'
-          : 'Add a cafe or breakfast spot to start your day',
-        icon: 'check',
-        action: { type: 'add_category', dayNumber: 1, category: 'cafe' },
-      });
-    }
-
-    // Suggestion 2: Check for days without cultural activities
-    const hasCulturalActivity = Array.from(categoriesPresent).some(cat =>
+    // Category checks
+    const hasBreakfast = Array.from(categoriesPresent).some(cat =>
+      cat.includes('cafe') || cat.includes('coffee') || cat.includes('breakfast') || cat.includes('bakery')
+    );
+    const hasMuseum = Array.from(categoriesPresent).some(cat =>
       cat.includes('museum') || cat.includes('gallery') || cat.includes('landmark') || cat.includes('attraction')
     );
-
-    if (!hasCulturalActivity && days.length > 1) {
-      // Suggest museum for day 2 or later
-      const suggestDay = days.length >= 2 ? 2 : 1;
-      result.push({
-        id: 'museum',
-        text: `Consider adding a museum visit for Day ${suggestDay}`,
-        icon: 'sparkle',
-        action: { type: 'add_category', dayNumber: suggestDay, category: 'museum' },
-      });
-    }
-
-    // Suggestion 3: Evening dining
-    const hasEveningDining = Array.from(categoriesPresent).some(cat =>
+    const hasDinner = Array.from(categoriesPresent).some(cat =>
       cat.includes('restaurant') || cat.includes('dining') || cat.includes('bistro')
     );
-
-    if (!hasEveningDining) {
-      result.push({
-        id: 'dinner',
-        text: destination
-          ? `You might enjoy a sunset dinner at the waterfront`
-          : 'Add a dinner spot for a memorable evening',
-        icon: 'check',
-        action: { type: 'add_category', dayNumber: 1, category: 'restaurant' },
-      });
-    }
-
-    // Suggestion 4: Bars/nightlife if only restaurants
     const hasBars = Array.from(categoriesPresent).some(cat =>
       cat.includes('bar') || cat.includes('cocktail') || cat.includes('pub') || cat.includes('nightlife')
     );
 
-    if (hasEveningDining && !hasBars && allItems.length >= 3) {
+    // 1. Morning suggestion - breakfast/cafe
+    if (!hasBreakfast) {
+      result.push({
+        id: 'breakfast',
+        text: firstDestWithLocation
+          ? 'Add breakfast spots near your first destination'
+          : 'Start your day with a morning cafe',
+        icon: 'check',
+        priority: 10,
+        action: { type: 'add_category', dayNumber: 1, category: 'cafe' },
+      });
+    }
+
+    // 2. Find days missing afternoon activities
+    for (const day of days) {
+      const slots = timeSlotsByDay[day.dayNumber];
+      if (day.items.length > 0 && !slots.has('afternoon') && !hasMuseum) {
+        result.push({
+          id: `museum-day-${day.dayNumber}`,
+          text: `Consider adding a museum visit for Day ${day.dayNumber}`,
+          icon: 'sparkle',
+          priority: 8,
+          action: { type: 'add_category', dayNumber: day.dayNumber, category: 'museum' },
+        });
+        break; // Only one museum suggestion
+      }
+    }
+
+    // 3. Evening dining suggestion
+    if (!hasDinner && allItems.length >= 2) {
+      result.push({
+        id: 'dinner',
+        text: destination?.toLowerCase().includes('coast') || destination?.toLowerCase().includes('beach')
+          ? 'You might enjoy a sunset dinner at the waterfront'
+          : 'Add a dinner reservation for the evening',
+        icon: 'check',
+        priority: 9,
+        action: { type: 'add_category', dayNumber: 1, category: 'restaurant' },
+      });
+    }
+
+    // 4. Nightlife suggestion after dinner
+    if (hasDinner && !hasBars && allItems.length >= 3) {
       result.push({
         id: 'nightlife',
         text: 'Top off your evening with a cocktail bar',
         icon: 'sparkle',
+        priority: 5,
         action: { type: 'add_category', category: 'bar' },
       });
     }
 
-    // Suggestion 5: Day with few items
+    // 5. Sparse day suggestion
     for (const day of days) {
       if (day.items.length === 1) {
         result.push({
           id: `sparse-day-${day.dayNumber}`,
-          text: `Day ${day.dayNumber} looks light - add more activities`,
+          text: `Day ${day.dayNumber} looks light — add more activities`,
           icon: 'check',
+          priority: 7,
           action: { type: 'add_place', dayNumber: day.dayNumber },
         });
-        break; // Only one sparse day suggestion
+        break;
       }
     }
 
-    // Limit to 3 suggestions
-    return result.slice(0, 3);
+    // 6. Empty evening slot
+    for (const day of days) {
+      const slots = timeSlotsByDay[day.dayNumber];
+      if (day.items.length >= 2 && !slots.has('evening') && !hasDinner) {
+        result.push({
+          id: `evening-day-${day.dayNumber}`,
+          text: `Day ${day.dayNumber} needs an evening plan`,
+          icon: 'sparkle',
+          priority: 6,
+          action: { type: 'add_category', dayNumber: day.dayNumber, category: 'restaurant' },
+        });
+        break;
+      }
+    }
+
+    // Sort by priority and limit to 3
+    return result
+      .sort((a, b) => b.priority - a.priority)
+      .slice(0, 3);
   }, [days, destination]);
 
   // Don't render if no suggestions
