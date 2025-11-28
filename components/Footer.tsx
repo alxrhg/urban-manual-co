@@ -58,24 +58,24 @@ export function Footer() {
   const [isSitemapExpanded, setIsSitemapExpanded] = useState(false);
 
   return (
-    <footer className="mt-20 border-t border-gray-200 dark:border-stone-800 relative" role="contentinfo">
+    <footer className="mt-20 border-t border-stone-200 dark:border-stone-800 relative" role="contentinfo">
       <div className="w-full px-6 md:px-10 lg:px-12 py-6">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-stone-500 dark:text-stone-400">
           <div>© {new Date().getFullYear()} The Manual Company. All Rights Reserved.</div>
 
           <div className="flex items-center gap-6">
-            <Link href="/newsletter" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+            <Link href="/newsletter" className="hover:text-stone-900 dark:hover:text-white transition-colors">
               Newsletter
             </Link>
-            <Link href="/about" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+            <Link href="/about" className="hover:text-stone-900 dark:hover:text-white transition-colors">
               About
             </Link>
-            <Link href="/contact" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+            <Link href="/contact" className="hover:text-stone-900 dark:hover:text-white transition-colors">
               Contact
             </Link>
             <button
               onClick={() => setIsSitemapExpanded(!isSitemapExpanded)}
-              className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="flex items-center gap-1 hover:text-stone-900 dark:hover:text-white transition-colors"
               aria-expanded={isSitemapExpanded}
               aria-controls="footer-sitemap"
             >
@@ -92,11 +92,11 @@ export function Footer() {
             <ThemeToggle />
             <button
               onClick={openCookieSettings}
-              className="hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="hover:text-stone-900 dark:hover:text-white transition-colors"
             >
               Cookie Settings
             </button>
-            <Link href="/privacy" className="hover:text-gray-900 dark:hover:text-white transition-colors">
+            <Link href="/privacy" className="hover:text-stone-900 dark:hover:text-white transition-colors">
               Privacy Policy
             </Link>
           </div>
@@ -110,7 +110,7 @@ export function Footer() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
               {sitemapSections.map((section, index) => (
                 <div key={index}>
-                  <h2 className="text-xs font-medium text-gray-900 dark:text-white mb-2">
+                  <h2 className="text-xs font-medium text-stone-900 dark:text-white mb-2">
                     {section.title}
                   </h2>
                   <nav className="space-y-1">
@@ -118,7 +118,7 @@ export function Footer() {
                       <Link
                         key={linkIndex}
                         href={link.href}
-                        className="block text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                        className="block text-xs text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white transition-colors"
                       >
                         {link.label}
                       </Link>

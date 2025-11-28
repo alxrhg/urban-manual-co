@@ -342,18 +342,108 @@
   .dark .bg-\[\#171717\] { background-color: hsl(24 10% 8%) !important; }
   .dark .border-\[\#1F2937\] { border-color: hsl(24 8% 16%) !important; }
 
-  /* Warm brownish overrides for gray colors in dark mode */
+  /* ================================================
+     COMPREHENSIVE WARM BROWNISH DARK MODE OVERRIDES
+     All gray/neutral colors → warm stone palette
+     ================================================ */
+
+  /* Gray backgrounds */
+  .dark .bg-gray-950 { background-color: hsl(24 10% 6%) !important; }
   .dark .bg-gray-900 { background-color: hsl(24 10% 10%) !important; }
   .dark .bg-gray-800 { background-color: hsl(24 8% 14%) !important; }
   .dark .bg-gray-700 { background-color: hsl(24 8% 20%) !important; }
+  .dark .bg-gray-600 { background-color: hsl(24 8% 28%) !important; }
+  .dark .bg-gray-500 { background-color: hsl(24 8% 36%) !important; }
+  .dark .bg-gray-400 { background-color: hsl(30 8% 50%) !important; }
+  .dark .bg-gray-300 { background-color: hsl(30 10% 65%) !important; }
+  .dark .bg-gray-200 { background-color: hsl(30 12% 78%) !important; }
+  .dark .bg-gray-100 { background-color: hsl(30 15% 88%) !important; }
+  .dark .bg-gray-50 { background-color: hsl(30 18% 95%) !important; }
 
+  /* Gray backgrounds with opacity */
+  .dark .bg-gray-900\/80 { background-color: hsl(24 10% 10% / 0.8) !important; }
+  .dark .bg-gray-900\/50 { background-color: hsl(24 10% 10% / 0.5) !important; }
+  .dark .bg-gray-900\/30 { background-color: hsl(24 10% 10% / 0.3) !important; }
+  .dark .bg-gray-800\/80 { background-color: hsl(24 8% 14% / 0.8) !important; }
+  .dark .bg-gray-800\/50 { background-color: hsl(24 8% 14% / 0.5) !important; }
+  .dark .bg-gray-800\/30 { background-color: hsl(24 8% 14% / 0.3) !important; }
+  .dark .bg-gray-700\/50 { background-color: hsl(24 8% 20% / 0.5) !important; }
+  .dark .bg-gray-700\/40 { background-color: hsl(24 8% 20% / 0.4) !important; }
+
+  /* Gray borders */
+  .dark .border-gray-950 { border-color: hsl(24 8% 8%) !important; }
   .dark .border-gray-900 { border-color: hsl(24 8% 12%) !important; }
   .dark .border-gray-800 { border-color: hsl(24 8% 16%) !important; }
   .dark .border-gray-700 { border-color: hsl(24 8% 22%) !important; }
+  .dark .border-gray-600 { border-color: hsl(24 8% 30%) !important; }
+  .dark .border-gray-500 { border-color: hsl(24 8% 38%) !important; }
+  .dark .border-gray-400 { border-color: hsl(30 8% 50%) !important; }
+  .dark .border-gray-300 { border-color: hsl(30 10% 65%) !important; }
+  .dark .border-gray-200 { border-color: hsl(30 12% 78%) !important; }
 
+  /* Gray borders with opacity */
+  .dark .border-gray-800\/50 { border-color: hsl(24 8% 16% / 0.5) !important; }
+  .dark .border-gray-700\/50 { border-color: hsl(24 8% 22% / 0.5) !important; }
+  .dark .border-gray-700\/40 { border-color: hsl(24 8% 22% / 0.4) !important; }
+
+  /* Gray text */
+  .dark .text-gray-100 { color: hsl(30 15% 95%) !important; }
+  .dark .text-gray-200 { color: hsl(30 12% 88%) !important; }
+  .dark .text-gray-300 { color: hsl(30 10% 70%) !important; }
   .dark .text-gray-400 { color: hsl(30 10% 55%) !important; }
   .dark .text-gray-500 { color: hsl(30 8% 45%) !important; }
-  .dark .text-gray-300 { color: hsl(30 10% 70%) !important; }
+  .dark .text-gray-600 { color: hsl(30 8% 38%) !important; }
+  .dark .text-gray-700 { color: hsl(24 8% 28%) !important; }
+  .dark .text-gray-800 { color: hsl(24 8% 18%) !important; }
+  .dark .text-gray-900 { color: hsl(24 10% 10%) !important; }
+
+  /* Gray rings */
+  .dark .ring-gray-800 { --tw-ring-color: hsl(24 8% 16%) !important; }
+  .dark .ring-gray-700 { --tw-ring-color: hsl(24 8% 22%) !important; }
+
+  /* Neutral backgrounds (same as gray) */
+  .dark .bg-neutral-950 { background-color: hsl(24 10% 6%) !important; }
+  .dark .bg-neutral-900 { background-color: hsl(24 10% 10%) !important; }
+  .dark .bg-neutral-800 { background-color: hsl(24 8% 14%) !important; }
+  .dark .bg-neutral-700 { background-color: hsl(24 8% 20%) !important; }
+  .dark .bg-neutral-600 { background-color: hsl(24 8% 28%) !important; }
+  .dark .bg-neutral-500 { background-color: hsl(24 8% 36%) !important; }
+  .dark .bg-neutral-400 { background-color: hsl(30 8% 50%) !important; }
+  .dark .bg-neutral-300 { background-color: hsl(30 10% 65%) !important; }
+  .dark .bg-neutral-200 { background-color: hsl(30 12% 78%) !important; }
+  .dark .bg-neutral-100 { background-color: hsl(30 15% 88%) !important; }
+  .dark .bg-neutral-50 { background-color: hsl(30 18% 95%) !important; }
+
+  /* Neutral borders */
+  .dark .border-neutral-900 { border-color: hsl(24 8% 12%) !important; }
+  .dark .border-neutral-800 { border-color: hsl(24 8% 16%) !important; }
+  .dark .border-neutral-700 { border-color: hsl(24 8% 22%) !important; }
+  .dark .border-neutral-600 { border-color: hsl(24 8% 30%) !important; }
+  .dark .border-neutral-500 { border-color: hsl(24 8% 38%) !important; }
+  .dark .border-neutral-400 { border-color: hsl(30 8% 50%) !important; }
+  .dark .border-neutral-300 { border-color: hsl(30 10% 65%) !important; }
+  .dark .border-neutral-200 { border-color: hsl(30 12% 78%) !important; }
+
+  /* Neutral text */
+  .dark .text-neutral-100 { color: hsl(30 15% 95%) !important; }
+  .dark .text-neutral-200 { color: hsl(30 12% 88%) !important; }
+  .dark .text-neutral-300 { color: hsl(30 10% 70%) !important; }
+  .dark .text-neutral-400 { color: hsl(30 10% 55%) !important; }
+  .dark .text-neutral-500 { color: hsl(30 8% 45%) !important; }
+  .dark .text-neutral-600 { color: hsl(30 8% 38%) !important; }
+  .dark .text-neutral-700 { color: hsl(24 8% 28%) !important; }
+  .dark .text-neutral-800 { color: hsl(24 8% 18%) !important; }
+
+  /* Slate backgrounds (for any slate usage) */
+  .dark .bg-slate-900 { background-color: hsl(24 10% 10%) !important; }
+  .dark .bg-slate-800 { background-color: hsl(24 8% 14%) !important; }
+  .dark .bg-slate-700 { background-color: hsl(24 8% 20%) !important; }
+
+  .dark .border-slate-800 { border-color: hsl(24 8% 16%) !important; }
+  .dark .border-slate-700 { border-color: hsl(24 8% 22%) !important; }
+
+  .dark .text-slate-400 { color: hsl(30 10% 55%) !important; }
+  .dark .text-slate-300 { color: hsl(30 10% 70%) !important; }
   
   /* Ensure container max-width is 1280px site-wide */
   .container {
