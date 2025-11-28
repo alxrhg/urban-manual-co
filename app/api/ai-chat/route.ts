@@ -186,6 +186,15 @@ async function understandQuery(
     priceLevel?: string; // e.g., "$", "$$", "$$$", "$$$$"
     modifiers?: string[];
   };
+  tripPlanning?: {
+    isTrip?: boolean;
+    tripType?: 'weekend' | 'day' | 'week' | 'multi-day' | null;
+    duration?: number | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    travelers?: 'solo' | 'couple' | 'family' | 'group' | null;
+    tripStyle?: 'adventure' | 'relaxation' | 'cultural' | 'foodie' | 'romantic' | 'business' | null;
+  };
 }> {
   if (!openai?.chat) {
     return parseQueryFallback(query);
@@ -259,6 +268,15 @@ async function understandQuery(
     "styleTags": ["array", "of", "style", "descriptors", "e.g.", "minimalist", "contemporary", "traditional", "luxury"],
     "priceLevel": "price", "symbol", "like", "$", "$$", "$$$", "or", "$$$$", "based", "on", "query", "or", "null",
     "modifiers": ["array", "of", "descriptive", "modifiers", "e.g.", "quiet", "romantic", "trendy", "hidden", "gem"]
+  },
+  "tripPlanning": {
+    "isTrip": true/false,
+    "tripType": "weekend" | "day" | "week" | "multi-day" | null,
+    "duration": "number of days or null",
+    "startDate": "ISO date string if mentioned or null",
+    "endDate": "ISO date string if mentioned or null",
+    "travelers": "solo" | "couple" | "family" | "group" | null,
+    "tripStyle": "adventure" | "relaxation" | "cultural" | "foodie" | "romantic" | "business" | null
   }
 }
 
@@ -274,6 +292,12 @@ Guidelines:
 - Detect event-related queries: "events", "happening", "festival", "concert" → boost places near events
 - Confidence should reflect how clear the query intent is
 - For relative queries ("more", "another", "different"), infer intent from conversation history
+- TRIP PLANNING DETECTION: Set tripPlanning.isTrip to true for queries like:
+  - "plan my weekend in miami", "plan a trip to tokyo", "help me plan my vacation"
+  - "create an itinerary for paris", "3 day trip to london", "weekend getaway to barcelona"
+  - "what should I do in rome for 5 days", "plan my honeymoon in bali"
+  - Any query that implies the user wants to CREATE a trip plan, not just find a single place
+- If tripPlanning.isTrip is true but city is missing, add a clarification asking where they want to go
 
 Return only the JSON, no other text.`;
 
@@ -486,21 +510,26 @@ function parseQueryFallback(query: string): {
   intent?: string;
   confidence?: number;
   clarifications?: string[];
+  tripPlanning?: {
+    isTrip?: boolean;
+    tripType?: 'weekend' | 'day' | 'week' | 'multi-day' | null;
+    duration?: number | null;
+  };
 } {
   const lowerQuery = query.toLowerCase();
   let city: string | undefined;
   let category: string | undefined;
-  
+
   // Extract city
   const cityNames = ['tokyo', 'paris', 'london', 'new york', 'los angeles', 'singapore', 'hong kong', 'sydney', 'dubai', 'bangkok', 'berlin', 'amsterdam', 'rome', 'barcelona', 'lisbon', 'madrid', 'vienna', 'prague', 'stockholm', 'oslo', 'copenhagen', 'helsinki', 'milan', 'taipei', 'seoul', 'shanghai', 'beijing', 'mumbai', 'delhi', 'istanbul', 'moscow', 'sao paulo', 'mexico city', 'buenos aires', 'miami', 'san francisco', 'chicago', 'boston', 'seattle', 'toronto', 'vancouver', 'melbourne', 'auckland'];
-  
+
   for (const cityName of cityNames) {
     if (lowerQuery.includes(cityName)) {
       city = cityName;
       break;
     }
   }
-  
+
   // Extract category
   const categories = ['restaurant', 'cafe', 'hotel', 'bar', 'bakery', 'culture', 'dining', 'museum', 'gallery', 'shop', 'market'];
   for (const cat of categories) {
@@ -509,7 +538,7 @@ function parseQueryFallback(query: string): {
       break;
     }
   }
-  
+
   // Extract keywords (words not in city or category)
   const keywords: string[] = [];
   const words = query.split(/\s+/);
@@ -522,12 +551,43 @@ function parseQueryFallback(query: string): {
     }
   }
 
+  // Detect trip planning intent from keywords
+  const tripKeywords = ['plan', 'trip', 'itinerary', 'vacation', 'holiday', 'getaway', 'visit', 'travel'];
+  const durationKeywords = ['weekend', 'day', 'week', 'days', 'nights'];
+  const isTrip = tripKeywords.some(kw => lowerQuery.includes(kw)) ||
+                 (durationKeywords.some(kw => lowerQuery.includes(kw)) && city);
+
+  let tripType: 'weekend' | 'day' | 'week' | 'multi-day' | null = null;
+  let duration: number | null = null;
+
+  if (isTrip) {
+    if (lowerQuery.includes('weekend')) {
+      tripType = 'weekend';
+      duration = 2;
+    } else if (lowerQuery.includes('week')) {
+      tripType = 'week';
+      duration = 7;
+    } else if (lowerQuery.match(/(\d+)\s*day/)) {
+      const match = lowerQuery.match(/(\d+)\s*day/);
+      duration = match ? parseInt(match[1]) : null;
+      tripType = duration === 1 ? 'day' : 'multi-day';
+    }
+  }
+
   return {
     keywords,
     city,
     category,
-    intent: `finding ${category || 'places'}${city ? ` in ${city}` : ''}`,
+    intent: isTrip
+      ? `planning a trip${city ? ` to ${city}` : ''}`
+      : `finding ${category || 'places'}${city ? ` in ${city}` : ''}`,
     confidence: (city ? 0.7 : 0.5) + (category ? 0.2 : 0),
+    tripPlanning: isTrip ? {
+      isTrip: true,
+      tripType,
+      duration,
+    } : undefined,
+    clarifications: isTrip && !city ? ['Where would you like to go?'] : undefined,
   };
 }
 
@@ -1531,6 +1591,14 @@ async function processAIChatRequest(
                   intelligence: intelligenceInsights,
                   enriched: enrichedMetadata, // Include enrichment metadata
                   suggestions: followUpSuggestions, // Include follow-up suggestions
+                  // Trip planning intent - when detected, frontend should create a trip
+                  tripPlanning: intent.tripPlanning?.isTrip ? {
+                    ...intent.tripPlanning,
+                    suggestedTitle: intent.tripPlanning.tripType
+                      ? `${intent.tripPlanning.tripType.charAt(0).toUpperCase() + intent.tripPlanning.tripType.slice(1)} in ${intent.city || 'your destination'}`
+                      : `Trip to ${intent.city || 'your destination'}`,
+                    destination: intent.city || null,
+                  } : undefined,
                 };
 
                 // Cache non-personalized results
