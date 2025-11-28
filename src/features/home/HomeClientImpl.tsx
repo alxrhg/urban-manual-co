@@ -2487,11 +2487,7 @@ export default function HomeClientImpl({
           }),
         }}
       />
-      <main
-        id="main-content"
-        className="relative min-h-screen dark:text-white"
-        role="main"
-      >
+      <div className="relative min-h-screen dark:text-white">
         {/* SEO H1 - Visually hidden but accessible to search engines */}
         <h1 className="sr-only">
           Discover the World's Best Hotels, Restaurants & Travel Destinations -
@@ -3583,7 +3579,7 @@ export default function HomeClientImpl({
           />
         )}
         <AIAssistant />
-      </main>
+      </div>
     </ErrorBoundary>
   );
 }
