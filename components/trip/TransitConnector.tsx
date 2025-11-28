@@ -1,117 +1,151 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Car, Footprints, Train } from 'lucide-react';
 import { formatDuration } from '@/lib/utils/time-calculations';
 
-type TransitMode = 'walk' | 'transit' | 'drive';
+type TransitMode = 'walk' | 'drive' | 'transit';
+
+interface Location {
+  latitude?: number | null;
+  longitude?: number | null;
+}
 
 interface TransitConnectorProps {
-  fromLat?: number | null;
-  fromLng?: number | null;
-  toLat?: number | null;
-  toLng?: number | null;
+  from?: Location | null;
+  to?: Location | null;
+  durationMinutes?: number;
+  distanceKm?: number;
+  mode?: TransitMode;
   className?: string;
 }
 
-/**
- * Calculate distance between two points using Haversine formula
- */
-function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Earth's radius in km
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+const modeIcons: Record<TransitMode, typeof Car> = {
+  walk: Footprints,
+  drive: Car,
+  transit: Train,
+};
+
+const modeLabels: Record<TransitMode, string> = {
+  walk: 'Walk',
+  drive: 'Drive',
+  transit: 'Transit',
+};
 
 /**
- * Estimate travel time based on distance and mode
- */
-function estimateTravelTime(distanceKm: number, mode: TransitMode): number {
-  const speeds: Record<TransitMode, number> = {
-    walk: 5,     // 5 km/h walking
-    transit: 25, // 25 km/h average for public transit
-    drive: 35,   // 35 km/h city driving average
-  };
-  return Math.round((distanceKm / speeds[mode]) * 60); // minutes
-}
-
-const modeConfig: { mode: TransitMode; icon: typeof Car; label: string }[] = [
-  { mode: 'walk', icon: Footprints, label: 'Walk' },
-  { mode: 'transit', icon: Train, label: 'Transit' },
-  { mode: 'drive', icon: Car, label: 'Drive' },
-];
-
-/**
- * TransitConnector - Shows estimated travel time between two locations
- * Displays all three travel modes (walk, transit, drive) with times
+ * TransitConnector - Travel time connector between timeline items
+ * Calculates actual travel time via API when coordinates provided
  */
 export default function TransitConnector({
-  fromLat,
-  fromLng,
-  toLat,
-  toLng,
+  from,
+  to,
+  durationMinutes: propDuration,
+  mode = 'walk',
   className = '',
 }: TransitConnectorProps) {
-  const { distance, times } = useMemo(() => {
-    if (fromLat == null || fromLng == null || toLat == null || toLng == null) {
-      return { distance: null, times: null };
+  const [selectedMode, setSelectedMode] = useState<TransitMode>(mode);
+  const [durations, setDurations] = useState<Record<TransitMode, number | null>>({
+    walk: null,
+    drive: null,
+    transit: null,
+  });
+  const [loading, setLoading] = useState(false);
+
+  // Calculate travel times when coordinates change
+  useEffect(() => {
+    async function fetchTravelTimes() {
+      const fromLat = from?.latitude;
+      const fromLng = from?.longitude;
+      const toLat = to?.latitude;
+      const toLng = to?.longitude;
+
+      if (!fromLat || !fromLng || !toLat || !toLng) {
+        return;
+      }
+
+      setLoading(true);
+      try {
+        // Fetch all modes in parallel
+        const modes: TransitMode[] = ['walk', 'drive', 'transit'];
+        const results = await Promise.all(
+          modes.map(async (m) => {
+            try {
+              const response = await fetch('/api/distance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  origins: [{ lat: fromLat, lng: fromLng, name: 'From' }],
+                  destinations: [{ lat: toLat, lng: toLng, name: 'To' }],
+                  mode: m === 'walk' ? 'walking' : m === 'drive' ? 'driving' : 'transit',
+                }),
+              });
+              const data = await response.json();
+              if (data.results?.[0]?.duration) {
+                return { mode: m, minutes: Math.round(data.results[0].duration / 60) };
+              }
+              return { mode: m, minutes: null };
+            } catch {
+              return { mode: m, minutes: null };
+            }
+          })
+        );
+
+        const newDurations: Record<TransitMode, number | null> = { walk: null, drive: null, transit: null };
+        results.forEach((r) => {
+          newDurations[r.mode] = r.minutes;
+        });
+        setDurations(newDurations);
+      } catch (err) {
+        console.error('Error fetching travel times:', err);
+      } finally {
+        setLoading(false);
+      }
     }
-    const dist = calculateDistance(fromLat, fromLng, toLat, toLng);
-    const travelTimes = {
-      walk: estimateTravelTime(dist, 'walk'),
-      transit: estimateTravelTime(dist, 'transit'),
-      drive: estimateTravelTime(dist, 'drive'),
-    };
-    return { distance: dist, times: travelTimes };
-  }, [fromLat, fromLng, toLat, toLng]);
 
-  // Always render the connector - show placeholder if no coordinates
+    fetchTravelTimes();
+  }, [from?.latitude, from?.longitude, to?.latitude, to?.longitude]);
+
+  const currentDuration = durations[selectedMode] ?? propDuration;
+  const Icon = modeIcons[selectedMode];
+
   return (
-    <div className={`flex items-center gap-2 py-2 px-2 ${className}`}>
-      {/* Connector line */}
-      <div className="flex flex-col items-center">
-        <div className="w-px h-2 bg-stone-300 dark:bg-gray-600" />
-        <div className="w-2 h-2 rounded-full border-2 border-stone-300 dark:border-gray-600 bg-white dark:bg-gray-900" />
-        <div className="w-px h-2 bg-stone-300 dark:bg-gray-600" />
-      </div>
+    <div
+      className={`
+        relative flex items-center justify-center
+        py-2
+        ${className}
+      `}
+    >
+      {/* Mode Selector Pills */}
+      <div className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+        {(['walk', 'transit', 'drive'] as TransitMode[]).map((m) => {
+          const ModeIcon = modeIcons[m];
+          const duration = durations[m];
+          const isSelected = selectedMode === m;
 
-      {/* Travel modes with times */}
-      <div className="flex items-center gap-3 flex-1">
-        {times ? (
-          <>
-            {modeConfig.map(({ mode, icon: Icon, label }) => (
-              <div
-                key={mode}
-                className="flex items-center gap-1 text-stone-500 dark:text-gray-400"
-                title={label}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                <span className="text-xs tabular-nums font-medium">
-                  {formatDuration(times[mode])}
-                </span>
-              </div>
-            ))}
-
-            {/* Distance */}
-            {distance && distance > 0.1 && (
-              <>
-                <span className="text-stone-300 dark:text-gray-600">·</span>
-                <span className="text-xs text-stone-400 dark:text-gray-500 tabular-nums">
-                  {distance < 1 ? `${Math.round(distance * 1000)}m` : `${distance.toFixed(1)}km`}
-                </span>
-              </>
-            )}
-          </>
-        ) : (
-          <span className="text-xs text-stone-400 dark:text-gray-500 italic">
-            Travel time
-          </span>
-        )}
+          return (
+            <button
+              key={m}
+              onClick={() => setSelectedMode(m)}
+              className={`
+                flex items-center gap-1.5 px-2 py-1 rounded-full transition-all text-[10px] font-medium
+                ${isSelected
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }
+              `}
+            >
+              <ModeIcon className="w-3 h-3" strokeWidth={1.5} />
+              {duration !== null ? (
+                <span className="tabular-nums">{formatDuration(duration)}</span>
+              ) : loading ? (
+                <span className="w-6 h-2 bg-gray-200 dark:bg-gray-600 rounded animate-pulse" />
+              ) : (
+                <span>{modeLabels[m]}</span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

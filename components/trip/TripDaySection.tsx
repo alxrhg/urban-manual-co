@@ -88,39 +88,41 @@ export default function TripDaySection({
 
   const formattedDate = formatDayDate(day.date);
 
-  // Helper to get coordinates from item (check destination first, then parsedNotes)
-  const getItemCoords = (item: EnrichedItineraryItem) => {
-    const lat = item.destination?.latitude ?? item.parsedNotes?.latitude ?? null;
-    const lng = item.destination?.longitude ?? item.parsedNotes?.longitude ?? null;
-    return { lat, lng };
+  // Helper to get location from item (check destination first, then parsedNotes)
+  const getItemLocation = (item: EnrichedItineraryItem) => {
+    const lat = item.destination?.latitude ?? item.parsedNotes?.latitude;
+    const lng = item.destination?.longitude ?? item.parsedNotes?.longitude;
+    if (lat && lng) {
+      return { latitude: lat, longitude: lng };
+    }
+    return undefined;
   };
 
   // Render items with TransitConnector between them
   const renderItemsWithConnectors = () => {
     return day.items.map((item, index) => {
-      const prevItem = index > 0 ? day.items[index - 1] : null;
-      const prevCoords = prevItem ? getItemCoords(prevItem) : null;
-      const currCoords = getItemCoords(item);
+      const nextItem = day.items[index + 1];
+      const fromLocation = getItemLocation(item);
+      const toLocation = nextItem ? getItemLocation(nextItem) : undefined;
 
       return (
         <div key={item.id}>
-          {/* Transit connector between items */}
-          {prevItem && (
-            <TransitConnector
-              fromLat={prevCoords?.lat}
-              fromLng={prevCoords?.lng}
-              toLat={currCoords.lat}
-              toLng={currCoords.lng}
-            />
-          )}
           <TripItemCard
             item={item}
             index={index}
-            onEdit={isEditMode ? onEditItem : undefined}
-            onRemove={isEditMode ? onRemoveItem : undefined}
+            onEdit={onEditItem}
+            onRemove={undefined}
             isActive={item.id === activeItemId}
-            isViewOnly={!isEditMode}
+            isViewOnly={true}
           />
+          {/* Transit connector between items */}
+          {index < day.items.length - 1 && (
+            <TransitConnector
+              from={fromLocation}
+              to={toLocation}
+              mode="walk"
+            />
+          )}
         </div>
       );
     });

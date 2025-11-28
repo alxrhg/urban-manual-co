@@ -435,13 +435,13 @@ export default function TripPage() {
                   className="mb-4"
                 />
 
-                {/* Day Sections */}
-                {days.map((day) => (
+                {/* Selected Day Only */}
+                {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
                   <TripDaySection
                     key={day.dayNumber}
                     day={day}
-                    isSelected={day.dayNumber === selectedDayNumber}
-                    onSelect={() => setSelectedDayNumber(day.dayNumber)}
+                    isSelected={true}
+                    onSelect={() => {}}
                     onReorderItems={reorderItems}
                     onRemoveItem={removeItem}
                     onEditItem={handleEditItem}
