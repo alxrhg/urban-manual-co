@@ -248,26 +248,25 @@
   }
 
   .dark {
-    /* Warm brownish dark theme */
-    --background: 24 10% 6%;
-    --foreground: 36 15% 95%;
-    --card: 24 10% 8%;
-    --card-foreground: 36 15% 95%;
-    --popover: 24 10% 8%;
-    --popover-foreground: 36 15% 95%;
-    --primary: 36 15% 95%;
-    --primary-foreground: 24 10% 8%;
-    --secondary: 24 8% 12%;
-    --secondary-foreground: 36 15% 95%;
-    --muted: 24 8% 14%;
-    --muted-foreground: 30 8% 55%;
-    --accent: 24 8% 14%;
-    --accent-foreground: 36 15% 95%;
-    --destructive: 0 62.8% 35%;
-    --destructive-foreground: 36 15% 95%;
-    --border: 24 8% 15%;
-    --input: 24 8% 15%;
-    --ring: 36 15% 80%;
+    --background: 0 0% 9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 0 0% 9%;
+    --secondary: 0 0% 14.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 14.9%;
+    --muted-foreground: 0 0% 63.9%;
+    --accent: 0 0% 14.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 14.9%;
+    --input: 0 0% 14.9%;
+    --ring: 0 0% 83.1%;
   }
 
   * {
@@ -309,136 +308,10 @@
   html.dark {
     color-scheme: dark;
   }
-
+  
   html.light {
     color-scheme: light;
   }
-
-  /* Warm brownish overrides for dark mode stone colors */
-  .dark .bg-stone-950 { background-color: hsl(24 10% 6%) !important; }
-  .dark .bg-stone-900 { background-color: hsl(24 10% 10%) !important; }
-  .dark .bg-stone-800 { background-color: hsl(24 8% 14%) !important; }
-  .dark .bg-stone-700 { background-color: hsl(24 8% 20%) !important; }
-
-  .dark .border-stone-900 { border-color: hsl(24 8% 12%) !important; }
-  .dark .border-stone-800 { border-color: hsl(24 8% 16%) !important; }
-  .dark .border-stone-700 { border-color: hsl(24 8% 22%) !important; }
-
-  .dark .ring-stone-800 { --tw-ring-color: hsl(24 8% 16%) !important; }
-  .dark .ring-stone-700 { --tw-ring-color: hsl(24 8% 22%) !important; }
-
-  .dark .text-stone-400 { color: hsl(30 10% 55%) !important; }
-  .dark .text-stone-500 { color: hsl(30 8% 45%) !important; }
-
-  /* Brownish background variants */
-  .dark .bg-stone-900\/50 { background-color: hsl(24 10% 10% / 0.5) !important; }
-  .dark .bg-stone-800\/50 { background-color: hsl(24 8% 14% / 0.5) !important; }
-  .dark .bg-stone-950\/50 { background-color: hsl(24 10% 6% / 0.5) !important; }
-  .dark .bg-stone-900\/90 { background-color: hsl(24 10% 10% / 0.9) !important; }
-
-  /* Override hardcoded navy hex values with warm brownish */
-  .dark .bg-\[\#1A1C1F\] { background-color: hsl(24 10% 10%) !important; }
-  .dark .bg-\[\#0F1117\] { background-color: hsl(24 10% 6%) !important; }
-  .dark .bg-\[\#171717\] { background-color: hsl(24 10% 8%) !important; }
-  .dark .border-\[\#1F2937\] { border-color: hsl(24 8% 16%) !important; }
-
-  /* ================================================
-     COMPREHENSIVE WARM BROWNISH DARK MODE OVERRIDES
-     All gray/neutral colors → warm stone palette
-     ================================================ */
-
-  /* Gray backgrounds */
-  .dark .bg-gray-950 { background-color: hsl(24 10% 6%) !important; }
-  .dark .bg-gray-900 { background-color: hsl(24 10% 10%) !important; }
-  .dark .bg-gray-800 { background-color: hsl(24 8% 14%) !important; }
-  .dark .bg-gray-700 { background-color: hsl(24 8% 20%) !important; }
-  .dark .bg-gray-600 { background-color: hsl(24 8% 28%) !important; }
-  .dark .bg-gray-500 { background-color: hsl(24 8% 36%) !important; }
-  .dark .bg-gray-400 { background-color: hsl(30 8% 50%) !important; }
-  .dark .bg-gray-300 { background-color: hsl(30 10% 65%) !important; }
-  .dark .bg-gray-200 { background-color: hsl(30 12% 78%) !important; }
-  .dark .bg-gray-100 { background-color: hsl(30 15% 88%) !important; }
-  .dark .bg-gray-50 { background-color: hsl(30 18% 95%) !important; }
-
-  /* Gray backgrounds with opacity */
-  .dark .bg-gray-900\/80 { background-color: hsl(24 10% 10% / 0.8) !important; }
-  .dark .bg-gray-900\/50 { background-color: hsl(24 10% 10% / 0.5) !important; }
-  .dark .bg-gray-900\/30 { background-color: hsl(24 10% 10% / 0.3) !important; }
-  .dark .bg-gray-800\/80 { background-color: hsl(24 8% 14% / 0.8) !important; }
-  .dark .bg-gray-800\/50 { background-color: hsl(24 8% 14% / 0.5) !important; }
-  .dark .bg-gray-800\/30 { background-color: hsl(24 8% 14% / 0.3) !important; }
-  .dark .bg-gray-700\/50 { background-color: hsl(24 8% 20% / 0.5) !important; }
-  .dark .bg-gray-700\/40 { background-color: hsl(24 8% 20% / 0.4) !important; }
-
-  /* Gray borders */
-  .dark .border-gray-950 { border-color: hsl(24 8% 8%) !important; }
-  .dark .border-gray-900 { border-color: hsl(24 8% 12%) !important; }
-  .dark .border-gray-800 { border-color: hsl(24 8% 16%) !important; }
-  .dark .border-gray-700 { border-color: hsl(24 8% 22%) !important; }
-  .dark .border-gray-600 { border-color: hsl(24 8% 30%) !important; }
-  .dark .border-gray-500 { border-color: hsl(24 8% 38%) !important; }
-  .dark .border-gray-400 { border-color: hsl(30 8% 50%) !important; }
-  .dark .border-gray-300 { border-color: hsl(30 10% 65%) !important; }
-  .dark .border-gray-200 { border-color: hsl(30 12% 78%) !important; }
-
-  /* Gray borders with opacity */
-  .dark .border-gray-800\/50 { border-color: hsl(24 8% 16% / 0.5) !important; }
-  .dark .border-gray-700\/50 { border-color: hsl(24 8% 22% / 0.5) !important; }
-  .dark .border-gray-700\/40 { border-color: hsl(24 8% 22% / 0.4) !important; }
-
-  /* Gray text - only override light shades for warm tone, don't touch dark shades */
-  .dark .text-gray-100 { color: hsl(30 15% 95%) !important; }
-  .dark .text-gray-200 { color: hsl(30 12% 88%) !important; }
-  .dark .text-gray-300 { color: hsl(30 10% 70%) !important; }
-  .dark .text-gray-400 { color: hsl(30 10% 55%) !important; }
-  .dark .text-gray-500 { color: hsl(30 8% 50%) !important; }
-  /* gray-600 through gray-900 intentionally NOT overridden - they're for dark text on light elements */
-
-  /* Gray rings */
-  .dark .ring-gray-800 { --tw-ring-color: hsl(24 8% 16%) !important; }
-  .dark .ring-gray-700 { --tw-ring-color: hsl(24 8% 22%) !important; }
-
-  /* Neutral backgrounds (same as gray) */
-  .dark .bg-neutral-950 { background-color: hsl(24 10% 6%) !important; }
-  .dark .bg-neutral-900 { background-color: hsl(24 10% 10%) !important; }
-  .dark .bg-neutral-800 { background-color: hsl(24 8% 14%) !important; }
-  .dark .bg-neutral-700 { background-color: hsl(24 8% 20%) !important; }
-  .dark .bg-neutral-600 { background-color: hsl(24 8% 28%) !important; }
-  .dark .bg-neutral-500 { background-color: hsl(24 8% 36%) !important; }
-  .dark .bg-neutral-400 { background-color: hsl(30 8% 50%) !important; }
-  .dark .bg-neutral-300 { background-color: hsl(30 10% 65%) !important; }
-  .dark .bg-neutral-200 { background-color: hsl(30 12% 78%) !important; }
-  .dark .bg-neutral-100 { background-color: hsl(30 15% 88%) !important; }
-  .dark .bg-neutral-50 { background-color: hsl(30 18% 95%) !important; }
-
-  /* Neutral borders */
-  .dark .border-neutral-900 { border-color: hsl(24 8% 12%) !important; }
-  .dark .border-neutral-800 { border-color: hsl(24 8% 16%) !important; }
-  .dark .border-neutral-700 { border-color: hsl(24 8% 22%) !important; }
-  .dark .border-neutral-600 { border-color: hsl(24 8% 30%) !important; }
-  .dark .border-neutral-500 { border-color: hsl(24 8% 38%) !important; }
-  .dark .border-neutral-400 { border-color: hsl(30 8% 50%) !important; }
-  .dark .border-neutral-300 { border-color: hsl(30 10% 65%) !important; }
-  .dark .border-neutral-200 { border-color: hsl(30 12% 78%) !important; }
-
-  /* Neutral text - only override light shades for warm tone */
-  .dark .text-neutral-100 { color: hsl(30 15% 95%) !important; }
-  .dark .text-neutral-200 { color: hsl(30 12% 88%) !important; }
-  .dark .text-neutral-300 { color: hsl(30 10% 70%) !important; }
-  .dark .text-neutral-400 { color: hsl(30 10% 55%) !important; }
-  .dark .text-neutral-500 { color: hsl(30 8% 50%) !important; }
-  /* neutral-600 through neutral-900 intentionally NOT overridden */
-
-  /* Slate backgrounds (for any slate usage) */
-  .dark .bg-slate-900 { background-color: hsl(24 10% 10%) !important; }
-  .dark .bg-slate-800 { background-color: hsl(24 8% 14%) !important; }
-  .dark .bg-slate-700 { background-color: hsl(24 8% 20%) !important; }
-
-  .dark .border-slate-800 { border-color: hsl(24 8% 16%) !important; }
-  .dark .border-slate-700 { border-color: hsl(24 8% 22%) !important; }
-
-  .dark .text-slate-400 { color: hsl(30 10% 55%) !important; }
-  .dark .text-slate-300 { color: hsl(30 10% 70%) !important; }
   
   /* Ensure container max-width is 1280px site-wide */
   .container {
@@ -504,7 +377,7 @@
   }
 
   .dark .um-input-wrap::before {
-    background: hsl(30 8% 45%);
+    background: #737373;
   }
 
   .um-input-wrap.um-input-empty::before {
@@ -523,9 +396,9 @@
   }
 
   .dark .um-input {
-    border-color: hsl(24 8% 20%);
-    background: hsl(24 10% 8%);
-    color: #F5F3F0;
+    border-color: #404040;
+    background: #171717;
+    color: #FFFFFF;
   }
 
   .um-input::placeholder {
@@ -534,7 +407,7 @@
   }
 
   .dark .um-input::placeholder {
-    color: hsl(30 8% 45%);
+    color: #737373;
   }
 
   @keyframes umBlinkCursor {

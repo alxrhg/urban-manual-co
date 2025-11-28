@@ -27,15 +27,14 @@
 }
 
 .dark {
-  /* Warm brownish dark theme */
-  --um-text-primary: #F5F3F0;
-  --um-text-muted: #A8A096;
-  --um-text-subtle: #78716C;
-  --um-border: hsl(24 8% 16%);
-  --um-border-subtle: rgba(255, 248, 240, 0.08);
-  --um-bg-primary: hsl(24 10% 6%);
-  --um-bg-secondary: hsl(24 10% 10%);
-  --um-bg-card: hsl(24 10% 10%);
+  --um-text-primary: #FFFFFF;
+  --um-text-muted: #9CA3AF;
+  --um-text-subtle: #6B7280;
+  --um-border: #1F2937;
+  --um-border-subtle: rgba(255, 255, 255, 0.08);
+  --um-bg-primary: #0F1117;
+  --um-bg-secondary: #1A1C1F;
+  --um-bg-card: #1A1C1F;
 }
 
 /* ============================================
@@ -64,7 +63,7 @@
    Usage: <p class="um-description">Description</p>
 */
 .um-description {
-  @apply text-xs text-stone-500 dark:text-stone-400;
+  @apply text-xs text-gray-500 dark:text-gray-400;
 }
 
 /* SECTION LABEL
@@ -72,7 +71,7 @@
    Usage: <h2 class="um-section-label">Section</h2>
 */
 .um-section-label {
-  @apply text-xs font-medium text-stone-500 dark:text-stone-400;
+  @apply text-xs font-medium text-gray-500 dark:text-gray-400;
 }
 
 /* PRIMARY BUTTON
@@ -88,7 +87,7 @@
    Usage: <button class="um-btn-secondary">Action</button>
 */
 .um-btn-secondary {
-  @apply px-4 py-2 border border-stone-200 dark:border-stone-700 rounded-2xl text-xs font-medium transition hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed;
+  @apply px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs font-medium transition hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed;
 }
 
 /* BACK BUTTON
@@ -96,7 +95,7 @@
    Usage: <button class="um-back-btn">← Back</button>
 */
 .um-back-btn {
-  @apply text-xs text-stone-400 dark:text-stone-500 hover:text-black dark:hover:text-white transition-colors;
+  @apply text-xs text-gray-400 dark:text-gray-500 hover:text-black dark:hover:text-white transition-colors;
 }
 
 /* INPUT FIELD
@@ -104,7 +103,7 @@
    Usage: <input class="um-input" />
 */
 .um-input {
-  @apply w-full px-4 py-2.5 border border-stone-200 dark:border-stone-700 rounded-2xl bg-white dark:bg-stone-900 text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors;
+  @apply w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-gray-900 text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors;
 }
 
 /* CARD
@@ -112,7 +111,7 @@
    Usage: <div class="um-card">...</div>
 */
 .um-card {
-  @apply border border-stone-200 dark:border-stone-700 rounded-2xl bg-white dark:bg-stone-900;
+  @apply border border-gray-200 dark:border-gray-800 rounded-2xl bg-white dark:bg-[#1A1C1F];
 }
 
 /* TAB BUTTON - ACTIVE
@@ -128,7 +127,7 @@
 }
 
 .um-tab-inactive {
-  @apply text-black/30 dark:text-stone-500 hover:text-black/60 dark:hover:text-stone-300;
+  @apply text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300;
 }
 
 /* ITEM NAME
@@ -136,7 +135,7 @@
    Usage: <p class="um-item-name">Name</p>
 */
 .um-item-name {
-  @apply text-sm font-medium text-stone-900 dark:text-white;
+  @apply text-sm font-medium text-gray-900 dark:text-white;
 }
 
 /* ITEM SUBTITLE
@@ -144,7 +143,7 @@
    Usage: <p class="um-item-subtitle">Info</p>
 */
 .um-item-subtitle {
-  @apply text-xs text-stone-500 dark:text-stone-400;
+  @apply text-xs text-gray-500 dark:text-gray-400;
 }
 
 /* ICON BOX
@@ -152,6 +151,6 @@
    Usage: <div class="um-icon-box">...</div>
 */
 .um-icon-box {
-  @apply flex h-9 w-9 items-center justify-center rounded-2xl bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400;
+  @apply flex h-9 w-9 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400;
 }
 

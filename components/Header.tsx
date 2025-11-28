@@ -93,7 +93,7 @@ export function Header() {
     <>
       {isAdmin && buildVersion && (
         <span
-          className="text-[10px] text-stone-400 font-mono px-1.5 py-0.5 bg-stone-100 dark:bg-stone-800 rounded"
+          className="text-[10px] text-gray-400 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded"
           title="Build version"
           aria-label={`Build version ${buildVersion}`}
         >
@@ -108,7 +108,7 @@ export function Header() {
           aria-label="Open account drawer"
         >
           {avatarUrl ? (
-            <span className="w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-stone-100 dark:bg-stone-800 overflow-hidden">
+            <span className="w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-hidden">
               <img
                 src={avatarUrl}
                 alt="Profile"
@@ -135,7 +135,7 @@ export function Header() {
 
   return (
     <header
-      className="mt-6 md:mt-8 relative z-30 bg-white dark:bg-stone-950 w-full"
+      className="mt-6 md:mt-8 relative z-30 bg-white dark:bg-gray-900 w-full"
       role="banner"
     >
       {/* Primary Nav */}
