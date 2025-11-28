@@ -386,16 +386,13 @@
   .dark .border-gray-700\/50 { border-color: hsl(24 8% 22% / 0.5) !important; }
   .dark .border-gray-700\/40 { border-color: hsl(24 8% 22% / 0.4) !important; }
 
-  /* Gray text */
+  /* Gray text - only override light shades for warm tone, don't touch dark shades */
   .dark .text-gray-100 { color: hsl(30 15% 95%) !important; }
   .dark .text-gray-200 { color: hsl(30 12% 88%) !important; }
   .dark .text-gray-300 { color: hsl(30 10% 70%) !important; }
   .dark .text-gray-400 { color: hsl(30 10% 55%) !important; }
-  .dark .text-gray-500 { color: hsl(30 8% 45%) !important; }
-  .dark .text-gray-600 { color: hsl(30 8% 38%) !important; }
-  .dark .text-gray-700 { color: hsl(24 8% 28%) !important; }
-  .dark .text-gray-800 { color: hsl(24 8% 18%) !important; }
-  .dark .text-gray-900 { color: hsl(24 10% 10%) !important; }
+  .dark .text-gray-500 { color: hsl(30 8% 50%) !important; }
+  /* gray-600 through gray-900 intentionally NOT overridden - they're for dark text on light elements */
 
   /* Gray rings */
   .dark .ring-gray-800 { --tw-ring-color: hsl(24 8% 16%) !important; }
@@ -424,15 +421,13 @@
   .dark .border-neutral-300 { border-color: hsl(30 10% 65%) !important; }
   .dark .border-neutral-200 { border-color: hsl(30 12% 78%) !important; }
 
-  /* Neutral text */
+  /* Neutral text - only override light shades for warm tone */
   .dark .text-neutral-100 { color: hsl(30 15% 95%) !important; }
   .dark .text-neutral-200 { color: hsl(30 12% 88%) !important; }
   .dark .text-neutral-300 { color: hsl(30 10% 70%) !important; }
   .dark .text-neutral-400 { color: hsl(30 10% 55%) !important; }
-  .dark .text-neutral-500 { color: hsl(30 8% 45%) !important; }
-  .dark .text-neutral-600 { color: hsl(30 8% 38%) !important; }
-  .dark .text-neutral-700 { color: hsl(24 8% 28%) !important; }
-  .dark .text-neutral-800 { color: hsl(24 8% 18%) !important; }
+  .dark .text-neutral-500 { color: hsl(30 8% 50%) !important; }
+  /* neutral-600 through neutral-900 intentionally NOT overridden */
 
   /* Slate backgrounds (for any slate usage) */
   .dark .bg-slate-900 { background-color: hsl(24 10% 10%) !important; }
