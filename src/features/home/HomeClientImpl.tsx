@@ -2445,7 +2445,7 @@ export default function HomeClientImpl({
     : featuredCities;
 
   return (
-    <ErrorBoundary>
+    <>
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"
@@ -3580,6 +3580,6 @@ export default function HomeClientImpl({
         )}
         <AIAssistant />
       </div>
-    </ErrorBoundary>
+    </>
   );
 }
