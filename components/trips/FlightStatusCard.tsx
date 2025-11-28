@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowRight, RefreshCw, Loader2, CheckCircle2, Clock, AlertCircle, Plane } from 'lucide-react';
+import { ArrowRight, RefreshCw, Loader2, CheckCircle2, Clock, AlertCircle, Plane, Pencil } from 'lucide-react';
 import type { ItineraryItemNotes } from '@/types/trip';
 
 interface FlightStatusCardProps {
   flight: ItineraryItemNotes;
   departureDate?: string;
   compact?: boolean;
+  onEdit?: () => void;
 }
 
 type FlightStatus = 'scheduled' | 'boarding' | 'departed' | 'in_flight' | 'landed' | 'delayed' | 'cancelled' | 'unknown';
@@ -27,7 +28,7 @@ interface FlightInfo {
  * FlightStatusCard - Compact flight card with route-focused design
  * Layout: Route header → Schedule row → Flight identity
  */
-export default function FlightStatusCard({ flight, departureDate, compact = true }: FlightStatusCardProps) {
+export default function FlightStatusCard({ flight, departureDate, compact = true, onEdit }: FlightStatusCardProps) {
   const [flightInfo, setFlightInfo] = useState<FlightInfo | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -166,7 +167,21 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50">
+    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50 relative">
+      {/* Edit Button */}
+      {onEdit && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="absolute top-3 right-3 p-1.5 rounded-lg bg-white/80 dark:bg-gray-900/80 text-stone-500 hover:text-stone-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+          title="Edit flight"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
+      )}
+
       {/* REGION 1: Route Header (EWR → MIA) */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-4 mb-3">
         {/* Origin */}
