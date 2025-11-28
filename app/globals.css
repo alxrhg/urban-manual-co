@@ -248,25 +248,26 @@
   }
 
   .dark {
-    --background: 0 0% 9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    /* Warm brownish dark theme */
+    --background: 24 10% 6%;
+    --foreground: 36 15% 95%;
+    --card: 24 10% 8%;
+    --card-foreground: 36 15% 95%;
+    --popover: 24 10% 8%;
+    --popover-foreground: 36 15% 95%;
+    --primary: 36 15% 95%;
+    --primary-foreground: 24 10% 8%;
+    --secondary: 24 8% 12%;
+    --secondary-foreground: 36 15% 95%;
+    --muted: 24 8% 14%;
+    --muted-foreground: 30 8% 55%;
+    --accent: 24 8% 14%;
+    --accent-foreground: 36 15% 95%;
+    --destructive: 0 62.8% 35%;
+    --destructive-foreground: 36 15% 95%;
+    --border: 24 8% 15%;
+    --input: 24 8% 15%;
+    --ring: 36 15% 80%;
   }
 
   * {
@@ -308,10 +309,32 @@
   html.dark {
     color-scheme: dark;
   }
-  
+
   html.light {
     color-scheme: light;
   }
+
+  /* Warm brownish overrides for dark mode stone colors */
+  .dark .bg-stone-950 { background-color: hsl(24 10% 6%) !important; }
+  .dark .bg-stone-900 { background-color: hsl(24 10% 10%) !important; }
+  .dark .bg-stone-800 { background-color: hsl(24 8% 14%) !important; }
+  .dark .bg-stone-700 { background-color: hsl(24 8% 20%) !important; }
+
+  .dark .border-stone-900 { border-color: hsl(24 8% 12%) !important; }
+  .dark .border-stone-800 { border-color: hsl(24 8% 16%) !important; }
+  .dark .border-stone-700 { border-color: hsl(24 8% 22%) !important; }
+
+  .dark .ring-stone-800 { --tw-ring-color: hsl(24 8% 16%) !important; }
+  .dark .ring-stone-700 { --tw-ring-color: hsl(24 8% 22%) !important; }
+
+  .dark .text-stone-400 { color: hsl(30 10% 55%) !important; }
+  .dark .text-stone-500 { color: hsl(30 8% 45%) !important; }
+
+  /* Brownish background variants */
+  .dark .bg-stone-900\/50 { background-color: hsl(24 10% 10% / 0.5) !important; }
+  .dark .bg-stone-800\/50 { background-color: hsl(24 8% 14% / 0.5) !important; }
+  .dark .bg-stone-950\/50 { background-color: hsl(24 10% 6% / 0.5) !important; }
+  .dark .bg-stone-900\/90 { background-color: hsl(24 10% 10% / 0.9) !important; }
   
   /* Ensure container max-width is 1280px site-wide */
   .container {
