@@ -1,13 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Clock, GripVertical, X, Star, MapPin } from 'lucide-react';
+import { GripVertical, X } from 'lucide-react';
 import { formatTimeDisplay } from '@/lib/utils/time-calculations';
 import FlightStatusCard from '@/components/trips/FlightStatusCard';
 import LodgingCard from '@/components/trips/LodgingCard';
+import PlaceCard from '@/components/trips/PlaceCard';
+import TransportCard from '@/components/trips/TransportCard';
+import MealCard from '@/components/trips/MealCard';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
 interface TripItemCardProps {
@@ -20,9 +22,12 @@ interface TripItemCardProps {
 
 /**
  * TripItemCard - Renders specialized cards based on item type
+ * All cards follow a cohesive design pattern with stone palette
  * - Flights: FlightStatusCard with route-focused layout
- * - Lodging: LodgingCard with property-focused layout
- * - Places: Compact row card with thumbnail
+ * - Hotels: LodgingCard with property-focused layout
+ * - Trains/Drives: TransportCard with route layout
+ * - Breakfast: MealCard with meal info
+ * - Places: PlaceCard with location details
  */
 export default function TripItemCard({
   item,
@@ -48,8 +53,6 @@ export default function TripItemCard({
   };
 
   const itemType = item.parsedNotes?.type;
-  const isFlight = itemType === 'flight';
-  const isLodging = itemType === 'hotel';
 
   // Shared wrapper for drag & drop + remove functionality
   const CardWrapper = ({ children }: { children: React.ReactNode }) => (
@@ -57,14 +60,14 @@ export default function TripItemCard({
       ref={setNodeRef}
       style={style}
       className={`
-        group relative
+        group relative mb-2
         ${isDragging ? 'z-50 opacity-50' : ''}
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative">
-        {/* Drag Handle - Overlaid on specialized cards */}
+        {/* Drag Handle - Overlaid on cards */}
         <div
           {...attributes}
           {...listeners}
@@ -79,7 +82,7 @@ export default function TripItemCard({
           <GripVertical className="w-4 h-4 text-stone-400 dark:text-stone-500" />
         </div>
 
-        {/* Remove Button - Overlaid on specialized cards */}
+        {/* Remove Button - Overlaid on cards */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -102,7 +105,7 @@ export default function TripItemCard({
           className={`
             cursor-pointer rounded-2xl transition-all
             ${isActive ? 'ring-2 ring-stone-300 dark:ring-stone-600' : ''}
-            ${!isFlight && !isLodging ? '' : 'hover:ring-1 hover:ring-stone-200 dark:hover:ring-stone-700'}
+            hover:ring-1 hover:ring-stone-200 dark:hover:ring-stone-700
           `}
         >
           {children}
@@ -112,7 +115,7 @@ export default function TripItemCard({
   );
 
   // Render FlightStatusCard for flights
-  if (isFlight && item.parsedNotes) {
+  if (itemType === 'flight' && item.parsedNotes) {
     return (
       <CardWrapper>
         <FlightStatusCard
@@ -124,8 +127,8 @@ export default function TripItemCard({
     );
   }
 
-  // Render LodgingCard for hotels/lodging
-  if (isLodging && item.parsedNotes) {
+  // Render LodgingCard for hotels
+  if (itemType === 'hotel' && item.parsedNotes) {
     return (
       <CardWrapper>
         <LodgingCard
@@ -143,110 +146,86 @@ export default function TripItemCard({
     );
   }
 
-  // Default: Generic place/activity card
+  // Render TransportCard for trains
+  if (itemType === 'train' && item.parsedNotes) {
+    return (
+      <CardWrapper>
+        <TransportCard
+          type="train"
+          from={item.parsedNotes.from}
+          to={item.parsedNotes.to}
+          departureDate={item.parsedNotes.departureDate}
+          departureTime={item.parsedNotes.departureTime}
+          arrivalTime={item.parsedNotes.arrivalTime}
+          duration={item.parsedNotes.duration}
+          trainNumber={item.parsedNotes.trainNumber}
+          trainLine={item.parsedNotes.trainLine}
+          confirmationNumber={item.parsedNotes.confirmationNumber}
+          notes={item.parsedNotes.notes}
+          compact
+        />
+      </CardWrapper>
+    );
+  }
+
+  // Render TransportCard for drives
+  if (itemType === 'drive' && item.parsedNotes) {
+    return (
+      <CardWrapper>
+        <TransportCard
+          type="drive"
+          from={item.parsedNotes.from}
+          to={item.parsedNotes.to}
+          departureDate={item.parsedNotes.departureDate}
+          departureTime={item.parsedNotes.departureTime}
+          arrivalTime={item.parsedNotes.arrivalTime}
+          duration={item.parsedNotes.duration}
+          notes={item.parsedNotes.notes}
+          compact
+        />
+      </CardWrapper>
+    );
+  }
+
+  // Render MealCard for breakfast
+  if (itemType === 'breakfast' && item.parsedNotes) {
+    return (
+      <CardWrapper>
+        <MealCard
+          name={item.title || 'Breakfast'}
+          type="breakfast"
+          time={item.time ? formatTimeDisplay(item.time) : item.parsedNotes.departureTime}
+          location={item.parsedNotes.city}
+          neighborhood={item.destination?.neighborhood ?? undefined}
+          rating={item.destination?.rating ?? undefined}
+          image={item.destination?.image || item.parsedNotes.image}
+          includedWithHotel={item.parsedNotes.breakfastIncluded}
+          notes={item.parsedNotes.notes}
+          compact
+        />
+      </CardWrapper>
+    );
+  }
+
+  // Default: PlaceCard for places, custom items, etc.
   const image = item.destination?.image || item.destination?.image_thumbnail || item.parsedNotes?.image;
   const category = item.parsedNotes?.category || item.destination?.category;
-  const neighborhood = item.destination?.neighborhood;
-  const rating = item.destination?.rating;
+  const neighborhood = item.destination?.neighborhood ?? undefined;
+  const rating = item.destination?.rating ?? undefined;
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`
-        group relative
-        ${isDragging ? 'z-50 opacity-50' : ''}
-      `}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <button
-        onClick={() => onEdit?.(item)}
-        className={`
-          w-full flex items-center gap-4 p-3
-          hover:bg-stone-50 dark:hover:bg-stone-800
-          rounded-2xl transition-colors text-left
-          ${isActive ? 'bg-stone-50 dark:bg-stone-800 ring-1 ring-stone-200 dark:ring-stone-700' : ''}
-        `}
-      >
-        {/* Drag Handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className={`
-            flex-shrink-0 cursor-grab active:cursor-grabbing p-1
-            transition-opacity duration-200
-            ${isHovered ? 'opacity-100' : 'opacity-0'}
-          `}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <GripVertical className="w-4 h-4 text-stone-300 dark:text-stone-600" />
-        </div>
-
-        {/* Index Badge */}
-        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
-          <span className="text-xs font-medium text-stone-600 dark:text-stone-400">{index + 1}</span>
-        </div>
-
-        {/* Thumbnail - 64px rounded-xl */}
-        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800">
-          {image ? (
-            <Image
-              src={image}
-              alt={item.title || 'Destination'}
-              fill
-              className="object-cover"
-              sizes="64px"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <MapPin className="w-6 h-6 text-stone-400" />
-            </div>
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium truncate text-stone-900 dark:text-white">
-            {item.title}
-          </div>
-          <div className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 flex items-center gap-1.5">
-            {neighborhood && <span>{neighborhood}</span>}
-            {neighborhood && category && <span>•</span>}
-            {category && <span className="capitalize">{category}</span>}
-          </div>
-          <div className="flex items-center gap-3 mt-1">
-            {item.time && (
-              <span className="text-xs text-stone-400 dark:text-stone-500 flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {formatTimeDisplay(item.time)}
-              </span>
-            )}
-            {rating && (
-              <span className="text-xs text-stone-400 dark:text-stone-500 flex items-center gap-1">
-                <Star className="w-3 h-3 fill-current text-amber-400" />
-                {rating.toFixed(1)}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Remove Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove?.(item.id);
-          }}
-          className={`
-            flex-shrink-0 p-2 rounded-xl
-            text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
-            transition-all duration-200
-            ${isHovered ? 'opacity-100' : 'opacity-0'}
-          `}
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </button>
-    </div>
+    <CardWrapper>
+      <PlaceCard
+        name={item.title || 'Place'}
+        category={category ?? undefined}
+        neighborhood={neighborhood}
+        time={item.time ? formatTimeDisplay(item.time) : undefined}
+        duration={item.parsedNotes?.duration}
+        rating={rating}
+        image={image ?? undefined}
+        notes={item.parsedNotes?.notes}
+        compact
+      />
+    </CardWrapper>
   );
 }
