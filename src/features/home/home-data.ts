@@ -48,28 +48,25 @@ function extractFilters(rows: FilterRow[]): { cities: string[]; categories: stri
 
 /**
  * Load homepage destinations fresh on each request
+ *
+ * Note: Errors are NOT caught here. Expected errors (connection issues) are handled
+ * by getHomepageDestinations(). Unexpected errors are intentionally thrown to trigger
+ * the error boundary (error.tsx) so users see an error page instead of a blank homepage.
  */
 export async function getDestinations(): Promise<Destination[]> {
-  try {
-    const destinations = await getHomepageDestinations(5000);
-    return destinations;
-  } catch (error) {
-    console.error('[Homepage] Failed to load destinations:', error);
-    return [];
-  }
+  return getHomepageDestinations(5000);
 }
 
 /**
  * Load filter options fresh on each request
+ *
+ * Note: Errors are NOT caught here. Expected errors (connection issues) are handled
+ * by getFilterRows(). Unexpected errors are intentionally thrown to trigger
+ * the error boundary (error.tsx) so users see an error page instead of a blank homepage.
  */
 export async function getFilters(): Promise<{ cities: string[]; categories: string[] }> {
-  try {
-    const rows = await getFilterRows(1000);
-    return extractFilters(rows);
-  } catch (error) {
-    console.error('[Homepage] Failed to load filters:', error);
-    return { cities: [], categories: [] };
-  }
+  const rows = await getFilterRows(1000);
+  return extractFilters(rows);
 }
 
 /**
