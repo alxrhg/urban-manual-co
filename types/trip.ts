@@ -166,7 +166,15 @@ export interface ItineraryItemNotes {
   breakfastIncluded?: boolean; // If true, shows breakfast at top of next day
   checkInTime?: string;
   checkOutTime?: string;
+  checkInDate?: string;
+  checkOutDate?: string;
   hotelConfirmation?: string;
+  // Lodging details
+  name?: string;
+  address?: string;
+  phone?: string;
+  website?: string;
+  notes?: string;
   // Travel time to next item
   travelTimeToNext?: number; // in minutes
   travelDistanceToNext?: number; // in km

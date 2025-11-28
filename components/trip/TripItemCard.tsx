@@ -4,8 +4,10 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Clock, GripVertical, X, Star, MapPin, Plane } from 'lucide-react';
+import { Clock, GripVertical, X, Star, MapPin } from 'lucide-react';
 import { formatTimeDisplay } from '@/lib/utils/time-calculations';
+import FlightStatusCard from '@/components/trips/FlightStatusCard';
+import LodgingCard from '@/components/trips/LodgingCard';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
 interface TripItemCardProps {
@@ -17,8 +19,10 @@ interface TripItemCardProps {
 }
 
 /**
- * TripItemCard - Compact row card with stone palette
- * Uses: rounded-2xl borders, 64px thumbnails, text-sm/text-xs typography
+ * TripItemCard - Renders specialized cards based on item type
+ * - Flights: FlightStatusCard with route-focused layout
+ * - Lodging: LodgingCard with property-focused layout
+ * - Places: Compact row card with thumbnail
  */
 export default function TripItemCard({
   item,
@@ -43,11 +47,107 @@ export default function TripItemCard({
     transition,
   };
 
+  const itemType = item.parsedNotes?.type;
+  const isFlight = itemType === 'flight';
+  const isLodging = itemType === 'hotel';
+
+  // Shared wrapper for drag & drop + remove functionality
+  const CardWrapper = ({ children }: { children: React.ReactNode }) => (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`
+        group relative
+        ${isDragging ? 'z-50 opacity-50' : ''}
+      `}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="relative">
+        {/* Drag Handle - Overlaid on specialized cards */}
+        <div
+          {...attributes}
+          {...listeners}
+          className={`
+            absolute top-3 left-3 z-10 cursor-grab active:cursor-grabbing p-1
+            bg-white/80 dark:bg-stone-900/80 rounded-lg backdrop-blur-sm
+            transition-opacity duration-200
+            ${isHovered ? 'opacity-100' : 'opacity-0'}
+          `}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <GripVertical className="w-4 h-4 text-stone-400 dark:text-stone-500" />
+        </div>
+
+        {/* Remove Button - Overlaid on specialized cards */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove?.(item.id);
+          }}
+          className={`
+            absolute top-3 right-3 z-10 p-1.5 rounded-lg
+            bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm
+            text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
+            transition-all duration-200
+            ${isHovered ? 'opacity-100' : 'opacity-0'}
+          `}
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Clickable wrapper for edit */}
+        <div
+          onClick={() => onEdit?.(item)}
+          className={`
+            cursor-pointer rounded-2xl transition-all
+            ${isActive ? 'ring-2 ring-stone-300 dark:ring-stone-600' : ''}
+            ${!isFlight && !isLodging ? '' : 'hover:ring-1 hover:ring-stone-200 dark:hover:ring-stone-700'}
+          `}
+        >
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Render FlightStatusCard for flights
+  if (isFlight && item.parsedNotes) {
+    return (
+      <CardWrapper>
+        <FlightStatusCard
+          flight={item.parsedNotes}
+          departureDate={item.parsedNotes.departureDate}
+          compact
+        />
+      </CardWrapper>
+    );
+  }
+
+  // Render LodgingCard for hotels/lodging
+  if (isLodging && item.parsedNotes) {
+    return (
+      <CardWrapper>
+        <LodgingCard
+          name={item.title || item.parsedNotes.name || 'Accommodation'}
+          address={item.parsedNotes.address}
+          checkIn={item.parsedNotes.checkInDate || item.parsedNotes.checkInTime}
+          checkOut={item.parsedNotes.checkOutDate || item.parsedNotes.checkOutTime}
+          confirmationNumber={item.parsedNotes.hotelConfirmation || item.parsedNotes.confirmationNumber}
+          phone={item.parsedNotes.phone}
+          website={item.parsedNotes.website}
+          notes={item.parsedNotes.notes}
+          compact
+        />
+      </CardWrapper>
+    );
+  }
+
+  // Default: Generic place/activity card
   const image = item.destination?.image || item.destination?.image_thumbnail || item.parsedNotes?.image;
   const category = item.parsedNotes?.category || item.destination?.category;
   const neighborhood = item.destination?.neighborhood;
   const rating = item.destination?.rating;
-  const isFlight = item.parsedNotes?.type === 'flight';
 
   return (
     <div
@@ -98,10 +198,6 @@ export default function TripItemCard({
               className="object-cover"
               sizes="64px"
             />
-          ) : isFlight ? (
-            <div className="w-full h-full flex items-center justify-center bg-blue-50 dark:bg-blue-900/30">
-              <Plane className="w-6 h-6 text-blue-400" />
-            </div>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <MapPin className="w-6 h-6 text-stone-400" />
