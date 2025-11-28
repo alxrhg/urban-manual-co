@@ -22,6 +22,7 @@ import {
   Square,
   CheckSquare,
   X,
+  Calendar,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import TripStats from '@/components/trip/TripStats';
@@ -33,8 +34,11 @@ import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import TripWeatherForecast from '@/components/trips/TripWeatherForecast';
 import TripSafetyAlerts from '@/components/trips/TripSafetyAlerts';
 import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
+import BestTimeToVisitWidget from '@/components/trips/BestTimeToVisitWidget';
+import IntelligenceWarnings from '@/components/planner/IntelligenceWarnings';
 import type { FlightData } from '@/types/trip';
 import type { Destination } from '@/types/destination';
+import type { PlannerWarning } from '@/lib/intelligence/types';
 
 /**
  * TripPage - Clean, minimal design with stone palette
@@ -75,12 +79,98 @@ export default function TripPage() {
   const [checklistItems, setChecklistItems] = useState<{ id: string; text: string; checked: boolean }[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState('');
   const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
+  const [warnings, setWarnings] = useState<PlannerWarning[]>([]);
 
   // Get first destination coordinates for weather
   const firstDestination = useMemo(() => {
     const firstItem = days.flatMap(d => d.items).find(item => item.destination?.latitude);
     return firstItem?.destination;
   }, [days]);
+
+  // Generate trip warnings based on analysis
+  useMemo(() => {
+    const newWarnings: PlannerWarning[] = [];
+    const allItems = days.flatMap(d => d.items);
+
+    // Warning: Empty days
+    days.forEach(day => {
+      if (day.items.length === 0) {
+        newWarnings.push({
+          id: `empty-day-${day.dayNumber}`,
+          type: 'timing',
+          severity: 'low',
+          message: `Day ${day.dayNumber} has no activities planned`,
+          suggestion: 'Add some places to fill your day',
+        });
+      }
+    });
+
+    // Warning: Too many activities in a day
+    days.forEach(day => {
+      if (day.items.length > 6) {
+        newWarnings.push({
+          id: `busy-day-${day.dayNumber}`,
+          type: 'timing',
+          severity: 'medium',
+          message: `Day ${day.dayNumber} looks very packed (${day.items.length} stops)`,
+          suggestion: 'Consider spreading activities across multiple days for a more relaxed trip',
+        });
+      }
+    });
+
+    // Warning: Long distances between consecutive activities
+    allItems.forEach((item, index) => {
+      if (index === 0) return;
+      const prevItem = allItems[index - 1];
+      if (item.destination?.latitude && item.destination?.longitude &&
+          prevItem.destination?.latitude && prevItem.destination?.longitude) {
+        const lat1 = item.destination.latitude;
+        const lon1 = item.destination.longitude;
+        const lat2 = prevItem.destination.latitude;
+        const lon2 = prevItem.destination.longitude;
+
+        // Haversine formula for distance
+        const R = 6371; // km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distance = R * c;
+
+        if (distance > 5) { // More than 5km apart
+          newWarnings.push({
+            id: `distance-${item.id}`,
+            type: 'distance',
+            severity: distance > 10 ? 'medium' : 'low',
+            message: `${prevItem.title} to ${item.title}: ${distance.toFixed(1)}km apart`,
+            blockId: item.id,
+            suggestion: 'Consider reordering or adding transit time',
+          });
+        }
+      }
+    });
+
+    setWarnings(newWarnings.slice(0, 5)); // Limit to 5 warnings
+  }, [days]);
+
+  // Handle adding AI suggestion to trip
+  const handleAddAISuggestion = useCallback(async (suggestion: {
+    destination: { slug: string; name: string; category: string };
+    day: number;
+    startTime: string;
+  }) => {
+    try {
+      const response = await fetch(`/api/destinations/${suggestion.destination.slug}`);
+      if (response.ok) {
+        const destination = await response.json();
+        await addPlace(destination, suggestion.day, suggestion.startTime);
+      }
+    } catch (err) {
+      console.error('Failed to add AI suggestion:', err);
+    }
+  }, [addPlace]);
 
   // Callbacks
   const openPlaceSelector = useCallback((dayNumber: number) => {
@@ -360,6 +450,16 @@ export default function TripPage() {
           </div>
         )}
 
+        {/* Intelligence Warnings - show proactive alerts */}
+        {warnings.length > 0 && (
+          <div className="mb-6">
+            <IntelligenceWarnings
+              warnings={warnings}
+              onDismiss={(id) => setWarnings(prev => prev.filter(w => w.id !== id))}
+            />
+          </div>
+        )}
+
         {/* Smart Suggestions - below weather */}
         {days.length > 0 && (
           <SmartSuggestions
@@ -369,6 +469,7 @@ export default function TripPage() {
               setSelectedDayNumber(dayNumber);
               openPlaceSelector(dayNumber);
             }}
+            onAddAISuggestion={handleAddAISuggestion}
             className="mb-8"
           />
         )}
@@ -572,6 +673,19 @@ export default function TripPage() {
         {/* Insights Tab */}
         {activeTab === 'insights' && (
           <div className="space-y-6 fade-in">
+            {/* Best Time to Visit */}
+            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <Calendar className="w-4 h-4 text-stone-500" />
+                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Best Time to Visit</h3>
+              </div>
+              <BestTimeToVisitWidget
+                destination={trip.destination}
+                startDate={trip.start_date}
+                endDate={trip.end_date}
+              />
+            </div>
+
             {/* Weather Forecast */}
             <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
               <div className="flex items-center gap-2 mb-4">
