@@ -81,13 +81,13 @@ export function SavedPlacesDrawer() {
   const backButton = canGoBack ? (
     <button
       onClick={goBack}
-      className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      className="flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-xl sm:rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 active:bg-stone-200 dark:active:bg-stone-700 transition-colors min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
     >
-      <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+      <ChevronLeft className="h-5 w-5 text-stone-600 dark:text-stone-400" />
     </button>
   ) : (
-    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-      <Bookmark className="h-4 w-4 text-gray-500" />
+    <div className="flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-xl sm:rounded-full bg-stone-100 dark:bg-stone-800">
+      <Bookmark className="h-5 w-5 sm:h-4 sm:w-4 text-stone-500" />
     </div>
   );
 
@@ -100,20 +100,20 @@ export function SavedPlacesDrawer() {
         bordered={false}
       />
 
-      <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-24 custom-scrollbar">
+      <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-24 pb-safe custom-scrollbar">
         {loading ? (
           <DrawerSection>
-            <div className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-              <p className="mt-2 text-sm text-gray-500">Loading saved places...</p>
+            <div className="flex flex-col items-center justify-center py-16 sm:py-12">
+              <Loader2 className="h-7 w-7 sm:h-6 sm:w-6 animate-spin text-stone-400" />
+              <p className="mt-3 text-base sm:text-sm text-stone-500">Loading saved places...</p>
             </div>
           </DrawerSection>
         ) : savedPlaces.length === 0 ? (
           <DrawerSection>
-            <div className="text-center py-12 px-4 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-900/50">
-              <Bookmark className="h-8 w-8 text-gray-400 mx-auto mb-3" />
-              <p className="text-sm font-medium text-gray-900 dark:text-white">No saved places yet</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <div className="text-center py-16 sm:py-12 px-5 sm:px-4 border border-dashed border-stone-200 dark:border-stone-800 rounded-2xl bg-stone-50/50 dark:bg-stone-900/50">
+              <Bookmark className="h-10 w-10 sm:h-8 sm:w-8 text-stone-400 mx-auto mb-4 sm:mb-3" />
+              <p className="text-base sm:text-sm font-medium text-stone-900 dark:text-white">No saved places yet</p>
+              <p className="text-sm sm:text-xs text-stone-500 dark:text-stone-400 mt-1.5 sm:mt-1">
                 Save places you want to visit later
               </p>
             </div>
@@ -140,7 +140,7 @@ export function SavedPlacesDrawer() {
             closeDrawer();
             router.push('/account?tab=saved');
           }}
-          className="w-full bg-black dark:bg-white text-white dark:text-black rounded-xl px-4 py-3 text-sm font-medium hover:opacity-90 transition-opacity"
+          className="w-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-2xl sm:rounded-xl px-4 py-4 sm:py-3 text-base sm:text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity min-h-[56px] sm:min-h-[44px]"
         >
           View Full List
         </button>

@@ -24,18 +24,18 @@ function NavItem({
   return (
     <button
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-900"
+      className="flex w-full items-center gap-4 rounded-2xl sm:rounded-xl px-4 sm:px-3 py-4 sm:py-3 text-left transition-colors hover:bg-stone-50 dark:hover:bg-stone-900 active:bg-stone-100 dark:active:bg-stone-800 min-h-[60px] sm:min-h-0"
     >
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-        <Icon className="h-4 w-4" />
+      <div className="flex h-11 w-11 sm:h-9 sm:w-9 items-center justify-center rounded-xl sm:rounded-full bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400 flex-shrink-0">
+        <Icon className="h-5 w-5 sm:h-4 sm:w-4" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
+        <p className="text-base sm:text-sm font-medium text-stone-900 dark:text-white">{label}</p>
         {description && (
-          <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+          <p className="text-sm sm:text-xs text-stone-500 dark:text-stone-400 mt-0.5">{description}</p>
         )}
       </div>
-      <ChevronRight className="h-4 w-4 text-gray-400" />
+      <ChevronRight className="h-5 w-5 sm:h-4 sm:w-4 text-stone-400 flex-shrink-0" />
     </button>
   );
 }
@@ -54,12 +54,12 @@ export function SettingsDrawer() {
   const backButton = canGoBack ? (
     <button
       onClick={goBack}
-      className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+      className="flex h-11 w-11 sm:h-8 sm:w-8 items-center justify-center rounded-xl sm:rounded-full hover:bg-stone-100 dark:hover:bg-stone-800 active:bg-stone-200 dark:active:bg-stone-700 transition-colors min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0"
     >
-      <ChevronLeft className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+      <ChevronLeft className="h-5 w-5 text-stone-600 dark:text-stone-400" />
     </button>
   ) : (
-    <Settings className="h-5 w-5 text-gray-500" />
+    <Settings className="h-5 w-5 text-stone-500" />
   );
 
   if (!user) {
@@ -70,10 +70,10 @@ export function SettingsDrawer() {
           leftAccessory={backButton}
         />
 
-        <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
+        <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16 pb-safe">
           <DrawerSection>
-            <div className="text-center py-12">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="text-center py-16 sm:py-12">
+              <p className="text-base sm:text-sm text-stone-500 dark:text-stone-400">
                 Sign in to access settings
               </p>
             </div>
@@ -91,12 +91,12 @@ export function SettingsDrawer() {
         leftAccessory={backButton}
       />
 
-      <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16">
+      <div className="overflow-y-auto max-h-[calc(100vh-4rem)] pb-16 pb-safe">
         <DrawerSection bordered>
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+          <p className="text-xs font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-3 sm:mb-2 px-1">
             Account
           </p>
-          <div className="-mx-3">
+          <div className="-mx-4 sm:-mx-3 space-y-1">
             <NavItem
               icon={User}
               label="Profile"
@@ -119,10 +119,10 @@ export function SettingsDrawer() {
         </DrawerSection>
 
         <DrawerSection>
-          <p className="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">
+          <p className="text-xs font-medium uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-3 sm:mb-2 px-1">
             App
           </p>
-          <div className="-mx-3">
+          <div className="-mx-4 sm:-mx-3 space-y-1">
             <NavItem
               icon={Settings}
               label="Preferences"
@@ -136,7 +136,7 @@ export function SettingsDrawer() {
       <DrawerActionBar>
         <button
           onClick={() => handleNavigate('/account?tab=settings')}
-          className="w-full bg-black dark:bg-white text-white dark:text-black rounded-full px-4 py-2.5 text-sm font-medium"
+          className="w-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 rounded-2xl sm:rounded-xl px-4 py-4 sm:py-3 text-base sm:text-sm font-medium hover:opacity-90 active:opacity-80 transition-opacity min-h-[56px] sm:min-h-[44px]"
         >
           Open full settings
         </button>
