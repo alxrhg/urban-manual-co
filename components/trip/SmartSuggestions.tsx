@@ -5,7 +5,7 @@ import { CheckCircle2, Sparkles } from 'lucide-react';
 
 interface TripDay {
   dayNumber: number;
-  date?: string;
+  date?: string | null;
   items: Array<{
     id: string;
     title: string;
