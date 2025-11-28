@@ -134,6 +134,47 @@
   }
 }
 
+/* Shimmer animation for placeholder text */
+@keyframes placeholderShimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.shimmer-placeholder::placeholder {
+  background: linear-gradient(
+    90deg,
+    #a8a29e 0%,
+    #a8a29e 40%,
+    #d6d3d1 50%,
+    #a8a29e 60%,
+    #a8a29e 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: placeholderShimmer 3s linear infinite;
+}
+
+.dark .shimmer-placeholder::placeholder {
+  background: linear-gradient(
+    90deg,
+    #57534e 0%,
+    #57534e 40%,
+    #78716c 50%,
+    #57534e 60%,
+    #57534e 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 .search-input-shimmer {
   position: relative;
 }

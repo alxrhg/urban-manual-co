@@ -138,7 +138,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                     onChange={(e) => setName(e.target.value)}
                     required={isSignUp}
                     autoComplete="name"
-                    className="w-full pl-12 sm:pl-11 pr-4 py-4 sm:py-3 border border-stone-200 dark:border-stone-800 rounded-xl bg-stone-50 dark:bg-stone-900 focus:outline-none focus:border-stone-400 dark:focus:border-stone-600 focus:bg-white dark:focus:bg-stone-900 transition-colors text-base sm:text-sm text-stone-900 dark:text-white placeholder:text-stone-400 min-h-[56px] sm:min-h-[48px]"
+                    className="w-full pl-12 sm:pl-11 pr-4 py-4 sm:py-3 border border-stone-200 dark:border-stone-800 rounded-xl bg-white dark:bg-stone-900 focus:outline-none focus:border-stone-400 dark:focus:border-stone-600 transition-colors text-base sm:text-sm text-stone-900 dark:text-white min-h-[56px] sm:min-h-[48px] shimmer-placeholder"
                     placeholder="Your name"
                   />
                 </div>
@@ -159,7 +159,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   autoComplete="email"
-                  className="w-full pl-12 sm:pl-11 pr-4 py-4 sm:py-3 border border-stone-200 dark:border-stone-800 rounded-xl bg-stone-50 dark:bg-stone-900 focus:outline-none focus:border-stone-400 dark:focus:border-stone-600 focus:bg-white dark:focus:bg-stone-900 transition-colors text-base sm:text-sm text-stone-900 dark:text-white placeholder:text-stone-400 min-h-[56px] sm:min-h-[48px]"
+                  className="w-full pl-12 sm:pl-11 pr-4 py-4 sm:py-3 border border-stone-200 dark:border-stone-800 rounded-xl bg-white dark:bg-stone-900 focus:outline-none focus:border-stone-400 dark:focus:border-stone-600 transition-colors text-base sm:text-sm text-stone-900 dark:text-white min-h-[56px] sm:min-h-[48px] shimmer-placeholder"
                   placeholder="you@example.com"
                 />
               </div>
@@ -180,7 +180,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                   required
                   minLength={6}
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                  className="w-full pl-12 sm:pl-11 pr-14 py-4 sm:py-3 border border-stone-200 dark:border-stone-800 rounded-xl bg-stone-50 dark:bg-stone-900 focus:outline-none focus:border-stone-400 dark:focus:border-stone-600 focus:bg-white dark:focus:bg-stone-900 transition-colors text-base sm:text-sm text-stone-900 dark:text-white placeholder:text-stone-400 min-h-[56px] sm:min-h-[48px]"
+                  className="w-full pl-12 sm:pl-11 pr-14 py-4 sm:py-3 border border-stone-200 dark:border-stone-800 rounded-xl bg-white dark:bg-stone-900 focus:outline-none focus:border-stone-400 dark:focus:border-stone-600 transition-colors text-base sm:text-sm text-stone-900 dark:text-white min-h-[56px] sm:min-h-[48px] shimmer-placeholder"
                   placeholder="••••••••"
                 />
                 <button
