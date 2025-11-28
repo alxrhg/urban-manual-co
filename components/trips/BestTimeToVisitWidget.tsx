@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Sun, Users, DollarSign, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Calendar, Sun, Users, DollarSign, Loader2, AlertCircle, Check } from 'lucide-react';
 
 interface MonthData {
   month: string;
@@ -43,16 +43,11 @@ interface BestTimeToVisitWidgetProps {
   className?: string;
 }
 
-function getScoreColor(score: number): string {
-  if (score >= 80) return 'text-green-600 dark:text-green-400';
-  if (score >= 60) return 'text-amber-600 dark:text-amber-400';
-  return 'text-red-500 dark:text-red-400';
-}
-
-function getScoreBg(score: number): string {
-  if (score >= 80) return 'bg-green-100 dark:bg-green-900/30';
-  if (score >= 60) return 'bg-amber-100 dark:bg-amber-900/30';
-  return 'bg-red-100 dark:bg-red-900/30';
+function getScoreLabel(score: number): string {
+  if (score >= 80) return 'Great';
+  if (score >= 60) return 'Good';
+  if (score >= 40) return 'Fair';
+  return 'Poor';
 }
 
 /**
@@ -62,7 +57,6 @@ function getScoreBg(score: number): string {
 export default function BestTimeToVisitWidget({
   destination,
   startDate,
-  endDate,
   className = '',
 }: BestTimeToVisitWidgetProps) {
   const [data, setData] = useState<BestTimeData | null>(null);
@@ -130,52 +124,43 @@ export default function BestTimeToVisitWidget({
 
   // Determine if trip timing is optimal
   const isOptimalTiming = tripMonthData && tripMonthData.overallScore >= 70;
-  const isBadTiming = tripMonthData && tripMonthData.overallScore < 50;
 
   return (
     <div className={className}>
       {/* Trip Month Analysis */}
       {tripMonthData && (
-        <div className={`p-4 rounded-xl mb-4 ${isOptimalTiming ? 'bg-green-50 dark:bg-green-900/20' : isBadTiming ? 'bg-amber-50 dark:bg-amber-900/20' : 'bg-stone-50 dark:bg-gray-800/50'}`}>
+        <div className="p-4 rounded-xl border border-stone-200 dark:border-gray-800 mb-4">
           <div className="flex items-start gap-3">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${isOptimalTiming ? 'bg-green-100 dark:bg-green-900/40' : isBadTiming ? 'bg-amber-100 dark:bg-amber-900/40' : 'bg-stone-100 dark:bg-gray-800'}`}>
+            <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
               {isOptimalTiming ? (
-                <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+                <Check className="w-4 h-4 text-stone-600 dark:text-gray-400" />
               ) : (
-                <Calendar className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <Calendar className="w-4 h-4 text-stone-500" />
               )}
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-stone-900 dark:text-white">
                 Your trip: {tripMonth}
               </p>
-              <p className="text-xs text-stone-600 dark:text-gray-400 mt-0.5">
+              <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
                 {isOptimalTiming
-                  ? 'Great timing! This is an excellent time to visit.'
-                  : isBadTiming
-                  ? `Consider visiting in ${data.bestOverall?.month || 'a different month'} for better conditions.`
-                  : 'Decent timing, though other months might be slightly better.'}
+                  ? 'Great timing for visiting.'
+                  : `Consider ${data.bestOverall?.month || 'other months'} for better conditions.`}
               </p>
 
               {/* Score breakdown */}
-              <div className="flex items-center gap-4 mt-3">
+              <div className="flex items-center gap-4 mt-3 text-xs text-stone-500 dark:text-gray-400">
                 <div className="flex items-center gap-1.5">
-                  <Sun className="w-3.5 h-3.5 text-stone-400" />
-                  <span className={`text-xs font-medium ${getScoreColor(tripMonthData.weatherScore)}`}>
-                    {tripMonthData.weatherScore}%
-                  </span>
+                  <Sun className="w-3 h-3" />
+                  <span>{getScoreLabel(tripMonthData.weatherScore)}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-stone-400" />
-                  <span className={`text-xs font-medium ${getScoreColor(tripMonthData.crowdScore)}`}>
-                    {tripMonthData.crowdScore}%
-                  </span>
+                  <Users className="w-3 h-3" />
+                  <span>{getScoreLabel(tripMonthData.crowdScore)}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5 text-stone-400" />
-                  <span className={`text-xs font-medium ${getScoreColor(tripMonthData.priceScore)}`}>
-                    {tripMonthData.priceScore}%
-                  </span>
+                  <DollarSign className="w-3 h-3" />
+                  <span>{getScoreLabel(tripMonthData.priceScore)}</span>
                 </div>
               </div>
             </div>
@@ -192,9 +177,9 @@ export default function BestTimeToVisitWidget({
 
           <div className="grid grid-cols-3 gap-2">
             {/* Best Overall */}
-            <div className="p-3 bg-stone-50 dark:bg-gray-800/50 rounded-xl text-center">
-              <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
-                <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+            <div className="p-3 border border-stone-200 dark:border-gray-800 rounded-xl text-center">
+              <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+                <Check className="w-4 h-4 text-stone-600 dark:text-gray-400" />
               </div>
               <p className="text-xs font-medium text-stone-900 dark:text-white">
                 {data.bestOverall.month}
@@ -206,9 +191,9 @@ export default function BestTimeToVisitWidget({
 
             {/* Best for Weather */}
             {data.bestForWeather && (
-              <div className="p-3 bg-stone-50 dark:bg-gray-800/50 rounded-xl text-center">
-                <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                  <Sun className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+              <div className="p-3 border border-stone-200 dark:border-gray-800 rounded-xl text-center">
+                <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+                  <Sun className="w-4 h-4 text-stone-500" />
                 </div>
                 <p className="text-xs font-medium text-stone-900 dark:text-white">
                   {data.bestForWeather.month}
@@ -221,9 +206,9 @@ export default function BestTimeToVisitWidget({
 
             {/* Best for Budget */}
             {data.bestForBudget && (
-              <div className="p-3 bg-stone-50 dark:bg-gray-800/50 rounded-xl text-center">
-                <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <div className="p-3 border border-stone-200 dark:border-gray-800 rounded-xl text-center">
+                <div className="w-8 h-8 mx-auto mb-2 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+                  <DollarSign className="w-4 h-4 text-stone-500" />
                 </div>
                 <p className="text-xs font-medium text-stone-900 dark:text-white">
                   {data.bestForBudget.month}
@@ -244,19 +229,26 @@ export default function BestTimeToVisitWidget({
             Monthly Overview
           </p>
           <div className="grid grid-cols-6 gap-1">
-            {data.months.slice(0, 12).map((month) => (
-              <div
-                key={month.month}
-                className={`p-1.5 rounded-lg text-center ${tripMonth?.toLowerCase() === month.month.toLowerCase() ? 'ring-2 ring-stone-900 dark:ring-white' : ''} ${getScoreBg(month.overallScore)}`}
-              >
-                <p className="text-[10px] font-medium text-stone-700 dark:text-gray-300">
-                  {month.month.slice(0, 3)}
-                </p>
-                <p className={`text-[10px] font-bold ${getScoreColor(month.overallScore)}`}>
-                  {month.overallScore}
-                </p>
-              </div>
-            ))}
+            {data.months.slice(0, 12).map((month) => {
+              const isCurrentMonth = tripMonth?.toLowerCase() === month.month.toLowerCase();
+              return (
+                <div
+                  key={month.month}
+                  className={`p-1.5 rounded-lg text-center border ${
+                    isCurrentMonth
+                      ? 'border-stone-900 dark:border-white'
+                      : 'border-stone-200 dark:border-gray-800'
+                  }`}
+                >
+                  <p className="text-[10px] font-medium text-stone-700 dark:text-gray-300">
+                    {month.month.slice(0, 3)}
+                  </p>
+                  <p className="text-[10px] text-stone-500 dark:text-gray-400">
+                    {month.overallScore}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

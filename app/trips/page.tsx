@@ -440,7 +440,7 @@ export default function TripsPage() {
                         {dateDisplay}
                       </p>
                     ) : trip.status === 'planning' && (trip.item_count || 0) < 3 ? (
-                      <p className="text-xs text-violet-600 dark:text-violet-400 flex items-center gap-1.5">
+                      <p className="text-xs text-stone-600 dark:text-gray-400 flex items-center gap-1.5">
                         <Sparkles className="w-3 h-3" />
                         Continue planning
                       </p>

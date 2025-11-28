@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
-import { CheckCircle2, Sparkles, Loader2, RefreshCw, Lightbulb, Zap } from 'lucide-react';
+import { useMemo, useState, useCallback } from 'react';
+import { CheckCircle2, Sparkles, Loader2, RefreshCw, Lightbulb } from 'lucide-react';
 
 interface TripDay {
   dayNumber: number;
@@ -271,7 +271,7 @@ export default function SmartSuggestions({
         <div className="p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium text-[15px] text-stone-900 dark:text-white flex items-center gap-2">
-              <Lightbulb className="w-4 h-4 text-amber-500" />
+              <Lightbulb className="w-4 h-4 text-stone-400" />
               Quick Suggestions
             </h3>
           </div>
@@ -308,10 +308,10 @@ export default function SmartSuggestions({
 
       {/* AI Suggestions Section */}
       {destination && (
-        <div className={`p-5 bg-gradient-to-br from-violet-50/50 to-blue-50/50 dark:from-violet-950/20 dark:to-blue-950/20 ${localSuggestions.length > 0 ? 'border-t border-stone-200 dark:border-gray-800' : ''}`}>
+        <div className={`p-5 ${localSuggestions.length > 0 ? 'border-t border-stone-200 dark:border-gray-800' : ''}`}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-medium text-[15px] text-stone-900 dark:text-white flex items-center gap-2">
-              <Zap className="w-4 h-4 text-violet-500" />
+              <Sparkles className="w-4 h-4 text-stone-400" />
               AI Recommendations
             </h3>
             <button
@@ -324,7 +324,7 @@ export default function SmartSuggestions({
                 }
               }}
               disabled={isLoadingAI}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-100 dark:hover:bg-violet-900/30 rounded-full transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-stone-600 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50"
             >
               {isLoadingAI ? (
                 <>
@@ -351,7 +351,7 @@ export default function SmartSuggestions({
             </p>
           ) : isLoadingAI ? (
             <div className="flex items-center justify-center py-6">
-              <Loader2 className="w-5 h-5 animate-spin text-violet-500" />
+              <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
             </div>
           ) : aiSuggestions.length === 0 ? (
             <p className="text-xs text-stone-500 dark:text-gray-400 py-2">
@@ -363,7 +363,7 @@ export default function SmartSuggestions({
                 <button
                   key={`${suggestion.destination.slug}-${index}`}
                   onClick={() => onAddAISuggestion?.(suggestion)}
-                  className="w-full flex items-start gap-3 text-left group hover:bg-white/60 dark:hover:bg-gray-800/50 -mx-2 px-2 py-2 rounded-xl transition-colors"
+                  className="w-full flex items-start gap-3 text-left group hover:bg-stone-50 dark:hover:bg-gray-800/50 -mx-2 px-2 py-2 rounded-xl transition-colors"
                 >
                   {/* Thumbnail */}
                   {suggestion.destination.image_thumbnail ? (
@@ -375,8 +375,8 @@ export default function SmartSuggestions({
                       />
                     </div>
                   ) : (
-                    <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
-                      <Sparkles className="w-4 h-4 text-violet-500" />
+                    <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-stone-400" />
                     </div>
                   )}
 
@@ -385,7 +385,7 @@ export default function SmartSuggestions({
                       <span className="text-sm font-medium text-stone-900 dark:text-white truncate">
                         {suggestion.destination.name}
                       </span>
-                      <span className="text-[10px] px-1.5 py-0.5 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 rounded-full flex-shrink-0">
+                      <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 dark:bg-gray-800 text-stone-600 dark:text-gray-400 rounded-full flex-shrink-0">
                         Day {suggestion.day}
                       </span>
                     </div>
