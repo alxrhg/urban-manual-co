@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
@@ -163,8 +162,6 @@ function transformOpeningHours(hours: any): any {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin(request);
-
     const body = await request.json();
     const { name, city, placeId } = body;
 
@@ -263,7 +260,8 @@ export async function POST(request: NextRequest) {
       const photo = details.photos[0];
       // New Places API uses 'name' property which is a full path like 'places/ChIJ.../photos/photo_reference'
       if (photo.name) {
-        imageUrl = `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=1200&key=${GOOGLE_API_KEY}`;
+        // Use our proxy endpoint to fetch the photo (avoids CORS and auth issues)
+        imageUrl = `/api/google-place-photo?name=${encodeURIComponent(photo.name)}&maxWidth=1200`;
       } else if (photo.photo_reference) {
         // Fallback to old API format if photo_reference exists
         imageUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=1200&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`;
@@ -279,6 +277,7 @@ export async function POST(request: NextRequest) {
       description: editorialSummary,
       content: editorialSummary,
       image: imageUrl,
+      address: details.formatted_address || '',
       formatted_address: details.formatted_address || '',
       phone: details.international_phone_number || '',
       website: details.website || '',
@@ -287,14 +286,15 @@ export async function POST(request: NextRequest) {
       opening_hours: details.current_opening_hours || details.opening_hours || null,
       place_types: details.types || [],
       cuisine_type: extractCuisineType(details.types || []),
+      // Include coordinates for transit connector
+      latitude: details.geometry?.location?.lat || null,
+      longitude: details.geometry?.location?.lng || null,
+      place_id: finalPlaceId,
     };
 
     return NextResponse.json(result);
 
   } catch (error: any) {
-    if (error instanceof AuthError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    }
     console.error('Fetch Google Place error:', error);
     return NextResponse.json({ error: error.message || 'Failed to fetch place data' }, { status: 500 });
   }

@@ -39,8 +39,22 @@ export async function GET(request: NextRequest) {
     }
 
     // Add included types if specified
-    if (types && types !== 'all') {
-      requestBody.includedPrimaryTypes = [types];
+    // Note: Places API (New) uses specific type names, not 'establishment'
+    // For broad searches, we skip this parameter entirely
+    if (types && types !== 'all' && types !== 'establishment') {
+      // Map common types to Places API (New) format
+      const typeMap: Record<string, string[]> = {
+        'restaurant': ['restaurant'],
+        'cafe': ['cafe'],
+        'bar': ['bar'],
+        'hotel': ['lodging', 'hotel'],
+        'museum': ['museum'],
+        'shopping': ['shopping_mall', 'store'],
+        'attraction': ['tourist_attraction'],
+      };
+      if (typeMap[types]) {
+        requestBody.includedPrimaryTypes = typeMap[types];
+      }
     }
 
     // Add session token if provided (helps with billing)
@@ -48,22 +62,26 @@ export async function GET(request: NextRequest) {
       requestBody.sessionToken = sessionToken;
     }
 
+    console.log('[Google Places Autocomplete] Request:', { query, types, location });
+
     const response = await fetch('https://places.googleapis.com/v1/places:autocomplete', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': GOOGLE_API_KEY,
-        'X-Goog-FieldMask': 'suggestions.placePrediction.placeId,suggestions.placePrediction.text,suggestions.placePrediction.structuredFormat,suggestions.placePrediction.types,suggestions.placePrediction.matchedSubstrings',
+        'X-Goog-FieldMask': 'suggestions.placePrediction.placeId,suggestions.placePrediction.text,suggestions.placePrediction.structuredFormat,suggestions.placePrediction.types',
       },
       body: JSON.stringify(requestBody),
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('[Google Places Autocomplete] API Error:', response.status, errorText);
       throw new Error(`Google Places API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log('[Google Places Autocomplete] Response predictions:', data.suggestions?.length || 0);
 
     // Transform Google's response to our format
     const predictions = (data.suggestions || [])
@@ -77,7 +95,6 @@ export async function GET(request: NextRequest) {
           main_text: pred.structuredFormat?.mainText?.text || pred.text?.text?.split(',')?.[0] || '',
           secondary_text: pred.structuredFormat?.secondaryText?.text || pred.text?.text?.split(',').slice(1).join(',') || '',
           types: pred.types || [],
-          matched_substrings: pred.matchedSubstrings || [],
         };
       });
 

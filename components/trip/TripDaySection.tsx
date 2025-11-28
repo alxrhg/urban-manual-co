@@ -22,6 +22,7 @@ import {
 import TripItemCard from './TripItemCard';
 import TransitConnector from './TransitConnector';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+import { getAirportCoordinates } from '@/lib/utils/airports';
 
 interface TripDaySectionProps {
   day: TripDay;
@@ -88,8 +89,66 @@ export default function TripDaySection({
 
   const formattedDate = formatDayDate(day.date);
 
-  // Helper to get location from item (check destination first, then parsedNotes)
-  const getItemLocation = (item: EnrichedItineraryItem) => {
+  // Helper to get "from" location (where you'd travel FROM this item to the next)
+  // For flights: this is the ARRIVAL airport (you arrive, then travel to next place)
+  // For regular places: this is the place's location
+  const getFromLocation = (item: EnrichedItineraryItem) => {
+    const itemType = item.parsedNotes?.type;
+
+    // For flights, the "from" for outgoing travel is the arrival airport
+    if (itemType === 'flight') {
+      // Get arrival airport from parsedNotes.to (e.g., "CDG" or "Paris (CDG)")
+      const arrivalAirport = item.parsedNotes?.to;
+      if (arrivalAirport) {
+        const coords = getAirportCoordinates(arrivalAirport);
+        if (coords) {
+          return coords;
+        }
+      }
+      // Fallback to stored lat/lng if any
+      const lat = item.parsedNotes?.latitude;
+      const lng = item.parsedNotes?.longitude;
+      if (lat && lng) {
+        return { latitude: lat, longitude: lng };
+      }
+      return undefined;
+    }
+
+    // For regular places, use destination coords or parsedNotes coords
+    const lat = item.destination?.latitude ?? item.parsedNotes?.latitude;
+    const lng = item.destination?.longitude ?? item.parsedNotes?.longitude;
+    if (lat && lng) {
+      return { latitude: lat, longitude: lng };
+    }
+    return undefined;
+  };
+
+  // Helper to get "to" location (where you'd travel TO this item from the previous)
+  // For flights: this is the DEPARTURE airport (you travel to airport before departing)
+  // For regular places: this is the place's location
+  const getToLocation = (item: EnrichedItineraryItem) => {
+    const itemType = item.parsedNotes?.type;
+
+    // For flights, the "to" for incoming travel is the departure airport
+    if (itemType === 'flight') {
+      // Get departure airport from parsedNotes.from (e.g., "JFK" or "New York (JFK)")
+      const departureAirport = item.parsedNotes?.from;
+      if (departureAirport) {
+        const coords = getAirportCoordinates(departureAirport);
+        if (coords) {
+          return coords;
+        }
+      }
+      // Fallback to stored lat/lng if any
+      const lat = item.parsedNotes?.latitude;
+      const lng = item.parsedNotes?.longitude;
+      if (lat && lng) {
+        return { latitude: lat, longitude: lng };
+      }
+      return undefined;
+    }
+
+    // For regular places, use destination coords or parsedNotes coords
     const lat = item.destination?.latitude ?? item.parsedNotes?.latitude;
     const lng = item.destination?.longitude ?? item.parsedNotes?.longitude;
     if (lat && lng) {
@@ -102,8 +161,17 @@ export default function TripDaySection({
   const renderItemsWithConnectors = () => {
     return day.items.map((item, index) => {
       const nextItem = day.items[index + 1];
-      const fromLocation = getItemLocation(item);
-      const toLocation = nextItem ? getItemLocation(nextItem) : undefined;
+
+      // For connector between current item and next item:
+      // - from: where we're leaving (current item's "from" location)
+      // - to: where we're going (next item's "to" location)
+      const fromLocation = getFromLocation(item);
+      const toLocation = nextItem ? getToLocation(nextItem) : undefined;
+
+      // Debug logging in development only
+      if (process.env.NODE_ENV === 'development' && nextItem && (!fromLocation || !toLocation)) {
+        console.debug('Transit connector missing coords:', item.title, '→', nextItem.title);
+      }
 
       return (
         <div key={item.id}>

@@ -61,6 +61,7 @@ export default function MealCard({
             fill
             className="object-cover"
             sizes="48px"
+            unoptimized={image.startsWith('/api/')}
           />
         ) : (
           <UtensilsCrossed className="w-5 h-5 text-amber-500" />
