@@ -461,7 +461,7 @@ export default function TimelineCanvas({
             onClick={onAIPlan}
             disabled={isAIPlanning}
             className="px-4 py-2.5 bg-gradient-to-r from-violet-500 to-purple-600 text-white text-sm font-medium rounded-xl hover:from-violet-600 hover:to-purple-700 disabled:opacity-50 transition-all"
-            title="AI Plan"
+            title="Autopilot"
           >
             <Sparkles className={`w-4 h-4 ${isAIPlanning ? 'animate-spin' : ''}`} />
           </button>

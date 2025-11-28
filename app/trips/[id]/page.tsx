@@ -388,7 +388,7 @@ export default function TripPage() {
                 ) : (
                   <Sparkles className="w-3 h-3" />
                 )}
-                {isAIPlanning ? 'Planning...' : 'AI Plan'}
+                {isAIPlanning ? 'Autopilot...' : 'Autopilot'}
               </button>
               <button
                 onClick={() => openPlaceSelector(selectedDayNumber)}
