@@ -59,6 +59,7 @@ export default function PlaceCard({
             fill
             className="object-cover"
             sizes="64px"
+            unoptimized={image.startsWith('/api/')}
           />
         </div>
       )}

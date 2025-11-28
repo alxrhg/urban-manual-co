@@ -169,6 +169,9 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
   // Reorder items within a day
   const reorderItems = useCallback(async (dayNumber: number, newItems: EnrichedItineraryItem[]) => {
+    // Store previous state for potential revert
+    const previousDays = days;
+
     // Optimistic update
     setDays((prev) =>
       prev.map((d) =>
@@ -184,27 +187,43 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       const itemsToUpdate = newItems.filter(item => {
         const idStr = String(item.id);
         // Skip temp IDs, empty IDs, or non-UUID-like IDs
-        if (idStr.startsWith('temp-') || !idStr || idStr === 'undefined') {
+        if (idStr.startsWith('temp-') || !idStr || idStr === 'undefined' || idStr === 'null') {
+          console.log('Skipping reorder for temp/invalid ID:', idStr);
+          return false;
+        }
+        // Check if it looks like a valid UUID (basic check)
+        if (idStr.length < 10) {
+          console.log('Skipping reorder for short ID:', idStr);
           return false;
         }
         return true;
       });
 
-      if (itemsToUpdate.length === 0) return;
+      if (itemsToUpdate.length === 0) {
+        console.log('No valid items to reorder');
+        return;
+      }
 
-      await Promise.all(
-        itemsToUpdate.map((item, index) =>
-          supabase
-            .from('itinerary_items')
-            .update({ order_index: index })
-            .eq('id', item.id)
-        )
-      );
+      // Update items sequentially to avoid race conditions
+      for (let i = 0; i < itemsToUpdate.length; i++) {
+        const item = itemsToUpdate[i];
+        const { error } = await supabase
+          .from('itinerary_items')
+          .update({ order_index: i })
+          .eq('id', item.id);
+
+        if (error) {
+          console.error('Error updating item order:', item.id, error);
+          throw error;
+        }
+      }
     } catch (err) {
       console.error('Error reordering:', err);
-      fetchTrip(); // Revert on error
+      // Revert to previous state on error
+      setDays(previousDays);
+      onError?.(err instanceof Error ? err : new Error('Failed to reorder items'));
     }
-  }, [fetchTrip]);
+  }, [days, onError]);
 
   // Add a place to the itinerary
   const addPlace = useCallback(async (destination: Destination, dayNumber: number, time?: string) => {
