@@ -120,7 +120,7 @@ export default function TransitOptions({
 
   // Expanded: simple list
   return (
-    <div className={`py-2 border-t border-stone-100 dark:border-stone-800 ${className}`}>
+    <div className={`py-2 border-t border-stone-100 dark:border-gray-800 ${className}`}>
       <div className="flex items-center gap-1.5 text-[10px] text-stone-400 mb-2">
         <Navigation className="w-3 h-3" />
         <span>{formatDistance(distance)}</span>
@@ -129,7 +129,7 @@ export default function TransitOptions({
         {filteredOptions.map((opt) => (
           <div key={opt.id} className="flex items-center gap-1.5 text-xs text-stone-500">
             <span className="text-stone-400">{opt.icon}</span>
-            <span className="font-medium text-stone-700 dark:text-stone-300">{formatTime(opt.minutes)}</span>
+            <span className="font-medium text-stone-700 dark:text-gray-300">{formatTime(opt.minutes)}</span>
             {opt.cost > 0 && <span className="text-stone-400">{formatCost(opt.cost)}</span>}
           </div>
         ))}

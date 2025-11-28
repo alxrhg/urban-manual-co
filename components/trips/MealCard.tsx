@@ -51,7 +51,7 @@ export default function MealCard({
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-stone-800/50 flex gap-4">
+    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50 flex gap-4">
       {/* Thumbnail or Icon */}
       <div className="relative w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center">
         {image ? (
@@ -81,13 +81,13 @@ export default function MealCard({
               </span>
             )}
           </div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 mt-0.5">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400 mt-0.5">
             {getMealLabel()}
           </p>
         </div>
 
         {/* REGION 2: Time & Location */}
-        <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 mb-2">
+        <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-gray-300 mb-2">
           {time && (
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3 text-stone-400" />
@@ -95,7 +95,7 @@ export default function MealCard({
             </span>
           )}
           {time && (location || neighborhood) && (
-            <span className="text-stone-300 dark:text-stone-600">•</span>
+            <span className="text-stone-300 dark:text-gray-600">•</span>
           )}
           {(location || neighborhood) && (
             <span className="flex items-center gap-1 truncate">
@@ -109,7 +109,7 @@ export default function MealCard({
         {rating && (
           <div className="flex items-center gap-1">
             <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-            <span className="text-xs font-medium text-stone-600 dark:text-stone-300">
+            <span className="text-xs font-medium text-stone-600 dark:text-gray-300">
               {rating.toFixed(1)}
             </span>
           </div>
@@ -117,8 +117,8 @@ export default function MealCard({
 
         {/* Notes (if any) */}
         {notes && (
-          <div className="mt-2 pt-2 border-t border-stone-200 dark:border-stone-700">
-            <p className="text-[10px] text-stone-500 dark:text-stone-400 line-clamp-2">
+          <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
+            <p className="text-[10px] text-stone-500 dark:text-gray-400 line-clamp-2">
               {notes}
             </p>
           </div>

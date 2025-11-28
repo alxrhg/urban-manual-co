@@ -87,13 +87,13 @@ export default function TripItemCard({
             absolute top-2 sm:top-3 left-2 sm:left-3 z-10
             cursor-grab active:cursor-grabbing
             p-2 sm:p-1 -m-1 sm:m-0
-            bg-white/90 dark:bg-stone-900/90 rounded-xl sm:rounded-lg backdrop-blur-sm
+            bg-white/90 dark:bg-gray-900/90 rounded-xl sm:rounded-lg backdrop-blur-sm
             transition-opacity duration-200
             ${showControls ? 'opacity-100' : 'opacity-0 sm:group-hover:opacity-100'}
           `}
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical className="w-5 h-5 sm:w-4 sm:h-4 text-stone-400 dark:text-stone-500" />
+          <GripVertical className="w-5 h-5 sm:w-4 sm:h-4 text-stone-400 dark:text-gray-500" />
         </div>
 
         {/* Remove Button - Larger touch target on mobile */}
@@ -106,7 +106,7 @@ export default function TripItemCard({
             absolute top-2 sm:top-3 right-2 sm:right-3 z-10
             p-2.5 sm:p-1.5 -m-1 sm:m-0
             rounded-xl sm:rounded-lg
-            bg-white/90 dark:bg-stone-900/90 backdrop-blur-sm
+            bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
             text-stone-400 hover:text-red-500 active:text-red-600
             hover:bg-red-50 active:bg-red-100 dark:hover:bg-red-900/20 dark:active:bg-red-900/30
             transition-all duration-200
@@ -125,7 +125,7 @@ export default function TripItemCard({
           className={`
             cursor-pointer rounded-2xl transition-all
             active:scale-[0.98] sm:active:scale-100
-            ${isActive ? 'ring-2 ring-stone-300 dark:ring-stone-600' : ''}
+            ${isActive ? 'ring-2 ring-stone-300 dark:ring-gray-600' : ''}
             hover:ring-1 hover:ring-stone-200 dark:hover:ring-stone-700
             active:ring-1 active:ring-stone-300 dark:active:ring-stone-600
           `}

@@ -143,7 +143,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
       case 'cancelled':
         return 'text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30';
       default:
-        return 'text-stone-600 bg-stone-50 dark:text-stone-400 dark:bg-stone-800';
+        return 'text-stone-600 bg-stone-50 dark:text-gray-400 dark:bg-gray-800';
     }
   };
 
@@ -166,7 +166,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-stone-800/50">
+    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50">
       {/* REGION 1: Route Header (EWR → MIA) */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-4 mb-3">
         {/* Origin */}
@@ -175,7 +175,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
             {origin.code}
           </p>
           {origin.city && (
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+            <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
               {origin.city}
             </p>
           )}
@@ -192,7 +192,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
             {destination.code}
           </p>
           {destination.city && (
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+            <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
               {destination.city}
             </p>
           )}
@@ -200,7 +200,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
       </div>
 
       {/* REGION 2: Schedule Row */}
-      <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-300 mb-3">
+      <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-gray-300 mb-3">
         {(departureDate || flight.departureDate) && (
           <>
             <span>{formatDate(departureDate || flight.departureDate)}</span>
@@ -217,7 +217,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
 
       {/* REGION 3: Flight Identity & Status */}
       <div className="flex items-center justify-between">
-        <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+        <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400">
           {flight.airline} {flight.flightNumber}
         </p>
 
@@ -234,7 +234,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
           <button
             onClick={fetchFlightStatus}
             disabled={loading}
-            className="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+            className="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-gray-300 transition-colors"
             title="Refresh status"
           >
             {loading ? (
@@ -248,7 +248,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
 
       {/* Gate/Terminal (if available) */}
       {flightInfo && (flightInfo.gate || flightInfo.terminal) && (
-        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-stone-200 dark:border-stone-700">
+        <div className="flex items-center gap-2 mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
           <p className="text-[10px] text-stone-500">
             {flightInfo.terminal && `Terminal ${flightInfo.terminal}`}
             {flightInfo.terminal && flightInfo.gate && ' • '}
@@ -259,7 +259,7 @@ export default function FlightStatusCard({ flight, departureDate, compact = true
 
       {/* Confirmation Number */}
       {flight.confirmationNumber && (
-        <div className="mt-2 pt-2 border-t border-stone-200 dark:border-stone-700">
+        <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
           <p className="text-[10px] text-stone-500">
             Confirmation: <span className="font-mono font-medium">{flight.confirmationNumber}</span>
           </p>

@@ -100,14 +100,14 @@ export default function ExplorePage() {
 
   if (loading) {
     return (
-      <main className="w-full px-5 sm:px-6 md:px-10 py-16 sm:py-20 min-h-screen bg-white dark:bg-stone-950">
+      <main className="w-full px-5 sm:px-6 md:px-10 py-16 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
         <div className="w-full">
           <div className="animate-pulse">
-            <div className="h-8 w-32 bg-stone-200 dark:bg-stone-800 rounded mb-4" />
-            <div className="h-4 w-64 bg-stone-200 dark:bg-stone-800 rounded mb-12" />
+            <div className="h-8 w-32 bg-stone-200 dark:bg-gray-800 rounded mb-4" />
+            <div className="h-4 w-64 bg-stone-200 dark:bg-gray-800 rounded mb-12" />
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-32 bg-stone-200 dark:bg-stone-800 rounded-2xl" />
+                <div key={i} className="h-32 bg-stone-200 dark:bg-gray-800 rounded-2xl" />
               ))}
             </div>
           </div>
@@ -117,32 +117,32 @@ export default function ExplorePage() {
   }
 
   return (
-    <main className="w-full px-5 sm:px-6 md:px-10 py-16 sm:py-20 min-h-screen bg-white dark:bg-stone-950">
+    <main className="w-full px-5 sm:px-6 md:px-10 py-16 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
       <div className="w-full">
         {/* Hero Section */}
         <div className="mb-10 sm:mb-12 animate-in fade-in slide-in-from-bottom-4">
           <h1 className="text-3xl sm:text-2xl font-light mb-2 text-stone-900 dark:text-white">Explore</h1>
-          <p className="text-sm sm:text-xs text-stone-500 dark:text-stone-400">
+          <p className="text-sm sm:text-xs text-stone-500 dark:text-gray-400">
             Discover destinations by category, city, or browse our curated collections
           </p>
         </div>
 
         {/* Categories Grid */}
         <section className="mb-12 sm:mb-16">
-          <h2 className="text-xs font-medium text-stone-500 dark:text-stone-400 mb-5 sm:mb-6">Browse by Category</h2>
+          <h2 className="text-xs font-medium text-stone-500 dark:text-gray-400 mb-5 sm:mb-6">Browse by Category</h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {categoryStats.map((stat, index) => (
               <button
                 key={stat.category}
                 onClick={() => router.push(`/?category=${stat.category}`)}
-                className="group p-5 sm:p-6 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 animate-in fade-in slide-in-from-bottom-4 min-h-[120px] sm:min-h-0"
+                className="group p-5 sm:p-6 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-2xl hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 animate-in fade-in slide-in-from-bottom-4 min-h-[120px] sm:min-h-0"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="text-3xl sm:text-4xl mb-3 group-hover:scale-110 transition-transform">
                   {stat.icon}
                 </div>
                 <h3 className="font-bold text-base sm:text-sm mb-1 capitalize text-stone-900 dark:text-white">{stat.category}</h3>
-                <span className="text-sm sm:text-xs text-stone-500 dark:text-stone-400">
+                <span className="text-sm sm:text-xs text-stone-500 dark:text-gray-400">
                   {stat.count} {stat.count === 1 ? 'place' : 'places'}
                 </span>
               </button>
@@ -155,7 +155,7 @@ export default function ExplorePage() {
           <section className="mb-12 sm:mb-16">
             <div className="flex items-center gap-2 mb-5 sm:mb-6">
               <Crown className="h-4 w-4 text-yellow-500" />
-              <h2 className="text-xs font-medium text-stone-500 dark:text-stone-400">Featured Destinations</h2>
+              <h2 className="text-xs font-medium text-stone-500 dark:text-gray-400">Featured Destinations</h2>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               {featuredDestinations.map((dest, index) => (
@@ -166,7 +166,7 @@ export default function ExplorePage() {
                   style={{ animationDelay: `${index * 50}ms` }}
                 >
                   {/* Image Container */}
-                  <div className="relative aspect-square overflow-hidden bg-stone-100 dark:bg-stone-800 rounded-2xl mb-2 sm:mb-3">
+                  <div className="relative aspect-square overflow-hidden bg-stone-100 dark:bg-gray-800 rounded-2xl mb-2 sm:mb-3">
                     {dest.image ? (
                       <img
                         src={dest.image}
@@ -174,7 +174,7 @@ export default function ExplorePage() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-stone-300 dark:text-stone-700">
+                      <div className="w-full h-full flex items-center justify-center text-stone-300 dark:text-gray-700">
                         <MapPin className="h-12 w-12 opacity-20" />
                       </div>
                     )}
@@ -184,7 +184,7 @@ export default function ExplorePage() {
                     )}
                     {/* Michelin Stars */}
                     {dest.michelin_stars && dest.michelin_stars > 0 && (
-                      <div className="absolute bottom-2 left-2 bg-white dark:bg-stone-900 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-lg">
+                      <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded-lg text-xs font-bold flex items-center gap-1 shadow-lg">
                         <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
                         <span className="text-stone-900 dark:text-white">{dest.michelin_stars}</span>
                       </div>
@@ -196,7 +196,7 @@ export default function ExplorePage() {
                     <h3 className="font-medium text-base sm:text-sm leading-tight line-clamp-2 text-stone-900 dark:text-white">
                       {dest.name}
                     </h3>
-                    <span className="text-sm sm:text-xs text-stone-500 dark:text-stone-400">
+                    <span className="text-sm sm:text-xs text-stone-500 dark:text-gray-400">
                       {capitalizeCity(dest.city)} • {dest.category}
                     </span>
                   </div>
@@ -210,12 +210,12 @@ export default function ExplorePage() {
         <section className="pb-safe">
           <div className="flex items-center justify-between mb-5 sm:mb-6">
             <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-stone-500 dark:text-stone-400" />
-              <h2 className="text-xs font-medium text-stone-500 dark:text-stone-400">Popular Cities</h2>
+              <TrendingUp className="h-4 w-4 text-stone-500 dark:text-gray-400" />
+              <h2 className="text-xs font-medium text-stone-500 dark:text-gray-400">Popular Cities</h2>
             </div>
             <button
               onClick={() => router.push('/cities')}
-              className="text-sm sm:text-xs font-medium text-stone-400 dark:text-stone-500 hover:text-stone-900 dark:hover:text-white active:text-stone-900 transition-colors flex items-center gap-1 py-2 min-h-[44px] sm:min-h-0"
+              className="text-sm sm:text-xs font-medium text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white active:text-stone-900 transition-colors flex items-center gap-1 py-2 min-h-[44px] sm:min-h-0"
             >
               View All
               <ChevronRight className="h-4 w-4 sm:h-3 sm:w-3" />
@@ -226,7 +226,7 @@ export default function ExplorePage() {
               <button
                 key={city.city}
                 onClick={() => router.push(`/city/${encodeURIComponent(city.city)}`)}
-                className="group p-5 sm:p-4 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 text-left animate-in fade-in slide-in-from-bottom-4 min-h-[100px] sm:min-h-0"
+                className="group p-5 sm:p-4 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-2xl hover:shadow-lg hover:-translate-y-1 active:scale-[0.98] transition-all duration-200 text-left animate-in fade-in slide-in-from-bottom-4 min-h-[100px] sm:min-h-0"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
@@ -236,7 +236,7 @@ export default function ExplorePage() {
                 <h3 className="font-bold text-base mb-1 text-stone-900 dark:text-white group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
                   {capitalizeCity(city.city)}
                 </h3>
-                <span className="text-sm sm:text-xs text-stone-500 dark:text-stone-400">
+                <span className="text-sm sm:text-xs text-stone-500 dark:text-gray-400">
                   {city.count === 1 ? '1 place' : `${city.count} places`}
                 </span>
               </button>

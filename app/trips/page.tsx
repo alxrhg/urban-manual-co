@@ -23,7 +23,7 @@ function getStatusConfig(status?: string) {
     case 'ongoing':
       return { label: 'Now', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', pulse: true };
     case 'completed':
-      return { label: 'Done', color: 'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-400' };
+      return { label: 'Done', color: 'bg-stone-100 text-stone-600 dark:bg-gray-800 dark:text-gray-400' };
     default:
       return null;
   }
@@ -118,7 +118,7 @@ export default function TripsPage() {
   // Loading state
   if (authLoading || loading) {
     return (
-      <main className="w-full min-h-screen bg-stone-50 dark:bg-stone-950">
+      <main className="w-full min-h-screen bg-stone-50 dark:bg-gray-950">
         <PageLoader />
       </main>
     );
@@ -127,18 +127,18 @@ export default function TripsPage() {
   // Not logged in
   if (!user) {
     return (
-      <main className="w-full min-h-screen bg-stone-50 dark:bg-stone-950 flex items-center justify-center px-4">
+      <main className="w-full min-h-screen bg-stone-50 dark:bg-gray-950 flex items-center justify-center px-4">
         <div className="w-full max-w-sm text-center">
-          <div className="w-16 h-16 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center mb-6 mx-auto">
+          <div className="w-16 h-16 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center mb-6 mx-auto">
             <Plane className="h-7 w-7 text-stone-400" />
           </div>
           <h1 className="text-2xl font-light text-stone-900 dark:text-white mb-3">Trips</h1>
-          <p className="text-sm text-stone-500 dark:text-stone-400 mb-8">
+          <p className="text-sm text-stone-500 dark:text-gray-400 mb-8">
             Sign in to plan and organize your travels
           </p>
           <button
             onClick={() => router.push('/auth/login')}
-            className="w-full px-6 py-3 bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-sm font-medium rounded-xl hover:opacity-90 transition-opacity"
+            className="w-full px-6 py-3 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-xl hover:opacity-90 transition-opacity"
           >
             Sign In
           </button>
@@ -148,7 +148,7 @@ export default function TripsPage() {
   }
 
   return (
-    <main className="w-full min-h-screen bg-stone-50 dark:bg-stone-950">
+    <main className="w-full min-h-screen bg-stone-50 dark:bg-gray-950">
       <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 md:py-12">
         {/* Header */}
         <div className="flex items-start justify-between mb-8">
@@ -156,14 +156,14 @@ export default function TripsPage() {
             <h1 className="text-3xl font-light text-stone-900 dark:text-white mb-1">
               Trips
             </h1>
-            <p className="text-sm text-stone-500 dark:text-stone-400">
+            <p className="text-sm text-stone-500 dark:text-gray-400">
               {trips.length === 0 ? 'Plan your next adventure' : `${trips.length} trip${trips.length !== 1 ? 's' : ''}`}
             </p>
           </div>
           <button
             onClick={createTrip}
             disabled={creating}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {creating ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -192,8 +192,8 @@ export default function TripsPage() {
                   className={`
                     px-4 py-2 rounded-full text-sm font-medium transition-all
                     ${statusFilter === key
-                      ? 'bg-stone-900 dark:bg-white text-white dark:text-stone-900'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
+                      ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'bg-stone-100 dark:bg-gray-800 text-stone-600 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700'
                     }
                   `}
                 >
@@ -213,12 +213,12 @@ export default function TripsPage() {
                 placeholder="Search by name or destination..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-10 py-3 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white transition-all"
+                className="w-full pl-11 pr-10 py-3 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white transition-all"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-stone-400 hover:text-stone-600 dark:hover:text-gray-300 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -230,20 +230,20 @@ export default function TripsPage() {
         {/* Trip List */}
         {trips.length === 0 ? (
           /* Empty State */
-          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
               <Plane className="w-7 h-7 text-stone-400" />
             </div>
             <h3 className="text-xl font-medium text-stone-900 dark:text-white mb-2">
               Plan your next adventure
             </h3>
-            <p className="text-sm text-stone-500 dark:text-stone-400 mb-8 max-w-md mx-auto">
+            <p className="text-sm text-stone-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
               Create a trip to organize your itinerary, save places, and let AI help you discover the best spots.
             </p>
             <button
               onClick={createTrip}
               disabled={creating}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
             >
               {creating ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -254,18 +254,18 @@ export default function TripsPage() {
             </button>
 
             {/* Features */}
-            <div className="mt-10 pt-8 border-t border-stone-100 dark:border-stone-800">
-              <p className="text-xs text-stone-400 dark:text-stone-500 mb-4 uppercase tracking-wider font-medium">
+            <div className="mt-10 pt-8 border-t border-stone-100 dark:border-gray-800">
+              <p className="text-xs text-stone-400 dark:text-gray-500 mb-4 uppercase tracking-wider font-medium">
                 What you can do
               </p>
-              <div className="flex flex-wrap justify-center gap-3 text-xs text-stone-500 dark:text-stone-400">
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-50 dark:bg-stone-800/50 rounded-full">
+              <div className="flex flex-wrap justify-center gap-3 text-xs text-stone-500 dark:text-gray-400">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-50 dark:bg-gray-800/50 rounded-full">
                   <MapPin className="w-3.5 h-3.5" /> Save places
                 </span>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-50 dark:bg-stone-800/50 rounded-full">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-50 dark:bg-gray-800/50 rounded-full">
                   <Plane className="w-3.5 h-3.5" /> Track flights
                 </span>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-50 dark:bg-stone-800/50 rounded-full">
+                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-50 dark:bg-gray-800/50 rounded-full">
                   <Calendar className="w-3.5 h-3.5" /> Day-by-day itinerary
                 </span>
               </div>
@@ -273,14 +273,14 @@ export default function TripsPage() {
           </div>
         ) : filteredTrips.length === 0 ? (
           /* No Results */
-          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-stone-800">
-            <div className="w-14 h-14 mx-auto mb-6 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-800">
+            <div className="w-14 h-14 mx-auto mb-6 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
               <Search className="w-6 h-6 text-stone-400" />
             </div>
             <h3 className="text-lg font-medium text-stone-900 dark:text-white mb-2">
               No matching trips
             </h3>
-            <p className="text-sm text-stone-500 dark:text-stone-400 mb-6">
+            <p className="text-sm text-stone-500 dark:text-gray-400 mb-6">
               {searchQuery ? `No trips found for "${searchQuery}"` : `No ${statusFilter} trips found`}
             </p>
             <button
@@ -302,10 +302,10 @@ export default function TripsPage() {
                 <Link
                   key={trip.id}
                   href={`/trips/${trip.id}`}
-                  className="group relative overflow-hidden rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 hover:border-stone-300 dark:hover:border-stone-700 transition-all"
+                  className="group relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-stone-700 transition-all"
                 >
                   {/* Cover Image */}
-                  <div className="relative aspect-[3/2] bg-stone-100 dark:bg-stone-800">
+                  <div className="relative aspect-[3/2] bg-stone-100 dark:bg-gray-800">
                     {trip.cover_image ? (
                       <Image
                         src={trip.cover_image}
@@ -318,13 +318,13 @@ export default function TripsPage() {
                       <div className="absolute inset-0 flex items-center justify-center">
                         {trip.destination ? (
                           <div className="text-center">
-                            <MapPin className="w-6 h-6 text-stone-300 dark:text-stone-600 mx-auto mb-1" />
-                            <span className="text-xs text-stone-400 dark:text-stone-500">
+                            <MapPin className="w-6 h-6 text-stone-300 dark:text-gray-600 mx-auto mb-1" />
+                            <span className="text-xs text-stone-400 dark:text-gray-500">
                               {trip.destination}
                             </span>
                           </div>
                         ) : (
-                          <Plane className="w-6 h-6 text-stone-300 dark:text-stone-600" />
+                          <Plane className="w-6 h-6 text-stone-300 dark:text-gray-600" />
                         )}
                       </div>
                     )}
@@ -373,8 +373,8 @@ export default function TripsPage() {
 
                   {/* Date Row */}
                   {dateDisplay && (
-                    <div className="px-4 py-3 border-t border-stone-100 dark:border-stone-800">
-                      <p className="text-xs text-stone-500 dark:text-stone-400 flex items-center gap-1.5">
+                    <div className="px-4 py-3 border-t border-stone-100 dark:border-gray-800">
+                      <p className="text-xs text-stone-500 dark:text-gray-400 flex items-center gap-1.5">
                         <Calendar className="w-3 h-3" />
                         {dateDisplay}
                       </p>

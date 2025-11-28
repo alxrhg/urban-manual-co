@@ -78,7 +78,7 @@ export default function CrowdIndicator({
       </div>
 
       {prediction.suggestion && (
-        <p className="text-[11px] text-stone-600 dark:text-stone-400 mb-2">
+        <p className="text-[11px] text-stone-600 dark:text-gray-400 mb-2">
           {prediction.suggestion}
         </p>
       )}

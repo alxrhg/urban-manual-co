@@ -78,7 +78,7 @@ export default function TransportCard({
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-stone-800/50">
+    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50">
       {/* REGION 1: Route Header */}
       <div className="flex items-start gap-3 mb-3">
         {/* Transport Icon */}
@@ -101,7 +101,7 @@ export default function TransportCard({
             </span>
           </div>
           {(origin.detail || destination.detail) && (
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 truncate">
+            <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5 truncate">
               {origin.detail || destination.detail}
             </p>
           )}
@@ -109,7 +109,7 @@ export default function TransportCard({
       </div>
 
       {/* REGION 2: Schedule Row */}
-      <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-stone-300 mb-3">
+      <div className="flex items-center gap-1.5 text-xs text-stone-600 dark:text-gray-300 mb-3">
         {departureDate && (
           <>
             <span>{formatDate(departureDate)}</span>
@@ -129,11 +129,11 @@ export default function TransportCard({
       {/* REGION 3: Transport Identity */}
       <div className="flex items-center justify-between">
         {isTrain && (trainLine || trainNumber) ? (
-          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 dark:text-gray-400">
             {trainLine} {trainNumber}
           </p>
         ) : (
-          <p className="text-[10px] text-stone-500 dark:text-stone-400">
+          <p className="text-[10px] text-stone-500 dark:text-gray-400">
             {isTrain ? 'Train' : 'Drive'}
           </p>
         )}
@@ -147,8 +147,8 @@ export default function TransportCard({
 
       {/* Notes (if any) */}
       {notes && (
-        <div className="mt-2 pt-2 border-t border-stone-200 dark:border-stone-700">
-          <p className="text-[10px] text-stone-500 dark:text-stone-400 line-clamp-2">
+        <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
+          <p className="text-[10px] text-stone-500 dark:text-gray-400 line-clamp-2">
             {notes}
           </p>
         </div>

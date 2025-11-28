@@ -89,9 +89,9 @@ export default function TripDaySection({
   return (
     <div
       className={`
-        border border-stone-200 dark:border-stone-800 rounded-xl sm:rounded-2xl overflow-hidden
+        border border-stone-200 dark:border-gray-800 rounded-xl sm:rounded-2xl overflow-hidden
         transition-colors duration-200
-        ${isSelected ? 'ring-1 ring-stone-300 dark:ring-stone-700' : ''}
+        ${isSelected ? 'ring-1 ring-stone-300 dark:ring-gray-700' : ''}
       `}
     >
       {/* Day Header - Larger touch target on mobile */}
@@ -100,20 +100,20 @@ export default function TripDaySection({
           setIsExpanded(!isExpanded);
           onSelect?.();
         }}
-        className="w-full flex items-center justify-between p-4 sm:p-4 min-h-[56px] hover:bg-stone-50 dark:hover:bg-stone-800/50 active:bg-stone-100 dark:active:bg-stone-800 transition-colors text-left"
+        className="w-full flex items-center justify-between p-4 sm:p-4 min-h-[56px] hover:bg-stone-50 dark:hover:bg-gray-800/50 active:bg-stone-100 dark:active:bg-gray-800 transition-colors text-left"
       >
         <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-3">
           <span className="text-base sm:text-lg font-light text-stone-900 dark:text-white">
             Day {day.dayNumber}
           </span>
           {formattedDate && (
-            <span className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400">
+            <span className="text-[11px] sm:text-xs text-stone-500 dark:text-gray-400">
               {formattedDate}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <span className="text-[11px] sm:text-xs text-stone-400 dark:text-stone-500">
+          <span className="text-[11px] sm:text-xs text-stone-400 dark:text-gray-500">
             {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
           </span>
           <ChevronDown
@@ -126,16 +126,16 @@ export default function TripDaySection({
 
       {/* Day Content */}
       {isExpanded && (
-        <div className="border-t border-stone-100 dark:border-stone-800/50">
+        <div className="border-t border-stone-100 dark:border-gray-800/50">
           {day.items.length === 0 ? (
             /* Empty State - Larger touch target */
             <div className="p-6 sm:p-6 text-center">
-              <p className="text-xs text-stone-400 dark:text-stone-500 mb-4 sm:mb-3">
+              <p className="text-xs text-stone-400 dark:text-gray-500 mb-4 sm:mb-3">
                 No stops planned for this day
               </p>
               <button
                 onClick={() => onAddItem?.(day.dayNumber)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white active:text-stone-900 transition-colors bg-stone-100 dark:bg-stone-800 sm:bg-transparent rounded-xl sm:rounded-none"
+                className="inline-flex items-center gap-2 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white active:text-stone-900 transition-colors bg-stone-100 dark:bg-gray-800 sm:bg-transparent rounded-xl sm:rounded-none"
               >
                 <Plus className="w-4 h-4 sm:w-3 sm:h-3" />
                 Add a stop
@@ -173,7 +173,7 @@ export default function TripDaySection({
             <div className="px-3 sm:px-4 pb-3 sm:pb-4">
               <button
                 onClick={() => onAddItem?.(day.dayNumber)}
-                className="w-full flex items-center justify-center gap-2 py-3 sm:py-2.5 text-sm sm:text-xs font-medium text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white active:text-stone-900 border border-dashed border-stone-200 dark:border-stone-800 rounded-xl hover:border-stone-300 dark:hover:border-stone-700 active:border-stone-400 active:bg-stone-50 dark:active:bg-stone-800/50 transition-colors min-h-[48px] sm:min-h-0"
+                className="w-full flex items-center justify-center gap-2 py-3 sm:py-2.5 text-sm sm:text-xs font-medium text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white active:text-stone-900 border border-dashed border-stone-200 dark:border-gray-800 rounded-xl hover:border-stone-300 dark:hover:border-stone-700 active:border-stone-400 active:bg-stone-50 dark:active:bg-gray-800/50 transition-colors min-h-[48px] sm:min-h-0"
               >
                 <Plus className="w-4 h-4 sm:w-3 sm:h-3" />
                 Add stop

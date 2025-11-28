@@ -215,7 +215,7 @@ export default function TripPage() {
   // Loading state
   if (loading) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 bg-stone-50 dark:bg-stone-950 min-h-screen">
+      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 bg-stone-50 dark:bg-gray-950 min-h-screen">
         <PageLoader />
       </main>
     );
@@ -224,10 +224,10 @@ export default function TripPage() {
   // Not found
   if (!trip) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 min-h-screen bg-stone-50 dark:bg-stone-950">
+      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 min-h-screen bg-stone-50 dark:bg-gray-950">
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
-            <p className="text-xs text-stone-500 dark:text-stone-400 mb-4">Trip not found</p>
+            <p className="text-xs text-stone-500 dark:text-gray-400 mb-4">Trip not found</p>
             <Link
               href="/trips"
               className="text-sm text-stone-900 dark:text-white hover:underline min-h-[44px] flex items-center justify-center"
@@ -246,7 +246,7 @@ export default function TripPage() {
     .find(item => item.destination?.image)?.destination?.image;
 
   return (
-    <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-stone-950">
+    <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950">
       <div className="max-w-4xl mx-auto">
         {/* Header - Mobile optimized */}
         <div className="mb-6 sm:mb-8">
@@ -257,7 +257,7 @@ export default function TripPage() {
               {/* Back Button */}
               <Link
                 href="/trips"
-                className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white transition-colors min-h-[44px] min-w-[44px] -ml-2 pl-2"
+                className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors min-h-[44px] min-w-[44px] -ml-2 pl-2"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Trips</span>
@@ -271,10 +271,10 @@ export default function TripPage() {
                     onUpdate: updateTrip,
                     onDelete: () => router.push('/trips'),
                   })}
-                  className="p-2.5 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                  className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                   title="Settings"
                 >
-                  <Settings className="w-5 h-5 text-stone-500 dark:text-stone-400" />
+                  <Settings className="w-5 h-5 text-stone-500 dark:text-gray-400" />
                 </button>
               </div>
             </div>
@@ -294,10 +294,10 @@ export default function TripPage() {
             <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={() => setIsMapOpen(true)}
-                className="p-2.5 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="View Map"
               >
-                <Map className="w-5 h-5 text-stone-500 dark:text-stone-400" />
+                <Map className="w-5 h-5 text-stone-500 dark:text-gray-400" />
               </button>
               <button
                 onClick={() => openDrawer('trip-settings', {
@@ -305,10 +305,10 @@ export default function TripPage() {
                   onUpdate: updateTrip,
                   onDelete: () => router.push('/trips'),
                 })}
-                className="p-2.5 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="Settings"
               >
-                <Settings className="w-5 h-5 text-stone-500 dark:text-stone-400" />
+                <Settings className="w-5 h-5 text-stone-500 dark:text-gray-400" />
               </button>
             </div>
           </div>
@@ -339,7 +339,7 @@ export default function TripPage() {
 
         {/* Weather Preview (compact) */}
         {trip.destination && trip.start_date && (
-          <div className="mb-8 p-4 border border-stone-200 dark:border-stone-800 rounded-2xl">
+          <div className="mb-8 p-4 border border-stone-200 dark:border-gray-800 rounded-2xl">
             <TripWeatherForecast
               destination={trip.destination}
               startDate={trip.start_date}
@@ -365,8 +365,8 @@ export default function TripPage() {
                     px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
                     min-h-[40px] sm:min-h-0
                     ${activeTab === tab
-                      ? 'font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-stone-800 sm:bg-transparent sm:dark:bg-transparent'
-                      : 'font-medium text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300'
+                      ? 'font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
+                      : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
                     }
                   `}
                 >
@@ -381,7 +381,7 @@ export default function TripPage() {
               <button
                 onClick={handleAITripPlanning}
                 disabled={isAIPlanning || saving}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-stone-900 dark:bg-white dark:text-stone-900 rounded-full hover:opacity-80 disabled:opacity-50 transition-opacity"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-stone-900 dark:bg-white dark:text-gray-900 rounded-full hover:opacity-80 disabled:opacity-50 transition-opacity"
               >
                 {isAIPlanning ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -392,7 +392,7 @@ export default function TripPage() {
               </button>
               <button
                 onClick={() => openPlaceSelector(selectedDayNumber)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-stone-200 dark:border-stone-800 rounded-full hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-stone-200 dark:border-gray-800 rounded-full hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Plus className="w-3 h-3" />
                 Add Stop
@@ -406,12 +406,12 @@ export default function TripPage() {
           <div className="space-y-4 fade-in">
             {days.length === 0 ? (
               /* Empty State */
-              <div className="text-center py-12 border border-dashed border-stone-200 dark:border-stone-800 rounded-2xl">
-                <MapPin className="h-12 w-12 mx-auto text-stone-300 dark:text-stone-700 mb-4" />
-                <p className="text-sm text-stone-500 dark:text-stone-400 mb-4">No days in your trip yet</p>
+              <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
+                <MapPin className="h-12 w-12 mx-auto text-stone-300 dark:text-gray-700 mb-4" />
+                <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">No days in your trip yet</p>
                 <button
                   onClick={() => openPlaceSelector(1)}
-                  className="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
+                  className="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
                 >
                   Add your first stop
                 </button>
@@ -439,10 +439,10 @@ export default function TripPage() {
         {activeTab === 'insights' && (
           <div className="space-y-6 fade-in">
             {/* Weather Forecast */}
-            <div className="p-6 border border-stone-200 dark:border-stone-800 rounded-2xl">
+            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
               <div className="flex items-center gap-2 mb-4">
                 <Cloud className="w-4 h-4 text-stone-500" />
-                <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400">Weather Forecast</h3>
+                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Weather Forecast</h3>
               </div>
               <TripWeatherForecast
                 destination={trip.destination}
@@ -454,19 +454,19 @@ export default function TripPage() {
             </div>
 
             {/* Safety Alerts */}
-            <div className="p-6 border border-stone-200 dark:border-stone-800 rounded-2xl">
+            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
               <div className="flex items-center gap-2 mb-4">
                 <Shield className="w-4 h-4 text-stone-500" />
-                <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400">Travel Advisories</h3>
+                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Travel Advisories</h3>
               </div>
               <TripSafetyAlerts destination={trip.destination} />
             </div>
 
             {/* Bucket List */}
-            <div className="p-6 border border-stone-200 dark:border-stone-800 rounded-2xl">
+            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
               <div className="flex items-center gap-2 mb-4">
                 <ListChecks className="w-4 h-4 text-stone-500" />
-                <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400">Bucket List</h3>
+                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Bucket List</h3>
               </div>
               <TripBucketList
                 items={bucketItems}
@@ -483,26 +483,26 @@ export default function TripPage() {
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <div className="fade-in">
-            <div className="p-6 border border-stone-200 dark:border-stone-800 rounded-2xl">
-              <h3 className="text-xs font-medium text-stone-500 dark:text-stone-400 mb-4">Trip Summary</h3>
+            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
+              <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400 mb-4">Trip Summary</h3>
               <div className="space-y-4">
                 {trip.description ? (
-                  <p className="text-sm text-stone-600 dark:text-stone-300">{trip.description}</p>
+                  <p className="text-sm text-stone-600 dark:text-gray-300">{trip.description}</p>
                 ) : (
-                  <p className="text-xs text-stone-400 dark:text-stone-500">
+                  <p className="text-xs text-stone-400 dark:text-gray-500">
                     No description added yet. Edit your trip to add one.
                   </p>
                 )}
 
-                <div className="pt-4 border-t border-stone-100 dark:border-stone-800">
-                  <h4 className="text-xs font-medium text-stone-500 dark:text-stone-400 mb-3">All Stops</h4>
+                <div className="pt-4 border-t border-stone-100 dark:border-gray-800">
+                  <h4 className="text-xs font-medium text-stone-500 dark:text-gray-400 mb-3">All Stops</h4>
                   <div className="space-y-2">
                     {days.flatMap(day =>
                       day.items.map((item) => (
                         <button
                           key={item.id}
                           onClick={() => handleEditItem(item)}
-                          className="w-full text-left p-2 hover:bg-stone-50 dark:hover:bg-stone-800 rounded-xl transition-colors"
+                          className="w-full text-left p-2 hover:bg-stone-50 dark:hover:bg-gray-800 rounded-xl transition-colors"
                         >
                           <div className="flex items-center gap-3">
                             <span className="text-xs text-stone-400 w-8">D{day.dayNumber}</span>
@@ -517,7 +517,7 @@ export default function TripPage() {
                       ))
                     )}
                     {days.flatMap(d => d.items).length === 0 && (
-                      <p className="text-xs text-stone-400 dark:text-stone-500 py-4 text-center">
+                      <p className="text-xs text-stone-400 dark:text-gray-500 py-4 text-center">
                         No stops added yet
                       </p>
                     )}

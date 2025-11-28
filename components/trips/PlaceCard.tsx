@@ -49,10 +49,10 @@ export default function PlaceCard({
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-stone-800/50 flex gap-4">
+    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50 flex gap-4">
       {/* Thumbnail */}
       {image && (
-        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-stone-200 dark:bg-stone-700">
+        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-stone-200 dark:bg-gray-700">
           <Image
             src={image}
             alt={name}
@@ -72,16 +72,16 @@ export default function PlaceCard({
           </h3>
           <div className="flex items-center gap-1.5 mt-0.5">
             {neighborhood && (
-              <p className="text-xs text-stone-500 dark:text-stone-400 flex items-center gap-1">
+              <p className="text-xs text-stone-500 dark:text-gray-400 flex items-center gap-1">
                 <MapPin className="w-3 h-3" />
                 <span className="truncate">{neighborhood}</span>
               </p>
             )}
             {neighborhood && category && (
-              <span className="text-stone-300 dark:text-stone-600">•</span>
+              <span className="text-stone-300 dark:text-gray-600">•</span>
             )}
             {category && (
-              <span className="text-xs text-stone-500 dark:text-stone-400 capitalize">
+              <span className="text-xs text-stone-500 dark:text-gray-400 capitalize">
                 {category}
               </span>
             )}
@@ -90,7 +90,7 @@ export default function PlaceCard({
 
         {/* REGION 2: Time & Duration */}
         {(time || duration) && (
-          <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300 mb-2">
+          <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-gray-300 mb-2">
             {time && (
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3 text-stone-400" />
@@ -98,10 +98,10 @@ export default function PlaceCard({
               </span>
             )}
             {time && duration && (
-              <span className="text-stone-300 dark:text-stone-600">•</span>
+              <span className="text-stone-300 dark:text-gray-600">•</span>
             )}
             {duration && (
-              <span className="text-stone-500 dark:text-stone-400">
+              <span className="text-stone-500 dark:text-gray-400">
                 {formatDuration(duration)}
               </span>
             )}
@@ -113,7 +113,7 @@ export default function PlaceCard({
           {rating ? (
             <div className="flex items-center gap-1">
               <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-              <span className="text-xs font-medium text-stone-600 dark:text-stone-300">
+              <span className="text-xs font-medium text-stone-600 dark:text-gray-300">
                 {rating.toFixed(1)}
               </span>
             </div>
@@ -127,7 +127,7 @@ export default function PlaceCard({
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+              className="p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-gray-300 transition-colors"
               title="View details"
             >
               <ExternalLink className="w-3.5 h-3.5" />
@@ -137,8 +137,8 @@ export default function PlaceCard({
 
         {/* Notes (if any) */}
         {notes && (
-          <div className="mt-2 pt-2 border-t border-stone-200 dark:border-stone-700">
-            <p className="text-[10px] text-stone-500 dark:text-stone-400 line-clamp-2">
+          <div className="mt-2 pt-2 border-t border-stone-200 dark:border-gray-700">
+            <p className="text-[10px] text-stone-500 dark:text-gray-400 line-clamp-2">
               {notes}
             </p>
           </div>

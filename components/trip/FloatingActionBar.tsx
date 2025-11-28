@@ -75,51 +75,51 @@ export default function FloatingActionBar({
               `}
             >
               {/* Add Options - Grid layout on mobile */}
-              <div className="grid grid-cols-3 sm:flex sm:items-center gap-1 sm:gap-2 p-2 sm:p-2 rounded-2xl bg-white dark:bg-stone-900 shadow-2xl shadow-black/20">
+              <div className="grid grid-cols-3 sm:flex sm:items-center gap-1 sm:gap-2 p-2 sm:p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl shadow-black/20">
                 <button
                   onClick={() => { onAddPlace(); setIsExpanded(false); }}
-                  className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 active:bg-stone-200 dark:active:bg-stone-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
+                  className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
                 >
-                  <MapPin className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-stone-400" />
+                  <MapPin className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-gray-400" />
                   <span className="text-[11px] sm:text-[10px] font-medium text-stone-500">Place</span>
                 </button>
                 <button
                   onClick={() => { onAddFlight(); setIsExpanded(false); }}
-                  className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 active:bg-stone-200 dark:active:bg-stone-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
+                  className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
                 >
-                  <Plane className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-stone-400" />
+                  <Plane className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-gray-400" />
                   <span className="text-[11px] sm:text-[10px] font-medium text-stone-500">Flight</span>
                 </button>
                 {onAddHotel && (
                   <button
                     onClick={() => { onAddHotel(); setIsExpanded(false); }}
-                    className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 active:bg-stone-200 dark:active:bg-stone-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
+                    className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
                   >
-                    <Hotel className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-stone-400" />
+                    <Hotel className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-gray-400" />
                     <span className="text-[11px] sm:text-[10px] font-medium text-stone-500">Hotel</span>
                   </button>
                 )}
                 {onAddTransport && (
                   <button
                     onClick={() => { onAddTransport(); setIsExpanded(false); }}
-                    className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 active:bg-stone-200 dark:active:bg-stone-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
+                    className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
                   >
-                    <Car className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-stone-400" />
+                    <Car className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-gray-400" />
                     <span className="text-[11px] sm:text-[10px] font-medium text-stone-500">Transport</span>
                   </button>
                 )}
                 <button
                   onClick={() => { onAddNote(); setIsExpanded(false); }}
-                  className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 active:bg-stone-200 dark:active:bg-stone-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
+                  className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
                 >
-                  <StickyNote className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-stone-400" />
+                  <StickyNote className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-gray-400" />
                   <span className="text-[11px] sm:text-[10px] font-medium text-stone-500">Note</span>
                 </button>
               </div>
             </div>
 
             {/* Main Bar - Larger touch targets on mobile */}
-            <div className="flex items-center gap-1 p-1.5 sm:p-1.5 rounded-full bg-white/95 dark:bg-stone-900/95 backdrop-blur-xl shadow-2xl shadow-black/20 border border-stone-200/50 dark:border-stone-700/50">
+            <div className="flex items-center gap-1 p-1.5 sm:p-1.5 rounded-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl shadow-black/20 border border-stone-200/50 dark:border-gray-700/50">
               {/* Add Button (Primary) - 48px on mobile */}
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -127,8 +127,8 @@ export default function FloatingActionBar({
                   w-14 h-14 sm:w-12 sm:h-12 rounded-full flex items-center justify-center
                   transition-all duration-300
                   ${isExpanded
-                    ? 'bg-stone-900 dark:bg-white text-white dark:text-stone-900 rotate-45'
-                    : 'bg-stone-900 dark:bg-white text-white dark:text-stone-900 hover:scale-105 active:scale-95'
+                    ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900 rotate-45'
+                    : 'bg-stone-900 dark:bg-white text-white dark:text-gray-900 hover:scale-105 active:scale-95'
                   }
                 `}
                 aria-label={isExpanded ? 'Close menu' : 'Add item'}
@@ -137,12 +137,12 @@ export default function FloatingActionBar({
               </button>
 
               {/* Divider */}
-              <div className="w-px h-8 bg-stone-200 dark:bg-stone-700 mx-0.5 sm:mx-1" />
+              <div className="w-px h-8 bg-stone-200 dark:bg-gray-700 mx-0.5 sm:mx-1" />
 
               {/* Map Button - 44px touch target */}
               <button
                 onClick={onOpenMap}
-                className="w-12 h-12 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 active:bg-stone-200 dark:active:bg-stone-700 hover:text-stone-900 dark:hover:text-white transition-colors"
+                className="w-12 h-12 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 hover:text-stone-900 dark:hover:text-white transition-colors"
                 aria-label="Open map"
               >
                 <Map className="w-5 h-5" />
@@ -156,7 +156,7 @@ export default function FloatingActionBar({
                   w-12 h-12 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors
                   ${isAIPlanning
                     ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                    : 'text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 active:bg-stone-200 dark:active:bg-stone-700 hover:text-stone-900 dark:hover:text-white'
+                    : 'text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 hover:text-stone-900 dark:hover:text-white'
                   }
                   disabled:opacity-50
                 `}
@@ -169,7 +169,7 @@ export default function FloatingActionBar({
               {onShare && (
                 <button
                   onClick={onShare}
-                  className="hidden sm:flex w-10 h-10 rounded-full items-center justify-center text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-white transition-colors"
+                  className="hidden sm:flex w-10 h-10 rounded-full items-center justify-center text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800 hover:text-stone-900 dark:hover:text-white transition-colors"
                   aria-label="Share trip"
                 >
                   <Share2 className="w-5 h-5" />
@@ -179,7 +179,7 @@ export default function FloatingActionBar({
 
             {/* Saving/Planning Indicator */}
             {(isSaving || isAIPlanning) && (
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-stone-900 dark:bg-white text-white dark:text-stone-900 text-xs font-medium shadow-lg whitespace-nowrap">
+              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium shadow-lg whitespace-nowrap">
                 {isAIPlanning ? 'AI Planning...' : 'Saving...'}
               </div>
             )}

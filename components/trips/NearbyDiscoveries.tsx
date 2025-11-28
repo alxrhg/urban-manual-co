@@ -105,7 +105,7 @@ export default function NearbyDiscoveries({
   }
 
   return (
-    <div className="mt-2 border-t border-stone-100 dark:border-stone-800 pt-2">
+    <div className="mt-2 border-t border-stone-100 dark:border-gray-800 pt-2">
       <button
         onClick={() => setExpanded(!expanded)}
         className="flex items-center gap-2 text-xs text-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors w-full"
@@ -124,9 +124,9 @@ export default function NearbyDiscoveries({
           {nearby.map((place) => (
             <div
               key={place.slug}
-              className="flex items-center gap-2 p-2 rounded-lg hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors group"
+              className="flex items-center gap-2 p-2 rounded-lg hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors group"
             >
-              <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 overflow-hidden flex-shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
                 {place.image_thumbnail ? (
                   <Image
                     src={place.image_thumbnail}
