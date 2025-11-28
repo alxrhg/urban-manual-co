@@ -62,10 +62,18 @@ export default function GreetingHero({
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get current time
-  const now = new Date();
-  const currentHour = now.getHours();
-  const currentDay = now.getDay();
+  // Defer time calculation to client to avoid hydration mismatch
+  // Server and client may have different times, causing React error #418
+  const [timeInfo, setTimeInfo] = useState<{ hour: number; day: number } | null>(null);
+
+  useEffect(() => {
+    const now = new Date();
+    setTimeInfo({ hour: now.getHours(), day: now.getDay() });
+  }, []);
+
+  // Use defaults until client-side time is available
+  const currentHour = timeInfo?.hour ?? 12;
+  const currentDay = timeInfo?.day ?? 1;
 
   // Generate contextual greeting with Phase 2 & 3 enhancements
   const greetingContext: GreetingContext = {
@@ -162,12 +170,12 @@ export default function GreetingHero({
           <div className="text-left mb-[50px]">
             <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
               {(() => {
-                const now = new Date();
-                const currentHour = now.getHours();
+                // Use the deferred timeInfo to avoid hydration mismatch
+                const hour = timeInfo?.hour ?? 12;
                 let timeGreeting = "GOOD EVENING";
-                if (currentHour < 12) timeGreeting = "GOOD MORNING";
-                else if (currentHour < 18) timeGreeting = "GOOD AFTERNOON";
-                
+                if (hour < 12) timeGreeting = "GOOD MORNING";
+                else if (hour < 18) timeGreeting = "GOOD AFTERNOON";
+
                 return userName ? `${timeGreeting}, ${userName.toUpperCase()}` : timeGreeting;
               })()}
             </h1>
