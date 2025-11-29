@@ -27,8 +27,7 @@ import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
-import SmartSuggestions from '@/components/trip/SmartSuggestions';
-import LocalEvents from '@/components/trip/LocalEvents';
+import AddPlaceBox from '@/components/trip/AddPlaceBox';
 import {
   analyzeScheduleForWarnings,
   detectConflicts,
@@ -343,45 +342,6 @@ export default function TripPage() {
     }
   }, [trip?.destination, days, addPlace, refresh]);
 
-  // Add destination from NL input
-  const handleAddFromNL = useCallback(async (
-    destination: unknown,
-    dayNumber: number,
-    time?: string
-  ) => {
-    const dest = destination as { id: number; slug: string; name: string; category: string };
-    if (dest && dest.slug) {
-      // Create minimal Destination object for addPlace
-      const fullDest: Destination = {
-        id: dest.id,
-        slug: dest.slug,
-        name: dest.name,
-        category: dest.category,
-        city: trip?.destination || '',
-      };
-      await addPlace(fullDest, dayNumber, time);
-      await refresh();
-    }
-  }, [addPlace, refresh, trip?.destination]);
-
-  // Handle AI suggestion click
-  const handleAddAISuggestion = useCallback(async (suggestion: {
-    destination: { id: number; slug: string; name: string; category: string };
-    day: number;
-    startTime: string;
-  }) => {
-    // Create minimal Destination object for addPlace
-    const fullDest: Destination = {
-      id: suggestion.destination.id,
-      slug: suggestion.destination.slug,
-      name: suggestion.destination.name,
-      category: suggestion.destination.category,
-      city: trip?.destination || '',
-    };
-    await addPlace(fullDest, suggestion.day, suggestion.startTime);
-    await refresh();
-  }, [addPlace, refresh, trip?.destination]);
-
   // Loading state
   if (loading) {
     return (
@@ -612,41 +572,24 @@ export default function TripPage() {
                   ))}
                 </div>
 
-                {/* AI Sidebar (Desktop) */}
-                <div className="hidden lg:block lg:w-80 lg:flex-shrink-0 space-y-4">
-                  <SmartSuggestions
-                    days={days}
-                    destination={trip.destination}
-                    selectedDayNumber={selectedDayNumber}
-                    onAddPlace={openPlaceSelector}
-                    onAddAISuggestion={handleAddAISuggestion}
-                    onAddFromNL={handleAddFromNL}
+                {/* Add Place Sidebar (Desktop) */}
+                <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
+                  <AddPlaceBox
+                    city={trip.destination}
+                    dayNumber={selectedDayNumber}
+                    onSelect={(destination) => addPlace(destination, selectedDayNumber)}
                   />
-                  {trip.start_date && (
-                    <LocalEvents
-                      city={trip.destination || ''}
-                      startDate={trip.start_date}
-                      endDate={trip.end_date}
-                      onAddToTrip={(event) => {
-                        // Add event as custom item
-                        openPlaceSelector(selectedDayNumber);
-                      }}
-                    />
-                  )}
                 </div>
               </div>
             )}
 
-            {/* Mobile AI Section (collapsible) */}
+            {/* Mobile Add Place Section */}
             {days.length > 0 && (
-              <div className="lg:hidden mt-6 space-y-4">
-                <SmartSuggestions
-                  days={days}
-                  destination={trip.destination}
-                  selectedDayNumber={selectedDayNumber}
-                  onAddPlace={openPlaceSelector}
-                  onAddAISuggestion={handleAddAISuggestion}
-                  onAddFromNL={handleAddFromNL}
+              <div className="lg:hidden mt-6">
+                <AddPlaceBox
+                  city={trip.destination}
+                  dayNumber={selectedDayNumber}
+                  onSelect={(destination) => addPlace(destination, selectedDayNumber)}
                 />
               </div>
             )}
