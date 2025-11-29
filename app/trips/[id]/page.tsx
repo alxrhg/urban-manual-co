@@ -28,6 +28,7 @@ import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
 import AddPlaceBox from '@/components/trip/AddPlaceBox';
+import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import LocalEvents from '@/components/trip/LocalEvents';
 import {
@@ -81,6 +82,7 @@ export default function TripPage() {
   const [newChecklistItem, setNewChecklistItem] = useState('');
   const [warnings, setWarnings] = useState<PlannerWarning[]>([]);
   const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
+  const [showTripSettings, setShowTripSettings] = useState(false);
 
   // Extract flights and hotels from itinerary
   const flights = useMemo(() => {
@@ -440,11 +442,7 @@ export default function TripPage() {
                   onDismiss={(id) => setWarnings(prev => prev.filter(w => w.id !== id))}
                 />
                 <button
-                  onClick={() => openDrawer('trip-settings', {
-                    trip,
-                    onUpdate: updateTrip,
-                    onDelete: () => router.push('/trips'),
-                  })}
+                  onClick={() => setShowTripSettings(true)}
                   className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                   title="Settings"
                 >
@@ -478,11 +476,7 @@ export default function TripPage() {
                 <Map className="w-5 h-5 text-stone-500 dark:text-gray-400" />
               </button>
               <button
-                onClick={() => openDrawer('trip-settings', {
-                  trip,
-                  onUpdate: updateTrip,
-                  onDelete: () => router.push('/trips'),
-                })}
+                onClick={() => setShowTripSettings(true)}
                 className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="Settings"
               >
@@ -614,7 +608,14 @@ export default function TripPage() {
 
                 {/* Sidebar (Desktop) */}
                 <div className="hidden lg:block lg:w-80 lg:flex-shrink-0 space-y-4">
-                  {showAddPlaceBox ? (
+                  {showTripSettings ? (
+                    <TripSettingsBox
+                      trip={trip}
+                      onUpdate={updateTrip}
+                      onDelete={() => router.push('/trips')}
+                      onClose={() => setShowTripSettings(false)}
+                    />
+                  ) : showAddPlaceBox ? (
                     <AddPlaceBox
                       city={trip.destination}
                       dayNumber={selectedDayNumber}
@@ -651,9 +652,16 @@ export default function TripPage() {
             )}
 
             {/* Mobile Section */}
-            {days.length > 0 && (
+            {(days.length > 0 || showTripSettings) && (
               <div className="lg:hidden mt-6 space-y-4">
-                {showAddPlaceBox ? (
+                {showTripSettings ? (
+                  <TripSettingsBox
+                    trip={trip}
+                    onUpdate={updateTrip}
+                    onDelete={() => router.push('/trips')}
+                    onClose={() => setShowTripSettings(false)}
+                  />
+                ) : showAddPlaceBox ? (
                   <AddPlaceBox
                     city={trip.destination}
                     dayNumber={selectedDayNumber}
