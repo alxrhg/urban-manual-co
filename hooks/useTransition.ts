@@ -123,7 +123,7 @@ export function useDeferredSearch(
   const [inputValue, setInputValue] = useState(initialValue);
   const [searchValue, setSearchValue] = useState(initialValue);
   const [isPending, startTransition] = reactUseTransition();
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const onChange = useCallback(
     (value: string) => {
