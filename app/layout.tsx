@@ -185,7 +185,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased bg-white dark:bg-um-slate-950 text-um-gray-900 dark:text-white">
+      <body className="antialiased bg-white dark:bg-zinc-950 text-neutral-900 dark:text-white">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -201,7 +201,7 @@ export default function RootLayout({
                     <AdminEditModeProvider>
                       <ItineraryProvider>
                         {/* Unified page wrapper - header and content flow together */}
-                        <div className="min-h-screen flex flex-col bg-white dark:bg-um-slate-950">
+                        <div className="min-h-screen flex flex-col bg-white dark:bg-zinc-950">
                           {/* Header - integrated into page flow with transparent background */}
                           <Header transparent />
 

@@ -109,35 +109,35 @@ export function Header({
   // Shared button styles for consistency
   const secondaryButtonClass = cn(
     "flex items-center gap-1.5 px-4 py-2",
-    "bg-white dark:bg-um-slate-900",
-    "border border-um-gray-200 dark:border-um-slate-700",
-    "text-um-gray-900 dark:text-white",
+    "bg-white dark:bg-zinc-900",
+    "border border-neutral-200 dark:border-zinc-700",
+    "text-neutral-900 dark:text-white",
     "rounded-full text-sm font-medium",
-    "hover:bg-um-gray-50 dark:hover:bg-um-slate-800",
+    "hover:bg-neutral-50 dark:hover:bg-zinc-800",
     "transition-colors duration-fast",
     "touch-manipulation",
     "focus:outline-none focus-visible:ring-2",
-    "focus-visible:ring-um-gray-900 dark:focus-visible:ring-white",
-    "focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-um-slate-950"
+    "focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
+    "focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950"
   );
 
   const primaryButtonClass = cn(
     "flex items-center gap-1.5 px-4 py-2",
-    "bg-um-gray-900 dark:bg-white",
-    "text-white dark:text-um-gray-900",
+    "bg-neutral-900 dark:bg-white",
+    "text-white dark:text-neutral-900",
     "rounded-full text-sm font-medium",
     "hover:opacity-90 transition-opacity duration-fast",
     "touch-manipulation",
     "focus:outline-none focus-visible:ring-2",
-    "focus-visible:ring-um-gray-900 dark:focus-visible:ring-white",
-    "focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-um-slate-950"
+    "focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
+    "focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950"
   );
 
   const actionButtons = (
     <>
       {isAdmin && buildVersion && (
         <span
-          className="text-[10px] text-um-gray-400 font-mono px-1.5 py-0.5 bg-um-gray-100 dark:bg-um-slate-800 rounded"
+          className="text-[10px] text-neutral-400 font-mono px-1.5 py-0.5 bg-neutral-100 dark:bg-zinc-800 rounded"
           title="Build version"
           aria-label={`Build version ${buildVersion}`}
         >
@@ -161,7 +161,7 @@ export function Header({
             aria-label="Open account drawer"
           >
             {avatarUrl ? (
-              <span className="w-6 h-6 rounded-full border border-white/20 dark:border-um-gray-900/10 bg-um-gray-100 dark:bg-um-slate-800 overflow-hidden">
+              <span className="w-6 h-6 rounded-full border border-white/20 dark:border-neutral-900/10 bg-neutral-100 dark:bg-zinc-800 overflow-hidden">
                 <img
                   src={avatarUrl}
                   alt="Profile"
@@ -192,17 +192,17 @@ export function Header({
       className={cn(
         "relative w-full",
         // Z-index for proper layering
-        "z-header",
+        "z-50",
         // Background - transparent by default for cohesive feel
         transparent
           ? "bg-transparent"
-          : "bg-white dark:bg-um-slate-950",
+          : "bg-white dark:bg-zinc-950",
         // Sticky mode with blur
         sticky && [
           "sticky top-0",
-          "bg-white/80 dark:bg-um-slate-950/80",
+          "bg-white/80 dark:bg-zinc-950/80",
           "backdrop-blur-md",
-          "border-b border-um-gray-100 dark:border-um-slate-800",
+          "border-b border-neutral-100 dark:border-zinc-800",
         ],
         // Top spacing - part of the page flow, not separate
         !sticky && "pt-6 md:pt-8",
@@ -224,10 +224,10 @@ export function Header({
             onClick={() => navigate("/")}
             className={cn(
               "font-medium text-sm shrink-0",
-              "text-um-gray-900 dark:text-white",
+              "text-neutral-900 dark:text-white",
               "hover:opacity-70 transition-all duration-normal ease-out",
-              "focus:outline-none focus-visible:ring-2 focus-visible:ring-um-gray-900 dark:focus-visible:ring-white",
-              "focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-um-slate-950",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-900 dark:focus-visible:ring-white",
+              "focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950",
               "rounded-lg py-2"
             )}
             aria-label="Go to homepage"
