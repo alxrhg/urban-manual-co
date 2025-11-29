@@ -25,10 +25,10 @@ import { PageLoader } from '@/components/LoadingStates';
 import TripDaySection from '@/components/trip/TripDaySection';
 import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
-import MapDrawer from '@/components/trip/MapDrawer';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
 import AddPlaceBox from '@/components/trip/AddPlaceBox';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
+import MapBox from '@/components/trip/MapBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import LocalEvents from '@/components/trip/LocalEvents';
 import {
@@ -72,7 +72,6 @@ export default function TripPage() {
   // UI State
   const [selectedDayNumber, setSelectedDayNumber] = useState(1);
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
-  const [isMapOpen, setIsMapOpen] = useState(false);
   const [isAIPlanning, setIsAIPlanning] = useState(false);
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
   const [autoFillingDay, setAutoFillingDay] = useState<number | null>(null);
@@ -83,6 +82,7 @@ export default function TripPage() {
   const [warnings, setWarnings] = useState<PlannerWarning[]>([]);
   const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
   const [showTripSettings, setShowTripSettings] = useState(false);
+  const [showMapBox, setShowMapBox] = useState(false);
 
   // Extract flights and hotels from itinerary
   const flights = useMemo(() => {
@@ -469,7 +469,7 @@ export default function TripPage() {
                 onDismiss={(id) => setWarnings(prev => prev.filter(w => w.id !== id))}
               />
               <button
-                onClick={() => setIsMapOpen(true)}
+                onClick={() => setShowMapBox(true)}
                 className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="View Map"
               >
@@ -615,6 +615,14 @@ export default function TripPage() {
                       onDelete={() => router.push('/trips')}
                       onClose={() => setShowTripSettings(false)}
                     />
+                  ) : showMapBox ? (
+                    <MapBox
+                      days={days}
+                      selectedDayNumber={selectedDayNumber}
+                      activeItemId={activeItemId}
+                      onMarkerClick={setActiveItemId}
+                      onClose={() => setShowMapBox(false)}
+                    />
                   ) : showAddPlaceBox ? (
                     <AddPlaceBox
                       city={trip.destination}
@@ -652,7 +660,7 @@ export default function TripPage() {
             )}
 
             {/* Mobile Section */}
-            {(days.length > 0 || showTripSettings) && (
+            {(days.length > 0 || showTripSettings || showMapBox) && (
               <div className="lg:hidden mt-6 space-y-4">
                 {showTripSettings ? (
                   <TripSettingsBox
@@ -660,6 +668,14 @@ export default function TripPage() {
                     onUpdate={updateTrip}
                     onDelete={() => router.push('/trips')}
                     onClose={() => setShowTripSettings(false)}
+                  />
+                ) : showMapBox ? (
+                  <MapBox
+                    days={days}
+                    selectedDayNumber={selectedDayNumber}
+                    activeItemId={activeItemId}
+                    onMarkerClick={setActiveItemId}
+                    onClose={() => setShowMapBox(false)}
                   />
                 ) : showAddPlaceBox ? (
                   <AddPlaceBox
@@ -903,15 +919,6 @@ export default function TripPage() {
         isSaving={saving}
       />
 
-      {/* Map Drawer */}
-      <MapDrawer
-        isOpen={isMapOpen}
-        onClose={() => setIsMapOpen(false)}
-        days={days}
-        selectedDayNumber={selectedDayNumber}
-        activeItemId={activeItemId}
-        onMarkerClick={setActiveItemId}
-      />
     </main>
   );
 }
