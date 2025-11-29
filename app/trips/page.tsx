@@ -6,10 +6,17 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plus, Loader2, MapPin, Calendar, Plane, Search, X, ArrowRight } from 'lucide-react';
+import { Plus, Loader2, MapPin, Calendar, Plane, Search, X, ArrowRight, Sparkles } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import { formatTripDateRange, calculateTripDays } from '@/lib/utils';
+import { TripHealthDots } from '@/components/trips/TripHealthIndicator';
 import type { Trip } from '@/types/trip';
+
+interface TripWithHealth extends Trip {
+  item_count?: number;
+  has_hotel?: boolean;
+  has_flight?: boolean;
+}
 
 type TripStatus = 'all' | 'planning' | 'upcoming' | 'ongoing' | 'completed';
 
@@ -32,7 +39,7 @@ function getStatusConfig(status?: string) {
 export default function TripsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [trips, setTrips] = useState<Trip[]>([]);
+  const [trips, setTrips] = useState<TripWithHealth[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,14 +81,54 @@ export default function TripsPage() {
       const supabase = createClient();
       if (!supabase || !user) return;
 
-      const { data, error } = await supabase
+      // Fetch trips with item counts
+      const { data: tripsData, error: tripsError } = await supabase
         .from('trips')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setTrips(data || []);
+      if (tripsError) throw tripsError;
+
+      // Fetch item counts for each trip
+      if (tripsData && tripsData.length > 0) {
+        const tripIds = tripsData.map(t => t.id);
+
+        // Get item counts grouped by trip
+        const { data: itemCounts } = await supabase
+          .from('itinerary_items')
+          .select('trip_id, notes')
+          .in('trip_id', tripIds);
+
+        // Calculate health metrics for each trip
+        const tripsWithHealth = tripsData.map(trip => {
+          const tripItems = itemCounts?.filter(i => i.trip_id === trip.id) || [];
+          const itemCount = tripItems.length;
+
+          // Check for hotels and flights in notes
+          let hasHotel = false;
+          let hasFlight = false;
+
+          tripItems.forEach(item => {
+            try {
+              const notes = item.notes ? JSON.parse(item.notes) : null;
+              if (notes?.type === 'hotel') hasHotel = true;
+              if (notes?.type === 'flight') hasFlight = true;
+            } catch {}
+          });
+
+          return {
+            ...trip,
+            item_count: itemCount,
+            has_hotel: hasHotel,
+            has_flight: hasFlight,
+          };
+        });
+
+        setTrips(tripsWithHealth);
+      } else {
+        setTrips([]);
+      }
     } catch (err) {
       console.error('Error fetching trips:', err);
     } finally {
@@ -369,17 +416,40 @@ export default function TripsPage() {
                         )}
                       </div>
                     </div>
+
+                    {/* Health indicator overlay */}
+                    {trip.status === 'planning' && (
+                      <div className="absolute bottom-3 right-3">
+                        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full px-2 py-1">
+                          <TripHealthDots
+                            itemCount={trip.item_count || 0}
+                            dayCount={daysCount || 1}
+                            hasHotel={trip.has_hotel || false}
+                            hasFlight={trip.has_flight || false}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Date Row */}
-                  {dateDisplay && (
-                    <div className="px-4 py-3 border-t border-stone-100 dark:border-gray-800">
+                  {/* Date Row / Planning CTA */}
+                  <div className="px-4 py-3 border-t border-stone-100 dark:border-gray-800">
+                    {dateDisplay ? (
                       <p className="text-xs text-stone-500 dark:text-gray-400 flex items-center gap-1.5">
                         <Calendar className="w-3 h-3" />
                         {dateDisplay}
                       </p>
-                    </div>
-                  )}
+                    ) : trip.status === 'planning' && (trip.item_count || 0) < 3 ? (
+                      <p className="text-xs text-stone-600 dark:text-gray-400 flex items-center gap-1.5">
+                        <Sparkles className="w-3 h-3" />
+                        Continue planning
+                      </p>
+                    ) : trip.status === 'planning' ? (
+                      <p className="text-xs text-stone-400 dark:text-gray-500">
+                        Set dates to finalize
+                      </p>
+                    ) : null}
+                  </div>
                 </Link>
               );
             })}

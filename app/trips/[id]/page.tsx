@@ -15,8 +15,6 @@ import {
   Plus,
   Loader2,
   MapPin,
-  Cloud,
-  Shield,
   ListChecks,
   StickyNote,
   Square,
@@ -24,17 +22,21 @@ import {
   X,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
-import TripStats from '@/components/trip/TripStats';
 import TripDaySection from '@/components/trip/TripDaySection';
 import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
+import AlertsDropdown from '@/components/trip/AlertsDropdown';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
-import TripWeatherForecast from '@/components/trips/TripWeatherForecast';
-import TripSafetyAlerts from '@/components/trips/TripSafetyAlerts';
-import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
+import LocalEvents from '@/components/trip/LocalEvents';
+import {
+  analyzeScheduleForWarnings,
+  detectConflicts,
+  checkClosureDays,
+} from '@/lib/intelligence/schedule-analyzer';
 import type { FlightData } from '@/types/trip';
 import type { Destination } from '@/types/destination';
+import type { PlannerWarning } from '@/lib/intelligence/types';
 
 /**
  * TripPage - Clean, minimal design with stone palette
@@ -70,24 +72,94 @@ export default function TripPage() {
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isAIPlanning, setIsAIPlanning] = useState(false);
-  const [activeTab, setActiveTab] = useState<'itinerary' | 'notes' | 'insights' | 'overview'>('itinerary');
+  const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
+  const [autoFillingDay, setAutoFillingDay] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'itinerary' | 'flights' | 'hotels' | 'notes'>('itinerary');
   const [tripNotes, setTripNotes] = useState('');
   const [checklistItems, setChecklistItems] = useState<{ id: string; text: string; checked: boolean }[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState('');
-  const [bucketItems, setBucketItems] = useState<BucketItem[]>([]);
+  const [warnings, setWarnings] = useState<PlannerWarning[]>([]);
 
-  // Get first destination coordinates for weather
-  const firstDestination = useMemo(() => {
-    const firstItem = days.flatMap(d => d.items).find(item => item.destination?.latitude);
-    return firstItem?.destination;
+  // Extract flights and hotels from itinerary
+  const flights = useMemo(() => {
+    return days.flatMap(d =>
+      d.items.filter(item => item.parsedNotes?.type === 'flight')
+        .map(item => ({ ...item, dayNumber: d.dayNumber }))
+    );
   }, [days]);
 
+  const hotels = useMemo(() => {
+    return days.flatMap(d =>
+      d.items.filter(item => item.parsedNotes?.type === 'hotel')
+        .map(item => ({ ...item, dayNumber: d.dayNumber }))
+    );
+  }, [days]);
+
+  // Generate trip warnings based on analysis
+  useMemo(() => {
+    const newWarnings: PlannerWarning[] = [];
+
+    // Prepare items for schedule analysis
+    const scheduleItems = days.flatMap(d =>
+      d.items.map(item => ({
+        id: item.id,
+        title: item.title,
+        dayNumber: d.dayNumber,
+        time: item.time,
+        duration: item.parsedNotes?.duration,
+        category: item.parsedNotes?.category || item.destination?.category,
+        parsedNotes: item.parsedNotes,
+      }))
+    );
+
+    // Time-aware warnings (closing times, opening hours)
+    const scheduleWarnings = analyzeScheduleForWarnings(scheduleItems);
+    newWarnings.push(...scheduleWarnings);
+
+    // Conflict detection (overlapping bookings)
+    const conflictWarnings = detectConflicts(scheduleItems);
+    newWarnings.push(...conflictWarnings);
+
+    // Closure day warnings (e.g., museum closed Monday)
+    const closureWarnings = checkClosureDays(scheduleItems, trip?.start_date ?? undefined);
+    newWarnings.push(...closureWarnings);
+
+    // Warning: Empty days
+    days.forEach(day => {
+      if (day.items.length === 0) {
+        newWarnings.push({
+          id: `empty-day-${day.dayNumber}`,
+          type: 'timing',
+          severity: 'low',
+          message: `Day ${day.dayNumber} has no activities planned`,
+          suggestion: 'Add some places to fill your day',
+        });
+      }
+    });
+
+    // Warning: Too many activities in a day
+    days.forEach(day => {
+      if (day.items.length > 6) {
+        newWarnings.push({
+          id: `busy-day-${day.dayNumber}`,
+          type: 'timing',
+          severity: 'medium',
+          message: `Day ${day.dayNumber} looks very packed (${day.items.length} stops)`,
+          suggestion: 'Consider spreading activities across multiple days',
+        });
+      }
+    });
+
+    setWarnings(newWarnings.slice(0, 10)); // Limit to 10 warnings
+  }, [days, trip?.start_date]);
+
   // Callbacks
-  const openPlaceSelector = useCallback((dayNumber: number) => {
+  const openPlaceSelector = useCallback((dayNumber: number, category?: string) => {
     openDrawer('place-selector', {
       tripId: trip?.id,
       dayNumber,
       city: trip?.destination,
+      category, // Pass category filter to drawer
       onSelect: (destination: Destination) => addPlace(destination, dayNumber),
     });
   }, [trip?.id, trip?.destination, openDrawer, addPlace]);
@@ -189,37 +261,126 @@ export default function TripPage() {
     }
   };
 
-  // Bucket list handlers
-  const handleAddToBucketList = useCallback((item: Omit<BucketItem, 'id' | 'addedAt'>) => {
-    setBucketItems(prev => [...prev, {
-      ...item,
-      id: `bucket-${Date.now()}`,
-      addedAt: new Date().toISOString(),
-    }]);
-  }, []);
+  // Optimize day route order
+  const handleOptimizeDay = useCallback(async (dayNumber: number) => {
+    const day = days.find(d => d.dayNumber === dayNumber);
+    if (!day || day.items.length < 2) return;
 
-  const handleRemoveFromBucketList = useCallback((itemId: string) => {
-    setBucketItems(prev => prev.filter(item => item.id !== itemId));
-  }, []);
+    setOptimizingDay(dayNumber);
+    try {
+      const response = await fetch('/api/intelligence/route-optimizer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: day.items.map(item => ({
+            id: item.id,
+            title: item.title,
+            latitude: item.destination?.latitude ?? item.parsedNotes?.latitude,
+            longitude: item.destination?.longitude ?? item.parsedNotes?.longitude,
+            time: item.time,
+          })),
+        }),
+      });
 
-  const handleAssignToDay = useCallback(async (item: BucketItem, dayNumber: number) => {
-    // For place type items, try to find the destination and add it
-    if (item.type === 'place' && item.url) {
-      try {
-        const slug = item.url.split('/').pop();
-        if (slug) {
-          const response = await fetch(`/api/destinations/${slug}`);
-          if (response.ok) {
-            const destination = await response.json();
-            await addPlace(destination, dayNumber);
-            handleRemoveFromBucketList(item.id);
+      if (response.ok) {
+        const result = await response.json();
+        if (result.optimizedOrder && Array.isArray(result.optimizedOrder)) {
+          // Reorder items based on optimization
+          const orderedItems = result.optimizedOrder
+            .map((id: string) => day.items.find(item => item.id === id))
+            .filter(Boolean);
+          if (orderedItems.length === day.items.length) {
+            reorderItems(dayNumber, orderedItems);
           }
         }
-      } catch (err) {
-        console.error('Failed to add place:', err);
       }
+    } catch (err) {
+      console.error('Failed to optimize day:', err);
+    } finally {
+      setOptimizingDay(null);
     }
-  }, [addPlace, handleRemoveFromBucketList]);
+  }, [days, reorderItems]);
+
+  // Auto-fill day with suggestions
+  const handleAutoFillDay = useCallback(async (dayNumber: number) => {
+    if (!trip?.destination) return;
+
+    setAutoFillingDay(dayNumber);
+    try {
+      const day = days.find(d => d.dayNumber === dayNumber);
+      const existingItems = day?.items.map(item => ({
+        day: dayNumber,
+        time: item.time,
+        title: item.title,
+        destination_slug: item.destination_slug,
+        category: item.parsedNotes?.category || item.destination?.category,
+      })) || [];
+
+      const response = await fetch('/api/intelligence/smart-fill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city: trip.destination,
+          existingItems,
+          tripDays: 1, // Just this day
+          targetDay: dayNumber,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        for (const suggestion of result.suggestions || []) {
+          if (suggestion.destination && suggestion.day === dayNumber) {
+            await addPlace(suggestion.destination, dayNumber, suggestion.startTime);
+          }
+        }
+        await refresh();
+      }
+    } catch (err) {
+      console.error('Failed to auto-fill day:', err);
+    } finally {
+      setAutoFillingDay(null);
+    }
+  }, [trip?.destination, days, addPlace, refresh]);
+
+  // Add destination from NL input
+  const handleAddFromNL = useCallback(async (
+    destination: unknown,
+    dayNumber: number,
+    time?: string
+  ) => {
+    const dest = destination as { id: number; slug: string; name: string; category: string };
+    if (dest && dest.slug) {
+      // Create minimal Destination object for addPlace
+      const fullDest: Destination = {
+        id: dest.id,
+        slug: dest.slug,
+        name: dest.name,
+        category: dest.category,
+        city: trip?.destination || '',
+      };
+      await addPlace(fullDest, dayNumber, time);
+      await refresh();
+    }
+  }, [addPlace, refresh, trip?.destination]);
+
+  // Handle AI suggestion click
+  const handleAddAISuggestion = useCallback(async (suggestion: {
+    destination: { id: number; slug: string; name: string; category: string };
+    day: number;
+    startTime: string;
+  }) => {
+    // Create minimal Destination object for addPlace
+    const fullDest: Destination = {
+      id: suggestion.destination.id,
+      slug: suggestion.destination.slug,
+      name: suggestion.destination.name,
+      category: suggestion.destination.category,
+      city: trip?.destination || '',
+    };
+    await addPlace(fullDest, suggestion.day, suggestion.startTime);
+    await refresh();
+  }, [addPlace, refresh, trip?.destination]);
 
   // Loading state
   if (loading) {
@@ -272,8 +433,12 @@ export default function TripPage() {
                 <span className="hidden sm:inline">Trips</span>
               </Link>
 
-              {/* Mobile Actions - Settings only (Map in FAB) */}
+              {/* Mobile Actions */}
               <div className="flex items-center gap-1 sm:hidden">
+                <AlertsDropdown
+                  warnings={warnings}
+                  onDismiss={(id) => setWarnings(prev => prev.filter(w => w.id !== id))}
+                />
                 <button
                   onClick={() => openDrawer('trip-settings', {
                     trip,
@@ -301,6 +466,10 @@ export default function TripPage() {
 
             {/* Desktop Action Buttons */}
             <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+              <AlertsDropdown
+                warnings={warnings}
+                onDismiss={(id) => setWarnings(prev => prev.filter(w => w.id !== id))}
+              />
               <button
                 onClick={() => setIsMapOpen(true)}
                 className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -322,9 +491,9 @@ export default function TripPage() {
             </div>
           </div>
 
-          {/* Cover Image (optional) - Taller on mobile for visual impact */}
+          {/* Cover Image (optional) */}
           {coverImage && (
-            <div className="relative w-full h-40 sm:h-48 md:h-64 rounded-xl sm:rounded-2xl overflow-hidden mb-4 sm:mb-6">
+            <div className="relative w-full h-32 sm:h-40 rounded-xl overflow-hidden">
               <Image
                 src={coverImage}
                 alt={trip.title}
@@ -337,48 +506,11 @@ export default function TripPage() {
           )}
         </div>
 
-        {/* Stats Grid */}
-        <TripStats
-          days={days}
-          destination={trip.destination}
-          startDate={trip.start_date}
-          endDate={trip.end_date}
-          className="mb-8"
-        />
-
-        {/* Weather Preview (compact) */}
-        {trip.destination && trip.start_date && (
-          <div className="mb-8 p-4 border border-stone-200 dark:border-gray-800 rounded-2xl">
-            <TripWeatherForecast
-              destination={trip.destination}
-              startDate={trip.start_date}
-              endDate={trip.end_date}
-              latitude={firstDestination?.latitude ?? undefined}
-              longitude={firstDestination?.longitude ?? undefined}
-              compact
-            />
-          </div>
-        )}
-
-        {/* Smart Suggestions - below weather */}
-        {days.length > 0 && (
-          <SmartSuggestions
-            days={days}
-            destination={trip.destination}
-            onAddPlace={(dayNumber, category) => {
-              setSelectedDayNumber(dayNumber);
-              openPlaceSelector(dayNumber);
-            }}
-            className="mb-8"
-          />
-        )}
-
-        {/* Tab Navigation - Mobile optimized with horizontal scroll */}
-        <div className="mb-6 sm:mb-8">
+        {/* Tab Navigation */}
+        <div className="mb-4">
           <div className="flex items-center justify-between gap-4">
-            {/* Tabs - Scrollable on mobile */}
             <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
-              {(['itinerary', 'notes', 'insights', 'overview'] as const).map((tab) => (
+              {(['itinerary', 'flights', 'hotels', 'notes'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -393,13 +525,22 @@ export default function TripPage() {
                   `}
                 >
                   {tab === 'notes' && <StickyNote className="w-3.5 h-3.5 sm:w-3 sm:h-3" />}
-                  {tab === 'insights' && <Cloud className="w-3.5 h-3.5 sm:w-3 sm:h-3" />}
+                  {tab === 'flights' && flights.length > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-stone-200 dark:bg-gray-700 text-[10px] flex items-center justify-center">
+                      {flights.length}
+                    </span>
+                  )}
+                  {tab === 'hotels' && hotels.length > 0 && (
+                    <span className="w-4 h-4 rounded-full bg-stone-200 dark:bg-gray-700 text-[10px] flex items-center justify-center">
+                      {hotels.length}
+                    </span>
+                  )}
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                 </button>
               ))}
             </div>
 
-            {/* Quick Actions - Hidden on mobile (use FAB instead) */}
+            {/* Quick Actions */}
             <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleAITripPlanning}
@@ -411,14 +552,14 @@ export default function TripPage() {
                 ) : (
                   <Sparkles className="w-3 h-3" />
                 )}
-                {isAIPlanning ? 'Autopilot...' : 'Autopilot'}
+                {isAIPlanning ? 'Planning...' : 'Auto-plan'}
               </button>
               <button
                 onClick={() => openPlaceSelector(selectedDayNumber)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-stone-200 dark:border-gray-800 rounded-full hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Plus className="w-3 h-3" />
-                Add Stop
+                Add
               </button>
             </div>
           </div>
@@ -426,7 +567,7 @@ export default function TripPage() {
 
         {/* Itinerary Tab */}
         {activeTab === 'itinerary' && (
-          <div className="space-y-4 fade-in">
+          <div className="fade-in">
             {days.length === 0 ? (
               /* Empty State */
               <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
@@ -440,29 +581,176 @@ export default function TripPage() {
                 </button>
               </div>
             ) : (
-              <>
-                {/* Horizontal Day Tabs */}
-                <DayTabNav
-                  days={days}
-                  selectedDayNumber={selectedDayNumber}
-                  onSelectDay={setSelectedDayNumber}
-                  className="mb-4"
-                />
-
-                {/* Selected Day Only */}
-                {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
-                  <TripDaySection
-                    key={day.dayNumber}
-                    day={day}
-                    isSelected={true}
-                    onSelect={() => {}}
-                    onReorderItems={reorderItems}
-                    onRemoveItem={removeItem}
-                    onEditItem={handleEditItem}
-                    onAddItem={openPlaceSelector}
-                    activeItemId={activeItemId}
+              <div className="lg:flex lg:gap-6">
+                {/* Main Itinerary Column */}
+                <div className="flex-1 space-y-4">
+                  {/* Horizontal Day Tabs */}
+                  <DayTabNav
+                    days={days}
+                    selectedDayNumber={selectedDayNumber}
+                    onSelectDay={setSelectedDayNumber}
+                    className="mb-4"
                   />
+
+                  {/* Selected Day Only */}
+                  {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
+                    <TripDaySection
+                      key={day.dayNumber}
+                      day={day}
+                      isSelected={true}
+                      onSelect={() => {}}
+                      onReorderItems={reorderItems}
+                      onRemoveItem={removeItem}
+                      onEditItem={handleEditItem}
+                      onAddItem={openPlaceSelector}
+                      onOptimizeDay={handleOptimizeDay}
+                      onAutoFillDay={handleAutoFillDay}
+                      activeItemId={activeItemId}
+                      isOptimizing={optimizingDay === day.dayNumber}
+                      isAutoFilling={autoFillingDay === day.dayNumber}
+                    />
+                  ))}
+                </div>
+
+                {/* AI Sidebar (Desktop) */}
+                <div className="hidden lg:block lg:w-80 lg:flex-shrink-0 space-y-4">
+                  <SmartSuggestions
+                    days={days}
+                    destination={trip.destination}
+                    selectedDayNumber={selectedDayNumber}
+                    onAddPlace={openPlaceSelector}
+                    onAddAISuggestion={handleAddAISuggestion}
+                    onAddFromNL={handleAddFromNL}
+                  />
+                  {trip.start_date && (
+                    <LocalEvents
+                      city={trip.destination || ''}
+                      startDate={trip.start_date}
+                      endDate={trip.end_date}
+                      onAddToTrip={(event) => {
+                        // Add event as custom item
+                        openPlaceSelector(selectedDayNumber);
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Mobile AI Section (collapsible) */}
+            {days.length > 0 && (
+              <div className="lg:hidden mt-6 space-y-4">
+                <SmartSuggestions
+                  days={days}
+                  destination={trip.destination}
+                  selectedDayNumber={selectedDayNumber}
+                  onAddPlace={openPlaceSelector}
+                  onAddAISuggestion={handleAddAISuggestion}
+                  onAddFromNL={handleAddFromNL}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Flights Tab */}
+        {activeTab === 'flights' && (
+          <div className="fade-in space-y-4">
+            {flights.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
+                <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">No flights added yet</p>
+                <button
+                  onClick={() => openFlightDrawer(selectedDayNumber)}
+                  className="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
+                >
+                  Add a flight
+                </button>
+              </div>
+            ) : (
+              <>
+                {flights.map((flight) => (
+                  <div
+                    key={flight.id}
+                    onClick={() => handleEditItem(flight)}
+                    className="p-4 border border-stone-200 dark:border-gray-800 rounded-2xl hover:bg-stone-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-stone-400">Day {flight.dayNumber}</span>
+                      <span className="text-xs text-stone-400">{flight.parsedNotes?.departureDate}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-stone-900 dark:text-white">
+                          {flight.parsedNotes?.from} → {flight.parsedNotes?.to}
+                        </p>
+                        <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                          {flight.parsedNotes?.airline} {flight.parsedNotes?.flightNumber}
+                          {flight.parsedNotes?.departureTime && ` · ${flight.parsedNotes.departureTime}`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 ))}
+                <button
+                  onClick={() => openFlightDrawer(selectedDayNumber)}
+                  className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-stone-500 dark:text-gray-400 hover:border-stone-300 dark:hover:border-gray-700 transition-colors"
+                >
+                  + Add another flight
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Hotels Tab */}
+        {activeTab === 'hotels' && (
+          <div className="fade-in space-y-4">
+            {hotels.length === 0 ? (
+              <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
+                <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">No hotels added yet</p>
+                <button
+                  onClick={() => openPlaceSelector(selectedDayNumber)}
+                  className="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
+                >
+                  Add accommodation
+                </button>
+              </div>
+            ) : (
+              <>
+                {hotels.map((hotel) => (
+                  <div
+                    key={hotel.id}
+                    onClick={() => handleEditItem(hotel)}
+                    className="p-4 border border-stone-200 dark:border-gray-800 rounded-2xl hover:bg-stone-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-stone-400">Day {hotel.dayNumber}</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-stone-900 dark:text-white">
+                        {hotel.title}
+                      </p>
+                      {hotel.parsedNotes?.address && (
+                        <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                          {hotel.parsedNotes.address}
+                        </p>
+                      )}
+                      {(hotel.parsedNotes?.checkInDate || hotel.parsedNotes?.checkOutDate) && (
+                        <p className="text-xs text-stone-400 mt-2">
+                          {hotel.parsedNotes?.checkInDate && `Check-in: ${hotel.parsedNotes.checkInDate}`}
+                          {hotel.parsedNotes?.checkInDate && hotel.parsedNotes?.checkOutDate && ' · '}
+                          {hotel.parsedNotes?.checkOutDate && `Check-out: ${hotel.parsedNotes.checkOutDate}`}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={() => openPlaceSelector(selectedDayNumber)}
+                  className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-stone-500 dark:text-gray-400 hover:border-stone-300 dark:hover:border-gray-700 transition-colors"
+                >
+                  + Add another hotel
+                </button>
               </>
             )}
           </div>
@@ -565,99 +853,6 @@ export default function TripPage() {
                 placeholder="Add notes for your trip... reservations, reminders, etc."
                 className="w-full min-h-[150px] p-4 text-sm text-stone-700 dark:text-gray-300 bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl resize-y placeholder:text-stone-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-700"
               />
-            </div>
-          </div>
-        )}
-
-        {/* Insights Tab */}
-        {activeTab === 'insights' && (
-          <div className="space-y-6 fade-in">
-            {/* Weather Forecast */}
-            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
-              <div className="flex items-center gap-2 mb-4">
-                <Cloud className="w-4 h-4 text-stone-500" />
-                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Weather Forecast</h3>
-              </div>
-              <TripWeatherForecast
-                destination={trip.destination}
-                startDate={trip.start_date}
-                endDate={trip.end_date}
-                latitude={firstDestination?.latitude ?? undefined}
-                longitude={firstDestination?.longitude ?? undefined}
-              />
-            </div>
-
-            {/* Safety Alerts */}
-            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
-              <div className="flex items-center gap-2 mb-4">
-                <Shield className="w-4 h-4 text-stone-500" />
-                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Travel Advisories</h3>
-              </div>
-              <TripSafetyAlerts destination={trip.destination} />
-            </div>
-
-            {/* Bucket List */}
-            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
-              <div className="flex items-center gap-2 mb-4">
-                <ListChecks className="w-4 h-4 text-stone-500" />
-                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Bucket List</h3>
-              </div>
-              <TripBucketList
-                items={bucketItems}
-                onAdd={handleAddToBucketList}
-                onRemove={handleRemoveFromBucketList}
-                onReorder={setBucketItems}
-                onAssignToDay={handleAssignToDay}
-                availableDays={days.map(d => d.dayNumber)}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Overview Tab */}
-        {activeTab === 'overview' && (
-          <div className="fade-in">
-            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
-              <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400 mb-4">Trip Summary</h3>
-              <div className="space-y-4">
-                {trip.description ? (
-                  <p className="text-sm text-stone-600 dark:text-gray-300">{trip.description}</p>
-                ) : (
-                  <p className="text-xs text-stone-400 dark:text-gray-500">
-                    No description added yet. Edit your trip to add one.
-                  </p>
-                )}
-
-                <div className="pt-4 border-t border-stone-100 dark:border-gray-800">
-                  <h4 className="text-xs font-medium text-stone-500 dark:text-gray-400 mb-3">All Stops</h4>
-                  <div className="space-y-2">
-                    {days.flatMap(day =>
-                      day.items.map((item) => (
-                        <button
-                          key={item.id}
-                          onClick={() => handleEditItem(item)}
-                          className="w-full text-left p-2 hover:bg-stone-50 dark:hover:bg-gray-800 rounded-xl transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs text-stone-400 w-8">D{day.dayNumber}</span>
-                            <span className="text-sm text-stone-900 dark:text-white truncate flex-1">
-                              {item.title}
-                            </span>
-                            <span className="text-xs text-stone-400 capitalize">
-                              {item.parsedNotes?.category || item.destination?.category}
-                            </span>
-                          </div>
-                        </button>
-                      ))
-                    )}
-                    {days.flatMap(d => d.items).length === 0 && (
-                      <p className="text-xs text-stone-400 dark:text-gray-500 py-4 text-center">
-                        No stops added yet
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         )}

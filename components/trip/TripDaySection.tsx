@@ -21,6 +21,8 @@ import {
 } from '@dnd-kit/sortable';
 import TripItemCard from './TripItemCard';
 import TransitConnector from './TransitConnector';
+import DayIntelligence from './DayIntelligence';
+import { NeighborhoodTags } from './NeighborhoodBreakdown';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { getAirportCoordinates } from '@/lib/utils/airports';
 
@@ -31,8 +33,12 @@ interface TripDaySectionProps {
   onReorderItems?: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
   onRemoveItem?: (itemId: string) => void;
   onEditItem?: (item: EnrichedItineraryItem) => void;
-  onAddItem?: (dayNumber: number) => void;
+  onAddItem?: (dayNumber: number, category?: string) => void;
+  onOptimizeDay?: (dayNumber: number) => void;
+  onAutoFillDay?: (dayNumber: number) => void;
   activeItemId?: string | null;
+  isOptimizing?: boolean;
+  isAutoFilling?: boolean;
 }
 
 /**
@@ -47,7 +53,11 @@ export default function TripDaySection({
   onRemoveItem,
   onEditItem,
   onAddItem,
+  onOptimizeDay,
+  onAutoFillDay,
   activeItemId,
+  isOptimizing = false,
+  isAutoFilling = false,
 }: TripDaySectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -255,22 +265,68 @@ export default function TripDaySection({
         )}
       </div>
 
+      {/* Day Intelligence Bar */}
+      {isExpanded && (
+        <div className="px-4 py-2 border-t border-stone-100 dark:border-gray-800/50 bg-stone-50/50 dark:bg-gray-900/30">
+          <DayIntelligence
+            dayNumber={day.dayNumber}
+            date={day.date}
+            items={day.items}
+            onOptimizeDay={() => onOptimizeDay?.(day.dayNumber)}
+            onAutoFill={() => onAutoFillDay?.(day.dayNumber)}
+            isOptimizing={isOptimizing}
+            isAutoFilling={isAutoFilling}
+          />
+        </div>
+      )}
+
       {/* Day Content */}
       {isExpanded && (
         <div className="border-t border-stone-100 dark:border-gray-800/50">
           {day.items.length === 0 ? (
-            /* Empty State - Larger touch target */
-            <div className="p-6 sm:p-6 text-center">
-              <p className="text-xs text-stone-400 dark:text-gray-500 mb-4 sm:mb-3">
+            /* Empty State with Quick Suggestions */
+            <div className="p-6 sm:p-6">
+              <p className="text-xs text-stone-400 dark:text-gray-500 mb-4 text-center">
                 No stops planned for this day
               </p>
-              <button
-                onClick={() => onAddItem?.(day.dayNumber)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white active:text-stone-900 transition-colors bg-stone-100 dark:bg-gray-800 sm:bg-transparent rounded-xl sm:rounded-none"
-              >
-                <Plus className="w-4 h-4 sm:w-3 sm:h-3" />
-                Add a stop
-              </button>
+
+              {/* Quick Add Suggestions */}
+              <div className="flex flex-wrap justify-center gap-2 mb-4">
+                <button
+                  onClick={() => onAddItem?.(day.dayNumber, 'cafe')}
+                  className="px-3 py-1.5 text-xs text-stone-500 dark:text-gray-400 bg-stone-100 dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  + Breakfast
+                </button>
+                <button
+                  onClick={() => onAddItem?.(day.dayNumber, 'museum')}
+                  className="px-3 py-1.5 text-xs text-stone-500 dark:text-gray-400 bg-stone-100 dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  + Museum
+                </button>
+                <button
+                  onClick={() => onAddItem?.(day.dayNumber, 'restaurant')}
+                  className="px-3 py-1.5 text-xs text-stone-500 dark:text-gray-400 bg-stone-100 dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  + Lunch
+                </button>
+                <button
+                  onClick={() => onAddItem?.(day.dayNumber, 'bar')}
+                  className="px-3 py-1.5 text-xs text-stone-500 dark:text-gray-400 bg-stone-100 dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
+                >
+                  + Drinks
+                </button>
+              </div>
+
+              <div className="text-center">
+                <button
+                  onClick={() => onAddItem?.(day.dayNumber)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white active:text-stone-900 transition-colors bg-stone-100 dark:bg-gray-800 sm:bg-transparent rounded-xl sm:rounded-none"
+                >
+                  <Plus className="w-4 h-4 sm:w-3 sm:h-3" />
+                  Browse all
+                </button>
+              </div>
             </div>
           ) : isEditMode ? (
             /* Edit Mode - Draggable Items */
