@@ -28,7 +28,14 @@ import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import PersonalizedPick from '@/components/trip/PersonalizedPick';
-import IntelligenceWarnings from '@/components/planner/IntelligenceWarnings';
+import AlertsDropdown from '@/components/trip/AlertsDropdown';
+import LocalEvents from '@/components/trip/LocalEvents';
+import NaturalLanguageInput from '@/components/trip/NaturalLanguageInput';
+import {
+  analyzeScheduleForWarnings,
+  detectConflicts,
+  checkClosureDays,
+} from '@/lib/intelligence/schedule-analyzer';
 import type { FlightData } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 import type { PlannerWarning } from '@/lib/intelligence/types';
@@ -93,7 +100,31 @@ export default function TripPage() {
   // Generate trip warnings based on analysis
   useMemo(() => {
     const newWarnings: PlannerWarning[] = [];
-    const allItems = days.flatMap(d => d.items);
+
+    // Prepare items for schedule analysis
+    const scheduleItems = days.flatMap(d =>
+      d.items.map(item => ({
+        id: item.id,
+        title: item.title,
+        dayNumber: d.dayNumber,
+        time: item.time,
+        duration: item.parsedNotes?.duration,
+        category: item.parsedNotes?.category || item.destination?.category,
+        parsedNotes: item.parsedNotes,
+      }))
+    );
+
+    // Time-aware warnings (closing times, opening hours)
+    const scheduleWarnings = analyzeScheduleForWarnings(scheduleItems);
+    newWarnings.push(...scheduleWarnings);
+
+    // Conflict detection (overlapping bookings)
+    const conflictWarnings = detectConflicts(scheduleItems);
+    newWarnings.push(...conflictWarnings);
+
+    // Closure day warnings (e.g., museum closed Monday)
+    const closureWarnings = checkClosureDays(scheduleItems, trip?.start_date ?? undefined);
+    newWarnings.push(...closureWarnings);
 
     // Warning: Empty days
     days.forEach(day => {
@@ -116,47 +147,13 @@ export default function TripPage() {
           type: 'timing',
           severity: 'medium',
           message: `Day ${day.dayNumber} looks very packed (${day.items.length} stops)`,
-          suggestion: 'Consider spreading activities across multiple days for a more relaxed trip',
+          suggestion: 'Consider spreading activities across multiple days',
         });
       }
     });
 
-    // Warning: Long distances between consecutive activities
-    allItems.forEach((item, index) => {
-      if (index === 0) return;
-      const prevItem = allItems[index - 1];
-      if (item.destination?.latitude && item.destination?.longitude &&
-          prevItem.destination?.latitude && prevItem.destination?.longitude) {
-        const lat1 = item.destination.latitude;
-        const lon1 = item.destination.longitude;
-        const lat2 = prevItem.destination.latitude;
-        const lon2 = prevItem.destination.longitude;
-
-        // Haversine formula for distance
-        const R = 6371; // km
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        const distance = R * c;
-
-        if (distance > 5) { // More than 5km apart
-          newWarnings.push({
-            id: `distance-${item.id}`,
-            type: 'distance',
-            severity: distance > 10 ? 'medium' : 'low',
-            message: `${prevItem.title} to ${item.title}: ${distance.toFixed(1)}km apart`,
-            blockId: item.id,
-            suggestion: 'Consider reordering or adding transit time',
-          });
-        }
-      }
-    });
-
-    setWarnings(newWarnings.slice(0, 5)); // Limit to 5 warnings
-  }, [days]);
+    setWarnings(newWarnings.slice(0, 10)); // Limit to 10 warnings
+  }, [days, trip?.start_date]);
 
   // Handle adding AI suggestion to trip
   const handleAddAISuggestion = useCallback(async (suggestion: {
@@ -416,8 +413,12 @@ export default function TripPage() {
                 <span className="hidden sm:inline">Trips</span>
               </Link>
 
-              {/* Mobile Actions - Settings only (Map in FAB) */}
+              {/* Mobile Actions */}
               <div className="flex items-center gap-1 sm:hidden">
+                <AlertsDropdown
+                  warnings={warnings}
+                  onDismiss={(id) => setWarnings(prev => prev.filter(w => w.id !== id))}
+                />
                 <button
                   onClick={() => openDrawer('trip-settings', {
                     trip,
@@ -445,6 +446,10 @@ export default function TripPage() {
 
             {/* Desktop Action Buttons */}
             <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+              <AlertsDropdown
+                warnings={warnings}
+                onDismiss={(id) => setWarnings(prev => prev.filter(w => w.id !== id))}
+              />
               <button
                 onClick={() => setIsMapOpen(true)}
                 className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -481,17 +486,29 @@ export default function TripPage() {
           )}
         </div>
 
-        {/* Intelligence Warnings - show proactive alerts */}
-        {warnings.length > 0 && (
-          <div className="mb-6">
-            <IntelligenceWarnings
-              warnings={warnings}
-              onDismiss={(id) => setWarnings(prev => prev.filter(w => w.id !== id))}
-            />
-          </div>
+        {/* Natural Language Input - AI Planning */}
+        <NaturalLanguageInput
+          city={trip.destination}
+          tripDays={days.length}
+          onResult={async (result) => {
+            if (result.destination) {
+              await addPlace(result.destination as unknown as Destination, result.dayNumber || selectedDayNumber, result.time);
+            }
+          }}
+          className="mb-6"
+        />
+
+        {/* Local Events */}
+        {trip.destination && trip.start_date && (
+          <LocalEvents
+            city={trip.destination}
+            startDate={trip.start_date}
+            endDate={trip.end_date}
+            className="mb-6"
+          />
         )}
 
-        {/* Smart Suggestions - below weather */}
+        {/* Smart Suggestions */}
         {days.length > 0 && (
           <SmartSuggestions
             days={days}
