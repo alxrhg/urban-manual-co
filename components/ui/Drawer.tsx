@@ -62,6 +62,25 @@ export function Drawer({
   keepStateOnClose = false,
   fullScreen = false,
 }: DrawerProps) {
+  // Track if component is mounted (client-side) to avoid hydration mismatches
+  const [isMounted, setIsMounted] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState(0);
+
+  // Set mounted state and initial viewport width on client
+  useEffect(() => {
+    setIsMounted(true);
+    setViewportWidth(window.innerWidth);
+
+    const handleResize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Derived viewport breakpoints (only valid after mount)
+  const isMobile = isMounted && viewportWidth < 768;
+  const isTablet = isMounted && viewportWidth >= 768 && viewportWidth < 1024;
+  const isDesktop = isMounted && viewportWidth >= 1024;
+
   // Refs
   const mobileBottomRef = useRef<HTMLDivElement>(null);
   const mobileSideRef = useRef<HTMLDivElement>(null);
@@ -81,23 +100,22 @@ export function Drawer({
 
   // Get the currently visible drawer element
   const getCurrentDrawer = useCallback((): HTMLDivElement | null => {
-    if (typeof window === 'undefined') return null;
+    if (!isMounted) return null;
 
-    if (mobileVariant === 'bottom' && window.innerWidth < 768) {
+    if (mobileVariant === 'bottom' && isMobile) {
       return mobileBottomRef.current;
     }
-    if (mobileVariant === 'side' && window.innerWidth < 768) {
+    if (mobileVariant === 'side' && isMobile) {
       return mobileSideRef.current;
     }
-    const width = window.innerWidth;
-    if (width >= 768 && width < 1024) {
+    if (isTablet) {
       return tabletRef.current;
     }
-    if (width >= 1024) {
+    if (isDesktop) {
       return desktopRef.current;
     }
     return null;
-  }, [mobileVariant]);
+  }, [mobileVariant, isMounted, isMobile, isTablet, isDesktop]);
 
   // Body Scroll Locking
   useEffect(() => {
@@ -337,36 +355,36 @@ export function Drawer({
         </div>
       )}
 
-      {/* Side Drawer (Mobile Side & Desktop) */}
-      {(mobileVariant === 'side' || typeof window !== 'undefined' && window.innerWidth >= 768) && (
+      {/* Side Drawer (Mobile Side & Desktop) - Only render after mount to avoid hydration mismatch */}
+      {isMounted && (mobileVariant === 'side' || !isMobile) && (
         <div
-          ref={window.innerWidth >= 1024 ? desktopRef : (window.innerWidth >= 768 ? tabletRef : mobileSideRef)}
+          ref={isDesktop ? desktopRef : (isTablet ? tabletRef : mobileSideRef)}
           className={`
-            fixed 
-            ${window.innerWidth >= 768 
-              ? `${desktopSpacing} rounded-2xl` 
+            fixed
+            ${!isMobile
+              ? `${desktopSpacing} rounded-2xl`
               : `top-0 bottom-0 w-full ${position === 'right' ? 'right-0' : 'left-0'}`
             }
-            ${backgroundClasses} ${shadowClasses} ${window.innerWidth >= 768 ? borderClasses : ''}
+            ${backgroundClasses} ${shadowClasses} ${!isMobile ? borderClasses : ''}
             z-50 transform transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1)
             flex flex-col overflow-hidden
-            ${isOpen 
-              ? 'translate-x-0 opacity-100' 
+            ${isOpen
+              ? 'translate-x-0 opacity-100'
               : (position === 'right' ? 'translate-x-[110%]' : '-translate-x-[110%]')
             }
-            ${fullScreen && window.innerWidth >= 1024 ? 'inset-0 !rounded-none !w-full !max-w-none !translate-x-0' : ''}
-            ${fullScreen && window.innerWidth >= 1024 && !isOpen ? '!opacity-0 pointer-events-none' : ''}
+            ${fullScreen && isDesktop ? 'inset-0 !rounded-none !w-full !max-w-none !translate-x-0' : ''}
+            ${fullScreen && isDesktop && !isOpen ? '!opacity-0 pointer-events-none' : ''}
           `}
-          style={{ 
-            zIndex, 
-            width: window.innerWidth >= 768 && !fullScreen ? desktopWidth : '100%',
-            maxWidth: window.innerWidth >= 768 && !fullScreen ? 'calc(100vw - 2rem)' : '100%',
+          style={{
+            zIndex,
+            width: !isMobile && !fullScreen ? desktopWidth : '100%',
+            maxWidth: !isMobile && !fullScreen ? 'calc(100vw - 2rem)' : '100%',
           }}
           role="dialog"
           aria-modal="true"
         >
           {renderHeader()}
-          
+
           <div className="flex-1 overflow-y-auto overscroll-contain">
             {children}
           </div>
