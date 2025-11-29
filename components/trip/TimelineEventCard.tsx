@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Check, Plus, ChevronRight, Clock } from 'lucide-react';
+import { Check, Plus, Clock } from 'lucide-react';
 import { formatDuration, formatTimeDisplay } from '@/lib/utils/time-calculations';
 
 export type TimelineEventType =
@@ -39,53 +39,53 @@ export interface TimelineEventCardProps {
   className?: string;
 }
 
-// Color schemes for different event types
-const typeColors: Record<TimelineEventType, { bg: string; border: string; text: string }> = {
+// Clean color schemes matching the calendar screenshot style
+const typeColors: Record<TimelineEventType, { bg: string; text: string; duration: string }> = {
   morning: {
-    bg: 'bg-white dark:bg-stone-900',
-    border: 'border-stone-200 dark:border-stone-700',
+    bg: 'bg-white dark:bg-stone-800',
     text: 'text-stone-900 dark:text-white',
+    duration: 'text-stone-400 dark:text-stone-500',
   },
   task: {
-    bg: 'bg-cyan-50 dark:bg-cyan-950/40',
-    border: 'border-cyan-200 dark:border-cyan-800',
+    bg: 'bg-cyan-100 dark:bg-cyan-900/50',
     text: 'text-cyan-900 dark:text-cyan-100',
+    duration: 'text-cyan-500 dark:text-cyan-400',
   },
   work: {
-    bg: 'bg-emerald-50 dark:bg-emerald-950/40',
-    border: 'border-emerald-200 dark:border-emerald-800',
+    bg: 'bg-emerald-100 dark:bg-emerald-900/50',
     text: 'text-emerald-900 dark:text-emerald-100',
+    duration: 'text-emerald-500 dark:text-emerald-400',
   },
   meal: {
-    bg: 'bg-amber-50 dark:bg-amber-950/40',
-    border: 'border-amber-200 dark:border-amber-800',
+    bg: 'bg-amber-100 dark:bg-amber-900/50',
     text: 'text-amber-900 dark:text-amber-100',
+    duration: 'text-amber-500 dark:text-amber-400',
   },
   travel: {
-    bg: 'bg-blue-50 dark:bg-blue-950/40',
-    border: 'border-blue-200 dark:border-blue-800',
+    bg: 'bg-blue-100 dark:bg-blue-900/50',
     text: 'text-blue-900 dark:text-blue-100',
+    duration: 'text-blue-500 dark:text-blue-400',
   },
   leisure: {
-    bg: 'bg-purple-50 dark:bg-purple-950/40',
-    border: 'border-purple-200 dark:border-purple-800',
+    bg: 'bg-purple-100 dark:bg-purple-900/50',
     text: 'text-purple-900 dark:text-purple-100',
+    duration: 'text-purple-500 dark:text-purple-400',
   },
   hotel: {
-    bg: 'bg-indigo-50 dark:bg-indigo-950/40',
-    border: 'border-indigo-200 dark:border-indigo-800',
+    bg: 'bg-indigo-100 dark:bg-indigo-900/50',
     text: 'text-indigo-900 dark:text-indigo-100',
+    duration: 'text-indigo-500 dark:text-indigo-400',
   },
   default: {
-    bg: 'bg-stone-50 dark:bg-stone-900',
-    border: 'border-stone-200 dark:border-stone-700',
+    bg: 'bg-stone-100 dark:bg-stone-800',
     text: 'text-stone-900 dark:text-white',
+    duration: 'text-stone-400 dark:text-stone-500',
   },
 };
 
 /**
- * TimelineEventCard - A card representing an event in the visual timeline
- * Features colored backgrounds, icons, duration badges, and optional sub-items
+ * TimelineEventCard - Clean calendar-style time block
+ * Matches the simple, minimal design from the screenshot
  */
 export default function TimelineEventCard({
   id,
@@ -105,14 +105,10 @@ export default function TimelineEventCard({
   onClick,
   className = '',
 }: TimelineEventCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
   const [isEditingTime, setIsEditingTime] = useState(false);
   const [editTimeValue, setEditTimeValue] = useState(time || '09:00');
   const timeInputRef = useRef<HTMLInputElement>(null);
   const colors = typeColors[type];
-
-  const completedCount = subItems?.filter((item) => item.completed).length || 0;
-  const totalSubItems = subItems?.length || 0;
 
   // Focus input when editing starts
   useEffect(() => {
@@ -146,106 +142,71 @@ export default function TimelineEventCard({
     }
   };
 
-  // Get duration color based on type
-  const getDurationColor = () => {
-    switch (type) {
-      case 'task': return 'text-cyan-600 dark:text-cyan-400';
-      case 'work': return 'text-emerald-600 dark:text-emerald-400';
-      case 'meal': return 'text-amber-600 dark:text-amber-400';
-      case 'travel': return 'text-blue-600 dark:text-blue-400';
-      case 'leisure': return 'text-purple-600 dark:text-purple-400';
-      case 'hotel': return 'text-indigo-600 dark:text-indigo-400';
-      default: return 'text-stone-500 dark:text-stone-400';
-    }
-  };
-
   return (
     <div
       className={`
-        relative rounded-xl border
-        ${colors.bg} ${colors.border}
-        transition-all duration-200
-        ${isHovered ? 'shadow-md' : 'shadow-sm'}
-        ${isAutoExpanded ? 'border-dashed' : ''}
+        h-full rounded-2xl overflow-hidden cursor-pointer
+        ${colors.bg}
+        ${isAutoExpanded ? 'opacity-80' : ''}
         ${className}
       `}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick?.(id)}
     >
-      {/* Main Card Content */}
-      <div className="flex items-center justify-between p-3">
-        <div className="flex items-center gap-3 min-w-0">
+      {/* Header: Icon + Title + Duration */}
+      <div className="flex items-start justify-between p-3 pb-2">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {/* Icon */}
           {icon && (
-            <span className="text-lg flex-shrink-0">{icon}</span>
+            <span className="text-base flex-shrink-0">{icon}</span>
           )}
-          {/* Add Icon for task type */}
+          {/* Plus icon for task type */}
           {type === 'task' && !icon && (
-            <div className="w-6 h-6 rounded-full bg-cyan-400 dark:bg-cyan-500 flex items-center justify-center flex-shrink-0">
-              <Plus className="w-3.5 h-3.5 text-white" />
-            </div>
-          )}
-
-          {/* Time (editable in edit mode) */}
-          {isEditMode && onTimeChange && (
-            <div className="flex-shrink-0">
-              {isEditingTime ? (
-                <input
-                  ref={timeInputRef}
-                  type="time"
-                  value={editTimeValue}
-                  onChange={(e) => setEditTimeValue(e.target.value)}
-                  onBlur={handleTimeSubmit}
-                  onKeyDown={handleTimeKeyDown}
-                  className="w-20 px-1.5 py-0.5 text-sm font-medium bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-600 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 dark:focus:ring-stone-500"
-                  onClick={(e) => e.stopPropagation()}
-                />
-              ) : (
-                <button
-                  onClick={handleTimeClick}
-                  className="flex items-center gap-1 px-1.5 py-0.5 text-sm font-medium text-stone-600 dark:text-stone-300 bg-white/50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700 rounded-md hover:bg-white dark:hover:bg-stone-800 hover:border-stone-300 dark:hover:border-stone-600 transition-colors"
-                >
-                  <Clock className="w-3 h-3" />
-                  {time ? formatTimeDisplay(time) : 'Set time'}
-                </button>
-              )}
+            <div className="w-5 h-5 rounded-full bg-cyan-400 flex items-center justify-center flex-shrink-0">
+              <Plus className="w-3 h-3 text-white" />
             </div>
           )}
 
           {/* Title */}
-          <span className={`font-medium truncate ${colors.text}`}>
+          <span className={`font-semibold truncate ${colors.text}`}>
             {title}
           </span>
         </div>
 
         {/* Duration Badge */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={`text-sm font-medium px-2 py-0.5 rounded-md ${getDurationColor()}`}>
-            {formatDuration(duration)}
-            {isAutoExpanded && (
-              <span className="ml-1 text-xs opacity-60">(until next)</span>
-            )}
-          </span>
+        <span className={`text-sm font-medium flex-shrink-0 ml-2 ${colors.duration}`}>
+          {formatDuration(duration)}
+        </span>
+      </div>
 
-          {/* Edit indicator on hover */}
-          {isHovered && onEdit && (
+      {/* Time editor (only in edit mode) */}
+      {isEditMode && onTimeChange && (
+        <div className="px-3 pb-2">
+          {isEditingTime ? (
+            <input
+              ref={timeInputRef}
+              type="time"
+              value={editTimeValue}
+              onChange={(e) => setEditTimeValue(e.target.value)}
+              onBlur={handleTimeSubmit}
+              onKeyDown={handleTimeKeyDown}
+              className="w-24 px-2 py-1 text-sm bg-white dark:bg-stone-700 border border-stone-300 dark:border-stone-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+              onClick={(e) => e.stopPropagation()}
+            />
+          ) : (
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(id);
-              }}
-              className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-md transition-colors"
+              onClick={handleTimeClick}
+              className="flex items-center gap-1.5 px-2 py-1 text-sm text-stone-500 dark:text-stone-400 bg-white/60 dark:bg-stone-700/60 rounded-lg hover:bg-white dark:hover:bg-stone-700 transition-colors"
             >
-              <ChevronRight className="w-4 h-4 text-stone-400 dark:text-stone-500" />
+              <Clock className="w-3.5 h-3.5" />
+              {time ? formatTimeDisplay(time) : 'Set time'}
             </button>
           )}
         </div>
-      </div>
+      )}
 
-      {/* Sub-items (like checklist items) */}
+      {/* Sub-items with checkmarks */}
       {isExpanded && subItems && subItems.length > 0 && (
-        <div className="px-3 pb-3 space-y-1.5">
+        <div className="px-3 pb-3 space-y-1">
           {subItems.map((subItem) => (
             <button
               key={subItem.id}
@@ -253,24 +214,23 @@ export default function TimelineEventCard({
                 e.stopPropagation();
                 onToggleSubItem?.(id, subItem.id);
               }}
-              className="flex items-center gap-2 w-full text-left group/item"
+              className="flex items-center gap-2 w-full text-left"
             >
               <div className={`
-                w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0
-                transition-colors
+                w-4 h-4 rounded flex items-center justify-center flex-shrink-0
                 ${subItem.completed
-                  ? 'bg-cyan-500 dark:bg-cyan-600'
-                  : 'border-2 border-stone-300 dark:border-stone-600 group-hover/item:border-cyan-400'
+                  ? 'bg-cyan-500'
+                  : 'border-2 border-stone-300 dark:border-stone-500'
                 }
               `}>
                 {subItem.completed && (
-                  <Check className="w-3 h-3 text-white" />
+                  <Check className="w-2.5 h-2.5 text-white" />
                 )}
               </div>
               <span className={`
-                text-sm transition-colors
+                text-sm
                 ${subItem.completed
-                  ? 'text-stone-400 dark:text-stone-500 line-through'
+                  ? 'text-stone-400 line-through'
                   : 'text-stone-600 dark:text-stone-300'
                 }
               `}>
@@ -281,16 +241,7 @@ export default function TimelineEventCard({
         </div>
       )}
 
-      {/* Collapsed sub-items indicator */}
-      {!isExpanded && subItems && subItems.length > 0 && (
-        <div className="px-3 pb-2">
-          <span className="text-xs text-stone-400 dark:text-stone-500">
-            {completedCount}/{totalSubItems} completed
-          </span>
-        </div>
-      )}
-
-      {/* Scheduled items count (for collapsed blocks) */}
+      {/* Scheduled items count */}
       {scheduledItems && scheduledItems > 0 && (
         <div className="px-3 pb-3">
           <span className="text-sm text-stone-500 dark:text-stone-400">

@@ -261,14 +261,14 @@ export default function TimelineView({
         style={{ height: timelineHeight }}
       >
         {/* Hour markers column */}
-        <div className="w-14 flex-shrink-0 relative">
+        <div className="w-12 flex-shrink-0 relative">
           {hours.map((hour, index) => (
             <div
               key={hour}
-              className="absolute right-0 pr-3 -translate-y-1/2"
+              className="absolute right-0 pr-2 -translate-y-1/2"
               style={{ top: index * HOUR_HEIGHT }}
             >
-              <span className="text-xs text-stone-400 dark:text-stone-500 tabular-nums font-medium">
+              <span className="text-xs text-stone-400 dark:text-stone-500 tabular-nums">
                 {hour}
               </span>
             </div>
@@ -276,12 +276,12 @@ export default function TimelineView({
         </div>
 
         {/* Timeline grid and events */}
-        <div className="flex-1 relative border-l border-stone-200 dark:border-stone-700">
-          {/* Hour grid lines */}
+        <div className="flex-1 relative">
+          {/* Hour grid lines - subtle dotted */}
           {hours.map((hour, index) => (
             <div
               key={hour}
-              className="absolute left-0 right-0 border-t border-stone-100 dark:border-stone-800"
+              className="absolute left-0 right-0 border-t border-dashed border-stone-200 dark:border-stone-800"
               style={{ top: index * HOUR_HEIGHT }}
             />
           ))}
@@ -289,25 +289,20 @@ export default function TimelineView({
           {/* Current time indicator */}
           {shouldShowCurrentTime && currentTimePosition !== null && (
             <div
-              className="absolute left-0 right-0 z-20 pointer-events-none"
+              className="absolute -left-12 right-0 z-20 pointer-events-none flex items-center"
               style={{ top: currentTimePosition }}
             >
               {/* Time label */}
-              <div className="absolute -left-14 -translate-y-1/2">
-                <span className="text-xs font-semibold text-rose-500 dark:text-rose-400 tabular-nums">
-                  {currentTime}
-                </span>
-              </div>
-              {/* Line with dot */}
-              <div className="flex items-center">
-                <div className="w-2.5 h-2.5 rounded-full bg-rose-500 dark:bg-rose-400 -ml-[5px]" />
-                <div className="flex-1 h-[2px] bg-rose-500 dark:bg-rose-400" />
-              </div>
+              <span className="text-xs font-semibold text-rose-500 dark:text-rose-400 tabular-nums pr-1.5 bg-white dark:bg-stone-900">
+                {currentTime}
+              </span>
+              {/* Line */}
+              <div className="flex-1 h-[2px] bg-rose-500 dark:bg-rose-400" />
             </div>
           )}
 
           {/* Events */}
-          <div className="relative z-10">
+          <div className="relative z-10 pl-1">
             {timelineEvents.map((event) => {
               const top = getEventPosition(event.startTime);
               const height = getEventHeight(event.duration);
@@ -318,8 +313,8 @@ export default function TimelineView({
               return (
                 <div
                   key={event.id}
-                  className="absolute left-2 right-2"
-                  style={{ top, minHeight: height }}
+                  className="absolute left-1 right-0"
+                  style={{ top: top + 2, height: height - 4 }}
                 >
                   <TimelineEventCard
                     id={event.id}
