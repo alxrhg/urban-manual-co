@@ -127,19 +127,19 @@ export default function AdminDestinationsPage() {
       {showCreateModal && (
         <>
           <div
-            className="fixed inset-0 bg-black/70 z-40 transition-opacity"
+            className="fixed inset-0 bg-black/50 z-40 transition-opacity"
             onClick={() => {
               setShowCreateModal(false);
               setEditingDestination(null);
             }}
           />
           <div
-            className={`fixed right-0 top-0 h-full w-full sm:w-[600px] lg:w-[700px] bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+            className={`fixed right-0 top-0 h-full w-full sm:w-[600px] lg:w-[700px] bg-white dark:bg-gray-950 z-50 shadow-2xl transform transition-transform duration-300 ease-in-out ${
               showCreateModal ? 'translate-x-0' : 'translate-x-full'
-            } overflow-y-auto border-l border-gray-800`}
+            } overflow-y-auto`}
           >
-            <div className="sticky top-0 bg-gray-950 border-b border-gray-800 px-6 py-4 flex items-center justify-between z-10">
-              <h2 className="text-xl font-bold text-white">
+            <div className="sticky top-0 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 {editingDestination ? 'Edit Destination' : 'Create New Destination'}
               </h2>
               <button
@@ -147,14 +147,14 @@ export default function AdminDestinationsPage() {
                   setShowCreateModal(false);
                   setEditingDestination(null);
                 }}
-                className="p-2 hover:bg-gray-800 rounded-full transition-colors text-gray-400 hover:text-white"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <div className="p-6">
               <DestinationForm
-                destination={editingDestination}
+                destination={editingDestination ?? undefined}
                 toast={toast}
                 onSave={handleSaveDestination}
                 onCancel={() => {

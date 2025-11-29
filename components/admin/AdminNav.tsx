@@ -4,9 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const NAV_LINKS = [
-  { href: '/admin', label: 'Destinations' },
+  { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/destinations', label: 'Destinations' },
   { href: '/admin/analytics', label: 'Analytics' },
   { href: '/admin/searches', label: 'Search Insights' },
+  { href: '/admin/users', label: 'Users' },
+  { href: '/admin/media', label: 'Media' },
   { href: '/admin/discover', label: 'Discover' },
   { href: '/admin/enrich', label: 'Enrich' },
   { href: '/admin/reindex', label: 'Reindex' },
