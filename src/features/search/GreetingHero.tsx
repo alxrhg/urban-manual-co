@@ -299,7 +299,7 @@ export default function GreetingHero({
             {!searchQuery && !isInputFocused && showGreeting && (
               <div
                 className={`absolute left-0 top-0 pointer-events-none text-xs uppercase tracking-[2px] font-medium z-0 transition-all duration-300 ${
-                  showShimmer ? 'shimmer-text' : isGreeting ? 'text-gray-500' : 'text-gray-400'
+                  showShimmer ? 'shimmer-text' : isGreeting ? 'text-neutral-600 dark:text-neutral-300' : 'text-neutral-500 dark:text-neutral-400'
                 }`}
                 style={{
                   paddingLeft: isSearching ? '32px' : '0'
@@ -310,7 +310,7 @@ export default function GreetingHero({
                   {displayedText}
                   {/* Blinking cursor while typing */}
                   {showCursor && displayedText && (
-                    <span className="inline-block w-[2px] h-[12px] bg-gray-400 ml-[2px] animate-blink align-middle" />
+                    <span className="inline-block w-[2px] h-[12px] bg-neutral-400 dark:bg-neutral-500 ml-[2px] animate-blink align-middle" />
                   )}
                 </span>
               </div>
