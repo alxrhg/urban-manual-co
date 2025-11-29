@@ -232,7 +232,7 @@ export default function GreetingHero({
     greetingSpeed: 50,
     promptSpeed: 35,
     greetingDelay: 300,
-    greetingPauseDuration: 1500,
+    greetingPauseDuration: 800, // Reduced pause after greeting
     promptPauseDuration: 4000,
     shimmerDuration: 2500,
     enabled: showGreeting && !searchQuery && !isInputFocused,
