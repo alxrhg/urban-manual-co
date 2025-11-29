@@ -25,7 +25,6 @@ import {
   Calendar,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
-import TripStats from '@/components/trip/TripStats';
 import TripDaySection from '@/components/trip/TripDaySection';
 import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
@@ -512,15 +511,6 @@ export default function TripPage() {
             </div>
           )}
         </div>
-
-        {/* Stats Grid */}
-        <TripStats
-          days={days}
-          destination={trip.destination}
-          startDate={trip.start_date}
-          endDate={trip.end_date}
-          className="mb-8"
-        />
 
         {/* Weather Preview (compact) */}
         {trip.destination && trip.start_date && (
