@@ -20,9 +20,12 @@ import {
   Square,
   CheckSquare,
   X,
+  Calendar,
+  List,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import TripDaySection from '@/components/trip/TripDaySection';
+import TimelineDayView from '@/components/trip/TimelineDayView';
 import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
@@ -75,6 +78,7 @@ export default function TripPage() {
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
   const [autoFillingDay, setAutoFillingDay] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'itinerary' | 'flights' | 'hotels' | 'notes'>('itinerary');
+  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('timeline');
   const [tripNotes, setTripNotes] = useState('');
   const [checklistItems, setChecklistItems] = useState<{ id: string; text: string; checked: boolean }[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState('');
@@ -584,31 +588,82 @@ export default function TripPage() {
               <div className="lg:flex lg:gap-6">
                 {/* Main Itinerary Column */}
                 <div className="flex-1 space-y-4">
-                  {/* Horizontal Day Tabs */}
-                  <DayTabNav
-                    days={days}
-                    selectedDayNumber={selectedDayNumber}
-                    onSelectDay={setSelectedDayNumber}
-                    className="mb-4"
-                  />
-
-                  {/* Selected Day Only */}
-                  {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
-                    <TripDaySection
-                      key={day.dayNumber}
-                      day={day}
-                      isSelected={true}
-                      onSelect={() => {}}
-                      onReorderItems={reorderItems}
-                      onRemoveItem={removeItem}
-                      onEditItem={handleEditItem}
-                      onAddItem={openPlaceSelector}
-                      onOptimizeDay={handleOptimizeDay}
-                      onAutoFillDay={handleAutoFillDay}
-                      activeItemId={activeItemId}
-                      isOptimizing={optimizingDay === day.dayNumber}
-                      isAutoFilling={autoFillingDay === day.dayNumber}
+                  {/* Day Tabs + View Toggle */}
+                  <div className="flex items-center justify-between gap-4">
+                    <DayTabNav
+                      days={days}
+                      selectedDayNumber={selectedDayNumber}
+                      onSelectDay={setSelectedDayNumber}
+                      className="flex-1"
                     />
+
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center gap-1 p-0.5 bg-stone-100 dark:bg-stone-800 rounded-lg flex-shrink-0">
+                      <button
+                        onClick={() => setViewMode('timeline')}
+                        className={`
+                          p-1.5 rounded-md transition-colors
+                          ${viewMode === 'timeline'
+                            ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-sm'
+                            : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'
+                          }
+                        `}
+                        title="Timeline view"
+                      >
+                        <Calendar className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => setViewMode('list')}
+                        className={`
+                          p-1.5 rounded-md transition-colors
+                          ${viewMode === 'list'
+                            ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-sm'
+                            : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'
+                          }
+                        `}
+                        title="List view"
+                      >
+                        <List className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Selected Day Content */}
+                  {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
+                    viewMode === 'timeline' ? (
+                      <TimelineDayView
+                        key={day.dayNumber}
+                        dayNumber={day.dayNumber}
+                        date={day.date}
+                        items={day.items}
+                        isExpanded={true}
+                        onEventClick={(id) => setActiveItemId(id)}
+                        onEventEdit={(id) => {
+                          const item = day.items.find(i => i.id === id);
+                          if (item) handleEditItem(item);
+                        }}
+                        onTimeChange={(id, time) => {
+                          // Update item time
+                          console.log('Time change:', id, time);
+                        }}
+                      />
+                    ) : (
+                      <TripDaySection
+                        key={day.dayNumber}
+                        day={day}
+                        isSelected={true}
+                        onSelect={() => {}}
+                        onReorderItems={reorderItems}
+                        onRemoveItem={removeItem}
+                        onEditItem={handleEditItem}
+                        onAddItem={openPlaceSelector}
+                        onOptimizeDay={handleOptimizeDay}
+                        onAutoFillDay={handleAutoFillDay}
+                        activeItemId={activeItemId}
+                        isOptimizing={optimizingDay === day.dayNumber}
+                        isAutoFilling={autoFillingDay === day.dayNumber}
+                      />
+                    )
                   ))}
                 </div>
 
