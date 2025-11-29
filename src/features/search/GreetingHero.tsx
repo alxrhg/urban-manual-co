@@ -1,42 +1,150 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { generateContextualGreeting, generateContextualPlaceholder, type GreetingContext } from '@/lib/greetings';
 import { UserProfile } from '@/types/personalization';
 import { JourneyInsights } from '@/lib/greetings/journey-tracker';
 import { RecentAchievement } from '@/lib/greetings/achievement-helper';
 import { GreetingWeatherData } from '@/lib/greetings/weather-helper';
 
-// Typewriter hook for animated text
-function useTypewriter(text: string, speed: number = 50, delay: number = 300) {
+// Phase type for the typewriter animation sequence
+type TypewriterPhase = 'greeting' | 'greeting-pause' | 'prompt' | 'prompt-shimmer' | 'prompt-pause';
+
+// Combined typewriter hook for greeting → prompts sequence
+function useSequentialTypewriter(
+  greeting: string,
+  prompts: string[],
+  options: {
+    greetingSpeed?: number;
+    promptSpeed?: number;
+    greetingDelay?: number;
+    greetingPauseDuration?: number;
+    promptPauseDuration?: number;
+    shimmerDuration?: number;
+    enabled?: boolean;
+  } = {}
+) {
+  const {
+    greetingSpeed = 50,
+    promptSpeed = 40,
+    greetingDelay = 200,
+    greetingPauseDuration = 1500,
+    promptPauseDuration = 3000,
+    shimmerDuration = 2000,
+    enabled = true,
+  } = options;
+
   const [displayedText, setDisplayedText] = useState('');
-  const [isComplete, setIsComplete] = useState(false);
+  const [phase, setPhase] = useState<TypewriterPhase>('greeting');
+  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const cleanup = useCallback(() => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  }, []);
+
+  const reset = useCallback(() => {
+    cleanup();
+    setDisplayedText('');
+    setPhase('greeting');
+    setCurrentPromptIndex(0);
+    setIsTypingComplete(false);
+  }, [cleanup]);
 
   useEffect(() => {
-    setDisplayedText('');
-    setIsComplete(false);
+    if (!enabled) {
+      reset();
+      return;
+    }
 
-    const startTimeout = setTimeout(() => {
+    cleanup();
+
+    const typeText = (text: string, speed: number, onComplete: () => void) => {
       let currentIndex = 0;
+      setDisplayedText('');
+      setIsTypingComplete(false);
 
-      const typeInterval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         if (currentIndex < text.length) {
           setDisplayedText(text.slice(0, currentIndex + 1));
           currentIndex++;
         } else {
-          clearInterval(typeInterval);
-          setIsComplete(true);
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          setIsTypingComplete(true);
+          onComplete();
         }
       }, speed);
+    };
 
-      return () => clearInterval(typeInterval);
-    }, delay);
+    if (phase === 'greeting') {
+      // Start typing greeting after initial delay
+      timeoutRef.current = setTimeout(() => {
+        typeText(greeting, greetingSpeed, () => {
+          setPhase('greeting-pause');
+        });
+      }, greetingDelay);
+    } else if (phase === 'greeting-pause') {
+      // Pause after greeting, then transition to prompts
+      timeoutRef.current = setTimeout(() => {
+        setPhase('prompt');
+      }, greetingPauseDuration);
+    } else if (phase === 'prompt') {
+      // Type current prompt
+      const currentPrompt = prompts[currentPromptIndex];
+      typeText(currentPrompt, promptSpeed, () => {
+        setPhase('prompt-shimmer');
+      });
+    } else if (phase === 'prompt-shimmer') {
+      // Show shimmer effect for a duration
+      timeoutRef.current = setTimeout(() => {
+        setPhase('prompt-pause');
+      }, shimmerDuration);
+    } else if (phase === 'prompt-pause') {
+      // Pause then move to next prompt
+      timeoutRef.current = setTimeout(() => {
+        setCurrentPromptIndex((prev) => (prev + 1) % prompts.length);
+        setPhase('prompt');
+      }, promptPauseDuration - shimmerDuration);
+    }
 
-    return () => clearTimeout(startTimeout);
-  }, [text, speed, delay]);
+    return cleanup;
+  }, [
+    phase,
+    greeting,
+    prompts,
+    currentPromptIndex,
+    greetingSpeed,
+    promptSpeed,
+    greetingDelay,
+    greetingPauseDuration,
+    promptPauseDuration,
+    shimmerDuration,
+    enabled,
+    cleanup,
+  ]);
 
-  return { displayedText, isComplete };
+  // Reset when greeting changes (e.g., user logs in)
+  useEffect(() => {
+    if (enabled) {
+      reset();
+      setPhase('greeting');
+    }
+  }, [greeting, enabled, reset]);
+
+  return {
+    displayedText,
+    phase,
+    isTypingComplete,
+    isGreeting: phase === 'greeting' || phase === 'greeting-pause',
+    isPrompt: phase === 'prompt' || phase === 'prompt-shimmer' || phase === 'prompt-pause',
+    showShimmer: phase === 'prompt-shimmer',
+    showCursor: !isTypingComplete || phase === 'greeting-pause',
+    reset,
+  };
 }
 
 interface GreetingHeroProps {
@@ -88,74 +196,47 @@ export default function GreetingHero({
   isSearching = false,
   showGreeting = true,
 }: GreetingHeroProps) {
-  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
   const [isTyping, setIsTyping] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Get current time
-  const now = new Date();
-  const currentHour = now.getHours();
-  const currentDay = now.getDay();
-
-  // Generate contextual greeting with Phase 2 & 3 enhancements
-  const greetingContext: GreetingContext = {
-    userName,
-    userProfile,
-    lastSession,
-    currentHour,
-    currentDay,
-    // Phase 2 & 3 context
-    journey: enrichedContext?.journey,
-    recentAchievements: enrichedContext?.recentAchievements,
-    nextAchievement: enrichedContext?.nextAchievement,
-    weather: enrichedContext?.weather,
-    trendingCity: enrichedContext?.trendingCity,
-    aiGreeting: enrichedContext?.aiGreeting,
-  };
-
-  const { greeting } = generateContextualGreeting(greetingContext);
-
-  // Generate the full greeting text for typewriter
-  const fullGreetingText = useMemo(() => {
+  // Generate the greeting text
+  const greetingText = useMemo(() => {
     const now = new Date();
     const currentHour = now.getHours();
-    let timeGreeting = "GOOD EVENING";
-    if (currentHour < 12) timeGreeting = "GOOD MORNING";
-    else if (currentHour < 18) timeGreeting = "GOOD AFTERNOON";
+    let timeGreeting = "Good evening";
+    if (currentHour < 12) timeGreeting = "Good morning";
+    else if (currentHour < 18) timeGreeting = "Good afternoon";
 
-    return userName ? `${timeGreeting}, ${userName.toUpperCase()}` : timeGreeting;
+    return userName ? `${timeGreeting}, ${userName}` : timeGreeting;
   }, [userName]);
 
-  // Typewriter animation for greeting
-  const { displayedText: typedGreeting, isComplete: greetingComplete } = useTypewriter(
-    fullGreetingText,
-    60, // speed - ms per character
-    200  // initial delay
-  );
-
-  // Rotating placeholders - Step One spec
-  const [isInputFocused, setIsInputFocused] = useState(false);
-  const aiPlaceholders = [
+  // Prompt suggestions
+  const prompts = useMemo(() => [
     "Ask me anything about travel",
     "Where would you like to go?",
     "Find hotels, restaurants, or hidden gems",
     "Try: budget hotels in Tokyo",
     "Try: best cafes near me",
-  ];
+  ], []);
 
-  // Rotate placeholder text every 4 seconds when input is empty and not focused
-  useEffect(() => {
-    if (!isAIEnabled || searchQuery.trim().length > 0 || isInputFocused) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setCurrentPlaceholderIndex((prev) => (prev + 1) % aiPlaceholders.length);
-    }, 4000);
-
-    return () => clearInterval(interval);
-  }, [searchQuery, isAIEnabled, isInputFocused, aiPlaceholders.length]);
+  // Sequential typewriter: greeting → prompts with shimmer
+  const {
+    displayedText,
+    isGreeting,
+    showShimmer,
+    showCursor,
+    reset: resetTypewriter,
+  } = useSequentialTypewriter(greetingText, prompts, {
+    greetingSpeed: 50,
+    promptSpeed: 35,
+    greetingDelay: 300,
+    greetingPauseDuration: 1500,
+    promptPauseDuration: 4000,
+    shimmerDuration: 2500,
+    enabled: showGreeting && !searchQuery && !isInputFocused,
+  });
 
   // Keyboard shortcut: Press '/' to focus search
   useEffect(() => {
@@ -206,22 +287,7 @@ export default function GreetingHero({
   return (
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="w-full relative">
-        {/* Greeting above search - Typewriter animation */}
-        {showGreeting && (
-          <div className="text-left mb-[50px]">
-            <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
-              <span className="inline-block">
-                {typedGreeting}
-                {/* Blinking cursor while typing */}
-                {!greetingComplete && (
-                  <span className="inline-block w-[2px] h-[12px] bg-gray-400 ml-[2px] animate-blink align-middle" />
-                )}
-              </span>
-            </h1>
-          </div>
-        )}
-
-        {/* Borderless Text Input - Minimal editorial style with shimmering placeholder */}
+        {/* Unified Input with Typewriter Greeting + Prompts */}
         <div className="relative mb-[50px]">
           {isSearching && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 z-10">
@@ -229,8 +295,28 @@ export default function GreetingHero({
             </div>
           )}
           <div className="relative w-full">
-            {/* Shimmering placeholder text overlay */}
-            {!searchQuery && !isInputFocused && (
+            {/* Typewriter text overlay - greeting then prompts */}
+            {!searchQuery && !isInputFocused && showGreeting && (
+              <div
+                className={`absolute left-0 top-0 pointer-events-none text-xs uppercase tracking-[2px] font-medium z-0 transition-all duration-300 ${
+                  showShimmer ? 'shimmer-text' : isGreeting ? 'text-gray-500' : 'text-gray-400'
+                }`}
+                style={{
+                  paddingLeft: isSearching ? '32px' : '0'
+                }}
+                aria-hidden="true"
+              >
+                <span className="inline-block">
+                  {displayedText}
+                  {/* Blinking cursor while typing */}
+                  {showCursor && displayedText && (
+                    <span className="inline-block w-[2px] h-[12px] bg-gray-400 ml-[2px] animate-blink align-middle" />
+                  )}
+                </span>
+              </div>
+            )}
+            {/* Fallback static placeholder when greeting is disabled */}
+            {!searchQuery && !isInputFocused && !showGreeting && (
               <div
                 className="absolute left-0 top-0 pointer-events-none text-xs uppercase tracking-[2px] font-medium z-0 shimmer-text"
                 style={{
@@ -238,12 +324,12 @@ export default function GreetingHero({
                 }}
                 aria-hidden="true"
               >
-                {isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything"}
+                Ask me anything
               </div>
             )}
             <input
               ref={inputRef}
-              placeholder={isInputFocused ? (isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything") : ""}
+              placeholder={isInputFocused ? "Type to search..." : ""}
               value={searchQuery}
               onChange={(e) => {
                 handleInputChange(e.target.value);
