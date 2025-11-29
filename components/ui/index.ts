@@ -29,22 +29,36 @@ export {
 } from './Icon';
 
 // =============================================================================
-// CARDS
+// CARDS (Original simple cards)
 // =============================================================================
 
 export {
   Card,
+  CardHeader,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent,
+} from './card';
+
+// =============================================================================
+// CARD COMPOSITION (Advanced composable cards)
+// =============================================================================
+
+export {
+  Card as ComposableCard,
   CardImage,
   CardBody,
-  CardHeader,
-  CardTitle,
+  CardHeader as ComposableCardHeader,
+  CardTitle as ComposableCardTitle,
   CardMeta,
-  CardDescription,
+  CardDescription as ComposableCardDescription,
   CardBadge,
   CardActions,
-  CardFooter,
+  CardFooter as ComposableCardFooter,
   CardOverlay,
-} from './card';
+} from './card-composition';
 
 // =============================================================================
 // DRAWERS

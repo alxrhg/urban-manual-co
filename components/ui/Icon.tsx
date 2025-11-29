@@ -36,7 +36,7 @@ const iconSizePixels: Record<IconSize, number> = {
   '2xl': 32,
 };
 
-export interface IconProps extends React.SVGAttributes<SVGElement> {
+export interface IconProps extends Omit<React.SVGAttributes<SVGElement>, 'ref'> {
   /** The Lucide icon component to render */
   icon: React.ComponentType<React.SVGAttributes<SVGElement>>;
   /** Predefined size */
@@ -60,43 +60,35 @@ export interface IconProps extends React.SVGAttributes<SVGElement> {
  * <Icon icon={Star} size="lg" decorative />
  * <Icon icon={Star} pixelSize={18} />
  */
-const Icon = React.forwardRef<SVGSVGElement, IconProps>(
-  (
-    {
-      icon: IconComponent,
-      size = 'sm',
-      pixelSize,
-      label,
-      decorative = false,
-      className,
-      ...props
-    },
-    ref
-  ) => {
-    // Use pixel size if provided, otherwise use predefined size
-    const sizeClass = pixelSize ? undefined : iconSizeMap[size];
-    const style = pixelSize
-      ? { width: pixelSize, height: pixelSize, ...props.style }
-      : props.style;
+function Icon({
+  icon: IconComponent,
+  size = 'sm',
+  pixelSize,
+  label,
+  decorative = false,
+  className,
+  ...props
+}: IconProps) {
+  // Use pixel size if provided, otherwise use predefined size
+  const sizeClass = pixelSize ? undefined : iconSizeMap[size];
+  const style = pixelSize
+    ? { width: pixelSize, height: pixelSize, ...props.style }
+    : props.style;
 
-    // Accessibility: aria-hidden for decorative, aria-label for meaningful icons
-    const accessibilityProps = decorative
-      ? { 'aria-hidden': true as const }
-      : { 'aria-label': label, role: 'img' as const };
+  // Accessibility: aria-hidden for decorative, aria-label for meaningful icons
+  const accessibilityProps = decorative
+    ? { 'aria-hidden': true as const }
+    : { 'aria-label': label, role: 'img' as const };
 
-    return (
-      <IconComponent
-        ref={ref}
-        className={cn(sizeClass, 'shrink-0', className)}
-        style={style}
-        {...accessibilityProps}
-        {...props}
-      />
-    );
-  }
-);
-
-Icon.displayName = 'Icon';
+  return (
+    <IconComponent
+      className={cn(sizeClass, 'shrink-0', className)}
+      style={style}
+      {...accessibilityProps}
+      {...props}
+    />
+  );
+}
 
 /**
  * Hook to get icon size classes
