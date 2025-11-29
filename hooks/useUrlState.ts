@@ -143,20 +143,20 @@ export function useUrlState<T extends Record<string, StateValue>>(
   // Set a single param
   const setParam = useCallback(
     <K extends keyof T>(key: K, value: T[K]) => {
-      setPendingUpdate((prev) => ({
-        ...prev,
-        [key]: value,
-      }));
+      setPendingUpdate((prev) => {
+        const updated = { ...prev, [key]: value } as Partial<T>;
+        return updated;
+      });
     },
     []
   );
 
   // Set multiple params
   const setState = useCallback((updates: Partial<T>) => {
-    setPendingUpdate((prev) => ({
-      ...prev,
-      ...updates,
-    }));
+    setPendingUpdate((prev) => {
+      const updated = { ...prev, ...updates } as Partial<T>;
+      return updated;
+    });
   }, []);
 
   // Reset to defaults
