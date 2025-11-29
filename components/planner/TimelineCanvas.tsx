@@ -316,17 +316,12 @@ export default function TimelineCanvas({
 
   return (
     <div className={`flex flex-col h-full ${className}`}>
-      {/* Day Header with Stats */}
-      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
+      {/* Stats Bar */}
+      <div className="px-4 py-3 bg-white/50 dark:bg-gray-900/50 backdrop-blur-sm">
         <div className="flex items-center justify-between mb-2">
-          <div>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-              Day {dayPlan.dayNumber}
-            </h3>
-            {dayPlan.date && (
-              <p className="text-xs text-gray-500">{new Date(dayPlan.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
-            )}
-          </div>
+          {dayPlan.date && (
+            <p className="text-xs text-gray-500">{new Date(dayPlan.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</p>
+          )}
 
           {/* Quick Stats */}
           <div className="flex items-center gap-3 text-xs text-gray-500">
