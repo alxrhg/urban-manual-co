@@ -122,14 +122,16 @@ export function useDrawerNavigation(
   );
 
   return {
-    // Navigation
+    // Direct access to underlying context (spread first so custom props override)
+    ...drawer,
+
+    // Navigation (override drawer methods with enhanced versions)
     navigateTo,
     goBack,
     close,
     replace,
 
     // State
-    activeDrawer: drawer.activeDrawer,
     isOpen: drawer.activeDrawer !== null,
     canGoBack: history.length > 0,
     historyLength: history.length,
@@ -138,9 +140,6 @@ export function useDrawerNavigation(
     data: drawerData,
     getData,
     setData,
-
-    // Direct access to underlying context
-    ...drawer,
   };
 }
 
