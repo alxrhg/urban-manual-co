@@ -28,6 +28,8 @@ export interface TimelineEvent {
   icon?: string;
   subItems?: TimelineSubItem[];
   scheduledItems?: number;
+  isHotel?: boolean;
+  isAutoExpanded?: boolean;
 }
 
 interface TimelineViewProps {
@@ -35,8 +37,10 @@ interface TimelineViewProps {
   itineraryItems?: EnrichedItineraryItem[];
   date?: string | null;
   showCurrentTime?: boolean;
+  isEditMode?: boolean;
   onEventClick?: (eventId: string) => void;
   onEventEdit?: (eventId: string) => void;
+  onTimeChange?: (eventId: string, time: string) => void;
   onToggleSubItem?: (eventId: string, subItemId: string) => void;
   className?: string;
 }
@@ -44,7 +48,12 @@ interface TimelineViewProps {
 /**
  * Map category to timeline event type
  */
-function getCategoryType(category?: string): TimelineEventType {
+function getCategoryType(category?: string, itemType?: string): TimelineEventType {
+  // Check itemType first (from parsedNotes.type)
+  if (itemType === 'hotel') return 'hotel';
+  if (itemType === 'flight' || itemType === 'train' || itemType === 'drive') return 'travel';
+  if (itemType === 'breakfast') return 'meal';
+
   if (!category) return 'default';
 
   const lowerCategory = category.toLowerCase();
@@ -56,7 +65,7 @@ function getCategoryType(category?: string): TimelineEventType {
     return 'leisure';
   }
   if (lowerCategory.includes('hotel') || lowerCategory.includes('lodging')) {
-    return 'default';
+    return 'hotel';
   }
   if (lowerCategory.includes('flight') || lowerCategory.includes('train') || lowerCategory.includes('drive')) {
     return 'travel';
@@ -108,8 +117,10 @@ export default function TimelineView({
   itineraryItems = [],
   date,
   showCurrentTime = true,
+  isEditMode = false,
   onEventClick,
   onEventEdit,
+  onTimeChange,
   onToggleSubItem,
   className = '',
 }: TimelineViewProps) {
@@ -131,25 +142,69 @@ export default function TimelineView({
 
   // Convert itinerary items to timeline events
   const timelineEvents = useMemo((): TimelineEvent[] => {
-    // If events are passed directly, use them
-    if (events.length > 0) return events;
+    // If events are passed directly, use them (but still apply hotel expansion)
+    let eventsList: TimelineEvent[] = [];
 
-    // Convert itinerary items to timeline events
-    return itineraryItems
-      .filter((item) => item.time) // Only items with time
-      .map((item): TimelineEvent => {
-        const category = item.parsedNotes?.category || item.destination?.category;
-        const itemType = item.parsedNotes?.type;
+    if (events.length > 0) {
+      eventsList = events;
+    } else {
+      // Convert itinerary items to timeline events
+      eventsList = itineraryItems
+        .filter((item) => item.time) // Only items with time
+        .map((item): TimelineEvent => {
+          const category = item.parsedNotes?.category || item.destination?.category;
+          const itemType = item.parsedNotes?.type;
+          const isHotel = itemType === 'hotel' || category?.toLowerCase().includes('hotel') || category?.toLowerCase().includes('lodging');
 
-        return {
-          id: item.id,
-          title: item.title,
-          startTime: item.time || '09:00',
-          duration: item.parsedNotes?.duration || estimateDuration(category),
-          type: getCategoryType(category),
-          icon: getCategoryIcon(category, itemType),
-        };
-      });
+          return {
+            id: item.id,
+            title: item.title,
+            startTime: item.time || '09:00',
+            duration: item.parsedNotes?.duration || estimateDuration(category),
+            type: getCategoryType(category, itemType),
+            icon: getCategoryIcon(category, itemType),
+            isHotel,
+          };
+        });
+    }
+
+    // Sort events by start time
+    eventsList.sort((a, b) => parseTimeToMinutes(a.startTime) - parseTimeToMinutes(b.startTime));
+
+    // Auto-expand hotel durations to fill time until next event
+    return eventsList.map((event, index): TimelineEvent => {
+      if (event.isHotel || event.type === 'hotel') {
+        const nextEvent = eventsList[index + 1];
+        if (nextEvent) {
+          const hotelStartMinutes = parseTimeToMinutes(event.startTime);
+          const nextStartMinutes = parseTimeToMinutes(nextEvent.startTime);
+          const expandedDuration = nextStartMinutes - hotelStartMinutes;
+
+          // Only expand if next event is later
+          if (expandedDuration > event.duration) {
+            return {
+              ...event,
+              duration: expandedDuration,
+              isAutoExpanded: true,
+            };
+          }
+        } else {
+          // No next event - expand until end of day (23:00)
+          const hotelStartMinutes = parseTimeToMinutes(event.startTime);
+          const endOfDayMinutes = END_HOUR * 60;
+          const expandedDuration = endOfDayMinutes - hotelStartMinutes;
+
+          if (expandedDuration > event.duration) {
+            return {
+              ...event,
+              duration: expandedDuration,
+              isAutoExpanded: true,
+            };
+          }
+        }
+      }
+      return event;
+    });
   }, [events, itineraryItems]);
 
   // Generate hour markers
@@ -270,12 +325,16 @@ export default function TimelineView({
                     id={event.id}
                     title={event.title}
                     icon={event.icon}
+                    time={event.startTime}
                     duration={event.duration}
                     type={event.type}
                     subItems={event.subItems}
                     scheduledItems={event.scheduledItems}
+                    isEditMode={isEditMode}
+                    isAutoExpanded={event.isAutoExpanded}
                     onClick={onEventClick}
                     onEdit={onEventEdit}
+                    onTimeChange={onTimeChange}
                     onToggleSubItem={onToggleSubItem}
                   />
                 </div>

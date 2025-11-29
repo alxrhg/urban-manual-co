@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Check, Plus, ChevronRight } from 'lucide-react';
-import { formatDuration } from '@/lib/utils/time-calculations';
+import { useState, useRef, useEffect } from 'react';
+import { Check, Plus, ChevronRight, Clock } from 'lucide-react';
+import { formatDuration, formatTimeDisplay } from '@/lib/utils/time-calculations';
 
 export type TimelineEventType =
   | 'morning'
@@ -11,6 +11,7 @@ export type TimelineEventType =
   | 'meal'
   | 'travel'
   | 'leisure'
+  | 'hotel'
   | 'default';
 
 export interface TimelineSubItem {
@@ -23,12 +24,16 @@ export interface TimelineEventCardProps {
   id: string;
   title: string;
   icon?: string;
+  time?: string; // HH:MM format
   duration: number; // in minutes
   type?: TimelineEventType;
   subItems?: TimelineSubItem[];
   scheduledItems?: number;
   isExpanded?: boolean;
+  isEditMode?: boolean;
+  isAutoExpanded?: boolean; // For hotels that expand to fill time
   onToggleSubItem?: (itemId: string, subItemId: string) => void;
+  onTimeChange?: (id: string, time: string) => void;
   onEdit?: (id: string) => void;
   onClick?: (id: string) => void;
   className?: string;
@@ -66,6 +71,11 @@ const typeColors: Record<TimelineEventType, { bg: string; border: string; text: 
     border: 'border-purple-200 dark:border-purple-800',
     text: 'text-purple-900 dark:text-purple-100',
   },
+  hotel: {
+    bg: 'bg-indigo-50 dark:bg-indigo-950/40',
+    border: 'border-indigo-200 dark:border-indigo-800',
+    text: 'text-indigo-900 dark:text-indigo-100',
+  },
   default: {
     bg: 'bg-stone-50 dark:bg-stone-900',
     border: 'border-stone-200 dark:border-stone-700',
@@ -81,21 +91,73 @@ export default function TimelineEventCard({
   id,
   title,
   icon,
+  time,
   duration,
   type = 'default',
   subItems,
   scheduledItems,
   isExpanded = true,
+  isEditMode = false,
+  isAutoExpanded = false,
   onToggleSubItem,
+  onTimeChange,
   onEdit,
   onClick,
   className = '',
 }: TimelineEventCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [isEditingTime, setIsEditingTime] = useState(false);
+  const [editTimeValue, setEditTimeValue] = useState(time || '09:00');
+  const timeInputRef = useRef<HTMLInputElement>(null);
   const colors = typeColors[type];
 
   const completedCount = subItems?.filter((item) => item.completed).length || 0;
   const totalSubItems = subItems?.length || 0;
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingTime && timeInputRef.current) {
+      timeInputRef.current.focus();
+      timeInputRef.current.select();
+    }
+  }, [isEditingTime]);
+
+  const handleTimeClick = (e: React.MouseEvent) => {
+    if (isEditMode && onTimeChange) {
+      e.stopPropagation();
+      setEditTimeValue(time || '09:00');
+      setIsEditingTime(true);
+    }
+  };
+
+  const handleTimeSubmit = () => {
+    if (editTimeValue && onTimeChange) {
+      onTimeChange(id, editTimeValue);
+    }
+    setIsEditingTime(false);
+  };
+
+  const handleTimeKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTimeSubmit();
+    } else if (e.key === 'Escape') {
+      setIsEditingTime(false);
+      setEditTimeValue(time || '09:00');
+    }
+  };
+
+  // Get duration color based on type
+  const getDurationColor = () => {
+    switch (type) {
+      case 'task': return 'text-cyan-600 dark:text-cyan-400';
+      case 'work': return 'text-emerald-600 dark:text-emerald-400';
+      case 'meal': return 'text-amber-600 dark:text-amber-400';
+      case 'travel': return 'text-blue-600 dark:text-blue-400';
+      case 'leisure': return 'text-purple-600 dark:text-purple-400';
+      case 'hotel': return 'text-indigo-600 dark:text-indigo-400';
+      default: return 'text-stone-500 dark:text-stone-400';
+    }
+  };
 
   return (
     <div
@@ -104,6 +166,7 @@ export default function TimelineEventCard({
         ${colors.bg} ${colors.border}
         transition-all duration-200
         ${isHovered ? 'shadow-md' : 'shadow-sm'}
+        ${isAutoExpanded ? 'border-dashed' : ''}
         ${className}
       `}
       onMouseEnter={() => setIsHovered(true)}
@@ -124,6 +187,32 @@ export default function TimelineEventCard({
             </div>
           )}
 
+          {/* Time (editable in edit mode) */}
+          {isEditMode && onTimeChange && (
+            <div className="flex-shrink-0">
+              {isEditingTime ? (
+                <input
+                  ref={timeInputRef}
+                  type="time"
+                  value={editTimeValue}
+                  onChange={(e) => setEditTimeValue(e.target.value)}
+                  onBlur={handleTimeSubmit}
+                  onKeyDown={handleTimeKeyDown}
+                  className="w-20 px-1.5 py-0.5 text-sm font-medium bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-600 rounded-md focus:outline-none focus:ring-2 focus:ring-stone-400 dark:focus:ring-stone-500"
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <button
+                  onClick={handleTimeClick}
+                  className="flex items-center gap-1 px-1.5 py-0.5 text-sm font-medium text-stone-600 dark:text-stone-300 bg-white/50 dark:bg-stone-800/50 border border-stone-200 dark:border-stone-700 rounded-md hover:bg-white dark:hover:bg-stone-800 hover:border-stone-300 dark:hover:border-stone-600 transition-colors"
+                >
+                  <Clock className="w-3 h-3" />
+                  {time ? formatTimeDisplay(time) : 'Set time'}
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Title */}
           <span className={`font-medium truncate ${colors.text}`}>
             {title}
@@ -132,16 +221,11 @@ export default function TimelineEventCard({
 
         {/* Duration Badge */}
         <div className="flex items-center gap-2 flex-shrink-0">
-          <span className={`
-            text-sm font-medium px-2 py-0.5 rounded-md
-            ${type === 'task' ? 'text-cyan-600 dark:text-cyan-400' : ''}
-            ${type === 'work' ? 'text-emerald-600 dark:text-emerald-400' : ''}
-            ${type === 'morning' || type === 'default' ? 'text-stone-500 dark:text-stone-400' : ''}
-            ${type === 'meal' ? 'text-amber-600 dark:text-amber-400' : ''}
-            ${type === 'travel' ? 'text-blue-600 dark:text-blue-400' : ''}
-            ${type === 'leisure' ? 'text-purple-600 dark:text-purple-400' : ''}
-          `}>
+          <span className={`text-sm font-medium px-2 py-0.5 rounded-md ${getDurationColor()}`}>
             {formatDuration(duration)}
+            {isAutoExpanded && (
+              <span className="ml-1 text-xs opacity-60">(until next)</span>
+            )}
           </span>
 
           {/* Edit indicator on hover */}

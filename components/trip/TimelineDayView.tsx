@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
-import { ChevronDown, Calendar, List } from 'lucide-react';
+import { ChevronDown, Calendar, List, Pencil, Check } from 'lucide-react';
 import TimelineView from './TimelineView';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
@@ -14,6 +14,7 @@ interface TimelineDayViewProps {
   onToggleExpand?: () => void;
   onEventClick?: (eventId: string) => void;
   onEventEdit?: (eventId: string) => void;
+  onTimeChange?: (eventId: string, time: string) => void;
   className?: string;
 }
 
@@ -29,9 +30,11 @@ export default function TimelineDayView({
   onToggleExpand,
   onEventClick,
   onEventEdit,
+  onTimeChange,
   className = '',
 }: TimelineDayViewProps) {
   const [viewMode, setViewMode] = useState<'timeline' | 'list'>('timeline');
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const formattedDate = useMemo(() => {
     if (!date) return null;
@@ -82,35 +85,59 @@ export default function TimelineDayView({
           </div>
         </button>
 
-        {/* View Mode Toggle */}
+        {/* View Mode Toggle & Edit Button */}
         {isExpanded && items.length > 0 && (
-          <div className="flex items-center gap-1 ml-3 p-0.5 bg-stone-100 dark:bg-stone-800 rounded-lg">
-            <button
-              onClick={() => setViewMode('timeline')}
-              className={`
-                p-1.5 rounded-md transition-colors
-                ${viewMode === 'timeline'
-                  ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-sm'
-                  : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'
-                }
-              `}
-              title="Timeline view"
-            >
-              <Calendar className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`
-                p-1.5 rounded-md transition-colors
-                ${viewMode === 'list'
-                  ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-sm'
-                  : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'
-                }
-              `}
-              title="List view"
-            >
-              <List className="w-4 h-4" />
-            </button>
+          <div className="flex items-center gap-2 ml-3">
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-1 p-0.5 bg-stone-100 dark:bg-stone-800 rounded-lg">
+              <button
+                onClick={() => setViewMode('timeline')}
+                className={`
+                  p-1.5 rounded-md transition-colors
+                  ${viewMode === 'timeline'
+                    ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-sm'
+                    : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'
+                  }
+                `}
+                title="Timeline view"
+              >
+                <Calendar className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`
+                  p-1.5 rounded-md transition-colors
+                  ${viewMode === 'list'
+                    ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-white shadow-sm'
+                    : 'text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300'
+                  }
+                `}
+                title="List view"
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Edit Mode Toggle */}
+            {onTimeChange && viewMode === 'timeline' && (
+              <button
+                onClick={() => setIsEditMode(!isEditMode)}
+                className={`
+                  p-2 rounded-lg transition-colors
+                  ${isEditMode
+                    ? 'bg-stone-900 dark:bg-white text-white dark:text-stone-900'
+                    : 'hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-500 dark:text-stone-400'
+                  }
+                `}
+                title={isEditMode ? 'Done editing' : 'Edit times'}
+              >
+                {isEditMode ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Pencil className="w-4 h-4" />
+                )}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -128,13 +155,15 @@ export default function TimelineDayView({
             <TimelineView
               itineraryItems={items}
               date={date}
+              isEditMode={isEditMode}
               onEventClick={onEventClick}
               onEventEdit={onEventEdit}
+              onTimeChange={onTimeChange}
             />
           ) : (
             // List view placeholder - you can replace with existing TripDaySection content
             <div className="space-y-2">
-              {items.map((item, index) => (
+              {items.map((item) => (
                 <div
                   key={item.id}
                   onClick={() => onEventClick?.(item.id)}
