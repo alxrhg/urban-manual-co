@@ -295,22 +295,6 @@ export default function GreetingHero({
                 />
               </div>
             )}
-
-            {/* Animated underline - expands on focus, pulses when empty */}
-            <div className="absolute bottom-0 left-0 right-0 h-[1px] overflow-hidden">
-              <div
-                className={`
-                  h-full bg-gray-300 dark:bg-gray-600
-                  transition-all duration-500 ease-out
-                  ${isInputFocused
-                    ? 'w-full opacity-100'
-                    : searchQuery
-                      ? 'w-full opacity-40'
-                      : 'w-16 opacity-60 animate-underline-pulse'
-                  }
-                `}
-              />
-            </div>
           </div>
         </div>
       </div>
