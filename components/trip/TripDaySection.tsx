@@ -33,7 +33,7 @@ interface TripDaySectionProps {
   onReorderItems?: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
   onRemoveItem?: (itemId: string) => void;
   onEditItem?: (item: EnrichedItineraryItem) => void;
-  onAddItem?: (dayNumber: number) => void;
+  onAddItem?: (dayNumber: number, category?: string) => void;
   onOptimizeDay?: (dayNumber: number) => void;
   onAutoFillDay?: (dayNumber: number) => void;
   activeItemId?: string | null;
