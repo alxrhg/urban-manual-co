@@ -2,6 +2,7 @@
 export { HomeDestinationGrid } from "./components/HomeDestinationGrid";
 export { HomeChatSection } from "./components/HomeChatSection";
 export { HomeFiltersBar } from "./components/HomeFiltersBar";
+export { HomePageClient } from "./components/HomePageClient";
 
 // Hooks
 export { useHomeDestinations, type HomeFilters } from "./hooks/useHomeDestinations";
