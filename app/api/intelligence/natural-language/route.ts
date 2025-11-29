@@ -109,7 +109,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const intent = parseIntent(query, tripDays);
 
   // Build database query
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   let dbQuery = supabase
     .from('destinations')

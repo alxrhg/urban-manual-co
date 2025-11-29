@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import { Sparkles, Loader2, RefreshCw, Plus } from 'lucide-react';
+import { Sparkles, Loader2, RefreshCw, Plus, Send } from 'lucide-react';
 
 interface TripDay {
   dayNumber: number;
@@ -51,8 +51,10 @@ interface AISuggestion {
 interface SmartSuggestionsProps {
   days: TripDay[];
   destination?: string | null;
+  selectedDayNumber?: number;
   onAddPlace?: (dayNumber: number, category?: string) => void;
   onAddAISuggestion?: (suggestion: AISuggestion) => void;
+  onAddFromNL?: (destination: unknown, dayNumber: number, time?: string) => Promise<void>;
   className?: string;
 }
 
@@ -75,13 +77,20 @@ function getTimeSlot(time: string | null | undefined): TimeSlot | null {
 export default function SmartSuggestions({
   days,
   destination,
+  selectedDayNumber = 1,
   onAddPlace,
   onAddAISuggestion,
+  onAddFromNL,
   className = '',
 }: SmartSuggestionsProps) {
   const [aiSuggestions, setAISuggestions] = useState<AISuggestion[]>([]);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const [hasLoadedAI, setHasLoadedAI] = useState(false);
+
+  // Natural language input state
+  const [nlInput, setNlInput] = useState('');
+  const [isProcessingNL, setIsProcessingNL] = useState(false);
+  const [nlResult, setNlResult] = useState<string | null>(null);
 
   // Fetch AI suggestions automatically when destination is set
   const fetchAISuggestions = useCallback(async () => {
@@ -126,6 +135,59 @@ export default function SmartSuggestions({
       fetchAISuggestions();
     }
   }, [destination, days.length, hasLoadedAI, fetchAISuggestions]);
+
+  // Process natural language input
+  const processNLInput = useCallback(async () => {
+    if (!nlInput.trim() || !destination) return;
+
+    setIsProcessingNL(true);
+    setNlResult(null);
+
+    try {
+      const response = await fetch('/api/intelligence/natural-language', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: nlInput,
+          city: destination,
+          tripDays: days.length,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        if (result.destination && onAddFromNL) {
+          setNlResult(`Adding: ${result.destination.name}`);
+          await onAddFromNL(
+            result.destination,
+            result.dayNumber || selectedDayNumber,
+            result.time
+          );
+          setNlInput('');
+          setNlResult(null);
+        } else if (result.message) {
+          setNlResult(result.message);
+        } else {
+          setNlResult('No results found');
+        }
+      } else {
+        setNlResult('Failed to process');
+      }
+    } catch (error) {
+      console.error('NL processing error:', error);
+      setNlResult('Something went wrong');
+    } finally {
+      setIsProcessingNL(false);
+    }
+  }, [nlInput, destination, days.length, selectedDayNumber, onAddFromNL]);
+
+  const handleNLKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      processNLInput();
+    }
+  };
 
   // Local suggestions (fast, no API)
   const localSuggestions = useMemo(() => {
@@ -236,7 +298,7 @@ export default function SmartSuggestions({
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-medium text-[15px] text-stone-900 dark:text-white flex items-center gap-2">
           <Sparkles className="w-4 h-4 text-stone-400" />
-          Suggestions
+          Ask AI
         </h3>
         {destination && hasLoadedAI && (
           <button
@@ -252,6 +314,39 @@ export default function SmartSuggestions({
           </button>
         )}
       </div>
+
+      {/* Natural Language Input */}
+      {destination && (
+        <div className="mb-4">
+          <div className="relative">
+            <input
+              type="text"
+              value={nlInput}
+              onChange={(e) => setNlInput(e.target.value)}
+              onKeyDown={handleNLKeyDown}
+              placeholder={`"Add dinner near the Eiffel Tower..."`}
+              disabled={isProcessingNL}
+              className="w-full px-3 py-2.5 pr-10 text-sm text-stone-700 dark:text-gray-300 bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl placeholder:text-stone-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-700 disabled:opacity-50"
+            />
+            <button
+              onClick={processNLInput}
+              disabled={!nlInput.trim() || isProcessingNL}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isProcessingNL ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+          {nlResult && (
+            <p className="mt-1.5 text-xs text-stone-500 dark:text-gray-400">
+              {nlResult}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Loading state */}
       {isLoadingAI && aiSuggestions.length === 0 && (
