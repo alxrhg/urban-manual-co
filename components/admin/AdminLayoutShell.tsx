@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminNav } from './AdminNav';
@@ -11,7 +12,7 @@ export default function AdminLayoutShell({ children }: { children: ReactNode }) 
   const router = useRouter();
   const { user, loading } = useAuth();
 
-  const isAdmin = (user?.app_metadata as Record<string, any> | null)?.role === 'admin';
+  const isAdmin = (user?.app_metadata as Record<string, unknown> | null)?.role === 'admin';
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -21,46 +22,42 @@ export default function AdminLayoutShell({ children }: { children: ReactNode }) 
 
   if (loading || (!isAdmin && !loading)) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-950 px-6">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-          Checking admin access…
-        </p>
-      </div>
+      <main className="w-full px-6 md:px-10 py-20">
+        <div className="min-h-[60vh] flex flex-col items-center justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+            Checking access...
+          </p>
+        </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-12 py-8 md:py-10 space-y-8">
-        <header className="space-y-4">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.4em] text-gray-400 dark:text-gray-500">
-                Admin Console
-              </p>
-              <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 dark:text-white mt-2">
-                Content Operations
-              </h1>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="text-right">
-                <div className="text-sm font-medium text-gray-900 dark:text-white">
-                  {user?.email}
-                </div>
-                <div className="mt-1 inline-flex items-center rounded-full border border-gray-200 dark:border-gray-700 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.3em] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900">
-                  Admin
-                </div>
-              </div>
-            </div>
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <div className="w-full">
+        {/* Header - Matches account page */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-light">Admin</h1>
+            <Link
+              href="/"
+              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
+            >
+              Exit
+            </Link>
           </div>
-          <AdminNav />
-        </header>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+        </div>
 
-        <section className="space-y-6">
-          {children}
-        </section>
+        {/* Tab Navigation - Matches account page */}
+        <div className="mb-12">
+          <AdminNav />
+        </div>
+
+        {/* Content */}
+        {children}
       </div>
-    </div>
+    </main>
   );
 }
