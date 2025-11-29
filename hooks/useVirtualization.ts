@@ -89,7 +89,7 @@ export function useVirtualization<T>(
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(initialHeight ?? 0);
   const [isScrolling, setIsScrolling] = useState(false);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout>();
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   // Calculate total height
   const totalHeight = items.length * itemHeight;
