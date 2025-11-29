@@ -130,14 +130,14 @@ export default function TimelineView({
   }, []);
 
   // Convert itinerary items to timeline events
-  const timelineEvents = useMemo(() => {
+  const timelineEvents = useMemo((): TimelineEvent[] => {
     // If events are passed directly, use them
     if (events.length > 0) return events;
 
     // Convert itinerary items to timeline events
     return itineraryItems
       .filter((item) => item.time) // Only items with time
-      .map((item) => {
+      .map((item): TimelineEvent => {
         const category = item.parsedNotes?.category || item.destination?.category;
         const itemType = item.parsedNotes?.type;
 
