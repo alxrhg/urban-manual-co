@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
-import { Search, MapPin, Loader2, Globe, Plus } from 'lucide-react';
+import { Search, MapPin, Loader2, Globe, Plus, X } from 'lucide-react';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
 
@@ -15,17 +15,19 @@ interface AddPlaceBoxProps {
   city?: string | null;
   dayNumber?: number;
   onSelect?: (destination: Destination) => void;
+  onClose?: () => void;
   className?: string;
 }
 
 /**
  * AddPlaceBox - Inline place search and selection component
- * Replaces the Add Place drawer with an inline box for the sidebar
+ * Shows when "Add Place" button is tapped, replacing Ask AI and What's On temporarily
  */
 export default function AddPlaceBox({
   city,
   dayNumber = 1,
   onSelect,
+  onClose,
   className = '',
 }: AddPlaceBoxProps) {
   const [tab, setTab] = useState<Tab>('curated');
@@ -146,10 +148,18 @@ export default function AddPlaceBox({
           <h3 className="text-sm font-medium text-stone-900 dark:text-white">
             Add Place
           </h3>
+          <span className="text-xs text-stone-400">
+            · Day {dayNumber}
+          </span>
         </div>
-        <span className="text-xs text-stone-400">
-          Day {dayNumber}
-        </span>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-1.5 -mr-1 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <X className="w-4 h-4 text-stone-400" />
+          </button>
+        )}
       </div>
 
       {/* Tab Switcher */}

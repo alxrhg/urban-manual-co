@@ -28,6 +28,8 @@ import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
 import AddPlaceBox from '@/components/trip/AddPlaceBox';
+import SmartSuggestions from '@/components/trip/SmartSuggestions';
+import LocalEvents from '@/components/trip/LocalEvents';
 import {
   analyzeScheduleForWarnings,
   detectConflicts,
@@ -78,6 +80,7 @@ export default function TripPage() {
   const [checklistItems, setChecklistItems] = useState<{ id: string; text: string; checked: boolean }[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState('');
   const [warnings, setWarnings] = useState<PlannerWarning[]>([]);
+  const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
 
   // Extract flights and hotels from itinerary
   const flights = useMemo(() => {
@@ -342,6 +345,43 @@ export default function TripPage() {
     }
   }, [trip?.destination, days, addPlace, refresh]);
 
+  // Add destination from NL input
+  const handleAddFromNL = useCallback(async (
+    destination: unknown,
+    dayNumber: number,
+    time?: string
+  ) => {
+    const dest = destination as { id: number; slug: string; name: string; category: string };
+    if (dest && dest.slug) {
+      const fullDest: Destination = {
+        id: dest.id,
+        slug: dest.slug,
+        name: dest.name,
+        category: dest.category,
+        city: trip?.destination || '',
+      };
+      await addPlace(fullDest, dayNumber, time);
+      await refresh();
+    }
+  }, [addPlace, refresh, trip?.destination]);
+
+  // Handle AI suggestion click
+  const handleAddAISuggestion = useCallback(async (suggestion: {
+    destination: { id: number; slug: string; name: string; category: string };
+    day: number;
+    startTime: string;
+  }) => {
+    const fullDest: Destination = {
+      id: suggestion.destination.id,
+      slug: suggestion.destination.slug,
+      name: suggestion.destination.name,
+      category: suggestion.destination.category,
+      city: trip?.destination || '',
+    };
+    await addPlace(fullDest, suggestion.day, suggestion.startTime);
+    await refresh();
+  }, [addPlace, refresh, trip?.destination]);
+
   // Loading state
   if (loading) {
     return (
@@ -572,25 +612,85 @@ export default function TripPage() {
                   ))}
                 </div>
 
-                {/* Add Place Sidebar (Desktop) */}
-                <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
-                  <AddPlaceBox
-                    city={trip.destination}
-                    dayNumber={selectedDayNumber}
-                    onSelect={(destination) => addPlace(destination, selectedDayNumber)}
-                  />
+                {/* Sidebar (Desktop) */}
+                <div className="hidden lg:block lg:w-80 lg:flex-shrink-0 space-y-4">
+                  {showAddPlaceBox ? (
+                    <AddPlaceBox
+                      city={trip.destination}
+                      dayNumber={selectedDayNumber}
+                      onSelect={(destination) => {
+                        addPlace(destination, selectedDayNumber);
+                        setShowAddPlaceBox(false);
+                      }}
+                      onClose={() => setShowAddPlaceBox(false)}
+                    />
+                  ) : (
+                    <>
+                      {/* Add Place Button */}
+                      <button
+                        onClick={() => setShowAddPlaceBox(true)}
+                        className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-stone-300 dark:border-gray-700 rounded-2xl text-sm font-medium text-stone-600 dark:text-gray-400 hover:border-stone-400 dark:hover:border-gray-600 hover:text-stone-900 dark:hover:text-white transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Add Place
+                      </button>
+                      <SmartSuggestions
+                        days={days}
+                        destination={trip.destination}
+                        selectedDayNumber={selectedDayNumber}
+                        onAddPlace={openPlaceSelector}
+                        onAddAISuggestion={handleAddAISuggestion}
+                        onAddFromNL={handleAddFromNL}
+                      />
+                      {trip.start_date && (
+                        <LocalEvents
+                          city={trip.destination || ''}
+                          startDate={trip.start_date}
+                          endDate={trip.end_date}
+                          onAddToTrip={() => {
+                            openPlaceSelector(selectedDayNumber);
+                          }}
+                        />
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Mobile Add Place Section */}
+            {/* Mobile Section */}
             {days.length > 0 && (
-              <div className="lg:hidden mt-6">
-                <AddPlaceBox
-                  city={trip.destination}
-                  dayNumber={selectedDayNumber}
-                  onSelect={(destination) => addPlace(destination, selectedDayNumber)}
-                />
+              <div className="lg:hidden mt-6 space-y-4">
+                {showAddPlaceBox ? (
+                  <AddPlaceBox
+                    city={trip.destination}
+                    dayNumber={selectedDayNumber}
+                    onSelect={(destination) => {
+                      addPlace(destination, selectedDayNumber);
+                      setShowAddPlaceBox(false);
+                    }}
+                    onClose={() => setShowAddPlaceBox(false)}
+                  />
+                ) : (
+                  <>
+                    {/* Add Place Button */}
+                    <button
+                      onClick={() => setShowAddPlaceBox(true)}
+                      className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-stone-300 dark:border-gray-700 rounded-2xl text-sm font-medium text-stone-600 dark:text-gray-400 hover:border-stone-400 dark:hover:border-gray-600 hover:text-stone-900 dark:hover:text-white transition-colors"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Add Place
+                    </button>
+                    <SmartSuggestions
+                      days={days}
+                      destination={trip.destination}
+                      selectedDayNumber={selectedDayNumber}
+                      onAddPlace={openPlaceSelector}
+                      onAddAISuggestion={handleAddAISuggestion}
+                      onAddFromNL={handleAddFromNL}
+                    />
+                  </>
+                )}
               </div>
             )}
           </div>
