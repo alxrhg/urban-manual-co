@@ -17,13 +17,11 @@ import {
   ChevronRight,
   TrendingUp,
   Activity,
-  Filter,
   UserPlus,
   Ban,
-  CheckCircle,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { MetricCard } from '../analytics/MetricCard';
 
 interface UserData {
   id: string;
@@ -58,6 +56,7 @@ export function UserManagement() {
     adminUsers: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('');
   const [page, setPage] = useState(1);
@@ -69,93 +68,31 @@ export function UserManagement() {
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      // Fetch saved places to get user activity
-      const { data: savedPlaces } = await supabase
-        .from('saved_places')
-        .select('user_id');
-
-      const { data: visitedPlaces } = await supabase
-        .from('visited_places')
-        .select('user_id');
-
-      // Count saves and visits per user
-      const userSaves: Record<string, number> = {};
-      const userVisits: Record<string, number> = {};
-
-      savedPlaces?.forEach(sp => {
-        userSaves[sp.user_id] = (userSaves[sp.user_id] || 0) + 1;
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: ITEMS_PER_PAGE.toString(),
       });
 
-      visitedPlaces?.forEach(vp => {
-        userVisits[vp.user_id] = (userVisits[vp.user_id] || 0) + 1;
-      });
+      if (searchQuery) params.set('search', searchQuery);
+      if (roleFilter) params.set('role', roleFilter);
 
-      // Get unique user IDs
-      const allUserIds = new Set([
-        ...Object.keys(userSaves),
-        ...Object.keys(userVisits),
-      ]);
+      const response = await fetch(`/api/admin/users?${params}`);
 
-      // Simulate user data since we don't have direct access to auth.users
-      const simulatedUsers: UserData[] = Array.from(allUserIds).map((userId, i) => ({
-        id: userId,
-        email: `user${i + 1}@example.com`,
-        created_at: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000).toISOString(),
-        last_sign_in_at: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
-        app_metadata: {
-          role: Math.random() > 0.95 ? 'admin' : 'user',
-          provider: Math.random() > 0.5 ? 'google' : 'email',
-        },
-        user_metadata: {
-          full_name: `User ${i + 1}`,
-        },
-        saved_count: userSaves[userId] || 0,
-        visited_count: userVisits[userId] || 0,
-      }));
-
-      // Apply filters
-      let filteredUsers = simulatedUsers;
-
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        filteredUsers = filteredUsers.filter(
-          u => u.email.toLowerCase().includes(query) ||
-               u.user_metadata.full_name?.toLowerCase().includes(query)
-        );
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to fetch users');
       }
 
-      if (roleFilter) {
-        filteredUsers = filteredUsers.filter(u => u.app_metadata.role === roleFilter);
-      }
+      const data = await response.json();
 
-      // Sort by activity
-      filteredUsers.sort((a, b) => (b.saved_count + b.visited_count) - (a.saved_count + a.visited_count));
-
-      // Paginate
-      const from = (page - 1) * ITEMS_PER_PAGE;
-      const paginatedUsers = filteredUsers.slice(from, from + ITEMS_PER_PAGE);
-
-      setUsers(paginatedUsers);
-      setTotalCount(filteredUsers.length);
-
-      // Calculate stats
-      const now = new Date();
-      const monthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-      setStats({
-        totalUsers: simulatedUsers.length,
-        activeUsers: simulatedUsers.filter(u =>
-          u.last_sign_in_at && new Date(u.last_sign_in_at) > weekAgo
-        ).length,
-        newUsersThisMonth: simulatedUsers.filter(u =>
-          new Date(u.created_at) > monthAgo
-        ).length,
-        adminUsers: simulatedUsers.filter(u => u.app_metadata.role === 'admin').length,
-      });
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
+      setUsers(data.users);
+      setStats(data.stats);
+      setTotalCount(data.total);
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch users');
     } finally {
       setLoading(false);
     }
@@ -192,72 +129,68 @@ export function UserManagement() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">User Management</h1>
-          <p className="mt-1 text-sm text-gray-400">
-            Manage users and their permissions
-          </p>
+    <div className="space-y-8 fade-in">
+      {/* Stats - Matches design system */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+          {loading ? (
+            <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
+          ) : (
+            <div className="text-2xl font-light mb-1">{stats.totalUsers.toLocaleString()}</div>
+          )}
+          <div className="text-xs text-gray-500">Total Users</div>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors">
-          <UserPlus className="w-4 h-4" />
-          Invite User
-        </button>
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+          {loading ? (
+            <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
+          ) : (
+            <div className="text-2xl font-light mb-1">{stats.activeUsers.toLocaleString()}</div>
+          )}
+          <div className="text-xs text-gray-500">Active (7d)</div>
+        </div>
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+          {loading ? (
+            <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
+          ) : (
+            <div className="text-2xl font-light mb-1">{stats.newUsersThisMonth.toLocaleString()}</div>
+          )}
+          <div className="text-xs text-gray-500">New This Month</div>
+        </div>
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+          {loading ? (
+            <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
+          ) : (
+            <div className="text-2xl font-light mb-1">{stats.adminUsers.toLocaleString()}</div>
+          )}
+          <div className="text-xs text-gray-500">Admins</div>
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Total Users"
-          value={stats.totalUsers}
-          icon={<Users className="w-5 h-5" />}
-          color="indigo"
-          loading={loading}
-        />
-        <MetricCard
-          title="Active (7d)"
-          value={stats.activeUsers}
-          change={12.5}
-          icon={<Activity className="w-5 h-5" />}
-          color="emerald"
-          loading={loading}
-        />
-        <MetricCard
-          title="New This Month"
-          value={stats.newUsersThisMonth}
-          change={8.3}
-          icon={<TrendingUp className="w-5 h-5" />}
-          color="amber"
-          loading={loading}
-        />
-        <MetricCard
-          title="Admins"
-          value={stats.adminUsers}
-          icon={<ShieldCheck className="w-5 h-5" />}
-          color="purple"
-          loading={loading}
-        />
-      </div>
+      {/* Error Message */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 border border-red-200 dark:border-red-900 rounded-2xl bg-red-50 dark:bg-red-900/10">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+        </div>
+      )}
 
       {/* Search & Filters */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search users..."
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-gray-200 dark:border-gray-800 rounded-full text-sm placeholder-gray-400 focus:outline-none focus:border-gray-400 dark:focus:border-gray-600"
           />
         </div>
 
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="px-3 py-2.5 bg-gray-900 border border-gray-800 rounded-lg text-sm text-gray-300 focus:outline-none focus:border-indigo-500"
+          className="px-4 py-2.5 bg-transparent border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:border-gray-400 dark:focus:border-gray-600"
         >
           <option value="">All Roles</option>
           <option value="admin">Admin</option>
@@ -266,254 +199,224 @@ export function UserManagement() {
       </div>
 
       {/* Users Table */}
-      <div className="rounded-xl border border-gray-800 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-900/80 border-b border-gray-800">
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-500 font-medium">User</th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-500 font-medium">Role</th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-500 font-medium">Activity</th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-500 font-medium">Joined</th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-500 font-medium">Last Active</th>
-                <th className="w-12 px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800/50">
-              {loading ? (
-                Array.from({ length: 10 }).map((_, i) => (
-                  <tr key={i}>
-                    <td className="px-4 py-3"><div className="h-10 bg-gray-800 rounded animate-pulse" /></td>
-                    <td className="px-4 py-3"><div className="h-4 w-16 bg-gray-800 rounded animate-pulse" /></td>
-                    <td className="px-4 py-3"><div className="h-4 w-24 bg-gray-800 rounded animate-pulse" /></td>
-                    <td className="px-4 py-3"><div className="h-4 w-20 bg-gray-800 rounded animate-pulse" /></td>
-                    <td className="px-4 py-3"><div className="h-4 w-20 bg-gray-800 rounded animate-pulse" /></td>
-                    <td className="px-4 py-3" />
-                  </tr>
-                ))
-              ) : users.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
-                    No users found
-                  </td>
-                </tr>
-              ) : (
-                users.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-900/50 transition-colors">
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                          {user.user_metadata.avatar_url ? (
-                            <img
-                              src={user.user_metadata.avatar_url}
-                              alt={user.email}
-                              className="w-full h-full rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-white text-sm font-semibold">
-                              {user.email.charAt(0).toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-white truncate">
-                            {user.user_metadata.full_name || user.email.split('@')[0]}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`
-                        inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
-                        ${user.app_metadata.role === 'admin'
-                          ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                          : 'bg-gray-800 text-gray-400'}
-                      `}>
-                        {user.app_metadata.role === 'admin' ? (
-                          <ShieldCheck className="w-3 h-3" />
-                        ) : (
-                          <Shield className="w-3 h-3" />
-                        )}
-                        {user.app_metadata.role || 'User'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
-                          <Bookmark className="w-3.5 h-3.5" />
-                          {user.saved_count}
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-400">
-                          <MapPin className="w-3.5 h-3.5" />
-                          {user.visited_count}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {formatDate(user.created_at)}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`text-xs ${
-                        user.last_sign_in_at && new Date(user.last_sign_in_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-                          ? 'text-emerald-400'
-                          : 'text-gray-500'
-                      }`}>
-                        {getTimeAgo(user.last_sign_in_at)}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="relative">
-                        <button
-                          onClick={() => setActiveDropdown(activeDropdown === user.id ? null : user.id)}
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition-colors"
-                        >
-                          <MoreVertical className="w-4 h-4" />
-                        </button>
-
-                        {activeDropdown === user.id && (
-                          <>
-                            <div
-                              className="fixed inset-0 z-10"
-                              onClick={() => setActiveDropdown(null)}
-                            />
-                            <div className="absolute right-0 top-full mt-1 w-48 rounded-lg bg-gray-900 border border-gray-800 shadow-xl z-20 py-1 overflow-hidden">
-                              <button
-                                onClick={() => {
-                                  setSelectedUser(user);
-                                  setActiveDropdown(null);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                              >
-                                <Eye className="w-4 h-4" />
-                                View Details
-                              </button>
-                              <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
-                                <Mail className="w-4 h-4" />
-                                Send Email
-                              </button>
-                              {user.app_metadata.role !== 'admin' && (
-                                <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
-                                  <Crown className="w-4 h-4" />
-                                  Make Admin
-                                </button>
-                              )}
-                              <div className="my-1 border-t border-gray-800" />
-                              <button className="w-full flex items-center gap-2 px-3 py-2 text-sm text-rose-400 hover:bg-rose-500/10 transition-colors">
-                                <Ban className="w-4 h-4" />
-                                Suspend User
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 bg-gray-900/50">
-            <p className="text-sm text-gray-500">
-              Showing {((page - 1) * ITEMS_PER_PAGE) + 1} to {Math.min(page * ITEMS_PER_PAGE, totalCount)} of {totalCount}
-            </p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage(Math.max(1, page - 1))}
-                disabled={page === 1}
-                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <span className="px-3 text-sm text-gray-500">{page} / {totalPages}</span>
-              <button
-                onClick={() => setPage(Math.min(totalPages, page + 1))}
-                disabled={page === totalPages}
-                className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+      <div className="divide-y divide-gray-100 dark:divide-gray-800">
+        {loading ? (
+          Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-full animate-pulse" />
+                <div>
+                  <div className="h-4 w-32 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
+                  <div className="h-3 w-40 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                </div>
+              </div>
+              <div className="h-4 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
             </div>
+          ))
+        ) : users.length === 0 ? (
+          <div className="py-12 text-center text-gray-500">
+            <Users className="w-8 h-8 mx-auto mb-3 opacity-50" />
+            <p className="text-sm">No users found</p>
           </div>
+        ) : (
+          users.map((user) => (
+            <div key={user.id} className="py-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                  {user.user_metadata.avatar_url ? (
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt={user.email}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      {user.email.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">
+                    {user.user_metadata.full_name || user.email.split('@')[0]}
+                  </p>
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className="truncate">{user.email}</span>
+                    {user.app_metadata.role === 'admin' && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-[10px] font-medium">
+                        <ShieldCheck className="w-2.5 h-2.5" />
+                        Admin
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <div className="hidden sm:flex items-center gap-4 text-xs text-gray-500">
+                  <div className="flex items-center gap-1">
+                    <Bookmark className="w-3.5 h-3.5" />
+                    <span className="tabular-nums">{user.saved_count}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" />
+                    <span className="tabular-nums">{user.visited_count}</span>
+                  </div>
+                  <span className={`${
+                    user.last_sign_in_at && new Date(user.last_sign_in_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+                      ? 'text-gray-700 dark:text-gray-300'
+                      : ''
+                  }`}>
+                    {getTimeAgo(user.last_sign_in_at)}
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <button
+                    onClick={() => setActiveDropdown(activeDropdown === user.id ? null : user.id)}
+                    className="p-1.5 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+
+                  {activeDropdown === user.id && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setActiveDropdown(null)}
+                      />
+                      <div className="absolute right-0 top-full mt-1 w-48 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-lg z-20 py-2 overflow-hidden">
+                        <button
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setActiveDropdown(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View Details
+                        </button>
+                        <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                          <Mail className="w-4 h-4" />
+                          Send Email
+                        </button>
+                        {user.app_metadata.role !== 'admin' && (
+                          <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                            <Crown className="w-4 h-4" />
+                            Make Admin
+                          </button>
+                        )}
+                        <div className="my-1 border-t border-gray-200 dark:border-gray-800" />
+                        <button className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
+                          <Ban className="w-4 h-4" />
+                          Suspend User
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 pt-4">
+          <button
+            onClick={() => setPage(Math.max(1, page - 1))}
+            disabled={page === 1}
+            className="p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-sm text-gray-500">
+            Page {page} of {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(Math.min(totalPages, page + 1))}
+            disabled={page === totalPages}
+            className="p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* User Detail Modal */}
       {selectedUser && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
           onClick={() => setSelectedUser(null)}
         >
           <div
-            className="w-full max-w-lg bg-gray-900 rounded-xl overflow-hidden"
+            className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                  <span className="text-white text-xl font-semibold">
-                    {selectedUser.email.charAt(0).toUpperCase()}
-                  </span>
+                <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  {selectedUser.user_metadata.avatar_url ? (
+                    <img
+                      src={selectedUser.user_metadata.avatar_url}
+                      alt={selectedUser.email}
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xl font-medium text-gray-600 dark:text-gray-400">
+                      {selectedUser.email.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                 </div>
                 <div>
-                  <h2 className="text-xl font-semibold text-white">
+                  <h2 className="text-xl font-light">
                     {selectedUser.user_metadata.full_name || selectedUser.email.split('@')[0]}
                   </h2>
-                  <p className="text-sm text-gray-400">{selectedUser.email}</p>
-                  <span className={`
-                    inline-flex items-center gap-1 mt-2 px-2 py-0.5 rounded-full text-xs font-medium
-                    ${selectedUser.app_metadata.role === 'admin'
-                      ? 'bg-purple-500/10 text-purple-400'
-                      : 'bg-gray-800 text-gray-400'}
-                  `}>
-                    {selectedUser.app_metadata.role === 'admin' ? <ShieldCheck className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
-                    {selectedUser.app_metadata.role || 'User'}
-                  </span>
+                  <p className="text-sm text-gray-500">{selectedUser.email}</p>
+                  {selectedUser.app_metadata.role === 'admin' && (
+                    <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-medium">
+                      <ShieldCheck className="w-3 h-3" />
+                      Admin
+                    </span>
+                  )}
                 </div>
               </div>
 
               <div className="mt-6 grid grid-cols-2 gap-4">
-                <div className="p-4 bg-gray-800/50 rounded-lg">
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">Saved Places</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{selectedUser.saved_count}</p>
+                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                  <p className="text-xs text-gray-500 mb-1">Saved Places</p>
+                  <p className="text-2xl font-light">{selectedUser.saved_count}</p>
                 </div>
-                <div className="p-4 bg-gray-800/50 rounded-lg">
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">Visited</p>
-                  <p className="mt-1 text-2xl font-semibold text-white">{selectedUser.visited_count}</p>
+                <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                  <p className="text-xs text-gray-500 mb-1">Visited</p>
+                  <p className="text-2xl font-light">{selectedUser.visited_count}</p>
                 </div>
               </div>
 
-              <div className="mt-6 space-y-3">
-                <div className="flex items-center justify-between py-2 border-b border-gray-800">
+              <div className="mt-6 divide-y divide-gray-100 dark:divide-gray-800">
+                <div className="flex items-center justify-between py-3">
                   <span className="text-sm text-gray-500">Joined</span>
-                  <span className="text-sm text-white">{formatDate(selectedUser.created_at)}</span>
+                  <span className="text-sm">{formatDate(selectedUser.created_at)}</span>
                 </div>
-                <div className="flex items-center justify-between py-2 border-b border-gray-800">
+                <div className="flex items-center justify-between py-3">
                   <span className="text-sm text-gray-500">Last Active</span>
-                  <span className="text-sm text-white">{getTimeAgo(selectedUser.last_sign_in_at)}</span>
+                  <span className="text-sm">{getTimeAgo(selectedUser.last_sign_in_at)}</span>
                 </div>
-                <div className="flex items-center justify-between py-2">
+                <div className="flex items-center justify-between py-3">
                   <span className="text-sm text-gray-500">Provider</span>
-                  <span className="text-sm text-white capitalize">{selectedUser.app_metadata.provider || 'email'}</span>
+                  <span className="text-sm capitalize">{selectedUser.app_metadata.provider || 'email'}</span>
                 </div>
               </div>
             </div>
 
-            <div className="px-6 py-4 bg-gray-800/50 border-t border-gray-800 flex items-center justify-end gap-3">
+            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-200 dark:border-gray-800 flex items-center justify-end gap-3">
               <button
                 onClick={() => setSelectedUser(null)}
-                className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+                className="px-4 py-2 text-sm text-gray-500 hover:text-black dark:hover:text-white transition-colors"
               >
                 Close
               </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors">
+              <button className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium transition-colors hover:opacity-80">
                 <Mail className="w-4 h-4" />
                 Send Email
               </button>

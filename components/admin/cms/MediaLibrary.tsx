@@ -6,22 +6,18 @@ import {
   Upload,
   Grid,
   List,
-  Filter,
   Trash2,
-  Download,
   Copy,
   Check,
   X,
   Image as ImageIcon,
-  Film,
-  File,
   ChevronLeft,
   ChevronRight,
   Loader2,
   Eye,
-  MoreVertical,
-  FolderPlus,
   HardDrive,
+  Download,
+  AlertCircle,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -32,16 +28,18 @@ interface MediaItem {
   type: 'image' | 'video' | 'document';
   size: number;
   created_at: string;
-  destination_id?: number;
-  destination_name?: string;
+  path: string;
 }
 
 type ViewMode = 'grid' | 'list';
+
+const BUCKET_NAME = 'media';
 
 export function MediaLibrary() {
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -50,94 +48,76 @@ export function MediaLibrary() {
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [storageUsed, setStorageUsed] = useState(0);
+  const [error, setError] = useState<string | null>(null);
 
   const ITEMS_PER_PAGE = viewMode === 'grid' ? 24 : 20;
 
+  const getFileType = (name: string): 'image' | 'video' | 'document' => {
+    const ext = name.split('.').pop()?.toLowerCase() || '';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'avif'].includes(ext)) return 'image';
+    if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return 'video';
+    return 'document';
+  };
+
   const fetchMedia = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      // Fetch destinations with images
-      let query = supabase
-        .from('destinations')
-        .select('id, name, image, primary_photo_url, photos_json, created_at', { count: 'exact' })
-        .not('image', 'is', null);
+      // List files from the media bucket
+      const { data: files, error: listError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .list('', {
+          limit: 1000,
+          sortBy: { column: 'created_at', order: 'desc' },
+        });
 
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%`);
+      if (listError) {
+        throw listError;
       }
 
+      // Filter out folders (they have no metadata)
+      const validFiles = (files || []).filter(file => file.id && file.name);
+
+      // Apply search filter
+      let filteredFiles = validFiles;
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        filteredFiles = filteredFiles.filter(file =>
+          file.name.toLowerCase().includes(query)
+        );
+      }
+
+      setTotalCount(filteredFiles.length);
+
+      // Paginate
       const from = (page - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
-      query = query.range(from, to).order('created_at', { ascending: false });
+      const paginatedFiles = filteredFiles.slice(from, from + ITEMS_PER_PAGE);
 
-      const { data, count, error } = await query;
+      // Get public URLs for each file
+      const mediaItems: MediaItem[] = paginatedFiles.map(file => {
+        const { data: urlData } = supabase.storage
+          .from(BUCKET_NAME)
+          .getPublicUrl(file.name);
 
-      if (error) throw error;
-
-      const mediaItems: MediaItem[] = [];
-      let totalSize = 0;
-
-      data?.forEach((dest) => {
-        if (dest.image) {
-          mediaItems.push({
-            id: `${dest.id}-main`,
-            name: `${dest.name} - Main Image`,
-            url: dest.image,
-            type: 'image',
-            size: 500000, // Estimated size
-            created_at: dest.created_at,
-            destination_id: dest.id,
-            destination_name: dest.name,
-          });
-          totalSize += 500000;
-        }
-
-        if (dest.primary_photo_url && dest.primary_photo_url !== dest.image) {
-          mediaItems.push({
-            id: `${dest.id}-primary`,
-            name: `${dest.name} - Primary Photo`,
-            url: dest.primary_photo_url,
-            type: 'image',
-            size: 600000,
-            created_at: dest.created_at,
-            destination_id: dest.id,
-            destination_name: dest.name,
-          });
-          totalSize += 600000;
-        }
-
-        // Parse additional photos from JSON
-        if (dest.photos_json) {
-          const photos = typeof dest.photos_json === 'string'
-            ? JSON.parse(dest.photos_json)
-            : dest.photos_json;
-
-          if (Array.isArray(photos)) {
-            photos.slice(0, 3).forEach((photo: { url?: string; photo_reference?: string }, idx: number) => {
-              const photoUrl = photo.url || photo.photo_reference;
-              if (photoUrl) {
-                mediaItems.push({
-                  id: `${dest.id}-photo-${idx}`,
-                  name: `${dest.name} - Photo ${idx + 1}`,
-                  url: photoUrl,
-                  type: 'image',
-                  size: 400000,
-                  created_at: dest.created_at,
-                  destination_id: dest.id,
-                  destination_name: dest.name,
-                });
-                totalSize += 400000;
-              }
-            });
-          }
-        }
+        return {
+          id: file.id || file.name,
+          name: file.name,
+          url: urlData.publicUrl,
+          type: getFileType(file.name),
+          size: file.metadata?.size || 0,
+          created_at: file.created_at || new Date().toISOString(),
+          path: file.name,
+        };
       });
 
       setMedia(mediaItems);
-      setTotalCount(count ? count * 2 : 0); // Approximate
+
+      // Calculate total storage used
+      const totalSize = validFiles.reduce((acc, file) => acc + (file.metadata?.size || 0), 0);
       setStorageUsed(totalSize);
-    } catch (error) {
-      console.error('Failed to fetch media:', error);
+    } catch (err) {
+      console.error('Failed to fetch media:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch media');
     } finally {
       setLoading(false);
     }
@@ -152,42 +132,91 @@ export function MediaLibrary() {
     if (!files || files.length === 0) return;
 
     setUploading(true);
+    setError(null);
     try {
       for (const file of Array.from(files)) {
         const fileExt = file.name.split('.').pop();
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-        const { error } = await supabase.storage
-          .from('media')
-          .upload(fileName, file);
+        const { error: uploadError } = await supabase.storage
+          .from(BUCKET_NAME)
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
 
-        if (error) throw error;
+        if (uploadError) throw uploadError;
       }
 
-      fetchMedia();
-    } catch (error) {
-      console.error('Upload failed:', error);
-      alert('Failed to upload file');
+      // Refresh the list
+      await fetchMedia();
+    } catch (err) {
+      console.error('Upload failed:', err);
+      setError(err instanceof Error ? err.message : 'Failed to upload file');
     } finally {
       setUploading(false);
+      // Reset file input
+      e.target.value = '';
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Delete this media item?')) return;
-    // In a real app, you would delete from storage
-    setMedia(media.filter(m => m.id !== id));
-    setSelectedItems(prev => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
+  const handleDelete = async (item: MediaItem) => {
+    if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
+
+    setDeleting(prev => new Set(prev).add(item.id));
+    setError(null);
+    try {
+      const { error: deleteError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .remove([item.path]);
+
+      if (deleteError) throw deleteError;
+
+      // Remove from local state
+      setMedia(prev => prev.filter(m => m.id !== item.id));
+      setSelectedItems(prev => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
+
+      // Close preview if this item was selected
+      if (selectedMedia?.id === item.id) {
+        setSelectedMedia(null);
+      }
+    } catch (err) {
+      console.error('Delete failed:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete file');
+    } finally {
+      setDeleting(prev => {
+        const next = new Set(prev);
+        next.delete(item.id);
+        return next;
+      });
+    }
   };
 
   const handleBulkDelete = async () => {
-    if (!confirm(`Delete ${selectedItems.size} items?`)) return;
-    setMedia(media.filter(m => !selectedItems.has(m.id)));
-    setSelectedItems(new Set());
+    if (!confirm(`Delete ${selectedItems.size} items? This cannot be undone.`)) return;
+
+    const itemsToDelete = media.filter(m => selectedItems.has(m.id));
+    const paths = itemsToDelete.map(m => m.path);
+
+    setError(null);
+    try {
+      const { error: deleteError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .remove(paths);
+
+      if (deleteError) throw deleteError;
+
+      // Remove from local state
+      setMedia(prev => prev.filter(m => !selectedItems.has(m.id)));
+      setSelectedItems(new Set());
+    } catch (err) {
+      console.error('Bulk delete failed:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete files');
+    }
   };
 
   const copyUrl = (url: string) => {
@@ -207,6 +236,7 @@ export function MediaLibrary() {
   };
 
   const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -215,87 +245,104 @@ export function MediaLibrary() {
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 fade-in">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Media Library</h1>
-          <p className="mt-1 text-sm text-gray-400">
-            Manage images and media files for destinations
-          </p>
+        <div className="flex items-center gap-3 text-xs text-gray-500">
+          <HardDrive className="w-4 h-4" />
+          <span>{formatFileSize(storageUsed)} used</span>
+          <span className="text-gray-300 dark:text-gray-700">|</span>
+          <span>{totalCount} files</span>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 px-3 py-2 bg-gray-900 rounded-lg border border-gray-800">
-            <HardDrive className="w-4 h-4 text-gray-500" />
-            <span className="text-sm text-gray-400">{formatFileSize(storageUsed)} used</span>
-          </div>
-          <label className="flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition-colors cursor-pointer">
-            {uploading ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4" />
-            )}
-            Upload
-            <input
-              type="file"
-              multiple
-              accept="image/*,video/*"
-              onChange={handleUpload}
-              className="hidden"
-              disabled={uploading}
-            />
-          </label>
-        </div>
+        <label className="inline-flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium transition-colors hover:opacity-80 cursor-pointer">
+          {uploading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Upload className="w-4 h-4" />
+          )}
+          Upload
+          <input
+            type="file"
+            multiple
+            accept="image/*,video/*"
+            onChange={handleUpload}
+            className="hidden"
+            disabled={uploading}
+          />
+        </label>
       </div>
 
-      {/* Search & Filters */}
+      {/* Error Message */}
+      {error && (
+        <div className="flex items-center gap-3 p-4 border border-red-200 dark:border-red-900 rounded-2xl bg-red-50 dark:bg-red-900/10">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <button
+            onClick={() => setError(null)}
+            className="ml-auto p-1 text-red-400 hover:text-red-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Search & View Toggle */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search media..."
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-900 border border-gray-800 rounded-lg text-sm text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500"
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Search files..."
+            className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-gray-200 dark:border-gray-800 rounded-full text-sm placeholder-gray-400 focus:outline-none focus:border-gray-400 dark:focus:border-gray-600"
           />
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex items-center bg-gray-900 rounded-lg border border-gray-800 p-1">
-            <button
-              onClick={() => setViewMode('grid')}
-              className={`p-2 rounded ${viewMode === 'grid' ? 'bg-gray-800 text-white' : 'text-gray-500 hover:text-gray-300'}`}
-            >
-              <Grid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`p-2 rounded ${viewMode === 'list' ? 'bg-gray-800 text-white' : 'text-gray-500 hover:text-gray-300'}`}
-            >
-              <List className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`p-2 rounded-full transition-colors ${
+              viewMode === 'grid'
+                ? 'bg-gray-100 dark:bg-gray-800 text-black dark:text-white'
+                : 'text-gray-400 hover:text-black dark:hover:text-white'
+            }`}
+          >
+            <Grid className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-2 rounded-full transition-colors ${
+              viewMode === 'list'
+                ? 'bg-gray-100 dark:bg-gray-800 text-black dark:text-white'
+                : 'text-gray-400 hover:text-black dark:hover:text-white'
+            }`}
+          >
+            <List className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
       {/* Bulk Actions */}
       {selectedItems.size > 0 && (
-        <div className="flex items-center gap-3 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
-          <span className="text-sm text-indigo-300">
+        <div className="flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
             {selectedItems.size} selected
           </span>
-          <div className="h-4 w-px bg-indigo-500/30" />
+          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
           <button
             onClick={handleBulkDelete}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-full transition-colors"
           >
             <Trash2 className="w-3 h-3" />
             Delete
           </button>
           <button
             onClick={() => setSelectedItems(new Set())}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-gray-300 hover:bg-gray-800 rounded transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
           >
             <X className="w-3 h-3" />
             Clear
@@ -309,14 +356,15 @@ export function MediaLibrary() {
           {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
             <div
               key={i}
-              className={`bg-gray-800 rounded-lg animate-pulse ${viewMode === 'grid' ? 'aspect-square' : 'h-16'}`}
+              className={`bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse ${viewMode === 'grid' ? 'aspect-square' : 'h-16'}`}
             />
           ))}
         </div>
       ) : media.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
-          <p>No media files found</p>
+          <p className="text-sm">{searchQuery ? 'No files match your search' : 'No media files yet'}</p>
+          <p className="text-xs mt-1">Upload files to get started</p>
         </div>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -324,18 +372,25 @@ export function MediaLibrary() {
             <div
               key={item.id}
               className={`
-                group relative aspect-square rounded-lg overflow-hidden bg-gray-800 border transition-all cursor-pointer
-                ${selectedItems.has(item.id) ? 'border-indigo-500 ring-2 ring-indigo-500/20' : 'border-gray-800 hover:border-gray-700'}
+                group relative aspect-square rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 border transition-all cursor-pointer
+                ${selectedItems.has(item.id)
+                  ? 'ring-1 ring-gray-400 dark:ring-gray-500 bg-black/5 dark:bg-white/5'
+                  : 'border-transparent hover:border-gray-200 dark:hover:border-gray-700'}
               `}
               onClick={() => setSelectedMedia(item)}
             >
-              <img
-                src={item.url}
-                alt={item.name}
-                className="w-full h-full object-cover"
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              {item.type === 'image' ? (
+                <img
+                  src={item.url}
+                  alt={item.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <ImageIcon className="w-8 h-8 text-gray-400" />
+                </div>
+              )}
 
               {/* Checkbox */}
               <div
@@ -346,31 +401,31 @@ export function MediaLibrary() {
                 }}
               >
                 <div className={`
-                  w-5 h-5 rounded border-2 flex items-center justify-center transition-all
+                  w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
                   ${selectedItems.has(item.id)
-                    ? 'bg-indigo-500 border-indigo-500'
-                    : 'border-white/50 bg-black/30 opacity-0 group-hover:opacity-100'}
+                    ? 'bg-black dark:bg-white border-black dark:border-white'
+                    : 'border-white/70 bg-black/20 opacity-0 group-hover:opacity-100'}
                 `}>
-                  {selectedItems.has(item.id) && <Check className="w-3 h-3 text-white" />}
+                  {selectedItems.has(item.id) && <Check className="w-3 h-3 text-white dark:text-black" />}
                 </div>
               </div>
 
-              {/* Actions */}
+              {/* Quick Actions */}
               <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-xs text-white truncate max-w-[80%]">
-                  {item.destination_name}
+                <span className="text-[10px] text-white bg-black/50 px-2 py-1 rounded-full truncate max-w-[70%]">
+                  {item.name}
                 </span>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     copyUrl(item.url);
                   }}
-                  className="p-1.5 rounded bg-black/50 text-white hover:bg-black/70 transition-colors"
+                  className="p-1.5 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
                 >
                   {copiedUrl === item.url ? (
-                    <Check className="w-3.5 h-3.5" />
+                    <Check className="w-3 h-3" />
                   ) : (
-                    <Copy className="w-3.5 h-3.5" />
+                    <Copy className="w-3 h-3" />
                   )}
                 </button>
               </div>
@@ -378,81 +433,65 @@ export function MediaLibrary() {
           ))}
         </div>
       ) : (
-        <div className="rounded-xl border border-gray-800 overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-900/80 border-b border-gray-800">
-                <th className="w-12 px-4 py-3" />
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-500 font-medium">File</th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-500 font-medium">Destination</th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-500 font-medium">Size</th>
-                <th className="px-4 py-3 text-left text-xs uppercase tracking-wider text-gray-500 font-medium">Date</th>
-                <th className="w-12 px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800/50">
-              {media.map((item) => (
-                <tr
-                  key={item.id}
-                  className={`hover:bg-gray-900/50 transition-colors ${selectedItems.has(item.id) ? 'bg-indigo-500/5' : ''}`}
+        <div className="divide-y divide-gray-100 dark:divide-gray-800">
+          {media.map((item) => (
+            <div
+              key={item.id}
+              className={`py-3 flex items-center justify-between ${selectedItems.has(item.id) ? 'bg-gray-50 dark:bg-gray-900 -mx-4 px-4' : ''}`}
+            >
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={selectedItems.has(item.id)}
+                  onChange={() => toggleSelect(item.id)}
+                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-700"
+                />
+                <div
+                  className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0 cursor-pointer"
+                  onClick={() => setSelectedMedia(item)}
                 >
-                  <td className="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.has(item.id)}
-                      onChange={() => toggleSelect(item.id)}
-                      className="w-4 h-4 rounded border-gray-700 bg-gray-800 text-indigo-500 focus:ring-indigo-500"
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded bg-gray-800 overflow-hidden flex-shrink-0">
-                        <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
-                      </div>
-                      <span className="text-sm text-white truncate">{item.name}</span>
+                  {item.type === 'image' ? (
+                    <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <ImageIcon className="w-4 h-4 text-gray-400" />
                     </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm text-gray-400">{item.destination_name || '-'}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm text-gray-500">{formatFileSize(item.size)}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-sm text-gray-500">
-                      {new Date(item.created_at).toLocaleDateString()}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => copyUrl(item.url)}
-                        className="p-1.5 rounded text-gray-500 hover:text-white hover:bg-gray-800 transition-colors"
-                      >
-                        {copiedUrl === item.url ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
-                      </button>
-                      <button
-                        onClick={() => setSelectedMedia(item)}
-                        className="p-1.5 rounded text-gray-500 hover:text-white hover:bg-gray-800 transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm truncate">{item.name}</p>
+                  <p className="text-xs text-gray-500">{formatFileSize(item.size)}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-400">
+                  {new Date(item.created_at).toLocaleDateString()}
+                </span>
+                <button
+                  onClick={() => copyUrl(item.url)}
+                  className="p-1.5 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  {copiedUrl === item.url ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </button>
+                <button
+                  onClick={() => setSelectedMedia(item)}
+                  className="p-1.5 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 pt-4">
           <button
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+            className="p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -462,7 +501,7 @@ export function MediaLibrary() {
           <button
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
-            className="p-2 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 disabled:opacity-50 transition-colors"
+            className="p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -476,54 +515,60 @@ export function MediaLibrary() {
           onClick={() => setSelectedMedia(null)}
         >
           <div
-            className="relative max-w-4xl w-full bg-gray-900 rounded-xl overflow-hidden"
+            className="relative max-w-4xl w-full bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setSelectedMedia(null)}
-              className="absolute top-4 right-4 z-10 p-2 rounded-lg bg-black/50 text-white hover:bg-black/70 transition-colors"
+              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
-            <img
-              src={selectedMedia.url}
-              alt={selectedMedia.name}
-              className="w-full max-h-[70vh] object-contain"
-            />
-            <div className="p-4 border-t border-gray-800">
-              <h3 className="font-medium text-white">{selectedMedia.name}</h3>
-              <div className="mt-2 flex items-center gap-4 text-sm text-gray-500">
+            {selectedMedia.type === 'image' ? (
+              <img
+                src={selectedMedia.url}
+                alt={selectedMedia.name}
+                className="w-full max-h-[70vh] object-contain bg-gray-100 dark:bg-gray-800"
+              />
+            ) : (
+              <div className="w-full h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                <ImageIcon className="w-16 h-16 text-gray-400" />
+              </div>
+            )}
+            <div className="p-6">
+              <h3 className="font-medium truncate">{selectedMedia.name}</h3>
+              <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
                 <span>{formatFileSize(selectedMedia.size)}</span>
                 <span>{new Date(selectedMedia.created_at).toLocaleDateString()}</span>
-                {selectedMedia.destination_name && (
-                  <span>From: {selectedMedia.destination_name}</span>
-                )}
               </div>
               <div className="mt-4 flex items-center gap-2">
                 <button
                   onClick={() => copyUrl(selectedMedia.url)}
-                  className="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-white transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full text-sm transition-colors"
                 >
                   {copiedUrl === selectedMedia.url ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   Copy URL
                 </button>
                 <a
                   href={selectedMedia.url}
+                  download={selectedMedia.name}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-3 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm text-white transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full text-sm transition-colors"
                 >
                   <Download className="w-4 h-4" />
                   Download
                 </a>
                 <button
-                  onClick={() => {
-                    handleDelete(selectedMedia.id);
-                    setSelectedMedia(null);
-                  }}
-                  className="flex items-center gap-2 px-3 py-2 bg-rose-500/10 hover:bg-rose-500/20 rounded-lg text-sm text-rose-400 transition-colors ml-auto"
+                  onClick={() => handleDelete(selectedMedia)}
+                  disabled={deleting.has(selectedMedia.id)}
+                  className="flex items-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-full text-sm transition-colors ml-auto disabled:opacity-50"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  {deleting.has(selectedMedia.id) ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="w-4 h-4" />
+                  )}
                   Delete
                 </button>
               </div>
