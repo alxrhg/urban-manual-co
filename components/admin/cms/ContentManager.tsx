@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Destination } from '@/types/destination';
+import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 
 interface ContentManagerProps {
   onEditDestination?: (destination: Destination) => void;
@@ -690,7 +691,7 @@ function TableView({
   );
 }
 
-// Grid View Component
+// Grid View Component - Uses homepage card styles
 function GridView({
   destinations,
   selectedItems,
@@ -711,28 +712,28 @@ function GridView({
   handleDuplicate: (destination: Destination) => void;
 }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
       {destinations.map((dest) => (
-        <div
-          key={dest.id}
-          className={`group relative rounded-2xl overflow-hidden border transition-colors ${
+        <div key={dest.id} className="relative">
+          {/* Selection overlay */}
+          <div className={`absolute inset-0 z-10 pointer-events-none rounded-lg transition-all ${
             selectedItems.has(dest.id!)
-              ? 'border-black dark:border-white'
-              : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
-          }`}
-        >
+              ? 'ring-2 ring-black dark:ring-white'
+              : ''
+          }`} />
+
           {/* Checkbox */}
-          <div className="absolute top-2 left-2 z-10">
+          <div className="absolute top-2 left-2 z-20">
             <input
               type="checkbox"
               checked={selectedItems.has(dest.id!)}
               onChange={() => toggleSelect(dest.id!)}
-              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white/90 dark:bg-gray-900/90"
+              className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 bg-white/90 dark:bg-gray-900/90 shadow-sm"
             />
           </div>
 
           {/* Actions */}
-          <div className="absolute top-2 right-2 z-10">
+          <div className="absolute top-2 right-2 z-20">
             <RowActions
               destination={dest}
               isActive={activeDropdown === dest.id}
@@ -745,30 +746,45 @@ function GridView({
             />
           </div>
 
-          {/* Image */}
+          {/* Card using homepage styles */}
           <button
             onClick={() => onEdit?.(dest)}
-            className="w-full text-left"
+            className={`${CARD_WRAPPER} w-full text-left`}
           >
-            <div className="aspect-square bg-gray-100 dark:bg-gray-800">
+            <div className={CARD_MEDIA}>
               {dest.image ? (
-                <img src={dest.image} alt={dest.name} className="w-full h-full object-cover" />
+                <img
+                  src={dest.image}
+                  alt={dest.name}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <ImageIcon className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                <div className="absolute inset-0 w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-600">
+                  <MapPin className="h-8 w-8 opacity-20" />
+                </div>
+              )}
+              {/* Michelin stars badge */}
+              {dest.michelin_stars && dest.michelin_stars > 0 && (
+                <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                  {Array.from({ length: dest.michelin_stars }).map((_, i) => (
+                    <Star key={i} className="w-3 h-3 text-red-500 fill-red-500" />
+                  ))}
+                </div>
+              )}
+              {/* Crown badge */}
+              {dest.crown && (
+                <div className="absolute bottom-2 right-2 bg-white dark:bg-gray-900 p-1.5 rounded">
+                  <Crown className="w-3.5 h-3.5 text-amber-500" />
                 </div>
               )}
             </div>
-
-            {/* Info */}
-            <div className="p-3 space-y-1">
-              <div className="flex items-center gap-1">
-                <p className="text-sm font-medium text-black dark:text-white truncate">{dest.name}</p>
-                {dest.crown && <Crown className="w-3 h-3 text-amber-500 flex-shrink-0" />}
-              </div>
-              <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                <Globe className="w-3 h-3" />
-                <span className="truncate">{dest.city}</span>
+            <div className="space-y-0.5">
+              <div className={CARD_TITLE}>{dest.name}</div>
+              <div className={CARD_META}>
+                <MapPin className="h-3 w-3" />
+                <span>{dest.city}</span>
+                <span className="text-gray-300 dark:text-gray-600">·</span>
+                <span className="capitalize">{dest.category}</span>
               </div>
             </div>
           </button>
@@ -857,18 +873,16 @@ function RowActions({
   );
 }
 
-// Loading State
+// Loading State - Matches homepage card skeleton
 function LoadingState({ viewMode }: { viewMode: ViewMode }) {
   if (viewMode === 'grid') {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-        {Array.from({ length: 12 }).map((_, i) => (
-          <div key={i} className="rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden animate-pulse">
-            <div className="aspect-square bg-gray-100 dark:bg-gray-800" />
-            <div className="p-3 space-y-2">
-              <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-3/4" />
-              <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-1/2" />
-            </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
+        {Array.from({ length: 14 }).map((_, i) => (
+          <div key={i} className="space-y-2 animate-pulse">
+            <div className="aspect-video rounded-lg bg-gray-100 dark:bg-gray-800" />
+            <div className="h-3 rounded bg-gray-100 dark:bg-gray-800 w-3/4" />
+            <div className="h-2 rounded bg-gray-100 dark:bg-gray-800 w-1/2" />
           </div>
         ))}
       </div>
@@ -876,14 +890,14 @@ function LoadingState({ viewMode }: { viewMode: ViewMode }) {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {Array.from({ length: 10 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 py-3 animate-pulse">
-          <div className="w-4 h-4 bg-gray-200 dark:bg-gray-800 rounded" />
-          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+          <div className="w-4 h-4 bg-gray-100 dark:bg-gray-800 rounded" />
+          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-lg" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/3" />
-            <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/4" />
+            <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-1/3" />
+            <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-1/4" />
           </div>
         </div>
       ))}

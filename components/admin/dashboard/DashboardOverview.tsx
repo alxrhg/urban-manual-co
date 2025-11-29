@@ -16,7 +16,6 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
-  Zap,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -29,7 +28,7 @@ interface DashboardStats {
   totalVisits: number;
   activeUsers: number;
   recentSearches: number;
-  recentDestinations: { name: string; city: string; category: string; created_at: string }[];
+  recentDestinations: { name: string; city: string; category: string; slug: string }[];
   topCities: { city: string; count: number }[];
   systemHealth: { name: string; status: 'healthy' | 'warning' | 'error'; message: string }[];
 }
@@ -48,7 +47,7 @@ export function DashboardOverview() {
         const { count: enrichedCount } = await supabase
           .from('destinations')
           .select('*', { count: 'exact', head: true })
-          .not('google_place_id', 'is', null);
+          .not('last_enriched_at', 'is', null);
 
         const { count: michelinCount } = await supabase
           .from('destinations')
@@ -70,9 +69,9 @@ export function DashboardOverview() {
 
         const { data: recentDests } = await supabase
           .from('destinations')
-          .select('name, city, category, created_at')
+          .select('name, city, category, slug')
           .order('created_at', { ascending: false })
-          .limit(5);
+          .limit(8);
 
         const { data: allDests } = await supabase
           .from('destinations')
@@ -87,7 +86,7 @@ export function DashboardOverview() {
 
         const topCities = Object.entries(cityCount)
           .sort((a, b) => b[1] - a[1])
-          .slice(0, 6)
+          .slice(0, 8)
           .map(([city, count]) => ({ city, count }));
 
         setStats({
@@ -102,10 +101,10 @@ export function DashboardOverview() {
           recentDestinations: recentDests || [],
           topCities,
           systemHealth: [
-            { name: 'Database', status: 'healthy', message: 'All systems operational' },
-            { name: 'Search Index', status: 'healthy', message: 'Vector index up to date' },
-            { name: 'CDN', status: 'healthy', message: 'Images serving normally' },
-            { name: 'API', status: 'healthy', message: 'Response time < 100ms' },
+            { name: 'Database', status: 'healthy', message: 'Operational' },
+            { name: 'Search', status: 'healthy', message: 'Index synced' },
+            { name: 'CDN', status: 'healthy', message: 'Normal' },
+            { name: 'API', status: 'healthy', message: '<100ms' },
           ],
         });
       } catch (error) {
@@ -121,152 +120,161 @@ export function DashboardOverview() {
   const getStatusIcon = (status: 'healthy' | 'warning' | 'error') => {
     switch (status) {
       case 'healthy':
-        return <CheckCircle className="w-4 h-4 text-emerald-500" />;
+        return <CheckCircle className="w-3.5 h-3.5 text-green-600 dark:text-green-400" />;
       case 'warning':
-        return <AlertCircle className="w-4 h-4 text-amber-500" />;
+        return <AlertCircle className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400" />;
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-rose-500" />;
+        return <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />;
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Dashboard</h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Overview of Urban Manual performance and content.
+          <h2 className="text-lg font-medium text-black dark:text-white">Overview</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Urban Manual performance and content
           </p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <Clock className="w-4 h-4" />
-          Last updated: {new Date().toLocaleTimeString()}
+        <div className="flex items-center gap-1.5 text-xs text-gray-400">
+          <Clock className="w-3.5 h-3.5" />
+          {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </div>
       </div>
 
-      {/* Primary Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Destinations"
-          value={stats?.totalDestinations || 0}
-          icon={<MapPin className="w-5 h-5" />}
-          color="indigo"
-          loading={loading}
-        />
-        <StatCard
-          title="Enriched"
-          value={stats?.enrichedDestinations || 0}
-          icon={<Globe className="w-5 h-5" />}
-          color="emerald"
-          loading={loading}
-        />
-        <StatCard
-          title="User Saves"
-          value={stats?.totalSaves || 0}
-          icon={<Bookmark className="w-5 h-5" />}
-          color="amber"
-          loading={loading}
-        />
-        <StatCard
-          title="Active Users"
-          value={stats?.activeUsers || 0}
-          icon={<Users className="w-5 h-5" />}
-          color="purple"
-          loading={loading}
-        />
+      {/* Stats Row - Text-first inline stats */}
+      <div className="border-b border-gray-200 dark:border-gray-800 pb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <StatItem
+            label="Destinations"
+            value={stats?.totalDestinations || 0}
+            loading={loading}
+          />
+          <StatItem
+            label="Enriched"
+            value={stats?.enrichedDestinations || 0}
+            sublabel={stats ? `${Math.round((stats.enrichedDestinations / stats.totalDestinations) * 100)}%` : undefined}
+            loading={loading}
+          />
+          <StatItem
+            label="User Saves"
+            value={stats?.totalSaves || 0}
+            loading={loading}
+          />
+          <StatItem
+            label="Visits Logged"
+            value={stats?.totalVisits || 0}
+            loading={loading}
+          />
+        </div>
       </div>
 
-      {/* Content Highlights & Recent */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Content Highlights */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 p-5">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Content Highlights</h3>
-          <div className="space-y-3">
-            <HighlightRow
-              icon={<Crown className="w-4 h-4" />}
-              label="Crown Picks"
-              sublabel="Editorial favorites"
-              value={stats?.crownPicks || 0}
-              color="amber"
-              loading={loading}
-            />
-            <HighlightRow
-              icon={<Star className="w-4 h-4" />}
-              label="Michelin Spots"
-              sublabel="Starred restaurants"
-              value={stats?.michelinSpots || 0}
-              color="rose"
-              loading={loading}
-            />
-            <HighlightRow
-              icon={<Search className="w-4 h-4" />}
-              label="Searches"
-              sublabel="Last 24 hours"
-              value={stats?.recentSearches || 0}
-              color="indigo"
-              loading={loading}
-            />
-          </div>
-        </div>
+      {/* Content Stats - Definition list style */}
+      <div className="border-b border-gray-200 dark:border-gray-800 pb-6">
+        <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-4">
+          Content Highlights
+        </h3>
+        <dl className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <DefinitionItem
+            icon={<Crown className="w-4 h-4 text-amber-500" />}
+            term="Crown Picks"
+            value={stats?.crownPicks || 0}
+            loading={loading}
+          />
+          <DefinitionItem
+            icon={<Star className="w-4 h-4 text-red-500 fill-red-500" />}
+            term="Michelin Spots"
+            value={stats?.michelinSpots || 0}
+            loading={loading}
+          />
+          <DefinitionItem
+            icon={<Search className="w-4 h-4 text-gray-400" />}
+            term="Recent Searches"
+            value={stats?.recentSearches || 0}
+            loading={loading}
+          />
+          <DefinitionItem
+            icon={<Users className="w-4 h-4 text-gray-400" />}
+            term="Active Users"
+            value={stats?.activeUsers || 0}
+            loading={loading}
+          />
+        </dl>
+      </div>
 
-        {/* Recent Destinations */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 p-5">
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Destinations - Simple list */}
+        <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Recent Additions</h3>
+            <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">
+              Recent Additions
+            </h3>
             <Link
               href="/admin/destinations"
-              className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors"
             >
               View All
               <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="space-y-3">
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-10 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                <div key={i} className="py-3 flex items-center justify-between">
+                  <div className="space-y-1.5">
+                    <div className="h-4 w-32 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                    <div className="h-3 w-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                  </div>
+                </div>
               ))
             ) : (
               stats?.recentDestinations.map((dest, i) => (
-                <div
+                <Link
                   key={i}
-                  className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-800 last:border-0"
+                  href={`/destinations/${dest.slug}`}
+                  className="py-3 flex items-center justify-between group"
                 >
                   <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{dest.name}</p>
+                    <p className="text-sm text-black dark:text-white group-hover:opacity-70 transition-opacity">
+                      {dest.name}
+                    </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">{dest.city}</p>
                   </div>
-                  <span className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded">
+                  <span className="text-[10px] uppercase tracking-wider text-gray-400 capitalize">
                     {dest.category}
                   </span>
-                </div>
+                </Link>
               ))
             )}
           </div>
         </div>
-      </div>
 
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Cities */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 p-5">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Destinations by City</h3>
+        {/* Top Cities - Bar chart style */}
+        <div>
+          <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-4">
+            Destinations by City
+          </h3>
           <div className="space-y-3">
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-6 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                <div key={i} className="space-y-1.5">
+                  <div className="h-4 w-24 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                  <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full" />
+                </div>
               ))
             ) : (
               stats?.topCities.map((city, i) => (
-                <div key={i} className="space-y-1.5">
+                <div key={i} className="space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-700 dark:text-gray-300">{city.city}</span>
-                    <span className="text-gray-500 dark:text-gray-400">{city.count}</span>
+                    <span className="text-gray-400 tabular-nums">{city.count}</span>
                   </div>
-                  <div className="h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+                  <div className="h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gray-900 dark:bg-white rounded-full transition-all duration-500"
+                      className="h-full bg-gray-900 dark:bg-white rounded-full"
                       style={{
                         width: `${(city.count / (stats?.topCities[0]?.count || 1)) * 100}%`,
                       }}
@@ -277,184 +285,118 @@ export function DashboardOverview() {
             )}
           </div>
         </div>
+      </div>
 
-        {/* System Health */}
-        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">System Health</h3>
-            <Zap className="w-4 h-4 text-emerald-500" />
-          </div>
-          <div className="space-y-3">
-            {stats?.systemHealth.map((item, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between p-3 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-800"
-              >
-                <div className="flex items-center gap-3">
-                  {getStatusIcon(item.status)}
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">{item.name}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{item.message}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* System Status - Inline */}
+      <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+        <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-4">
+          System Status
+        </h3>
+        <div className="flex flex-wrap gap-4">
+          {stats?.systemHealth.map((item, i) => (
+            <div key={i} className="flex items-center gap-2 text-sm">
+              {getStatusIcon(item.status)}
+              <span className="text-gray-700 dark:text-gray-300">{item.name}</span>
+              <span className="text-gray-400">·</span>
+              <span className="text-gray-400">{item.message}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 p-5">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <QuickAction
-            href="/admin/destinations"
-            icon={<MapPin className="w-5 h-5" />}
-            label="Add Destination"
-            sublabel="Create new entry"
-            color="indigo"
-          />
-          <QuickAction
-            href="/admin/analytics"
-            icon={<TrendingUp className="w-5 h-5" />}
-            label="View Analytics"
-            sublabel="Check performance"
-            color="emerald"
-          />
-          <QuickAction
-            href="/admin/enrich"
-            icon={<Globe className="w-5 h-5" />}
-            label="Enrich Data"
-            sublabel="Google Places API"
-            color="amber"
-          />
-          <QuickAction
-            href="/admin/reindex"
-            icon={<Activity className="w-5 h-5" />}
-            label="Reindex"
-            sublabel="Update vectors"
-            color="purple"
-          />
+      {/* Quick Actions - Simple links */}
+      <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+        <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-4">
+          Quick Actions
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          <ActionLink href="/admin/destinations" icon={<MapPin className="w-4 h-4" />} label="Add Destination" />
+          <ActionLink href="/admin/analytics" icon={<TrendingUp className="w-4 h-4" />} label="View Analytics" />
+          <ActionLink href="/admin/enrich" icon={<Globe className="w-4 h-4" />} label="Enrich Data" />
+          <ActionLink href="/admin/reindex" icon={<Activity className="w-4 h-4" />} label="Reindex" />
         </div>
       </div>
     </div>
   );
 }
 
-function StatCard({
-  title,
-  value,
-  icon,
-  color,
-  loading,
-}: {
-  title: string;
-  value: number;
-  icon: React.ReactNode;
-  color: 'indigo' | 'emerald' | 'amber' | 'purple';
-  loading: boolean;
-}) {
-  const colorClasses = {
-    indigo: 'text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/10',
-    emerald: 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10',
-    amber: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10',
-    purple: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/10',
-  };
-
-  return (
-    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 p-4">
-      <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium">
-          {title}
-        </p>
-        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-          {icon}
-        </div>
-      </div>
-      {loading ? (
-        <div className="mt-2 h-8 w-20 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-      ) : (
-        <p className="mt-2 text-2xl font-semibold text-gray-900 dark:text-white">
-          {value.toLocaleString()}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function HighlightRow({
-  icon,
+// Text-first stat item
+function StatItem({
   label,
-  sublabel,
   value,
-  color,
+  sublabel,
   loading,
 }: {
-  icon: React.ReactNode;
   label: string;
-  sublabel: string;
   value: number;
-  color: 'amber' | 'rose' | 'indigo';
+  sublabel?: string;
   loading: boolean;
 }) {
-  const colorClasses = {
-    amber: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10',
-    rose: 'text-rose-600 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/10',
-    indigo: 'text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/10',
-  };
-
   return (
-    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-800">
-      <div className="flex items-center gap-3">
-        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-          {icon}
-        </div>
-        <div>
-          <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{sublabel}</p>
-        </div>
-      </div>
+    <div>
+      <dt className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</dt>
       {loading ? (
-        <div className="h-6 w-12 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+        <div className="h-7 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
       ) : (
-        <span className="text-lg font-semibold text-gray-900 dark:text-white">{value.toLocaleString()}</span>
+        <dd className="flex items-baseline gap-2">
+          <span className="text-2xl font-medium text-black dark:text-white tabular-nums">
+            {value.toLocaleString()}
+          </span>
+          {sublabel && (
+            <span className="text-xs text-gray-400">{sublabel}</span>
+          )}
+        </dd>
       )}
     </div>
   );
 }
 
-function QuickAction({
+// Definition list item with icon
+function DefinitionItem({
+  icon,
+  term,
+  value,
+  loading,
+}: {
+  icon: React.ReactNode;
+  term: string;
+  value: number;
+  loading: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex-shrink-0">{icon}</div>
+      <div>
+        <dt className="text-xs text-gray-500 dark:text-gray-400">{term}</dt>
+        {loading ? (
+          <div className="h-5 w-10 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mt-0.5" />
+        ) : (
+          <dd className="text-sm font-medium text-black dark:text-white tabular-nums">
+            {value.toLocaleString()}
+          </dd>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Simple action link
+function ActionLink({
   href,
   icon,
   label,
-  sublabel,
-  color,
 }: {
   href: string;
   icon: React.ReactNode;
   label: string;
-  sublabel: string;
-  color: 'indigo' | 'emerald' | 'amber' | 'purple';
 }) {
-  const colorClasses = {
-    indigo: 'text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-500/10 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-500/20',
-    emerald: 'text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/10 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-500/20',
-    amber: 'text-amber-600 dark:text-amber-400 bg-amber-100 dark:bg-amber-500/10 group-hover:bg-amber-200 dark:group-hover:bg-amber-500/20',
-    purple: 'text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-500/10 group-hover:bg-purple-200 dark:group-hover:bg-purple-500/20',
-  };
-
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 p-4 bg-white dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700 transition-colors group"
+      className="inline-flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-full text-sm text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-700 hover:text-black dark:hover:text-white transition-colors"
     >
-      <div className={`p-2 rounded-lg transition-colors ${colorClasses[color]}`}>
-        {icon}
-      </div>
-      <div>
-        <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{sublabel}</p>
-      </div>
+      {icon}
+      {label}
     </Link>
   );
 }
