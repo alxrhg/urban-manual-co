@@ -1,5 +1,6 @@
 'use client';
 
+import { useCallback } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 import { AccountDrawer } from '@/components/AccountDrawer';
@@ -23,6 +24,16 @@ import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 export default function DrawerMount() {
   const { open, type, props, closeDrawer } = useDrawerStore();
   const drawerStyle = useDrawerStyle();
+
+  // Custom close handler for trip settings that dispatches event for unsaved changes check
+  const handleTripSettingsClose = useCallback(() => {
+    const event = new CustomEvent('drawer-before-close', { cancelable: true });
+    window.dispatchEvent(event);
+    // If event was not prevented, close the drawer
+    if (!event.defaultPrevented) {
+      closeDrawer();
+    }
+  }, [closeDrawer]);
 
   return (
     <>
@@ -79,7 +90,7 @@ export default function DrawerMount() {
       {open && type === 'trip-settings' && props?.trip && (
         <Drawer
           isOpen={open}
-          onClose={closeDrawer}
+          onClose={handleTripSettingsClose}
           title="Trip Settings"
           style={drawerStyle}
           position="right"
@@ -89,6 +100,7 @@ export default function DrawerMount() {
             trip={props.trip}
             onUpdate={props?.onUpdate}
             onDelete={props?.onDelete}
+            onClose={handleTripSettingsClose}
           />
         </Drawer>
       )}
