@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { MapPin, Clock, Star, ExternalLink } from 'lucide-react';
+import { CrowdBadge } from '@/components/trip/CrowdIndicator';
 
 interface PlaceCardProps {
   name: string;
@@ -89,13 +90,14 @@ export default function PlaceCard({
           </div>
         </div>
 
-        {/* REGION 2: Time & Duration */}
+        {/* REGION 2: Time & Duration & Crowd */}
         {(time || duration) && (
           <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-gray-300 mb-2">
             {time && (
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3 text-stone-400" />
                 {formatTime(time)}
+                <CrowdBadge category={category} time={time} />
               </span>
             )}
             {time && duration && (

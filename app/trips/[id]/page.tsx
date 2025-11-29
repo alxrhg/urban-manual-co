@@ -31,6 +31,7 @@ import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
+import PersonalizedPick from '@/components/trip/PersonalizedPick';
 import TripWeatherForecast from '@/components/trips/TripWeatherForecast';
 import TripSafetyAlerts from '@/components/trips/TripSafetyAlerts';
 import TripBucketList, { type BucketItem } from '@/components/trips/TripBucketList';
@@ -74,6 +75,8 @@ export default function TripPage() {
   const [activeItemId, setActiveItemId] = useState<string | null>(null);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isAIPlanning, setIsAIPlanning] = useState(false);
+  const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
+  const [autoFillingDay, setAutoFillingDay] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'itinerary' | 'notes' | 'insights' | 'overview'>('itinerary');
   const [tripNotes, setTripNotes] = useState('');
   const [checklistItems, setChecklistItems] = useState<{ id: string; text: string; checked: boolean }[]>([]);
@@ -312,6 +315,88 @@ export default function TripPage() {
     }
   }, [addPlace, handleRemoveFromBucketList]);
 
+  // Optimize day route order
+  const handleOptimizeDay = useCallback(async (dayNumber: number) => {
+    const day = days.find(d => d.dayNumber === dayNumber);
+    if (!day || day.items.length < 2) return;
+
+    setOptimizingDay(dayNumber);
+    try {
+      const response = await fetch('/api/intelligence/route-optimizer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: day.items.map(item => ({
+            id: item.id,
+            title: item.title,
+            latitude: item.destination?.latitude ?? item.parsedNotes?.latitude,
+            longitude: item.destination?.longitude ?? item.parsedNotes?.longitude,
+            time: item.time,
+          })),
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.optimizedOrder && Array.isArray(result.optimizedOrder)) {
+          // Reorder items based on optimization
+          const orderedItems = result.optimizedOrder
+            .map((id: string) => day.items.find(item => item.id === id))
+            .filter(Boolean);
+          if (orderedItems.length === day.items.length) {
+            reorderItems(dayNumber, orderedItems);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to optimize day:', err);
+    } finally {
+      setOptimizingDay(null);
+    }
+  }, [days, reorderItems]);
+
+  // Auto-fill day with suggestions
+  const handleAutoFillDay = useCallback(async (dayNumber: number) => {
+    if (!trip?.destination) return;
+
+    setAutoFillingDay(dayNumber);
+    try {
+      const day = days.find(d => d.dayNumber === dayNumber);
+      const existingItems = day?.items.map(item => ({
+        day: dayNumber,
+        time: item.time,
+        title: item.title,
+        destination_slug: item.destination_slug,
+        category: item.parsedNotes?.category || item.destination?.category,
+      })) || [];
+
+      const response = await fetch('/api/intelligence/smart-fill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city: trip.destination,
+          existingItems,
+          tripDays: 1, // Just this day
+          targetDay: dayNumber,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        for (const suggestion of result.suggestions || []) {
+          if (suggestion.destination && suggestion.day === dayNumber) {
+            await addPlace(suggestion.destination, dayNumber, suggestion.startTime);
+          }
+        }
+        await refresh();
+      }
+    } catch (err) {
+      console.error('Failed to auto-fill day:', err);
+    } finally {
+      setAutoFillingDay(null);
+    }
+  }, [trip?.destination, days, addPlace, refresh]);
+
   // Loading state
   if (loading) {
     return (
@@ -471,6 +556,18 @@ export default function TripPage() {
               openPlaceSelector(dayNumber, category);
             }}
             onAddAISuggestion={handleAddAISuggestion}
+            className="mb-6"
+          />
+        )}
+
+        {/* Personalized Pick - below suggestions */}
+        {trip.destination && user && (
+          <PersonalizedPick
+            city={trip.destination}
+            userId={user.id}
+            existingSlugs={days.flatMap(d => d.items).map(item => item.destination_slug).filter(Boolean) as string[]}
+            onAdd={(destination, dayNumber) => addPlace(destination as unknown as Destination, dayNumber)}
+            dayNumber={selectedDayNumber}
             className="mb-8"
           />
         )}
@@ -562,7 +659,11 @@ export default function TripPage() {
                     onRemoveItem={removeItem}
                     onEditItem={handleEditItem}
                     onAddItem={openPlaceSelector}
+                    onOptimizeDay={handleOptimizeDay}
+                    onAutoFillDay={handleAutoFillDay}
                     activeItemId={activeItemId}
+                    isOptimizing={optimizingDay === day.dayNumber}
+                    isAutoFilling={autoFillingDay === day.dayNumber}
                   />
                 ))}
               </>

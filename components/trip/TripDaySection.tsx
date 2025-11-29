@@ -21,6 +21,8 @@ import {
 } from '@dnd-kit/sortable';
 import TripItemCard from './TripItemCard';
 import TransitConnector from './TransitConnector';
+import DayIntelligence from './DayIntelligence';
+import { NeighborhoodTags } from './NeighborhoodBreakdown';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { getAirportCoordinates } from '@/lib/utils/airports';
 
@@ -32,7 +34,11 @@ interface TripDaySectionProps {
   onRemoveItem?: (itemId: string) => void;
   onEditItem?: (item: EnrichedItineraryItem) => void;
   onAddItem?: (dayNumber: number) => void;
+  onOptimizeDay?: (dayNumber: number) => void;
+  onAutoFillDay?: (dayNumber: number) => void;
   activeItemId?: string | null;
+  isOptimizing?: boolean;
+  isAutoFilling?: boolean;
 }
 
 /**
@@ -47,7 +53,11 @@ export default function TripDaySection({
   onRemoveItem,
   onEditItem,
   onAddItem,
+  onOptimizeDay,
+  onAutoFillDay,
   activeItemId,
+  isOptimizing = false,
+  isAutoFilling = false,
 }: TripDaySectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -254,6 +264,21 @@ export default function TripDaySection({
           </button>
         )}
       </div>
+
+      {/* Day Intelligence Bar */}
+      {isExpanded && (
+        <div className="px-4 py-2 border-t border-stone-100 dark:border-gray-800/50 bg-stone-50/50 dark:bg-gray-900/30">
+          <DayIntelligence
+            dayNumber={day.dayNumber}
+            date={day.date}
+            items={day.items}
+            onOptimizeDay={() => onOptimizeDay?.(day.dayNumber)}
+            onAutoFill={() => onAutoFillDay?.(day.dayNumber)}
+            isOptimizing={isOptimizing}
+            isAutoFilling={isAutoFilling}
+          />
+        </div>
+      )}
 
       {/* Day Content */}
       {isExpanded && (
