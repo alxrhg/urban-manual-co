@@ -230,7 +230,7 @@ export default function CitiesPage() {
 
   if (loading) {
     return (
-      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-xs text-gray-500 dark:text-gray-400">Loading cities…</div>
         </div>
@@ -243,7 +243,7 @@ export default function CitiesPage() {
 
   return (
     <>
-      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <main className="w-full px-6 md:px-10 lg:px-12 py-20 min-h-screen">
       {/* Hero Section */}
       <section>
         <div className="w-full">

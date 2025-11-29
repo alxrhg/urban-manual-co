@@ -385,7 +385,7 @@ export default function TripPage() {
   // Loading state
   if (loading) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 bg-stone-50 dark:bg-gray-950 min-h-screen">
+      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 bg-stone-50 dark:bg-gray-900 min-h-screen">
         <PageLoader />
       </main>
     );
@@ -394,7 +394,7 @@ export default function TripPage() {
   // Not found
   if (!trip) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 min-h-screen bg-stone-50 dark:bg-gray-950">
+      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 min-h-screen bg-stone-50 dark:bg-gray-900">
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="text-center">
             <p className="text-xs text-stone-500 dark:text-gray-400 mb-4">Trip not found</p>
@@ -416,7 +416,7 @@ export default function TripPage() {
     .find(item => item.destination?.image)?.destination?.image;
 
   return (
-    <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950">
+    <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto">
         {/* Header - Mobile optimized */}
         <div className="mb-6 sm:mb-8">

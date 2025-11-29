@@ -26,7 +26,7 @@ export default function StudioPage() {
   // Show loading state while checking auth
   if (loading || !isAuthorized) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-950 px-6">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-900 px-6">
         <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
         <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
           Checking admin access…

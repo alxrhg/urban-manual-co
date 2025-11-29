@@ -204,7 +204,7 @@ export default function CollectionDetailPage() {
   }
 
   return (
-    <main className="w-full min-h-screen bg-white dark:bg-gray-950">
+    <main className="w-full min-h-screen bg-white dark:bg-gray-900">
       {/* Header Background */}
       <div className="h-48 w-full bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800" />
       

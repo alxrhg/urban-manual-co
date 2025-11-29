@@ -100,7 +100,7 @@ export default function ExplorePage() {
 
   if (loading) {
     return (
-      <main className="w-full px-5 sm:px-6 md:px-10 py-16 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
+      <main className="w-full px-6 md:px-10 lg:px-12 py-16 sm:py-20 min-h-screen bg-white dark:bg-gray-900">
         <div className="w-full">
           <div className="animate-pulse">
             <div className="h-8 w-32 bg-stone-200 dark:bg-gray-800 rounded mb-4" />
@@ -117,7 +117,7 @@ export default function ExplorePage() {
   }
 
   return (
-    <main className="w-full px-5 sm:px-6 md:px-10 py-16 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
+    <main className="w-full px-6 md:px-10 lg:px-12 py-16 sm:py-20 min-h-screen bg-white dark:bg-gray-900">
       <div className="w-full">
         {/* Hero Section */}
         <div className="mb-10 sm:mb-12 animate-in fade-in slide-in-from-bottom-4">

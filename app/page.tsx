@@ -2469,7 +2469,7 @@ export default function Home() {
           The Urban Manual
         </h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[50vh] flex flex-col px-6 md:px-10 py-10 pb-6 md:pb-10">
+        <section className="min-h-[50vh] flex flex-col px-6 md:px-10 lg:px-12 py-10 pb-6 md:pb-10">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
@@ -2894,7 +2894,7 @@ export default function Home() {
 
         {/* Edit Mode Banner - Minimal and Elegant */}
         {editModeActive && (
-          <div className="sticky top-0 z-40 w-full px-6 md:px-10 mb-4">
+          <div className="sticky top-0 z-40 w-full px-6 md:px-10 lg:px-12 mb-4">
             <div className="max-w-[1800px] mx-auto">
               <div className="rounded-xl border border-gray-200/60 dark:border-gray-700/40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md px-3 py-2 flex items-center justify-between gap-3 shadow-sm">
                 <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -2938,7 +2938,7 @@ export default function Home() {
 
         {/* Admin Edit Mode Toggle - Always visible when admin */}
         {isAdmin && (
-          <div className="w-full px-6 md:px-10">
+          <div className="w-full px-6 md:px-10 lg:px-12">
             <div className="max-w-[1800px] mx-auto mb-6 flex justify-end">
               <EditModeToggle
                 active={editModeActive}
@@ -2949,7 +2949,7 @@ export default function Home() {
         )}
 
               {/* Content Section - Grid directly below hero */}
-              <div className="w-full px-6 md:px-10 mt-8">
+              <div className="w-full px-6 md:px-10 lg:px-12 mt-8">
                 <div className="max-w-[1800px] mx-auto">
                 {/* Mid Nav - Horizontal Row, Right Aligned */}
                 <div className="mb-6">

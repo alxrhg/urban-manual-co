@@ -108,7 +108,7 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       <main className="w-full px-6 md:px-10 lg:px-12 py-8">
         {/* Header */}
         <div className="mb-8">

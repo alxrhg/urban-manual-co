@@ -149,7 +149,7 @@ export function Header() {
       role="banner"
     >
       {/* Primary Nav */}
-      <div className="w-full px-6 md:px-10">
+      <div className="w-full px-6 md:px-10 lg:px-12">
         <nav
           className="flex items-center justify-between py-4 w-full"
           aria-label="Main navigation"
