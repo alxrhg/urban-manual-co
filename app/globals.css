@@ -770,12 +770,105 @@ html {
   html {
     scroll-behavior: auto;
   }
-  
+
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY UTILITIES
+   ============================================ */
+
+/* Minimum touch target size (WCAG 2.1 AAA - 44x44px) */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Ensure interactive elements are large enough */
+.touch-target-sm {
+  min-width: 36px;
+  min-height: 36px;
+}
+
+/* High contrast focus for accessibility */
+@media (prefers-contrast: more) {
+  :focus-visible {
+    outline: 3px solid currentColor !important;
+    outline-offset: 2px !important;
+  }
+
+  /* Increase contrast for borders */
+  .border {
+    border-width: 2px;
+  }
+}
+
+/* Respect user's transparency preferences */
+@media (prefers-reduced-transparency) {
+  .backdrop-blur,
+  .backdrop-blur-sm,
+  .backdrop-blur-md,
+  .backdrop-blur-lg {
+    backdrop-filter: none !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+  }
+
+  .dark .backdrop-blur,
+  .dark .backdrop-blur-sm,
+  .dark .backdrop-blur-md,
+  .dark .backdrop-blur-lg {
+    background-color: rgba(0, 0, 0, 0.95) !important;
+  }
+}
+
+/* Required field indicator */
+.required-field::after {
+  content: " *";
+  color: #ef4444;
+}
+
+/* Error state for form fields */
+.field-error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px #ef4444;
+}
+
+/* Success state for form fields */
+.field-success {
+  border-color: #22c55e !important;
+  box-shadow: 0 0 0 1px #22c55e;
+}
+
+/* High visibility mode for users with vision impairments */
+@media (forced-colors: active) {
+  .button,
+  button,
+  [role="button"] {
+    border: 2px solid ButtonText;
+  }
+
+  :focus {
+    outline: 3px solid Highlight !important;
+  }
+}
+
+/* Print styles for accessibility */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  a[href]::after {
+    content: " (" attr(href) ")";
+  }
+
+  abbr[title]::after {
+    content: " (" attr(title) ")";
   }
 }
