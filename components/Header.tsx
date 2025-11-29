@@ -8,8 +8,25 @@ import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
 import { ChatDrawer } from "@/components/ChatDrawer";
 import { LoginDrawer } from "@/components/LoginDrawer";
+import { cn } from "@/lib/utils";
 
-export function Header() {
+export interface HeaderProps {
+  /** Use transparent background (blends with page) */
+  transparent?: boolean;
+  /** Sticky header with blur effect */
+  sticky?: boolean;
+  /** Compact mode - reduced padding */
+  compact?: boolean;
+  /** Additional class */
+  className?: string;
+}
+
+export function Header({
+  transparent = true,
+  sticky = false,
+  compact = false,
+  className,
+}: HeaderProps = {}) {
   const router = useRouter();
   const { user } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
@@ -89,11 +106,38 @@ export function Header() {
     router.push(path);
   };
 
+  // Shared button styles for consistency
+  const secondaryButtonClass = cn(
+    "flex items-center gap-1.5 px-4 py-2",
+    "bg-white dark:bg-um-slate-900",
+    "border border-um-gray-200 dark:border-um-slate-700",
+    "text-um-gray-900 dark:text-white",
+    "rounded-full text-sm font-medium",
+    "hover:bg-um-gray-50 dark:hover:bg-um-slate-800",
+    "transition-colors duration-fast",
+    "touch-manipulation",
+    "focus:outline-none focus-visible:ring-2",
+    "focus-visible:ring-um-gray-900 dark:focus-visible:ring-white",
+    "focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-um-slate-950"
+  );
+
+  const primaryButtonClass = cn(
+    "flex items-center gap-1.5 px-4 py-2",
+    "bg-um-gray-900 dark:bg-white",
+    "text-white dark:text-um-gray-900",
+    "rounded-full text-sm font-medium",
+    "hover:opacity-90 transition-opacity duration-fast",
+    "touch-manipulation",
+    "focus:outline-none focus-visible:ring-2",
+    "focus-visible:ring-um-gray-900 dark:focus-visible:ring-white",
+    "focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-um-slate-950"
+  );
+
   const actionButtons = (
     <>
       {isAdmin && buildVersion && (
         <span
-          className="text-[10px] text-gray-400 font-mono px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 rounded"
+          className="text-[10px] text-um-gray-400 font-mono px-1.5 py-0.5 bg-um-gray-100 dark:bg-um-slate-800 rounded"
           title="Build version"
           aria-label={`Build version ${buildVersion}`}
         >
@@ -105,7 +149,7 @@ export function Header() {
         <>
           <button
             onClick={() => navigate('/trips')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+            className={secondaryButtonClass}
             aria-label="View trips"
           >
             <Map className="w-4 h-4" />
@@ -113,11 +157,11 @@ export function Header() {
           </button>
           <button
             onClick={() => openDrawer('account')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+            className={primaryButtonClass}
             aria-label="Open account drawer"
           >
             {avatarUrl ? (
-              <span className="w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+              <span className="w-6 h-6 rounded-full border border-white/20 dark:border-um-gray-900/10 bg-um-gray-100 dark:bg-um-slate-800 overflow-hidden">
                 <img
                   src={avatarUrl}
                   alt="Profile"
@@ -133,7 +177,7 @@ export function Header() {
       ) : (
         <button
           onClick={() => openDrawer('login')}
-          className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+          className={primaryButtonClass}
           aria-label="Sign in"
         >
           <User className="w-4 h-4" />
@@ -145,23 +189,53 @@ export function Header() {
 
   return (
     <header
-      className="mt-6 md:mt-8 relative z-30 bg-white dark:bg-gray-900 w-full"
+      className={cn(
+        "relative w-full",
+        // Z-index for proper layering
+        "z-header",
+        // Background - transparent by default for cohesive feel
+        transparent
+          ? "bg-transparent"
+          : "bg-white dark:bg-um-slate-950",
+        // Sticky mode with blur
+        sticky && [
+          "sticky top-0",
+          "bg-white/80 dark:bg-um-slate-950/80",
+          "backdrop-blur-md",
+          "border-b border-um-gray-100 dark:border-um-slate-800",
+        ],
+        // Top spacing - part of the page flow, not separate
+        !sticky && "pt-6 md:pt-8",
+        className
+      )}
       role="banner"
     >
-      {/* Primary Nav */}
+      {/* Primary Nav - uses same gutters as page content */}
       <div className="w-full px-6 md:px-10">
         <nav
-          className="flex items-center justify-between py-4 w-full"
+          className={cn(
+            "flex items-center justify-between w-full",
+            compact ? "py-3" : "py-4"
+          )}
           aria-label="Main navigation"
         >
+          {/* Logo */}
           <button
             onClick={() => navigate("/")}
-            className="font-medium text-sm hover:opacity-70 transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 rounded-lg py-2 shrink-0"
+            className={cn(
+              "font-medium text-sm shrink-0",
+              "text-um-gray-900 dark:text-white",
+              "hover:opacity-70 transition-all duration-normal ease-out",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-um-gray-900 dark:focus-visible:ring-white",
+              "focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-um-slate-950",
+              "rounded-lg py-2"
+            )}
             aria-label="Go to homepage"
           >
             Urban Manual®
           </button>
 
+          {/* Actions */}
           <div className="flex items-center gap-2">{actionButtons}</div>
         </nav>
       </div>

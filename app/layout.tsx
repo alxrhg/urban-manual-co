@@ -185,7 +185,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+      <body className="antialiased bg-white dark:bg-um-slate-950 text-um-gray-900 dark:text-white">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -200,11 +200,23 @@ export default function RootLayout({
                   <Suspense fallback={null}>
                     <AdminEditModeProvider>
                       <ItineraryProvider>
-                        <Header />
-                        <main id="main-content" className="min-h-screen page-transition" role="main">
-                          {children}
-                        </main>
-                        <Footer />
+                        {/* Unified page wrapper - header and content flow together */}
+                        <div className="min-h-screen flex flex-col bg-white dark:bg-um-slate-950">
+                          {/* Header - integrated into page flow with transparent background */}
+                          <Header transparent />
+
+                          {/* Main content - flows naturally from header */}
+                          <main
+                            id="main-content"
+                            className="flex-1 page-transition"
+                            role="main"
+                          >
+                            {children}
+                          </main>
+
+                          {/* Footer */}
+                          <Footer />
+                        </div>
                         <CookieConsent />
                         <DrawerMount />
                       </ItineraryProvider>
