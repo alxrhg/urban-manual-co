@@ -63,6 +63,7 @@ export default function TripPage() {
     addPlace,
     addFlight,
     removeItem,
+    updateItemTime,
     refresh,
   } = useTripEditor({
     tripId,
@@ -643,8 +644,7 @@ export default function TripPage() {
                           if (item) handleEditItem(item);
                         }}
                         onTimeChange={(id, time) => {
-                          // Update item time
-                          console.log('Time change:', id, time);
+                          updateItemTime(id, time);
                         }}
                       />
                     ) : (
