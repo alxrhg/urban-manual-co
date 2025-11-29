@@ -75,8 +75,8 @@ export function useAnnounce() {
  */
 export function useFocusTrap<T extends HTMLElement>(
   enabled: boolean
-): React.RefObject<T> {
-  const containerRef = useRef<T>(null);
+): React.RefObject<T | null> {
+  const containerRef = useRef<T | null>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
@@ -109,8 +109,8 @@ export function useFocusTrap<T extends HTMLElement>(
  */
 export function useFocusOnMount<T extends HTMLElement>(
   shouldFocus: boolean
-): React.RefObject<T> {
-  const elementRef = useRef<T>(null);
+): React.RefObject<T | null> {
+  const elementRef = useRef<T | null>(null);
 
   useEffect(() => {
     if (shouldFocus && elementRef.current) {
