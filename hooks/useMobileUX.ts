@@ -233,7 +233,7 @@ interface UsePullToRefreshOptions {
 export function usePullToRefresh<T extends HTMLElement>(
   options: UsePullToRefreshOptions
 ): {
-  containerRef: React.RefObject<T>;
+  containerRef: React.RefObject<T | null>;
   isPulling: boolean;
   isRefreshing: boolean;
   pullDistance: number;
@@ -241,7 +241,7 @@ export function usePullToRefresh<T extends HTMLElement>(
 } {
   const { threshold = 80, onRefresh, enabled = true } = options;
 
-  const containerRef = useRef<T>(null);
+  const containerRef = useRef<T | null>(null);
   const [state, setState] = useState<PullToRefreshState>({
     isPulling: false,
     isRefreshing: false,
@@ -363,10 +363,10 @@ export function useIsMobile(): boolean {
  * Hook for touch feedback (haptic-like visual feedback)
  */
 export function useTouchFeedback<T extends HTMLElement>(): {
-  ref: React.RefObject<T>;
+  ref: React.RefObject<T | null>;
   isPressed: boolean;
 } {
-  const ref = useRef<T>(null);
+  const ref = useRef<T | null>(null);
   const [isPressed, setIsPressed] = useState(false);
 
   useEffect(() => {
