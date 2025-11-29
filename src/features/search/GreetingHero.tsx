@@ -221,7 +221,7 @@ export default function GreetingHero({
           </div>
         )}
 
-        {/* Borderless Text Input - Minimal editorial style with subtle underline */}
+        {/* Borderless Text Input - Minimal editorial style with shimmering placeholder */}
         <div className="relative mb-[50px]">
           {isSearching && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 z-10">
@@ -229,9 +229,21 @@ export default function GreetingHero({
             </div>
           )}
           <div className="relative w-full">
+            {/* Shimmering placeholder text overlay */}
+            {!searchQuery && !isInputFocused && (
+              <div
+                className="absolute left-0 top-0 pointer-events-none text-xs uppercase tracking-[2px] font-medium z-0 shimmer-text"
+                style={{
+                  paddingLeft: isSearching ? '32px' : '0'
+                }}
+                aria-hidden="true"
+              >
+                {isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything"}
+              </div>
+            )}
             <input
               ref={inputRef}
-              placeholder={isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything"}
+              placeholder={isInputFocused ? (isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything") : ""}
               value={searchQuery}
               onChange={(e) => {
                 handleInputChange(e.target.value);
@@ -252,7 +264,7 @@ export default function GreetingHero({
                   }
                 }
               }}
-              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60 relative z-10"
+              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 relative z-10"
               style={{
                 paddingLeft: isSearching ? '32px' : '0'
               }}
