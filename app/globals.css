@@ -134,6 +134,36 @@
   }
 }
 
+/* Typewriter cursor blink animation */
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* Underline pulse animation for search input */
+@keyframes underlinePulse {
+  0%, 100% {
+    width: 4rem;
+    opacity: 0.4;
+  }
+  50% {
+    width: 6rem;
+    opacity: 0.7;
+  }
+}
+
+.animate-underline-pulse {
+  animation: underlinePulse 2.5s ease-in-out infinite;
+}
+
 /* Shimmer animation for placeholder text */
 @keyframes placeholderShimmer {
   0% {
