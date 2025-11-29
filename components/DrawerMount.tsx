@@ -106,6 +106,7 @@ export default function DrawerMount() {
             tripId={props?.tripId}
             dayNumber={props?.dayNumber}
             city={props?.city}
+            category={props?.category}
             onSelect={props?.onSelect}
             day={props?.day}
             trip={props?.trip}

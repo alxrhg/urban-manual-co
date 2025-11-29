@@ -16,6 +16,7 @@ interface PlaceSelectorDrawerProps {
   tripId?: string;
   dayNumber?: number;
   city?: string | null;
+  category?: string; // Pre-filter by category (e.g., 'cafe', 'restaurant')
   onSelect?: (destination: Destination) => void;
   // Legacy props
   day?: any;
@@ -25,10 +26,24 @@ interface PlaceSelectorDrawerProps {
   replaceIndex?: number | null;
 }
 
+// Map suggestion categories to drawer filter categories
+function mapCategoryToFilter(cat?: string): string {
+  if (!cat) return 'All';
+  const lower = cat.toLowerCase();
+  if (lower === 'cafe' || lower === 'coffee' || lower === 'bakery') return 'Cafe';
+  if (lower === 'restaurant' || lower === 'dining') return 'Dining';
+  if (lower === 'bar' || lower === 'cocktail' || lower === 'pub') return 'Bar';
+  if (lower === 'museum' || lower === 'gallery' || lower === 'landmark') return 'Culture';
+  if (lower === 'hotel') return 'Hotel';
+  if (lower === 'shop' || lower === 'store') return 'Shopping';
+  return 'All';
+}
+
 export default function PlaceSelectorDrawer({
   tripId,
   dayNumber,
   city,
+  category: initialCategory,
   onSelect,
   day,
   trip,
@@ -39,7 +54,7 @@ export default function PlaceSelectorDrawer({
   const { closeDrawer } = useDrawerStore();
   const [tab, setTab] = useState<Tab>('curated');
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState('All');
+  const [category, setCategory] = useState(() => mapCategoryToFilter(initialCategory));
   const [places, setPlaces] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
 

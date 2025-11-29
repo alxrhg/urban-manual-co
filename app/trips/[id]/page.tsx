@@ -173,11 +173,12 @@ export default function TripPage() {
   }, [addPlace]);
 
   // Callbacks
-  const openPlaceSelector = useCallback((dayNumber: number) => {
+  const openPlaceSelector = useCallback((dayNumber: number, category?: string) => {
     openDrawer('place-selector', {
       tripId: trip?.id,
       dayNumber,
       city: trip?.destination,
+      category, // Pass category filter to drawer
       onSelect: (destination: Destination) => addPlace(destination, dayNumber),
     });
   }, [trip?.id, trip?.destination, openDrawer, addPlace]);
@@ -467,7 +468,7 @@ export default function TripPage() {
             destination={trip.destination}
             onAddPlace={(dayNumber, category) => {
               setSelectedDayNumber(dayNumber);
-              openPlaceSelector(dayNumber);
+              openPlaceSelector(dayNumber, category);
             }}
             onAddAISuggestion={handleAddAISuggestion}
             className="mb-8"
