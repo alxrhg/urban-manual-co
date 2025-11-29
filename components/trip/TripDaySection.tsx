@@ -197,78 +197,71 @@ export default function TripDaySection({
   };
 
   return (
-    <div
-      className={`
-        border border-stone-200 dark:border-gray-800 rounded-xl sm:rounded-2xl overflow-hidden
-        transition-colors duration-200
-        ${isSelected ? 'ring-1 ring-stone-300 dark:ring-gray-700' : ''}
-      `}
-    >
-      {/* Day Header - Larger touch target on mobile */}
+    <div className="space-y-4">
+      {/* Day Header */}
       <div className="flex items-center justify-between">
         <button
           onClick={() => {
             setIsExpanded(!isExpanded);
             onSelect?.();
           }}
-          className="flex-1 flex items-center justify-between p-4 sm:p-4 min-h-[56px] hover:bg-stone-50 dark:hover:bg-gray-800/50 active:bg-stone-100 dark:active:bg-gray-800 transition-colors text-left"
+          className="flex items-center gap-3 text-left group"
         >
-          <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-3">
-            <span className="text-base sm:text-lg font-light text-stone-900 dark:text-white">
+          <div className="flex items-baseline gap-2">
+            <span className="text-lg font-light text-gray-900 dark:text-white">
               Day {day.dayNumber}
             </span>
             {formattedDate && (
-              <span className="text-[11px] sm:text-xs text-stone-500 dark:text-gray-400">
+              <span className="text-sm text-gray-400 dark:text-gray-500">
                 {formattedDate}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <span className="text-[11px] sm:text-xs text-stone-400 dark:text-gray-500">
-              {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
-            </span>
-            <ChevronDown
-              className={`w-5 h-5 sm:w-4 sm:h-4 text-stone-400 transition-transform duration-200 ${
-                isExpanded ? 'rotate-0' : '-rotate-90'
-              }`}
-            />
-          </div>
+          <ChevronDown
+            className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+              isExpanded ? 'rotate-0' : '-rotate-90'
+            }`}
+          />
         </button>
 
-        {/* Edit Mode Toggle */}
-        {day.items.length > 0 && (
-          <button
-            onClick={() => setIsEditMode(!isEditMode)}
-            className={`mr-2 p-2 rounded-lg transition-colors ${
-              isEditMode
-                ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
-                : 'hover:bg-stone-100 dark:hover:bg-gray-800 text-stone-500 dark:text-gray-400'
-            }`}
-            title={isEditMode ? 'Done editing' : 'Edit day'}
-          >
-            {isEditMode ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Pencil className="w-4 h-4" />
-            )}
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
+          </span>
+          {day.items.length > 0 && (
+            <button
+              onClick={() => setIsEditMode(!isEditMode)}
+              className={`p-2 rounded-full transition-colors ${
+                isEditMode
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400'
+              }`}
+              title={isEditMode ? 'Done editing' : 'Reorder items'}
+            >
+              {isEditMode ? (
+                <Check className="w-4 h-4" />
+              ) : (
+                <Pencil className="w-4 h-4" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Day Content */}
       {isExpanded && (
-        <div className="border-t border-stone-100 dark:border-gray-800/50">
+        <div>
           {day.items.length === 0 ? (
-            /* Empty State - Larger touch target */
-            <div className="p-6 sm:p-6 text-center">
-              <p className="text-xs text-stone-400 dark:text-gray-500 mb-4 sm:mb-3">
-                No stops planned for this day
+            /* Empty State */
+            <div className="py-8 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
+              <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+                No stops planned
               </p>
               <button
                 onClick={() => onAddItem?.(day.dayNumber)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 sm:px-3 sm:py-1.5 text-sm sm:text-xs font-medium text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white active:text-stone-900 transition-colors bg-stone-100 dark:bg-gray-800 sm:bg-transparent rounded-xl sm:rounded-none"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
-                <Plus className="w-4 h-4 sm:w-3 sm:h-3" />
+                <Plus className="w-4 h-4" />
                 Add a stop
               </button>
             </div>
@@ -283,7 +276,7 @@ export default function TripDaySection({
                 items={day.items.map((item) => item.id)}
                 strategy={verticalListSortingStrategy}
               >
-                <div className="p-2 sm:p-2">
+                <div className="space-y-2">
                   {day.items.map((item, index) => (
                     <TripItemCard
                       key={item.id}
@@ -300,22 +293,20 @@ export default function TripDaySection({
             </DndContext>
           ) : (
             /* View Mode - With Transit Connectors */
-            <div className="p-2 sm:p-2">
+            <div className="space-y-0">
               {renderItemsWithConnectors()}
             </div>
           )}
 
-          {/* Add Stop Button (when items exist) - Larger touch target */}
+          {/* Add Stop Button */}
           {day.items.length > 0 && (
-            <div className="px-3 sm:px-4 pb-3 sm:pb-4">
-              <button
-                onClick={() => onAddItem?.(day.dayNumber)}
-                className="w-full flex items-center justify-center gap-2 py-3 sm:py-2.5 text-sm sm:text-xs font-medium text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white active:text-stone-900 border border-dashed border-stone-200 dark:border-gray-800 rounded-xl hover:border-stone-300 dark:hover:border-stone-700 active:border-stone-400 active:bg-stone-50 dark:active:bg-gray-800/50 transition-colors min-h-[48px] sm:min-h-0"
-              >
-                <Plus className="w-4 h-4 sm:w-3 sm:h-3" />
-                Add stop
-              </button>
-            </div>
+            <button
+              onClick={() => onAddItem?.(day.dayNumber)}
+              className="w-full flex items-center justify-center gap-2 py-3 mt-4 text-sm font-medium text-gray-400 hover:text-gray-900 dark:hover:text-white border border-dashed border-gray-200 dark:border-gray-800 rounded-xl hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add stop
+            </button>
           )}
         </div>
       )}

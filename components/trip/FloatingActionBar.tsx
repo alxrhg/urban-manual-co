@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Map, Sparkles, Share2, X, MapPin, Plane, StickyNote, Hotel, Car } from 'lucide-react';
+import { Plus, Map, Sparkles, X, MapPin, Plane } from 'lucide-react';
 
 interface FloatingActionBarProps {
   onAddPlace: () => void;
@@ -17,31 +17,19 @@ interface FloatingActionBarProps {
 }
 
 /**
- * FloatingActionBar - Mobile-optimized bottom action bar
- * Features: Safe area insets, larger touch targets, haptic-friendly
+ * FloatingActionBar - Minimal bottom action bar
+ * Features: Clean design, essential actions only
  */
 export default function FloatingActionBar({
   onAddPlace,
   onAddFlight,
   onAddNote,
-  onAddHotel,
-  onAddTransport,
   onOpenMap,
   onAIPlan,
-  onShare,
   isAIPlanning = false,
   isSaving = false,
 }: FloatingActionBarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Detect mobile for touch-specific behavior
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
 
   // Close menu on escape key
   useEffect(() => {
@@ -57,130 +45,93 @@ export default function FloatingActionBar({
       {/* Backdrop */}
       {isExpanded && (
         <div
-          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm transition-opacity md:hidden"
           onClick={() => setIsExpanded(false)}
         />
       )}
 
-      {/* Action Bar Container - Safe area aware */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-safe">
-        <div className="flex justify-center pb-4 sm:pb-6 px-4">
-          <div className="pointer-events-auto">
-            {/* Expanded Menu - Grid on mobile for better touch targets */}
+      {/* Mobile FAB */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 pointer-events-none pb-safe md:hidden">
+        <div className="flex justify-center pb-6 px-4">
+          <div className="pointer-events-auto relative">
+            {/* Expanded Menu */}
             <div
               className={`
                 absolute bottom-full left-1/2 -translate-x-1/2 mb-3
-                transition-all duration-300 origin-bottom
-                ${isExpanded ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4 pointer-events-none'}
+                transition-all duration-200 origin-bottom
+                ${isExpanded ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}
               `}
             >
-              {/* Add Options - Grid layout on mobile */}
-              <div className="grid grid-cols-3 sm:flex sm:items-center gap-1 sm:gap-2 p-2 sm:p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl shadow-black/20">
+              <div className="flex items-center gap-2 p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800">
                 <button
                   onClick={() => { onAddPlace(); setIsExpanded(false); }}
-                  className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[64px]"
                 >
-                  <MapPin className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-gray-400" />
-                  <span className="text-[11px] sm:text-[10px] font-medium text-stone-500">Place</span>
+                  <MapPin className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <span className="text-[10px] font-medium text-gray-500">Place</span>
                 </button>
                 <button
                   onClick={() => { onAddFlight(); setIsExpanded(false); }}
-                  className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
+                  className="flex flex-col items-center gap-1 p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors min-w-[64px]"
                 >
-                  <Plane className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-gray-400" />
-                  <span className="text-[11px] sm:text-[10px] font-medium text-stone-500">Flight</span>
-                </button>
-                {onAddHotel && (
-                  <button
-                    onClick={() => { onAddHotel(); setIsExpanded(false); }}
-                    className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
-                  >
-                    <Hotel className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-gray-400" />
-                    <span className="text-[11px] sm:text-[10px] font-medium text-stone-500">Hotel</span>
-                  </button>
-                )}
-                {onAddTransport && (
-                  <button
-                    onClick={() => { onAddTransport(); setIsExpanded(false); }}
-                    className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
-                  >
-                    <Car className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-gray-400" />
-                    <span className="text-[11px] sm:text-[10px] font-medium text-stone-500">Transport</span>
-                  </button>
-                )}
-                <button
-                  onClick={() => { onAddNote(); setIsExpanded(false); }}
-                  className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
-                >
-                  <StickyNote className="w-6 h-6 sm:w-5 sm:h-5 text-stone-600 dark:text-gray-400" />
-                  <span className="text-[11px] sm:text-[10px] font-medium text-stone-500">Note</span>
+                  <Plane className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <span className="text-[10px] font-medium text-gray-500">Flight</span>
                 </button>
               </div>
             </div>
 
-            {/* Main Bar - Larger touch targets on mobile */}
-            <div className="flex items-center gap-1 p-1.5 sm:p-1.5 rounded-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl shadow-black/20 border border-stone-200/50 dark:border-gray-700/50">
-              {/* Add Button (Primary) - 48px on mobile */}
+            {/* Main Bar */}
+            <div className="flex items-center gap-1 p-1.5 rounded-full bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-800">
+              {/* Add Button */}
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
                 className={`
-                  w-14 h-14 sm:w-12 sm:h-12 rounded-full flex items-center justify-center
-                  transition-all duration-300
+                  w-12 h-12 rounded-full flex items-center justify-center
+                  transition-all duration-200
                   ${isExpanded
-                    ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900 rotate-45'
-                    : 'bg-stone-900 dark:bg-white text-white dark:text-gray-900 hover:scale-105 active:scale-95'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 rotate-45'
+                    : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                   }
                 `}
                 aria-label={isExpanded ? 'Close menu' : 'Add item'}
               >
-                {isExpanded ? <X className="w-6 h-6 sm:w-5 sm:h-5" /> : <Plus className="w-6 h-6 sm:w-5 sm:h-5" />}
+                {isExpanded ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
               </button>
 
               {/* Divider */}
-              <div className="w-px h-8 bg-stone-200 dark:bg-gray-700 mx-0.5 sm:mx-1" />
+              <div className="w-px h-6 bg-gray-200 dark:bg-gray-700" />
 
-              {/* Map Button - 44px touch target */}
+              {/* Map Button */}
               <button
                 onClick={onOpenMap}
-                className="w-12 h-12 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 hover:text-stone-900 dark:hover:text-white transition-colors"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors"
                 aria-label="Open map"
               >
                 <Map className="w-5 h-5" />
               </button>
 
-              {/* AI Plan Button - 44px touch target */}
+              {/* AI Plan Button */}
               <button
                 onClick={onAIPlan}
                 disabled={isAIPlanning || isSaving}
                 className={`
-                  w-12 h-12 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors
+                  w-10 h-10 rounded-full flex items-center justify-center transition-colors
                   ${isAIPlanning
-                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
-                    : 'text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700 hover:text-stone-900 dark:hover:text-white'
+                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                    : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                   }
                   disabled:opacity-50
                 `}
-                aria-label="Autopilot"
+                aria-label="AI Autopilot"
               >
                 <Sparkles className={`w-5 h-5 ${isAIPlanning ? 'animate-pulse' : ''}`} />
               </button>
-
-              {/* Share Button - Desktop only to reduce clutter on mobile */}
-              {onShare && (
-                <button
-                  onClick={onShare}
-                  className="hidden sm:flex w-10 h-10 rounded-full items-center justify-center text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800 hover:text-stone-900 dark:hover:text-white transition-colors"
-                  aria-label="Share trip"
-                >
-                  <Share2 className="w-5 h-5" />
-                </button>
-              )}
             </div>
 
-            {/* Saving/Planning Indicator */}
+            {/* Status Indicator */}
             {(isSaving || isAIPlanning) && (
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium shadow-lg whitespace-nowrap">
-                {isAIPlanning ? 'Autopilot...' : 'Saving...'}
+              <div className="absolute -top-1 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[10px] font-medium shadow-lg">
+                {isAIPlanning ? 'Planning...' : 'Saving...'}
               </div>
             )}
           </div>
