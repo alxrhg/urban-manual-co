@@ -142,16 +142,7 @@ export async function logAuditEvent(
 
   // Console logging
   if (config.console) {
-    const logMethod =
-      event.severity === AuditSeverity.CRITICAL
-        ? logger.fatal
-        : event.severity === AuditSeverity.ERROR
-          ? logger.error
-          : event.severity === AuditSeverity.WARNING
-            ? logger.warn
-            : logger.info;
-
-    logMethod(`[AUDIT] ${event.type}`, {
+    const logContext = {
       module: 'audit',
       userId: event.userId,
       extra: {
@@ -159,7 +150,17 @@ export async function logAuditEvent(
         outcome: event.outcome,
         resource: event.resource,
       },
-    });
+    };
+
+    if (event.severity === AuditSeverity.CRITICAL) {
+      logger.fatal(`[AUDIT] ${event.type}`, undefined, logContext);
+    } else if (event.severity === AuditSeverity.ERROR) {
+      logger.error(`[AUDIT] ${event.type}`, undefined, logContext);
+    } else if (event.severity === AuditSeverity.WARNING) {
+      logger.warn(`[AUDIT] ${event.type}`, logContext);
+    } else {
+      logger.info(`[AUDIT] ${event.type}`, logContext);
+    }
   }
 
   // External logging (e.g., to Supabase audit table or external service)
