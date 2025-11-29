@@ -10,7 +10,7 @@ import DOMPurify from 'isomorphic-dompurify';
 /**
  * Configuration presets for different sanitization contexts
  */
-export const SanitizePresets = {
+export const SanitizePresets: Record<string, DOMPurify.Config> = {
   /** Rich text with formatting allowed */
   richText: {
     ALLOWED_TAGS: [
@@ -51,7 +51,7 @@ export const SanitizePresets = {
     FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input'],
     FORBID_ATTR: ['onerror', 'onclick', 'onload'],
   },
-} as const;
+};
 
 type SanitizePreset = keyof typeof SanitizePresets;
 
