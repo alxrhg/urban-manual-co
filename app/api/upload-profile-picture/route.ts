@@ -8,6 +8,10 @@ import {
   createRateLimitResponse,
   isUpstashConfigured,
 } from '@/lib/rate-limit';
+import {
+  validateImageFile,
+  getSafeExtension,
+} from '@/lib/security/image-validation';
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,19 +48,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
-    }
-
-    // Validate file size (max 2MB for profile pictures)
+    // Validate file size first (max 2MB for profile pictures)
     if (file.size > 2 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File size must be less than 2MB' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'File size must be less than 2MB' },
+        { status: 400 }
+      );
     }
 
-    // Generate unique filename
-    const fileExt = file.name.split('.').pop();
-    const fileName = `profile-${user.id}-${Date.now()}.${fileExt}`;
+    // Validate image using magic bytes (prevents MIME type spoofing)
+    const validation = await validateImageFile(file);
+    if (!validation.valid) {
+      return NextResponse.json(
+        { error: validation.error || 'Invalid image file' },
+        { status: 400 }
+      );
+    }
+
+    // Use safe extension from detected MIME type (not user-provided)
+    const safeExt = getSafeExtension(validation.detectedMime!);
+    const fileName = `profile-${user.id}-${Date.now()}.${safeExt}`;
     const filePath = `profiles/${fileName}`;
 
     // Upload to Supabase Storage
