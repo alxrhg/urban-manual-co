@@ -26,11 +26,7 @@ import TripDaySection from '@/components/trip/TripDaySection';
 import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
-import SmartSuggestions from '@/components/trip/SmartSuggestions';
-import PersonalizedPick from '@/components/trip/PersonalizedPick';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
-import LocalEvents from '@/components/trip/LocalEvents';
-import NaturalLanguageInput from '@/components/trip/NaturalLanguageInput';
 import {
   analyzeScheduleForWarnings,
   detectConflicts,
@@ -154,23 +150,6 @@ export default function TripPage() {
 
     setWarnings(newWarnings.slice(0, 10)); // Limit to 10 warnings
   }, [days, trip?.start_date]);
-
-  // Handle adding AI suggestion to trip
-  const handleAddAISuggestion = useCallback(async (suggestion: {
-    destination: { slug: string; name: string; category: string };
-    day: number;
-    startTime: string;
-  }) => {
-    try {
-      const response = await fetch(`/api/destinations/${suggestion.destination.slug}`);
-      if (response.ok) {
-        const destination = await response.json();
-        await addPlace(destination, suggestion.day, suggestion.startTime);
-      }
-    } catch (err) {
-      console.error('Failed to add AI suggestion:', err);
-    }
-  }, [addPlace]);
 
   // Callbacks
   const openPlaceSelector = useCallback((dayNumber: number, category?: string) => {
@@ -471,9 +450,9 @@ export default function TripPage() {
             </div>
           </div>
 
-          {/* Cover Image (optional) - Taller on mobile for visual impact */}
+          {/* Cover Image (optional) */}
           {coverImage && (
-            <div className="relative w-full h-40 sm:h-48 md:h-64 rounded-xl sm:rounded-2xl overflow-hidden mb-4 sm:mb-6">
+            <div className="relative w-full h-32 sm:h-40 rounded-xl overflow-hidden">
               <Image
                 src={coverImage}
                 alt={trip.title}
@@ -486,58 +465,9 @@ export default function TripPage() {
           )}
         </div>
 
-        {/* Natural Language Input - AI Planning */}
-        <NaturalLanguageInput
-          city={trip.destination}
-          tripDays={days.length}
-          onResult={async (result) => {
-            if (result.destination) {
-              await addPlace(result.destination as unknown as Destination, result.dayNumber || selectedDayNumber, result.time);
-            }
-          }}
-          className="mb-6"
-        />
-
-        {/* Local Events */}
-        {trip.destination && trip.start_date && (
-          <LocalEvents
-            city={trip.destination}
-            startDate={trip.start_date}
-            endDate={trip.end_date}
-            className="mb-6"
-          />
-        )}
-
-        {/* Smart Suggestions */}
-        {days.length > 0 && (
-          <SmartSuggestions
-            days={days}
-            destination={trip.destination}
-            onAddPlace={(dayNumber, category) => {
-              setSelectedDayNumber(dayNumber);
-              openPlaceSelector(dayNumber, category);
-            }}
-            onAddAISuggestion={handleAddAISuggestion}
-            className="mb-6"
-          />
-        )}
-
-        {/* Personalized Pick - below suggestions */}
-        {trip.destination && user && (
-          <PersonalizedPick
-            city={trip.destination}
-            userId={user.id}
-            existingSlugs={days.flatMap(d => d.items).map(item => item.destination_slug).filter(Boolean) as string[]}
-            onAdd={(destination, dayNumber) => addPlace(destination as unknown as Destination, dayNumber)}
-            dayNumber={selectedDayNumber}
-            className="mb-8"
-          />
-        )}
-
-        {/* Tab Navigation - Mobile optimized with horizontal scroll */}
-        <div className="mb-6 sm:mb-8">
+        {/* Tab Navigation */}
+        <div className="mb-4">
           <div className="flex items-center justify-between gap-4">
-            {/* Tabs - Scrollable on mobile */}
             <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
               {(['itinerary', 'flights', 'hotels', 'notes'] as const).map((tab) => (
                 <button
@@ -569,7 +499,7 @@ export default function TripPage() {
               ))}
             </div>
 
-            {/* Quick Actions - Hidden on mobile (use FAB instead) */}
+            {/* Quick Actions */}
             <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
               <button
                 onClick={handleAITripPlanning}
@@ -581,14 +511,14 @@ export default function TripPage() {
                 ) : (
                   <Sparkles className="w-3 h-3" />
                 )}
-                {isAIPlanning ? 'Autopilot...' : 'Autopilot'}
+                {isAIPlanning ? 'Planning...' : 'Auto-plan'}
               </button>
               <button
                 onClick={() => openPlaceSelector(selectedDayNumber)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-stone-200 dark:border-gray-800 rounded-full hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Plus className="w-3 h-3" />
-                Add Stop
+                Add
               </button>
             </div>
           </div>
