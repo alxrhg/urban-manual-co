@@ -166,8 +166,8 @@ export function useVirtualKeyboard(): KeyboardState {
  * return <input ref={inputRef} />;
  * ```
  */
-export function useScrollIntoViewOnFocus<T extends HTMLElement>(): React.RefObject<T> {
-  const elementRef = useRef<T>(null);
+export function useScrollIntoViewOnFocus<T extends HTMLElement>(): React.RefObject<T | null> {
+  const elementRef = useRef<T | null>(null);
 
   useEffect(() => {
     const element = elementRef.current;
