@@ -10,7 +10,7 @@ import DOMPurify from 'isomorphic-dompurify';
 /**
  * Configuration presets for different sanitization contexts
  */
-export const SanitizePresets: Record<string, DOMPurify.Config> = {
+export const SanitizePresets = {
   /** Rich text with formatting allowed */
   richText: {
     ALLOWED_TAGS: [
@@ -27,14 +27,14 @@ export const SanitizePresets: Record<string, DOMPurify.Config> = {
   /** Basic text only (no links) */
   basicText: {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em'],
-    ALLOWED_ATTR: [],
+    ALLOWED_ATTR: [] as string[],
     ALLOW_DATA_ATTR: false,
   },
 
   /** Plain text (strip all HTML) */
   plainText: {
-    ALLOWED_TAGS: [],
-    ALLOWED_ATTR: [],
+    ALLOWED_TAGS: [] as string[],
+    ALLOWED_ATTR: [] as string[],
     ALLOW_DATA_ATTR: false,
   },
 
@@ -71,12 +71,12 @@ type SanitizePreset = keyof typeof SanitizePresets;
  */
 export function sanitizeHtml(
   html: string,
-  preset: SanitizePreset | DOMPurify.Config = 'richText'
+  preset: SanitizePreset | Record<string, unknown> = 'richText'
 ): string {
   if (!html) return '';
 
   const config = typeof preset === 'string' ? SanitizePresets[preset] : preset;
-  return DOMPurify.sanitize(html, config);
+  return DOMPurify.sanitize(html, config as Parameters<typeof DOMPurify.sanitize>[1]);
 }
 
 /**
@@ -84,7 +84,7 @@ export function sanitizeHtml(
  */
 export function htmlToPlainText(html: string): string {
   if (!html) return '';
-  return DOMPurify.sanitize(html, SanitizePresets.plainText).trim();
+  return DOMPurify.sanitize(html, SanitizePresets.plainText as Parameters<typeof DOMPurify.sanitize>[1]).trim();
 }
 
 /**
