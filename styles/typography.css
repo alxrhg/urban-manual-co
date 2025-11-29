@@ -1,0 +1,552 @@
+/* =============================================================================
+   URBAN MANUAL TYPOGRAPHY SYSTEM
+   Semantic typography classes for consistent hierarchy
+   ============================================================================= */
+
+/* =============================================================================
+   DISPLAY TEXT - Large headlines, hero sections
+   ============================================================================= */
+
+.um-display {
+  font-family: 'Instrument Serif', 'Playfair Display', Georgia, serif;
+  font-size: 48px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--um-color-text);
+}
+
+.um-display-lg {
+  font-family: 'Instrument Serif', 'Playfair Display', Georgia, serif;
+  font-size: 64px;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--um-color-text);
+}
+
+.um-display-sm {
+  font-family: 'Instrument Serif', 'Playfair Display', Georgia, serif;
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--um-color-text);
+}
+
+/* Responsive display text */
+@media (max-width: 768px) {
+  .um-display {
+    font-size: 36px;
+  }
+  .um-display-lg {
+    font-size: 48px;
+  }
+  .um-display-sm {
+    font-size: 28px;
+  }
+}
+
+/* =============================================================================
+   TITLE - Page titles, major section headers
+   ============================================================================= */
+
+.um-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--um-color-text);
+}
+
+.um-title-lg {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 42px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--um-color-text);
+}
+
+.um-title-sm {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--um-color-text);
+}
+
+@media (max-width: 768px) {
+  .um-title {
+    font-size: 28px;
+  }
+  .um-title-lg {
+    font-size: 32px;
+  }
+  .um-title-sm {
+    font-size: 24px;
+  }
+}
+
+/* =============================================================================
+   HEADING - Section headers (H1-H3 equivalent)
+   ============================================================================= */
+
+.um-heading {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--um-color-text);
+}
+
+.um-heading-lg {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 30px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--um-color-text);
+}
+
+.um-heading-sm {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--um-color-text);
+}
+
+/* =============================================================================
+   SUBHEADING - Subsection headers
+   ============================================================================= */
+
+.um-subheading {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--um-color-text);
+}
+
+.um-subheading-sm {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--um-color-text);
+}
+
+/* =============================================================================
+   BODY - Primary content text
+   ============================================================================= */
+
+.um-body {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--um-color-text);
+}
+
+.um-body-lg {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--um-color-text);
+}
+
+.um-body-sm {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--um-color-text);
+}
+
+/* Body with secondary color */
+.um-body-secondary {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--um-color-text-secondary);
+}
+
+.um-body-muted {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--um-color-text-muted);
+}
+
+/* =============================================================================
+   CAPTION - Small descriptive text, meta info
+   ============================================================================= */
+
+.um-caption {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--um-color-text-muted);
+}
+
+.um-caption-sm {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--um-color-text-muted);
+}
+
+/* =============================================================================
+   LABEL - Form labels, UI labels
+   ============================================================================= */
+
+.um-label {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--um-color-text);
+}
+
+.um-label-sm {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--um-color-text);
+}
+
+.um-label-muted {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--um-color-text-muted);
+}
+
+/* =============================================================================
+   MICRO - Badges, tags, very small text
+   ============================================================================= */
+
+.um-micro {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--um-color-text-secondary);
+}
+
+.um-micro-muted {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--um-color-text-muted);
+}
+
+.um-micro-xs {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--um-color-text-muted);
+}
+
+/* =============================================================================
+   CODE - Monospace text
+   ============================================================================= */
+
+.um-code {
+  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--um-color-text);
+}
+
+.um-code-sm {
+  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--um-color-text);
+}
+
+/* =============================================================================
+   LINK - Interactive text links
+   ============================================================================= */
+
+.um-link {
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: var(--um-color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--um-color-border);
+  transition: text-decoration-color var(--um-transition-fast);
+}
+
+.um-link:hover {
+  text-decoration-color: var(--um-color-text);
+}
+
+.um-link:focus-visible {
+  outline: none;
+  text-decoration-color: var(--um-color-text);
+  background-color: var(--um-color-surface-hover);
+}
+
+/* =============================================================================
+   OVERLINE - Section labels, category tags
+   ============================================================================= */
+
+.um-overline {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--um-color-text-muted);
+}
+
+.um-overline-lg {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--um-color-text-muted);
+}
+
+/* =============================================================================
+   EDITORIAL - Special serif body text for long-form content
+   ============================================================================= */
+
+.um-editorial {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--um-color-text);
+}
+
+.um-editorial-lg {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--um-color-text);
+}
+
+/* =============================================================================
+   UTILITY MODIFIERS
+   ============================================================================= */
+
+/* Weight modifiers */
+.um-text-light {
+  font-weight: 300;
+}
+
+.um-text-normal {
+  font-weight: 400;
+}
+
+.um-text-medium {
+  font-weight: 500;
+}
+
+.um-text-semibold {
+  font-weight: 600;
+}
+
+.um-text-bold {
+  font-weight: 700;
+}
+
+/* Color modifiers */
+.um-text-primary {
+  color: var(--um-color-text);
+}
+
+.um-text-secondary {
+  color: var(--um-color-text-secondary);
+}
+
+.um-text-muted {
+  color: var(--um-color-text-muted);
+}
+
+.um-text-subtle {
+  color: var(--um-color-text-subtle);
+}
+
+.um-text-inverse {
+  color: var(--um-color-text-inverse);
+}
+
+/* Alignment */
+.um-text-left {
+  text-align: left;
+}
+
+.um-text-center {
+  text-align: center;
+}
+
+.um-text-right {
+  text-align: right;
+}
+
+/* Truncation */
+.um-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.um-line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.um-line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.um-line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* =============================================================================
+   PROSE - Long-form content wrapper
+   ============================================================================= */
+
+.um-prose {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--um-color-text);
+}
+
+.um-prose h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 24px;
+}
+
+.um-prose h2 {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.3;
+  margin-top: 48px;
+  margin-bottom: 16px;
+}
+
+.um-prose h3 {
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-top: 32px;
+  margin-bottom: 12px;
+}
+
+.um-prose p {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.um-prose a {
+  color: var(--um-color-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--um-color-border);
+  transition: text-decoration-color var(--um-transition-fast);
+}
+
+.um-prose a:hover {
+  text-decoration-color: var(--um-color-text);
+}
+
+.um-prose ul,
+.um-prose ol {
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding-left: 24px;
+}
+
+.um-prose li {
+  margin-bottom: 8px;
+}
+
+.um-prose blockquote {
+  border-left: 3px solid var(--um-color-border);
+  padding-left: 16px;
+  margin: 24px 0;
+  font-style: italic;
+  color: var(--um-color-text-secondary);
+}
+
+.um-prose code {
+  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-size: 14px;
+  background-color: var(--um-color-surface-hover);
+  padding: 2px 6px;
+  border-radius: var(--um-radius-sm);
+}
+
+.um-prose pre {
+  font-family: 'JetBrains Mono', Menlo, monospace;
+  font-size: 14px;
+  background-color: var(--um-color-surface);
+  border: 1px solid var(--um-color-border);
+  border-radius: var(--um-radius-lg);
+  padding: 16px;
+  overflow-x: auto;
+  margin: 24px 0;
+}
+
+.um-prose pre code {
+  background: none;
+  padding: 0;
+}
+
+.um-prose hr {
+  border: none;
+  border-top: 1px solid var(--um-color-border);
+  margin: 32px 0;
+}
+
+.um-prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--um-radius-lg);
+  margin: 24px 0;
+}

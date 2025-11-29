@@ -1,13 +1,139 @@
+/* =============================================================================
+   URBAN MANUAL DESIGN TOKENS
+   Single source of truth for all design decisions
+   Synced with lib/theme.ts for TypeScript usage
+   ============================================================================= */
+
 :root {
-  /* Radius tokens */
-  --um-radius-sm: 8px;
-  --um-radius-md: 12px;
-  --um-radius-lg: 16px;
-  --um-radius-xl: 24px;
-  --um-radius-2xl: 32px;
+  /* =========================================================================
+     ADAPTIVE COLOR PALETTE - Light Mode (Warmer Grays)
+     ========================================================================= */
+
+  /* Surfaces */
+  --um-color-background: #FFFFFF;
+  --um-color-background-secondary: #FAFAFA;
+  --um-color-background-tertiary: #F5F5F4;
+  --um-color-surface: #FFFFFF;
+  --um-color-surface-hover: #F9FAFB;
+  --um-color-surface-active: #F3F4F6;
+
+  /* Text */
+  --um-color-text: #0A0A0A;
+  --um-color-text-secondary: #525252;
+  --um-color-text-muted: #737373;
+  --um-color-text-subtle: #A3A3A3;
+  --um-color-text-inverse: #FFFFFF;
+
+  /* Borders */
+  --um-color-border: #E5E5E5;
+  --um-color-border-subtle: rgba(0, 0, 0, 0.06);
+  --um-color-border-strong: #D4D4D4;
+  --um-color-border-focus: #0A0A0A;
+
+  /* Interactive */
+  --um-color-primary: #0A0A0A;
+  --um-color-primary-hover: #171717;
+  --um-color-primary-active: #262626;
+  --um-color-secondary: #F5F5F4;
+  --um-color-secondary-hover: #E7E5E4;
+  --um-color-secondary-active: #D6D3D1;
+
+  /* Legacy compatibility */
+  --um-text-primary: var(--um-color-text);
+  --um-text-muted: var(--um-color-text-muted);
+  --um-text-subtle: var(--um-color-text-subtle);
+  --um-border: var(--um-color-border);
+  --um-border-subtle: var(--um-color-border-subtle);
+  --um-bg-primary: var(--um-color-background);
+  --um-bg-secondary: var(--um-color-background-secondary);
+  --um-bg-card: var(--um-color-surface);
+
+  /* =========================================================================
+     STATUS COLORS (Same across themes)
+     ========================================================================= */
+  --um-color-success: #10B981;
+  --um-color-success-light: #D1FAE5;
+  --um-color-success-dark: #065F46;
+  --um-color-warning: #F59E0B;
+  --um-color-warning-light: #FEF3C7;
+  --um-color-warning-dark: #92400E;
+  --um-color-error: #EF4444;
+  --um-color-error-light: #FEE2E2;
+  --um-color-error-dark: #991B1B;
+  --um-color-info: #3B82F6;
+  --um-color-info-light: #DBEAFE;
+  --um-color-info-dark: #1E40AF;
+
+  /* =========================================================================
+     BORDER RADIUS
+     ========================================================================= */
+  --um-radius-none: 0;
+  --um-radius-sm: 6px;
+  --um-radius-md: 8px;
+  --um-radius-lg: 12px;
+  --um-radius-xl: 16px;
+  --um-radius-2xl: 20px;
+  --um-radius-3xl: 24px;
   --um-radius-full: 9999px;
 
-  /* Spacing tokens */
+  /* Semantic radius */
+  --um-radius-button: 12px;
+  --um-radius-button-pill: 9999px;
+  --um-radius-input: 12px;
+  --um-radius-card: 12px;
+  --um-radius-card-lg: 16px;
+  --um-radius-drawer: 16px;
+  --um-radius-drawer-mobile: 28px;
+  --um-radius-modal: 16px;
+  --um-radius-badge: 9999px;
+  --um-radius-tag: 8px;
+  --um-radius-tooltip: 8px;
+
+  /* =========================================================================
+     SPACING - Semantic Tokens
+     ========================================================================= */
+  /* Base scale */
+  --um-space-0: 0;
+  --um-space-1: 4px;
+  --um-space-2: 8px;
+  --um-space-3: 12px;
+  --um-space-4: 16px;
+  --um-space-5: 20px;
+  --um-space-6: 24px;
+  --um-space-8: 32px;
+  --um-space-10: 40px;
+  --um-space-12: 48px;
+  --um-space-16: 64px;
+
+  /* Semantic spacing */
+  --um-space-component-gap: 16px;
+  --um-space-component-padding: 16px;
+  --um-space-component-margin: 24px;
+  --um-space-section-gap: 48px;
+  --um-space-section-padding: 32px;
+  --um-space-section-margin: 64px;
+  --um-space-card-padding: 16px;
+  --um-space-card-padding-lg: 24px;
+  --um-space-card-gap: 12px;
+  --um-space-page-gutter-mobile: 24px;
+  --um-space-page-gutter-desktop: 40px;
+  --um-space-page-max-width: 1280px;
+
+  /* Stack (vertical) */
+  --um-space-stack-xs: 4px;
+  --um-space-stack-sm: 8px;
+  --um-space-stack-md: 16px;
+  --um-space-stack-lg: 24px;
+  --um-space-stack-xl: 32px;
+
+  /* Inline (horizontal) */
+  --um-space-inline-xs: 4px;
+  --um-space-inline-sm: 8px;
+  --um-space-inline-md: 12px;
+  --um-space-inline-lg: 16px;
+  --um-space-inline-xl: 24px;
+
+  /* Legacy compatibility */
   --um-space-xs: 8px;
   --um-space-sm: 12px;
   --um-space-md: 16px;
@@ -15,26 +141,156 @@
   --um-space-xl: 32px;
   --um-space-xxl: 48px;
 
-  /* Color tokens */
-  --um-text-primary: #000000;
-  --um-text-muted: #6B7280;
-  --um-text-subtle: #9CA3AF;
-  --um-border: #E5E7EB;
-  --um-border-subtle: rgba(0, 0, 0, 0.08);
-  --um-bg-primary: #FFFFFF;
-  --um-bg-secondary: #F9FAFB;
-  --um-bg-card: #FFFFFF;
+  /* =========================================================================
+     SHADOWS - 4-Level System
+     ========================================================================= */
+  --um-shadow-none: none;
+  --um-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --um-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --um-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --um-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --um-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  --um-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
+
+  /* Semantic shadows */
+  --um-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --um-shadow-card-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --um-shadow-dropdown: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --um-shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --um-shadow-drawer: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  /* =========================================================================
+     MOTION - Animation Tokens
+     ========================================================================= */
+  --um-duration-instant: 0ms;
+  --um-duration-fast: 150ms;
+  --um-duration-normal: 200ms;
+  --um-duration-slow: 300ms;
+  --um-duration-slower: 500ms;
+
+  --um-ease-linear: linear;
+  --um-ease-out: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --um-ease-in: cubic-bezier(0.4, 0.0, 1, 1);
+  --um-ease-in-out: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --um-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --um-ease-smooth: cubic-bezier(0.32, 0.72, 0, 1);
+  --um-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* Pre-composed transitions */
+  --um-transition-fast: 150ms cubic-bezier(0.0, 0.0, 0.2, 1);
+  --um-transition-normal: 200ms cubic-bezier(0.0, 0.0, 0.2, 1);
+  --um-transition-slow: 300ms cubic-bezier(0.32, 0.72, 0, 1);
+  --um-transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* =========================================================================
+     Z-INDEX
+     ========================================================================= */
+  --um-z-hide: -1;
+  --um-z-base: 0;
+  --um-z-raised: 1;
+  --um-z-dropdown: 10;
+  --um-z-sticky: 20;
+  --um-z-header: 30;
+  --um-z-overlay: 40;
+  --um-z-modal: 50;
+  --um-z-drawer: 50;
+  --um-z-popover: 60;
+  --um-z-tooltip: 70;
+  --um-z-toast: 80;
+  --um-z-max: 9999;
+
+  /* =========================================================================
+     FORM TOKENS
+     ========================================================================= */
+  --um-form-height-sm: 32px;
+  --um-form-height-md: 40px;
+  --um-form-height-lg: 48px;
+  --um-form-padding-x-sm: 12px;
+  --um-form-padding-x-md: 16px;
+  --um-form-padding-x-lg: 20px;
+  --um-form-font-size-sm: 13px;
+  --um-form-font-size-md: 14px;
+  --um-form-font-size-lg: 16px;
+  --um-form-border-width: 1px;
+  --um-form-focus-ring-width: 2px;
+  --um-form-focus-ring-offset: 2px;
+
+  /* =========================================================================
+     ICON SIZES
+     ========================================================================= */
+  --um-icon-xs: 12px;
+  --um-icon-sm: 16px;
+  --um-icon-md: 20px;
+  --um-icon-lg: 24px;
+  --um-icon-xl: 28px;
+  --um-icon-2xl: 32px;
+
+  /* =========================================================================
+     FOCUS INDICATORS
+     ========================================================================= */
+  --um-focus-ring-width: 2px;
+  --um-focus-ring-offset: 2px;
+  --um-focus-ring-color: rgba(10, 10, 10, 1);
 }
 
+/* =============================================================================
+   DARK MODE - Adaptive Palette (Cooler Grays)
+   ============================================================================= */
 .dark {
-  --um-text-primary: #FFFFFF;
-  --um-text-muted: #9CA3AF;
-  --um-text-subtle: #6B7280;
-  --um-border: #1F2937;
-  --um-border-subtle: rgba(255, 255, 255, 0.08);
-  --um-bg-primary: #0F1117;
-  --um-bg-secondary: #1A1C1F;
-  --um-bg-card: #1A1C1F;
+  /* Surfaces */
+  --um-color-background: #0C0C0D;
+  --um-color-background-secondary: #141416;
+  --um-color-background-tertiary: #1A1A1D;
+  --um-color-surface: #18181B;
+  --um-color-surface-hover: #1F1F23;
+  --um-color-surface-active: #27272A;
+
+  /* Text */
+  --um-color-text: #FAFAFA;
+  --um-color-text-secondary: #D4D4D8;
+  --um-color-text-muted: #A1A1AA;
+  --um-color-text-subtle: #71717A;
+  --um-color-text-inverse: #0A0A0A;
+
+  /* Borders */
+  --um-color-border: #27272A;
+  --um-color-border-subtle: rgba(255, 255, 255, 0.06);
+  --um-color-border-strong: #3F3F46;
+  --um-color-border-focus: #FAFAFA;
+
+  /* Interactive */
+  --um-color-primary: #FAFAFA;
+  --um-color-primary-hover: #E4E4E7;
+  --um-color-primary-active: #D4D4D8;
+  --um-color-secondary: #27272A;
+  --um-color-secondary-hover: #3F3F46;
+  --um-color-secondary-active: #52525B;
+
+  /* Legacy compatibility */
+  --um-text-primary: var(--um-color-text);
+  --um-text-muted: var(--um-color-text-muted);
+  --um-text-subtle: var(--um-color-text-subtle);
+  --um-border: var(--um-color-border);
+  --um-border-subtle: var(--um-color-border-subtle);
+  --um-bg-primary: var(--um-color-background);
+  --um-bg-secondary: var(--um-color-background-secondary);
+  --um-bg-card: var(--um-color-surface);
+
+  /* Dark mode shadows (stronger for contrast) */
+  --um-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --um-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --um-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --um-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --um-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+  --um-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+  --um-shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.2);
+  --um-shadow-card-hover: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --um-shadow-dropdown: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
+  --um-shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+  --um-shadow-drawer: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+
+  /* Dark mode focus */
+  --um-focus-ring-color: rgba(250, 250, 250, 1);
 }
 
 /* ============================================

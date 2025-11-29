@@ -75,6 +75,7 @@
 @import "../styles/layout.css";
 @import "../styles/image-system.css";
 @import "../styles/tokens.css";
+@import "../styles/typography.css";
 
 /* Highlight animation for trip items */
 @keyframes highlightPulse {
@@ -719,6 +720,74 @@
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white focus-visible:ring-offset-2;
   }
 
+  /* ==========================================================================
+     CUSTOM FOCUS INDICATORS - Component-specific focus styles
+     ========================================================================== */
+
+  /* Button focus - ring + subtle scale */
+  .focus-button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--um-color-background), 0 0 0 4px var(--um-focus-ring-color);
+    transform: scale(0.98);
+  }
+
+  /* Card focus - border highlight + slight lift */
+  .focus-card:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--um-focus-ring-color), var(--um-shadow-card-hover);
+    transform: translateY(-2px);
+  }
+
+  /* Input focus - ring + border color change */
+  .focus-input:focus-visible {
+    outline: none;
+    border-color: var(--um-color-border-focus);
+    box-shadow: 0 0 0 var(--um-form-focus-ring-width) var(--um-focus-ring-color);
+  }
+
+  /* Link focus - underline + color shift */
+  .focus-link:focus-visible {
+    outline: none;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+    background-color: var(--um-color-surface-hover);
+    border-radius: 2px;
+  }
+
+  /* Icon button focus - ring on circular */
+  .focus-icon:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--um-color-background), 0 0 0 4px var(--um-focus-ring-color);
+  }
+
+  /* Pill/Tag focus - ring with full radius */
+  .focus-pill:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--um-color-background), 0 0 0 4px var(--um-focus-ring-color);
+  }
+
+  /* Drawer/Modal focus trap indicator */
+  .focus-modal:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--um-focus-ring-color);
+  }
+
+  /* Skip link focus - visible when focused */
+  .focus-skip:focus {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: var(--um-z-max);
+    padding: 12px 24px;
+    background: var(--um-color-primary);
+    color: var(--um-color-text-inverse);
+    border-radius: var(--um-radius-button);
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: var(--um-shadow-lg);
+  }
+
   /* Card hover effects - refined */
   .card-hover {
     @apply transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:shadow-md;
@@ -1037,5 +1106,268 @@ html {
 
   abbr[title]::after {
     content: " (" attr(title) ")";
+  }
+}
+
+/* =============================================================================
+   MOBILE-FIRST RESPONSIVE UTILITIES
+   Consistent responsive patterns for cohesive mobile experience
+   ============================================================================= */
+
+/* Mobile page container - consistent gutters */
+.page-container {
+  width: 100%;
+  padding-left: var(--um-space-page-gutter-mobile);
+  padding-right: var(--um-space-page-gutter-mobile);
+}
+
+@media (min-width: 768px) {
+  .page-container {
+    padding-left: var(--um-space-page-gutter-desktop);
+    padding-right: var(--um-space-page-gutter-desktop);
+  }
+}
+
+/* Responsive grid - consistent column pattern */
+.grid-responsive {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--um-space-4);
+}
+
+@media (min-width: 640px) {
+  .grid-responsive {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .grid-responsive {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--um-space-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-responsive {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid-responsive {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1536px) {
+  .grid-responsive {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+/* Mobile stack - vertical on mobile, horizontal on larger screens */
+.stack-responsive {
+  display: flex;
+  flex-direction: column;
+  gap: var(--um-space-4);
+}
+
+@media (min-width: 768px) {
+  .stack-responsive {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* Mobile text sizing */
+.text-responsive-display {
+  font-size: 36px;
+  line-height: 1.15;
+}
+
+@media (min-width: 768px) {
+  .text-responsive-display {
+    font-size: 48px;
+    line-height: 1.1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-responsive-display {
+    font-size: 64px;
+    line-height: 1.05;
+  }
+}
+
+.text-responsive-title {
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+@media (min-width: 768px) {
+  .text-responsive-title {
+    font-size: 30px;
+    line-height: 1.2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .text-responsive-title {
+    font-size: 36px;
+  }
+}
+
+/* Mobile spacing utilities */
+.section-spacing {
+  padding-top: var(--um-space-12);
+  padding-bottom: var(--um-space-12);
+}
+
+@media (min-width: 768px) {
+  .section-spacing {
+    padding-top: var(--um-space-16);
+    padding-bottom: var(--um-space-16);
+  }
+}
+
+/* Mobile-optimized button group */
+.button-group-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--um-space-3);
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .button-group-mobile {
+    flex-direction: row;
+    width: auto;
+  }
+}
+
+/* Hide on mobile / show on desktop */
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .hide-mobile {
+    display: block;
+  }
+}
+
+.hide-desktop {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .hide-desktop {
+    display: none;
+  }
+}
+
+/* Mobile card optimizations */
+.card-mobile {
+  border-radius: var(--um-radius-lg);
+}
+
+@media (min-width: 768px) {
+  .card-mobile {
+    border-radius: var(--um-radius-card-lg);
+  }
+}
+
+/* Mobile drawer adjustments */
+@media (max-width: 767px) {
+  .drawer-mobile-full {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* Mobile navigation adjustments */
+.nav-mobile {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--um-z-header);
+  background: var(--um-color-background);
+  border-top: 1px solid var(--um-color-border);
+  padding: var(--um-space-2) var(--um-space-4);
+  padding-bottom: calc(var(--um-space-2) + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .nav-mobile {
+    display: none;
+  }
+}
+
+/* Sticky header mobile */
+.header-sticky {
+  position: sticky;
+  top: 0;
+  z-index: var(--um-z-header);
+  background: var(--um-color-background);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Mobile form optimizations */
+@media (max-width: 767px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    font-size: 16px !important; /* Prevents iOS zoom */
+    min-height: var(--um-form-height-lg); /* Larger touch targets */
+  }
+}
+
+/* Mobile scroll snap for carousels */
+.scroll-snap-x {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scroll-snap-x::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-snap-item {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Mobile pull-to-refresh indicator area */
+.ptr-area {
+  padding-top: env(safe-area-inset-top);
+  min-height: 44px;
+}
+
+/* Mobile full-bleed images */
+.full-bleed-mobile {
+  margin-left: calc(-1 * var(--um-space-page-gutter-mobile));
+  margin-right: calc(-1 * var(--um-space-page-gutter-mobile));
+  width: calc(100% + 2 * var(--um-space-page-gutter-mobile));
+}
+
+@media (min-width: 768px) {
+  .full-bleed-mobile {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    border-radius: var(--um-radius-card-lg);
   }
 }
