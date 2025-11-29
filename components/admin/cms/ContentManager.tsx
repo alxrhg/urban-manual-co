@@ -718,7 +718,7 @@ function GridView({
           {/* Selection overlay */}
           <div className={`absolute inset-0 z-10 pointer-events-none rounded-lg transition-all ${
             selectedItems.has(dest.id!)
-              ? 'ring-2 ring-black dark:ring-white'
+              ? 'ring-1 ring-gray-400 dark:ring-gray-500 bg-black/5 dark:bg-white/5'
               : ''
           }`} />
 
