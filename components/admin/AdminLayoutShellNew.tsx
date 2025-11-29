@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AdminSidebar } from './AdminSidebar';
 
-export default function AdminLayoutShell({ children }: { children: ReactNode }) {
+export default function AdminLayoutShellNew({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { user, loading } = useAuth();
 
