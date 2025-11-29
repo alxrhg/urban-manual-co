@@ -1,24 +1,55 @@
 /**
  * Admin Reindex Destinations API Route
- * 
+ *
  * POST /api/admin/reindex-destinations
- * 
+ *
  * Upserts destination embeddings to Upstash Vector.
  * Can reindex all destinations or only changed ones.
+ *
+ * Requires admin authentication.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
 import { generateDestinationEmbedding } from '@/lib/ml/embeddings';
 import { batchUpsertDestinationEmbeddings } from '@/lib/upstash-vector';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+import { requireAdmin, AuthError } from '@/lib/adminAuth';
+import {
+  adminRatelimit,
+  memoryAdminRatelimit,
+  getIdentifier,
+  createRateLimitResponse,
+  isUpstashConfigured,
+} from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
+    // Require admin authentication
+    const { user, serviceClient: supabase } = await requireAdmin(request);
+
+    // Apply rate limiting
+    const identifier = getIdentifier(request, user.id);
+    const ratelimit = isUpstashConfigured() ? adminRatelimit : memoryAdminRatelimit;
+    const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse(
+        'Admin rate limit exceeded. Please wait before retrying.',
+        limit,
+        remaining,
+        reset
+      );
+    }
+
     const body = await request.json();
     const { mode = 'changed', batchSize = 10 } = body;
+
+    // Validate batchSize range
+    if (typeof batchSize !== 'number' || batchSize < 1 || batchSize > 100) {
+      return NextResponse.json(
+        { error: 'batchSize must be a number between 1 and 100' },
+        { status: 400 }
+      );
+    }
 
     // Validate mode
     if (!['all', 'changed'].includes(mode)) {
@@ -27,8 +58,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Step 1: Fetch destinations to reindex
     let query = supabase
@@ -136,11 +165,19 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
+    // Handle authentication errors
+    if (error instanceof AuthError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+
     console.error('Reindex error:', error);
     return NextResponse.json(
-      { 
-        error: 'Internal server error', 
-        message: error instanceof Error ? error.message : 'Unknown error'
+      {
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

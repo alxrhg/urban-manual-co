@@ -87,6 +87,22 @@ export const authRatelimit = new Ratelimit({
   prefix: "ratelimit:auth",
 });
 
+// Admin endpoints: 10 requests per minute (expensive operations)
+export const adminRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(10, "60 s"),
+  analytics: true,
+  prefix: "ratelimit:admin",
+});
+
+// External API proxy: 30 requests per minute
+export const proxyRatelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(30, "60 s"),
+  analytics: true,
+  prefix: "ratelimit:proxy",
+});
+
 /**
  * Extract identifier for rate limiting
  * Priority: user ID > IP address > forwarded IP > fallback
@@ -198,6 +214,8 @@ export const memoryConversationRatelimit = new MemoryRatelimit(5, 10000);
 export const memorySearchRatelimit = new MemoryRatelimit(20, 10000);
 export const memoryUploadRatelimit = new MemoryRatelimit(3, 60000);
 export const memoryAuthRatelimit = new MemoryRatelimit(5, 60000);
+export const memoryAdminRatelimit = new MemoryRatelimit(10, 60000);
+export const memoryProxyRatelimit = new MemoryRatelimit(30, 60000);
 
 /**
  * Check if Upstash is configured
