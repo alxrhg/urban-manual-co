@@ -27,6 +27,7 @@ import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import MapDrawer from '@/components/trip/MapDrawer';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
+import AddPlaceBox from '@/components/trip/AddPlaceBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import LocalEvents from '@/components/trip/LocalEvents';
 import {
@@ -79,6 +80,7 @@ export default function TripPage() {
   const [checklistItems, setChecklistItems] = useState<{ id: string; text: string; checked: boolean }[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState('');
   const [warnings, setWarnings] = useState<PlannerWarning[]>([]);
+  const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
 
   // Extract flights and hotels from itinerary
   const flights = useMemo(() => {
@@ -351,7 +353,6 @@ export default function TripPage() {
   ) => {
     const dest = destination as { id: number; slug: string; name: string; category: string };
     if (dest && dest.slug) {
-      // Create minimal Destination object for addPlace
       const fullDest: Destination = {
         id: dest.id,
         slug: dest.slug,
@@ -370,7 +371,6 @@ export default function TripPage() {
     day: number;
     startTime: string;
   }) => {
-    // Create minimal Destination object for addPlace
     const fullDest: Destination = {
       id: suggestion.destination.id,
       slug: suggestion.destination.slug,
@@ -555,7 +555,7 @@ export default function TripPage() {
                 {isAIPlanning ? 'Planning...' : 'Auto-plan'}
               </button>
               <button
-                onClick={() => openPlaceSelector(selectedDayNumber)}
+                onClick={() => setShowAddPlaceBox(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-stone-200 dark:border-gray-800 rounded-full hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Plus className="w-3 h-3" />
@@ -612,8 +612,58 @@ export default function TripPage() {
                   ))}
                 </div>
 
-                {/* AI Sidebar (Desktop) */}
+                {/* Sidebar (Desktop) */}
                 <div className="hidden lg:block lg:w-80 lg:flex-shrink-0 space-y-4">
+                  {showAddPlaceBox ? (
+                    <AddPlaceBox
+                      city={trip.destination}
+                      dayNumber={selectedDayNumber}
+                      onSelect={(destination) => {
+                        addPlace(destination, selectedDayNumber);
+                        setShowAddPlaceBox(false);
+                      }}
+                      onClose={() => setShowAddPlaceBox(false)}
+                    />
+                  ) : (
+                    <>
+                      <SmartSuggestions
+                        days={days}
+                        destination={trip.destination}
+                        selectedDayNumber={selectedDayNumber}
+                        onAddPlace={openPlaceSelector}
+                        onAddAISuggestion={handleAddAISuggestion}
+                        onAddFromNL={handleAddFromNL}
+                      />
+                      {trip.start_date && (
+                        <LocalEvents
+                          city={trip.destination || ''}
+                          startDate={trip.start_date}
+                          endDate={trip.end_date}
+                          onAddToTrip={() => {
+                            openPlaceSelector(selectedDayNumber);
+                          }}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Mobile Section */}
+            {days.length > 0 && (
+              <div className="lg:hidden mt-6 space-y-4">
+                {showAddPlaceBox ? (
+                  <AddPlaceBox
+                    city={trip.destination}
+                    dayNumber={selectedDayNumber}
+                    onSelect={(destination) => {
+                      addPlace(destination, selectedDayNumber);
+                      setShowAddPlaceBox(false);
+                    }}
+                    onClose={() => setShowAddPlaceBox(false)}
+                  />
+                ) : (
                   <SmartSuggestions
                     days={days}
                     destination={trip.destination}
@@ -622,32 +672,7 @@ export default function TripPage() {
                     onAddAISuggestion={handleAddAISuggestion}
                     onAddFromNL={handleAddFromNL}
                   />
-                  {trip.start_date && (
-                    <LocalEvents
-                      city={trip.destination || ''}
-                      startDate={trip.start_date}
-                      endDate={trip.end_date}
-                      onAddToTrip={(event) => {
-                        // Add event as custom item
-                        openPlaceSelector(selectedDayNumber);
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Mobile AI Section (collapsible) */}
-            {days.length > 0 && (
-              <div className="lg:hidden mt-6 space-y-4">
-                <SmartSuggestions
-                  days={days}
-                  destination={trip.destination}
-                  selectedDayNumber={selectedDayNumber}
-                  onAddPlace={openPlaceSelector}
-                  onAddAISuggestion={handleAddAISuggestion}
-                  onAddFromNL={handleAddFromNL}
-                />
+                )}
               </div>
             )}
           </div>
