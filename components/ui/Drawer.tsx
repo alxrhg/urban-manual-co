@@ -273,6 +273,10 @@ export function Drawer({
 
   if (!isOpen && !keepStateOnClose) return null;
 
+  // Don't render anything until mounted to prevent hydration mismatches
+  // This ensures server and client render the same content initially
+  if (!isMounted) return null;
+
   const renderHeader = () => {
     if (!title && !headerContent) return null;
     return (
@@ -355,8 +359,8 @@ export function Drawer({
         </div>
       )}
 
-      {/* Side Drawer (Mobile Side & Desktop) - Only render after mount to avoid hydration mismatch */}
-      {isMounted && (mobileVariant === 'side' || !isMobile) && (
+      {/* Side Drawer (Mobile Side & Desktop) */}
+      {(mobileVariant === 'side' || !isMobile) && (
         <div
           ref={isDesktop ? desktopRef : (isTablet ? tabletRef : mobileSideRef)}
           className={`
