@@ -219,7 +219,7 @@ export function AvatarImage({
 /**
  * Background image with gradient overlay
  */
-interface BackgroundImageProps extends Omit<LazyImageProps, 'fill'> {
+interface BackgroundImageProps extends Omit<LazyImageProps, 'fill' | 'height' | 'width'> {
   /** Gradient overlay */
   gradient?: string;
   /** Children to render over the image */
