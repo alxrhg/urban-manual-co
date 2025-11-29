@@ -1,12 +1,43 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import { generateContextualGreeting, generateContextualPlaceholder, type GreetingContext } from '@/lib/greetings';
 import { UserProfile } from '@/types/personalization';
 import { JourneyInsights } from '@/lib/greetings/journey-tracker';
 import { RecentAchievement } from '@/lib/greetings/achievement-helper';
 import { GreetingWeatherData } from '@/lib/greetings/weather-helper';
+
+// Typewriter hook for animated text
+function useTypewriter(text: string, speed: number = 50, delay: number = 300) {
+  const [displayedText, setDisplayedText] = useState('');
+  const [isComplete, setIsComplete] = useState(false);
+
+  useEffect(() => {
+    setDisplayedText('');
+    setIsComplete(false);
+
+    const startTimeout = setTimeout(() => {
+      let currentIndex = 0;
+
+      const typeInterval = setInterval(() => {
+        if (currentIndex < text.length) {
+          setDisplayedText(text.slice(0, currentIndex + 1));
+          currentIndex++;
+        } else {
+          clearInterval(typeInterval);
+          setIsComplete(true);
+        }
+      }, speed);
+
+      return () => clearInterval(typeInterval);
+    }, delay);
+
+    return () => clearTimeout(startTimeout);
+  }, [text, speed, delay]);
+
+  return { displayedText, isComplete };
+}
 
 interface GreetingHeroProps {
   searchQuery: string;
@@ -85,6 +116,24 @@ export default function GreetingHero({
 
   const { greeting } = generateContextualGreeting(greetingContext);
 
+  // Generate the full greeting text for typewriter
+  const fullGreetingText = useMemo(() => {
+    const now = new Date();
+    const currentHour = now.getHours();
+    let timeGreeting = "GOOD EVENING";
+    if (currentHour < 12) timeGreeting = "GOOD MORNING";
+    else if (currentHour < 18) timeGreeting = "GOOD AFTERNOON";
+
+    return userName ? `${timeGreeting}, ${userName.toUpperCase()}` : timeGreeting;
+  }, [userName]);
+
+  // Typewriter animation for greeting
+  const { displayedText: typedGreeting, isComplete: greetingComplete } = useTypewriter(
+    fullGreetingText,
+    60, // speed - ms per character
+    200  // initial delay
+  );
+
   // Rotating placeholders - Step One spec
   const [isInputFocused, setIsInputFocused] = useState(false);
   const aiPlaceholders = [
@@ -157,34 +206,44 @@ export default function GreetingHero({
   return (
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="w-full relative">
-        {/* Greeting above search - Step One spec: "GOOD MORNING, {{user_name}}" */}
+        {/* Greeting above search - Typewriter animation */}
         {showGreeting && (
           <div className="text-left mb-[50px]">
             <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
-              {(() => {
-                const now = new Date();
-                const currentHour = now.getHours();
-                let timeGreeting = "GOOD EVENING";
-                if (currentHour < 12) timeGreeting = "GOOD MORNING";
-                else if (currentHour < 18) timeGreeting = "GOOD AFTERNOON";
-                
-                return userName ? `${timeGreeting}, ${userName.toUpperCase()}` : timeGreeting;
-              })()}
+              <span className="inline-block">
+                {typedGreeting}
+                {/* Blinking cursor while typing */}
+                {!greetingComplete && (
+                  <span className="inline-block w-[2px] h-[12px] bg-gray-400 ml-[2px] animate-blink align-middle" />
+                )}
+              </span>
             </h1>
           </div>
         )}
 
-        {/* Borderless Text Input - Lovably style (no icon, no border, left-aligned) */}
+        {/* Borderless Text Input - Minimal editorial style with shimmering placeholder */}
         <div className="relative mb-[50px]">
           {isSearching && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 z-10">
               <Loader2 className="w-4 h-4 animate-spin" />
             </div>
           )}
-          <div className={`relative w-full ${!searchQuery ? 'search-input-shimmer' : ''}`}>
+          <div className="relative w-full">
+            {/* Shimmering placeholder text overlay */}
+            {!searchQuery && !isInputFocused && (
+              <div
+                className="absolute left-0 top-0 pointer-events-none text-xs uppercase tracking-[2px] font-medium z-0 shimmer-text"
+                style={{
+                  paddingLeft: isSearching ? '32px' : '0'
+                }}
+                aria-hidden="true"
+              >
+                {isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything"}
+              </div>
+            )}
             <input
               ref={inputRef}
-              placeholder={isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything"}
+              placeholder={isInputFocused ? (isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything") : ""}
               value={searchQuery}
               onChange={(e) => {
                 handleInputChange(e.target.value);
@@ -205,7 +264,7 @@ export default function GreetingHero({
                   }
                 }
               }}
-              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60 relative z-10"
+              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 relative z-10"
               style={{
                 paddingLeft: isSearching ? '32px' : '0'
               }}
@@ -213,26 +272,26 @@ export default function GreetingHero({
             {/* Typing Indicator - Minimal, editorial style */}
             {isTyping && searchQuery.length > 0 && !isSearching && (
               <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-                <span 
+                <span
                   className="w-0.5 h-0.5 bg-gray-400 rounded-full opacity-60"
-                  style={{ 
+                  style={{
                     animation: 'typing-dot 1.4s ease-in-out infinite',
                     animationDelay: '0ms'
-                  }} 
+                  }}
                 />
-                <span 
+                <span
                   className="w-0.5 h-0.5 bg-gray-400 rounded-full opacity-60"
-                  style={{ 
+                  style={{
                     animation: 'typing-dot 1.4s ease-in-out infinite',
                     animationDelay: '200ms'
-                  }} 
+                  }}
                 />
-                <span 
+                <span
                   className="w-0.5 h-0.5 bg-gray-400 rounded-full opacity-60"
-                  style={{ 
+                  style={{
                     animation: 'typing-dot 1.4s ease-in-out infinite',
                     animationDelay: '400ms'
-                  }} 
+                  }}
                 />
               </div>
             )}

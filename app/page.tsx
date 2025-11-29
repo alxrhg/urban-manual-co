@@ -70,6 +70,7 @@ import { useDestinationLoading } from '@/hooks/useDestinationLoading';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 import { AIAssistant } from '@/components/AIAssistant';
+import { ScrollToTop } from '@/components/ScrollToTop';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -2468,7 +2469,7 @@ export default function Home() {
           The Urban Manual
         </h1>
         {/* Hero Section - Separate section, never overlaps with grid */}
-        <section className="min-h-[65vh] flex flex-col px-6 md:px-10 py-12 pb-8 md:pb-12">
+        <section className="min-h-[50vh] flex flex-col px-6 md:px-10 py-10 pb-6 md:pb-10">
           <div className="w-full flex md:justify-start flex-1 items-center">
             <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
               {/* Greeting - Always vertically centered */}
@@ -3553,6 +3554,7 @@ export default function Home() {
           />
         )}
         <AIAssistant />
+        <ScrollToTop threshold={400} />
       </main>
     </ErrorBoundary>
   );
