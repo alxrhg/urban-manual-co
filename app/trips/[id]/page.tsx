@@ -913,7 +913,7 @@ export default function TripPage() {
         onAddPlace={() => openPlaceSelector(selectedDayNumber)}
         onAddFlight={() => openFlightDrawer(selectedDayNumber)}
         onAddNote={() => openDrawer('trip-notes', { tripId: trip.id })}
-        onOpenMap={() => setIsMapOpen(true)}
+        onOpenMap={() => setShowMapBox(true)}
         onAIPlan={handleAITripPlanning}
         isAIPlanning={isAIPlanning}
         isSaving={saving}
