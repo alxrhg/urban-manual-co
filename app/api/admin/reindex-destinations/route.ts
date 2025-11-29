@@ -13,11 +13,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateDestinationEmbedding } from '@/lib/ml/embeddings';
 import { batchUpsertDestinationEmbeddings } from '@/lib/upstash-vector';
 import { requireAdmin, AuthError } from '@/lib/adminAuth';
+import {
+  adminRatelimit,
+  memoryAdminRatelimit,
+  getIdentifier,
+  createRateLimitResponse,
+  isUpstashConfigured,
+} from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
     // Require admin authentication
-    const { serviceClient: supabase } = await requireAdmin(request);
+    const { user, serviceClient: supabase } = await requireAdmin(request);
+
+    // Apply rate limiting
+    const identifier = getIdentifier(request, user.id);
+    const ratelimit = isUpstashConfigured() ? adminRatelimit : memoryAdminRatelimit;
+    const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse(
+        'Admin rate limit exceeded. Please wait before retrying.',
+        limit,
+        remaining,
+        reset
+      );
+    }
 
     const body = await request.json();
     const { mode = 'changed', batchSize = 10 } = body;

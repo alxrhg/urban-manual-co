@@ -1,12 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/adminAuth';
+import { requireAdmin, AuthError } from '@/lib/adminAuth';
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createSanityClient } from '@sanity/client';
+import {
+  adminRatelimit,
+  memoryAdminRatelimit,
+  getIdentifier,
+  createRateLimitResponse,
+  isUpstashConfigured,
+} from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
     // Verify admin authentication
     const { user } = await requireAdmin(request);
+
+    // Apply rate limiting
+    const identifier = getIdentifier(request, user.id);
+    const ratelimit = isUpstashConfigured() ? adminRatelimit : memoryAdminRatelimit;
+    const { success, limit, remaining, reset } = await ratelimit.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse(
+        'Admin rate limit exceeded. Please wait before retrying.',
+        limit,
+        remaining,
+        reset
+      );
+    }
 
     const body = await request.json();
     const { limit, slug, dryRun } = body;
@@ -183,16 +204,25 @@ export async function POST(request: NextRequest) {
         ? `Would ${stats.created > 0 ? 'create' : 'update'} ${stats.created + stats.updated} document(s)`
         : `Synced ${stats.created + stats.updated} document(s)`,
     });
-  } catch (error: any) {
-    if (error.status === 403 || error.status === 401) {
+  } catch (error: unknown) {
+    // Handle authentication errors
+    if (error instanceof AuthError) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: error.message },
         { status: error.status }
       );
     }
 
+    const err = error as { status?: number; message?: string };
+    if (err.status === 403 || err.status === 401) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: err.status }
+      );
+    }
+
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: err.message || 'Internal server error' },
       { status: 500 }
     );
   }
