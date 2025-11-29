@@ -23,19 +23,18 @@ export function AdminNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex gap-6 overflow-x-auto py-3 -mb-px">
+    <nav className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
       {NAV_LINKS.map((link) => {
         const active = isActive(pathname || '', link.href);
         return (
           <Link
             key={link.href}
             href={link.href}
-            className={`
-              text-sm whitespace-nowrap pb-3 border-b-2 transition-colors
-              ${active
-                ? 'text-black dark:text-white border-black dark:border-white'
-                : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300'}
-            `}
+            className={`transition-all ${
+              active
+                ? 'font-medium text-black dark:text-white'
+                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+            }`}
           >
             {link.label}
           </Link>

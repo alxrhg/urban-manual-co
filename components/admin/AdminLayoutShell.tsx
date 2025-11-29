@@ -22,49 +22,42 @@ export default function AdminLayoutShell({ children }: { children: ReactNode }) 
 
   if (loading || (!isAdmin && !loading)) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-950 px-6">
-        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-          Checking access...
-        </p>
-      </div>
+      <main className="w-full px-6 md:px-10 py-20">
+        <div className="min-h-[60vh] flex flex-col items-center justify-center">
+          <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+            Checking access...
+          </p>
+        </div>
+      </main>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-950">
-      <div className="max-w-[1400px] mx-auto px-6 md:px-10">
-        {/* Minimal Header */}
-        <header className="py-6 md:py-8 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex items-center justify-between">
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <div className="w-full">
+        {/* Header - Matches account page */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-light">Admin</h1>
             <Link
-              href="/admin"
-              className="text-sm font-medium text-black dark:text-white hover:opacity-70 transition-opacity"
+              href="/"
+              className="text-xs font-medium text-gray-500 hover:text-black dark:hover:text-white transition-colors"
             >
-              Admin
+              Exit
             </Link>
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-gray-400">{user?.email}</span>
-              <Link
-                href="/"
-                className="text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-              >
-                Exit
-              </Link>
-            </div>
           </div>
-        </header>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
+        </div>
 
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-200 dark:border-gray-800">
+        {/* Tab Navigation - Matches account page */}
+        <div className="mb-12">
           <AdminNav />
         </div>
 
         {/* Content */}
-        <main className="py-8">
-          {children}
-        </main>
+        {children}
       </div>
-    </div>
+    </main>
   );
 }

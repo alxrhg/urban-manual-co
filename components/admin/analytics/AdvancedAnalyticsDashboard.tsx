@@ -1,44 +1,25 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  BarChart3,
-  Users,
-  Eye,
-  MousePointerClick,
-  TrendingUp,
-  Calendar,
-  Download,
-  RefreshCw,
-  Globe,
-  Search,
-  Bookmark,
-  Map,
-} from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { AnalyticsChart } from './AnalyticsChart';
-import { MetricCard } from './MetricCard';
 
 interface AnalyticsData {
   totalViews: number;
   totalSearches: number;
   totalSaves: number;
   totalUsers: number;
-  avgEngagement: number;
-  conversionRate: number;
   viewsTrend: number;
   searchesTrend: number;
   savesTrend: number;
-  usersTrend: number;
   dailyViews: { label: string; value: number }[];
-  dailySearches: { label: string; value: number }[];
   topDestinations: { name: string; city: string; views: number; saves: number }[];
   topSearches: { query: string; count: number }[];
-  geoDistribution: { country: string; count: number }[];
   categoryBreakdown: { category: string; count: number }[];
+  topCities: { city: string; count: number }[];
 }
 
-type DateRange = '7d' | '30d' | '90d' | 'all';
+type DateRange = '7d' | '30d' | '90d';
 
 export function AdvancedAnalyticsDashboard() {
   const [data, setData] = useState<AnalyticsData | null>(null);
@@ -49,14 +30,9 @@ export function AdvancedAnalyticsDashboard() {
   const fetchAnalytics = async () => {
     setRefreshing(true);
     try {
-      const daysAgo = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : dateRange === '90d' ? 90 : 365;
+      const daysAgo = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 90;
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysAgo);
-
-      // Fetch destinations stats
-      const { count: totalDestinations } = await supabase
-        .from('destinations')
-        .select('*', { count: 'exact', head: true });
 
       // Fetch user interactions
       const { data: interactions } = await supabase
@@ -65,16 +41,10 @@ export function AdvancedAnalyticsDashboard() {
         .gte('created_at', startDate.toISOString());
 
       // Fetch saved places
-      const { data: savedPlaces, count: totalSaves } = await supabase
+      const { count: totalSaves } = await supabase
         .from('saved_places')
-        .select('*', { count: 'exact' })
+        .select('*', { count: 'exact', head: true })
         .gte('saved_at', startDate.toISOString());
-
-      // Fetch visited places
-      const { data: visitedPlaces, count: totalVisits } = await supabase
-        .from('visited_places')
-        .select('*', { count: 'exact' })
-        .gte('visited_at', startDate.toISOString());
 
       // Fetch unique users
       const { data: uniqueUsers } = await supabase
@@ -85,24 +55,20 @@ export function AdvancedAnalyticsDashboard() {
       const uniqueUserIds = new Set(uniqueUsers?.map(u => u.user_id) || []);
 
       // Calculate daily data for charts
-      const dailyData: Record<string, { views: number; searches: number }> = {};
+      const dailyData: Record<string, { views: number }> = {};
       const days = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 14;
 
       for (let i = days - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
         const key = date.toISOString().split('T')[0];
-        dailyData[key] = { views: 0, searches: 0 };
+        dailyData[key] = { views: 0 };
       }
 
       interactions?.forEach(interaction => {
         const date = interaction.created_at.split('T')[0];
-        if (dailyData[date]) {
-          if (interaction.interaction_type === 'view') {
-            dailyData[date].views++;
-          } else if (interaction.interaction_type === 'search') {
-            dailyData[date].searches++;
-          }
+        if (dailyData[date] && interaction.interaction_type === 'view') {
+          dailyData[date].views++;
         }
       });
 
@@ -112,11 +78,6 @@ export function AdvancedAnalyticsDashboard() {
         .select('name, city, views_count, saves_count')
         .order('views_count', { ascending: false })
         .limit(10);
-
-      // Fetch top searches from interactions
-      const searchInteractions = interactions?.filter(i => i.interaction_type === 'search') || [];
-      const searchCounts: Record<string, number> = {};
-      // Note: In a real implementation, you'd have search queries stored
 
       // Fetch category breakdown
       const { data: categories } = await supabase
@@ -130,7 +91,23 @@ export function AdvancedAnalyticsDashboard() {
         }
       });
 
-      // Calculate trends (comparing to previous period)
+      // Fetch city breakdown
+      const { data: cities } = await supabase
+        .from('destinations')
+        .select('city');
+
+      const cityCount: Record<string, number> = {};
+      cities?.forEach(d => {
+        if (d.city) {
+          cityCount[d.city] = (cityCount[d.city] || 0) + 1;
+        }
+      });
+
+      const topCities = Object.entries(cityCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([city, count]) => ({ city, count }));
+
       const viewCount = interactions?.filter(i => i.interaction_type === 'view').length || 0;
       const searchCount = interactions?.filter(i => i.interaction_type === 'search').length || 0;
 
@@ -139,19 +116,12 @@ export function AdvancedAnalyticsDashboard() {
         totalSearches: searchCount || Math.floor(Math.random() * 20000) + 5000,
         totalSaves: totalSaves || 0,
         totalUsers: uniqueUserIds.size || Math.floor(Math.random() * 5000) + 1000,
-        avgEngagement: 3.2,
-        conversionRate: totalSaves && viewCount ? (totalSaves / viewCount) * 100 : 4.8,
         viewsTrend: 12.5,
         searchesTrend: 8.3,
         savesTrend: 15.2,
-        usersTrend: 6.7,
         dailyViews: Object.entries(dailyData).map(([date, val]) => ({
           label: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
           value: val.views || Math.floor(Math.random() * 2000) + 500,
-        })),
-        dailySearches: Object.entries(dailyData).map(([date, val]) => ({
-          label: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          value: val.searches || Math.floor(Math.random() * 800) + 200,
         })),
         topDestinations: topDests?.map(d => ({
           name: d.name,
@@ -166,17 +136,11 @@ export function AdvancedAnalyticsDashboard() {
           { query: 'new york cafes', count: 765 },
           { query: 'barcelona food', count: 654 },
         ],
-        geoDistribution: [
-          { country: 'United States', count: 35 },
-          { country: 'United Kingdom', count: 22 },
-          { country: 'Germany', count: 12 },
-          { country: 'France', count: 10 },
-          { country: 'Japan', count: 8 },
-        ],
         categoryBreakdown: Object.entries(categoryCount)
           .map(([category, count]) => ({ category, count }))
           .sort((a, b) => b.count - a.count)
           .slice(0, 8),
+        topCities,
       });
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
@@ -198,8 +162,6 @@ export function AdvancedAnalyticsDashboard() {
       ['Total Searches', data.totalSearches],
       ['Total Saves', data.totalSaves],
       ['Total Users', data.totalUsers],
-      ['Avg Engagement', data.avgEngagement],
-      ['Conversion Rate', data.conversionRate],
     ]
       .map(row => row.join(','))
       .join('\n');
@@ -212,46 +174,38 @@ export function AdvancedAnalyticsDashboard() {
     a.click();
   };
 
+  const maxViews = Math.max(...(data?.dailyViews.map(d => d.value) || [1]));
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-white">Analytics Overview</h1>
-          <p className="mt-1 text-sm text-gray-400">
-            Monitor your platform&apos;s performance and user engagement
-          </p>
+    <div className="space-y-12 fade-in">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+          {(['7d', '30d', '90d'] as DateRange[]).map((range) => (
+            <button
+              key={range}
+              onClick={() => setDateRange(range)}
+              className={`transition-all ${
+                dateRange === range
+                  ? 'font-medium text-black dark:text-white'
+                  : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+              }`}
+            >
+              {range === '7d' ? '7 Days' : range === '30d' ? '30 Days' : '90 Days'}
+            </button>
+          ))}
         </div>
         <div className="flex items-center gap-3">
-          {/* Date Range Selector */}
-          <div className="flex items-center gap-1 bg-gray-900 rounded-lg p-1 border border-gray-800">
-            {(['7d', '30d', '90d', 'all'] as DateRange[]).map((range) => (
-              <button
-                key={range}
-                onClick={() => setDateRange(range)}
-                className={`
-                  px-3 py-1.5 rounded-md text-xs font-medium transition-all
-                  ${dateRange === range
-                    ? 'bg-indigo-500 text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-gray-800'}
-                `}
-              >
-                {range === 'all' ? 'All Time' : range.replace('d', ' Days')}
-              </button>
-            ))}
-          </div>
-
           <button
             onClick={fetchAnalytics}
             disabled={refreshing}
-            className="p-2 rounded-lg border border-gray-800 text-gray-400 hover:text-white hover:bg-gray-800 transition-colors disabled:opacity-50"
+            className="p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
-
           <button
             onClick={handleExport}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-800 text-gray-400 hover:text-white hover:bg-gray-800 transition-colors text-sm"
+            className="flex items-center gap-2 text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors"
           >
             <Download className="w-4 h-4" />
             Export
@@ -259,182 +213,110 @@ export function AdvancedAnalyticsDashboard() {
         </div>
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Total Page Views"
-          value={data?.totalViews || 0}
-          change={data?.viewsTrend}
-          changeLabel="vs last period"
-          icon={<Eye className="w-5 h-5" />}
-          color="indigo"
-          loading={loading}
-        />
-        <MetricCard
-          title="Search Queries"
-          value={data?.totalSearches || 0}
-          change={data?.searchesTrend}
-          changeLabel="vs last period"
-          icon={<Search className="w-5 h-5" />}
-          color="emerald"
-          loading={loading}
-        />
-        <MetricCard
-          title="Saved Places"
-          value={data?.totalSaves || 0}
-          change={data?.savesTrend}
-          changeLabel="vs last period"
-          icon={<Bookmark className="w-5 h-5" />}
-          color="amber"
-          loading={loading}
-        />
-        <MetricCard
-          title="Active Users"
-          value={data?.totalUsers || 0}
-          change={data?.usersTrend}
-          changeLabel="vs last period"
-          icon={<Users className="w-5 h-5" />}
-          color="purple"
-          loading={loading}
-        />
-      </div>
-
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Page Views Chart */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-medium text-white">Page Views</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Daily traffic overview</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-500" />
-              <span className="text-xs text-gray-500">Views</span>
-            </div>
-          </div>
+      {/* Primary Stats - Matches account page style */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
           {loading ? (
-            <div className="h-[200px] bg-gray-800/50 rounded animate-pulse" />
+            <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
           ) : (
-            <AnalyticsChart
-              data={data?.dailyViews || []}
-              type="area"
-              color="#6366f1"
-              height={200}
-            />
+            <div className="text-2xl font-light mb-1">{data?.totalViews.toLocaleString()}</div>
           )}
+          <div className="text-xs text-gray-500">Page Views</div>
         </div>
-
-        {/* Search Queries Chart */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-sm font-medium text-white">Search Activity</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Daily search queries</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-xs text-gray-500">Searches</span>
-            </div>
-          </div>
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
           {loading ? (
-            <div className="h-[200px] bg-gray-800/50 rounded animate-pulse" />
+            <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
           ) : (
-            <AnalyticsChart
-              data={data?.dailySearches || []}
-              type="bar"
-              color="#10b981"
-              height={200}
-            />
+            <div className="text-2xl font-light mb-1">{data?.totalSearches.toLocaleString()}</div>
           )}
+          <div className="text-xs text-gray-500">Searches</div>
+        </div>
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+          {loading ? (
+            <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
+          ) : (
+            <div className="text-2xl font-light mb-1">{data?.totalSaves.toLocaleString()}</div>
+          )}
+          <div className="text-xs text-gray-500">Saves</div>
+        </div>
+        <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+          {loading ? (
+            <div className="h-8 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mb-1" />
+          ) : (
+            <div className="text-2xl font-light mb-1">{data?.totalUsers.toLocaleString()}</div>
+          )}
+          <div className="text-xs text-gray-500">Users</div>
         </div>
       </div>
 
-      {/* Secondary Metrics */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard
-          title="Avg Session Duration"
-          value="4m 32s"
-          change={5.2}
-          icon={<Calendar className="w-5 h-5" />}
-          color="sky"
-        />
-        <MetricCard
-          title="Bounce Rate"
-          value="32.4%"
-          change={-2.8}
-          icon={<MousePointerClick className="w-5 h-5" />}
-          color="rose"
-        />
-        <MetricCard
-          title="Conversion Rate"
-          value={`${data?.conversionRate?.toFixed(1) || 0}%`}
-          change={1.2}
-          icon={<TrendingUp className="w-5 h-5" />}
-          color="emerald"
-        />
-        <MetricCard
-          title="Total Destinations"
-          value="897"
-          icon={<Map className="w-5 h-5" />}
-          color="purple"
-        />
+      {/* Daily Views Chart - Simple bar chart */}
+      <div>
+        <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Daily Views</h2>
+        {loading ? (
+          <div className="h-32 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />
+        ) : (
+          <div className="flex items-end gap-1 h-32">
+            {data?.dailyViews.map((day, i) => (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                <div
+                  className="w-full bg-gray-900 dark:bg-white rounded-t transition-all"
+                  style={{ height: `${(day.value / maxViews) * 100}%`, minHeight: '2px' }}
+                />
+                <span className="text-[9px] text-gray-400 truncate w-full text-center">
+                  {i % Math.ceil(data.dailyViews.length / 7) === 0 ? day.label : ''}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Data Tables Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Two Column Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Top Destinations */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
-          <h3 className="text-sm font-medium text-white mb-4">Top Destinations</h3>
-          <div className="space-y-3">
+        <div>
+          <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Top Destinations</h2>
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-10 bg-gray-800/50 rounded animate-pulse" />
+                <div key={i} className="py-3 flex justify-between">
+                  <div className="h-4 w-32 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                  <div className="h-4 w-12 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                </div>
               ))
             ) : (
-              data?.topDestinations.slice(0, 5).map((dest, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between py-2 border-b border-gray-800 last:border-0"
-                >
+              data?.topDestinations.slice(0, 8).map((dest, i) => (
+                <div key={i} className="py-3 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="w-6 h-6 rounded-full bg-gray-800 flex items-center justify-center text-xs text-gray-400 font-medium">
-                      {i + 1}
-                    </span>
+                    <span className="text-xs text-gray-400 w-4">{i + 1}</span>
                     <div>
-                      <p className="text-sm text-white font-medium">{dest.name}</p>
-                      <p className="text-xs text-gray-500">{dest.city}</p>
+                      <p className="text-sm">{dest.name}</p>
+                      <p className="text-xs text-gray-400">{dest.city}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm text-white">{dest.views.toLocaleString()}</p>
-                    <p className="text-xs text-gray-500">views</p>
-                  </div>
+                  <span className="text-xs text-gray-500 tabular-nums">{dest.views.toLocaleString()}</span>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        {/* Top Search Queries */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
-          <h3 className="text-sm font-medium text-white mb-4">Popular Searches</h3>
-          <div className="space-y-3">
+        {/* Top Searches */}
+        <div>
+          <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Popular Searches</h2>
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="h-10 bg-gray-800/50 rounded animate-pulse" />
+                <div key={i} className="py-3 flex justify-between">
+                  <div className="h-4 w-40 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                  <div className="h-4 w-12 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                </div>
               ))
             ) : (
               data?.topSearches.map((search, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between py-2 border-b border-gray-800 last:border-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <Search className="w-4 h-4 text-gray-500" />
-                    <p className="text-sm text-white">{search.query}</p>
-                  </div>
-                  <span className="text-sm text-gray-400">{search.count.toLocaleString()}</span>
+                <div key={i} className="py-3 flex items-center justify-between">
+                  <span className="text-sm">{search.query}</span>
+                  <span className="text-xs text-gray-500 tabular-nums">{search.count.toLocaleString()}</span>
                 </div>
               ))
             )}
@@ -443,42 +325,53 @@ export function AdvancedAnalyticsDashboard() {
       </div>
 
       {/* Category Breakdown */}
-      <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
-        <h3 className="text-sm font-medium text-white mb-4">Content by Category</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-          {data?.categoryBreakdown.map((cat, i) => (
-            <div
-              key={i}
-              className="text-center p-3 rounded-lg bg-gray-800/50 border border-gray-800"
-            >
-              <p className="text-lg font-semibold text-white">{cat.count}</p>
-              <p className="text-xs text-gray-500 mt-1 capitalize">{cat.category}</p>
-            </div>
-          ))}
+      <div>
+        <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Content by Category</h2>
+        <div className="flex flex-wrap gap-4">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-12 w-24 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse" />
+            ))
+          ) : (
+            data?.categoryBreakdown.map((cat, i) => (
+              <div key={i} className="px-4 py-3 border border-gray-200 dark:border-gray-800 rounded-2xl">
+                <div className="text-lg font-light">{cat.count}</div>
+                <div className="text-xs text-gray-500 capitalize">{cat.category}</div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
-      {/* Geographic Distribution */}
-      <div className="rounded-xl border border-gray-800 bg-gray-900/50 p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-medium text-white">Geographic Distribution</h3>
-          <Globe className="w-4 h-4 text-gray-500" />
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-          {data?.geoDistribution.map((geo, i) => (
-            <div key={i} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-400">{geo.country}</span>
-                <span className="text-sm text-white font-medium">{geo.count}%</span>
+      {/* Cities */}
+      <div>
+        <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Destinations by City</h2>
+        <div className="space-y-3">
+          {loading ? (
+            Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="space-y-1.5">
+                <div className="h-4 w-24 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full" />
               </div>
-              <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
-                  style={{ width: `${geo.count}%` }}
-                />
+            ))
+          ) : (
+            data?.topCities.map((city, i) => (
+              <div key={i} className="space-y-1">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-700 dark:text-gray-300">{city.city}</span>
+                  <span className="text-gray-400 tabular-nums">{city.count}</span>
+                </div>
+                <div className="h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gray-900 dark:bg-white rounded-full"
+                    style={{
+                      width: `${(city.count / (data?.topCities[0]?.count || 1)) * 100}%`,
+                    }}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
