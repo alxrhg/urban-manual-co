@@ -4,7 +4,7 @@ import { Map, X } from 'lucide-react';
 import TripPlannerMap from './TripPlannerMap';
 import type { TripDay } from '@/lib/hooks/useTripEditor';
 
-interface MapBoxProps {
+interface RouteMapBoxProps {
   days: TripDay[];
   selectedDayNumber: number;
   activeItemId?: string | null;
@@ -14,17 +14,17 @@ interface MapBoxProps {
 }
 
 /**
- * MapBox - Inline map component for sidebar
+ * RouteMapBox - Inline Google Maps component for sidebar
  * Shows when map button is tapped, replacing other sidebar content
  */
-export default function MapBox({
+export default function RouteMapBox({
   days,
   selectedDayNumber,
   activeItemId,
   onMarkerClick,
   onClose,
   className = '',
-}: MapBoxProps) {
+}: RouteMapBoxProps) {
   const currentDay = days[selectedDayNumber - 1];
   const stopCount = currentDay?.items.length || 0;
 

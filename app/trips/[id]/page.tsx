@@ -28,7 +28,7 @@ import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
 import AddPlaceBox from '@/components/trip/AddPlaceBox';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
-import MapBox from '@/components/trip/MapBox';
+import RouteMapBox from '@/components/trip/RouteMapBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import LocalEvents from '@/components/trip/LocalEvents';
 import {
@@ -616,7 +616,7 @@ export default function TripPage() {
                       onClose={() => setShowTripSettings(false)}
                     />
                   ) : showMapBox ? (
-                    <MapBox
+                    <RouteMapBox
                       days={days}
                       selectedDayNumber={selectedDayNumber}
                       activeItemId={activeItemId}
@@ -670,7 +670,7 @@ export default function TripPage() {
                     onClose={() => setShowTripSettings(false)}
                   />
                 ) : showMapBox ? (
-                  <MapBox
+                  <RouteMapBox
                     days={days}
                     selectedDayNumber={selectedDayNumber}
                     activeItemId={activeItemId}
