@@ -555,7 +555,7 @@ export default function TripPage() {
                 {isAIPlanning ? 'Planning...' : 'Auto-plan'}
               </button>
               <button
-                onClick={() => openPlaceSelector(selectedDayNumber)}
+                onClick={() => setShowAddPlaceBox(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-stone-200 dark:border-gray-800 rounded-full hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Plus className="w-3 h-3" />
@@ -626,14 +626,6 @@ export default function TripPage() {
                     />
                   ) : (
                     <>
-                      {/* Add Place Button */}
-                      <button
-                        onClick={() => setShowAddPlaceBox(true)}
-                        className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-stone-300 dark:border-gray-700 rounded-2xl text-sm font-medium text-stone-600 dark:text-gray-400 hover:border-stone-400 dark:hover:border-gray-600 hover:text-stone-900 dark:hover:text-white transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                        Add Place
-                      </button>
                       <SmartSuggestions
                         days={days}
                         destination={trip.destination}
@@ -672,24 +664,14 @@ export default function TripPage() {
                     onClose={() => setShowAddPlaceBox(false)}
                   />
                 ) : (
-                  <>
-                    {/* Add Place Button */}
-                    <button
-                      onClick={() => setShowAddPlaceBox(true)}
-                      className="w-full flex items-center justify-center gap-2 py-3 border border-dashed border-stone-300 dark:border-gray-700 rounded-2xl text-sm font-medium text-stone-600 dark:text-gray-400 hover:border-stone-400 dark:hover:border-gray-600 hover:text-stone-900 dark:hover:text-white transition-colors"
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Place
-                    </button>
-                    <SmartSuggestions
-                      days={days}
-                      destination={trip.destination}
-                      selectedDayNumber={selectedDayNumber}
-                      onAddPlace={openPlaceSelector}
-                      onAddAISuggestion={handleAddAISuggestion}
-                      onAddFromNL={handleAddFromNL}
-                    />
-                  </>
+                  <SmartSuggestions
+                    days={days}
+                    destination={trip.destination}
+                    selectedDayNumber={selectedDayNumber}
+                    onAddPlace={openPlaceSelector}
+                    onAddAISuggestion={handleAddAISuggestion}
+                    onAddFromNL={handleAddFromNL}
+                  />
                 )}
               </div>
             )}
