@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { limit, slug, dryRun } = body;
+    const { limit: syncLimit, slug, dryRun } = body;
 
     // Get Supabase credentials
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const toSync = limit ? destinations.slice(0, limit) : destinations;
+    const toSync = syncLimit ? destinations.slice(0, syncLimit) : destinations;
 
     // Map Supabase destination to Sanity format
     const mapToSanityDocument = (dest: any) => {
