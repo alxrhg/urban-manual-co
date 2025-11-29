@@ -209,9 +209,8 @@ export default function TripDaySection({
   return (
     <div
       className={`
-        border border-stone-200 dark:border-gray-800 rounded-xl sm:rounded-2xl overflow-hidden
+        overflow-hidden
         transition-colors duration-200
-        ${isSelected ? 'ring-1 ring-stone-300 dark:ring-gray-700' : ''}
       `}
     >
       {/* Day Header - Larger touch target on mobile */}
@@ -224,9 +223,6 @@ export default function TripDaySection({
           className="flex-1 flex items-center justify-between p-4 sm:p-4 min-h-[56px] hover:bg-stone-50 dark:hover:bg-gray-800/50 active:bg-stone-100 dark:active:bg-gray-800 transition-colors text-left"
         >
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-3">
-            <span className="text-base sm:text-lg font-light text-stone-900 dark:text-white">
-              Day {day.dayNumber}
-            </span>
             {formattedDate && (
               <span className="text-[11px] sm:text-xs text-stone-500 dark:text-gray-400">
                 {formattedDate}
