@@ -164,6 +164,102 @@
   animation: underlinePulse 2.5s ease-in-out infinite;
 }
 
+/* ============================================
+   SEARCH INPUT EFFECT ALTERNATIVES
+   Uncomment the desired effect in GreetingHero.tsx
+   ============================================ */
+
+/* OPTION 1: Gradient Glow Effect */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  50% {
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.search-glow-effect {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+.dark .search-glow-effect {
+  animation: glowPulseDark 3s ease-in-out infinite;
+}
+
+@keyframes glowPulseDark {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(255, 255, 255, 0.03);
+  }
+  50% {
+    box-shadow: 0 2px 16px rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* OPTION 2: Breathing Dot Indicator */
+@keyframes breathingDot {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+.animate-breathing-dot {
+  animation: breathingDot 2s ease-in-out infinite;
+}
+
+/* OPTION 3: Sliding Cursor Effect */
+@keyframes slidingCursor {
+  0% {
+    left: 0;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+.search-sliding-cursor::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  width: 2px;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.5;
+  animation: slidingCursor 4s ease-in-out infinite;
+}
+
+/* OPTION 4: Minimal Border Bottom Fade */
+@keyframes borderFade {
+  0%, 100% {
+    border-color: rgba(156, 163, 175, 0.2);
+  }
+  50% {
+    border-color: rgba(156, 163, 175, 0.5);
+  }
+}
+
+.search-border-fade {
+  border-bottom: 1px solid rgba(156, 163, 175, 0.3);
+  animation: borderFade 3s ease-in-out infinite;
+}
+
+.dark .search-border-fade {
+  border-bottom: 1px solid rgba(107, 114, 128, 0.3);
+}
+
 /* Shimmer animation for placeholder text */
 @keyframes placeholderShimmer {
   0% {
