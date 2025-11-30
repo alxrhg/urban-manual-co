@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, HomeBase } from '@/types/personalization';
 import { Save, Loader2, MapPin, X } from 'lucide-react';
 import { cityCountryMap } from '@/data/cityCountryMap';
-import { useDebouncedCallback } from 'use-debounce';
 
 const ALL_CITIES = Object.keys(cityCountryMap).map(city =>
   city.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
@@ -49,9 +48,10 @@ export function PreferencesTab({ userId }: PreferencesTabProps) {
   const [homeBaseSearch, setHomeBaseSearch] = useState('');
   const [homeBaseSuggestions, setHomeBaseSuggestions] = useState<LocationSuggestion[]>([]);
   const [searchingLocation, setSearchingLocation] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Debounced location search
-  const searchLocations = useDebouncedCallback(async (query: string) => {
+  // Search locations with debounce
+  const searchLocations = useCallback(async (query: string) => {
     if (!query || query.length < 2) {
       setHomeBaseSuggestions([]);
       return;
@@ -80,11 +80,18 @@ export function PreferencesTab({ userId }: PreferencesTabProps) {
     } finally {
       setSearchingLocation(false);
     }
-  }, 300);
+  }, []);
 
   const handleHomeBaseSearchChange = (value: string) => {
     setHomeBaseSearch(value);
-    searchLocations(value);
+
+    // Debounce the search
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      searchLocations(value);
+    }, 300);
   };
 
   const selectHomeBase = (location: LocationSuggestion) => {
