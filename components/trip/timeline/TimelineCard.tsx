@@ -57,7 +57,6 @@ function TimelineCardComponent({
   item,
   start,
   duration,
-  height,
   isActive = false,
   isEditMode = false,
   onEdit,
@@ -67,12 +66,11 @@ function TimelineCardComponent({
   const styleSet = getCategoryStyle(type);
   const startLabel = formatTimeDisplay(formatMinutesToTime(start));
   const endLabel = formatTimeDisplay(formatMinutesToTime(start + duration));
-  const showExpandedContent = height > 70;
 
   return (
     <div
-      className={`h-full flex items-stretch rounded-lg bg-gray-50 dark:bg-gray-800/40 ${
-        isActive ? 'bg-gray-100 dark:bg-gray-800' : ''
+      className={`h-full flex items-stretch rounded-lg bg-gray-50 dark:bg-gray-800/40 cursor-pointer ${
+        isActive ? 'ring-1 ring-gray-900 dark:ring-white' : ''
       }`}
       onClick={() => onEdit?.(item)}
       role="button"
@@ -89,9 +87,9 @@ function TimelineCardComponent({
       <div className={`w-1 flex-shrink-0 rounded-l-lg ${styleSet.accent}`} />
 
       {/* Card content */}
-      <div className="flex-1 flex items-start gap-2.5 pl-3 pr-2 py-2 min-w-0">
+      <div className="flex-1 flex items-center gap-2.5 pl-3 pr-2 py-2 min-w-0">
         {/* Icon */}
-        <div className={`flex-shrink-0 mt-0.5 ${styleSet.iconColor}`}>
+        <div className={`flex-shrink-0 ${styleSet.iconColor}`}>
           {getIconForItem(item)}
         </div>
 
@@ -100,7 +98,7 @@ function TimelineCardComponent({
           <p className="text-sm font-medium text-gray-900 dark:text-white leading-tight truncate">
             {item.title || 'Untitled stop'}
           </p>
-          <div className="flex items-center gap-1.5 mt-0.5">
+          <div className="flex items-center gap-1.5">
             <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
               {startLabel}–{endLabel}
             </span>
@@ -113,11 +111,6 @@ function TimelineCardComponent({
               </>
             )}
           </div>
-          {showExpandedContent && item.parsedNotes?.notes && (
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 line-clamp-2">
-              {item.parsedNotes.notes}
-            </p>
-          )}
         </div>
 
         {/* Duration */}

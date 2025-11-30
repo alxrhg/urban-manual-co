@@ -10,50 +10,36 @@ interface TimeGridProps {
 }
 
 /**
- * TimeGrid - Simple time labels aligned to the left
+ * TimeGrid - Hour labels with light grey horizontal lines
  */
 function TimeGridComponent({
   startHour,
   endHour,
   minutesToPixels,
-  showHalfHours = false,
 }: TimeGridProps) {
-  const labels = [];
+  const rows = [];
 
   for (let hour = startHour; hour <= endHour; hour++) {
     const top = minutesToPixels(hour * 60);
     const label = `${hour.toString().padStart(2, '0')}:00`;
 
-    labels.push(
+    rows.push(
       <div
         key={`hour-${hour}`}
-        className="absolute left-0 pointer-events-none"
-        style={{ top: top - 6 }}
+        className="absolute left-0 right-0 flex items-center pointer-events-none"
+        style={{ top }}
       >
-        <span className="text-[11px] text-gray-400 dark:text-gray-500 tabular-nums">
+        {/* Time label */}
+        <span className="w-12 text-[11px] text-gray-400 dark:text-gray-500 tabular-nums flex-shrink-0">
           {label}
         </span>
+        {/* Horizontal line */}
+        <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
       </div>
     );
-
-    // Half-hour label (optional)
-    if (showHalfHours && hour < endHour) {
-      const halfHourTop = minutesToPixels(hour * 60 + 30);
-      labels.push(
-        <div
-          key={`half-${hour}`}
-          className="absolute left-0 pointer-events-none"
-          style={{ top: halfHourTop - 6 }}
-        >
-          <span className="text-[10px] text-gray-300 dark:text-gray-600 tabular-nums">
-            {hour.toString().padStart(2, '0')}:30
-          </span>
-        </div>
-      );
-    }
   }
 
-  return <>{labels}</>;
+  return <>{rows}</>;
 }
 
 export const TimeGrid = memo(TimeGridComponent);
