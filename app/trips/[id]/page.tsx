@@ -109,27 +109,32 @@ export default function TripPage() {
         .map(item => ({ ...item, dayNumber: d.dayNumber }))
     );
 
-    // Sort hotels by day number first (Day 1 before Day 2), then by order_index
+    // Helper to calculate effective day number (same as display logic)
+    const getEffectiveDayNum = (hotel: typeof hotelItems[0]) => {
+      if (hotel.parsedNotes?.checkInDate && trip?.start_date) {
+        const tripStart = new Date(trip.start_date);
+        tripStart.setHours(0, 0, 0, 0);
+        const checkIn = new Date(hotel.parsedNotes.checkInDate);
+        checkIn.setHours(0, 0, 0, 0);
+        return Math.floor((checkIn.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      }
+      return hotel.dayNumber;
+    };
+
+    // Sort hotels by effective day number (matches display)
     return hotelItems.sort((a, b) => {
-      // First compare by day number
-      if (a.dayNumber !== b.dayNumber) {
-        return a.dayNumber - b.dayNumber;
+      const aDayNum = getEffectiveDayNum(a);
+      const bDayNum = getEffectiveDayNum(b);
+
+      // First compare by effective day number
+      if (aDayNum !== bDayNum) {
+        return aDayNum - bDayNum;
       }
 
-      // If same day, compare by check-in date
-      const aCheckIn = a.parsedNotes?.checkInDate;
-      const bCheckIn = b.parsedNotes?.checkInDate;
-
-      if (aCheckIn && bCheckIn) {
-        const aDate = new Date(aCheckIn).getTime();
-        const bDate = new Date(bCheckIn).getTime();
-        if (aDate !== bDate) return aDate - bDate;
-      }
-
-      // Finally, order_index within the same day
+      // If same day, compare by order_index
       return (a.order_index || 0) - (b.order_index || 0);
     });
-  }, [days]);
+  }, [days, trip?.start_date]);
 
   // Compute which hotel covers each night based on check-in/check-out dates
   const nightlyHotelByDay = useMemo(() => {
