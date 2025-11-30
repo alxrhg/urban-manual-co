@@ -67,6 +67,7 @@ export default function TripPage() {
     addTrain,
     removeItem,
     updateItemTime,
+    updateItemNotes,
     refresh,
   } = useTripEditor({
     tripId,
@@ -692,6 +693,13 @@ export default function TripPage() {
                         setSelectedItem(null);
                         setActiveItemId(null);
                       }}
+                      onTimeChange={updateItemTime}
+                      onNotesChange={updateItemNotes}
+                      onRemove={(itemId) => {
+                        removeItem(itemId);
+                        setSelectedItem(null);
+                        setActiveItemId(null);
+                      }}
                     />
                   ) : (
                     <>
@@ -759,6 +767,13 @@ export default function TripPage() {
                   <DestinationBox
                     item={selectedItem}
                     onClose={() => {
+                      setSelectedItem(null);
+                      setActiveItemId(null);
+                    }}
+                    onTimeChange={updateItemTime}
+                    onNotesChange={updateItemNotes}
+                    onRemove={(itemId) => {
+                      removeItem(itemId);
                       setSelectedItem(null);
                       setActiveItemId(null);
                     }}

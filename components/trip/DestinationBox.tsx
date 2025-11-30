@@ -2,25 +2,34 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { X, MapPin, Star, Globe, Phone, Clock, ChevronDown, ExternalLink } from 'lucide-react';
+import { X, MapPin, Star, Globe, Clock, ChevronDown, ExternalLink, Pencil, Check, Trash2, StickyNote } from 'lucide-react';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
 interface DestinationBoxProps {
   item: EnrichedItineraryItem;
   onClose?: () => void;
+  onTimeChange?: (itemId: string, time: string) => void;
+  onNotesChange?: (itemId: string, notes: string) => void;
+  onRemove?: (itemId: string) => void;
   className?: string;
 }
 
 /**
- * DestinationBox - Inline destination details component
+ * DestinationBox - Inline destination details component with edit mode
  * Shows when an itinerary item is clicked, replacing other sidebar content
  */
 export default function DestinationBox({
   item,
   onClose,
+  onTimeChange,
+  onNotesChange,
+  onRemove,
   className = '',
 }: DestinationBoxProps) {
   const [showMore, setShowMore] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTime, setEditTime] = useState(item.time || '');
+  const [editNotes, setEditNotes] = useState(item.parsedNotes?.notes || item.parsedNotes?.raw || '');
 
   const destination = item.destination;
   const parsedNotes = item.parsedNotes;
@@ -37,6 +46,23 @@ export default function DestinationBox({
   const priceLevel = destination?.price_level;
   const michelinStars = destination?.michelin_stars;
 
+  const handleSave = () => {
+    if (onTimeChange && editTime !== item.time) {
+      onTimeChange(item.id, editTime);
+    }
+    if (onNotesChange && editNotes !== (item.parsedNotes?.notes || item.parsedNotes?.raw || '')) {
+      onNotesChange(item.id, editNotes);
+    }
+    setIsEditing(false);
+  };
+
+  const handleRemove = () => {
+    if (onRemove) {
+      onRemove(item.id);
+      onClose?.();
+    }
+  };
+
   return (
     <div className={`border border-stone-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900 ${className}`}>
       {/* Header */}
@@ -47,14 +73,33 @@ export default function DestinationBox({
             {name}
           </h3>
         </div>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="p-1.5 -mr-1 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
-          >
-            <X className="w-4 h-4 text-stone-400" />
-          </button>
-        )}
+        <div className="flex items-center gap-1">
+          {isEditing ? (
+            <button
+              onClick={handleSave}
+              className="p-1.5 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
+              title="Save changes"
+            >
+              <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+            </button>
+          ) : (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="p-1.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              title="Edit"
+            >
+              <Pencil className="w-4 h-4 text-stone-400" />
+            </button>
+          )}
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-1.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
+            >
+              <X className="w-4 h-4 text-stone-400" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Content */}
@@ -92,22 +137,24 @@ export default function DestinationBox({
         </div>
 
         {/* Rating & Price */}
-        <div className="flex items-center gap-3 text-xs">
-          {rating && (
-            <div className="flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-              <span className="font-medium text-stone-700 dark:text-gray-300">{rating.toFixed(1)}</span>
-              {reviewCount && (
-                <span className="text-stone-400 dark:text-gray-500">({reviewCount.toLocaleString()})</span>
-              )}
-            </div>
-          )}
-          {priceLevel && priceLevel > 0 && (
-            <span className="text-stone-500 dark:text-gray-400">
-              {'$'.repeat(priceLevel)}
-            </span>
-          )}
-        </div>
+        {(rating || priceLevel) && (
+          <div className="flex items-center gap-3 text-xs">
+            {rating && (
+              <div className="flex items-center gap-1">
+                <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                <span className="font-medium text-stone-700 dark:text-gray-300">{rating.toFixed(1)}</span>
+                {reviewCount && (
+                  <span className="text-stone-400 dark:text-gray-500">({reviewCount.toLocaleString()})</span>
+                )}
+              </div>
+            )}
+            {priceLevel && priceLevel > 0 && (
+              <span className="text-stone-500 dark:text-gray-400">
+                {'$'.repeat(priceLevel)}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Description */}
         {description && (
@@ -135,17 +182,50 @@ export default function DestinationBox({
           </div>
         )}
 
-        {/* Time if set */}
-        {item.time && (
-          <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-gray-400">
-            <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>Scheduled for {item.time}</span>
+        {/* Editable Time Section */}
+        <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="w-3.5 h-3.5 text-stone-400" />
+            <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Scheduled Time</span>
           </div>
-        )}
+          {isEditing ? (
+            <input
+              type="time"
+              value={editTime}
+              onChange={(e) => setEditTime(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600"
+            />
+          ) : (
+            <p className="text-sm text-stone-700 dark:text-gray-300">
+              {item.time || <span className="text-stone-400 dark:text-gray-500 italic">No time set</span>}
+            </p>
+          )}
+        </div>
+
+        {/* Editable Notes Section */}
+        <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+          <div className="flex items-center gap-2 mb-2">
+            <StickyNote className="w-3.5 h-3.5 text-stone-400" />
+            <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Notes</span>
+          </div>
+          {isEditing ? (
+            <textarea
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+              placeholder="Add notes..."
+              rows={3}
+              className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 resize-none"
+            />
+          ) : (
+            <p className="text-sm text-stone-700 dark:text-gray-300">
+              {parsedNotes?.notes || parsedNotes?.raw || <span className="text-stone-400 dark:text-gray-500 italic">No notes</span>}
+            </p>
+          )}
+        </div>
 
         {/* Links */}
         {website && (
-          <div className="pt-2 border-t border-stone-100 dark:border-gray-800">
+          <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
             <a
               href={website}
               target="_blank"
@@ -159,12 +239,16 @@ export default function DestinationBox({
           </div>
         )}
 
-        {/* Notes from item */}
-        {parsedNotes?.notes && (
-          <div className="pt-2 border-t border-stone-100 dark:border-gray-800">
-            <p className="text-xs text-stone-500 dark:text-gray-400 italic">
-              {parsedNotes.notes}
-            </p>
+        {/* Remove Button (only in edit mode) */}
+        {isEditing && onRemove && (
+          <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+            <button
+              onClick={handleRemove}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              Remove from Itinerary
+            </button>
           </div>
         )}
       </div>
