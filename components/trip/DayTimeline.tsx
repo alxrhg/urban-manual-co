@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { format, parseISO } from 'date-fns';
-import { Plus, Sparkles, Loader2 } from 'lucide-react';
+import { Plus, Sparkles, Loader2, Moon } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -21,6 +21,7 @@ import {
 } from '@dnd-kit/sortable';
 import TimelineBlock, { ViewOnlyTimelineBlock } from './TimelineBlock';
 import TransitConnector from './TransitConnector';
+import DayIntelligence from './DayIntelligence';
 import { getAirportCoordinates } from '@/lib/utils/airports';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
@@ -140,10 +141,20 @@ export default function DayTimeline({
     return undefined;
   };
 
-  // Render items with transit connectors (view mode)
+  // Separate hotels from regular activities
+  const { regularItems, hotelItem } = useMemo(() => {
+    const hotels = day.items.filter(item => item.parsedNotes?.type === 'hotel');
+    const regular = day.items.filter(item => item.parsedNotes?.type !== 'hotel');
+    return {
+      regularItems: regular,
+      hotelItem: hotels[0] || null, // Take first hotel for this night
+    };
+  }, [day.items]);
+
+  // Render regular items with transit connectors (view mode)
   const renderItemsWithConnectors = () => {
-    return day.items.map((item, index) => {
-      const nextItem = day.items[index + 1];
+    return regularItems.map((item, index) => {
+      const nextItem = regularItems[index + 1];
       const fromLocation = getFromLocation(item);
       const toLocation = nextItem ? getToLocation(nextItem) : undefined;
 
@@ -156,7 +167,7 @@ export default function DayTimeline({
             onTimeChange={onTimeChange}
             isActive={item.id === activeItemId}
           />
-          {index < day.items.length - 1 && (
+          {index < regularItems.length - 1 && (
             <TransitConnector
               from={fromLocation}
               to={toLocation}
@@ -168,9 +179,9 @@ export default function DayTimeline({
     });
   };
 
-  // Render draggable items (edit mode)
+  // Render draggable items (edit mode) - includes regular items only
   const renderDraggableItems = () => {
-    return day.items.map((item, index) => (
+    return regularItems.map((item, index) => (
       <TimelineBlock
         key={item.id}
         item={item}
@@ -182,6 +193,29 @@ export default function DayTimeline({
         isDraggable={true}
       />
     ));
+  };
+
+  // Render hotel section at the bottom
+  const renderHotelSection = () => {
+    if (!hotelItem) return null;
+
+    return (
+      <div className="mt-4 pt-4 border-t border-stone-200 dark:border-gray-800">
+        <div className="flex items-center gap-2 mb-3 px-2">
+          <Moon className="w-4 h-4 text-stone-400" />
+          <span className="text-xs font-medium text-stone-500 dark:text-gray-400 uppercase tracking-wide">
+            Tonight&apos;s Stay
+          </span>
+        </div>
+        <ViewOnlyTimelineBlock
+          item={hotelItem}
+          index={regularItems.length}
+          onEdit={onEditItem}
+          onTimeChange={onTimeChange}
+          isActive={hotelItem.id === activeItemId}
+        />
+      </div>
+    );
   };
 
   return (
@@ -198,31 +232,29 @@ export default function DayTimeline({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-stone-400 dark:text-gray-500">
-            {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
-          </span>
-          {/* Quick Actions */}
-          {day.items.length >= 2 && onOptimizeDay && (
-            <button
-              onClick={() => onOptimizeDay(day.dayNumber)}
-              disabled={isOptimizing}
-              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-stone-500 dark:text-gray-400 hover:text-stone-700 dark:hover:text-gray-300 bg-stone-100 dark:bg-gray-800 rounded-full transition-colors disabled:opacity-50"
-            >
-              {isOptimizing ? (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              ) : (
-                <Sparkles className="w-3 h-3" />
-              )}
-              Optimize
-            </button>
-          )}
-        </div>
+        <span className="text-xs text-stone-400 dark:text-gray-500">
+          {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
+        </span>
       </div>
+
+      {/* Day Intelligence Bar */}
+      {day.items.length > 0 && (
+        <div className="px-4 py-2 border-b border-stone-100 dark:border-gray-800/50 bg-stone-50/30 dark:bg-gray-900/30">
+          <DayIntelligence
+            dayNumber={day.dayNumber}
+            date={day.date}
+            items={day.items}
+            onOptimizeDay={() => onOptimizeDay?.(day.dayNumber)}
+            onAutoFill={() => onAutoFillDay?.(day.dayNumber)}
+            isOptimizing={isOptimizing}
+            isAutoFilling={isAutoFilling}
+          />
+        </div>
+      )}
 
       {/* Day Content */}
       <div className="p-2 sm:p-4">
-        {day.items.length === 0 ? (
+        {regularItems.length === 0 && !hotelItem ? (
           /* Empty State */
           <div className="py-8 text-center">
             <p className="text-sm text-stone-400 dark:text-gray-500 mb-4">
@@ -281,25 +313,31 @@ export default function DayTimeline({
           </div>
         ) : isEditMode ? (
           /* Edit Mode - Draggable */
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={day.items.map((item) => item.id)}
-              strategy={verticalListSortingStrategy}
+          <>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              <div className="space-y-2">
-                {renderDraggableItems()}
-              </div>
-            </SortableContext>
-          </DndContext>
+              <SortableContext
+                items={regularItems.map((item) => item.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="space-y-2">
+                  {renderDraggableItems()}
+                </div>
+              </SortableContext>
+            </DndContext>
+            {renderHotelSection()}
+          </>
         ) : (
           /* View Mode - With Transit Connectors */
-          <div className="space-y-0">
-            {renderItemsWithConnectors()}
-          </div>
+          <>
+            <div className="space-y-0">
+              {renderItemsWithConnectors()}
+            </div>
+            {renderHotelSection()}
+          </>
         )}
 
         {/* Add Stop Button */}
