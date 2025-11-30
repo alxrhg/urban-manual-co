@@ -79,7 +79,7 @@ export default function DayTimeline({
 
   const formattedDate = formatDayDate(day.date);
 
-  // Separate hotels from regular activities
+  // Separate hotels from regular activities, filter flights by date
   const { regularItems, hotelItem, isExternalHotel } = useMemo(() => {
     const hotels = day.items.filter(item => {
       if (item.parsedNotes?.type !== 'hotel') return false;
@@ -94,7 +94,28 @@ export default function DayTimeline({
       return true;
     });
 
-    const regular = day.items.filter(item => item.parsedNotes?.type !== 'hotel');
+    // Filter regular items - exclude hotels and filter flights by departure date
+    const regular = day.items.filter(item => {
+      const type = item.parsedNotes?.type;
+
+      // Exclude hotels
+      if (type === 'hotel') return false;
+
+      // Filter flights by departure date
+      if (type === 'flight') {
+        const departureDate = item.parsedNotes?.departureDate || item.parsedNotes?.date;
+        if (departureDate && day.date) {
+          const departure = new Date(departureDate);
+          const dayDate = new Date(day.date);
+          departure.setHours(0, 0, 0, 0);
+          dayDate.setHours(0, 0, 0, 0);
+          return departure.getTime() === dayDate.getTime();
+        }
+      }
+
+      return true;
+    });
+
     const effectiveHotel = nightlyHotel || hotels[0] || null;
     const isExternal = !!nightlyHotel && !hotels.length;
 
