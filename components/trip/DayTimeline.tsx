@@ -29,6 +29,7 @@ interface DayTimelineProps {
   onReorderItems?: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
   onRemoveItem?: (itemId: string) => void;
   onEditItem?: (item: EnrichedItineraryItem) => void;
+  onTimeChange?: (itemId: string, time: string) => void;
   onAddItem?: (dayNumber: number, category?: string) => void;
   onOptimizeDay?: (dayNumber: number) => void;
   onAutoFillDay?: (dayNumber: number) => void;
@@ -47,6 +48,7 @@ export default function DayTimeline({
   onReorderItems,
   onRemoveItem,
   onEditItem,
+  onTimeChange,
   onAddItem,
   onOptimizeDay,
   onAutoFillDay,
@@ -151,6 +153,7 @@ export default function DayTimeline({
             item={item}
             index={index}
             onEdit={onEditItem}
+            onTimeChange={onTimeChange}
             isActive={item.id === activeItemId}
           />
           {index < day.items.length - 1 && (
@@ -174,6 +177,7 @@ export default function DayTimeline({
         index={index}
         onEdit={onEditItem}
         onRemove={onRemoveItem}
+        onTimeChange={onTimeChange}
         isActive={item.id === activeItemId}
         isDraggable={true}
       />

@@ -38,6 +38,8 @@ export default function TimelineBlock({
 }: TimelineBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
+  const [isEditingTime, setIsEditingTime] = useState(false);
+  const [editTimeValue, setEditTimeValue] = useState(item.time || '09:00');
 
   const {
     attributes,
@@ -198,13 +200,41 @@ export default function TimelineBlock({
     >
       {/* Time Column */}
       <div className="flex-shrink-0 w-16 sm:w-20 py-4 pr-3 flex flex-col items-end justify-start">
-        {item.time ? (
+        {isEditingTime ? (
+          <input
+            type="time"
+            value={editTimeValue}
+            onChange={(e) => setEditTimeValue(e.target.value)}
+            onBlur={() => {
+              setIsEditingTime(false);
+              if (editTimeValue && editTimeValue !== item.time) {
+                onTimeChange?.(item.id, editTimeValue);
+              }
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setIsEditingTime(false);
+                if (editTimeValue) {
+                  onTimeChange?.(item.id, editTimeValue);
+                }
+              }
+              if (e.key === 'Escape') {
+                setIsEditingTime(false);
+                setEditTimeValue(item.time || '09:00');
+              }
+            }}
+            autoFocus
+            className="w-full text-sm font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-gray-800 rounded px-1 py-0.5 tabular-nums focus:outline-none focus:ring-2 focus:ring-stone-400"
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : item.time ? (
           <button
             onClick={(e) => {
               e.stopPropagation();
-              // Could open a time picker here
+              setEditTimeValue(item.time || '09:00');
+              setIsEditingTime(true);
             }}
-            className="text-sm font-medium text-stone-700 dark:text-stone-300 tabular-nums hover:text-stone-900 dark:hover:text-white transition-colors"
+            className="text-sm font-medium text-stone-700 dark:text-stone-300 tabular-nums hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-gray-800 px-1 py-0.5 rounded transition-colors"
           >
             {formatTimeDisplay(item.time)}
           </button>
@@ -212,7 +242,8 @@ export default function TimelineBlock({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onTimeChange?.(item.id, '09:00');
+              setEditTimeValue('09:00');
+              setIsEditingTime(true);
             }}
             className="text-[11px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors flex items-center gap-1"
           >
@@ -301,13 +332,15 @@ export function ViewOnlyTimelineBlock({
   item,
   index,
   onEdit,
+  onTimeChange,
   isActive = false,
-}: Omit<TimelineBlockProps, 'onRemove' | 'onTimeChange' | 'isDraggable'>) {
+}: Omit<TimelineBlockProps, 'onRemove' | 'isDraggable'>) {
   return (
     <TimelineBlock
       item={item}
       index={index}
       onEdit={onEdit}
+      onTimeChange={onTimeChange}
       isActive={isActive}
       isDraggable={false}
     />

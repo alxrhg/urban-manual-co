@@ -64,6 +64,7 @@ export default function TripPage() {
     addPlace,
     addFlight,
     removeItem,
+    updateItemTime,
     refresh,
   } = useTripEditor({
     tripId,
@@ -618,6 +619,7 @@ export default function TripPage() {
                       onReorderItems={reorderItems}
                       onRemoveItem={isEditMode ? removeItem : undefined}
                       onEditItem={handleEditItem}
+                      onTimeChange={updateItemTime}
                       onAddItem={openPlaceSelector}
                       onOptimizeDay={handleOptimizeDay}
                       onAutoFillDay={handleAutoFillDay}
