@@ -46,6 +46,7 @@ import { type ExtractedIntent } from "@/app/api/intent/schema";
 import { capitalizeCity } from "@/lib/utils";
 import { isOpenNow } from "@/lib/utils/opening-hours";
 import { DestinationCard } from "@/components/DestinationCard";
+import { DestinationGridSkeleton } from "@/components/skeletons/DestinationCardSkeleton";
 import HomeMapSplitView from "@/components/HomeMapSplitView";
 import { EditModeToggle } from "@/components/EditModeToggle";
 import { useItemsPerPage } from "@/hooks/useGridColumns";
@@ -193,13 +194,16 @@ export default function HomepageClient({
   // Initialize state with server-provided data (minimal)
   const [destinations, setDestinations] = useState<MinimalDestination[]>(initialDestinations);
   const [filteredDestinations, setFilteredDestinations] = useState<MinimalDestination[]>(initialDestinations);
-  const [cities] = useState<string[]>(initialCities);
-  const [categories] = useState<string[]>(initialCategories);
+  const [cities, setCities] = useState<string[]>(initialCities);
+  const [categories, setCategories] = useState<string[]>(initialCategories);
 
   // User data - fetched client-side (non-blocking SSR)
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [isAdmin, setIsAdmin] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // Loading state for initial data fetch
+  const [isInitialLoading, setIsInitialLoading] = useState(initialDestinations.length === 0);
 
   // Loading more destinations
   const [loadingMore, setLoadingMore] = useState(false);
@@ -284,7 +288,7 @@ export default function HomepageClient({
   // Hooks
   const itemsPerPage = useItemsPerPage(4);
   const editModeActive = isAdmin && adminEditMode;
-  const isDestinationsLoading = searching || loadingMore;
+  const isDestinationsLoading = searching || loadingMore || isInitialLoading;
 
   // Loading message
   const currentLoadingText = useMemo(() => {
@@ -579,6 +583,49 @@ export default function HomepageClient({
     initializeSession();
     trackPageView({ pageType: "home" });
   }, []);
+
+  // Fetch initial data client-side (when page is static)
+  useEffect(() => {
+    if (initialDestinations.length > 0) return; // Already have server data
+
+    const fetchInitialData = async () => {
+      try {
+        // Fetch destinations and filters in parallel
+        const [destRes, filterRes] = await Promise.all([
+          fetch("/api/homepage/destinations?limit=20"),
+          fetch("/api/homepage/filters"),
+        ]);
+
+        const [destData, filterData] = await Promise.all([
+          destRes.json(),
+          filterRes.json(),
+        ]);
+
+        if (destData.destinations) {
+          setDestinations(destData.destinations);
+          setFilteredDestinations(destData.destinations);
+        }
+
+        if (filterData.rows) {
+          // Extract cities and categories from filter rows
+          const citySet = new Set<string>();
+          const categorySet = new Set<string>();
+          for (const row of filterData.rows) {
+            if (row.city) citySet.add(row.city);
+            if (row.category) categorySet.add(row.category);
+          }
+          setCities(Array.from(citySet).sort());
+          setCategories(Array.from(categorySet).sort());
+        }
+      } catch (error) {
+        console.error("Failed to fetch initial data:", error);
+      } finally {
+        setIsInitialLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, [initialDestinations.length]);
 
   // Handle view mode from URL
   useEffect(() => {
@@ -1154,7 +1201,9 @@ export default function HomepageClient({
             )}
 
             {/* Grid / Map View */}
-            {displayDestinations.length === 0 && !advancedFilters.nearMe ? (
+            {isInitialLoading ? (
+              <DestinationGridSkeleton count={20} />
+            ) : displayDestinations.length === 0 && !advancedFilters.nearMe ? (
               <div className="text-center py-12 px-4">
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {searching ? "Searching..." : "No destinations found."}

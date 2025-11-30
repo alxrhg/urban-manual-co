@@ -1,17 +1,13 @@
 /**
- * Homepage - ISR with Suspense Streaming
+ * Homepage - Static Shell with Client-Side Data
  *
- * OPTIMIZED FOR SPEED:
- * - Hero renders immediately (no data blocking)
- * - Destinations stream in with Suspense
- * - Only 20 destinations for first viewport
- * - Cached data revalidates every 60 seconds
+ * INSTANT LOADING:
+ * - Static HTML shell renders immediately (0ms TTFB)
+ * - Data fetched client-side with loading skeleton
+ * - No server-side blocking - page is fully pre-built
  */
 
-import { Suspense } from "react";
 import HomepageClient from "@/components/homepage/HomepageClient";
-import { loadHomepageData } from "./loaders";
-import HomeLoading from "./loading";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -28,27 +24,17 @@ export const metadata: Metadata = {
   },
 };
 
-// ISR - revalidate every 60 seconds for fresh content
-export const revalidate = 60;
-
-// Server component that fetches data
-async function HomepageWithData() {
-  const { destinations, cities, categories, totalCount } = await loadHomepageData();
-
-  return (
-    <HomepageClient
-      initialDestinations={destinations}
-      initialCities={cities}
-      initialCategories={categories}
-      totalCount={totalCount}
-    />
-  );
-}
+// Fully static - no server data fetching
+export const dynamic = "force-static";
 
 export default function HomePage() {
+  // Empty initial data - client will fetch and show skeleton
   return (
-    <Suspense fallback={<HomeLoading />}>
-      <HomepageWithData />
-    </Suspense>
+    <HomepageClient
+      initialDestinations={[]}
+      initialCities={[]}
+      initialCategories={[]}
+      totalCount={0}
+    />
   );
 }
