@@ -135,6 +135,6 @@ async def search_faiss(request: FaissSearchRequest) -> FaissSearchResponse:
     return FaissSearchResponse(
         results=[FaissSearchResult(**result) for result in results],
         top_k=request.top_k,
-        model=request.model,
+        model=request.model if request.query_text else None,
     )
 
