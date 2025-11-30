@@ -103,7 +103,7 @@ export default function DayTimeline({
 
       // Filter flights by departure date
       if (type === 'flight') {
-        const departureDate = item.parsedNotes?.departureDate || item.parsedNotes?.date;
+        const departureDate = item.parsedNotes?.departureDate;
         if (departureDate && day.date) {
           const departure = new Date(departureDate);
           const dayDate = new Date(day.date);
