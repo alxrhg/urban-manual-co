@@ -10,6 +10,7 @@ import LodgingCard from '@/components/trips/LodgingCard';
 import PlaceCard from '@/components/trips/PlaceCard';
 import TransportCard from '@/components/trips/TransportCard';
 import MealCard from '@/components/trips/MealCard';
+import EventCard from '@/components/trips/EventCard';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
 interface TripItemCardProps {
@@ -204,6 +205,17 @@ export default function TripItemCard({
           phone={item.parsedNotes.phone}
           website={item.parsedNotes.website}
           notes={item.parsedNotes.notes}
+          compact
+        />
+      );
+    }
+
+    // Render EventCard for events
+    if (itemType === 'event' && item.parsedNotes) {
+      return (
+        <EventCard
+          event={item.parsedNotes}
+          name={item.title}
           compact
         />
       );

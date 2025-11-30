@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/personalization';
-import { Save, Loader2 } from 'lucide-react';
+import { UserProfile, HomeBase } from '@/types/personalization';
+import { Save, Loader2, MapPin, X } from 'lucide-react';
 import { cityCountryMap } from '@/data/cityCountryMap';
 
 const ALL_CITIES = Object.keys(cityCountryMap).map(city =>
@@ -22,6 +22,12 @@ interface PreferencesTabProps {
   userId: string;
 }
 
+interface LocationSuggestion {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
 export function PreferencesTab({ userId }: PreferencesTabProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,10 +38,78 @@ export function PreferencesTab({ userId }: PreferencesTabProps) {
     price_preference: 2,
     interests: [],
     travel_style: 'Balanced',
+    home_base: undefined,
     privacy_mode: false,
     allow_tracking: true,
     email_notifications: true,
   });
+
+  // Home base search state
+  const [homeBaseSearch, setHomeBaseSearch] = useState('');
+  const [homeBaseSuggestions, setHomeBaseSuggestions] = useState<LocationSuggestion[]>([]);
+  const [searchingLocation, setSearchingLocation] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Search locations with debounce
+  const searchLocations = useCallback(async (query: string) => {
+    if (!query || query.length < 2) {
+      setHomeBaseSuggestions([]);
+      return;
+    }
+
+    setSearchingLocation(true);
+    try {
+      // Use Mapbox geocoding API
+      const response = await fetch(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?` +
+        `types=place,locality,neighborhood&limit=5&access_token=${process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}`
+      );
+      const data = await response.json();
+
+      if (data.features) {
+        setHomeBaseSuggestions(
+          data.features.map((f: { place_name: string; center: number[] }) => ({
+            name: f.place_name,
+            longitude: f.center[0],
+            latitude: f.center[1],
+          }))
+        );
+      }
+    } catch (err) {
+      console.error('Error searching locations:', err);
+    } finally {
+      setSearchingLocation(false);
+    }
+  }, []);
+
+  const handleHomeBaseSearchChange = (value: string) => {
+    setHomeBaseSearch(value);
+
+    // Debounce the search
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    searchTimeoutRef.current = setTimeout(() => {
+      searchLocations(value);
+    }, 300);
+  };
+
+  const selectHomeBase = (location: LocationSuggestion) => {
+    setProfile({
+      ...profile,
+      home_base: {
+        name: location.name,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      },
+    });
+    setHomeBaseSearch('');
+    setHomeBaseSuggestions([]);
+  };
+
+  const clearHomeBase = () => {
+    setProfile({ ...profile, home_base: undefined });
+  };
 
   useEffect(() => {
     loadProfile();
@@ -101,6 +175,66 @@ export function PreferencesTab({ userId }: PreferencesTabProps) {
 
   return (
     <div className="space-y-8">
+      {/* Home Base */}
+      <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
+        <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Home Base</h2>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+          Set your home location for better trip routing and travel time estimates
+        </p>
+
+        {profile.home_base ? (
+          <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl">
+            <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                {profile.home_base.name}
+              </p>
+              <p className="text-xs text-gray-400">
+                {profile.home_base.latitude.toFixed(4)}, {profile.home_base.longitude.toFixed(4)}
+              </p>
+            </div>
+            <button
+              onClick={clearHomeBase}
+              className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="relative">
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={homeBaseSearch}
+                onChange={(e) => handleHomeBaseSearchChange(e.target.value)}
+                placeholder="Search for your city..."
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
+              />
+              {searchingLocation && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-gray-400" />
+              )}
+            </div>
+
+            {/* Suggestions Dropdown */}
+            {homeBaseSuggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg z-10 overflow-hidden">
+                {homeBaseSuggestions.map((suggestion, index) => (
+                  <button
+                    key={index}
+                    onClick={() => selectHomeBase(suggestion)}
+                    className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2"
+                  >
+                    <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <span className="truncate">{suggestion.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
       {/* Travel Style */}
       <section className="border border-gray-200 dark:border-gray-800 rounded-2xl p-6">
         <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-4">Travel Style</h2>

@@ -84,7 +84,25 @@ export interface UpdateTrip {
   notes?: string | null;
 }
 
-export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'custom';
+export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'event' | 'activity' | 'custom';
+
+// Activity types for downtime/hotel time blocks
+export type ActivityType =
+  | 'nap'
+  | 'pool'
+  | 'spa'
+  | 'gym'
+  | 'breakfast-at-hotel'
+  | 'getting-ready'
+  | 'packing'
+  | 'free-time'
+  | 'sunset'
+  | 'checkout-prep'
+  | 'work'
+  | 'call'
+  | 'shopping-time'
+  | 'photo-walk'
+  | 'other';
 
 export interface ItineraryItem {
   id: string; // UUID
@@ -175,10 +193,44 @@ export interface ItineraryItemNotes {
   phone?: string;
   website?: string;
   notes?: string;
+  // Reservation details
+  partySize?: number;
+  bookingStatus?: 'need-to-book' | 'booked' | 'waitlist' | 'walk-in';
+  // Planning & Organization
+  priority?: 'must-do' | 'want-to' | 'if-time';
+  visitedStatus?: 'planned' | 'visited' | 'skipped';
+  tags?: string[];
+  personalRating?: number; // 1-5 stars
   // Travel time to next item
   travelTimeToNext?: number; // in minutes
   travelDistanceToNext?: number; // in km
   travelModeToNext?: 'walking' | 'driving' | 'transit' | 'flight';
+  // Event-specific fields
+  eventType?: 'concert' | 'show' | 'sports' | 'exhibition' | 'festival' | 'tour' | 'other';
+  venue?: string;
+  eventDate?: string;
+  eventTime?: string;
+  endTime?: string;
+  ticketUrl?: string;
+  ticketConfirmation?: string;
+  seatInfo?: string;
+  // Activity-specific fields (downtime, hotel time, etc.)
+  activityType?: ActivityType;
+  linkedHotelId?: string; // Link activity to a hotel (e.g., pool at hotel)
+  location?: string; // Where the activity takes place (e.g., "hotel pool", "room")
+}
+
+/**
+ * Activity data structure for adding downtime/hotel activities
+ */
+export interface ActivityData {
+  type: 'activity';
+  activityType: ActivityType;
+  title: string;
+  duration?: number;
+  linkedHotelId?: string;
+  location?: string;
+  notes?: string;
 }
 
 /**
@@ -194,6 +246,24 @@ export interface FlightData {
   departureTime: string;
   arrivalDate: string;
   arrivalTime: string;
+  confirmationNumber?: string;
+  notes?: string;
+}
+
+/**
+ * Train data structure
+ */
+export interface TrainData {
+  type: 'train';
+  trainLine?: string;
+  trainNumber?: string;
+  from: string;
+  to: string;
+  departureDate: string;
+  departureTime: string;
+  arrivalDate?: string;
+  arrivalTime?: string;
+  duration?: number;
   confirmationNumber?: string;
   notes?: string;
 }

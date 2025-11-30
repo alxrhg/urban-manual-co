@@ -20,15 +20,19 @@ import {
   Square,
   CheckSquare,
   X,
+  Pencil,
+  Check,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
-import TripDaySection from '@/components/trip/TripDaySection';
+import DayTimeline from '@/components/trip/DayTimeline';
+import { TransitMode } from '@/components/trip/TransitConnector';
 import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
 import AddPlaceBox from '@/components/trip/AddPlaceBox';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import RouteMapBox from '@/components/trip/RouteMapBox';
+import DestinationBox from '@/components/trip/DestinationBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import LocalEvents from '@/components/trip/LocalEvents';
 import {
@@ -36,7 +40,7 @@ import {
   detectConflicts,
   checkClosureDays,
 } from '@/lib/intelligence/schedule-analyzer';
-import type { FlightData } from '@/types/trip';
+import type { FlightData, ActivityData } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 import type { PlannerWarning } from '@/lib/intelligence/types';
 
@@ -61,7 +65,12 @@ export default function TripPage() {
     reorderItems,
     addPlace,
     addFlight,
+    addTrain,
+    addActivity,
     removeItem,
+    updateItemTime,
+    updateItemNotes,
+    updateItem,
     refresh,
   } = useTripEditor({
     tripId,
@@ -76,6 +85,7 @@ export default function TripPage() {
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
   const [autoFillingDay, setAutoFillingDay] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'itinerary' | 'flights' | 'hotels' | 'notes'>('itinerary');
+  const [isEditMode, setIsEditMode] = useState(false);
   const [tripNotes, setTripNotes] = useState('');
   const [checklistItems, setChecklistItems] = useState<{ id: string; text: string; checked: boolean }[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState('');
@@ -83,6 +93,7 @@ export default function TripPage() {
   const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [showMapBox, setShowMapBox] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
 
   // Extract flights and hotels from itinerary
   const flights = useMemo(() => {
@@ -93,11 +104,80 @@ export default function TripPage() {
   }, [days]);
 
   const hotels = useMemo(() => {
-    return days.flatMap(d =>
+    const hotelItems = days.flatMap(d =>
       d.items.filter(item => item.parsedNotes?.type === 'hotel')
         .map(item => ({ ...item, dayNumber: d.dayNumber }))
     );
-  }, [days]);
+
+    // Helper to calculate effective day number (same as display logic)
+    const getEffectiveDayNum = (hotel: typeof hotelItems[0]) => {
+      if (hotel.parsedNotes?.checkInDate && trip?.start_date) {
+        const tripStart = new Date(trip.start_date);
+        tripStart.setHours(0, 0, 0, 0);
+        const checkIn = new Date(hotel.parsedNotes.checkInDate);
+        checkIn.setHours(0, 0, 0, 0);
+        return Math.floor((checkIn.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      }
+      return hotel.dayNumber;
+    };
+
+    // Sort hotels by effective day number (matches display)
+    return hotelItems.sort((a, b) => {
+      const aDayNum = getEffectiveDayNum(a);
+      const bDayNum = getEffectiveDayNum(b);
+
+      // First compare by effective day number
+      if (aDayNum !== bDayNum) {
+        return aDayNum - bDayNum;
+      }
+
+      // If same day, compare by order_index
+      return (a.order_index || 0) - (b.order_index || 0);
+    });
+  }, [days, trip?.start_date]);
+
+  // Compute which hotel covers each night based on check-in/check-out dates
+  const nightlyHotelByDay = useMemo(() => {
+    const hotelMap: Record<number, typeof hotels[0] | null> = {};
+    if (!trip?.start_date) return hotelMap;
+
+    const tripStart = new Date(trip.start_date);
+    tripStart.setHours(0, 0, 0, 0);
+
+    hotels.forEach(hotel => {
+      const checkInDate = hotel.parsedNotes?.checkInDate;
+      const checkOutDate = hotel.parsedNotes?.checkOutDate;
+
+      if (!checkInDate) return;
+
+      // Calculate actual check-in day number based on trip start
+      const inDate = new Date(checkInDate);
+      inDate.setHours(0, 0, 0, 0);
+      const checkInDayNum = Math.floor((inDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+      // Calculate number of nights
+      let nights = 1;
+      if (checkOutDate) {
+        try {
+          const outDate = new Date(checkOutDate);
+          outDate.setHours(0, 0, 0, 0);
+          nights = Math.max(1, Math.ceil((outDate.getTime() - inDate.getTime()) / (1000 * 60 * 60 * 24)));
+        } catch {
+          nights = 1;
+        }
+      }
+
+      // Mark this hotel for the check-in day and each subsequent night
+      for (let i = 0; i < nights; i++) {
+        const nightDay = checkInDayNum + i;
+        if (nightDay > 0 && !hotelMap[nightDay]) {
+          hotelMap[nightDay] = hotel;
+        }
+      }
+    });
+
+    return hotelMap;
+  }, [hotels, trip?.start_date]);
 
   // Generate trip warnings based on analysis
   useMemo(() => {
@@ -177,31 +257,18 @@ export default function TripPage() {
   }, [trip?.id, openDrawer, addFlight]);
 
   const handleEditItem = useCallback((item: EnrichedItineraryItem) => {
-    if (item.destination) {
-      openDrawer('destination', {
-        place: {
-          name: item.destination.name,
-          category: item.destination.category,
-          neighborhood: item.destination.neighborhood ?? undefined,
-          city: item.destination.city ?? undefined,
-          michelinRating: item.destination.michelin_stars ?? undefined,
-          hasMichelin: !!item.destination.michelin_stars,
-          googleRating: item.destination.rating ?? undefined,
-          googleReviews: item.destination.user_ratings_total ?? undefined,
-          priceLevel: item.destination.price_level ?? undefined,
-          description: item.destination.description ?? undefined,
-          image: item.destination.image ?? undefined,
-          image_thumbnail: item.destination.image_thumbnail ?? undefined,
-          latitude: item.destination.latitude ?? undefined,
-          longitude: item.destination.longitude ?? undefined,
-          address: item.destination.formatted_address ?? undefined,
-          website: item.destination.website ?? undefined,
-        },
-        hideAddToTrip: true,
-      });
-    }
+    // Show destination details inline instead of opening drawer
+    setSelectedItem(item);
+    setShowAddPlaceBox(false);
+    setShowTripSettings(false);
+    setShowMapBox(false);
     setActiveItemId(item.id);
-  }, [openDrawer]);
+  }, []);
+
+  // Handle travel mode change from TransitConnector
+  const handleTravelModeChange = useCallback((itemId: string, mode: TransitMode) => {
+    updateItem(itemId, { travelModeToNext: mode });
+  }, [updateItem]);
 
   const handleAITripPlanning = async () => {
     if (!trip || !user) return;
@@ -578,30 +645,53 @@ export default function TripPage() {
               <div className="lg:flex lg:gap-6">
                 {/* Main Itinerary Column */}
                 <div className="flex-1 space-y-4">
-                  {/* Horizontal Day Tabs */}
-                  <DayTabNav
-                    days={days}
-                    selectedDayNumber={selectedDayNumber}
-                    onSelectDay={setSelectedDayNumber}
-                    className="mb-4"
-                  />
+                  {/* Day Tabs + Edit Toggle */}
+                  <div className="flex items-center justify-between mb-4">
+                    <DayTabNav
+                      days={days}
+                      selectedDayNumber={selectedDayNumber}
+                      onSelectDay={setSelectedDayNumber}
+                    />
+                    <button
+                      onClick={() => setIsEditMode(!isEditMode)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                        isEditMode
+                          ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
+                          : 'text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      {isEditMode ? (
+                        <>
+                          <Check className="w-3 h-3" />
+                          Done
+                        </>
+                      ) : (
+                        <>
+                          <Pencil className="w-3 h-3" />
+                          Edit
+                        </>
+                      )}
+                    </button>
+                  </div>
 
-                  {/* Selected Day Only */}
+                  {/* Selected Day Timeline */}
                   {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
-                    <TripDaySection
+                    <DayTimeline
                       key={day.dayNumber}
                       day={day}
-                      isSelected={true}
-                      onSelect={() => {}}
+                      nightlyHotel={nightlyHotelByDay[day.dayNumber] || null}
                       onReorderItems={reorderItems}
-                      onRemoveItem={removeItem}
+                      onRemoveItem={isEditMode ? removeItem : undefined}
                       onEditItem={handleEditItem}
+                      onTimeChange={updateItemTime}
+                      onTravelModeChange={handleTravelModeChange}
                       onAddItem={openPlaceSelector}
                       onOptimizeDay={handleOptimizeDay}
                       onAutoFillDay={handleAutoFillDay}
                       activeItemId={activeItemId}
                       isOptimizing={optimizingDay === day.dayNumber}
                       isAutoFilling={autoFillingDay === day.dayNumber}
+                      isEditMode={isEditMode}
                     />
                   ))}
                 </div>
@@ -631,7 +721,35 @@ export default function TripPage() {
                         addPlace(destination, selectedDayNumber);
                         setShowAddPlaceBox(false);
                       }}
+                      onAddFlight={(flightData) => {
+                        addFlight(flightData, selectedDayNumber);
+                        setShowAddPlaceBox(false);
+                      }}
+                      onAddTrain={(trainData) => {
+                        addTrain(trainData, selectedDayNumber);
+                        setShowAddPlaceBox(false);
+                      }}
+                      onAddActivity={(activityData) => {
+                        addActivity(activityData, selectedDayNumber);
+                        setShowAddPlaceBox(false);
+                      }}
                       onClose={() => setShowAddPlaceBox(false)}
+                    />
+                  ) : selectedItem ? (
+                    <DestinationBox
+                      item={selectedItem}
+                      onClose={() => {
+                        setSelectedItem(null);
+                        setActiveItemId(null);
+                      }}
+                      onTimeChange={updateItemTime}
+                      onNotesChange={updateItemNotes}
+                      onItemUpdate={updateItem}
+                      onRemove={(itemId) => {
+                        removeItem(itemId);
+                        setSelectedItem(null);
+                        setActiveItemId(null);
+                      }}
                     />
                   ) : (
                     <>
@@ -660,7 +778,7 @@ export default function TripPage() {
             )}
 
             {/* Mobile Section */}
-            {(days.length > 0 || showTripSettings || showMapBox) && (
+            {(days.length > 0 || showTripSettings || showMapBox || selectedItem) && (
               <div className="lg:hidden mt-6 space-y-4">
                 {showTripSettings ? (
                   <TripSettingsBox
@@ -685,7 +803,35 @@ export default function TripPage() {
                       addPlace(destination, selectedDayNumber);
                       setShowAddPlaceBox(false);
                     }}
+                    onAddFlight={(flightData) => {
+                      addFlight(flightData, selectedDayNumber);
+                      setShowAddPlaceBox(false);
+                    }}
+                    onAddTrain={(trainData) => {
+                      addTrain(trainData, selectedDayNumber);
+                      setShowAddPlaceBox(false);
+                    }}
+                    onAddActivity={(activityData) => {
+                      addActivity(activityData, selectedDayNumber);
+                      setShowAddPlaceBox(false);
+                    }}
                     onClose={() => setShowAddPlaceBox(false)}
+                  />
+                ) : selectedItem ? (
+                  <DestinationBox
+                    item={selectedItem}
+                    onClose={() => {
+                      setSelectedItem(null);
+                      setActiveItemId(null);
+                    }}
+                    onTimeChange={updateItemTime}
+                    onNotesChange={updateItemNotes}
+                    onItemUpdate={updateItem}
+                    onRemove={(itemId) => {
+                      removeItem(itemId);
+                      setSelectedItem(null);
+                      setActiveItemId(null);
+                    }}
                   />
                 ) : (
                   <SmartSuggestions
@@ -753,7 +899,7 @@ export default function TripPage() {
 
         {/* Hotels Tab */}
         {activeTab === 'hotels' && (
-          <div className="fade-in space-y-4">
+          <div className="fade-in">
             {hotels.length === 0 ? (
               <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
                 <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">No hotels added yet</p>
@@ -765,42 +911,114 @@ export default function TripPage() {
                 </button>
               </div>
             ) : (
-              <>
-                {hotels.map((hotel) => (
-                  <div
-                    key={hotel.id}
-                    onClick={() => handleEditItem(hotel)}
-                    className="p-4 border border-stone-200 dark:border-gray-800 rounded-2xl hover:bg-stone-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
+              <div className="lg:flex lg:gap-6">
+                {/* Hotels List */}
+                <div className="flex-1 space-y-4">
+                  {hotels.map((hotel) => {
+                    // Calculate correct day number based on checkInDate vs trip start
+                    let checkInDayNum = hotel.dayNumber;
+                    if (hotel.parsedNotes?.checkInDate && trip?.start_date) {
+                      const tripStart = new Date(trip.start_date);
+                      tripStart.setHours(0, 0, 0, 0);
+                      const checkIn = new Date(hotel.parsedNotes.checkInDate);
+                      checkIn.setHours(0, 0, 0, 0);
+                      checkInDayNum = Math.floor((checkIn.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                    }
+
+                    // Calculate nights
+                    let nights = 1;
+                    if (hotel.parsedNotes?.checkInDate && hotel.parsedNotes?.checkOutDate) {
+                      const inDate = new Date(hotel.parsedNotes.checkInDate);
+                      const outDate = new Date(hotel.parsedNotes.checkOutDate);
+                      nights = Math.max(1, Math.ceil((outDate.getTime() - inDate.getTime()) / (1000 * 60 * 60 * 24)));
+                    }
+
+                    return (
+                      <div
+                        key={hotel.id}
+                        onClick={() => handleEditItem(hotel)}
+                        className={`p-4 border rounded-2xl cursor-pointer transition-colors ${
+                          selectedItem?.id === hotel.id
+                            ? 'border-stone-400 dark:border-gray-600 bg-stone-50 dark:bg-gray-800/50'
+                            : 'border-stone-200 dark:border-gray-800 hover:bg-stone-50 dark:hover:bg-gray-800/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-stone-400">Day {checkInDayNum}</span>
+                          <span className="text-xs text-stone-400 bg-stone-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                            {nights} {nights === 1 ? 'night' : 'nights'}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-stone-900 dark:text-white">
+                            {hotel.title}
+                          </p>
+                          {hotel.parsedNotes?.address && (
+                            <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                              {hotel.parsedNotes.address}
+                            </p>
+                          )}
+                          {(hotel.parsedNotes?.checkInDate || hotel.parsedNotes?.checkOutDate) && (
+                            <p className="text-xs text-stone-400 mt-2">
+                              {hotel.parsedNotes?.checkInDate && `Check-in: ${hotel.parsedNotes.checkInDate}`}
+                              {hotel.parsedNotes?.checkInDate && hotel.parsedNotes?.checkOutDate && ' · '}
+                              {hotel.parsedNotes?.checkOutDate && `Check-out: ${hotel.parsedNotes.checkOutDate}`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <button
+                    onClick={() => openPlaceSelector(selectedDayNumber)}
+                    className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-stone-500 dark:text-gray-400 hover:border-stone-300 dark:hover:border-gray-700 transition-colors"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-stone-400">Day {hotel.dayNumber}</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-stone-900 dark:text-white">
-                        {hotel.title}
-                      </p>
-                      {hotel.parsedNotes?.address && (
-                        <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
-                          {hotel.parsedNotes.address}
-                        </p>
-                      )}
-                      {(hotel.parsedNotes?.checkInDate || hotel.parsedNotes?.checkOutDate) && (
-                        <p className="text-xs text-stone-400 mt-2">
-                          {hotel.parsedNotes?.checkInDate && `Check-in: ${hotel.parsedNotes.checkInDate}`}
-                          {hotel.parsedNotes?.checkInDate && hotel.parsedNotes?.checkOutDate && ' · '}
-                          {hotel.parsedNotes?.checkOutDate && `Check-out: ${hotel.parsedNotes.checkOutDate}`}
-                        </p>
-                      )}
-                    </div>
+                    + Add another hotel
+                  </button>
+                </div>
+
+                {/* Sidebar with inline editor (Desktop) */}
+                {selectedItem && selectedItem.parsedNotes?.type === 'hotel' && (
+                  <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
+                    <DestinationBox
+                      item={selectedItem}
+                      onClose={() => {
+                        setSelectedItem(null);
+                        setActiveItemId(null);
+                      }}
+                      onTimeChange={updateItemTime}
+                      onNotesChange={updateItemNotes}
+                      onItemUpdate={updateItem}
+                      onRemove={(itemId) => {
+                        removeItem(itemId);
+                        setSelectedItem(null);
+                        setActiveItemId(null);
+                      }}
+                    />
                   </div>
-                ))}
-                <button
-                  onClick={() => openPlaceSelector(selectedDayNumber)}
-                  className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-stone-500 dark:text-gray-400 hover:border-stone-300 dark:hover:border-gray-700 transition-colors"
-                >
-                  + Add another hotel
-                </button>
-              </>
+                )}
+              </div>
+            )}
+
+            {/* Mobile Inline Editor */}
+            {selectedItem && selectedItem.parsedNotes?.type === 'hotel' && (
+              <div className="lg:hidden mt-6">
+                <DestinationBox
+                  item={selectedItem}
+                  onClose={() => {
+                    setSelectedItem(null);
+                    setActiveItemId(null);
+                  }}
+                  onTimeChange={updateItemTime}
+                  onNotesChange={updateItemNotes}
+                  onItemUpdate={updateItem}
+                  onRemove={(itemId) => {
+                    removeItem(itemId);
+                    setSelectedItem(null);
+                    setActiveItemId(null);
+                  }}
+                />
+              </div>
             )}
           </div>
         )}

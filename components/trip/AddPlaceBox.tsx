@@ -3,30 +3,58 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
-import { Search, MapPin, Loader2, Globe, Plus, X } from 'lucide-react';
+import {
+  Search, MapPin, Loader2, Globe, Plus, X, Plane, Train, Clock,
+  BedDouble, Waves, Sparkles, Dumbbell, Coffee, Shirt, Package, Sun, Briefcase, Phone, Camera, ShoppingBag
+} from 'lucide-react';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
+import type { FlightData, TrainData, ActivityData, ActivityType } from '@/types/trip';
 
 const CATEGORIES = ['All', 'Dining', 'Cafe', 'Bar', 'Culture', 'Shopping', 'Hotel'];
 
-type Tab = 'curated' | 'google';
+type Tab = 'curated' | 'google' | 'flight' | 'train' | 'activity';
+
+// Activity quick-add options
+const ACTIVITY_OPTIONS: { type: ActivityType; icon: typeof BedDouble; label: string; defaultDuration: number }[] = [
+  { type: 'nap', icon: BedDouble, label: 'Nap / Rest', defaultDuration: 60 },
+  { type: 'pool', icon: Waves, label: 'Pool Time', defaultDuration: 90 },
+  { type: 'spa', icon: Sparkles, label: 'Spa', defaultDuration: 120 },
+  { type: 'gym', icon: Dumbbell, label: 'Workout', defaultDuration: 60 },
+  { type: 'breakfast-at-hotel', icon: Coffee, label: 'Hotel Breakfast', defaultDuration: 45 },
+  { type: 'getting-ready', icon: Shirt, label: 'Getting Ready', defaultDuration: 45 },
+  { type: 'packing', icon: Package, label: 'Packing', defaultDuration: 30 },
+  { type: 'checkout-prep', icon: Package, label: 'Check-out Prep', defaultDuration: 30 },
+  { type: 'free-time', icon: Clock, label: 'Free Time', defaultDuration: 60 },
+  { type: 'sunset', icon: Sun, label: 'Sunset', defaultDuration: 45 },
+  { type: 'work', icon: Briefcase, label: 'Work Time', defaultDuration: 120 },
+  { type: 'call', icon: Phone, label: 'Call / Meeting', defaultDuration: 30 },
+  { type: 'shopping-time', icon: ShoppingBag, label: 'Shopping', defaultDuration: 90 },
+  { type: 'photo-walk', icon: Camera, label: 'Photo Walk', defaultDuration: 60 },
+];
 
 interface AddPlaceBoxProps {
   city?: string | null;
   dayNumber?: number;
   onSelect?: (destination: Destination) => void;
+  onAddFlight?: (flightData: FlightData) => void;
+  onAddTrain?: (trainData: TrainData) => void;
+  onAddActivity?: (activityData: ActivityData) => void;
   onClose?: () => void;
   className?: string;
 }
 
 /**
- * AddPlaceBox - Inline place search and selection component
- * Shows when "Add Place" button is tapped, replacing Ask AI and What's On temporarily
+ * AddPlaceBox - Inline place, flight, and train search/add component
+ * Unified interface for adding any type of item to the itinerary
  */
 export default function AddPlaceBox({
   city,
   dayNumber = 1,
   onSelect,
+  onAddFlight,
+  onAddTrain,
+  onAddActivity,
   onClose,
   className = '',
 }: AddPlaceBoxProps) {
@@ -40,6 +68,54 @@ export default function AddPlaceBox({
   const [googleQuery, setGoogleQuery] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googlePlace, setGooglePlace] = useState<any>(null);
+
+  // Flight form state
+  const [flightForm, setFlightForm] = useState({
+    airline: '',
+    flightNumber: '',
+    from: '',
+    to: '',
+    departureDate: '',
+    departureTime: '',
+    arrivalDate: '',
+    arrivalTime: '',
+    confirmationNumber: '',
+  });
+
+  // Train form state
+  const [trainForm, setTrainForm] = useState({
+    trainLine: '',
+    trainNumber: '',
+    from: '',
+    to: '',
+    departureDate: '',
+    departureTime: '',
+    arrivalTime: '',
+    confirmationNumber: '',
+  });
+
+  // Activity state
+  const [selectedActivity, setSelectedActivity] = useState<ActivityType | null>(null);
+  const [activityDuration, setActivityDuration] = useState(60);
+  const [activityNotes, setActivityNotes] = useState('');
+
+  const handleAddActivity = (activityType: ActivityType) => {
+    if (!onAddActivity) return;
+
+    const option = ACTIVITY_OPTIONS.find(o => o.type === activityType);
+    const activityData: ActivityData = {
+      type: 'activity',
+      activityType,
+      title: option?.label || 'Activity',
+      duration: activityDuration || option?.defaultDuration || 60,
+      notes: activityNotes || undefined,
+    };
+
+    onAddActivity(activityData);
+    setSelectedActivity(null);
+    setActivityDuration(60);
+    setActivityNotes('');
+  };
 
   useEffect(() => {
     if (tab === 'curated') {
@@ -139,6 +215,74 @@ export default function AddPlaceBox({
     setGoogleQuery('');
   };
 
+  const handleAddFlight = () => {
+    if (!onAddFlight || !flightForm.from || !flightForm.to) return;
+
+    const flightData: FlightData = {
+      type: 'flight',
+      airline: flightForm.airline,
+      flightNumber: flightForm.flightNumber,
+      from: flightForm.from,
+      to: flightForm.to,
+      departureDate: flightForm.departureDate,
+      departureTime: flightForm.departureTime,
+      arrivalDate: flightForm.arrivalDate || flightForm.departureDate,
+      arrivalTime: flightForm.arrivalTime,
+    };
+
+    if (flightForm.confirmationNumber) {
+      flightData.confirmationNumber = flightForm.confirmationNumber;
+    }
+
+    onAddFlight(flightData);
+
+    // Reset form
+    setFlightForm({
+      airline: '',
+      flightNumber: '',
+      from: '',
+      to: '',
+      departureDate: '',
+      departureTime: '',
+      arrivalDate: '',
+      arrivalTime: '',
+      confirmationNumber: '',
+    });
+  };
+
+  const handleAddTrain = () => {
+    if (!onAddTrain || !trainForm.from || !trainForm.to) return;
+
+    const trainData: TrainData = {
+      type: 'train',
+      trainLine: trainForm.trainLine || undefined,
+      trainNumber: trainForm.trainNumber || undefined,
+      from: trainForm.from,
+      to: trainForm.to,
+      departureDate: trainForm.departureDate,
+      departureTime: trainForm.departureTime,
+      arrivalTime: trainForm.arrivalTime || undefined,
+    };
+
+    if (trainForm.confirmationNumber) {
+      trainData.confirmationNumber = trainForm.confirmationNumber;
+    }
+
+    onAddTrain(trainData);
+
+    // Reset form
+    setTrainForm({
+      trainLine: '',
+      trainNumber: '',
+      from: '',
+      to: '',
+      departureDate: '',
+      departureTime: '',
+      arrivalTime: '',
+      confirmationNumber: '',
+    });
+  };
+
   return (
     <div className={`border border-stone-200 dark:border-gray-800 rounded-2xl overflow-hidden ${className}`}>
       {/* Header */}
@@ -146,7 +290,7 @@ export default function AddPlaceBox({
         <div className="flex items-center gap-2">
           <Plus className="w-4 h-4 text-stone-400" />
           <h3 className="text-sm font-medium text-stone-900 dark:text-white">
-            Add Place
+            Add to Trip
           </h3>
           <span className="text-xs text-stone-400">
             · Day {dayNumber}
@@ -163,10 +307,10 @@ export default function AddPlaceBox({
       </div>
 
       {/* Tab Switcher */}
-      <div className="px-4 pt-3 pb-2 flex gap-4 text-xs border-b border-stone-100 dark:border-gray-800">
+      <div className="px-4 pt-3 pb-2 flex gap-4 text-xs border-b border-stone-100 dark:border-gray-800 overflow-x-auto scrollbar-hide">
         <button
           onClick={() => setTab('curated')}
-          className={`transition-all pb-2 ${
+          className={`transition-all pb-2 whitespace-nowrap ${
             tab === 'curated'
               ? 'font-medium text-stone-900 dark:text-white border-b-2 border-stone-900 dark:border-white -mb-[9px]'
               : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
@@ -176,7 +320,7 @@ export default function AddPlaceBox({
         </button>
         <button
           onClick={() => setTab('google')}
-          className={`transition-all pb-2 ${
+          className={`transition-all pb-2 whitespace-nowrap ${
             tab === 'google'
               ? 'font-medium text-stone-900 dark:text-white border-b-2 border-stone-900 dark:border-white -mb-[9px]'
               : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
@@ -184,9 +328,49 @@ export default function AddPlaceBox({
         >
           Google
         </button>
+        {onAddFlight && (
+          <button
+            onClick={() => setTab('flight')}
+            className={`transition-all pb-2 flex items-center gap-1.5 whitespace-nowrap ${
+              tab === 'flight'
+                ? 'font-medium text-stone-900 dark:text-white border-b-2 border-stone-900 dark:border-white -mb-[9px]'
+                : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+            }`}
+          >
+            <Plane className="w-3 h-3" />
+            Flight
+          </button>
+        )}
+        {onAddTrain && (
+          <button
+            onClick={() => setTab('train')}
+            className={`transition-all pb-2 flex items-center gap-1.5 whitespace-nowrap ${
+              tab === 'train'
+                ? 'font-medium text-stone-900 dark:text-white border-b-2 border-stone-900 dark:border-white -mb-[9px]'
+                : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+            }`}
+          >
+            <Train className="w-3 h-3" />
+            Train
+          </button>
+        )}
+        {onAddActivity && (
+          <button
+            onClick={() => setTab('activity')}
+            className={`transition-all pb-2 flex items-center gap-1.5 whitespace-nowrap ${
+              tab === 'activity'
+                ? 'font-medium text-stone-900 dark:text-white border-b-2 border-stone-900 dark:border-white -mb-[9px]'
+                : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+            }`}
+          >
+            <Clock className="w-3 h-3" />
+            Activity
+          </button>
+        )}
       </div>
 
-      {tab === 'curated' ? (
+      {/* Curated Tab */}
+      {tab === 'curated' && (
         <div className="p-4">
           {/* Search */}
           <div className="relative mb-3">
@@ -267,7 +451,10 @@ export default function AddPlaceBox({
             )}
           </div>
         </div>
-      ) : (
+      )}
+
+      {/* Google Tab */}
+      {tab === 'google' && (
         <div className="p-4">
           {/* Google Search */}
           <GooglePlacesAutocomplete
@@ -345,6 +532,302 @@ export default function AddPlaceBox({
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Flight Tab */}
+      {tab === 'flight' && (
+        <div className="p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Airline</label>
+              <input
+                type="text"
+                value={flightForm.airline}
+                onChange={(e) => setFlightForm(prev => ({ ...prev, airline: e.target.value }))}
+                placeholder="e.g., United"
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Flight #</label>
+              <input
+                type="text"
+                value={flightForm.flightNumber}
+                onChange={(e) => setFlightForm(prev => ({ ...prev, flightNumber: e.target.value }))}
+                placeholder="e.g., UA123"
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">From *</label>
+              <input
+                type="text"
+                value={flightForm.from}
+                onChange={(e) => setFlightForm(prev => ({ ...prev, from: e.target.value }))}
+                placeholder="e.g., JFK"
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">To *</label>
+              <input
+                type="text"
+                value={flightForm.to}
+                onChange={(e) => setFlightForm(prev => ({ ...prev, to: e.target.value }))}
+                placeholder="e.g., CDG"
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Departure Date</label>
+              <input
+                type="date"
+                value={flightForm.departureDate}
+                onChange={(e) => setFlightForm(prev => ({ ...prev, departureDate: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Departure Time</label>
+              <input
+                type="time"
+                value={flightForm.departureTime}
+                onChange={(e) => setFlightForm(prev => ({ ...prev, departureTime: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Arrival Date</label>
+              <input
+                type="date"
+                value={flightForm.arrivalDate}
+                onChange={(e) => setFlightForm(prev => ({ ...prev, arrivalDate: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Arrival Time</label>
+              <input
+                type="time"
+                value={flightForm.arrivalTime}
+                onChange={(e) => setFlightForm(prev => ({ ...prev, arrivalTime: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Confirmation #</label>
+            <input
+              type="text"
+              value={flightForm.confirmationNumber}
+              onChange={(e) => setFlightForm(prev => ({ ...prev, confirmationNumber: e.target.value }))}
+              placeholder="Optional"
+              className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300"
+            />
+          </div>
+
+          <button
+            onClick={handleAddFlight}
+            disabled={!flightForm.from || !flightForm.to}
+            className="w-full py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition flex items-center justify-center gap-2"
+          >
+            <Plane className="w-4 h-4" />
+            Add Flight to Day {dayNumber}
+          </button>
+        </div>
+      )}
+
+      {/* Train Tab */}
+      {tab === 'train' && (
+        <div className="p-4 space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Train Line</label>
+              <input
+                type="text"
+                value={trainForm.trainLine}
+                onChange={(e) => setTrainForm(prev => ({ ...prev, trainLine: e.target.value }))}
+                placeholder="e.g., Eurostar"
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Train #</label>
+              <input
+                type="text"
+                value={trainForm.trainNumber}
+                onChange={(e) => setTrainForm(prev => ({ ...prev, trainNumber: e.target.value }))}
+                placeholder="e.g., 9001"
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">From *</label>
+              <input
+                type="text"
+                value={trainForm.from}
+                onChange={(e) => setTrainForm(prev => ({ ...prev, from: e.target.value }))}
+                placeholder="e.g., London St Pancras"
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">To *</label>
+              <input
+                type="text"
+                value={trainForm.to}
+                onChange={(e) => setTrainForm(prev => ({ ...prev, to: e.target.value }))}
+                placeholder="e.g., Paris Gare du Nord"
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Departure Date</label>
+              <input
+                type="date"
+                value={trainForm.departureDate}
+                onChange={(e) => setTrainForm(prev => ({ ...prev, departureDate: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Departure Time</label>
+              <input
+                type="time"
+                value={trainForm.departureTime}
+                onChange={(e) => setTrainForm(prev => ({ ...prev, departureTime: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Arrival Time</label>
+              <input
+                type="time"
+                value={trainForm.arrivalTime}
+                onChange={(e) => setTrainForm(prev => ({ ...prev, arrivalTime: e.target.value }))}
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Confirmation #</label>
+              <input
+                type="text"
+                value={trainForm.confirmationNumber}
+                onChange={(e) => setTrainForm(prev => ({ ...prev, confirmationNumber: e.target.value }))}
+                placeholder="Optional"
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300"
+              />
+            </div>
+          </div>
+
+          <button
+            onClick={handleAddTrain}
+            disabled={!trainForm.from || !trainForm.to}
+            className="w-full py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium hover:opacity-90 disabled:opacity-50 transition flex items-center justify-center gap-2"
+          >
+            <Train className="w-4 h-4" />
+            Add Train to Day {dayNumber}
+          </button>
+        </div>
+      )}
+
+      {/* Activity Tab */}
+      {tab === 'activity' && (
+        <div className="p-4">
+          <p className="text-xs text-stone-500 dark:text-gray-400 mb-3">
+            Add downtime, hotel activities, or personal time blocks
+          </p>
+
+          {/* Activity Grid */}
+          <div className="grid grid-cols-2 gap-2 mb-4 max-h-64 overflow-y-auto">
+            {ACTIVITY_OPTIONS.map((option) => {
+              const Icon = option.icon;
+              const isSelected = selectedActivity === option.type;
+              return (
+                <button
+                  key={option.type}
+                  onClick={() => {
+                    if (isSelected) {
+                      // If already selected, add it immediately
+                      handleAddActivity(option.type);
+                    } else {
+                      setSelectedActivity(option.type);
+                      setActivityDuration(option.defaultDuration);
+                    }
+                  }}
+                  className={`flex items-center gap-2 p-3 rounded-xl text-left transition-all ${
+                    isSelected
+                      ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900 ring-2 ring-stone-900 dark:ring-white'
+                      : 'bg-stone-50 dark:bg-gray-800 hover:bg-stone-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isSelected ? '' : 'text-stone-400'}`} />
+                  <span className="text-xs font-medium">{option.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Duration & Notes (when activity selected) */}
+          {selectedActivity && (
+            <div className="space-y-3 pt-3 border-t border-stone-100 dark:border-gray-800">
+              <div>
+                <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Duration</label>
+                <select
+                  value={activityDuration}
+                  onChange={(e) => setActivityDuration(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm"
+                >
+                  <option value={15}>15 min</option>
+                  <option value={30}>30 min</option>
+                  <option value={45}>45 min</option>
+                  <option value={60}>1 hour</option>
+                  <option value={90}>1.5 hours</option>
+                  <option value={120}>2 hours</option>
+                  <option value={180}>3 hours</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Notes (optional)</label>
+                <input
+                  type="text"
+                  value={activityNotes}
+                  onChange={(e) => setActivityNotes(e.target.value)}
+                  placeholder="e.g., hotel pool, spa appointment..."
+                  className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm placeholder:text-stone-400"
+                />
+              </div>
+
+              <button
+                onClick={() => handleAddActivity(selectedActivity)}
+                className="w-full py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add to Day {dayNumber}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
