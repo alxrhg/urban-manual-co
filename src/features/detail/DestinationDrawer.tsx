@@ -1396,7 +1396,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       <Drawer
         isOpen={isOpen}
         onClose={onClose}
-        mobileVariant="side"
+        mobileVariant="bottom"
         desktopSpacing="right-4 top-4 bottom-4"
         desktopWidth="420px"
         position="right"
