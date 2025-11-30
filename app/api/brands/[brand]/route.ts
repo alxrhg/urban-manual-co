@@ -1,24 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import { withErrorHandling, createValidationError } from '@/lib/errors';
+
+// Cache for 10 minutes - brand data is relatively stable
+export const revalidate = 600;
 
 /**
  * GET /api/brands/[brand]
  * Get all destinations for a specific brand
  */
-export async function GET(
+export const GET = withErrorHandling(async (
   _req: NextRequest,
   context: { params: Promise<{ brand: string }> }
-) {
-  try {
-    const { brand } = await context.params;
-    const supabase = await createServerClient();
+) => {
+  const { brand } = await context.params;
+  const supabase = await createServerClient();
 
-    if (!brand) {
-      return NextResponse.json(
-        { error: 'Brand parameter is required' },
-        { status: 400 }
-      );
-    }
+  if (!brand) {
+    throw createValidationError('Brand parameter is required');
+  }
 
     // Get all destinations for this brand
     const { data: destinations, error } = await supabase
@@ -60,19 +60,12 @@ export async function GET(
       });
     }
 
-    return NextResponse.json({
-      brand,
-      count: destinations?.length || 0,
-      destinations: (destinations as any[])?.map((d: any) => ({
-        ...d,
-        user_status: user ? userStatuses.get(d.slug) : undefined,
-      })) || [],
-    });
-  } catch (error: any) {
-    console.error('Brand destinations error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch brand destinations', details: error.message },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    brand,
+    count: destinations?.length || 0,
+    destinations: (destinations as any[])?.map((d: any) => ({
+      ...d,
+      user_status: user ? userStatuses.get(d.slug) : undefined,
+    })) || [],
+  });
+});

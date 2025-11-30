@@ -1,44 +1,33 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { withErrorHandling } from '@/lib/errors';
 
-export async function GET() {
-  try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Cache for 5 minutes - cities rarely change
+export const revalidate = 300;
 
-    if (!supabaseUrl || !supabaseKey) {
-      return NextResponse.json(
-        { error: 'Supabase configuration missing' },
-        { status: 500 }
-      );
-    }
+export const GET = withErrorHandling(async () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Query distinct cities from the destinations table
-    const { data, error } = await supabase
-      .from('destinations')
-      .select('city')
-      .not('city', 'is', null)
-      .order('city');
-
-    if (error) {
-      console.error('Error fetching cities:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch cities' },
-        { status: 500 }
-      );
-    }
-
-    // Extract unique cities
-    const cities = [...new Set(data.map((d: { city: string }) => d.city))].sort();
-
-    return NextResponse.json({ cities });
-  } catch (error) {
-    console.error('Error in cities API:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error('Supabase configuration missing');
   }
-}
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Query distinct cities from the destinations table
+  const { data, error } = await supabase
+    .from('destinations')
+    .select('city')
+    .not('city', 'is', null)
+    .order('city');
+
+  if (error) {
+    throw error;
+  }
+
+  // Extract unique cities
+  const cities = [...new Set(data.map((d: { city: string }) => d.city))].sort();
+
+  return NextResponse.json({ cities });
+});

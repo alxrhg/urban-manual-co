@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSeasonalContext, getAllSeasonalEvents } from '@/services/seasonality';
+import { withErrorHandling, createValidationError } from '@/lib/errors';
+
+// Cache for 1 hour - seasonal data is relatively stable
+export const revalidate = 3600;
 
 /**
  * GET /api/seasonality
@@ -10,18 +14,14 @@ import { getSeasonalContext, getAllSeasonalEvents } from '@/services/seasonality
  * 
  * Returns seasonal context for a city
  */
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const city = searchParams.get('city');
-    const dateParam = searchParams.get('date');
+export const GET = withErrorHandling(async (request: NextRequest) => {
+  const searchParams = request.nextUrl.searchParams;
+  const city = searchParams.get('city');
+  const dateParam = searchParams.get('date');
 
-    if (!city) {
-      return NextResponse.json(
-        { error: 'City parameter is required' },
-        { status: 400 }
-      );
-    }
+  if (!city) {
+    throw createValidationError('City parameter is required');
+  }
 
     const date = dateParam ? new Date(dateParam) : new Date();
     const context = getSeasonalContext(city, date);
@@ -59,15 +59,5 @@ export async function GET(request: NextRequest) {
         priority: e.priority,
       })),
     });
-  } catch (error: any) {
-    console.error('Error fetching seasonality:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to fetch seasonality data',
-        details: error.message,
-      },
-      { status: 500 }
-    );
-  }
-}
+});
 

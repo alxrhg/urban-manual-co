@@ -70,9 +70,10 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     'walking'
   );
 
-  // Combine with destination data
+  // Combine with destination data using Map for O(1) lookups instead of O(n) find
+  const destinationMap = new Map(destinations.map(d => [d.slug, d]));
   const results = nearby.map(near => {
-    const dest = destinations.find(d => d.slug === near.slug);
+    const dest = destinationMap.get(near.slug);
     return {
       ...dest,
       distanceMeters: near.distanceMeters,

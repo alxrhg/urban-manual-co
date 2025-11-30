@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { withErrorHandling, handleSupabaseError } from '@/lib/errors';
 
+// Cache for 5 minutes - categories rarely change
+export const revalidate = 300;
+
 /**
  * GET /api/categories
  *

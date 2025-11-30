@@ -6,14 +6,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { parseArchitectureQuery, isArchitectureQuery } from '@/lib/search/architecture-parser';
 import { createServerClient } from '@/lib/supabase/server';
+import { withErrorHandling, createValidationError } from '@/lib/errors';
 
-export async function POST(request: NextRequest) {
-  try {
-    const { query, city, limit = 20 } = await request.json();
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const { query, city, limit = 20 } = await request.json();
 
-    if (!query) {
-      return NextResponse.json({ error: 'Query is required' }, { status: 400 });
-    }
+  if (!query) {
+    throw createValidationError('Query is required');
+  }
 
     // Parse architecture query
     const architectureQuery = parseArchitectureQuery(query);
@@ -114,20 +114,13 @@ export async function POST(request: NextRequest) {
     // Group results by architect or movement for better presentation
     const grouped = groupArchitectureResults(destinations || [], architectureQuery);
 
-    return NextResponse.json({
-      destinations: destinations || [],
-      grouped: grouped,
-      query: architectureQuery,
-      isArchitectureQuery: isArchitectureQuery(query),
-    });
-  } catch (error: any) {
-    console.error('Error in architecture search:', error);
-    return NextResponse.json(
-      { error: 'Failed to perform architecture search', details: error.message },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    destinations: destinations || [],
+    grouped: grouped,
+    query: architectureQuery,
+    isArchitectureQuery: isArchitectureQuery(query),
+  });
+});
 
 /**
  * Group architecture search results
