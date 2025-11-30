@@ -18,6 +18,7 @@ import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
+import { useUrlState } from '@/hooks/useUrlState';
 
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
@@ -64,16 +65,27 @@ export default function CityPageClient() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [advancedFilters, setAdvancedFilters] = useState<{
-    michelin?: boolean;
-    crown?: boolean;
-  }>({});
   const [loading, setLoading] = useState(true);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
-  const [currentPage, setCurrentPage] = useState(1);
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
+
+  // URL state management for filters and pagination
+  const { state, setParam, setState, resetParams, isDefault } = useUrlState({
+    defaults: {
+      category: '',
+      michelin: 'false',
+      crown: 'false',
+      page: '1',
+    },
+  });
+
+  const selectedCategory = state.category || '';
+  const advancedFilters = {
+    michelin: state.michelin === 'true',
+    crown: state.crown === 'true',
+  };
+  const currentPage = parseInt(state.page || '1', 10);
 
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
 
@@ -108,8 +120,9 @@ export default function CityPageClient() {
     } else {
       setVisitedSlugs(new Set());
     }
-    setCurrentPage(1);
-  }, [citySlug, user]);
+    // Reset to page 1 when city changes
+    setParam('page', '1');
+  }, [citySlug, user, setParam]);
 
   useEffect(() => {
     if (destinations.length > 0) {
@@ -171,14 +184,14 @@ export default function CityPageClient() {
     if (category) {
       filtered = filtered.filter(d => {
         const categoryMatch = d.category && d.category.toLowerCase().trim() === category.toLowerCase().trim();
-        
+
         // If category matches, include it
         if (categoryMatch) return true;
-        
+
         // Also check tags for category-related matches
         const tags = d.tags || [];
         const categoryLower = category.toLowerCase().trim();
-        
+
         // Map categories to relevant tag patterns
         const categoryTagMap: Record<string, string[]> = {
           'dining': ['restaurant', 'dining', 'fine-dining', 'italian_restaurant', 'mexican_restaurant', 'japanese_restaurant', 'french_restaurant', 'chinese_restaurant', 'thai_restaurant', 'indian_restaurant', 'seafood_restaurant', 'steak_house', 'pizza', 'food'],
@@ -189,18 +202,18 @@ export default function CityPageClient() {
           'attraction': ['tourist_attraction', 'museum', 'park', 'landmark', 'monument'],
           'nightlife': ['nightclub', 'bar', 'pub', 'lounge', 'entertainment'],
         };
-        
+
         // Get relevant tags for this category
         const relevantTags = categoryTagMap[categoryLower] || [];
-        
+
         // Check if any tags match
         const tagMatch = tags.some(tag => {
           const tagLower = tag.toLowerCase();
-          return relevantTags.some(relevantTag => 
+          return relevantTags.some(relevantTag =>
             tagLower.includes(relevantTag) || relevantTag.includes(tagLower)
           );
         });
-        
+
         return tagMatch;
       });
     }
@@ -213,7 +226,8 @@ export default function CityPageClient() {
     }
 
     setFilteredDestinations(filtered);
-    setCurrentPage(1);
+    // Reset to page 1 when filters change
+    setParam('page', '1');
   };
 
   const fetchVisitedPlaces = async () => {
@@ -249,8 +263,7 @@ export default function CityPageClient() {
 
   const handleCategorySelect = (category: string) => {
     const nextCategory = category === selectedCategory ? '' : category;
-    setSelectedCategory(nextCategory);
-    setAdvancedFilters(prev => ({ ...prev, category: nextCategory || undefined }));
+    setParam('category', nextCategory);
   };
 
   const paginatedDestinations = (() => {
@@ -378,7 +391,7 @@ export default function CityPageClient() {
               {/* Advanced Filters */}
               <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
                 <button
-                  onClick={() => setAdvancedFilters(prev => ({ ...prev, michelin: !prev.michelin }))}
+                  onClick={() => setParam('michelin', advancedFilters.michelin ? 'false' : 'true')}
                   className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
                     advancedFilters.michelin
                       ? 'font-medium text-black dark:text-white'
@@ -400,7 +413,7 @@ export default function CityPageClient() {
                   Michelin
                 </button>
                 <button
-                  onClick={() => setAdvancedFilters(prev => ({ ...prev, crown: !prev.crown }))}
+                  onClick={() => setParam('crown', advancedFilters.crown ? 'false' : 'true')}
                   className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
                     advancedFilters.crown
                       ? 'font-medium text-black dark:text-white'
@@ -455,7 +468,7 @@ export default function CityPageClient() {
               {totalPages > 1 && (
                 <div className="w-full flex flex-wrap items-center justify-center gap-2 pt-8">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    onClick={() => setParam('page', String(Math.max(1, currentPage - 1)))}
                     disabled={currentPage === 1}
                     className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label="Previous page"
@@ -484,7 +497,7 @@ export default function CityPageClient() {
                       return (
                         <button
                           key={pageNumber}
-                          onClick={() => setCurrentPage(pageNumber)}
+                          onClick={() => setParam('page', String(pageNumber))}
                           className={`w-8 h-8 rounded-full flex items-center justify-center text-sm transition-all duration-200 ${
                             isActive
                               ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium'
@@ -500,7 +513,7 @@ export default function CityPageClient() {
                   </div>
 
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    onClick={() => setParam('page', String(Math.min(totalPages, currentPage + 1)))}
                     disabled={currentPage === totalPages}
                     className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label="Next page"
