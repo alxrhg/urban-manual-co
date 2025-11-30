@@ -412,6 +412,118 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, [trip, userId, days, onError]);
 
+  // Add a hotel
+  const addHotel = useCallback(async (
+    destination: Destination,
+    dayNumber: number,
+    options?: {
+      checkInDate?: string;
+      checkOutDate?: string;
+      nightStart?: number;
+      nightEnd?: number;
+    }
+  ) => {
+    if (!trip || !userId) return;
+
+    const currentDay = days.find((d) => d.dayNumber === dayNumber);
+    const orderIndex = currentDay?.items.length || 0;
+
+    const notesData: ItineraryItemNotes = {
+      type: 'hotel',
+      name: destination.name,
+      address: destination.formatted_address ?? undefined,
+      phone: destination.phone_number ?? undefined,
+      website: destination.website ?? undefined,
+      latitude: destination.latitude ?? undefined,
+      longitude: destination.longitude ?? undefined,
+      image: destination.image_thumbnail || destination.image || undefined,
+      rating: destination.rating ?? undefined,
+      priceLevel: destination.price_level ?? undefined,
+      bookingUrl: destination.booking_url ?? undefined,
+      neighborhood: destination.neighborhood ?? undefined,
+      checkInDate: options?.checkInDate,
+      checkOutDate: options?.checkOutDate,
+      nightStart: options?.nightStart,
+      nightEnd: options?.nightEnd,
+    };
+
+    const title = destination.name;
+    const description = destination.formatted_address || destination.city;
+
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const newItem: EnrichedItineraryItem = {
+      id: tempId,
+      trip_id: trip.id,
+      destination_slug: destination.slug,
+      day: dayNumber,
+      order_index: orderIndex,
+      time: null,
+      title,
+      description: description || null,
+      notes: stringifyItineraryNotes(notesData),
+      created_at: new Date().toISOString(),
+      destination: destination,
+      parsedNotes: notesData,
+    };
+
+    setDays((prev) =>
+      prev.map((d) =>
+        d.dayNumber === dayNumber
+          ? { ...d, items: [...d.items, newItem] }
+          : d
+      )
+    );
+
+    try {
+      setSaving(true);
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { data, error } = await supabase.from('itinerary_items').insert({
+        trip_id: trip.id,
+        destination_slug: destination.slug,
+        day: dayNumber,
+        order_index: orderIndex,
+        time: null,
+        title,
+        description: description || null,
+        notes: stringifyItineraryNotes(notesData),
+      }).select().single();
+
+      if (error) throw error;
+
+      // Update with real ID
+      if (data) {
+        setDays((prev) =>
+          prev.map((d) =>
+            d.dayNumber === dayNumber
+              ? {
+                  ...d,
+                  items: d.items.map((item) =>
+                    item.id === tempId ? { ...item, id: data.id } : item
+                  ),
+                }
+              : d
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error adding hotel:', err);
+      // Revert optimistic update
+      setDays((prev) =>
+        prev.map((d) =>
+          d.dayNumber === dayNumber
+            ? { ...d, items: d.items.filter((item) => item.id !== tempId) }
+            : d
+        )
+      );
+      onError?.(err instanceof Error ? err : new Error('Failed to add hotel'));
+    } finally {
+      setSaving(false);
+    }
+  }, [trip, userId, days, onError]);
+
   // Remove an item
   const removeItem = useCallback(async (itemId: string) => {
     // Store for potential revert
@@ -526,6 +638,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     reorderItems,
     addPlace,
     addFlight,
+    addHotel,
     removeItem,
     updateItemTime,
     updateItemNotes,

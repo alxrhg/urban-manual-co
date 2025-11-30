@@ -27,6 +27,7 @@ import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
 import AddPlaceBox from '@/components/trip/AddPlaceBox';
+import AddHotelBox from '@/components/trip/AddHotelBox';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import RouteMapBox from '@/components/trip/RouteMapBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
@@ -61,6 +62,7 @@ export default function TripPage() {
     reorderItems,
     addPlace,
     addFlight,
+    addHotel,
     removeItem,
     refresh,
   } = useTripEditor({
@@ -81,6 +83,7 @@ export default function TripPage() {
   const [newChecklistItem, setNewChecklistItem] = useState('');
   const [warnings, setWarnings] = useState<PlannerWarning[]>([]);
   const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
+  const [showAddHotelBox, setShowAddHotelBox] = useState(false);
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [showMapBox, setShowMapBox] = useState(false);
 
@@ -754,17 +757,31 @@ export default function TripPage() {
         {/* Hotels Tab */}
         {activeTab === 'hotels' && (
           <div className="fade-in space-y-4">
-            {hotels.length === 0 ? (
+            {/* Add Hotel Box */}
+            {showAddHotelBox && (
+              <AddHotelBox
+                city={trip?.destination}
+                tripStartDate={trip?.start_date}
+                tripEndDate={trip?.end_date}
+                onSelect={(hotel, options) => {
+                  addHotel(hotel, selectedDayNumber, options);
+                  setShowAddHotelBox(false);
+                }}
+                onClose={() => setShowAddHotelBox(false)}
+              />
+            )}
+
+            {!showAddHotelBox && hotels.length === 0 ? (
               <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
                 <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">No hotels added yet</p>
                 <button
-                  onClick={() => openPlaceSelector(selectedDayNumber)}
+                  onClick={() => setShowAddHotelBox(true)}
                   className="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
                 >
                   Add accommodation
                 </button>
               </div>
-            ) : (
+            ) : !showAddHotelBox && (
               <>
                 {hotels.map((hotel) => (
                   <div
@@ -795,7 +812,7 @@ export default function TripPage() {
                   </div>
                 ))}
                 <button
-                  onClick={() => openPlaceSelector(selectedDayNumber)}
+                  onClick={() => setShowAddHotelBox(true)}
                   className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-stone-500 dark:text-gray-400 hover:border-stone-300 dark:hover:border-gray-700 transition-colors"
                 >
                   + Add another hotel
@@ -912,6 +929,10 @@ export default function TripPage() {
       <FloatingActionBar
         onAddPlace={() => openPlaceSelector(selectedDayNumber)}
         onAddFlight={() => openFlightDrawer(selectedDayNumber)}
+        onAddHotel={() => {
+          setActiveTab('hotels');
+          setShowAddHotelBox(true);
+        }}
         onAddNote={() => openDrawer('trip-notes', { tripId: trip.id })}
         onOpenMap={() => setShowMapBox(true)}
         onAIPlan={handleAITripPlanning}
