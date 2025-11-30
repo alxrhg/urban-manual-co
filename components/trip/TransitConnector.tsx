@@ -171,8 +171,18 @@ export default function TransitConnector({
     return null;
   };
 
+  // Format distance for display
+  const formatDistance = (km: number): string => {
+    if (km < 1) {
+      return `${Math.round(km * 1000)}m`;
+    }
+    return `${km.toFixed(1)}km`;
+  };
+
+  const distance = localEstimates?.distance;
+
   return (
-    <div className={`relative flex items-center justify-center py-2 ${className}`}>
+    <div className={`relative flex flex-col items-center justify-center py-2 gap-1 ${className}`}>
       {/* Mode Selector Pills */}
       <div className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
         {(['walking', 'transit', 'driving'] as TransitMode[]).map((m) => {
@@ -204,6 +214,12 @@ export default function TransitConnector({
           );
         })}
       </div>
+      {/* Distance indicator */}
+      {distance !== undefined && distance > 0 && (
+        <span className="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
+          {formatDistance(distance)}
+        </span>
+      )}
     </div>
   );
 }

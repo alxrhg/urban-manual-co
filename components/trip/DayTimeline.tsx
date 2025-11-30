@@ -25,6 +25,7 @@ import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import {
   calculateDuration,
   estimateDuration,
+  formatDuration,
   formatMinutesToTime,
   formatTimeDisplay,
   parseTimeToMinutes,
@@ -577,6 +578,12 @@ export default function DayTimeline({
                       </>
                     )}
                   </div>
+                </div>
+                {/* Duration badge */}
+                <div className="flex-shrink-0 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+                  <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums">
+                    {formatDuration(duration)}
+                  </span>
                 </div>
               </div>
 
