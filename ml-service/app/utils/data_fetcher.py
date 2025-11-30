@@ -1,7 +1,7 @@
 """Data fetching utilities from Supabase."""
 
 import pandas as pd
-from typing import Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional
 from datetime import datetime, timedelta
 
 from app.utils.database import get_db_connection
@@ -556,6 +556,76 @@ class DataFetcher:
 
         except Exception as e:
             logger.error(f"Error fetching visit history: {e}")
+            raise
+
+    @staticmethod
+    def fetch_destination_embeddings(
+        limit: Optional[int] = None,
+        cities: Optional[List[str]] = None,
+        categories: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Fetch destination embeddings for vector index construction."""
+
+        logger.info(
+            "Fetching destination embeddings (limit=%s, cities=%s, categories=%s)",
+            limit,
+            cities,
+            categories,
+        )
+
+        conditions = ["vector_embedding IS NOT NULL"]
+        params: List[Any] = []
+
+        if cities:
+            conditions.append("LOWER(city) = ANY(%s)")
+            params.append([city.lower() for city in cities])
+
+        if categories:
+            conditions.append("LOWER(category) = ANY(%s)")
+            params.append([category.lower() for category in categories])
+
+        where_clause = " AND ".join(conditions)
+        limit_clause = ""
+
+        if limit:
+            limit_clause = " LIMIT %s"
+            params.append(limit)
+
+        query = f"""
+        SELECT id, slug, name, city, category, vector_embedding
+        FROM destinations
+        WHERE {where_clause}
+        ORDER BY id
+        {limit_clause}
+        """
+
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, params)
+                    columns = [desc[0] for desc in cur.description]
+                    records = [dict(zip(columns, row)) for row in cur.fetchall()]
+
+            for record in records:
+                embedding = record.get("vector_embedding")
+
+                if isinstance(embedding, memoryview):
+                    embedding = list(embedding)
+
+                if isinstance(embedding, tuple):
+                    embedding = list(embedding)
+
+                try:
+                    record["vector_embedding"] = [float(x) for x in embedding] if embedding is not None else None
+                except (TypeError, ValueError):
+                    logger.debug("Failed to cast embedding for record %s", record.get("id"))
+                    record["vector_embedding"] = embedding
+
+            logger.info("Fetched %d destination embeddings", len(records))
+            return records
+
+        except Exception as e:
+            logger.error(f"Error fetching destination embeddings: {e}")
             raise
 
     @staticmethod

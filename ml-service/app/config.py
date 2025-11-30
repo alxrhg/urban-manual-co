@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     # Performance
     max_requests_per_minute: int = 60
 
+    # Vector search / FAISS configuration
+    faiss_index_path: str = "data/faiss.index"
+    faiss_metadata_path: str = "data/faiss-metadata.json"
+
     # Topic modeling / NLP configuration
     topic_min_documents_city: int = 20
     topic_min_documents_destination: int = 5
