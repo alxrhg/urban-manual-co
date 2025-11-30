@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase-server';
+import { withErrorHandling } from '@/lib/errors';
 
 /**
  * POST /api/discovery/search/natural-language
@@ -10,91 +11,80 @@ import { createServerClient } from '@/lib/supabase-server';
  * - "museums open now near the Eiffel Tower"
  * - "cafes with wifi and good reviews"
  */
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { query, userId, pageSize = 20 } = body;
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const body = await request.json();
+  const { query, userId, pageSize = 20 } = body;
 
-    if (!query || typeof query !== 'string') {
-      return NextResponse.json(
-        { error: 'query is required' },
-        { status: 400 }
-      );
-    }
-
-    const discoveryEngine = getDiscoveryEngineService();
-
-    if (!discoveryEngine.isAvailable()) {
-      return NextResponse.json(
-        { error: 'Discovery Engine is not configured' },
-        { status: 503 }
-      );
-    }
-
-    // Get user ID from session if not provided
-    let finalUserId = userId;
-    if (!finalUserId) {
-      try {
-        const supabase = await createServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        finalUserId = user?.id;
-      } catch (error) {
-        // Continue without user ID
-      }
-    }
-
-    // Parse natural language query for filters
-    const parsedFilters = parseNaturalLanguageFilters(query);
-    
-    // Clean query (remove filter keywords)
-    const cleanQuery = cleanNaturalLanguageQuery(query);
-
-    // Perform search with parsed filters
-    const results = await discoveryEngine.search(cleanQuery, {
-      userId: finalUserId,
-      pageSize,
-      filters: parsedFilters,
-      boostSpec: [
-        {
-          condition: 'michelin_stars > 0',
-          boost: 1.5,
-        },
-        {
-          condition: 'rating >= 4.5',
-          boost: 1.2,
-        },
-      ],
-    });
-
-    // Track search event
-    if (finalUserId) {
-      discoveryEngine.trackEvent({
-        userId: finalUserId,
-        eventType: 'search',
-        searchQuery: query,
-      }).catch((error) => {
-        console.warn('Failed to track natural language search event:', error);
-      });
-    }
-
-    return NextResponse.json({
-      results: results.results,
-      totalSize: results.totalSize,
-      query: cleanQuery,
-      parsedFilters,
-      originalQuery: query,
-    });
-  } catch (error: any) {
-    console.error('Natural language search error:', error);
+  if (!query || typeof query !== 'string') {
     return NextResponse.json(
-      {
-        error: 'Natural language search failed',
-        details: error.message,
-      },
-      { status: 500 }
+      { error: 'query is required' },
+      { status: 400 }
     );
   }
-}
+
+  const discoveryEngine = getDiscoveryEngineService();
+
+  if (!discoveryEngine.isAvailable()) {
+    return NextResponse.json(
+      { error: 'Discovery Engine is not configured' },
+      { status: 503 }
+    );
+  }
+
+  // Get user ID from session if not provided
+  let finalUserId = userId;
+  if (!finalUserId) {
+    try {
+      const supabase = await createServerClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      finalUserId = user?.id;
+    } catch (error) {
+      // Continue without user ID
+    }
+  }
+
+  // Parse natural language query for filters
+  const parsedFilters = parseNaturalLanguageFilters(query);
+
+  // Clean query (remove filter keywords)
+  const cleanQuery = cleanNaturalLanguageQuery(query);
+
+  // Perform search with parsed filters
+  const results = await discoveryEngine.search(cleanQuery, {
+    userId: finalUserId,
+    pageSize,
+    filters: parsedFilters,
+    boostSpec: [
+      {
+        condition: 'michelin_stars > 0',
+        boost: 1.5,
+      },
+      {
+        condition: 'rating >= 4.5',
+        boost: 1.2,
+      },
+    ],
+  });
+
+  // Track search event
+  if (finalUserId) {
+    discoveryEngine.trackEvent({
+      userId: finalUserId,
+      eventType: 'search',
+      searchQuery: query,
+    }).catch((error) => {
+      console.warn('Failed to track natural language search event:', error);
+    });
+  }
+
+  return NextResponse.json({
+    results: results.results,
+    totalSize: results.totalSize,
+    query: cleanQuery,
+    parsedFilters,
+    originalQuery: query,
+  });
+});
 
 /**
  * Parse natural language query to extract filters

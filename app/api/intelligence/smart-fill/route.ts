@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { withErrorHandling, createValidationError } from '@/lib/errors';
 
 /**
  * POST /api/intelligence/smart-fill
  * Analyze existing trip items and suggest complementary places
  */
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createServerClient();
-    const { data: { user } } = await supabase.auth.getUser();
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const supabase = await createServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-    const { city, existingItems, tripDays } = await request.json();
+  const { city, existingItems, tripDays } = await request.json();
 
-    if (!city) {
-      return NextResponse.json(
-        { error: 'City is required' },
-        { status: 400 }
-      );
-    }
+  if (!city) {
+    throw createValidationError('City is required');
+  }
 
     // Get available destinations in the city
     const { data: destinations, error: destError } = await supabase
@@ -74,19 +71,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      suggestions,
-      analysis,
-      count: suggestions.length,
-    });
-  } catch (error: any) {
-    console.error('Error in smart-fill:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    suggestions,
+    analysis,
+    count: suggestions.length,
+  });
+});
 
 interface TripAnalysis {
   itemsByDay: Record<number, any[]>;

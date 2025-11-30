@@ -1,109 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
+import { withErrorHandling } from '@/lib/errors';
 
 /**
  * GET /api/discovery/analytics
  * Get search analytics and insights
- * 
+ *
  * Query parameters:
  * - startDate: Start date (ISO string)
  * - endDate: End date (ISO string)
  * - metric: Specific metric to retrieve
  */
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const startDate = searchParams.get('startDate');
-    const endDate = searchParams.get('endDate');
-    const metric = searchParams.get('metric');
+export const GET = withErrorHandling(async (request: NextRequest) => {
+  const { searchParams } = new URL(request.url);
+  const startDate = searchParams.get('startDate');
+  const endDate = searchParams.get('endDate');
+  const metric = searchParams.get('metric');
 
-    const supabase = await createServerClient();
+  const supabase = await createServerClient();
 
-    // Get analytics from user_interactions table
-    const dateFilter: any = {};
-    if (startDate) {
-      dateFilter.gte = startDate;
-    }
-    if (endDate) {
-      dateFilter.lte = endDate;
-    }
-
-    // Popular queries
-    const { data: searchInteractions } = await supabase
-      .from('user_interactions')
-      .select('search_query, created_at')
-      .eq('interaction_type', 'search')
-      .not('search_query', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(1000);
-
-    // Popular destinations (views)
-    const { data: viewInteractions } = await supabase
-      .from('user_interactions')
-      .select('destination_slug, created_at')
-      .eq('interaction_type', 'view')
-      .not('destination_slug', 'is', null)
-      .order('created_at', { ascending: false })
-      .limit(1000);
-
-    // Calculate metrics
-    const popularQueries = calculatePopularQueries(searchInteractions || []);
-    const popularDestinations = calculatePopularDestinations(viewInteractions || []);
-    const searchTrends = calculateSearchTrends(searchInteractions || []);
-
-    // Discovery Engine status
-    const discoveryEngine = getDiscoveryEngineService();
-    const isDiscoveryEngineAvailable = discoveryEngine.isAvailable();
-
-    const analytics = {
-      summary: {
-        totalSearches: searchInteractions?.length || 0,
-        totalViews: viewInteractions?.length || 0,
-        discoveryEngineEnabled: isDiscoveryEngineAvailable,
-        dateRange: {
-          start: startDate || null,
-          end: endDate || null,
-        },
-      },
-      popularQueries: popularQueries.slice(0, 20),
-      popularDestinations: popularDestinations.slice(0, 20),
-      searchTrends,
-      metrics: {
-        averageResultsPerQuery: 15, // Placeholder
-        clickThroughRate: 0.12, // Placeholder
-        searchToSaveRate: 0.05, // Placeholder
-      },
-    };
-
-    // Return specific metric if requested
-    if (metric) {
-      switch (metric) {
-        case 'popular-queries':
-          return NextResponse.json({ popularQueries: analytics.popularQueries });
-        case 'popular-destinations':
-          return NextResponse.json({ popularDestinations: analytics.popularDestinations });
-        case 'trends':
-          return NextResponse.json({ trends: analytics.searchTrends });
-        case 'summary':
-          return NextResponse.json({ summary: analytics.summary });
-        default:
-          return NextResponse.json({ error: 'Unknown metric' }, { status: 400 });
-      }
-    }
-
-    return NextResponse.json(analytics);
-  } catch (error: any) {
-    console.error('Analytics error:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to get analytics',
-        details: error.message,
-      },
-      { status: 500 }
-    );
+  // Get analytics from user_interactions table
+  const dateFilter: any = {};
+  if (startDate) {
+    dateFilter.gte = startDate;
   }
-}
+  if (endDate) {
+    dateFilter.lte = endDate;
+  }
+
+  // Popular queries
+  const { data: searchInteractions } = await supabase
+    .from('user_interactions')
+    .select('search_query, created_at')
+    .eq('interaction_type', 'search')
+    .not('search_query', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1000);
+
+  // Popular destinations (views)
+  const { data: viewInteractions } = await supabase
+    .from('user_interactions')
+    .select('destination_slug, created_at')
+    .eq('interaction_type', 'view')
+    .not('destination_slug', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1000);
+
+  // Calculate metrics
+  const popularQueries = calculatePopularQueries(searchInteractions || []);
+  const popularDestinations = calculatePopularDestinations(viewInteractions || []);
+  const searchTrends = calculateSearchTrends(searchInteractions || []);
+
+  // Discovery Engine status
+  const discoveryEngine = getDiscoveryEngineService();
+  const isDiscoveryEngineAvailable = discoveryEngine.isAvailable();
+
+  const analytics = {
+    summary: {
+      totalSearches: searchInteractions?.length || 0,
+      totalViews: viewInteractions?.length || 0,
+      discoveryEngineEnabled: isDiscoveryEngineAvailable,
+      dateRange: {
+        start: startDate || null,
+        end: endDate || null,
+      },
+    },
+    popularQueries: popularQueries.slice(0, 20),
+    popularDestinations: popularDestinations.slice(0, 20),
+    searchTrends,
+    metrics: {
+      averageResultsPerQuery: 15, // Placeholder
+      clickThroughRate: 0.12, // Placeholder
+      searchToSaveRate: 0.05, // Placeholder
+    },
+  };
+
+  // Return specific metric if requested
+  if (metric) {
+    switch (metric) {
+      case 'popular-queries':
+        return NextResponse.json({ popularQueries: analytics.popularQueries });
+      case 'popular-destinations':
+        return NextResponse.json({ popularDestinations: analytics.popularDestinations });
+      case 'trends':
+        return NextResponse.json({ trends: analytics.searchTrends });
+      case 'summary':
+        return NextResponse.json({ summary: analytics.summary });
+      default:
+        return NextResponse.json({ error: 'Unknown metric' }, { status: 400 });
+    }
+  }
+
+  return NextResponse.json(analytics);
+});
 
 /**
  * Calculate popular queries from search interactions

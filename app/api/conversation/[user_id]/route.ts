@@ -9,6 +9,7 @@ import { openai, OPENAI_MODEL } from '@/lib/openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { URBAN_MANUAL_EDITOR_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';
 import { formatFewShots } from '@/lib/ai/fewShots';
+import { withErrorHandling } from '@/lib/errors';
 import {
   getOrCreateSession,
   getConversationMessages,
@@ -49,10 +50,10 @@ function normalizeUserId(userId?: string | null) {
   return ['anonymous', 'guest'].includes(userId) ? undefined : userId;
 }
 
-export async function POST(
+export const POST = withErrorHandling(async (
   request: NextRequest,
   context: { params: Promise<{ user_id: string }> }
-) {
+) => {
   try {
     // Get user context first for rate limiting
     const supabase = await createServerClient();
@@ -270,7 +271,7 @@ export async function POST(
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * Check if a string is a UUID (session ID format)
@@ -284,10 +285,10 @@ function isUUID(str: string): boolean {
  * GET: Retrieve conversation history
  * Supports both user_id and session_id (UUID) in the path parameter
  */
-export async function GET(
+export const GET = withErrorHandling(async (
   _request: NextRequest,
   context: { params: Promise<{ user_id: string }> }
-) {
+) => {
   try {
     const { searchParams } = new URL(_request.url);
     const session_token = searchParams.get('session_token') || undefined;
@@ -347,4 +348,4 @@ export async function GET(
     console.error('Error fetching conversation:', error);
     return NextResponse.json({ error: 'Failed to fetch conversation' }, { status: 500 });
   }
-}
+});

@@ -169,7 +169,9 @@ async function enrichDestinationComplete(dest: any): Promise<{ slug: string; ok:
           updateData.primary_photo_url = photos[0]?.url || null;
           updateData.photo_count = photos.length;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn(`Failed to process photos for ${placeId}:`, e instanceof Error ? e.message : e);
+      }
     }
 
     const weather = await fetchWeather(lat, lng);

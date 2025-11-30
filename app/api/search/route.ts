@@ -8,6 +8,7 @@ import {
   isUpstashConfigured,
 } from '@/lib/rate-limit';
 import { createServerClient } from '@/lib/supabase/server';
+import { withErrorHandling } from '@/lib/errors';
 
 // Generate embedding for a query using OpenAI embeddings via provider-agnostic helper
 async function generateEmbedding(query: string): Promise<number[] | null> {
@@ -99,7 +100,7 @@ function parseQueryFallback(query: string): {
   return { keywords, city, category, brand };
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   const supabase = await createServerClient();
   try {
     const body = await request.json();
@@ -509,4 +510,4 @@ export async function POST(request: NextRequest) {
       error: error.message || 'Search failed',
     }, { status: 500 });
   }
-}
+});

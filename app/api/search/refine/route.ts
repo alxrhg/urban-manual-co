@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { generateSearchResponseContext } from '@/lib/search/generateSearchContext';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
+import { withErrorHandling } from '@/lib/errors';
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
     const { originalQuery, refinements = [], allResults = [] } = await request.json();
     const supabase = await createServerClient();
@@ -193,7 +194,7 @@ export async function POST(request: NextRequest) {
       suggestions: [],
     });
   }
-}
+});
 
 function generateFallbackResponse(
   filteredCount: number,

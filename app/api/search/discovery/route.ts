@@ -4,6 +4,8 @@ import { createServerClient } from '@/lib/supabase-server';
 import { getFeatureFlags, getABTestVariant } from '@/lib/discovery-engine/feature-flags';
 import { withCache, getDiscoveryEngineCache } from '@/lib/discovery-engine/cache';
 import { withPerformanceMonitoring } from '@/lib/discovery-engine/performance';
+import { withErrorHandling } from '@/lib/errors';
+import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 
 // Track if we've already warned about Discovery Engine configuration
 let hasWarnedAboutDiscoveryEngine = false;
@@ -11,7 +13,7 @@ let hasWarnedAboutDiscoveryEngine = false;
 /**
  * POST /api/search/discovery
  * Search destinations using Google Discovery Engine
- * 
+ *
  * Query parameters:
  * - query: Search query string (required)
  * - city: Filter by city (optional)
@@ -20,11 +22,19 @@ let hasWarnedAboutDiscoveryEngine = false;
  * - minRating: Filter by minimum rating (optional)
  * - pageSize: Number of results (default: 20)
  * - pageToken: Pagination token (optional)
- * 
+ *
  * Body:
  * - userId: User ID for personalization (optional)
  */
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const identifier = getIdentifier(request);
+  const limiter = isUpstashConfigured() ? searchRatelimit : memorySearchRatelimit;
+  const { success, limit, remaining, reset } = await limiter.limit(identifier);
+
+  if (!success) {
+    return createRateLimitResponse('Rate limit exceeded. Please try again later.', limit, remaining, reset);
+  }
+
   let body: any = null;
   try {
     body = await request.json();
@@ -167,13 +177,21 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   }
-}
+});
 
 /**
  * GET /api/search/discovery
  * Search destinations using Google Discovery Engine (GET version)
  */
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async (request: NextRequest) => {
+  const identifier = getIdentifier(request);
+  const limiter = isUpstashConfigured() ? searchRatelimit : memorySearchRatelimit;
+  const { success, limit, remaining, reset } = await limiter.limit(identifier);
+
+  if (!success) {
+    return createRateLimitResponse('Rate limit exceeded. Please try again later.', limit, remaining, reset);
+  }
+
   const url = new URL(request.url);
   const searchParams = url.searchParams;
   try {
@@ -268,7 +286,7 @@ export async function GET(request: NextRequest) {
     // Return 200 with empty results instead of 500 to prevent breaking the UI
     const query = searchParams.get('query') || '';
     return NextResponse.json(
-      { 
+      {
         results: [],
         totalSize: 0,
         query,
@@ -281,5 +299,5 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   }
-}
+});
 

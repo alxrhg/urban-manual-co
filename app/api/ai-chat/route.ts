@@ -25,6 +25,7 @@ import {
   trackUsage,
   estimateTokens,
 } from '@/lib/ai/cost-tracking';
+import { withErrorHandling } from '@/lib/errors';
 
 // LRU Cache implementation with TTL support
 class LRUCache<T> {
@@ -878,7 +879,7 @@ function generateResponse(count: number, city?: string, category?: string): stri
   return `I found ${count}${categoryText}s${location}.`;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   const encoder = new TextEncoder();
 
   try {
@@ -982,7 +983,7 @@ export async function POST(request: NextRequest) {
       destinations: []
     }, { status: 500 });
   }
-}
+});
 
 // Streaming version of the AI chat request handler
 async function processStreamingAIChatRequest(

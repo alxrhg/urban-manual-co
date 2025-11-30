@@ -1,10 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, AuthError } from '@/lib/adminAuth';
+import { withErrorHandling } from '@/lib/errors';
+import { conversationRatelimit, memoryConversationRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
+    // Rate limiting for AI endpoints
+    const identifier = getIdentifier(request);
+    const limiter = isUpstashConfigured() ? conversationRatelimit : memoryConversationRatelimit;
+    const { success, limit, remaining, reset } = await limiter.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse('Rate limit exceeded. Please try again later.', limit, remaining, reset);
+    }
+
     const { serviceClient: supabase } = await requireAdmin(request);
 
     if (!GOOGLE_API_KEY) {
@@ -143,4 +154,4 @@ Respond ONLY with valid JSON in this exact format:
       { status: 500 }
     );
   }
-}
+});

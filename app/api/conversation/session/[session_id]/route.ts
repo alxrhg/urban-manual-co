@@ -6,14 +6,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 import { getConversationMessages } from '../../utils/contextHandler';
+import { withErrorHandling } from '@/lib/errors';
 
 /**
  * GET: Retrieve conversation history by session ID
  */
-export async function GET(
+export const GET = withErrorHandling(async (
   request: NextRequest,
   context: { params: Promise<{ session_id: string }> }
-) {
+) => {
   try {
     const params = await context.params;
     const { session_id } = params || {};
@@ -59,5 +60,5 @@ export async function GET(
     console.error('Error fetching conversation by session ID:', error);
     return NextResponse.json({ error: 'Failed to fetch conversation' }, { status: 500 });
   }
-}
+});
 

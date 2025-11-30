@@ -1,7 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { withErrorHandling } from '@/lib/errors';
+import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const identifier = getIdentifier(request);
+  const limiter = isUpstashConfigured() ? searchRatelimit : memorySearchRatelimit;
+  const { success, limit, remaining, reset } = await limiter.limit(identifier);
+
+  if (!success) {
+    return createRateLimitResponse('Rate limit exceeded. Please try again later.', limit, remaining, reset);
+  }
+
   try {
     const { query } = await request.json();
 
@@ -61,5 +71,5 @@ export async function POST(request: NextRequest) {
     console.error('Autocomplete error:', error);
     return NextResponse.json({ suggestions: [] }, { status: 500 });
   }
-}
+});
 

@@ -6,8 +6,18 @@ import { generateSearchResponseContext } from '@/lib/search/generateSearchContex
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { getUserLocation } from '@/lib/location/getUserLocation';
 import { expandNearbyLocations, getLocationContext, findLocationByName } from '@/lib/search/expandLocations';
+import { withErrorHandling } from '@/lib/errors';
+import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async (request: NextRequest) => {
+  const identifier = getIdentifier(request);
+  const limiter = isUpstashConfigured() ? searchRatelimit : memorySearchRatelimit;
+  const { success, limit, remaining, reset } = await limiter.limit(identifier);
+
+  if (!success) {
+    return createRateLimitResponse('Rate limit exceeded. Please try again later.', limit, remaining, reset);
+  }
+
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q') || '';
   const city = searchParams.get('city');
@@ -209,8 +219,8 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Search error:', error);
     return NextResponse.json(
-      { 
-        error: 'Search failed', 
+      {
+        error: 'Search failed',
         details: error.message,
         results: [],
         contextResponse: 'Sorry, there was an error processing your search. Please try again.',
@@ -219,5 +229,5 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 

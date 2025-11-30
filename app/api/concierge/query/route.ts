@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getVectorIndex } from '@/lib/upstash-vector';
 import { generateTextEmbedding } from '@/lib/ml/embeddings';
+import { withErrorHandling } from '@/lib/errors';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -41,10 +42,10 @@ interface ConciergeResponse {
 
 /**
  * POST /api/concierge/query
- * 
+ *
  * AI-powered travel concierge that combines internal semantic search
  * with external web research to provide personalized recommendations.
- * 
+ *
  * Flow:
  * 1. Generate embedding for user query
  * 2. Query Upstash Vector for semantic matches
@@ -52,101 +53,93 @@ interface ConciergeResponse {
  * 4. Synthesize final answer with LLM
  * 5. Return ranked destinations + explanation + references
  */
-export async function POST(request: NextRequest) {
-  try {
-    const body: ConciergeRequest = await request.json();
-    const { query, userContext, limit = 5, includeExternal = true } = body;
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const body: ConciergeRequest = await request.json();
+  const { query, userContext, limit = 5, includeExternal = true } = body;
 
-    if (!query || query.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Query is required' },
-        { status: 400 }
-      );
-    }
-
-    // Step 1: Generate embedding for the query
-    const embeddingResult = await generateTextEmbedding(query);
-
-    // Step 2: Query vector database for semantic matches
-    const vectorIndex = getVectorIndex();
-    const vectorResults = await vectorIndex.query({
-      vector: embeddingResult.embedding,
-      topK: limit * 2, // Get more results for filtering
-      includeMetadata: true,
-    });
-
-    // Step 3: Get destination IDs from vector results
-    const destinationIds = vectorResults
-      .filter((r: any) => r.score && r.score > 0.7) // Filter by similarity threshold
-      .map((r: any) => parseInt(String(r.id)))
-      .slice(0, limit);
-
-    if (destinationIds.length === 0) {
-      return NextResponse.json<ConciergeResponse>({
-        explanation: "I couldn't find any destinations matching your criteria. Try a broader search or different keywords.",
-        destinations: [],
-      });
-    }
-
-    // Step 4: Fetch full destination data from Supabase
-    const supabase = createClient(supabaseUrl, supabaseKey);
-    const { data: destinations, error } = await supabase
-      .from('destinations')
-      .select('id, name, city, country, category, price_range, michelin_stars, description, ai_description')
-      .in('id', destinationIds);
-
-    if (error || !destinations) {
-      console.error('Supabase error:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch destination details' },
-        { status: 500 }
-      );
-    }
-
-    // Step 5: Fetch external context if enabled
-    let externalReferences: ExternalReference[] | undefined;
-    if (includeExternal) {
-      externalReferences = await fetchExternalContext(query, destinations.slice(0, 3));
-    }
-
-    // Step 6: Generate AI explanation
-    const explanation = await generateExplanation(
-      query,
-      destinations,
-      userContext,
-      externalReferences
-    );
-
-    // Step 7: Map destinations with similarity scores and reasons
-    const rankedDestinations = destinations.map((dest: any, index: number) => {
-      const vectorResult = vectorResults.find((r: any) => parseInt(String(r.id)) === dest.id);
-      return {
-        id: dest.id,
-        name: dest.name,
-        city: dest.city,
-        country: dest.country,
-        category: dest.category,
-        similarity_score: vectorResult?.score || 0,
-        reason: generateReason(dest, query, userContext),
-      };
-    });
-
-    const response: ConciergeResponse = {
-      explanation,
-      destinations: rankedDestinations,
-      externalReferences,
-      userContext: formatUserContext(userContext),
-    };
-
-    return NextResponse.json(response);
-  } catch (error) {
-    console.error('Concierge query error:', error);
+  if (!query || query.trim().length === 0) {
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Query is required' },
+      { status: 400 }
+    );
+  }
+
+  // Step 1: Generate embedding for the query
+  const embeddingResult = await generateTextEmbedding(query);
+
+  // Step 2: Query vector database for semantic matches
+  const vectorIndex = getVectorIndex();
+  const vectorResults = await vectorIndex.query({
+    vector: embeddingResult.embedding,
+    topK: limit * 2, // Get more results for filtering
+    includeMetadata: true,
+  });
+
+  // Step 3: Get destination IDs from vector results
+  const destinationIds = vectorResults
+    .filter((r: any) => r.score && r.score > 0.7) // Filter by similarity threshold
+    .map((r: any) => parseInt(String(r.id)))
+    .slice(0, limit);
+
+  if (destinationIds.length === 0) {
+    return NextResponse.json<ConciergeResponse>({
+      explanation: "I couldn't find any destinations matching your criteria. Try a broader search or different keywords.",
+      destinations: [],
+    });
+  }
+
+  // Step 4: Fetch full destination data from Supabase
+  const supabase = createClient(supabaseUrl, supabaseKey);
+  const { data: destinations, error } = await supabase
+    .from('destinations')
+    .select('id, name, city, country, category, price_range, michelin_stars, description, ai_description')
+    .in('id', destinationIds);
+
+  if (error || !destinations) {
+    console.error('Supabase error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch destination details' },
       { status: 500 }
     );
   }
-}
+
+  // Step 5: Fetch external context if enabled
+  let externalReferences: ExternalReference[] | undefined;
+  if (includeExternal) {
+    externalReferences = await fetchExternalContext(query, destinations.slice(0, 3));
+  }
+
+  // Step 6: Generate AI explanation
+  const explanation = await generateExplanation(
+    query,
+    destinations,
+    userContext,
+    externalReferences
+  );
+
+  // Step 7: Map destinations with similarity scores and reasons
+  const rankedDestinations = destinations.map((dest: any, index: number) => {
+    const vectorResult = vectorResults.find((r: any) => parseInt(String(r.id)) === dest.id);
+    return {
+      id: dest.id,
+      name: dest.name,
+      city: dest.city,
+      country: dest.country,
+      category: dest.category,
+      similarity_score: vectorResult?.score || 0,
+      reason: generateReason(dest, query, userContext),
+    };
+  });
+
+  const response: ConciergeResponse = {
+    explanation,
+    destinations: rankedDestinations,
+    externalReferences,
+    userContext: formatUserContext(userContext),
+  };
+
+  return NextResponse.json(response);
+});
 
 /**
  * Fetch external context from Tavily or Exa API

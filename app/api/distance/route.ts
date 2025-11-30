@@ -6,6 +6,7 @@ import {
   createRateLimitResponse,
   isUpstashConfigured,
 } from '@/lib/rate-limit';
+import { withErrorHandling } from '@/lib/errors';
 
 interface DistanceRequest {
   origins: Array<{ lat: number; lng: number; name: string }>;
@@ -21,7 +22,7 @@ interface DistanceResult {
   mode: string;
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
     // Apply rate limiting
     const identifier = getIdentifier(request);
@@ -121,7 +122,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 // Fallback: Calculate estimates based on haversine distance
 function calculateEstimates(

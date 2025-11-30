@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import { withErrorHandling } from '@/lib/errors';
 
-export async function GET(
+export const GET = withErrorHandling(async (
   _req: NextRequest,
   context: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     const { id } = await context.params;
     const destinationId = parseInt(id);
@@ -61,6 +62,6 @@ export async function GET(
       { status: 500 }
     );
   }
-}
+});
 
 

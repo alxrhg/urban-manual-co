@@ -1,90 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase-server';
+import { withErrorHandling } from '@/lib/errors';
 
 /**
  * POST /api/discovery/recommendations/contextual
  * Get context-aware recommendations based on time, location, weather, events
- * 
+ *
  * Body:
  * - userId: User ID (optional)
  * - context: Context object with time, location, weather, events
  */
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { userId, context = {} } = body;
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const body = await request.json();
+  const { userId, context = {} } = body;
 
-    const discoveryEngine = getDiscoveryEngineService();
+  const discoveryEngine = getDiscoveryEngineService();
 
-    if (!discoveryEngine.isAvailable()) {
-      return NextResponse.json(
-        { error: 'Discovery Engine is not configured' },
-        { status: 503 }
-      );
-    }
-
-    // Get user ID from session if not provided
-    let finalUserId = userId;
-    if (!finalUserId) {
-      try {
-        const supabase = await createServerClient();
-        const { data: { user } } = await supabase.auth.getUser();
-        finalUserId = user?.id;
-      } catch (error) {
-        return NextResponse.json(
-          { error: 'User authentication required for contextual recommendations' },
-          { status: 401 }
-        );
-      }
-    }
-
-    if (!finalUserId) {
-      return NextResponse.json(
-        { error: 'User ID is required for recommendations' },
-        { status: 400 }
-      );
-    }
-
-    // Build context-aware query
-    const contextQuery = buildContextQuery(context);
-
-    // Get base recommendations
-    const recommendations = await discoveryEngine.recommend(finalUserId, {
-      pageSize: context.pageSize || 10,
-      filters: {
-        city: context.city,
-        category: context.category,
-      },
-    });
-
-    // Enhance with context scoring
-    const enhancedRecommendations = recommendations.map((rec: any) => ({
-      ...rec,
-      contextScore: calculateContextScore(rec, context),
-      contextReason: getContextReason(rec, context),
-    }));
-
-    // Sort by context score
-    enhancedRecommendations.sort((a: any, b: any) => b.contextScore - a.contextScore);
-
-    return NextResponse.json({
-      recommendations: enhancedRecommendations,
-      count: enhancedRecommendations.length,
-      context,
-      userId: finalUserId,
-    });
-  } catch (error: any) {
-    console.error('Contextual recommendations error:', error);
+  if (!discoveryEngine.isAvailable()) {
     return NextResponse.json(
-      {
-        error: 'Failed to get contextual recommendations',
-        details: error.message,
-      },
-      { status: 500 }
+      { error: 'Discovery Engine is not configured' },
+      { status: 503 }
     );
   }
-}
+
+  // Get user ID from session if not provided
+  let finalUserId = userId;
+  if (!finalUserId) {
+    try {
+      const supabase = await createServerClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      finalUserId = user?.id;
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'User authentication required for contextual recommendations' },
+        { status: 401 }
+      );
+    }
+  }
+
+  if (!finalUserId) {
+    return NextResponse.json(
+      { error: 'User ID is required for recommendations' },
+      { status: 400 }
+    );
+  }
+
+  // Build context-aware query
+  const contextQuery = buildContextQuery(context);
+
+  // Get base recommendations
+  const recommendations = await discoveryEngine.recommend(finalUserId, {
+    pageSize: context.pageSize || 10,
+    filters: {
+      city: context.city,
+      category: context.category,
+    },
+  });
+
+  // Enhance with context scoring
+  const enhancedRecommendations = recommendations.map((rec: any) => ({
+    ...rec,
+    contextScore: calculateContextScore(rec, context),
+    contextReason: getContextReason(rec, context),
+  }));
+
+  // Sort by context score
+  enhancedRecommendations.sort((a: any, b: any) => b.contextScore - a.contextScore);
+
+  return NextResponse.json({
+    recommendations: enhancedRecommendations,
+    count: enhancedRecommendations.length,
+    context,
+    userId: finalUserId,
+  });
+});
 
 /**
  * Build context-aware query string
