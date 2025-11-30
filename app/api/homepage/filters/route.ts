@@ -9,7 +9,11 @@ export function createHomepageFiltersHandler(deps: FiltersHandlerDeps) {
   return async function handler(_request: NextRequest) {
     try {
       const rows = await deps.loadFilterRows();
-      return NextResponse.json({ success: true, rows });
+
+      // Add cache headers for CDN/browser caching
+      const response = NextResponse.json({ success: true, rows });
+      response.headers.set('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+      return response;
     } catch (error: any) {
       console.error('[Homepage Filters API] Error loading filter rows:', error?.message || error);
       

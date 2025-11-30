@@ -14,12 +14,16 @@ export function createHomepageDestinationsHandler(deps: DestinationsHandlerDeps)
       const limitParam = searchParams.get('limit');
       const limit = limitParam ? parseInt(limitParam, 10) : 5000;
       const destinations = await deps.loadDestinations(limit);
-      return NextResponse.json({ success: true, destinations });
+
+      // Add cache headers for CDN/browser caching
+      const response = NextResponse.json({ success: true, destinations });
+      response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+      return response;
     } catch (error: any) {
       console.error('[Homepage Destinations API] Error loading destinations:', error?.message || error);
-      
+
       // Check if it's a Supabase config error or connection issue
-      if (error?.message?.includes('placeholder') || 
+      if (error?.message?.includes('placeholder') ||
           error?.message?.includes('invalid') ||
           error?.message?.includes('Failed to create service role client') ||
           error?.message?.includes('fetch failed') ||
@@ -28,7 +32,7 @@ export function createHomepageDestinationsHandler(deps: DestinationsHandlerDeps)
         console.warn('[Homepage Destinations API] Database connection issue - returning empty destinations');
         return NextResponse.json({ success: true, destinations: [], note: 'Database temporarily unavailable' }, { status: 200 });
       }
-      
+
       // For other errors, also return empty destinations with 200 for better UX
       // The frontend can still render the page, just without destinations
       console.error('[Homepage Destinations API] Unexpected error - returning empty destinations for graceful degradation');
@@ -41,6 +45,5 @@ export const GET = createHomepageDestinationsHandler({
   loadDestinations: () => getHomepageDestinations(),
 });
 
-// Disable caching completely to ensure new POIs show up immediately
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+// Enable ISR - cache for 60 seconds
+export const revalidate = 60;
