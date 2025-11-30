@@ -22,6 +22,14 @@ interface List {
   cities?: string[];
 }
 
+interface ListItem {
+  destination_slug: string;
+}
+
+interface DestinationCity {
+  city: string;
+}
+
 // Helper function to capitalize city names
 function capitalizeCity(city: string): string {
   return city
@@ -68,7 +76,7 @@ export default function ListsPage() {
       } else if (data) {
         // Fetch counts and cities for each list
         const listsWithCounts = await Promise.all(
-          (data as any[]).map(async (list: any) => {
+          (data as List[]).map(async (list) => {
             const { count: itemCount } = await supabase
               .from('list_items')
               .select('*', { count: 'exact', head: true })
@@ -87,14 +95,14 @@ export default function ListsPage() {
               .eq('list_id', list.id);
 
             if (listItems && listItems.length > 0) {
-              const slugs = (listItems as any[]).map((item: any) => item.destination_slug);
+              const slugs = (listItems as ListItem[]).map((item) => item.destination_slug);
               const { data: destinations } = await supabase
                 .from('destinations')
                 .select('city')
                 .in('slug', slugs);
 
               if (destinations) {
-                cities = Array.from(new Set((destinations as any[]).map((d: any) => d.city)));
+                cities = Array.from(new Set((destinations as DestinationCity[]).map((d) => d.city)));
               }
             }
 
@@ -117,13 +125,22 @@ export default function ListsPage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (user) {
+      fetchLists();
+    }
+  }, [user, fetchLists]);
+
   const createList = async () => {
     if (!user || !newListName.trim()) return;
 
     setCreating(true);
-    const { data, error } = await (supabase
+    // Explicitly cast to unknown then to the expected input type if needed,
+    // or rely on Supabase types if they were generated correctly.
+    // Since 'insert' might be loosely typed in this project setup, we use type assertion.
+    const { data, error } = await supabase
       .from('lists')
-      .insert as any)([
+      .insert([
         {
           user_id: user.id,
           name: newListName.trim(),
@@ -139,7 +156,9 @@ export default function ListsPage() {
       console.error('Error creating list:', error);
       alert('Failed to create list');
     } else if (data) {
-      setLists([{ ...data, item_count: 0, like_count: 0, cities: [] }, ...lists]);
+      // Cast data to List since we know the structure
+      const newList = data as List;
+      setLists([{ ...newList, item_count: 0, like_count: 0, cities: [] }, ...lists]);
       setShowCreateModal(false);
       setNewListName("");
       setNewListDescription("");

@@ -62,6 +62,24 @@ interface DestinationPageClientProps {
   parentDestination?: Destination | null;
 }
 
+// Define specific types for enriched data parts
+interface EnrichedOpeningHours {
+  weekday_text?: string[];
+}
+
+interface EnrichedReview {
+  author_name: string;
+  rating: number;
+  text?: string;
+  relative_time_description?: string;
+}
+
+interface EnrichedData extends Partial<Destination> {
+    opening_hours?: EnrichedOpeningHours;
+    reviews?: EnrichedReview[];
+    photos?: any[]; // Keep any for photos if structure is unknown or complex
+}
+
 export default function DestinationPageClient({ initialDestination, parentDestination }: DestinationPageClientProps) {
   const router = useRouter();
   const { user } = useAuth();
@@ -78,14 +96,15 @@ export default function DestinationPageClient({ initialDestination, parentDestin
   const [showVisitedDropdown, setShowVisitedDropdown] = useState(false);
 
   // Parse enriched JSON fields from initial destination
-  const enrichedData = useState(() => {
-    const enriched: any = { ...initialDestination };
+  const enrichedData = useState<EnrichedData>(() => {
+    // Clone initialDestination to avoid mutating props, but type cast is safer now
+    const enriched: EnrichedData = { ...initialDestination };
 
     if (initialDestination.opening_hours_json) {
       try {
         enriched.opening_hours = typeof initialDestination.opening_hours_json === 'string'
           ? JSON.parse(initialDestination.opening_hours_json)
-          : initialDestination.opening_hours_json;
+          : initialDestination.opening_hours_json as EnrichedOpeningHours;
       } catch (e) {
         console.error('Error parsing opening_hours_json:', e);
       }
@@ -95,7 +114,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
       try {
         enriched.reviews = typeof initialDestination.reviews_json === 'string'
           ? JSON.parse(initialDestination.reviews_json)
-          : initialDestination.reviews_json;
+          : initialDestination.reviews_json as EnrichedReview[];
       } catch (e) {
         console.error('Error parsing reviews_json:', e);
       }
@@ -105,7 +124,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
       try {
         enriched.photos = typeof initialDestination.photos_json === 'string'
           ? JSON.parse(initialDestination.photos_json)
-          : initialDestination.photos_json;
+          : initialDestination.photos_json as any[];
       } catch (e) {
         console.error('Error parsing photos_json:', e);
       }
@@ -305,7 +324,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           if (relatedResponse.ok) {
             const data = await relatedResponse.json();
             setRecommendations(
-              (data.related || []).map((dest: any) => ({
+              (data.related || []).map((dest: Destination) => ({
                 slug: dest.slug,
                 name: dest.name,
                 city: dest.city,
@@ -332,7 +351,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           if (relatedResponse.ok) {
             const data = await relatedResponse.json();
             setRecommendations(
-              (data.related || []).map((dest: any) => ({
+              (data.related || []).map((dest: Destination) => ({
                 slug: dest.slug,
                 name: dest.name,
                 city: dest.city,
@@ -358,7 +377,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
       if (data.recommendations && Array.isArray(data.recommendations)) {
         setRecommendations(
           data.recommendations
-            .map((rec: any) => rec.destination)
+            .map((rec: { destination: Destination }) => rec.destination)
             .filter(Boolean)
             .slice(0, 6)
         );
@@ -730,7 +749,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
             <h2 className="text-sm font-medium mb-4">Top Reviews</h2>
             <div className="space-y-3">
-              {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
+              {enrichedData.reviews.slice(0, 3).map((review: EnrichedReview, idx: number) => (
                 <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">

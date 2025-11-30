@@ -3,6 +3,14 @@ import { router, protectedProcedure } from '../trpc';
 import { generateDestinationEmbedding } from '@/lib/embeddings/generate';
 import { findSimilarPlace, inferPriceFromBudgetPhrase, inferGroupSize } from '@/lib/ai/fuzzy-matching';
 import { analyzeIntent, type UserContext } from '@/lib/ai/intent-analysis';
+import type { Destination } from '@/types/destination';
+
+// Interface for saved/visited places RPC result
+interface SavedPlace extends Partial<Destination> {
+  destination_id?: number;
+  destination?: Partial<Destination>;
+  slug?: string;
+}
 
 export const aiRouter = router({
   chat: protectedProcedure
@@ -44,12 +52,18 @@ export const aiRouter = router({
       });
 
       // Get user's saved places for context
-      let savedPlaces: any = { data: null };
+      // Use typed response instead of any
+      let savedPlacesData: SavedPlace[] = [];
       try {
-        const result = await supabase.rpc('get_user_saved_destinations', { target_user_id: userId });
-        savedPlaces = result;
+        const { data, error } = await supabase.rpc('get_user_saved_destinations', { target_user_id: userId });
+        if (error) {
+           console.error('Error fetching saved places:', error);
+           // Continue with empty saved places
+        } else {
+           savedPlacesData = (data as unknown as SavedPlace[]) || [];
+        }
       } catch (error) {
-        console.error('Error fetching saved places:', error);
+        console.error('Unexpected error fetching saved places:', error);
       }
 
       // Pre-process query for fuzzy matching
@@ -64,7 +78,7 @@ export const aiRouter = router({
         if (placeName) {
           comparisonBase = await findSimilarPlace(
             placeName,
-            (savedPlaces?.data || []) as any[],
+            savedPlacesData,
             supabase
           );
         }
@@ -72,7 +86,7 @@ export const aiRouter = router({
 
       // Analyze intent with advanced NLU
       const intent = await analyzeIntent(input.message, {
-        savedPlaces: (savedPlaces?.data || []).slice(0, 10).map((sp: any) => ({
+        savedPlaces: savedPlacesData.slice(0, 10).map((sp) => ({
           name: sp.name || sp.destination?.name || '',
           city: sp.city || sp.destination?.city || '',
           category: sp.category || sp.destination?.category || '',
@@ -102,7 +116,7 @@ export const aiRouter = router({
       
       // Hybrid search using the new function
       // Note: This requires migration 024_hybrid_search_function.sql to be run
-      let results: any[] = [];
+      let results: Destination[] = [];
       try {
         const { data, error: searchError } = await supabase
           .rpc('search_destinations_hybrid', {
@@ -120,7 +134,7 @@ export const aiRouter = router({
           });
         
         if (!searchError && data) {
-          results = data;
+          results = data as unknown as Destination[];
         } else if (searchError) {
           console.error('Hybrid search error:', searchError);
           // Fallback: Use existing match_destinations if hybrid search not available
@@ -132,7 +146,7 @@ export const aiRouter = router({
               filter_city: filters.city || null,
               filter_category: filters.category || null,
             });
-            results = fallbackResult.data || [];
+            results = (fallbackResult.data || []) as unknown as Destination[];
           } catch (fallbackError) {
             console.error('Fallback search error:', fallbackError);
             results = [];
@@ -144,16 +158,20 @@ export const aiRouter = router({
 
       // Filter out visited places if requested
       if (filters.exclude_visited) {
-        let visitedPlaces: any = { data: null };
+        let visitedPlacesData: SavedPlace[] = [];
         try {
-          const result = await supabase.rpc('get_user_visited_destinations', { target_user_id: userId });
-          visitedPlaces = result;
+          const { data, error } = await supabase.rpc('get_user_visited_destinations', { target_user_id: userId });
+          if (!error && data) {
+            visitedPlacesData = data as unknown as SavedPlace[];
+          } else if (error) {
+             console.error('Error fetching visited places:', error);
+          }
         } catch (error) {
           console.error('Error fetching visited places:', error);
         }
         
-        const visitedSlugs = new Set((visitedPlaces?.data || []).map((vp: any) => vp.slug));
-        results = results.filter((r: any) => !visitedSlugs.has(r.slug));
+        const visitedSlugs = new Set(visitedPlacesData.map((vp) => vp.slug));
+        results = results.filter((r) => r.slug && !visitedSlugs.has(r.slug));
       }
 
 
@@ -215,18 +233,20 @@ export const aiRouter = router({
       }
 
       // Get user's saved cities
-      let savedPlaces: any = { data: null };
+      let savedPlacesData: SavedPlace[] = [];
       try {
-        const result = await supabase.rpc('get_user_saved_destinations', { target_user_id: userId });
-        savedPlaces = result;
+        const { data, error } = await supabase.rpc('get_user_saved_destinations', { target_user_id: userId });
+        if (!error && data) {
+           savedPlacesData = data as unknown as SavedPlace[];
+        }
       } catch (error) {
         console.error('Error fetching saved places:', error);
       }
 
       const cities = [
         ...new Set(
-          ((savedPlaces?.data || []) as any[])
-            .map((p: any) => p.city)
+          savedPlacesData
+            .map((p) => p.city)
             .filter(Boolean)
         )
       ];
@@ -246,4 +266,3 @@ export const aiRouter = router({
       return prompts.filter(Boolean);
     }),
 });
-
