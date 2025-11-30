@@ -198,7 +198,7 @@ export default function TripDaySection({
             <TransitConnector
               from={fromLocation}
               to={toLocation}
-              mode="walk"
+              mode="walking"
             />
           )}
         </div>

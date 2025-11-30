@@ -193,7 +193,7 @@ export default function TimelineCanvas({
                                   latitude: nextItem.destination?.latitude ?? nextItem.parsedNotes?.latitude,
                                   longitude: nextItem.destination?.longitude ?? nextItem.parsedNotes?.longitude,
                                 }}
-                                mode="walk"
+                                mode="walking"
                               />
                             )}
                           </div>
