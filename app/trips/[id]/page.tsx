@@ -864,7 +864,7 @@ export default function TripPage() {
 
         {/* Hotels Tab */}
         {activeTab === 'hotels' && (
-          <div className="fade-in space-y-4">
+          <div className="fade-in">
             {hotels.length === 0 ? (
               <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
                 <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">No hotels added yet</p>
@@ -876,42 +876,114 @@ export default function TripPage() {
                 </button>
               </div>
             ) : (
-              <>
-                {hotels.map((hotel) => (
-                  <div
-                    key={hotel.id}
-                    onClick={() => handleEditItem(hotel)}
-                    className="p-4 border border-stone-200 dark:border-gray-800 rounded-2xl hover:bg-stone-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
+              <div className="lg:flex lg:gap-6">
+                {/* Hotels List */}
+                <div className="flex-1 space-y-4">
+                  {hotels.map((hotel) => {
+                    // Calculate correct day number based on checkInDate vs trip start
+                    let checkInDayNum = hotel.dayNumber;
+                    if (hotel.parsedNotes?.checkInDate && trip?.start_date) {
+                      const tripStart = new Date(trip.start_date);
+                      tripStart.setHours(0, 0, 0, 0);
+                      const checkIn = new Date(hotel.parsedNotes.checkInDate);
+                      checkIn.setHours(0, 0, 0, 0);
+                      checkInDayNum = Math.floor((checkIn.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                    }
+
+                    // Calculate nights
+                    let nights = 1;
+                    if (hotel.parsedNotes?.checkInDate && hotel.parsedNotes?.checkOutDate) {
+                      const inDate = new Date(hotel.parsedNotes.checkInDate);
+                      const outDate = new Date(hotel.parsedNotes.checkOutDate);
+                      nights = Math.max(1, Math.ceil((outDate.getTime() - inDate.getTime()) / (1000 * 60 * 60 * 24)));
+                    }
+
+                    return (
+                      <div
+                        key={hotel.id}
+                        onClick={() => handleEditItem(hotel)}
+                        className={`p-4 border rounded-2xl cursor-pointer transition-colors ${
+                          selectedItem?.id === hotel.id
+                            ? 'border-stone-400 dark:border-gray-600 bg-stone-50 dark:bg-gray-800/50'
+                            : 'border-stone-200 dark:border-gray-800 hover:bg-stone-50 dark:hover:bg-gray-800/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-xs text-stone-400">Day {checkInDayNum}</span>
+                          <span className="text-xs text-stone-400 bg-stone-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                            {nights} {nights === 1 ? 'night' : 'nights'}
+                          </span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-stone-900 dark:text-white">
+                            {hotel.title}
+                          </p>
+                          {hotel.parsedNotes?.address && (
+                            <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                              {hotel.parsedNotes.address}
+                            </p>
+                          )}
+                          {(hotel.parsedNotes?.checkInDate || hotel.parsedNotes?.checkOutDate) && (
+                            <p className="text-xs text-stone-400 mt-2">
+                              {hotel.parsedNotes?.checkInDate && `Check-in: ${hotel.parsedNotes.checkInDate}`}
+                              {hotel.parsedNotes?.checkInDate && hotel.parsedNotes?.checkOutDate && ' · '}
+                              {hotel.parsedNotes?.checkOutDate && `Check-out: ${hotel.parsedNotes.checkOutDate}`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <button
+                    onClick={() => openPlaceSelector(selectedDayNumber)}
+                    className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-stone-500 dark:text-gray-400 hover:border-stone-300 dark:hover:border-gray-700 transition-colors"
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-stone-400">Day {hotel.dayNumber}</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-stone-900 dark:text-white">
-                        {hotel.title}
-                      </p>
-                      {hotel.parsedNotes?.address && (
-                        <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
-                          {hotel.parsedNotes.address}
-                        </p>
-                      )}
-                      {(hotel.parsedNotes?.checkInDate || hotel.parsedNotes?.checkOutDate) && (
-                        <p className="text-xs text-stone-400 mt-2">
-                          {hotel.parsedNotes?.checkInDate && `Check-in: ${hotel.parsedNotes.checkInDate}`}
-                          {hotel.parsedNotes?.checkInDate && hotel.parsedNotes?.checkOutDate && ' · '}
-                          {hotel.parsedNotes?.checkOutDate && `Check-out: ${hotel.parsedNotes.checkOutDate}`}
-                        </p>
-                      )}
-                    </div>
+                    + Add another hotel
+                  </button>
+                </div>
+
+                {/* Sidebar with inline editor (Desktop) */}
+                {selectedItem && selectedItem.parsedNotes?.type === 'hotel' && (
+                  <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
+                    <DestinationBox
+                      item={selectedItem}
+                      onClose={() => {
+                        setSelectedItem(null);
+                        setActiveItemId(null);
+                      }}
+                      onTimeChange={updateItemTime}
+                      onNotesChange={updateItemNotes}
+                      onItemUpdate={updateItem}
+                      onRemove={(itemId) => {
+                        removeItem(itemId);
+                        setSelectedItem(null);
+                        setActiveItemId(null);
+                      }}
+                    />
                   </div>
-                ))}
-                <button
-                  onClick={() => openPlaceSelector(selectedDayNumber)}
-                  className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-stone-500 dark:text-gray-400 hover:border-stone-300 dark:hover:border-gray-700 transition-colors"
-                >
-                  + Add another hotel
-                </button>
-              </>
+                )}
+              </div>
+            )}
+
+            {/* Mobile Inline Editor */}
+            {selectedItem && selectedItem.parsedNotes?.type === 'hotel' && (
+              <div className="lg:hidden mt-6">
+                <DestinationBox
+                  item={selectedItem}
+                  onClose={() => {
+                    setSelectedItem(null);
+                    setActiveItemId(null);
+                  }}
+                  onTimeChange={updateItemTime}
+                  onNotesChange={updateItemNotes}
+                  onItemUpdate={updateItem}
+                  onRemove={(itemId) => {
+                    removeItem(itemId);
+                    setSelectedItem(null);
+                    setActiveItemId(null);
+                  }}
+                />
+              </div>
             )}
           </div>
         )}
