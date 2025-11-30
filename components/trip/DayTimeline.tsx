@@ -398,28 +398,30 @@ export default function DayTimeline({
     }
 
     return (
-      <div className="mt-4 pt-4 border-t border-stone-200 dark:border-gray-800">
+      <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
         <div className="flex items-center justify-between mb-3 px-2">
           <div className="flex items-center gap-2">
-            <Moon className="w-4 h-4 text-stone-400" />
-            <span className="text-xs font-medium text-stone-500 dark:text-gray-400 uppercase tracking-wide">
+            <Moon className="w-4 h-4 text-gray-400" />
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
               {nightLabel}
             </span>
           </div>
           {nightsInfo && (
-            <span className="text-[10px] text-stone-400 dark:text-gray-500 bg-stone-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] text-gray-500 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
               {nightsInfo}
             </span>
           )}
         </div>
-        <div className="p-3 bg-gradient-to-r from-stone-50 to-white dark:from-gray-900 dark:to-gray-800 border border-stone-200 dark:border-gray-800 rounded-2xl">
+        <div className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl">
           <div className="flex items-center gap-3">
-            <Moon className="w-4 h-4 text-amber-500" />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-stone-900 dark:text-white">{hotelItem.title || 'Hotel'}</p>
-              <p className="text-xs text-stone-500 dark:text-gray-400">{hotelItem.parsedNotes?.address || hotelItem.destination?.formatted_address}</p>
+            <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
+              <Moon className="w-4 h-4 text-amber-600 dark:text-amber-500" />
             </div>
-            <span className="text-xs text-stone-500 dark:text-gray-400">{hotelItem.parsedNotes?.checkInTime || 'Check-in'}</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{hotelItem.title || 'Hotel'}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{hotelItem.parsedNotes?.address || hotelItem.destination?.formatted_address}</p>
+            </div>
+            <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">{hotelItem.parsedNotes?.checkInTime || 'Check-in'}</span>
           </div>
         </div>
       </div>
@@ -430,46 +432,38 @@ export default function DayTimeline({
     const type = item.parsedNotes?.type || item.destination?.category || 'default';
 
     const base = {
-      text: 'text-stone-900 dark:text-white',
-      border: 'border-stone-200 dark:border-gray-800',
-      iconBg: 'bg-white/80 dark:bg-gray-900/70',
+      text: 'text-gray-900 dark:text-white',
+      border: 'border-gray-200 dark:border-gray-800',
+      bg: 'bg-white dark:bg-gray-900',
+      iconBg: 'bg-gray-100 dark:bg-gray-800',
+      iconColor: 'text-gray-500 dark:text-gray-400',
     };
 
     if (type === 'breakfast' || type === 'restaurant' || type === 'bar') {
       return {
         ...base,
-        bg: 'bg-amber-50 dark:bg-amber-900/10',
-        border: 'border-amber-100 dark:border-amber-900/40',
-        iconColor: 'text-amber-600',
-        iconBg: 'bg-amber-100 dark:bg-amber-900/30',
+        iconColor: 'text-amber-600 dark:text-amber-500',
+        iconBg: 'bg-amber-50 dark:bg-amber-900/20',
       };
     }
 
     if (type === 'museum' || type === 'gallery') {
       return {
         ...base,
-        bg: 'bg-indigo-50 dark:bg-indigo-900/10',
-        border: 'border-indigo-100 dark:border-indigo-900/40',
-        iconColor: 'text-indigo-600',
-        iconBg: 'bg-indigo-100 dark:bg-indigo-900/30',
+        iconColor: 'text-gray-600 dark:text-gray-400',
+        iconBg: 'bg-gray-100 dark:bg-gray-800',
       };
     }
 
     if (type === 'flight' || type === 'train') {
       return {
         ...base,
-        bg: 'bg-sky-50 dark:bg-sky-900/10',
-        border: 'border-sky-100 dark:border-sky-900/40',
-        iconColor: 'text-sky-600',
-        iconBg: 'bg-sky-100 dark:bg-sky-900/30',
+        iconColor: 'text-blue-600 dark:text-blue-500',
+        iconBg: 'bg-blue-50 dark:bg-blue-900/20',
       };
     }
 
-    return {
-      ...base,
-      bg: 'bg-white dark:bg-gray-900',
-      iconColor: 'text-stone-500 dark:text-gray-400',
-    };
+    return base;
   };
 
   const getIconForItem = (item: EnrichedItineraryItem) => {
@@ -496,8 +490,8 @@ export default function DayTimeline({
           style={{ top }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-12 text-[11px] text-right text-stone-400 tabular-nums bg-white dark:bg-gray-900 pr-1">{label}</div>
-            <div className="flex-1 h-px bg-gradient-to-r from-stone-200/80 via-stone-100 to-transparent dark:from-gray-800 dark:via-gray-800" />
+            <div className="w-12 text-[11px] text-right text-gray-400 dark:text-gray-500 tabular-nums bg-white dark:bg-gray-900 pr-1">{label}</div>
+            <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
           </div>
         </div>
       );
@@ -551,14 +545,12 @@ export default function DayTimeline({
             onPointerDown={(event) => handleDragStart(item.id, 'move', start, duration, event.clientY)}
           >
             <div
-            className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-xl relative overflow-hidden transition-colors duration-150 ${
-                isEditMode ? '' : ''
-              } ${item.id === activeItemId ? 'ring-2 ring-stone-300 dark:ring-gray-600' : ''}`}
+              className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-xl relative overflow-hidden transition-colors duration-150 ${item.id === activeItemId ? 'ring-2 ring-gray-300 dark:ring-gray-600' : ''}`}
               onClick={() => onEditItem?.(item)}
             >
               {isEditMode && (
-                <div className="absolute inset-x-4 top-2 flex items-center justify-between text-[10px] text-stone-400">
-                  <span className="flex items-center gap-1 uppercase tracking-wide font-semibold">
+                <div className="absolute inset-x-4 top-2 flex items-center justify-between text-[10px] text-gray-400">
+                  <span className="flex items-center gap-1 uppercase tracking-wide font-medium">
                     <GripVertical className="w-3 h-3" />
                     Drag / resize
                   </span>
@@ -567,21 +559,21 @@ export default function DayTimeline({
               )}
               <div className="flex items-start gap-3 px-4 py-3 relative z-10">
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center ${styleSet.iconBg} ${styleSet.iconColor} border border-white/70 dark:border-gray-800/60`}
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center ${styleSet.iconBg} ${styleSet.iconColor}`}
                 >
                   {getIconForItem(item)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 text-[11px] text-stone-500 dark:text-gray-400 uppercase tracking-[0.08em]">
+                  <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                     <span>{startLabel}</span>
-                    <span className="text-stone-300 dark:text-gray-600">•</span>
+                    <span className="text-gray-300 dark:text-gray-600">·</span>
                     <span>{endLabel}</span>
                   </div>
-                  <p className="text-sm font-semibold leading-tight text-stone-900 dark:text-white mt-0.5 line-clamp-1">
+                  <p className="text-sm font-medium leading-tight text-gray-900 dark:text-white mt-0.5 line-clamp-1">
                     {item.title || 'Untitled stop'}
                   </p>
                   {item.destination?.neighborhood && (
-                    <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-1">{item.destination.neighborhood}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{item.destination.neighborhood}</p>
                   )}
                 </div>
               </div>
@@ -628,29 +620,29 @@ export default function DayTimeline({
   };
 
   return (
-    <div className="border border-stone-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
+    <div className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
       {/* Day Header */}
-      <div className="flex items-center justify-between p-4 border-b border-stone-100 dark:border-gray-800/50 bg-stone-50/50 dark:bg-gray-900/50">
+      <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
         <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-3">
-          <span className="text-lg font-light text-stone-900 dark:text-white">
+          <span className="text-lg font-normal text-gray-900 dark:text-white">
             Day {day.dayNumber}
           </span>
           {formattedDate && (
-            <span className="text-xs text-stone-500 dark:text-gray-400">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               {formattedDate}
             </span>
           )}
           {/* Neighborhood Tags */}
           <NeighborhoodTags items={regularItems} />
         </div>
-        <span className="text-xs text-stone-400 dark:text-gray-500">
+        <span className="text-xs text-gray-400 dark:text-gray-500">
           {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
         </span>
       </div>
 
       {/* Day Intelligence Bar */}
       {day.items.length > 0 && (
-        <div className="px-4 py-2 border-b border-stone-100 dark:border-gray-800/50 bg-stone-50/30 dark:bg-gray-900/30">
+        <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
           <DayIntelligence
             dayNumber={day.dayNumber}
             date={day.date}
@@ -668,39 +660,39 @@ export default function DayTimeline({
         {regularItems.length === 0 && !hotelItem ? (
           /* Empty State */
           <div className="py-8 text-center">
-            <p className="text-sm text-stone-400 dark:text-gray-500 mb-4">
+            <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
               No stops planned for this day
             </p>
             {/* Quick Add Suggestions */}
             <div className="flex flex-wrap justify-center gap-2 mb-4">
               <button
                 onClick={() => onAddItem?.(day.dayNumber, 'cafe')}
-                className="px-3 py-1.5 text-xs text-stone-500 dark:text-gray-400 bg-stone-100 dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
+                className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 + Breakfast
               </button>
               <button
                 onClick={() => onAddItem?.(day.dayNumber, 'museum')}
-                className="px-3 py-1.5 text-xs text-stone-500 dark:text-gray-400 bg-stone-100 dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
+                className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 + Museum
               </button>
               <button
                 onClick={() => onAddItem?.(day.dayNumber, 'restaurant')}
-                className="px-3 py-1.5 text-xs text-stone-500 dark:text-gray-400 bg-stone-100 dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
+                className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 + Lunch
               </button>
               <button
                 onClick={() => onAddItem?.(day.dayNumber, 'bar')}
-                className="px-3 py-1.5 text-xs text-stone-500 dark:text-gray-400 bg-stone-100 dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
+                className="px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 + Drinks
               </button>
             </div>
             <button
               onClick={() => onAddItem?.(day.dayNumber)}
-              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <Plus className="w-3 h-3" />
               Browse all places
@@ -710,7 +702,7 @@ export default function DayTimeline({
                 <button
                   onClick={() => onAutoFillDay(day.dayNumber)}
                   disabled={isAutoFilling}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-stone-900 dark:bg-white dark:text-gray-900 rounded-full hover:opacity-80 disabled:opacity-50 transition-opacity"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-white bg-black dark:bg-white dark:text-black rounded-full hover:opacity-80 disabled:opacity-50 transition-opacity"
                 >
                   {isAutoFilling ? (
                     <Loader2 className="w-3 h-3 animate-spin" />
@@ -746,7 +738,7 @@ export default function DayTimeline({
           <div className="mt-4">
             <button
               onClick={() => onAddItem?.(day.dayNumber)}
-              className="w-full flex items-center justify-center gap-2 py-3 text-xs font-medium text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white border border-dashed border-stone-200 dark:border-gray-800 rounded-xl hover:border-stone-300 dark:hover:border-gray-700 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-dashed border-gray-200 dark:border-gray-800 rounded-xl hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
             >
               <Plus className="w-3 h-3" />
               Add stop

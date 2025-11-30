@@ -174,7 +174,7 @@ export default function TransitConnector({
   return (
     <div className={`relative flex items-center justify-center py-2 ${className}`}>
       {/* Mode Selector Pills */}
-      <div className="flex items-center gap-1 p-0.5 bg-stone-100 dark:bg-gray-800 rounded-full">
+      <div className="flex items-center gap-1 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
         {(['walking', 'transit', 'driving'] as TransitMode[]).map((m) => {
           const ModeIcon = modeIcons[m];
           const duration = getDuration(m);
@@ -187,8 +187,8 @@ export default function TransitConnector({
               className={`
                 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all text-[11px] font-medium
                 ${isSelected
-                  ? 'bg-white dark:bg-gray-700 text-stone-900 dark:text-white'
-                  : 'text-stone-500 dark:text-gray-400 hover:text-stone-700 dark:hover:text-gray-300'
+                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }
               `}
             >
@@ -196,9 +196,9 @@ export default function TransitConnector({
               {duration !== null ? (
                 <span className="tabular-nums">{formatDuration(duration)}</span>
               ) : loading ? (
-                <span className="w-6 h-2 bg-stone-200 dark:bg-gray-600 rounded animate-pulse" />
+                <span className="w-6 h-2 bg-gray-200 dark:bg-gray-600 rounded animate-pulse" />
               ) : (
-                <span className="text-stone-400 dark:text-gray-500">--</span>
+                <span className="text-gray-400 dark:text-gray-500">--</span>
               )}
             </button>
           );
