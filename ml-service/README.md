@@ -44,6 +44,9 @@ gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
 - `POST /api/forecast/demand` - Demand forecasting
 - `POST /api/forecast/peak-times` - Peak time predictions
 - `POST /api/recommendations/collaborative` - Collaborative filtering
+- `POST /api/vector/faiss/rebuild` - Build a FAISS index from destination embeddings
+- `POST /api/vector/faiss/search` - Semantic search over destinations via FAISS
+- `GET /api/vector/faiss/status` - Inspect FAISS availability and index size
 - `GET /health` - Health check
 
 ## Models
