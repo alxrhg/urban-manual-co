@@ -6,7 +6,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Settings, Trash2, Loader2, X, ImagePlus, Smile } from 'lucide-react';
 import Image from 'next/image';
 import type { Trip } from '@/types/trip';
-import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
+import { parseDestinations, stringifyDestinations } from '@/types/trip';
+import { MultiCityAutocompleteInput } from '@/components/MultiCityAutocompleteInput';
 
 // Common travel-related emojis
 const TRIP_EMOJIS = [
@@ -82,7 +83,7 @@ export default function TripSettingsBox({
 
   const [tripEmoji, setTripEmoji] = useState<string | null>(initialEmoji);
   const [title, setTitle] = useState(initialText);
-  const [destination, setDestination] = useState(trip.destination || '');
+  const [destinations, setDestinations] = useState<string[]>(parseDestinations(trip.destination));
   const [startDate, setStartDate] = useState(formatDateForInput(trip.start_date));
   const [endDate, setEndDate] = useState(formatDateForInput(trip.end_date));
   const [coverImage, setCoverImage] = useState(trip.cover_image || '');
@@ -105,7 +106,7 @@ export default function TripSettingsBox({
 
       const updates: Partial<Trip> = {
         title: fullTitle,
-        destination: destination || null,
+        destination: stringifyDestinations(destinations),
         start_date: startDate || null,
         end_date: endDate || null,
         cover_image: coverImage || null,
@@ -352,15 +353,15 @@ export default function TripSettingsBox({
           </div>
         </div>
 
-        {/* Destination */}
+        {/* Destinations */}
         <div>
           <label className="block text-xs font-medium text-stone-500 dark:text-gray-400 mb-1.5">
-            Destination
+            Destinations
           </label>
-          <CityAutocompleteInput
-            value={destination}
-            onChange={setDestination}
-            placeholder="e.g. Tokyo, Paris"
+          <MultiCityAutocompleteInput
+            value={destinations}
+            onChange={setDestinations}
+            placeholder="Add cities..."
             className="w-full"
           />
         </div>

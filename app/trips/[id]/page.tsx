@@ -41,6 +41,7 @@ import {
   checkClosureDays,
 } from '@/lib/intelligence/schedule-analyzer';
 import type { FlightData, ActivityData } from '@/types/trip';
+import { parseDestinations, formatDestinationsFromField } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 import type { PlannerWarning } from '@/lib/intelligence/types';
 
@@ -77,6 +78,11 @@ export default function TripPage() {
     userId: user?.id,
     onError: (error) => console.error('Trip editor error:', error),
   });
+
+  // Parse destinations for multi-city support
+  const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
+  const primaryCity = destinations[0] || '';
+  const destinationsDisplay = useMemo(() => formatDestinationsFromField(trip?.destination ?? null), [trip?.destination]);
 
   // UI State
   const [selectedDayNumber, setSelectedDayNumber] = useState(1);
@@ -272,7 +278,7 @@ export default function TripPage() {
 
   const handleAITripPlanning = async () => {
     if (!trip || !user) return;
-    if (!trip.destination || !trip.start_date || !trip.end_date) {
+    if (!primaryCity || !trip.start_date || !trip.end_date) {
       openDrawer('trip-settings', { trip, onUpdate: updateTrip });
       return;
     }
@@ -294,7 +300,7 @@ export default function TripPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            city: trip.destination,
+            city: primaryCity,
             existingItems: existingItemsForAPI,
             tripDays: days.length,
           }),
@@ -313,7 +319,7 @@ export default function TripPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            city: trip.destination,
+            city: primaryCity,
             startDate: trip.start_date,
             endDate: trip.end_date,
             userId: user.id,
@@ -391,7 +397,7 @@ export default function TripPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          city: trip.destination,
+          city: primaryCity,
           existingItems,
           tripDays: 1, // Just this day
           targetDay: dayNumber,
@@ -412,7 +418,7 @@ export default function TripPage() {
     } finally {
       setAutoFillingDay(null);
     }
-  }, [trip?.destination, days, addPlace, refresh]);
+  }, [primaryCity, days, addPlace, refresh]);
 
   // Add destination from NL input
   const handleAddFromNL = useCallback(async (
@@ -427,12 +433,12 @@ export default function TripPage() {
         slug: dest.slug,
         name: dest.name,
         category: dest.category,
-        city: trip?.destination || '',
+        city: primaryCity,
       };
       await addPlace(fullDest, dayNumber, time);
       await refresh();
     }
-  }, [addPlace, refresh, trip?.destination]);
+  }, [addPlace, refresh, primaryCity]);
 
   // Handle AI suggestion click
   const handleAddAISuggestion = useCallback(async (suggestion: {
@@ -715,7 +721,7 @@ export default function TripPage() {
                     />
                   ) : showAddPlaceBox ? (
                     <AddPlaceBox
-                      city={trip.destination}
+                      city={primaryCity}
                       dayNumber={selectedDayNumber}
                       onSelect={(destination) => {
                         addPlace(destination, selectedDayNumber);
@@ -755,7 +761,7 @@ export default function TripPage() {
                     <>
                       <SmartSuggestions
                         days={days}
-                        destination={trip.destination}
+                        destination={primaryCity}
                         selectedDayNumber={selectedDayNumber}
                         onAddPlace={openPlaceSelector}
                         onAddAISuggestion={handleAddAISuggestion}
@@ -763,7 +769,7 @@ export default function TripPage() {
                       />
                       {trip.start_date && (
                         <LocalEvents
-                          city={trip.destination || ''}
+                          city={primaryCity}
                           startDate={trip.start_date}
                           endDate={trip.end_date}
                           onAddToTrip={() => {
@@ -797,7 +803,7 @@ export default function TripPage() {
                   />
                 ) : showAddPlaceBox ? (
                   <AddPlaceBox
-                    city={trip.destination}
+                    city={primaryCity}
                     dayNumber={selectedDayNumber}
                     onSelect={(destination) => {
                       addPlace(destination, selectedDayNumber);
@@ -836,7 +842,7 @@ export default function TripPage() {
                 ) : (
                   <SmartSuggestions
                     days={days}
-                    destination={trip.destination}
+                    destination={primaryCity}
                     selectedDayNumber={selectedDayNumber}
                     onAddPlace={openPlaceSelector}
                     onAddAISuggestion={handleAddAISuggestion}

@@ -5,6 +5,7 @@ import { X, Plus, MapPin, Loader2, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { formatDestinationsFromField } from '@/types/trip';
 
 interface Trip {
   id: string;
@@ -269,7 +270,7 @@ export const QuickTripSelector = memo(function QuickTripSelector({
                       <div className="flex-1 text-left min-w-0">
                         <p className="font-medium text-stone-900 dark:text-white truncate">{trip.name}</p>
                         <p className="text-xs text-stone-500 dark:text-stone-400 truncate">
-                          {trip.destination || 'No destination set'}
+                          {formatDestinationsFromField(trip.destination) || 'No destination set'}
                         </p>
                       </div>
                     </button>

@@ -18,6 +18,7 @@ import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
 import { PreferencesTab } from "@/components/account/PreferencesTab";
 import { openCookieSettings } from "@/components/CookieConsent";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
+import { formatDestinationsFromField } from "@/types/trip";
 import type { Trip } from "@/types/trip";
 import type { User } from "@supabase/supabase-js";
 
@@ -697,7 +698,7 @@ export default function Account() {
                         {trip.destination && (
                           <div className="flex items-center gap-2">
                             <MapPin className="h-3 w-3" />
-                            <span>{trip.destination}</span>
+                            <span>{formatDestinationsFromField(trip.destination)}</span>
                           </div>
                         )}
                         {(trip.start_date || trip.end_date) && (

@@ -59,6 +59,69 @@ export function stringifyTripNotes(notes: TripNotes): string {
   return JSON.stringify(notes);
 }
 
+/**
+ * Helper to parse destinations from the destination field.
+ * Supports both legacy single-city format and new JSON array format.
+ *
+ * @example
+ * parseDestinations(null) // []
+ * parseDestinations("Tokyo") // ["Tokyo"]
+ * parseDestinations('["Tokyo","Paris"]') // ["Tokyo", "Paris"]
+ */
+export function parseDestinations(destination: string | null): string[] {
+  if (!destination) return [];
+
+  // Try to parse as JSON array first
+  if (destination.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(destination);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((item): item is string => typeof item === 'string' && item.trim() !== '');
+      }
+    } catch {
+      // Fall through to legacy format
+    }
+  }
+
+  // Legacy format: single city string
+  return destination.trim() ? [destination.trim()] : [];
+}
+
+/**
+ * Helper to stringify destinations for storage.
+ * Stores as JSON array for multi-city support.
+ * Returns null if empty.
+ *
+ * @example
+ * stringifyDestinations([]) // null
+ * stringifyDestinations(["Tokyo"]) // '["Tokyo"]'
+ * stringifyDestinations(["Tokyo", "Paris"]) // '["Tokyo","Paris"]'
+ */
+export function stringifyDestinations(destinations: string[]): string | null {
+  if (!destinations || destinations.length === 0) return null;
+  return JSON.stringify(destinations);
+}
+
+/**
+ * Helper to format destinations for display (comma-separated).
+ *
+ * @example
+ * formatDestinations([]) // ""
+ * formatDestinations(["Tokyo"]) // "Tokyo"
+ * formatDestinations(["Tokyo", "Paris"]) // "Tokyo, Paris"
+ */
+export function formatDestinations(destinations: string[]): string {
+  return destinations.join(', ');
+}
+
+/**
+ * Helper to format destinations from the raw destination field for display.
+ * Combines parsing and formatting.
+ */
+export function formatDestinationsFromField(destination: string | null): string {
+  return formatDestinations(parseDestinations(destination));
+}
+
 export interface InsertTrip {
   user_id: string;
   title: string;
