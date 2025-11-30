@@ -72,8 +72,8 @@ function TimelineCardComponent({
 
   return (
     <div
-      className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-xl relative overflow-hidden transition-all duration-150 shadow-sm hover:shadow hover:scale-[1.01] ${
-        isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600 shadow-md' : ''
+      className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-lg relative overflow-hidden transition-colors duration-150 ${
+        isActive ? 'ring-1 ring-gray-300 dark:ring-gray-600' : ''
       }`}
       onClick={() => onEdit?.(item)}
       role="button"

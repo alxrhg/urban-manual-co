@@ -19,7 +19,6 @@ import {
   TimeGrid,
   TimelineCard,
   CurrentTimeIndicator,
-  ConnectorLine,
   useTimelinePositions,
   useDragResize,
   TIMELINE_CONFIG,
@@ -392,13 +391,6 @@ export default function DayTimeline({
                 className="relative"
                 style={{ height: `${timelineHeight}px` }}
               >
-                {/* Vertical connector line */}
-                <ConnectorLine
-                  startHour={startHour}
-                  endHour={endHour}
-                  minutesToPixels={minutesToPixels}
-                />
-
                 {/* Time grid with half-hour markers */}
                 <TimeGrid
                   startHour={startHour}
