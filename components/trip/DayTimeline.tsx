@@ -491,9 +491,13 @@ export default function DayTimeline({
       const top = minutesToPixels(hour * 60);
       const label = `${hour.toString().padStart(2, '0')}:00`;
       labels.push(
-        <div key={hour} className="absolute left-0 right-0" style={{ top }}>
+        <div
+          key={hour}
+          className="absolute left-0 right-0 z-10 pointer-events-none"
+          style={{ top }}
+        >
           <div className="flex items-center gap-3">
-            <div className="w-12 text-[11px] text-right text-stone-400 tabular-nums">{label}</div>
+            <div className="w-12 text-[11px] text-right text-stone-400 tabular-nums bg-white dark:bg-gray-900 pr-1">{label}</div>
             <div className="flex-1 h-px bg-gradient-to-r from-stone-200/80 via-stone-100 to-transparent dark:from-gray-800 dark:via-gray-800" />
           </div>
         </div>
@@ -511,7 +515,7 @@ export default function DayTimeline({
     const top = minutesToPixels(currentMinutes);
     return (
       <div
-        className="absolute left-0 right-0 pointer-events-none"
+        className="absolute left-0 right-0 pointer-events-none z-20"
         style={{ top }}
       >
         <div className="flex items-center gap-3">
