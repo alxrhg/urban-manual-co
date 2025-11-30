@@ -17,6 +17,7 @@ import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 import DrawerMount from "@/components/DrawerMount";
+import MyStatsig from "./my-statsig";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -186,15 +187,16 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
-          storageKey="urban-manual-theme"
-        >
-          <SkipNavigation />
-          <SplashScreen />
-          <TRPCProvider>
+        <MyStatsig>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem={false}
+            storageKey="urban-manual-theme"
+          >
+            <SkipNavigation />
+            <SplashScreen />
+            <TRPCProvider>
               <AuthProvider>
                 <DrawerProvider>
                   <Suspense fallback={null}>
@@ -212,12 +214,13 @@ export default function RootLayout({
                   </Suspense>
                 </DrawerProvider>
               </AuthProvider>
-          </TRPCProvider>
-          <ToastContainer />
-          <GoogleAnalytics />
-          <Analytics />
-          <SpeedInsights />
-        </ThemeProvider>
+            </TRPCProvider>
+            <ToastContainer />
+            <GoogleAnalytics />
+            <Analytics />
+            <SpeedInsights />
+          </ThemeProvider>
+        </MyStatsig>
       </body>
     </html>
   );
