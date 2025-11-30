@@ -627,6 +627,50 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, [days]);
 
+  // Update item with partial notes updates (for inline editing)
+  const updateItem = useCallback(async (itemId: string, updates: Partial<ItineraryItemNotes>) => {
+    // Find the item and merge updates
+    let existingNotes: ItineraryItemNotes | undefined;
+    for (const day of days) {
+      const item = day.items.find((i) => i.id === itemId);
+      if (item) {
+        existingNotes = item.parsedNotes;
+        break;
+      }
+    }
+
+    const updatedNotes: ItineraryItemNotes = {
+      ...existingNotes,
+      ...updates,
+    };
+
+    // Optimistic update
+    setDays((prev) =>
+      prev.map((d) => ({
+        ...d,
+        items: d.items.map((item) =>
+          item.id === itemId
+            ? { ...item, notes: stringifyItineraryNotes(updatedNotes), parsedNotes: updatedNotes }
+            : item
+        ),
+      }))
+    );
+
+    try {
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { error } = await supabase
+        .from('itinerary_items')
+        .update({ notes: stringifyItineraryNotes(updatedNotes) })
+        .eq('id', itemId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error updating item:', err);
+    }
+  }, [days]);
+
   return {
     trip,
     days,
@@ -640,6 +684,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     removeItem,
     updateItemTime,
     updateItemNotes,
+    updateItem,
     refresh: fetchTrip,
   };
 }

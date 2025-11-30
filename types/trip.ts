@@ -175,6 +175,8 @@ export interface ItineraryItemNotes {
   phone?: string;
   website?: string;
   notes?: string;
+  // Reservation details
+  partySize?: number;
   // Travel time to next item
   travelTimeToNext?: number; // in minutes
   travelDistanceToNext?: number; // in km

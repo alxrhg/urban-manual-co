@@ -68,6 +68,7 @@ export default function TripPage() {
     removeItem,
     updateItemTime,
     updateItemNotes,
+    updateItem,
     refresh,
   } = useTripEditor({
     tripId,
@@ -695,6 +696,7 @@ export default function TripPage() {
                       }}
                       onTimeChange={updateItemTime}
                       onNotesChange={updateItemNotes}
+                      onItemUpdate={updateItem}
                       onRemove={(itemId) => {
                         removeItem(itemId);
                         setSelectedItem(null);
@@ -772,6 +774,7 @@ export default function TripPage() {
                     }}
                     onTimeChange={updateItemTime}
                     onNotesChange={updateItemNotes}
+                    onItemUpdate={updateItem}
                     onRemove={(itemId) => {
                       removeItem(itemId);
                       setSelectedItem(null);
