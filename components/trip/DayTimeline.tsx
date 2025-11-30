@@ -424,21 +424,21 @@ export default function DayTimeline({
               </div>
             )}
 
+            {/* Add Stop Button */}
+            {regularItems.length > 0 && (
+              <div className="mt-3 ml-14">
+                <button
+                  onClick={() => onAddItem?.(day.dayNumber)}
+                  className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  <Plus className="w-3 h-3" />
+                  Add stop
+                </button>
+              </div>
+            )}
+
             {renderHotelSection()}
           </>
-        )}
-
-        {/* Add Stop Button */}
-        {day.items.length > 0 && (
-          <div className="mt-3 ml-14">
-            <button
-              onClick={() => onAddItem?.(day.dayNumber)}
-              className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-            >
-              <Plus className="w-3 h-3" />
-              Add stop
-            </button>
-          </div>
         )}
       </div>
     </div>
