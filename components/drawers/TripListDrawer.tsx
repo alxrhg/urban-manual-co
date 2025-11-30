@@ -11,6 +11,7 @@ import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { Loader2, AlertCircle, MapPin, Calendar, ChevronRight, Plane, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { formatTripDateRange } from '@/lib/utils';
+import { formatDestinationsFromField } from '@/types/trip';
 
 const LOADING_TIMEOUT = 15000; // 15 seconds
 
@@ -292,7 +293,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
                         {trip.destination && (
                           <span className="flex items-center gap-1 truncate max-w-[120px]">
                             <MapPin className="w-3 h-3 flex-shrink-0" />
-                            {trip.destination}
+                            {formatDestinationsFromField(trip.destination)}
                           </span>
                         )}
                       </div>
