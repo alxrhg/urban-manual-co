@@ -40,18 +40,18 @@ interface TimelineCardProps {
 
 function getIconForItem(item: EnrichedItineraryItem) {
   const type = item.parsedNotes?.type || item.destination?.category;
-  if (type === 'breakfast' || type === 'cafe') return <Coffee className="w-3.5 h-3.5" />;
-  if (type === 'restaurant') return <Utensils className="w-3.5 h-3.5" />;
-  if (type === 'bar') return <Martini className="w-3.5 h-3.5" />;
-  if (type === 'museum' || type === 'gallery') return <Landmark className="w-3.5 h-3.5" />;
-  if (type === 'flight') return <Plane className="w-3.5 h-3.5" />;
-  if (type === 'train') return <Train className="w-3.5 h-3.5" />;
-  if (type === 'activity') return <Camera className="w-3.5 h-3.5" />;
-  return <MapPin className="w-3.5 h-3.5" />;
+  if (type === 'breakfast' || type === 'cafe') return <Coffee className="w-4 h-4" />;
+  if (type === 'restaurant') return <Utensils className="w-4 h-4" />;
+  if (type === 'bar') return <Martini className="w-4 h-4" />;
+  if (type === 'museum' || type === 'gallery') return <Landmark className="w-4 h-4" />;
+  if (type === 'flight') return <Plane className="w-4 h-4" />;
+  if (type === 'train') return <Train className="w-4 h-4" />;
+  if (type === 'activity') return <Camera className="w-4 h-4" />;
+  return <MapPin className="w-4 h-4" />;
 }
 
 /**
- * TimelineCard - Glass-style card inspired by iOS 26 Liquid Glass
+ * TimelineCard - Clean, minimal card following Apple HIG
  */
 function TimelineCardComponent({
   item,
@@ -70,12 +70,13 @@ function TimelineCardComponent({
   return (
     <div
       className={`
-        h-full rounded-xl cursor-pointer overflow-hidden
-        bg-white/80 dark:bg-gray-800/60
+        h-full rounded-2xl cursor-pointer
+        bg-gray-50/80 dark:bg-gray-800/50
         backdrop-blur-sm
-        shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50
-        ring-1 ring-gray-200/60 dark:ring-gray-700/40
-        ${isActive ? 'ring-gray-400 dark:ring-gray-500 shadow-md' : ''}
+        ${isActive
+          ? 'ring-2 ring-gray-900 dark:ring-white'
+          : 'ring-1 ring-black/[0.04] dark:ring-white/[0.06]'
+        }
       `}
       onClick={() => onEdit?.(item)}
       role="button"
@@ -88,62 +89,50 @@ function TimelineCardComponent({
         }
       }}
     >
-      {/* Top highlight edge */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent dark:via-white/20" />
-
-      {/* Card content */}
-      <div className="flex items-center gap-2.5 px-3 py-2.5 min-w-0 h-full">
+      {/* Card content - 12px padding, 8px gap */}
+      <div className="flex items-center gap-2 px-3 py-3 h-full">
         {/* Icon */}
         <div className={`flex-shrink-0 ${styleSet.iconColor}`}>
           {getIconForItem(item)}
         </div>
 
-        {/* Main content */}
+        {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 dark:text-white leading-tight truncate">
+          <p className="text-[15px] font-medium text-gray-900 dark:text-white leading-tight truncate">
             {item.title || 'Untitled stop'}
           </p>
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums tracking-tight">
-              {startLabel}–{endLabel}
-            </span>
-            {item.destination?.neighborhood && (
-              <>
-                <span className="text-gray-200 dark:text-gray-700">·</span>
-                <span className="text-xs text-gray-400 dark:text-gray-500 truncate">
-                  {item.destination.neighborhood}
-                </span>
-              </>
-            )}
-          </div>
+          <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">
+            {startLabel}–{endLabel}
+            {item.destination?.neighborhood && ` · ${item.destination.neighborhood}`}
+          </p>
         </div>
 
-        {/* Duration */}
-        <span className="flex-shrink-0 text-xs text-gray-400 dark:text-gray-500 tabular-nums tracking-tight">
+        {/* Duration pill */}
+        <span className="flex-shrink-0 text-[13px] text-gray-500 dark:text-gray-400 tabular-nums">
           {formatDuration(duration)}
         </span>
 
-        {/* Edit mode indicator */}
+        {/* Edit mode grip */}
         {isEditMode && (
-          <GripVertical className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" />
+          <GripVertical className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
         )}
       </div>
 
-      {/* Resize handles in edit mode */}
+      {/* Resize handles */}
       {isEditMode && onDragStart && (
         <>
           <div
             className="absolute inset-x-0 top-0 h-2 cursor-n-resize"
-            onPointerDown={(event) => {
-              event.stopPropagation();
-              onDragStart(item.id, 'resize-start', start, duration, event.clientY);
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              onDragStart(item.id, 'resize-start', start, duration, e.clientY);
             }}
           />
           <div
             className="absolute inset-x-0 bottom-0 h-2 cursor-s-resize"
-            onPointerDown={(event) => {
-              event.stopPropagation();
-              onDragStart(item.id, 'resize-end', start, duration, event.clientY);
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              onDragStart(item.id, 'resize-end', start, duration, e.clientY);
             }}
           />
         </>
