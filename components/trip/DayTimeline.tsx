@@ -271,9 +271,9 @@ export default function DayTimeline({
 
       const travelMode = (item.parsedNotes?.travelModeToNext as TransitMode) || 'walking';
       const nextItem = positionedItems[index + 1];
-      const connectorTop = minutesToPixels(actualStart + actualDuration) + 6;
+      const connectorTop = minutesToPixels(actualStart + actualDuration) + 4;
       const connectorHeight = nextItem
-        ? Math.max(minutesToPixels(nextItem.start) - connectorTop - 12, 18)
+        ? Math.max(minutesToPixels(nextItem.start) - connectorTop - 4, 24)
         : 0;
       const fromLocation = getFromLocation(item);
       const toLocation = nextItem ? getToLocation(nextItem.item) : undefined;
@@ -399,12 +399,12 @@ export default function DayTimeline({
             {/* Scrollable Timeline Container */}
             <div
               ref={scrollContainerRef}
-              className={`relative ${isScrollable ? 'overflow-y-auto' : ''}`}
+              className={`relative transition-all duration-300 ease-out ${isScrollable ? 'overflow-y-auto' : ''}`}
               style={{ maxHeight: isScrollable ? maxHeight : undefined }}
             >
               <div
                 ref={timelineRef}
-                className="relative"
+                className="relative transition-[height] duration-300 ease-out"
                 style={{ height: `${timelineHeight}px` }}
               >
                 {/* Time grid with hour lines */}

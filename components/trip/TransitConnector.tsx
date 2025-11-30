@@ -182,9 +182,9 @@ export default function TransitConnector({
   const distance = localEstimates?.distance;
 
   return (
-    <div className={`relative flex items-center justify-center py-2 gap-2 ${className}`}>
+    <div className={`relative flex items-center justify-end py-1 gap-2 ${className}`}>
       {/* Mode Selector Pills */}
-      <div className="flex items-center gap-0.5 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+      <div className="flex items-center gap-0.5 p-0.5 bg-gray-100/80 dark:bg-gray-800/80 rounded-full backdrop-blur-sm">
         {(['walking', 'transit', 'driving'] as TransitMode[]).map((m) => {
           const ModeIcon = modeIcons[m];
           const duration = getDuration(m);
@@ -195,14 +195,14 @@ export default function TransitConnector({
               key={m}
               onClick={() => handleModeChange(m)}
               className={`
-                flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all text-[11px] font-medium
+                flex items-center gap-1 px-2.5 py-1 rounded-full transition-all text-[10px] font-medium
                 ${isSelected
                   ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                 }
               `}
             >
-              <ModeIcon className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <ModeIcon className="w-3 h-3" strokeWidth={1.5} />
               {duration !== null ? (
                 <span className="tabular-nums">{formatDuration(duration)}</span>
               ) : loading ? (
