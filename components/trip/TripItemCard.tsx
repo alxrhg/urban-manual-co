@@ -194,16 +194,38 @@ export default function TripItemCard({
 
     // Render LodgingCard for hotels
     if (itemType === 'hotel' && item.parsedNotes) {
+      // Get hotel data from parsedNotes or linked destination
+      const hotelImage = item.parsedNotes.image || item.destination?.image || item.destination?.image_thumbnail;
+      const hotelRating = item.parsedNotes.rating ?? item.destination?.rating ?? undefined;
+      const hotelPriceLevel = item.parsedNotes.priceLevel ?? item.destination?.price_level ?? undefined;
+      const hotelBookingUrl = item.parsedNotes.bookingUrl || item.destination?.booking_url || undefined;
+      const hotelNeighborhood = item.parsedNotes.neighborhood || item.destination?.neighborhood || undefined;
+      const hotelAddress = item.parsedNotes.address || item.destination?.formatted_address || undefined;
+      const hotelPhone = item.parsedNotes.phone || item.destination?.phone_number || undefined;
+      const hotelWebsite = item.parsedNotes.website || item.destination?.website || undefined;
+
       return (
         <LodgingCard
           name={item.title || item.parsedNotes.name || 'Accommodation'}
-          address={item.parsedNotes.address}
+          address={hotelAddress}
+          neighborhood={hotelNeighborhood}
           checkIn={item.parsedNotes.checkInDate || item.parsedNotes.checkInTime}
           checkOut={item.parsedNotes.checkOutDate || item.parsedNotes.checkOutTime}
           confirmationNumber={item.parsedNotes.hotelConfirmation || item.parsedNotes.confirmationNumber}
-          phone={item.parsedNotes.phone}
-          website={item.parsedNotes.website}
+          phone={hotelPhone}
+          website={hotelWebsite}
+          bookingUrl={hotelBookingUrl}
           notes={item.parsedNotes.notes}
+          image={hotelImage}
+          rating={hotelRating}
+          priceLevel={hotelPriceLevel}
+          nightStart={item.parsedNotes.nightStart}
+          nightEnd={item.parsedNotes.nightEnd}
+          breakfastIncluded={item.parsedNotes.breakfastIncluded}
+          hasSpa={item.parsedNotes.hasSpa}
+          hasPool={item.parsedNotes.hasPool}
+          hasGym={item.parsedNotes.hasGym}
+          travelTimeBack={item.parsedNotes.travelTimeToNext}
           compact
         />
       );

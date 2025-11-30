@@ -175,6 +175,23 @@ export interface ItineraryItemNotes {
   phone?: string;
   website?: string;
   notes?: string;
+  // Extended hotel fields
+  priceLevel?: number; // 1-4 scale
+  rating?: number; // Google rating
+  bookingUrl?: string; // Booking link (OTA or direct)
+  neighborhood?: string; // Hotel neighborhood
+  // Multi-night hotel support
+  nightStart?: number; // First night (day number in trip)
+  nightEnd?: number; // Last night (day number in trip)
+  // Meal inclusions at hotel
+  breakfastIncludedDays?: number[]; // Days where breakfast is included
+  dinnerIncludedDays?: number[]; // Days where dinner is included
+  lunchIncludedDays?: number[]; // Days where lunch is included
+  // Hotel-based activities
+  hasRestOption?: boolean; // Can return to hotel for rest
+  hasSpa?: boolean; // Hotel has spa
+  hasPool?: boolean; // Hotel has pool
+  hasGym?: boolean; // Hotel has gym
   // Travel time to next item
   travelTimeToNext?: number; // in minutes
   travelDistanceToNext?: number; // in km
