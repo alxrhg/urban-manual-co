@@ -86,8 +86,8 @@ async def rebuild_faiss_index(request: FaissRebuildRequest) -> Dict[str, Any]:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
-        logger.error("Failed to rebuild FAISS index: %s", exc)
-        raise HTTPException(status_code=500, detail=str(exc))
+        logger.error("Failed to rebuild FAISS index: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred while rebuilding the FAISS index.")
 
     return {
         "status": "ok",
