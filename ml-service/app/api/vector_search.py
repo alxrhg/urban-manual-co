@@ -129,8 +129,8 @@ async def search_faiss(request: FaissSearchRequest) -> FaissSearchResponse:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     except Exception as exc:
-        logger.error("FAISS search failed: %s", exc)
-        raise HTTPException(status_code=500, detail=str(exc))
+        logger.error("FAISS search failed: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="An internal error occurred during FAISS search.")
 
     return FaissSearchResponse(
         results=[FaissSearchResult(**result) for result in results],
