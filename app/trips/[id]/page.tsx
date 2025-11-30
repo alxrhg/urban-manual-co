@@ -29,6 +29,7 @@ import AlertsDropdown from '@/components/trip/AlertsDropdown';
 import AddPlaceBox from '@/components/trip/AddPlaceBox';
 import AddHotelBox from '@/components/trip/AddHotelBox';
 import EditHotelBox from '@/components/trip/EditHotelBox';
+import DestinationBox from '@/components/trip/DestinationBox';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import RouteMapBox from '@/components/trip/RouteMapBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
@@ -87,6 +88,7 @@ export default function TripPage() {
   const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
   const [showAddHotelBox, setShowAddHotelBox] = useState(false);
   const [editingHotel, setEditingHotel] = useState<EnrichedItineraryItem | null>(null);
+  const [viewingItem, setViewingItem] = useState<EnrichedItineraryItem | null>(null);
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [showMapBox, setShowMapBox] = useState(false);
 
@@ -194,31 +196,25 @@ export default function TripPage() {
   }, [trip?.id, openDrawer, addFlight]);
 
   const handleEditItem = useCallback((item: EnrichedItineraryItem) => {
-    if (item.destination) {
-      openDrawer('destination', {
-        place: {
-          name: item.destination.name,
-          category: item.destination.category,
-          neighborhood: item.destination.neighborhood ?? undefined,
-          city: item.destination.city ?? undefined,
-          michelinRating: item.destination.michelin_stars ?? undefined,
-          hasMichelin: !!item.destination.michelin_stars,
-          googleRating: item.destination.rating ?? undefined,
-          googleReviews: item.destination.user_ratings_total ?? undefined,
-          priceLevel: item.destination.price_level ?? undefined,
-          description: item.destination.description ?? undefined,
-          image: item.destination.image ?? undefined,
-          image_thumbnail: item.destination.image_thumbnail ?? undefined,
-          latitude: item.destination.latitude ?? undefined,
-          longitude: item.destination.longitude ?? undefined,
-          address: item.destination.formatted_address ?? undefined,
-          website: item.destination.website ?? undefined,
-        },
-        hideAddToTrip: true,
-      });
+    const itemType = item.parsedNotes?.type;
+
+    // Hotels open in EditHotelBox
+    if (itemType === 'hotel') {
+      setEditingHotel(item);
+      setViewingItem(null);
+      setShowAddPlaceBox(false);
+      setShowAddHotelBox(false);
     }
+    // Other items (places) show in DestinationBox
+    else if (item.destination) {
+      setViewingItem(item);
+      setEditingHotel(null);
+      setShowAddPlaceBox(false);
+      setShowAddHotelBox(false);
+    }
+
     setActiveItemId(item.id);
-  }, [openDrawer]);
+  }, []);
 
   const handleAITripPlanning = async () => {
     if (!trip || !user) return;
@@ -651,6 +647,34 @@ export default function TripPage() {
                         setShowAddPlaceBox(false);
                       }}
                       onClose={() => setShowAddPlaceBox(false)}
+                    />
+                  ) : viewingItem ? (
+                    <DestinationBox
+                      item={viewingItem}
+                      onClose={() => {
+                        setViewingItem(null);
+                        setActiveItemId(null);
+                      }}
+                      onRemove={(id) => {
+                        removeItem(id);
+                        setViewingItem(null);
+                        setActiveItemId(null);
+                      }}
+                    />
+                  ) : editingHotel ? (
+                    <EditHotelBox
+                      item={editingHotel}
+                      tripStartDate={trip.start_date}
+                      tripEndDate={trip.end_date}
+                      onSave={(updates) => {
+                        updateHotel(editingHotel.id, updates);
+                        setEditingHotel(null);
+                      }}
+                      onDelete={() => {
+                        removeItem(editingHotel.id);
+                        setEditingHotel(null);
+                      }}
+                      onClose={() => setEditingHotel(null)}
                     />
                   ) : (
                     <>
