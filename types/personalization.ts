@@ -1,27 +1,36 @@
 import { Destination } from './destination';
 
+export interface HomeBase {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface UserProfile {
   id: string;
   user_id: string;
   display_name?: string;
   bio?: string;
   avatar_url?: string;
-  
+
   // Preferences
   favorite_cities?: string[];
   favorite_categories?: string[];
   dietary_preferences?: string[];
   price_preference?: number; // 1-4 ($ to $$$$)
-  
+
   // Interests
   interests?: string[];
   travel_style?: 'Luxury' | 'Budget' | 'Adventure' | 'Relaxation' | 'Balanced';
-  
+
+  // Home base for trip routing
+  home_base?: HomeBase;
+
   // Settings
   privacy_mode: boolean;
   allow_tracking: boolean;
   email_notifications: boolean;
-  
+
   created_at: string;
   updated_at: string;
 }

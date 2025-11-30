@@ -1,11 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Settings, Trash2, Loader2, X } from 'lucide-react';
+import { Settings, Trash2, Loader2, X, ImagePlus, Smile } from 'lucide-react';
+import Image from 'next/image';
 import type { Trip } from '@/types/trip';
 import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
+
+// Common travel-related emojis
+const TRIP_EMOJIS = [
+  '✈️', '🌍', '🏖️', '🏔️', '🌆', '🗼', '🏛️', '🎭',
+  '🍽️', '🍷', '☕', '🛍️', '🎪', '🎨', '🎵', '🏄',
+  '⛷️', '🚗', '🚂', '🚢', '🏕️', '🌴', '🌸', '❄️',
+  '🌅', '🌙', '💼', '💑', '👨‍👩‍👧‍👦', '🎒', '📸', '🗺️',
+];
 
 interface TripSettingsBoxProps {
   trip: Trip;
@@ -48,6 +57,16 @@ function formatDateForInput(dateStr: string | null | undefined): string {
  * TripSettingsBox - Inline trip settings component
  * Shows when settings button is tapped, replacing sidebar content temporarily
  */
+// Extract emoji from beginning of title if present
+function extractEmoji(title: string): { emoji: string | null; text: string } {
+  const emojiRegex = /^(\p{Emoji_Presentation}|\p{Emoji}\uFE0F?)/u;
+  const match = title.match(emojiRegex);
+  if (match) {
+    return { emoji: match[0], text: title.slice(match[0].length).trim() };
+  }
+  return { emoji: null, text: title };
+}
+
 export default function TripSettingsBox({
   trip,
   onUpdate,
@@ -56,13 +75,22 @@ export default function TripSettingsBox({
   className = '',
 }: TripSettingsBoxProps) {
   const { user } = useAuth();
-  const [title, setTitle] = useState(trip.title);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Parse emoji from title
+  const { emoji: initialEmoji, text: initialText } = extractEmoji(trip.title);
+
+  const [tripEmoji, setTripEmoji] = useState<string | null>(initialEmoji);
+  const [title, setTitle] = useState(initialText);
   const [destination, setDestination] = useState(trip.destination || '');
   const [startDate, setStartDate] = useState(formatDateForInput(trip.start_date));
   const [endDate, setEndDate] = useState(formatDateForInput(trip.end_date));
+  const [coverImage, setCoverImage] = useState(trip.cover_image || '');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleSave = async () => {
     if (!user) return;
@@ -72,11 +100,15 @@ export default function TripSettingsBox({
       const supabase = createClient();
       if (!supabase) return;
 
+      // Combine emoji and title
+      const fullTitle = tripEmoji ? `${tripEmoji} ${title}` : title;
+
       const updates: Partial<Trip> = {
-        title,
+        title: fullTitle,
         destination: destination || null,
         start_date: startDate || null,
         end_date: endDate || null,
+        cover_image: coverImage || null,
       };
 
       const { error } = await supabase
@@ -94,6 +126,57 @@ export default function TripSettingsBox({
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    // Validate file type and size
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be less than 5MB');
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      const supabase = createClient();
+      if (!supabase) return;
+
+      // Create unique filename
+      const ext = file.name.split('.').pop();
+      const filename = `${trip.id}-${Date.now()}.${ext}`;
+      const filePath = `trip-covers/${user.id}/${filename}`;
+
+      // Upload to Supabase Storage
+      const { error: uploadError } = await supabase.storage
+        .from('public')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('public')
+        .getPublicUrl(filePath);
+
+      if (urlData?.publicUrl) {
+        setCoverImage(urlData.publicUrl);
+      }
+    } catch (err) {
+      console.error('Error uploading image:', err);
+      alert('Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveCover = () => {
+    setCoverImage('');
   };
 
   const handleDelete = async () => {
@@ -142,18 +225,114 @@ export default function TripSettingsBox({
 
       {/* Content */}
       <div className="p-4 space-y-4">
-        {/* Title */}
+        {/* Cover Photo */}
+        <div>
+          <label className="block text-xs font-medium text-stone-500 dark:text-gray-400 mb-1.5">
+            Cover Photo
+          </label>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+          {coverImage ? (
+            <div className="relative w-full h-32 rounded-xl overflow-hidden group">
+              <Image
+                src={coverImage}
+                alt="Trip cover"
+                fill
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="px-3 py-1.5 bg-white/90 text-stone-900 text-xs font-medium rounded-full hover:bg-white transition-colors"
+                >
+                  Change
+                </button>
+                <button
+                  onClick={handleRemoveCover}
+                  className="px-3 py-1.5 bg-red-500/90 text-white text-xs font-medium rounded-full hover:bg-red-500 transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingImage}
+              className="w-full h-24 border-2 border-dashed border-stone-200 dark:border-gray-700 rounded-xl flex flex-col items-center justify-center gap-2 text-stone-400 dark:text-gray-500 hover:border-stone-300 dark:hover:border-gray-600 hover:text-stone-500 dark:hover:text-gray-400 transition-colors"
+            >
+              {uploadingImage ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <>
+                  <ImagePlus className="w-5 h-5" />
+                  <span className="text-xs">Add cover photo</span>
+                </>
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Title with Emoji */}
         <div>
           <label className="block text-xs font-medium text-stone-500 dark:text-gray-400 mb-1.5">
             Trip Name
           </label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-stone-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition-all"
-            placeholder="Trip name"
-          />
+          <div className="flex gap-2">
+            {/* Emoji Picker Button */}
+            <div className="relative">
+              <button
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className="w-10 h-10 flex items-center justify-center rounded-xl border border-stone-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-lg hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                {tripEmoji || <Smile className="w-4 h-4 text-stone-400" />}
+              </button>
+              {/* Emoji Dropdown */}
+              {showEmojiPicker && (
+                <div className="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-700 rounded-xl shadow-lg z-10 w-64">
+                  <div className="grid grid-cols-8 gap-1">
+                    {/* Clear option */}
+                    <button
+                      onClick={() => {
+                        setTripEmoji(null);
+                        setShowEmojiPicker(false);
+                      }}
+                      className="w-7 h-7 flex items-center justify-center rounded hover:bg-stone-100 dark:hover:bg-gray-800 text-stone-400 text-xs"
+                      title="No icon"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                    {TRIP_EMOJIS.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => {
+                          setTripEmoji(emoji);
+                          setShowEmojiPicker(false);
+                        }}
+                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-stone-100 dark:hover:bg-gray-800 text-base"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Title Input */}
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="flex-1 px-3 py-2 rounded-xl border border-stone-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-stone-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition-all"
+              placeholder="Trip name"
+            />
+          </div>
         </div>
 
         {/* Destination */}
