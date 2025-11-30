@@ -486,11 +486,11 @@ export default function DayTimeline({
       labels.push(
         <div
           key={hour}
-          className="absolute left-0 right-0 z-10 pointer-events-none"
+          className="absolute left-0 right-0 pointer-events-none"
           style={{ top }}
         >
           <div className="flex items-center gap-3">
-            <div className="w-12 text-[11px] text-right text-gray-400 dark:text-gray-500 tabular-nums bg-white dark:bg-gray-900 pr-1">{label}</div>
+            <div className="w-12 text-[11px] text-right text-gray-400 dark:text-gray-500 tabular-nums pr-1">{label}</div>
             <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
           </div>
         </div>
@@ -546,7 +546,7 @@ export default function DayTimeline({
             onPointerDown={(event) => handleDragStart(item.id, 'move', start, duration, event.clientY)}
           >
             <div
-              className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-xl relative overflow-hidden transition-all duration-150 hover:shadow-sm ${item.id === activeItemId ? 'ring-2 ring-gray-300 dark:ring-gray-600 shadow-md' : ''}`}
+              className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-xl relative overflow-hidden transition-all duration-150 shadow-sm hover:shadow ${item.id === activeItemId ? 'ring-2 ring-gray-300 dark:ring-gray-600 shadow-md' : ''}`}
               onClick={() => onEditItem?.(item)}
             >
               {isEditMode && (
@@ -726,7 +726,7 @@ export default function DayTimeline({
               >
                 {renderTimeGrid()}
                 {renderCurrentTime()}
-                <div className="absolute inset-0 left-12">
+                <div className="absolute inset-0 left-12 z-10">
                   {renderBlocks()}
                 </div>
               </div>
