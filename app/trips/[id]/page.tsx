@@ -109,9 +109,14 @@ export default function TripPage() {
         .map(item => ({ ...item, dayNumber: d.dayNumber }))
     );
 
-    // Sort hotels by check-in date, then by dayNumber, then by sortOrder
+    // Sort hotels by day number first (Day 1 before Day 2), then by order_index
     return hotelItems.sort((a, b) => {
-      // First compare by check-in date
+      // First compare by day number
+      if (a.dayNumber !== b.dayNumber) {
+        return a.dayNumber - b.dayNumber;
+      }
+
+      // If same day, compare by check-in date
       const aCheckIn = a.parsedNotes?.checkInDate;
       const bCheckIn = b.parsedNotes?.checkInDate;
 
@@ -119,15 +124,6 @@ export default function TripPage() {
         const aDate = new Date(aCheckIn).getTime();
         const bDate = new Date(bCheckIn).getTime();
         if (aDate !== bDate) return aDate - bDate;
-      } else if (aCheckIn) {
-        return -1; // a has date, b doesn't - a comes first
-      } else if (bCheckIn) {
-        return 1; // b has date, a doesn't - b comes first
-      }
-
-      // Fallback to day number
-      if (a.dayNumber !== b.dayNumber) {
-        return a.dayNumber - b.dayNumber;
       }
 
       // Finally, order_index within the same day
