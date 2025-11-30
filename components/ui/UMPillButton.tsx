@@ -28,7 +28,7 @@ export default function UMPillButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        'inline-flex items-center gap-2 px-5 h-[40px] rounded-3xl border transition-all',
+        'inline-flex items-center gap-2 px-5 h-[44px] rounded-3xl border transition-all',
         'font-medium text-sm',
         variant === 'default' &&
           'border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-white/15 dark:bg-[#1A1C1F] dark:text-white/90 dark:hover:bg-white/5',
