@@ -23,8 +23,10 @@ import TripItemCard from './TripItemCard';
 import TransitConnector from './TransitConnector';
 import DayIntelligence from './DayIntelligence';
 import { NeighborhoodTags } from './NeighborhoodBreakdown';
+import ReturnToHotelCard from './ReturnToHotelCard';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { getAirportCoordinates } from '@/lib/utils/airports';
+import { estimateTransit } from '@/lib/intelligence/transit';
 
 interface TripDaySectionProps {
   day: TripDay;
@@ -39,6 +41,9 @@ interface TripDaySectionProps {
   activeItemId?: string | null;
   isOptimizing?: boolean;
   isAutoFilling?: boolean;
+  // Hotel for this night (if any)
+  hotelForNight?: EnrichedItineraryItem | null;
+  onHotelClick?: (hotel: EnrichedItineraryItem) => void;
 }
 
 /**
@@ -58,6 +63,8 @@ export default function TripDaySection({
   activeItemId,
   isOptimizing = false,
   isAutoFilling = false,
+  hotelForNight,
+  onHotelClick,
 }: TripDaySectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -167,9 +174,41 @@ export default function TripDaySection({
     return undefined;
   };
 
+  // Calculate travel time from last item to hotel
+  const getHotelTravelTime = () => {
+    if (!hotelForNight || day.items.length === 0) return undefined;
+
+    const lastItem = day.items[day.items.length - 1];
+    const lastLocation = getFromLocation(lastItem);
+    const hotelLat = hotelForNight.destination?.latitude ?? hotelForNight.parsedNotes?.latitude;
+    const hotelLng = hotelForNight.destination?.longitude ?? hotelForNight.parsedNotes?.longitude;
+
+    if (!lastLocation || !hotelLat || !hotelLng) return undefined;
+
+    const transit = estimateTransit(
+      { lat: lastLocation.latitude, lng: lastLocation.longitude },
+      { lat: hotelLat, lng: hotelLng },
+      'walk'
+    );
+
+    return transit?.durationMinutes;
+  };
+
+  // Get hotel night info
+  const getHotelNightInfo = () => {
+    if (!hotelForNight) return { nightNumber: undefined, totalNights: undefined };
+
+    const nightStart = hotelForNight.parsedNotes?.nightStart ?? 1;
+    const nightEnd = hotelForNight.parsedNotes?.nightEnd ?? nightStart;
+    const totalNights = nightEnd - nightStart + 1;
+    const nightNumber = day.dayNumber - nightStart + 1;
+
+    return { nightNumber, totalNights };
+  };
+
   // Render items with TransitConnector between them
   const renderItemsWithConnectors = () => {
-    return day.items.map((item, index) => {
+    const items = day.items.map((item, index) => {
       const nextItem = day.items[index + 1];
 
       // For connector between current item and next item:
@@ -183,6 +222,9 @@ export default function TripDaySection({
         console.debug('Transit connector missing coords:', item.title, '→', nextItem.title);
       }
 
+      // Check if this is a hotel item for quick actions
+      const isHotel = item.parsedNotes?.type === 'hotel';
+
       return (
         <div key={item.id}>
           <TripItemCard
@@ -192,6 +234,11 @@ export default function TripDaySection({
             onRemove={undefined}
             isActive={item.id === activeItemId}
             isViewOnly={true}
+            // Hotel quick actions - open place selector with meal category
+            onHotelAddBreakfast={isHotel ? () => onAddItem?.(day.dayNumber, 'cafe') : undefined}
+            onHotelAddLunch={isHotel ? () => onAddItem?.(day.dayNumber, 'restaurant') : undefined}
+            onHotelAddDinner={isHotel ? () => onAddItem?.(day.dayNumber, 'restaurant') : undefined}
+            onHotelReturnToRest={isHotel ? () => onAddItem?.(day.dayNumber, 'activity') : undefined}
           />
           {/* Transit connector between items */}
           {index < day.items.length - 1 && (
@@ -204,6 +251,38 @@ export default function TripDaySection({
         </div>
       );
     });
+
+    // Add ReturnToHotelCard at the end if there's a hotel for this night
+    if (hotelForNight && day.items.length > 0) {
+      const { nightNumber, totalNights } = getHotelNightInfo();
+      const travelTime = getHotelTravelTime();
+      const hotelName = hotelForNight.title || hotelForNight.parsedNotes?.name || 'Hotel';
+      const hotelAddress = hotelForNight.parsedNotes?.address || hotelForNight.destination?.formatted_address || undefined;
+
+      items.push(
+        <div key="return-to-hotel">
+          {/* Connector to hotel */}
+          <TransitConnector
+            from={getFromLocation(day.items[day.items.length - 1])}
+            to={{
+              latitude: hotelForNight.destination?.latitude ?? hotelForNight.parsedNotes?.latitude ?? 0,
+              longitude: hotelForNight.destination?.longitude ?? hotelForNight.parsedNotes?.longitude ?? 0,
+            }}
+            mode="walk"
+          />
+          <ReturnToHotelCard
+            hotelName={hotelName}
+            hotelAddress={hotelAddress}
+            nightNumber={nightNumber}
+            totalNights={totalNights}
+            travelTimeMinutes={travelTime}
+            onClick={() => onHotelClick?.(hotelForNight)}
+          />
+        </div>
+      );
+    }
+
+    return items;
   };
 
   return (

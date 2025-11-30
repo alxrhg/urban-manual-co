@@ -23,6 +23,12 @@ interface HotelOptions {
   checkOutDate?: string;
   nightStart?: number;
   nightEnd?: number;
+  // Amenities from Google Places
+  breakfastIncluded?: boolean;
+  hasPool?: boolean;
+  hasGym?: boolean;
+  hasSpa?: boolean;
+  hasFreeWifi?: boolean;
 }
 
 /**
@@ -51,6 +57,15 @@ export default function AddHotelBox({
   const [googleQuery, setGoogleQuery] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googlePlace, setGooglePlace] = useState<any>(null);
+
+  // Amenities from Google Places (stored when selecting a Google hotel)
+  const [hotelAmenities, setHotelAmenities] = useState<{
+    breakfastIncluded?: boolean;
+    hasPool?: boolean;
+    hasGym?: boolean;
+    hasSpa?: boolean;
+    hasFreeWifi?: boolean;
+  }>({});
 
   useEffect(() => {
     if (tab === 'curated') {
@@ -118,8 +133,11 @@ export default function AddHotelBox({
       checkOutDate,
       nightStart,
       nightEnd,
+      // Pass amenities from Google Places (if available)
+      ...hotelAmenities,
     });
     setSelectedHotel(null);
+    setHotelAmenities({});
   };
 
   const handleGooglePlaceSelect = async (placeDetails: any) => {
@@ -168,6 +186,15 @@ export default function AddHotelBox({
       website: googlePlace.website,
       phone_number: googlePlace.phone,
     };
+
+    // Store amenities from Google Places
+    setHotelAmenities({
+      breakfastIncluded: googlePlace.serves_breakfast ?? undefined,
+      hasPool: googlePlace.swimming_pool ?? undefined,
+      hasGym: googlePlace.fitness_center ?? undefined,
+      hasSpa: googlePlace.spa ?? undefined,
+      hasFreeWifi: googlePlace.free_wifi ?? undefined,
+    });
 
     setSelectedHotel(hotel);
     setGooglePlace(null);

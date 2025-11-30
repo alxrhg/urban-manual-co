@@ -19,6 +19,11 @@ interface TripItemCardProps {
   onRemove?: (id: string) => void;
   isActive?: boolean;
   isViewOnly?: boolean;
+  // Hotel quick actions
+  onHotelAddBreakfast?: () => void;
+  onHotelAddLunch?: () => void;
+  onHotelAddDinner?: () => void;
+  onHotelReturnToRest?: () => void;
 }
 
 /**
@@ -176,6 +181,10 @@ export default function TripItemCard({
   onRemove,
   isActive = false,
   isViewOnly = false,
+  onHotelAddBreakfast,
+  onHotelAddLunch,
+  onHotelAddDinner,
+  onHotelReturnToRest,
 }: TripItemCardProps) {
   const itemType = item.parsedNotes?.type;
 
@@ -226,6 +235,10 @@ export default function TripItemCard({
           hasPool={item.parsedNotes.hasPool}
           hasGym={item.parsedNotes.hasGym}
           travelTimeBack={item.parsedNotes.travelTimeToNext}
+          onAddBreakfast={onHotelAddBreakfast}
+          onAddLunch={onHotelAddLunch}
+          onAddDinner={onHotelAddDinner}
+          onReturnToHotel={onHotelReturnToRest}
           compact
         />
       );

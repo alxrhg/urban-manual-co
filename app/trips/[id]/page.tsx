@@ -28,6 +28,7 @@ import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
 import AddPlaceBox from '@/components/trip/AddPlaceBox';
 import AddHotelBox from '@/components/trip/AddHotelBox';
+import EditHotelBox from '@/components/trip/EditHotelBox';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import RouteMapBox from '@/components/trip/RouteMapBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
@@ -63,6 +64,7 @@ export default function TripPage() {
     addPlace,
     addFlight,
     addHotel,
+    updateHotel,
     removeItem,
     refresh,
   } = useTripEditor({
@@ -84,6 +86,7 @@ export default function TripPage() {
   const [warnings, setWarnings] = useState<PlannerWarning[]>([]);
   const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
   const [showAddHotelBox, setShowAddHotelBox] = useState(false);
+  const [editingHotel, setEditingHotel] = useState<EnrichedItineraryItem | null>(null);
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [showMapBox, setShowMapBox] = useState(false);
 
@@ -101,6 +104,16 @@ export default function TripPage() {
         .map(item => ({ ...item, dayNumber: d.dayNumber }))
     );
   }, [days]);
+
+  // Helper to get hotel for a specific night (day number)
+  const getHotelForNight = useCallback((dayNumber: number) => {
+    // Find hotel that covers this night based on nightStart/nightEnd
+    return hotels.find(hotel => {
+      const nightStart = hotel.parsedNotes?.nightStart ?? hotel.dayNumber;
+      const nightEnd = hotel.parsedNotes?.nightEnd ?? nightStart;
+      return dayNumber >= nightStart && dayNumber <= nightEnd;
+    }) || null;
+  }, [hotels]);
 
   // Generate trip warnings based on analysis
   useMemo(() => {
@@ -605,6 +618,8 @@ export default function TripPage() {
                       activeItemId={activeItemId}
                       isOptimizing={optimizingDay === day.dayNumber}
                       isAutoFilling={autoFillingDay === day.dayNumber}
+                      hotelForNight={getHotelForNight(day.dayNumber)}
+                      onHotelClick={(hotel) => setEditingHotel(hotel)}
                     />
                   ))}
                 </div>
@@ -757,8 +772,26 @@ export default function TripPage() {
         {/* Hotels Tab */}
         {activeTab === 'hotels' && (
           <div className="fade-in space-y-4">
+            {/* Edit Hotel Box */}
+            {editingHotel && (
+              <EditHotelBox
+                item={editingHotel}
+                tripStartDate={trip?.start_date}
+                tripEndDate={trip?.end_date}
+                onSave={async (updates) => {
+                  await updateHotel(editingHotel.id, updates);
+                  setEditingHotel(null);
+                }}
+                onDelete={() => {
+                  removeItem(editingHotel.id);
+                  setEditingHotel(null);
+                }}
+                onClose={() => setEditingHotel(null)}
+              />
+            )}
+
             {/* Add Hotel Box */}
-            {showAddHotelBox && (
+            {!editingHotel && showAddHotelBox && (
               <AddHotelBox
                 city={trip?.destination}
                 tripStartDate={trip?.start_date}
@@ -771,7 +804,7 @@ export default function TripPage() {
               />
             )}
 
-            {!showAddHotelBox && hotels.length === 0 ? (
+            {!editingHotel && !showAddHotelBox && hotels.length === 0 ? (
               <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
                 <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">No hotels added yet</p>
                 <button
@@ -781,12 +814,12 @@ export default function TripPage() {
                   Add accommodation
                 </button>
               </div>
-            ) : !showAddHotelBox && (
+            ) : !editingHotel && !showAddHotelBox && (
               <>
                 {hotels.map((hotel) => (
                   <div
                     key={hotel.id}
-                    onClick={() => handleEditItem(hotel)}
+                    onClick={() => setEditingHotel(hotel)}
                     className="p-4 border border-stone-200 dark:border-gray-800 rounded-2xl hover:bg-stone-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center justify-between mb-2">

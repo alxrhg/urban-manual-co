@@ -421,6 +421,12 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       checkOutDate?: string;
       nightStart?: number;
       nightEnd?: number;
+      // Amenities from Google Places
+      breakfastIncluded?: boolean;
+      hasPool?: boolean;
+      hasGym?: boolean;
+      hasSpa?: boolean;
+      hasFreeWifi?: boolean;
     }
   ) => {
     if (!trip || !userId) return;
@@ -445,6 +451,11 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       checkOutDate: options?.checkOutDate,
       nightStart: options?.nightStart,
       nightEnd: options?.nightEnd,
+      // Amenities from Google Places
+      breakfastIncluded: options?.breakfastIncluded,
+      hasPool: options?.hasPool,
+      hasGym: options?.hasGym,
+      hasSpa: options?.hasSpa,
     };
 
     const title = destination.name;
@@ -629,6 +640,67 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, [days]);
 
+  // Update hotel-specific fields
+  const updateHotel = useCallback(async (
+    itemId: string,
+    updates: {
+      checkInDate?: string;
+      checkOutDate?: string;
+      confirmationNumber?: string;
+      nightStart?: number;
+      nightEnd?: number;
+      breakfastIncluded?: boolean;
+      hasSpa?: boolean;
+      hasPool?: boolean;
+      hasGym?: boolean;
+      notes?: string;
+    }
+  ) => {
+    const item = days.flatMap(d => d.items).find(i => i.id === itemId);
+    if (!item) return;
+
+    const existingNotes = item.parsedNotes || {};
+    const updatedNotes: ItineraryItemNotes = {
+      ...existingNotes,
+      checkInDate: updates.checkInDate ?? existingNotes.checkInDate,
+      checkOutDate: updates.checkOutDate ?? existingNotes.checkOutDate,
+      hotelConfirmation: updates.confirmationNumber ?? existingNotes.hotelConfirmation,
+      nightStart: updates.nightStart ?? existingNotes.nightStart,
+      nightEnd: updates.nightEnd ?? existingNotes.nightEnd,
+      breakfastIncluded: updates.breakfastIncluded ?? existingNotes.breakfastIncluded,
+      hasSpa: updates.hasSpa ?? existingNotes.hasSpa,
+      hasPool: updates.hasPool ?? existingNotes.hasPool,
+      hasGym: updates.hasGym ?? existingNotes.hasGym,
+      notes: updates.notes ?? existingNotes.notes,
+    };
+
+    // Optimistic update
+    setDays((prev) =>
+      prev.map((d) => ({
+        ...d,
+        items: d.items.map((i) =>
+          i.id === itemId
+            ? { ...i, notes: stringifyItineraryNotes(updatedNotes), parsedNotes: updatedNotes }
+            : i
+        ),
+      }))
+    );
+
+    try {
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { error } = await supabase
+        .from('itinerary_items')
+        .update({ notes: stringifyItineraryNotes(updatedNotes) })
+        .eq('id', itemId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error updating hotel:', err);
+    }
+  }, [days]);
+
   return {
     trip,
     days,
@@ -639,6 +711,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     addPlace,
     addFlight,
     addHotel,
+    updateHotel,
     removeItem,
     updateItemTime,
     updateItemNotes,

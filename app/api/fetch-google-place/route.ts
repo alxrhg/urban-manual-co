@@ -83,6 +83,16 @@ async function getPlaceDetails(placeId: string) {
         'primaryTypeDisplayName',
         'photos',
         'location',
+        // Hotel-specific amenities
+        'servesBreakfast',
+        'servesBrunch',
+        'servesLunch',
+        'servesDinner',
+        'swimmingPool',
+        'fitnessCenter',
+        'spa',
+        'freeWifi',
+        'parkingOptions',
       ].join(','),
     },
   });
@@ -119,6 +129,16 @@ async function getPlaceDetails(placeId: string) {
         lng: place.location.longitude,
       },
     } : null,
+    // Hotel amenities
+    serves_breakfast: place.servesBreakfast ?? null,
+    serves_brunch: place.servesBrunch ?? null,
+    serves_lunch: place.servesLunch ?? null,
+    serves_dinner: place.servesDinner ?? null,
+    swimming_pool: place.swimmingPool ?? null,
+    fitness_center: place.fitnessCenter ?? null,
+    spa: place.spa ?? null,
+    free_wifi: place.freeWifi ?? null,
+    parking_options: place.parkingOptions ?? null,
   };
 }
 
@@ -290,6 +310,16 @@ export async function POST(request: NextRequest) {
       latitude: details.geometry?.location?.lat || null,
       longitude: details.geometry?.location?.lng || null,
       place_id: finalPlaceId,
+      // Hotel amenities (from Google Places)
+      serves_breakfast: details.serves_breakfast,
+      serves_brunch: details.serves_brunch,
+      serves_lunch: details.serves_lunch,
+      serves_dinner: details.serves_dinner,
+      swimming_pool: details.swimming_pool,
+      fitness_center: details.fitness_center,
+      spa: details.spa,
+      free_wifi: details.free_wifi,
+      parking_options: details.parking_options,
     };
 
     return NextResponse.json(result);
