@@ -103,6 +103,39 @@ export default function TripPage() {
     );
   }, [days]);
 
+  // Compute which hotel covers each night (for multi-night stays)
+  const nightlyHotelByDay = useMemo(() => {
+    const hotelMap: Record<number, typeof hotels[0] | null> = {};
+
+    hotels.forEach(hotel => {
+      const checkInDay = hotel.dayNumber;
+      const checkInDate = hotel.parsedNotes?.checkInDate;
+      const checkOutDate = hotel.parsedNotes?.checkOutDate;
+
+      // Calculate number of nights
+      let nights = 1;
+      if (checkInDate && checkOutDate) {
+        try {
+          const inDate = new Date(checkInDate);
+          const outDate = new Date(checkOutDate);
+          nights = Math.max(1, Math.ceil((outDate.getTime() - inDate.getTime()) / (1000 * 60 * 60 * 24)));
+        } catch {
+          nights = 1;
+        }
+      }
+
+      // Mark this hotel for each night it covers (except the check-in day which has its own)
+      for (let i = 1; i < nights; i++) {
+        const nightDay = checkInDay + i;
+        if (!hotelMap[nightDay]) {
+          hotelMap[nightDay] = hotel;
+        }
+      }
+    });
+
+    return hotelMap;
+  }, [hotels]);
+
   // Generate trip warnings based on analysis
   useMemo(() => {
     const newWarnings: PlannerWarning[] = [];
@@ -616,6 +649,7 @@ export default function TripPage() {
                     <DayTimeline
                       key={day.dayNumber}
                       day={day}
+                      nightlyHotel={nightlyHotelByDay[day.dayNumber] || null}
                       onReorderItems={reorderItems}
                       onRemoveItem={isEditMode ? removeItem : undefined}
                       onEditItem={handleEditItem}

@@ -27,6 +27,7 @@ import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
 interface DayTimelineProps {
   day: TripDay;
+  nightlyHotel?: EnrichedItineraryItem | null; // Hotel spanning this night (from another day)
   onReorderItems?: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
   onRemoveItem?: (itemId: string) => void;
   onEditItem?: (item: EnrichedItineraryItem) => void;
@@ -46,6 +47,7 @@ interface DayTimelineProps {
  */
 export default function DayTimeline({
   day,
+  nightlyHotel,
   onReorderItems,
   onRemoveItem,
   onEditItem,
@@ -142,14 +144,20 @@ export default function DayTimeline({
   };
 
   // Separate hotels from regular activities
-  const { regularItems, hotelItem } = useMemo(() => {
+  const { regularItems, hotelItem, isExternalHotel } = useMemo(() => {
     const hotels = day.items.filter(item => item.parsedNotes?.type === 'hotel');
     const regular = day.items.filter(item => item.parsedNotes?.type !== 'hotel');
+
+    // Use nightlyHotel (multi-night from another day) if provided, else use day's hotel
+    const effectiveHotel = nightlyHotel || hotels[0] || null;
+    const isExternal = !!nightlyHotel && !hotels.length;
+
     return {
       regularItems: regular,
-      hotelItem: hotels[0] || null, // Take first hotel for this night
+      hotelItem: effectiveHotel,
+      isExternalHotel: isExternal, // True if hotel is from a different day (multi-night)
     };
-  }, [day.items]);
+  }, [day.items, nightlyHotel]);
 
   // Render regular items with transit connectors (view mode)
   const renderItemsWithConnectors = () => {
@@ -206,12 +214,17 @@ export default function DayTimeline({
           <span className="text-xs font-medium text-stone-500 dark:text-gray-400 uppercase tracking-wide">
             Tonight&apos;s Stay
           </span>
+          {isExternalHotel && (
+            <span className="text-[10px] text-stone-400 dark:text-gray-500 italic">
+              (continuing)
+            </span>
+          )}
         </div>
         <ViewOnlyTimelineBlock
           item={hotelItem}
           index={regularItems.length}
           onEdit={onEditItem}
-          onTimeChange={onTimeChange}
+          onTimeChange={isExternalHotel ? undefined : onTimeChange} // Can't edit time on external hotel
           isActive={hotelItem.id === activeItemId}
         />
       </div>
