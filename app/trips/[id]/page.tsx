@@ -109,8 +109,9 @@ export default function TripPage() {
   const getHotelForNight = useCallback((dayNumber: number) => {
     // Find hotel that covers this night based on nightStart/nightEnd
     return hotels.find(hotel => {
-      const nightStart = hotel.parsedNotes?.nightStart ?? hotel.dayNumber;
-      const nightEnd = hotel.parsedNotes?.nightEnd ?? nightStart;
+      // Ensure proper number coercion (values may come from JSON as strings)
+      const nightStart = Number(hotel.parsedNotes?.nightStart) || hotel.dayNumber;
+      const nightEnd = Number(hotel.parsedNotes?.nightEnd) || nightStart;
       return dayNumber >= nightStart && dayNumber <= nightEnd;
     }) || null;
   }, [hotels]);

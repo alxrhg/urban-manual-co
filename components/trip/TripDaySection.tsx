@@ -198,10 +198,14 @@ export default function TripDaySection({
   const getHotelNightInfo = () => {
     if (!hotelForNight) return { nightNumber: undefined, totalNights: undefined };
 
-    const nightStart = hotelForNight.parsedNotes?.nightStart ?? 1;
-    const nightEnd = hotelForNight.parsedNotes?.nightEnd ?? nightStart;
-    const totalNights = nightEnd - nightStart + 1;
-    const nightNumber = day.dayNumber - nightStart + 1;
+    // Ensure we have valid numbers (nightStart defaults to current day if not set)
+    const nightStart = Number(hotelForNight.parsedNotes?.nightStart) || day.dayNumber;
+    const nightEnd = Number(hotelForNight.parsedNotes?.nightEnd) || nightStart;
+    const totalNights = Math.max(1, nightEnd - nightStart + 1);
+
+    // Night number is which night of the stay (1-indexed)
+    // If on Day 3 and nightStart is 3, this is Night 1 of the stay
+    const nightNumber = Math.max(1, day.dayNumber - nightStart + 1);
 
     return { nightNumber, totalNights };
   };
