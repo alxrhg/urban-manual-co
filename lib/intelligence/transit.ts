@@ -11,8 +11,6 @@ export interface TransitEstimate {
   durationMinutes: number;
   mode: TransitMode;
   distanceKm: number;
-  /** Estimated cost in USD (for drive/transit) */
-  estimatedCost?: number;
   /** Human-readable summary */
   summary: string;
 }
@@ -30,15 +28,6 @@ const SPEEDS = {
   drive: 30,      // City driving with traffic
 } as const;
 
-// Base costs
-const COSTS = {
-  transit: 2.50,  // Average transit fare
-  drive: {
-    base: 3.00,
-    perKm: 1.50,
-  },
-} as const;
-
 /**
  * Estimate transit time and mode between two points
  * Automatically selects optimal mode based on distance
@@ -53,13 +42,11 @@ export function estimateTransit(
   // Auto-select mode based on distance if not specified
   const mode = preferredMode || selectOptimalMode(dist);
   const durationMinutes = calculateDuration(dist, mode);
-  const estimatedCost = calculateCost(dist, mode);
 
   return {
     durationMinutes,
     mode,
     distanceKm: Math.round(dist * 100) / 100,
-    estimatedCost,
     summary: formatSummary(durationMinutes, mode, dist),
   };
 }
@@ -107,23 +94,6 @@ function calculateDuration(distanceKm: number, mode: TransitMode): number {
   }
 
   return Math.ceil(baseDuration + buffer);
-}
-
-/**
- * Calculate estimated cost
- */
-function calculateCost(distanceKm: number, mode: TransitMode): number | undefined {
-  switch (mode) {
-    case 'walk':
-    case 'bike':
-      return undefined; // Free
-    case 'transit':
-      return COSTS.transit;
-    case 'drive':
-      return Math.round((COSTS.drive.base + distanceKm * COSTS.drive.perKm) * 100) / 100;
-    default:
-      return undefined;
-  }
 }
 
 /**

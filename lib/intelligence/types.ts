@@ -121,8 +121,6 @@ export interface DayPlanStats {
   totalWalkingKm: number;
   /** Total transit time in minutes */
   totalTransitMinutes: number;
-  /** Estimated total cost */
-  estimatedCost: number;
   /** Number of activities */
   activityCount: number;
   /** Total planned time in minutes */
@@ -160,8 +158,6 @@ export interface DayPlan {
 export interface TripPreferences {
   /** Preferred categories (restaurant, museum, etc.) */
   categories?: string[];
-  /** Budget level (1-4) */
-  budgetLevel?: number;
   /** Pace preference */
   pace?: 'relaxed' | 'moderate' | 'packed';
   /** Wake up time preference */
@@ -292,7 +288,6 @@ export function createTransitBlock(
 export function calculateDayStats(blocks: TimeBlock[]): DayPlanStats {
   let totalWalkingKm = 0;
   let totalTransitMinutes = 0;
-  let estimatedCost = 0;
   let activityCount = 0;
   let totalPlannedMinutes = 0;
 
@@ -315,7 +310,6 @@ export function calculateDayStats(blocks: TimeBlock[]): DayPlanStats {
   return {
     totalWalkingKm: Math.round(totalWalkingKm * 10) / 10,
     totalTransitMinutes,
-    estimatedCost,
     activityCount,
     totalPlannedMinutes,
     freeTimeMinutes,

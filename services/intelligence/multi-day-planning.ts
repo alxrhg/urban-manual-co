@@ -1,6 +1,6 @@
 /**
  * Multi-Day Trip Planning Service
- * Enhanced multi-day planning with route optimization and budget awareness
+ * Enhanced multi-day planning with route optimization and time awareness
  */
 
 import { createServiceRoleClient } from '@/lib/supabase-server';
@@ -26,20 +26,16 @@ export interface MultiDayTripPlan {
       endTime?: string;
       durationMinutes: number;
       travelTimeMinutes?: number;
-      estimatedCost?: number;
       notes?: string;
     }>;
     totalTravelTime: number;
-    estimatedCost: number;
   }>;
   optimization: {
     totalTravelTime: number;
-    totalEstimatedCost: number;
     routeEfficiency: number; // 0-1 score
     categoryBalance: number; // 0-1 score
   };
   constraints?: {
-    budget?: number;
     maxTravelTimePerDay?: number;
     preferredCategories?: string[];
   };
@@ -65,7 +61,6 @@ export class MultiDayTripPlanningService {
     endDate: Date,
     preferences?: {
       categories?: string[];
-      budget?: number;
       style?: string;
       mustVisit?: string[];
     },
@@ -105,7 +100,6 @@ export class MultiDayTripPlanningService {
         days,
         optimization,
         constraints: preferences ? {
-          budget: preferences.budget,
           preferredCategories: preferences.categories,
         } : undefined,
       };
@@ -219,16 +213,12 @@ export class MultiDayTripPlanningService {
       
       // Calculate travel time (simplified)
       const totalTravelTime = this.estimateTravelTime(dayItems);
-      
-      // Estimate cost
-      const estimatedCost = this.estimateDayCost(dayItems);
 
       days.push({
         dayNumber: dayNum,
         date: dayDate,
         items: itemsWithTiming,
         totalTravelTime,
-        estimatedCost,
       });
     }
 
@@ -275,17 +265,10 @@ export class MultiDayTripPlanningService {
     return Math.max(0, (items.length - 1) * 30);
   }
 
-  private estimateDayCost(items: Itinerary['items']): number {
-    // Simplified: estimate based on average price level
-    // In production, would fetch actual prices
-    return items.length * 50; // Placeholder: $50 per destination
-  }
-
   private calculateOptimizationMetrics(
     days: MultiDayTripPlan['days']
   ): MultiDayTripPlan['optimization'] {
     const totalTravelTime = days.reduce((sum, day) => sum + day.totalTravelTime, 0);
-    const totalEstimatedCost = days.reduce((sum, day) => sum + day.estimatedCost, 0);
 
     // Calculate route efficiency (simplified)
     const routeEfficiency = Math.max(0, 1 - (totalTravelTime / (days.length * 120))); // Normalize
@@ -295,7 +278,6 @@ export class MultiDayTripPlanningService {
 
     return {
       totalTravelTime,
-      totalEstimatedCost,
       routeEfficiency: Math.min(1, Math.max(0, routeEfficiency)),
       categoryBalance,
     };
