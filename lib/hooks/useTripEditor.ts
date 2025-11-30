@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, TrainData } from '@/types/trip';
+import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, TrainData, ActivityData } from '@/types/trip';
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 import { recalculateDayTimes, calculateTripDays, addDaysToDate } from '@/lib/utils/time-calculations';
@@ -522,6 +522,96 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, [trip, userId, days, onError]);
 
+  // Add an activity (downtime, hotel time, etc.)
+  const addActivity = useCallback(async (activityData: ActivityData, dayNumber: number, time?: string) => {
+    if (!trip || !userId) return;
+
+    const currentDay = days.find((d) => d.dayNumber === dayNumber);
+    const orderIndex = currentDay?.items.length || 0;
+
+    const notesData: ItineraryItemNotes = {
+      type: 'activity',
+      activityType: activityData.activityType,
+      duration: activityData.duration,
+      linkedHotelId: activityData.linkedHotelId,
+      location: activityData.location,
+      notes: activityData.notes,
+    };
+
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const newItem: EnrichedItineraryItem = {
+      id: tempId,
+      trip_id: trip.id,
+      destination_slug: null,
+      day: dayNumber,
+      order_index: orderIndex,
+      time: time || null,
+      title: activityData.title,
+      description: activityData.notes || null,
+      notes: stringifyItineraryNotes(notesData),
+      created_at: new Date().toISOString(),
+      destination: undefined,
+      parsedNotes: notesData,
+    };
+
+    setDays((prev) =>
+      prev.map((d) =>
+        d.dayNumber === dayNumber
+          ? { ...d, items: [...d.items, newItem] }
+          : d
+      )
+    );
+
+    try {
+      setSaving(true);
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { data, error } = await supabase.from('itinerary_items').insert({
+        trip_id: trip.id,
+        destination_slug: null,
+        day: dayNumber,
+        order_index: orderIndex,
+        time: time || null,
+        title: activityData.title,
+        description: activityData.notes,
+        notes: stringifyItineraryNotes(notesData),
+      }).select().single();
+
+      if (error) throw error;
+
+      // Update with real ID
+      if (data) {
+        setDays((prev) =>
+          prev.map((d) =>
+            d.dayNumber === dayNumber
+              ? {
+                  ...d,
+                  items: d.items.map((item) =>
+                    item.id === tempId ? { ...item, id: data.id } : item
+                  ),
+                }
+              : d
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error adding activity:', err);
+      // Revert optimistic update
+      setDays((prev) =>
+        prev.map((d) =>
+          d.dayNumber === dayNumber
+            ? { ...d, items: d.items.filter((item) => item.id !== tempId) }
+            : d
+        )
+      );
+      onError?.(err instanceof Error ? err : new Error('Failed to add activity'));
+    } finally {
+      setSaving(false);
+    }
+  }, [trip, userId, days, onError]);
+
   // Remove an item
   const removeItem = useCallback(async (itemId: string) => {
     // Store for potential revert
@@ -681,6 +771,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     addPlace,
     addFlight,
     addTrain,
+    addActivity,
     removeItem,
     updateItemTime,
     updateItemNotes,

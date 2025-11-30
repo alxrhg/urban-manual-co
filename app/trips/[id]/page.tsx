@@ -40,7 +40,7 @@ import {
   detectConflicts,
   checkClosureDays,
 } from '@/lib/intelligence/schedule-analyzer';
-import type { FlightData } from '@/types/trip';
+import type { FlightData, ActivityData } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 import type { PlannerWarning } from '@/lib/intelligence/types';
 
@@ -66,6 +66,7 @@ export default function TripPage() {
     addPlace,
     addFlight,
     addTrain,
+    addActivity,
     removeItem,
     updateItemTime,
     updateItemNotes,
@@ -103,10 +104,35 @@ export default function TripPage() {
   }, [days]);
 
   const hotels = useMemo(() => {
-    return days.flatMap(d =>
+    const hotelItems = days.flatMap(d =>
       d.items.filter(item => item.parsedNotes?.type === 'hotel')
         .map(item => ({ ...item, dayNumber: d.dayNumber }))
     );
+
+    // Sort hotels by check-in date, then by dayNumber, then by sortOrder
+    return hotelItems.sort((a, b) => {
+      // First compare by check-in date
+      const aCheckIn = a.parsedNotes?.checkInDate;
+      const bCheckIn = b.parsedNotes?.checkInDate;
+
+      if (aCheckIn && bCheckIn) {
+        const aDate = new Date(aCheckIn).getTime();
+        const bDate = new Date(bCheckIn).getTime();
+        if (aDate !== bDate) return aDate - bDate;
+      } else if (aCheckIn) {
+        return -1; // a has date, b doesn't - a comes first
+      } else if (bCheckIn) {
+        return 1; // b has date, a doesn't - b comes first
+      }
+
+      // Fallback to day number
+      if (a.dayNumber !== b.dayNumber) {
+        return a.dayNumber - b.dayNumber;
+      }
+
+      // Finally, order_index within the same day
+      return (a.order_index || 0) - (b.order_index || 0);
+    });
   }, [days]);
 
   // Compute which hotel covers each night based on check-in/check-out dates
@@ -702,6 +728,10 @@ export default function TripPage() {
                         addTrain(trainData, selectedDayNumber);
                         setShowAddPlaceBox(false);
                       }}
+                      onAddActivity={(activityData) => {
+                        addActivity(activityData, selectedDayNumber);
+                        setShowAddPlaceBox(false);
+                      }}
                       onClose={() => setShowAddPlaceBox(false)}
                     />
                   ) : selectedItem ? (
@@ -778,6 +808,10 @@ export default function TripPage() {
                     }}
                     onAddTrain={(trainData) => {
                       addTrain(trainData, selectedDayNumber);
+                      setShowAddPlaceBox(false);
+                    }}
+                    onAddActivity={(activityData) => {
+                      addActivity(activityData, selectedDayNumber);
                       setShowAddPlaceBox(false);
                     }}
                     onClose={() => setShowAddPlaceBox(false)}

@@ -3,14 +3,35 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
-import { Search, MapPin, Loader2, Globe, Plus, X, Plane, Train } from 'lucide-react';
+import {
+  Search, MapPin, Loader2, Globe, Plus, X, Plane, Train, Clock,
+  BedDouble, Waves, Sparkles, Dumbbell, Coffee, Shirt, Package, Sun, Briefcase, Phone, Camera, ShoppingBag
+} from 'lucide-react';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
-import type { FlightData, TrainData } from '@/types/trip';
+import type { FlightData, TrainData, ActivityData, ActivityType } from '@/types/trip';
 
 const CATEGORIES = ['All', 'Dining', 'Cafe', 'Bar', 'Culture', 'Shopping', 'Hotel'];
 
-type Tab = 'curated' | 'google' | 'flight' | 'train';
+type Tab = 'curated' | 'google' | 'flight' | 'train' | 'activity';
+
+// Activity quick-add options
+const ACTIVITY_OPTIONS: { type: ActivityType; icon: typeof BedDouble; label: string; defaultDuration: number }[] = [
+  { type: 'nap', icon: BedDouble, label: 'Nap / Rest', defaultDuration: 60 },
+  { type: 'pool', icon: Waves, label: 'Pool Time', defaultDuration: 90 },
+  { type: 'spa', icon: Sparkles, label: 'Spa', defaultDuration: 120 },
+  { type: 'gym', icon: Dumbbell, label: 'Workout', defaultDuration: 60 },
+  { type: 'breakfast-at-hotel', icon: Coffee, label: 'Hotel Breakfast', defaultDuration: 45 },
+  { type: 'getting-ready', icon: Shirt, label: 'Getting Ready', defaultDuration: 45 },
+  { type: 'packing', icon: Package, label: 'Packing', defaultDuration: 30 },
+  { type: 'checkout-prep', icon: Package, label: 'Check-out Prep', defaultDuration: 30 },
+  { type: 'free-time', icon: Clock, label: 'Free Time', defaultDuration: 60 },
+  { type: 'sunset', icon: Sun, label: 'Sunset', defaultDuration: 45 },
+  { type: 'work', icon: Briefcase, label: 'Work Time', defaultDuration: 120 },
+  { type: 'call', icon: Phone, label: 'Call / Meeting', defaultDuration: 30 },
+  { type: 'shopping-time', icon: ShoppingBag, label: 'Shopping', defaultDuration: 90 },
+  { type: 'photo-walk', icon: Camera, label: 'Photo Walk', defaultDuration: 60 },
+];
 
 interface AddPlaceBoxProps {
   city?: string | null;
@@ -18,6 +39,7 @@ interface AddPlaceBoxProps {
   onSelect?: (destination: Destination) => void;
   onAddFlight?: (flightData: FlightData) => void;
   onAddTrain?: (trainData: TrainData) => void;
+  onAddActivity?: (activityData: ActivityData) => void;
   onClose?: () => void;
   className?: string;
 }
@@ -32,6 +54,7 @@ export default function AddPlaceBox({
   onSelect,
   onAddFlight,
   onAddTrain,
+  onAddActivity,
   onClose,
   className = '',
 }: AddPlaceBoxProps) {
@@ -70,6 +93,29 @@ export default function AddPlaceBox({
     arrivalTime: '',
     confirmationNumber: '',
   });
+
+  // Activity state
+  const [selectedActivity, setSelectedActivity] = useState<ActivityType | null>(null);
+  const [activityDuration, setActivityDuration] = useState(60);
+  const [activityNotes, setActivityNotes] = useState('');
+
+  const handleAddActivity = (activityType: ActivityType) => {
+    if (!onAddActivity) return;
+
+    const option = ACTIVITY_OPTIONS.find(o => o.type === activityType);
+    const activityData: ActivityData = {
+      type: 'activity',
+      activityType,
+      title: option?.label || 'Activity',
+      duration: activityDuration || option?.defaultDuration || 60,
+      notes: activityNotes || undefined,
+    };
+
+    onAddActivity(activityData);
+    setSelectedActivity(null);
+    setActivityDuration(60);
+    setActivityNotes('');
+  };
 
   useEffect(() => {
     if (tab === 'curated') {
@@ -306,6 +352,19 @@ export default function AddPlaceBox({
           >
             <Train className="w-3 h-3" />
             Train
+          </button>
+        )}
+        {onAddActivity && (
+          <button
+            onClick={() => setTab('activity')}
+            className={`transition-all pb-2 flex items-center gap-1.5 whitespace-nowrap ${
+              tab === 'activity'
+                ? 'font-medium text-stone-900 dark:text-white border-b-2 border-stone-900 dark:border-white -mb-[9px]'
+                : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+            }`}
+          >
+            <Clock className="w-3 h-3" />
+            Activity
           </button>
         )}
       </div>
@@ -689,6 +748,86 @@ export default function AddPlaceBox({
             <Train className="w-4 h-4" />
             Add Train to Day {dayNumber}
           </button>
+        </div>
+      )}
+
+      {/* Activity Tab */}
+      {tab === 'activity' && (
+        <div className="p-4">
+          <p className="text-xs text-stone-500 dark:text-gray-400 mb-3">
+            Add downtime, hotel activities, or personal time blocks
+          </p>
+
+          {/* Activity Grid */}
+          <div className="grid grid-cols-2 gap-2 mb-4 max-h-64 overflow-y-auto">
+            {ACTIVITY_OPTIONS.map((option) => {
+              const Icon = option.icon;
+              const isSelected = selectedActivity === option.type;
+              return (
+                <button
+                  key={option.type}
+                  onClick={() => {
+                    if (isSelected) {
+                      // If already selected, add it immediately
+                      handleAddActivity(option.type);
+                    } else {
+                      setSelectedActivity(option.type);
+                      setActivityDuration(option.defaultDuration);
+                    }
+                  }}
+                  className={`flex items-center gap-2 p-3 rounded-xl text-left transition-all ${
+                    isSelected
+                      ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900 ring-2 ring-stone-900 dark:ring-white'
+                      : 'bg-stone-50 dark:bg-gray-800 hover:bg-stone-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isSelected ? '' : 'text-stone-400'}`} />
+                  <span className="text-xs font-medium">{option.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Duration & Notes (when activity selected) */}
+          {selectedActivity && (
+            <div className="space-y-3 pt-3 border-t border-stone-100 dark:border-gray-800">
+              <div>
+                <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Duration</label>
+                <select
+                  value={activityDuration}
+                  onChange={(e) => setActivityDuration(Number(e.target.value))}
+                  className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm"
+                >
+                  <option value={15}>15 min</option>
+                  <option value={30}>30 min</option>
+                  <option value={45}>45 min</option>
+                  <option value={60}>1 hour</option>
+                  <option value={90}>1.5 hours</option>
+                  <option value={120}>2 hours</option>
+                  <option value={180}>3 hours</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Notes (optional)</label>
+                <input
+                  type="text"
+                  value={activityNotes}
+                  onChange={(e) => setActivityNotes(e.target.value)}
+                  placeholder="e.g., hotel pool, spa appointment..."
+                  className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-sm placeholder:text-stone-400"
+                />
+              </div>
+
+              <button
+                onClick={() => handleAddActivity(selectedActivity)}
+                className="w-full py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add to Day {dayNumber}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

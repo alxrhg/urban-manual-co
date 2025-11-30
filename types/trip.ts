@@ -84,7 +84,25 @@ export interface UpdateTrip {
   notes?: string | null;
 }
 
-export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'event' | 'custom';
+export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'event' | 'activity' | 'custom';
+
+// Activity types for downtime/hotel time blocks
+export type ActivityType =
+  | 'nap'
+  | 'pool'
+  | 'spa'
+  | 'gym'
+  | 'breakfast-at-hotel'
+  | 'getting-ready'
+  | 'packing'
+  | 'free-time'
+  | 'sunset'
+  | 'checkout-prep'
+  | 'work'
+  | 'call'
+  | 'shopping-time'
+  | 'photo-walk'
+  | 'other';
 
 export interface ItineraryItem {
   id: string; // UUID
@@ -196,6 +214,23 @@ export interface ItineraryItemNotes {
   ticketUrl?: string;
   ticketConfirmation?: string;
   seatInfo?: string;
+  // Activity-specific fields (downtime, hotel time, etc.)
+  activityType?: ActivityType;
+  linkedHotelId?: string; // Link activity to a hotel (e.g., pool at hotel)
+  location?: string; // Where the activity takes place (e.g., "hotel pool", "room")
+}
+
+/**
+ * Activity data structure for adding downtime/hotel activities
+ */
+export interface ActivityData {
+  type: 'activity';
+  activityType: ActivityType;
+  title: string;
+  duration?: number;
+  linkedHotelId?: string;
+  location?: string;
+  notes?: string;
 }
 
 /**

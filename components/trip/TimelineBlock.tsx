@@ -11,7 +11,9 @@ import PlaceCard from '@/components/trips/PlaceCard';
 import TransportCard from '@/components/trips/TransportCard';
 import MealCard from '@/components/trips/MealCard';
 import EventCard from '@/components/trips/EventCard';
+import ActivityCard from '@/components/trips/ActivityCard';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+import type { ActivityType } from '@/types/trip';
 
 interface TimelineBlockProps {
   item: EnrichedItineraryItem;
@@ -141,6 +143,21 @@ export default function TimelineBlock({
           arrivalTime={item.parsedNotes.arrivalTime}
           duration={item.parsedNotes.duration}
           notes={item.parsedNotes.notes}
+          compact
+        />
+      );
+    }
+
+    // Activity (downtime, hotel time, etc.)
+    if (itemType === 'activity' && item.parsedNotes) {
+      return (
+        <ActivityCard
+          activityType={(item.parsedNotes.activityType || 'other') as ActivityType}
+          title={item.title}
+          duration={item.parsedNotes.duration}
+          location={item.parsedNotes.location}
+          notes={item.parsedNotes.notes}
+          time={item.time ? formatTimeDisplay(item.time) : undefined}
           compact
         />
       );
