@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import DayTimeline from '@/components/trip/DayTimeline';
+import { TransitMode } from '@/components/trip/TransitConnector';
 import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
@@ -226,6 +227,11 @@ export default function TripPage() {
     setShowMapBox(false);
     setActiveItemId(item.id);
   }, []);
+
+  // Handle travel mode change from TransitConnector
+  const handleTravelModeChange = useCallback((itemId: string, mode: TransitMode) => {
+    updateItem(itemId, { travelModeToNext: mode });
+  }, [updateItem]);
 
   const handleAITripPlanning = async () => {
     if (!trip || !user) return;
@@ -641,6 +647,7 @@ export default function TripPage() {
                       onRemoveItem={isEditMode ? removeItem : undefined}
                       onEditItem={handleEditItem}
                       onTimeChange={updateItemTime}
+                      onTravelModeChange={handleTravelModeChange}
                       onAddItem={openPlaceSelector}
                       onOptimizeDay={handleOptimizeDay}
                       onAutoFillDay={handleAutoFillDay}

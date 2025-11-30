@@ -20,7 +20,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import TimelineBlock, { ViewOnlyTimelineBlock } from './TimelineBlock';
-import TransitConnector from './TransitConnector';
+import TransitConnector, { TransitMode } from './TransitConnector';
 import DayIntelligence from './DayIntelligence';
 import { NeighborhoodTags } from './NeighborhoodBreakdown';
 import { getAirportCoordinates } from '@/lib/utils/airports';
@@ -33,6 +33,7 @@ interface DayTimelineProps {
   onRemoveItem?: (itemId: string) => void;
   onEditItem?: (item: EnrichedItineraryItem) => void;
   onTimeChange?: (itemId: string, time: string) => void;
+  onTravelModeChange?: (itemId: string, mode: TransitMode) => void;
   onAddItem?: (dayNumber: number, category?: string) => void;
   onOptimizeDay?: (dayNumber: number) => void;
   onAutoFillDay?: (dayNumber: number) => void;
@@ -53,6 +54,7 @@ export default function DayTimeline({
   onRemoveItem,
   onEditItem,
   onTimeChange,
+  onTravelModeChange,
   onAddItem,
   onOptimizeDay,
   onAutoFillDay,
@@ -167,6 +169,9 @@ export default function DayTimeline({
       const fromLocation = getFromLocation(item);
       const toLocation = nextItem ? getToLocation(nextItem) : undefined;
 
+      // Get saved travel mode from item's parsedNotes, default to walk
+      const savedTravelMode = (item.parsedNotes?.travelModeToNext as TransitMode) || 'walk';
+
       return (
         <div key={item.id}>
           <ViewOnlyTimelineBlock
@@ -180,7 +185,9 @@ export default function DayTimeline({
             <TransitConnector
               from={fromLocation}
               to={toLocation}
-              mode="walk"
+              mode={savedTravelMode}
+              itemId={item.id}
+              onModeChange={onTravelModeChange}
             />
           )}
         </div>

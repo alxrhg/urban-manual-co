@@ -5,7 +5,8 @@ import Image from 'next/image';
 import {
   X, MapPin, Star, Globe, Clock, ChevronDown, ExternalLink,
   Pencil, Check, Trash2, StickyNote, Plane, Train, Building2,
-  Calendar, Phone, Ticket, Coffee, Users, BedDouble
+  Calendar, Phone, Ticket, Coffee, Users, Timer, Flag, Tag,
+  CheckCircle2, Circle, XCircle, CalendarCheck, Sparkles
 } from 'lucide-react';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import type { ItineraryItemNotes } from '@/types/trip';
@@ -21,6 +22,34 @@ interface DestinationBoxProps {
 }
 
 const CATEGORIES = ['Restaurant', 'Cafe', 'Bar', 'Museum', 'Gallery', 'Shopping', 'Hotel', 'Landmark', 'Park', 'Other'];
+const DURATION_OPTIONS = [
+  { value: 15, label: '15 min' },
+  { value: 30, label: '30 min' },
+  { value: 45, label: '45 min' },
+  { value: 60, label: '1 hour' },
+  { value: 90, label: '1.5 hours' },
+  { value: 120, label: '2 hours' },
+  { value: 180, label: '3 hours' },
+  { value: 240, label: '4 hours' },
+  { value: 300, label: '5+ hours' },
+];
+const PRESET_TAGS = ['Romantic', 'Kid-friendly', 'Outdoor', 'Indoor', 'Foodie', 'Cultural', 'Adventure', 'Relaxing', 'Photo spot', 'Local favorite'];
+const BOOKING_STATUS_OPTIONS = [
+  { value: 'need-to-book', label: 'Need to book', color: 'text-amber-600 bg-amber-50' },
+  { value: 'booked', label: 'Booked', color: 'text-green-600 bg-green-50' },
+  { value: 'waitlist', label: 'Waitlist', color: 'text-blue-600 bg-blue-50' },
+  { value: 'walk-in', label: 'Walk-in', color: 'text-stone-600 bg-stone-50' },
+];
+const PRIORITY_OPTIONS = [
+  { value: 'must-do', label: 'Must do', color: 'text-red-600 bg-red-50', icon: Flag },
+  { value: 'want-to', label: 'Want to', color: 'text-amber-600 bg-amber-50', icon: Star },
+  { value: 'if-time', label: 'If time', color: 'text-stone-500 bg-stone-50', icon: Clock },
+];
+const VISITED_STATUS_OPTIONS = [
+  { value: 'planned', label: 'Planned', icon: Circle, color: 'text-stone-400' },
+  { value: 'visited', label: 'Visited', icon: CheckCircle2, color: 'text-green-500' },
+  { value: 'skipped', label: 'Skipped', icon: XCircle, color: 'text-stone-400' },
+];
 
 /**
  * DestinationBox - Inline destination details component with full edit mode
@@ -37,11 +66,20 @@ export default function DestinationBox({
 }: DestinationBoxProps) {
   const [showMore, setShowMore] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [newTag, setNewTag] = useState('');
 
   // Common fields
   const [editTime, setEditTime] = useState(item.time || '');
   const [editNotes, setEditNotes] = useState(item.parsedNotes?.notes || item.parsedNotes?.raw || '');
   const [editCategory, setEditCategory] = useState(item.parsedNotes?.category || item.destination?.category || '');
+  const [editDuration, setEditDuration] = useState(item.parsedNotes?.duration || 60);
+
+  // Planning fields
+  const [editBookingStatus, setEditBookingStatus] = useState<string>(item.parsedNotes?.bookingStatus || '');
+  const [editPriority, setEditPriority] = useState<string>(item.parsedNotes?.priority || '');
+  const [editVisitedStatus, setEditVisitedStatus] = useState<string>(item.parsedNotes?.visitedStatus || 'planned');
+  const [editTags, setEditTags] = useState<string[]>(item.parsedNotes?.tags || []);
+  const [editPersonalRating, setEditPersonalRating] = useState<number>(item.parsedNotes?.personalRating || 0);
 
   // Reservation fields
   const [editConfirmation, setEditConfirmation] = useState(item.parsedNotes?.confirmationNumber || item.parsedNotes?.hotelConfirmation || '');
@@ -91,6 +129,12 @@ export default function DestinationBox({
     setEditNotes(item.parsedNotes?.notes || item.parsedNotes?.raw || '');
     setEditCategory(item.parsedNotes?.category || item.destination?.category || '');
     setEditConfirmation(item.parsedNotes?.confirmationNumber || item.parsedNotes?.hotelConfirmation || '');
+    setEditDuration(item.parsedNotes?.duration || 60);
+    setEditBookingStatus(item.parsedNotes?.bookingStatus || '');
+    setEditPriority(item.parsedNotes?.priority || '');
+    setEditVisitedStatus(item.parsedNotes?.visitedStatus || 'planned');
+    setEditTags(item.parsedNotes?.tags || []);
+    setEditPersonalRating(item.parsedNotes?.personalRating || 0);
     setIsEditing(false);
   }, [item.id]);
 
@@ -118,6 +162,24 @@ export default function DestinationBox({
       }
       if (editPhone !== (item.parsedNotes?.phone || '')) {
         updates.phone = editPhone;
+      }
+      if (editDuration !== (item.parsedNotes?.duration || 60)) {
+        updates.duration = editDuration;
+      }
+      if (editBookingStatus !== (item.parsedNotes?.bookingStatus || '')) {
+        updates.bookingStatus = editBookingStatus as ItineraryItemNotes['bookingStatus'];
+      }
+      if (editPriority !== (item.parsedNotes?.priority || '')) {
+        updates.priority = editPriority as ItineraryItemNotes['priority'];
+      }
+      if (editVisitedStatus !== (item.parsedNotes?.visitedStatus || 'planned')) {
+        updates.visitedStatus = editVisitedStatus as ItineraryItemNotes['visitedStatus'];
+      }
+      if (JSON.stringify(editTags) !== JSON.stringify(item.parsedNotes?.tags || [])) {
+        updates.tags = editTags;
+      }
+      if (editPersonalRating !== (item.parsedNotes?.personalRating || 0)) {
+        updates.personalRating = editPersonalRating;
       }
 
       // Flight-specific updates
@@ -167,6 +229,32 @@ export default function DestinationBox({
     }
   };
 
+  const handleAddTag = (tag: string) => {
+    if (tag && !editTags.includes(tag)) {
+      setEditTags([...editTags, tag]);
+    }
+    setNewTag('');
+  };
+
+  const handleRemoveTag = (tag: string) => {
+    setEditTags(editTags.filter(t => t !== tag));
+  };
+
+  // Quick update functions (no edit mode required)
+  const quickUpdateVisitedStatus = (status: string) => {
+    if (onItemUpdate) {
+      onItemUpdate(item.id, { visitedStatus: status as ItineraryItemNotes['visitedStatus'] });
+      setEditVisitedStatus(status);
+    }
+  };
+
+  const quickUpdateRating = (rating: number) => {
+    if (onItemUpdate) {
+      onItemUpdate(item.id, { personalRating: rating });
+      setEditPersonalRating(rating);
+    }
+  };
+
   // Get type icon and color
   const getTypeInfo = () => {
     switch (itemType) {
@@ -183,6 +271,20 @@ export default function DestinationBox({
 
   const typeInfo = getTypeInfo();
   const TypeIcon = typeInfo.icon;
+
+  // Get status badge info
+  const getStatusBadge = () => {
+    const status = VISITED_STATUS_OPTIONS.find(s => s.value === (parsedNotes?.visitedStatus || 'planned'));
+    return status || VISITED_STATUS_OPTIONS[0];
+  };
+
+  const getPriorityBadge = () => {
+    return PRIORITY_OPTIONS.find(p => p.value === parsedNotes?.priority);
+  };
+
+  const getBookingBadge = () => {
+    return BOOKING_STATUS_OPTIONS.find(b => b.value === parsedNotes?.bookingStatus);
+  };
 
   return (
     <div className={`border border-stone-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900 ${className}`}>
@@ -228,8 +330,71 @@ export default function DestinationBox({
         </div>
       </div>
 
+      {/* Quick Status Bar (always visible) */}
+      <div className="px-4 py-2 bg-stone-50/50 dark:bg-gray-800/30 border-b border-stone-100 dark:border-gray-800 flex items-center justify-between gap-2">
+        {/* Visited Status Toggle */}
+        <div className="flex items-center gap-1">
+          {VISITED_STATUS_OPTIONS.map(status => {
+            const Icon = status.icon;
+            const isActive = (parsedNotes?.visitedStatus || 'planned') === status.value;
+            return (
+              <button
+                key={status.value}
+                onClick={() => quickUpdateVisitedStatus(status.value)}
+                className={`p-1.5 rounded-lg transition-colors ${isActive ? status.color + ' bg-white dark:bg-gray-700' : 'text-stone-300 hover:text-stone-500'}`}
+                title={status.label}
+              >
+                <Icon className="w-4 h-4" />
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Quick Personal Rating */}
+        <div className="flex items-center gap-0.5">
+          {[1, 2, 3, 4, 5].map(star => (
+            <button
+              key={star}
+              onClick={() => quickUpdateRating(star === editPersonalRating ? 0 : star)}
+              className="p-0.5"
+              title={`Rate ${star} star${star > 1 ? 's' : ''}`}
+            >
+              <Star
+                className={`w-4 h-4 transition-colors ${
+                  star <= (parsedNotes?.personalRating || 0)
+                    ? 'text-yellow-400 fill-yellow-400'
+                    : 'text-stone-300 hover:text-yellow-300'
+                }`}
+              />
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Content */}
-      <div className="p-4 space-y-4 max-h-[70vh] overflow-y-auto">
+      <div className="p-4 space-y-4 max-h-[65vh] overflow-y-auto">
+        {/* Status Badges (view mode) */}
+        {!isEditing && (
+          <div className="flex flex-wrap items-center gap-2">
+            {getPriorityBadge() && (
+              <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getPriorityBadge()?.color}`}>
+                {getPriorityBadge()?.label}
+              </span>
+            )}
+            {getBookingBadge() && (
+              <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${getBookingBadge()?.color}`}>
+                {getBookingBadge()?.label}
+              </span>
+            )}
+            {parsedNotes?.duration && (
+              <span className="px-2 py-0.5 text-xs text-stone-500 bg-stone-100 dark:bg-gray-800 rounded-full flex items-center gap-1">
+                <Timer className="w-3 h-3" />
+                {DURATION_OPTIONS.find(d => d.value === parsedNotes.duration)?.label || `${parsedNotes.duration} min`}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Image (for places/hotels) */}
         {image && itemType !== 'flight' && itemType !== 'train' && (
           <div className="aspect-[16/9] relative rounded-xl overflow-hidden">
@@ -340,7 +505,6 @@ export default function DestinationBox({
               </>
             ) : (
               <>
-                {/* Flight route display */}
                 <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
                   <div className="text-center">
                     <p className="text-lg font-semibold text-stone-900 dark:text-white">{parsedNotes?.from || '---'}</p>
@@ -437,7 +601,6 @@ export default function DestinationBox({
               </>
             ) : (
               <>
-                {/* Train route display */}
                 <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
                   <div className="text-center">
                     <p className="text-sm font-semibold text-stone-900 dark:text-white">{parsedNotes?.from || '---'}</p>
@@ -521,33 +684,30 @@ export default function DestinationBox({
                 </label>
               </>
             ) : (
-              <>
-                {/* Hotel stay display */}
-                <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl space-y-2">
-                  {(parsedNotes?.checkInDate || parsedNotes?.checkOutDate) && (
-                    <div className="flex items-center justify-between text-xs">
-                      <div>
-                        <p className="text-stone-500">Check-in</p>
-                        <p className="font-medium text-stone-900 dark:text-white">
-                          {parsedNotes?.checkInDate || '---'} {parsedNotes?.checkInTime && `at ${parsedNotes.checkInTime}`}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-stone-500">Check-out</p>
-                        <p className="font-medium text-stone-900 dark:text-white">
-                          {parsedNotes?.checkOutDate || '---'} {parsedNotes?.checkOutTime && `at ${parsedNotes.checkOutTime}`}
-                        </p>
-                      </div>
+              <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-xl space-y-2">
+                {(parsedNotes?.checkInDate || parsedNotes?.checkOutDate) && (
+                  <div className="flex items-center justify-between text-xs">
+                    <div>
+                      <p className="text-stone-500">Check-in</p>
+                      <p className="font-medium text-stone-900 dark:text-white">
+                        {parsedNotes?.checkInDate || '---'} {parsedNotes?.checkInTime && `at ${parsedNotes.checkInTime}`}
+                      </p>
                     </div>
-                  )}
-                  {parsedNotes?.breakfastIncluded && (
-                    <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
-                      <Coffee className="w-3.5 h-3.5" />
-                      <span>Breakfast included</span>
+                    <div className="text-right">
+                      <p className="text-stone-500">Check-out</p>
+                      <p className="font-medium text-stone-900 dark:text-white">
+                        {parsedNotes?.checkOutDate || '---'} {parsedNotes?.checkOutTime && `at ${parsedNotes.checkOutTime}`}
+                      </p>
                     </div>
-                  )}
-                </div>
-              </>
+                  </div>
+                )}
+                {parsedNotes?.breakfastIncluded && (
+                  <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+                    <Coffee className="w-3.5 h-3.5" />
+                    <span>Breakfast included</span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -555,7 +715,6 @@ export default function DestinationBox({
         {/* === PLACE FIELDS (category, rating, etc) === */}
         {(itemType === 'place' || itemType === 'breakfast' || !itemType) && (
           <>
-            {/* Category & Neighborhood */}
             {isEditing ? (
               <div>
                 <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Category</label>
@@ -585,7 +744,6 @@ export default function DestinationBox({
               </div>
             )}
 
-            {/* Rating & Price (view only) */}
             {!isEditing && (rating || priceLevel) && (
               <div className="flex items-center gap-3 text-xs">
                 {rating && (
@@ -605,7 +763,6 @@ export default function DestinationBox({
               </div>
             )}
 
-            {/* Description (view only) */}
             {!isEditing && description && (
               <div>
                 <p className={`text-sm text-stone-600 dark:text-gray-300 leading-relaxed ${!showMore ? 'line-clamp-3' : ''}`}>
@@ -625,7 +782,6 @@ export default function DestinationBox({
           </>
         )}
 
-        {/* Address (view only) */}
         {!isEditing && address && (
           <div className="flex items-start gap-2 text-xs text-stone-500 dark:text-gray-400">
             <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
@@ -633,7 +789,131 @@ export default function DestinationBox({
           </div>
         )}
 
-        {/* === COMMON EDITABLE FIELDS === */}
+        {/* === PLANNING & ORGANIZATION (Edit Mode) === */}
+        {isEditing && (
+          <>
+            {/* Duration */}
+            <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+              <div className="flex items-center gap-2 mb-2">
+                <Timer className="w-3.5 h-3.5 text-stone-400" />
+                <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Duration</span>
+              </div>
+              <select
+                value={editDuration}
+                onChange={(e) => setEditDuration(Number(e.target.value))}
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+              >
+                {DURATION_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Priority */}
+            <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+              <div className="flex items-center gap-2 mb-2">
+                <Flag className="w-3.5 h-3.5 text-stone-400" />
+                <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Priority</span>
+              </div>
+              <div className="flex gap-2">
+                {PRIORITY_OPTIONS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setEditPriority(editPriority === opt.value ? '' : opt.value)}
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                      editPriority === opt.value
+                        ? opt.color
+                        : 'bg-stone-100 dark:bg-gray-800 text-stone-500 hover:bg-stone-200'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Booking Status */}
+            <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+              <div className="flex items-center gap-2 mb-2">
+                <CalendarCheck className="w-3.5 h-3.5 text-stone-400" />
+                <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Booking Status</span>
+              </div>
+              <select
+                value={editBookingStatus}
+                onChange={(e) => setEditBookingStatus(e.target.value)}
+                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+              >
+                <option value="">Not set</option>
+                {BOOKING_STATUS_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Tags */}
+            <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+              <div className="flex items-center gap-2 mb-2">
+                <Tag className="w-3.5 h-3.5 text-stone-400" />
+                <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Tags</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {editTags.map(tag => (
+                  <span
+                    key={tag}
+                    className="px-2 py-1 bg-stone-100 dark:bg-gray-800 text-stone-600 dark:text-gray-300 text-xs rounded-full flex items-center gap-1"
+                  >
+                    {tag}
+                    <button onClick={() => handleRemoveTag(tag)} className="hover:text-red-500">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag(newTag))}
+                  placeholder="Add custom tag..."
+                  className="flex-1 px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                />
+                <button
+                  onClick={() => handleAddTag(newTag)}
+                  disabled={!newTag}
+                  className="px-3 py-2 bg-stone-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm disabled:opacity-50"
+                >
+                  Add
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {PRESET_TAGS.filter(t => !editTags.includes(t)).slice(0, 6).map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => handleAddTag(tag)}
+                    className="px-2 py-1 bg-stone-50 dark:bg-gray-800/50 text-stone-400 text-xs rounded-full hover:bg-stone-100 hover:text-stone-600 transition-colors"
+                  >
+                    + {tag}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Tags Display (View Mode) */}
+        {!isEditing && parsedNotes?.tags && parsedNotes.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {parsedNotes.tags.map(tag => (
+              <span
+                key={tag}
+                className="px-2 py-0.5 bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 text-xs rounded-full"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Scheduled Time */}
         <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
@@ -646,7 +926,7 @@ export default function DestinationBox({
               type="time"
               value={editTime}
               onChange={(e) => setEditTime(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm text-stone-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600"
+              className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
             />
           ) : (
             <p className="text-sm text-stone-700 dark:text-gray-300">
@@ -690,11 +970,11 @@ export default function DestinationBox({
             </div>
           ) : (
             <div className="space-y-1">
-              {(parsedNotes?.confirmationNumber || parsedNotes?.hotelConfirmation) ? (
+              {(parsedNotes?.confirmationNumber || parsedNotes?.hotelConfirmation) && (
                 <div className="flex items-center gap-2 text-sm text-stone-700 dark:text-gray-300">
                   <span className="font-mono">{parsedNotes?.confirmationNumber || parsedNotes?.hotelConfirmation}</span>
                 </div>
-              ) : null}
+              )}
               {parsedNotes?.phone && (
                 <div className="flex items-center gap-2 text-sm text-stone-700 dark:text-gray-300">
                   <Phone className="w-3.5 h-3.5 text-stone-400" />
@@ -726,7 +1006,7 @@ export default function DestinationBox({
               onChange={(e) => setEditNotes(e.target.value)}
               placeholder="Add notes..."
               rows={3}
-              className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm text-stone-900 dark:text-white placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 resize-none"
+              className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm resize-none"
             />
           ) : (
             <p className="text-sm text-stone-700 dark:text-gray-300">
@@ -735,7 +1015,7 @@ export default function DestinationBox({
           )}
         </div>
 
-        {/* Links (view only) */}
+        {/* Links */}
         {!isEditing && website && (
           <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
             <a
@@ -751,7 +1031,7 @@ export default function DestinationBox({
           </div>
         )}
 
-        {/* Remove Button (only in edit mode) */}
+        {/* Remove Button */}
         {isEditing && onRemove && (
           <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
             <button

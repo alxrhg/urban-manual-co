@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Car, Footprints, Train } from 'lucide-react';
 import { formatDuration } from '@/lib/utils/time-calculations';
 
-type TransitMode = 'walk' | 'drive' | 'transit';
+export type TransitMode = 'walk' | 'drive' | 'transit';
 
 interface Location {
   latitude?: number | null;
@@ -17,6 +17,8 @@ interface TransitConnectorProps {
   durationMinutes?: number;
   distanceKm?: number;
   mode?: TransitMode;
+  itemId?: string; // ID of the "from" item for saving travel mode
+  onModeChange?: (itemId: string, mode: TransitMode) => void;
   className?: string;
 }
 
@@ -67,9 +69,24 @@ export default function TransitConnector({
   to,
   durationMinutes: propDuration,
   mode = 'walk',
+  itemId,
+  onModeChange,
   className = '',
 }: TransitConnectorProps) {
   const [selectedMode, setSelectedMode] = useState<TransitMode>(mode);
+
+  // Update selectedMode when mode prop changes
+  useEffect(() => {
+    setSelectedMode(mode);
+  }, [mode]);
+
+  // Handle mode change and notify parent
+  const handleModeChange = (newMode: TransitMode) => {
+    setSelectedMode(newMode);
+    if (onModeChange && itemId) {
+      onModeChange(itemId, newMode);
+    }
+  };
   const [apiDurations, setApiDurations] = useState<Record<TransitMode, number | null>>({
     walk: null,
     drive: null,
@@ -166,7 +183,7 @@ export default function TransitConnector({
           return (
             <button
               key={m}
-              onClick={() => setSelectedMode(m)}
+              onClick={() => handleModeChange(m)}
               className={`
                 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all text-[11px] font-medium
                 ${isSelected

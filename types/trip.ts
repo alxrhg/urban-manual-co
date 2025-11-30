@@ -177,6 +177,12 @@ export interface ItineraryItemNotes {
   notes?: string;
   // Reservation details
   partySize?: number;
+  bookingStatus?: 'need-to-book' | 'booked' | 'waitlist' | 'walk-in';
+  // Planning & Organization
+  priority?: 'must-do' | 'want-to' | 'if-time';
+  visitedStatus?: 'planned' | 'visited' | 'skipped';
+  tags?: string[];
+  personalRating?: number; // 1-5 stars
   // Travel time to next item
   travelTimeToNext?: number; // in minutes
   travelDistanceToNext?: number; // in km
