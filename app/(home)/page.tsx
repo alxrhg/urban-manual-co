@@ -1,14 +1,17 @@
 /**
- * Homepage - ISR (Incremental Static Regeneration)
+ * Homepage - ISR with Suspense Streaming
  *
  * OPTIMIZED FOR SPEED:
- * - Pre-rendered HTML with initial content (SEO-friendly)
+ * - Hero renders immediately (no data blocking)
+ * - Destinations stream in with Suspense
+ * - Only 20 destinations for first viewport
  * - Cached data revalidates every 60 seconds
- * - User-specific data fetched client-side (non-blocking)
  */
 
+import { Suspense } from "react";
 import HomepageClient from "@/components/homepage/HomepageClient";
 import { loadHomepageData } from "./loaders";
+import HomeLoading from "./loading";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -28,8 +31,8 @@ export const metadata: Metadata = {
 // ISR - revalidate every 60 seconds for fresh content
 export const revalidate = 60;
 
-export default async function HomePage() {
-  // Fetch data server-side (cached with unstable_cache)
+// Server component that fetches data
+async function HomepageWithData() {
   const { destinations, cities, categories, totalCount } = await loadHomepageData();
 
   return (
@@ -39,5 +42,13 @@ export default async function HomePage() {
       initialCategories={categories}
       totalCount={totalCount}
     />
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<HomeLoading />}>
+      <HomepageWithData />
+    </Suspense>
   );
 }

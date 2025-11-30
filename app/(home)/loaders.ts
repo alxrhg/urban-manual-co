@@ -40,19 +40,14 @@ export interface HomepageData {
 /**
  * Cached function to fetch homepage destinations
  * Revalidates every 60 seconds
+ * OPTIMIZED: No count query, reduced limit for faster initial load
  */
 const getCachedDestinations = unstable_cache(
-  async (limit: number = 50): Promise<{ destinations: MinimalDestination[]; total: number }> => {
+  async (limit: number = 20): Promise<MinimalDestination[]> => {
     try {
       const supabase = await createServerClient();
 
-      // Get total count first (for pagination info)
-      const { count } = await supabase
-        .from("destinations")
-        .select("*", { count: "exact", head: true })
-        .is("parent_destination_id", null);
-
-      // Fetch only essential fields for initial render
+      // Fetch only essential fields for initial render - NO count query
       const { data, error } = await supabase
         .from("destinations")
         .select(
@@ -66,19 +61,16 @@ const getCachedDestinations = unstable_cache(
 
       if (error) {
         console.error("[Homepage Loader] Destinations error:", error.message);
-        return { destinations: [], total: 0 };
+        return [];
       }
 
-      return {
-        destinations: (data || []) as MinimalDestination[],
-        total: count || 0,
-      };
+      return (data || []) as MinimalDestination[];
     } catch (error) {
       console.error("[Homepage Loader] Destinations fetch failed:", error);
-      return { destinations: [], total: 0 };
+      return [];
     }
   },
-  ["homepage-destinations"],
+  ["homepage-destinations-v2"],
   { revalidate: 60, tags: ["destinations"] }
 );
 
@@ -130,24 +122,25 @@ const getCachedFilters = unstable_cache(
 /**
  * Load homepage data (cached, fast)
  *
- * Only fetches:
- * - 50 destinations with minimal fields
- * - Filter options (cities/categories)
+ * OPTIMIZED:
+ * - Only 20 destinations for first viewport
+ * - No count query (saves a database roundtrip)
+ * - Parallel fetching with caching
  *
  * User data is fetched client-side to not block SSR
  */
 export async function loadHomepageData(): Promise<HomepageData> {
   // Fetch in parallel (both cached)
-  const [destinationData, filters] = await Promise.all([
-    getCachedDestinations(50),
+  const [destinations, filters] = await Promise.all([
+    getCachedDestinations(20),
     getCachedFilters(),
   ]);
 
   return {
-    destinations: destinationData.destinations,
+    destinations,
     cities: filters.cities,
     categories: filters.categories,
-    totalCount: destinationData.total,
+    totalCount: destinations.length, // Client will load more via pagination
   };
 }
 
