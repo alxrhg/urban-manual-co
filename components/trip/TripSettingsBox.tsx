@@ -295,19 +295,36 @@ export default function TripSettingsBox({
               </button>
               {/* Emoji Dropdown */}
               {showEmojiPicker && (
-                <div className="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-700 rounded-xl shadow-lg z-10 w-64">
-                  <div className="grid grid-cols-8 gap-1">
-                    {/* Clear option */}
+                <div className="absolute top-full left-0 mt-1 p-2 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-700 rounded-xl shadow-lg z-10 w-72">
+                  {/* Custom emoji input */}
+                  <div className="flex items-center gap-2 mb-2 pb-2 border-b border-stone-100 dark:border-gray-800">
+                    <input
+                      type="text"
+                      placeholder="Type any emoji..."
+                      className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-stone-200 dark:border-gray-700 bg-stone-50 dark:bg-gray-800 focus:outline-none focus:ring-1 focus:ring-stone-300"
+                      onChange={(e) => {
+                        // Extract first emoji from input
+                        const emojiMatch = e.target.value.match(/\p{Emoji_Presentation}|\p{Emoji}\uFE0F?/u);
+                        if (emojiMatch) {
+                          setTripEmoji(emojiMatch[0]);
+                          setShowEmojiPicker(false);
+                        }
+                      }}
+                    />
                     <button
                       onClick={() => {
                         setTripEmoji(null);
                         setShowEmojiPicker(false);
                       }}
-                      className="w-7 h-7 flex items-center justify-center rounded hover:bg-stone-100 dark:hover:bg-gray-800 text-stone-400 text-xs"
-                      title="No icon"
+                      className="px-2 py-1.5 text-xs text-stone-500 hover:text-stone-700 dark:hover:text-gray-300"
+                      title="Clear"
                     >
-                      <X className="w-3 h-3" />
+                      Clear
                     </button>
+                  </div>
+                  {/* Quick picks */}
+                  <p className="text-[10px] text-stone-400 mb-1.5">Quick picks</p>
+                  <div className="grid grid-cols-8 gap-1">
                     {TRIP_EMOJIS.map((emoji) => (
                       <button
                         key={emoji}
