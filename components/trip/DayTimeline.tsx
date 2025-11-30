@@ -603,7 +603,7 @@ export default function DayTimeline({
 
           {nextItem && (
             <div
-              className="absolute left-[48px] right-0 flex justify-end pr-2"
+              className="absolute left-0 right-0 flex justify-end pr-2"
               style={{ top: connectorTop, height: connectorHeight }}
             >
               <TransitConnector
@@ -726,7 +726,7 @@ export default function DayTimeline({
               >
                 {renderTimeGrid()}
                 {renderCurrentTime()}
-                <div className="absolute inset-0 left-12 z-10">
+                <div className="absolute inset-0 left-16 z-10">
                   {renderBlocks()}
                 </div>
               </div>
