@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
+import { useDrawer } from '@/contexts/DrawerContext';
 
 import { AccountDrawer } from '@/components/AccountDrawer';
 import { DestinationDrawer } from '@/src/features/detail/DestinationDrawer';
@@ -21,8 +23,25 @@ import { Drawer } from '@/components/ui/Drawer';
 import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 
 export default function DrawerMount() {
-  const { open, type, props, closeDrawer } = useDrawerStore();
+  const { open: storeOpen, type: storeType, props: storeProps, closeDrawer: closeStoreDrawer } = useDrawerStore();
+  const { activeDrawer: contextDrawer, closeDrawer: closeContextDrawer } = useDrawer();
   const drawerStyle = useDrawerStyle();
+
+  // Synchronization: When Store drawer opens, close Context drawer
+  useEffect(() => {
+    if (storeOpen && contextDrawer) {
+      console.log('[DrawerMount] Closing Context drawer because Store drawer opened');
+      closeContextDrawer();
+    }
+  }, [storeOpen, contextDrawer, closeContextDrawer]);
+
+  // Synchronization: When Context drawer opens, close Store drawer
+  useEffect(() => {
+    if (contextDrawer && storeOpen) {
+      console.log('[DrawerMount] Closing Store drawer because Context drawer opened');
+      closeStoreDrawer();
+    }
+  }, [contextDrawer, storeOpen, closeStoreDrawer]);
 
   return (
     <>
@@ -32,151 +51,151 @@ export default function DrawerMount() {
       <VisitedPlacesDrawer />
 
       {/* New drawers that use the global drawer store */}
-      {open && type === 'account-new' && (
+      {storeOpen && storeType === 'account-new' && (
         <Drawer
-          isOpen={open}
-          onClose={closeDrawer}
+          isOpen={storeOpen}
+          onClose={closeStoreDrawer}
           desktopWidth="420px"
           style={drawerStyle}
           position="right"
         >
-          <AccountDrawerNew isOpen={open} onClose={closeDrawer} />
+          <AccountDrawerNew isOpen={storeOpen} onClose={closeStoreDrawer} />
         </Drawer>
       )}
 
       <DestinationDrawer
-        isOpen={open && type === 'destination'}
-        onClose={closeDrawer}
-        destination={props.place || props.destination || null}
-        {...props}
+        isOpen={storeOpen && storeType === 'destination'}
+        onClose={closeStoreDrawer}
+        destination={storeProps.place || storeProps.destination || null}
+        {...storeProps}
       />
 
       <TripOverviewDrawer
-        isOpen={open && type === 'trip-overview'}
-        onClose={closeDrawer}
-        trip={props?.trip ?? null}
+        isOpen={storeOpen && storeType === 'trip-overview'}
+        onClose={closeStoreDrawer}
+        trip={storeProps?.trip ?? null}
       />
 
-      {open && type === 'trip-list' && (
+      {storeOpen && storeType === 'trip-list' && (
         <Drawer
-          isOpen={open}
-          onClose={closeDrawer}
+          isOpen={storeOpen}
+          onClose={closeStoreDrawer}
           title="Your Trips"
           style={drawerStyle}
           position="right"
           desktopWidth="420px"
         >
-          <TripListDrawer {...props} />
+          <TripListDrawer {...storeProps} />
         </Drawer>
       )}
 
       <TripOverviewQuickDrawer
-        isOpen={open && type === 'trip-overview-quick'}
-        onClose={closeDrawer}
-        trip={props.trip || null}
+        isOpen={storeOpen && storeType === 'trip-overview-quick'}
+        onClose={closeStoreDrawer}
+        trip={storeProps.trip || null}
       />
 
-      {open && type === 'trip-settings' && props?.trip && (
+      {storeOpen && storeType === 'trip-settings' && storeProps?.trip && (
         <Drawer
-          isOpen={open}
-          onClose={closeDrawer}
+          isOpen={storeOpen}
+          onClose={closeStoreDrawer}
           title="Trip Settings"
           style={drawerStyle}
           position="right"
           desktopWidth="420px"
         >
           <TripSettingsDrawer
-            trip={props.trip}
-            onUpdate={props?.onUpdate}
-            onDelete={props?.onDelete}
+            trip={storeProps.trip}
+            onUpdate={storeProps?.onUpdate}
+            onDelete={storeProps?.onDelete}
           />
         </Drawer>
       )}
 
-      {open && type === 'place-selector' && (
+      {storeOpen && storeType === 'place-selector' && (
         <Drawer
-          isOpen={open}
-          onClose={closeDrawer}
+          isOpen={storeOpen}
+          onClose={closeStoreDrawer}
           title="Add Place"
           style={drawerStyle}
           position="right"
           desktopWidth="420px"
         >
           <PlaceSelectorDrawer
-            tripId={props?.tripId}
-            dayNumber={props?.dayNumber}
-            city={props?.city}
-            category={props?.category}
-            onSelect={props?.onSelect}
-            day={props?.day}
-            trip={props?.trip}
-            index={props?.index}
-            mealType={props?.mealType}
-            replaceIndex={props?.replaceIndex}
+            tripId={storeProps?.tripId}
+            dayNumber={storeProps?.dayNumber}
+            city={storeProps?.city}
+            category={storeProps?.category}
+            onSelect={storeProps?.onSelect}
+            day={storeProps?.day}
+            trip={storeProps?.trip}
+            index={storeProps?.index}
+            mealType={storeProps?.mealType}
+            replaceIndex={storeProps?.replaceIndex}
           />
         </Drawer>
       )}
 
-      {open && type === 'trip-add-hotel' && (
+      {storeOpen && storeType === 'trip-add-hotel' && (
         <Drawer
-          isOpen={open}
-          onClose={closeDrawer}
+          isOpen={storeOpen}
+          onClose={closeStoreDrawer}
           title="Select Hotel"
           style={drawerStyle}
           position="right"
           desktopWidth="420px"
         >
           <AddHotelDrawer
-            trip={props.trip || null}
-            day={props.day || null}
-            index={props.index}
+            trip={storeProps.trip || null}
+            day={storeProps.day || null}
+            index={storeProps.index}
           />
         </Drawer>
       )}
 
-      {open && type === 'add-flight' && (
+      {storeOpen && storeType === 'add-flight' && (
         <Drawer
-          isOpen={open}
-          onClose={closeDrawer}
+          isOpen={storeOpen}
+          onClose={closeStoreDrawer}
           title="Add Flight"
           style={drawerStyle}
           position="right"
           desktopWidth="420px"
         >
           <AddFlightDrawer
-            tripId={props?.tripId}
-            dayNumber={props?.dayNumber}
-            onAdd={props?.onAdd}
+            tripId={storeProps?.tripId}
+            dayNumber={storeProps?.dayNumber}
+            onAdd={storeProps?.onAdd}
           />
         </Drawer>
       )}
 
-      {open && type === 'trip-ai' && (
+      {storeOpen && storeType === 'trip-ai' && (
         <Drawer
-          isOpen={open}
-          onClose={closeDrawer}
+          isOpen={storeOpen}
+          onClose={closeStoreDrawer}
           title="AI Suggestions"
           fullScreen={true}
           position="right"
           style={drawerStyle}
         >
           <AISuggestionsDrawer
-            day={props.day || null}
-            trip={props.trip || null}
-            index={props.index}
-            suggestions={props.suggestions}
-            onApply={props.onApply}
+            day={storeProps.day || null}
+            trip={storeProps.trip || null}
+            index={storeProps.index}
+            suggestions={storeProps.suggestions}
+            onApply={storeProps.onApply}
           />
         </Drawer>
       )}
 
       {/* Quick Trip Selector - for one-click add to trip */}
       <QuickTripSelector
-        isOpen={open && type === 'quick-trip-selector'}
-        onClose={closeDrawer}
-        destinationSlug={props?.destinationSlug || ''}
-        destinationName={props?.destinationName || ''}
-        destinationCity={props?.destinationCity}
+        isOpen={storeOpen && storeType === 'quick-trip-selector'}
+        onClose={closeStoreDrawer}
+        destinationSlug={storeProps?.destinationSlug || ''}
+        destinationName={storeProps?.destinationName || ''}
+        destinationCity={storeProps?.destinationCity}
       />
     </>
   );

@@ -149,6 +149,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                   onChange={(e) => setName(e.target.value)}
                   required={isSignUp}
                   autoComplete="name"
+                  aria-label="Your name"
                   className="w-full px-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
                   placeholder="Your name"
                 />
@@ -167,6 +168,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
+                aria-label="Email address"
                 className="w-full px-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
                 placeholder="you@example.com"
               />
@@ -186,6 +188,7 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                   required
                   minLength={6}
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                  aria-label="Password"
                   className="w-full px-4 pr-14 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
                   placeholder="••••••••"
                 />

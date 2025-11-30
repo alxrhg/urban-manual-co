@@ -130,6 +130,7 @@ export default function TripSettingsDrawer({
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          aria-label="Trip Name"
           className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white transition-all"
           placeholder="Trip name"
         />
@@ -158,6 +159,7 @@ export default function TripSettingsDrawer({
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
+            aria-label="Start Date"
             className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white transition-all"
           />
         </div>
@@ -170,6 +172,7 @@ export default function TripSettingsDrawer({
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             min={startDate}
+            aria-label="End Date"
             className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white transition-all"
           />
         </div>
