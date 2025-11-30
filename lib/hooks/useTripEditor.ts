@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData } from '@/types/trip';
+import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, TrainData } from '@/types/trip';
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 import { recalculateDayTimes, calculateTripDays, addDaysToDate } from '@/lib/utils/time-calculations';
@@ -232,8 +232,17 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     const currentDay = days.find((d) => d.dayNumber === dayNumber);
     const orderIndex = currentDay?.items.length || 0;
 
+    // Determine item type based on destination category
+    const categoryLower = (destination.category || '').toLowerCase();
+    let itemType: ItineraryItemNotes['type'] = 'place';
+    if (categoryLower === 'hotel' || categoryLower === 'accommodation' || categoryLower === 'lodging') {
+      itemType = 'hotel';
+    } else if (categoryLower === 'cafe' || categoryLower === 'breakfast') {
+      itemType = 'breakfast';
+    }
+
     const notesData: ItineraryItemNotes = {
-      type: 'place',
+      type: itemType,
       latitude: destination.latitude ?? undefined,
       longitude: destination.longitude ?? undefined,
       category: destination.category ?? undefined,
@@ -412,6 +421,107 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, [trip, userId, days, onError]);
 
+  // Add a train
+  const addTrain = useCallback(async (trainData: TrainData, dayNumber: number) => {
+    if (!trip || !userId) return;
+
+    const currentDay = days.find((d) => d.dayNumber === dayNumber);
+    const orderIndex = currentDay?.items.length || 0;
+
+    const notesData: ItineraryItemNotes = {
+      type: 'train',
+      trainLine: trainData.trainLine,
+      trainNumber: trainData.trainNumber,
+      from: trainData.from,
+      to: trainData.to,
+      departureDate: trainData.departureDate,
+      departureTime: trainData.departureTime,
+      arrivalDate: trainData.arrivalDate,
+      arrivalTime: trainData.arrivalTime,
+      duration: trainData.duration,
+      confirmationNumber: trainData.confirmationNumber,
+      raw: trainData.notes,
+    };
+
+    const title = trainData.trainLine
+      ? `${trainData.trainLine}${trainData.trainNumber ? ` ${trainData.trainNumber}` : ''}`
+      : `Train ${trainData.trainNumber || ''}`;
+    const description = `${trainData.from} → ${trainData.to}`;
+
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`;
+    const newItem: EnrichedItineraryItem = {
+      id: tempId,
+      trip_id: trip.id,
+      destination_slug: null,
+      day: dayNumber,
+      order_index: orderIndex,
+      time: trainData.departureTime || null,
+      title,
+      description,
+      notes: stringifyItineraryNotes(notesData),
+      created_at: new Date().toISOString(),
+      destination: undefined,
+      parsedNotes: notesData,
+    };
+
+    setDays((prev) =>
+      prev.map((d) =>
+        d.dayNumber === dayNumber
+          ? { ...d, items: [...d.items, newItem] }
+          : d
+      )
+    );
+
+    try {
+      setSaving(true);
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { data, error } = await supabase.from('itinerary_items').insert({
+        trip_id: trip.id,
+        destination_slug: null,
+        day: dayNumber,
+        order_index: orderIndex,
+        time: trainData.departureTime,
+        title,
+        description,
+        notes: stringifyItineraryNotes(notesData),
+      }).select().single();
+
+      if (error) throw error;
+
+      // Update with real ID
+      if (data) {
+        setDays((prev) =>
+          prev.map((d) =>
+            d.dayNumber === dayNumber
+              ? {
+                  ...d,
+                  items: d.items.map((item) =>
+                    item.id === tempId ? { ...item, id: data.id } : item
+                  ),
+                }
+              : d
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error adding train:', err);
+      // Revert optimistic update
+      setDays((prev) =>
+        prev.map((d) =>
+          d.dayNumber === dayNumber
+            ? { ...d, items: d.items.filter((item) => item.id !== tempId) }
+            : d
+        )
+      );
+      onError?.(err instanceof Error ? err : new Error('Failed to add train'));
+    } finally {
+      setSaving(false);
+    }
+  }, [trip, userId, days, onError]);
+
   // Remove an item
   const removeItem = useCallback(async (itemId: string) => {
     // Store for potential revert
@@ -526,6 +636,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     reorderItems,
     addPlace,
     addFlight,
+    addTrain,
     removeItem,
     updateItemTime,
     updateItemNotes,

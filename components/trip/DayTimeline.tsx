@@ -22,6 +22,7 @@ import {
 import TimelineBlock, { ViewOnlyTimelineBlock } from './TimelineBlock';
 import TransitConnector from './TransitConnector';
 import DayIntelligence from './DayIntelligence';
+import { NeighborhoodTags } from './NeighborhoodBreakdown';
 import { getAirportCoordinates } from '@/lib/utils/airports';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
@@ -244,6 +245,8 @@ export default function DayTimeline({
               {formattedDate}
             </span>
           )}
+          {/* Neighborhood Tags */}
+          <NeighborhoodTags items={regularItems} />
         </div>
         <span className="text-xs text-stone-400 dark:text-gray-500">
           {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}

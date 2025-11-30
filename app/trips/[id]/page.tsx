@@ -31,6 +31,7 @@ import AlertsDropdown from '@/components/trip/AlertsDropdown';
 import AddPlaceBox from '@/components/trip/AddPlaceBox';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import RouteMapBox from '@/components/trip/RouteMapBox';
+import DestinationBox from '@/components/trip/DestinationBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import LocalEvents from '@/components/trip/LocalEvents';
 import {
@@ -63,6 +64,7 @@ export default function TripPage() {
     reorderItems,
     addPlace,
     addFlight,
+    addTrain,
     removeItem,
     updateItemTime,
     refresh,
@@ -87,6 +89,7 @@ export default function TripPage() {
   const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [showMapBox, setShowMapBox] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
 
   // Extract flights and hotels from itinerary
   const flights = useMemo(() => {
@@ -214,31 +217,13 @@ export default function TripPage() {
   }, [trip?.id, openDrawer, addFlight]);
 
   const handleEditItem = useCallback((item: EnrichedItineraryItem) => {
-    if (item.destination) {
-      openDrawer('destination', {
-        place: {
-          name: item.destination.name,
-          category: item.destination.category,
-          neighborhood: item.destination.neighborhood ?? undefined,
-          city: item.destination.city ?? undefined,
-          michelinRating: item.destination.michelin_stars ?? undefined,
-          hasMichelin: !!item.destination.michelin_stars,
-          googleRating: item.destination.rating ?? undefined,
-          googleReviews: item.destination.user_ratings_total ?? undefined,
-          priceLevel: item.destination.price_level ?? undefined,
-          description: item.destination.description ?? undefined,
-          image: item.destination.image ?? undefined,
-          image_thumbnail: item.destination.image_thumbnail ?? undefined,
-          latitude: item.destination.latitude ?? undefined,
-          longitude: item.destination.longitude ?? undefined,
-          address: item.destination.formatted_address ?? undefined,
-          website: item.destination.website ?? undefined,
-        },
-        hideAddToTrip: true,
-      });
-    }
+    // Show destination details inline instead of opening drawer
+    setSelectedItem(item);
+    setShowAddPlaceBox(false);
+    setShowTripSettings(false);
+    setShowMapBox(false);
     setActiveItemId(item.id);
-  }, [openDrawer]);
+  }, []);
 
   const handleAITripPlanning = async () => {
     if (!trip || !user) return;
@@ -690,7 +675,23 @@ export default function TripPage() {
                         addPlace(destination, selectedDayNumber);
                         setShowAddPlaceBox(false);
                       }}
+                      onAddFlight={(flightData) => {
+                        addFlight(flightData, selectedDayNumber);
+                        setShowAddPlaceBox(false);
+                      }}
+                      onAddTrain={(trainData) => {
+                        addTrain(trainData, selectedDayNumber);
+                        setShowAddPlaceBox(false);
+                      }}
                       onClose={() => setShowAddPlaceBox(false)}
+                    />
+                  ) : selectedItem ? (
+                    <DestinationBox
+                      item={selectedItem}
+                      onClose={() => {
+                        setSelectedItem(null);
+                        setActiveItemId(null);
+                      }}
                     />
                   ) : (
                     <>
@@ -719,7 +720,7 @@ export default function TripPage() {
             )}
 
             {/* Mobile Section */}
-            {(days.length > 0 || showTripSettings || showMapBox) && (
+            {(days.length > 0 || showTripSettings || showMapBox || selectedItem) && (
               <div className="lg:hidden mt-6 space-y-4">
                 {showTripSettings ? (
                   <TripSettingsBox
@@ -744,7 +745,23 @@ export default function TripPage() {
                       addPlace(destination, selectedDayNumber);
                       setShowAddPlaceBox(false);
                     }}
+                    onAddFlight={(flightData) => {
+                      addFlight(flightData, selectedDayNumber);
+                      setShowAddPlaceBox(false);
+                    }}
+                    onAddTrain={(trainData) => {
+                      addTrain(trainData, selectedDayNumber);
+                      setShowAddPlaceBox(false);
+                    }}
                     onClose={() => setShowAddPlaceBox(false)}
+                  />
+                ) : selectedItem ? (
+                  <DestinationBox
+                    item={selectedItem}
+                    onClose={() => {
+                      setSelectedItem(null);
+                      setActiveItemId(null);
+                    }}
                   />
                 ) : (
                   <SmartSuggestions

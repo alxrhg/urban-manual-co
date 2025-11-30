@@ -208,6 +208,24 @@ export interface FlightData {
 }
 
 /**
+ * Train data structure
+ */
+export interface TrainData {
+  type: 'train';
+  trainLine?: string;
+  trainNumber?: string;
+  from: string;
+  to: string;
+  departureDate: string;
+  departureTime: string;
+  arrivalDate?: string;
+  arrivalTime?: string;
+  duration?: number;
+  confirmationNumber?: string;
+  notes?: string;
+}
+
+/**
  * Helper to parse notes JSON safely
  */
 export function parseItineraryNotes(notes: string | null): ItineraryItemNotes | null {
