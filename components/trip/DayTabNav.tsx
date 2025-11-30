@@ -33,11 +33,11 @@ export default function DayTabNav({
   }, [selectedDayNumber]);
 
   return (
-    <div className={`relative ${className}`}>
-      {/* Tabs Container - matching main tab navigation style */}
+    <div className={`relative flex-1 min-w-0 overflow-hidden ${className}`}>
+      {/* Tabs Container - scrollable horizontally */}
       <div
         ref={scrollRef}
-        className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1"
+        className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide"
       >
         {days.map((day) => {
           const isSelected = day.dayNumber === selectedDayNumber;

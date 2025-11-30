@@ -73,6 +73,7 @@ export default function TripPage() {
     addActivity,
     removeItem,
     updateItemTime,
+    updateItemDuration,
     updateItemNotes,
     updateItem,
     refresh,
@@ -682,9 +683,9 @@ export default function TripPage() {
               <DndContext onDragStart={handleBucketDragStart} onDragEnd={handleBucketDragEnd}>
               <div className="lg:flex lg:gap-6">
                 {/* Main Itinerary Column */}
-                <div className="flex-1 space-y-4">
+                <div className="flex-1 min-w-0 space-y-4">
                   {/* Day Tabs + Edit Toggle */}
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4 mb-4">
                     <DayTabNav
                       days={days}
                       selectedDayNumber={selectedDayNumber}
@@ -692,7 +693,7 @@ export default function TripPage() {
                     />
                     <button
                       onClick={() => setIsEditMode(!isEditMode)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                         isEditMode
                           ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
                           : 'text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800'
@@ -722,6 +723,7 @@ export default function TripPage() {
                         onRemoveItem={isEditMode ? removeItem : undefined}
                         onEditItem={handleEditItem}
                         onTimeChange={updateItemTime}
+                        onDurationChange={updateItemDuration}
                         onTravelModeChange={handleTravelModeChange}
                         onAddItem={openPlaceSelector}
                         onOptimizeDay={handleOptimizeDay}
