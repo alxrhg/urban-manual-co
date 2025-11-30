@@ -17,17 +17,27 @@ import {
 import { knowledgeGraphService } from '@/services/intelligence/knowledge-graph';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { unifiedSearch, trackUserEvent, isDiscoveryEngineAvailable } from '@/lib/discovery-engine/integration';
+import type { Destination } from '@/types/destination';
+
+/**
+ * Destination with additional scoring fields added during processing
+ */
+interface ScoredDestination extends Destination {
+  similarity?: number;
+  contextScore?: number;
+  relevanceScore?: number;
+}
 
 export interface ConversationMessage {
   role: 'user' | 'assistant';
   content: string;
-  destinations?: any[];
+  destinations?: Destination[];
   context?: TravelContext;
 }
 
 export interface ProcessResult {
   response: string;
-  destinations: any[];
+  destinations: Destination[];
   mode: ConversationMode;
   context: TravelContext;
   suggestions?: Array<{
@@ -77,6 +87,35 @@ interface NLUResult {
 }
 
 /**
+ * Raw AI NLU response structure before processing
+ */
+interface AINLUResponse {
+  intent?: MessageIntent;
+  isNewTopic?: boolean;
+  searchQuery?: string;
+  mode?: ConversationMode;
+  confidence?: number;
+  city?: string;
+  neighborhood?: string;
+  category?: string;
+  occasion?: 'romantic' | 'business' | 'celebration' | 'casual' | 'solo';
+  timeOfDay?: 'breakfast' | 'brunch' | 'lunch' | 'afternoon' | 'dinner' | 'late-night';
+  pricePreference?: 'budget' | 'moderate' | 'upscale' | 'splurge';
+  vibes?: string[];
+  needsClarification?: boolean;
+  clarificationQuestion?: string;
+  continueConversation?: boolean;
+}
+
+/**
+ * Escape LIKE pattern metacharacters to match literally
+ * Escapes % and _ which are interpreted as wildcards in LIKE queries
+ */
+function escapeLikePattern(value: string): string {
+  return value.replace(/[%_]/g, (char) => `\\${char}`);
+}
+
+/**
  * LRU Cache for performance
  */
 class SimpleCache<T> {
@@ -111,10 +150,10 @@ class SimpleCache<T> {
 export class TravelIntelligenceEngine {
   private genAI: GoogleGenerativeAI | null = null;
   private contextCache = new SimpleCache<TravelContext>(50, 10 * 60 * 1000);
-  private destinationCache = new SimpleCache<any[]>(100, 5 * 60 * 1000);
+  private destinationCache = new SimpleCache<Destination[]>(100, 5 * 60 * 1000);
 
   constructor() {
-    const apiKey = process.env.GOOGLE_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+    const apiKey = process.env.GOOGLE_API_KEY;
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
     }
@@ -161,7 +200,7 @@ export class TravelIntelligenceEngine {
       // Get previous destinations from conversation for follow-up/refine intents
       const previousDestinations = this.getPreviousDestinations(conversationHistory);
 
-      let destinations: any[] = [];
+      let destinations: Destination[] = [];
       let response: string;
       let finalContext = nluResult.context;
 
@@ -310,7 +349,7 @@ export class TravelIntelligenceEngine {
   /**
    * Extract destinations from previous assistant messages
    */
-  private getPreviousDestinations(history: ConversationMessage[]): any[] {
+  private getPreviousDestinations(history: ConversationMessage[]): Destination[] {
     // Look at last few assistant messages for destinations
     const recentAssistantMessages = history
       .filter((m) => m.role === 'assistant' && m.destinations?.length)
@@ -320,7 +359,7 @@ export class TravelIntelligenceEngine {
 
     // Get unique destinations from recent messages
     const seen = new Set<string>();
-    const destinations: any[] = [];
+    const destinations: Destination[] = [];
 
     for (const msg of recentAssistantMessages.reverse()) {
       for (const dest of msg.destinations || []) {
@@ -337,7 +376,7 @@ export class TravelIntelligenceEngine {
   /**
    * Filter destinations based on new context
    */
-  private refineDestinations(destinations: any[], context: TravelContext): any[] {
+  private refineDestinations(destinations: Destination[], context: TravelContext): Destination[] {
     return destinations.filter((dest) => {
       // Price filter
       if (context.pricePreference) {
@@ -443,7 +482,7 @@ Respond naturally and conversationally. This is a follow-up or casual message, n
    */
   private async generateFollowUpResponse(
     message: string,
-    destinations: any[],
+    destinations: Destination[],
     context: TravelContext,
     history: ConversationMessage[]
   ): Promise<string> {
@@ -626,7 +665,7 @@ CAPITALIZE properly:
 Return ONLY the JSON, no explanation.`;
 
     try {
-      let result: any = null;
+      let result: AINLUResponse | null = null;
 
       // Try OpenAI first
       if (openai?.chat) {
@@ -639,7 +678,7 @@ Return ONLY the JSON, no explanation.`;
           });
           const text = response.choices?.[0]?.message?.content;
           if (text) {
-            result = JSON.parse(text);
+            result = JSON.parse(text) as AINLUResponse;
             console.log('[TravelIntelligence] OpenAI NLU raw result:', result);
           }
         } catch (e) {
@@ -657,7 +696,7 @@ Return ONLY the JSON, no explanation.`;
           const response = await model.generateContent(prompt);
           const text = response.response.text();
           if (text) {
-            result = JSON.parse(text);
+            result = JSON.parse(text) as AINLUResponse;
             console.log('[TravelIntelligence] Gemini NLU raw result:', result);
           }
         } catch (e) {
@@ -682,13 +721,13 @@ Return ONLY the JSON, no explanation.`;
       if (isNewTopic && intent === 'search') {
         // NEW topic - start fresh context
         context = {
-          city: result.city || null,
-          neighborhood: result.neighborhood || null,
-          category: result.category || null,
-          occasion: result.occasion || null,
-          timeOfDay: result.timeOfDay || null,
-          pricePreference: result.pricePreference || null,
-          vibes: result.vibes?.length > 0 ? result.vibes : [],
+          city: result.city ?? undefined,
+          neighborhood: result.neighborhood ?? undefined,
+          category: result.category ?? undefined,
+          occasion: result.occasion ?? undefined,
+          timeOfDay: result.timeOfDay ?? undefined,
+          pricePreference: result.pricePreference ?? undefined,
+          vibes: result.vibes && result.vibes.length > 0 ? result.vibes : [],
         };
         console.log('[TravelIntelligence] New topic detected - fresh context');
       } else {
@@ -701,7 +740,7 @@ Return ONLY the JSON, no explanation.`;
           occasion: result.occasion || existingContext?.occasion,
           timeOfDay: result.timeOfDay || existingContext?.timeOfDay,
           pricePreference: result.pricePreference || existingContext?.pricePreference,
-          vibes: result.vibes?.length > 0 ? result.vibes : existingContext?.vibes,
+          vibes: result.vibes && result.vibes.length > 0 ? result.vibes : existingContext?.vibes,
         };
         console.log('[TravelIntelligence] Continuing/refining - merged context');
       }
@@ -1020,8 +1059,8 @@ Return ONLY the JSON, no explanation.`;
     context: TravelContext,
     mode: ConversationMode,
     userId?: string
-  ): Promise<any[]> {
-    let results: any[] = [];
+  ): Promise<ScoredDestination[]> {
+    let results: ScoredDestination[] = [];
 
     // Normalize city and category
     const normalizedCity = this.normalizeCity(context.city);
@@ -1057,22 +1096,22 @@ Return ONLY the JSON, no explanation.`;
           console.log('[TravelIntelligence] Search source:', searchResult.source);
 
           // Discovery Engine returns different format - normalize it
-          results = searchResult.results.map((r: any) => ({
-            id: r.id,
-            slug: r.slug || r.id,
-            name: r.name,
-            description: r.description,
-            micro_description: r.description?.substring(0, 150),
-            city: r.city,
-            category: r.category,
-            neighborhood: r.neighborhood,
-            tags: r.tags || [],
-            rating: r.rating,
-            price_level: r.priceLevel || r.price_level,
-            michelin_stars: r.michelin_stars,
-            image: r.image || r.images?.[0],
-            relevanceScore: r.relevanceScore || 0,
-          }));
+          results = searchResult.results.map((r: Record<string, unknown>) => ({
+            id: typeof r.id === 'number' ? r.id : undefined,
+            slug: (r.slug as string) || String(r.id),
+            name: r.name as string,
+            description: r.description as string | undefined,
+            micro_description: typeof r.description === 'string' ? r.description.substring(0, 150) : undefined,
+            city: r.city as string,
+            category: r.category as string,
+            neighborhood: r.neighborhood as string | undefined,
+            tags: (r.tags as string[]) || [],
+            rating: r.rating as number | undefined,
+            price_level: (r.priceLevel as number) || (r.price_level as number) || undefined,
+            michelin_stars: r.michelin_stars as number | undefined,
+            image: (r.image as string) || (Array.isArray(r.images) ? r.images[0] as string : undefined),
+            relevanceScore: (r.relevanceScore as number) || 0,
+          })) as ScoredDestination[];
 
           // Track the search event for personalization
           if (userId) {
@@ -1105,13 +1144,13 @@ Return ONLY the JSON, no explanation.`;
           .limit(50);
 
         if (normalizedCity) {
-          query = query.ilike('city', `%${normalizedCity}%`);
+          query = query.ilike('city', `%${escapeLikePattern(normalizedCity)}%`);
         }
         if (normalizedCategory) {
-          query = query.ilike('category', `%${normalizedCategory}%`);
+          query = query.ilike('category', `%${escapeLikePattern(normalizedCategory)}%`);
         }
         if (context.neighborhood) {
-          query = query.ilike('neighborhood', `%${context.neighborhood}%`);
+          query = query.ilike('neighborhood', `%${escapeLikePattern(context.neighborhood)}%`);
         }
 
         const { data, error } = await query.order('rating', { ascending: false });
@@ -1156,7 +1195,7 @@ Return ONLY the JSON, no explanation.`;
           if (!error && data?.length) {
             console.log('[TravelIntelligence] Vector search found', data.length, 'additional results');
             const existingSlugs = new Set(results.map((r) => r.slug));
-            const newResults = data.filter((d: any) => !existingSlugs.has(d.slug));
+            const newResults = (data as ScoredDestination[]).filter((d) => !existingSlugs.has(d.slug));
             results = [...results, ...newResults];
           }
         }
@@ -1179,9 +1218,9 @@ Return ONLY the JSON, no explanation.`;
           .limit(30);
 
         if (normalizedCity) {
-          query = query.ilike('city', `%${normalizedCity}%`);
+          query = query.ilike('city', `%${escapeLikePattern(normalizedCity)}%`);
         } else if (normalizedCategory) {
-          query = query.ilike('category', `%${normalizedCategory}%`);
+          query = query.ilike('category', `%${escapeLikePattern(normalizedCategory)}%`);
         }
 
         const { data } = await query.order('rating', { ascending: false });
@@ -1213,7 +1252,7 @@ Return ONLY the JSON, no explanation.`;
   /**
    * Rank destinations by contextual relevance
    */
-  private rankByContext(destinations: any[], context: TravelContext, mode: ConversationMode): any[] {
+  private rankByContext(destinations: ScoredDestination[], context: TravelContext, mode: ConversationMode): ScoredDestination[] {
     return destinations.map((dest) => {
       let score = dest.similarity || 0.5;
 
@@ -1276,7 +1315,7 @@ Return ONLY the JSON, no explanation.`;
    */
   private async generateResponse(
     message: string,
-    destinations: any[],
+    destinations: Destination[],
     context: TravelContext,
     mode: ConversationMode,
     history: ConversationMessage[],
@@ -1389,7 +1428,7 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
   private generateSuggestions(
     context: TravelContext,
     mode: ConversationMode,
-    destinations: any[]
+    destinations: Destination[]
   ): Array<{ text: string; type: 'refine' | 'expand' | 'related' | 'next-step' }> {
     const suggestions: Array<{ text: string; type: 'refine' | 'expand' | 'related' | 'next-step' }> = [];
 
@@ -1428,7 +1467,7 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
    * Extract insights from destinations and context
    */
   private extractInsights(
-    destinations: any[],
+    destinations: Destination[],
     context: TravelContext,
     mode: ConversationMode
   ): Array<{ type: string; content: string }> {
@@ -1444,7 +1483,7 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
       }
     }
 
-    const michelinCount = destinations.filter((d) => d.michelin_stars > 0).length;
+    const michelinCount = destinations.filter((d) => d.michelin_stars && d.michelin_stars > 0).length;
     if (michelinCount > 2) {
       insights.push({
         type: 'quality',
@@ -1466,8 +1505,9 @@ Generate a response as Urban Manual's Travel Intelligence. Remember:
 
   /**
    * Get related destinations using knowledge graph
+   * Returns destination IDs with similarity/reason metadata
    */
-  async getRelatedDestinations(destinationId: string): Promise<any[]> {
+  async getRelatedDestinations(destinationId: string): Promise<Array<{ destination_id: string; reason: string; similarity?: number }>> {
     try {
       const [similar, complementary] = await Promise.all([
         knowledgeGraphService.findSimilar(destinationId, 3),
