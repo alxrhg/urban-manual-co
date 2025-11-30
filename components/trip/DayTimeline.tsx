@@ -511,11 +511,12 @@ export default function DayTimeline({
         className="absolute left-0 right-0 pointer-events-none z-20"
         style={{ top }}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-12 text-[11px] text-right text-red-500 tabular-nums">
+        <div className="flex items-center">
+          <div className="w-12 text-[11px] text-right text-red-500 font-medium tabular-nums pr-2">
             {formatTimeDisplay(formatMinutesToTime(currentMinutes))}
           </div>
-          <div className="flex-1 h-px bg-red-500" />
+          <div className="w-2 h-2 rounded-full bg-red-500 -ml-1" />
+          <div className="flex-1 h-0.5 bg-red-500" />
         </div>
       </div>
     );
@@ -545,36 +546,37 @@ export default function DayTimeline({
             onPointerDown={(event) => handleDragStart(item.id, 'move', start, duration, event.clientY)}
           >
             <div
-              className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-xl relative overflow-hidden transition-colors duration-150 ${item.id === activeItemId ? 'ring-2 ring-gray-300 dark:ring-gray-600' : ''}`}
+              className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-xl relative overflow-hidden transition-all duration-150 hover:shadow-sm ${item.id === activeItemId ? 'ring-2 ring-gray-300 dark:ring-gray-600 shadow-md' : ''}`}
               onClick={() => onEditItem?.(item)}
             >
               {isEditMode && (
                 <div className="absolute inset-x-4 top-2 flex items-center justify-between text-[10px] text-gray-400">
                   <span className="flex items-center gap-1 uppercase tracking-wide font-medium">
                     <GripVertical className="w-3 h-3" />
-                    Drag / resize
+                    Drag
                   </span>
                   <span className="tabular-nums">{formatTimeDisplay(formatMinutesToTime(duration))}</span>
                 </div>
               )}
-              <div className="flex items-start gap-3 px-4 py-3 relative z-10">
+              <div className="flex items-start gap-3 px-3 py-2.5 relative z-10">
                 <div
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center ${styleSet.iconBg} ${styleSet.iconColor}`}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${styleSet.iconBg} ${styleSet.iconColor}`}
                 >
                   {getIconForItem(item)}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                    <span>{startLabel}</span>
-                    <span className="text-gray-300 dark:text-gray-600">·</span>
-                    <span>{endLabel}</span>
-                  </div>
-                  <p className="text-sm font-medium leading-tight text-gray-900 dark:text-white mt-0.5 line-clamp-1">
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <p className="text-sm font-medium leading-tight text-gray-900 dark:text-white line-clamp-1">
                     {item.title || 'Untitled stop'}
                   </p>
-                  {item.destination?.neighborhood && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">{item.destination.neighborhood}</p>
-                  )}
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[11px] text-gray-400 dark:text-gray-500 tabular-nums">{startLabel} – {endLabel}</span>
+                    {item.destination?.neighborhood && (
+                      <>
+                        <span className="text-gray-300 dark:text-gray-600">·</span>
+                        <span className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{item.destination.neighborhood}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -601,7 +603,7 @@ export default function DayTimeline({
 
           {nextItem && (
             <div
-              className="absolute left-[52px] right-0 flex justify-end pr-3"
+              className="absolute left-[48px] right-0 flex justify-end pr-2"
               style={{ top: connectorTop, height: connectorHeight }}
             >
               <TransitConnector
