@@ -169,8 +169,8 @@ export default function DayTimeline({
       const fromLocation = getFromLocation(item);
       const toLocation = nextItem ? getToLocation(nextItem) : undefined;
 
-      // Get saved travel mode from item's parsedNotes, default to walk
-      const savedTravelMode = (item.parsedNotes?.travelModeToNext as TransitMode) || 'walk';
+      // Get saved travel mode from item's parsedNotes, default to walking
+      const savedTravelMode = (item.parsedNotes?.travelModeToNext as TransitMode) || 'walking';
 
       return (
         <div key={item.id}>
