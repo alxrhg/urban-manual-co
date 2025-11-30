@@ -89,21 +89,190 @@ export const userProfileTool: Tool = {
 };
 
 /**
+ * Calculate Haversine distance between two points in kilometers
+ */
+function haversineDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371; // Earth's radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/**
+ * Nearest Neighbor algorithm for route optimization
+ * Starts from first destination and always visits the closest unvisited destination
+ */
+function nearestNeighborOptimization<T extends { id: number; lat?: number; lng?: number }>(
+  destinations: T[]
+): T[] {
+  if (destinations.length <= 2) return destinations;
+
+  // Filter destinations with valid coordinates
+  const withCoords = destinations.filter((d) => d.lat != null && d.lng != null);
+  const withoutCoords = destinations.filter((d) => d.lat == null || d.lng == null);
+
+  if (withCoords.length <= 2) {
+    return [...withCoords, ...withoutCoords];
+  }
+
+  const optimized: T[] = [withCoords[0]];
+  const remaining = new Set(withCoords.slice(1));
+
+  while (remaining.size > 0) {
+    const current = optimized[optimized.length - 1];
+    let nearest: T | null = null;
+    let nearestDistance = Infinity;
+
+    for (const dest of remaining) {
+      const distance = haversineDistance(
+        current.lat!,
+        current.lng!,
+        dest.lat!,
+        dest.lng!
+      );
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = dest;
+      }
+    }
+
+    if (nearest) {
+      optimized.push(nearest);
+      remaining.delete(nearest);
+    }
+  }
+
+  // Append destinations without coordinates at the end
+  return [...optimized, ...withoutCoords];
+}
+
+/**
+ * 2-opt improvement for the route (reduces crossings)
+ */
+function twoOptImprovement<T extends { id: number; lat?: number; lng?: number }>(
+  route: T[]
+): T[] {
+  const withCoords = route.filter((d) => d.lat != null && d.lng != null);
+  if (withCoords.length <= 3) return route;
+
+  let improved = [...withCoords];
+  let improvement = true;
+
+  // Keep improving until no more improvements found
+  while (improvement) {
+    improvement = false;
+    for (let i = 0; i < improved.length - 2; i++) {
+      for (let j = i + 2; j < improved.length; j++) {
+        // Calculate current distance
+        const d1 = haversineDistance(
+          improved[i].lat!,
+          improved[i].lng!,
+          improved[i + 1].lat!,
+          improved[i + 1].lng!
+        );
+        const d2 =
+          j + 1 < improved.length
+            ? haversineDistance(
+                improved[j].lat!,
+                improved[j].lng!,
+                improved[j + 1].lat!,
+                improved[j + 1].lng!
+              )
+            : 0;
+
+        // Calculate new distance if we reverse the segment
+        const d3 = haversineDistance(
+          improved[i].lat!,
+          improved[i].lng!,
+          improved[j].lat!,
+          improved[j].lng!
+        );
+        const d4 =
+          j + 1 < improved.length
+            ? haversineDistance(
+                improved[i + 1].lat!,
+                improved[i + 1].lng!,
+                improved[j + 1].lat!,
+                improved[j + 1].lng!
+              )
+            : 0;
+
+        // If reversing improves the route, do it
+        if (d3 + d4 < d1 + d2) {
+          const reversed = improved.slice(i + 1, j + 1).reverse();
+          improved = [
+            ...improved.slice(0, i + 1),
+            ...reversed,
+            ...improved.slice(j + 1),
+          ];
+          improvement = true;
+        }
+      }
+    }
+  }
+
+  // Add back destinations without coordinates
+  const withoutCoords = route.filter((d) => d.lat == null || d.lng == null);
+  return [...improved, ...withoutCoords];
+}
+
+/**
  * Route Optimization Tool - Optimize route between destinations
+ * Uses Haversine distance with Nearest Neighbor + 2-opt improvement
  */
 export const routeOptimizationTool: Tool = {
   name: 'optimize_route',
-  description: 'Optimize the order of destinations to minimize travel time',
-  execute: async (params: { destinations: Array<{ id: number; lat?: number; lng?: number }> }) => {
-    // Simple distance-based optimization
-    // In production, use Google Maps Directions API
-    const { destinations } = params;
-    
+  description: 'Optimize the order of destinations to minimize travel time using Haversine distance',
+  execute: async (params: {
+    destinations: Array<{ id: number; lat?: number; lng?: number }>;
+    returnToStart?: boolean;
+  }) => {
+    const { destinations, returnToStart = false } = params;
+
     if (destinations.length <= 1) return destinations;
 
-    // For now, return destinations in original order
-    // TODO: Implement actual route optimization using Google Maps
-    return destinations;
+    // Step 1: Apply nearest neighbor algorithm
+    let optimized = nearestNeighborOptimization(destinations);
+
+    // Step 2: Apply 2-opt improvement
+    optimized = twoOptImprovement(optimized);
+
+    // Calculate total distance for logging
+    let totalDistance = 0;
+    for (let i = 0; i < optimized.length - 1; i++) {
+      const current = optimized[i];
+      const next = optimized[i + 1];
+      if (current.lat && current.lng && next.lat && next.lng) {
+        totalDistance += haversineDistance(current.lat, current.lng, next.lat, next.lng);
+      }
+    }
+
+    // If returning to start, add distance back to first destination
+    if (returnToStart && optimized.length > 1) {
+      const first = optimized[0];
+      const last = optimized[optimized.length - 1];
+      if (first.lat && first.lng && last.lat && last.lng) {
+        totalDistance += haversineDistance(last.lat, last.lng, first.lat, first.lng);
+      }
+    }
+
+    return {
+      optimized,
+      totalDistanceKm: Math.round(totalDistance * 10) / 10,
+      optimizationMethod: 'nearest_neighbor_2opt',
+    };
   },
 };
 

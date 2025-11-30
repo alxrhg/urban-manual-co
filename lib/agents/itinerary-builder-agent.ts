@@ -164,17 +164,64 @@ export class ItineraryBuilderAgent extends BaseAgent {
   }
 
   /**
-   * Optimize routes within each day
+   * Optimize routes within each day using Haversine distance-based algorithm
    */
   private async optimizeRoutes(
     days: ItineraryDay[],
     preferences?: ItineraryRequest['preferences']
   ): Promise<ItineraryDay[]> {
-    // Use route optimization tool if destinations have coordinates
+    // Use route optimization tool for each day
     const optimized = await Promise.all(
       days.map(async (day) => {
-        // For now, keep original order
-        // TODO: Implement actual route optimization using Google Maps
+        // Get destinations with coordinates from the analysis
+        const destinationsWithCoords = day.items.map((item) => ({
+          ...item,
+          lat: (item as any).latitude,
+          lng: (item as any).longitude,
+        }));
+
+        // Check if we have coordinates to optimize
+        const hasCoords = destinationsWithCoords.some((d) => d.lat && d.lng);
+        if (!hasCoords || day.items.length <= 2) {
+          return day;
+        }
+
+        // Apply nearest neighbor + 2-opt optimization
+        const routeOptimizerTool = this.tools.find((t) => t.name === 'optimize_route');
+        if (routeOptimizerTool) {
+          try {
+            const result = await routeOptimizerTool.execute({
+              destinations: destinationsWithCoords.map((d) => ({
+                id: d.destination_id,
+                lat: d.lat,
+                lng: d.lng,
+              })),
+            });
+
+            if (result?.optimized) {
+              // Reorder items based on optimized route
+              const optimizedOrder = result.optimized.map((d: { id: number }) => d.id);
+              const reorderedItems = optimizedOrder
+                .map((id: number) => day.items.find((item) => item.destination_id === id))
+                .filter(Boolean)
+                .map((item: any, idx: number) => ({
+                  ...item,
+                  order: idx + 1,
+                  travel_distance_km: idx > 0 ? (result.totalDistanceKm / day.items.length) : 0,
+                }));
+
+              return {
+                ...day,
+                items: reorderedItems,
+                route_optimized: true,
+                total_distance_km: result.totalDistanceKm,
+              };
+            }
+          } catch (error) {
+            console.warn('Route optimization failed, keeping original order:', error);
+          }
+        }
+
         return day;
       })
     );

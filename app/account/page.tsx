@@ -16,6 +16,7 @@ import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
 import { PreferencesTab } from "@/components/account/PreferencesTab";
+import { BrandAffinityDisplay } from "@/components/account/BrandAffinityDisplay";
 import { openCookieSettings } from "@/components/CookieConsent";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
 import type { Trip } from "@/types/trip";
@@ -783,8 +784,13 @@ export default function Account() {
 
         {/* Preferences Tab */}
         {activeTab === 'preferences' && user && (
-          <div className="fade-in">
+          <div className="fade-in space-y-8">
             <PreferencesTab userId={user.id} />
+
+            {/* Brand Affinity Section */}
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-8">
+              <BrandAffinityDisplay userId={user.id} />
+            </div>
           </div>
         )}
 

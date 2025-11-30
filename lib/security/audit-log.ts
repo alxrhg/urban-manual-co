@@ -178,13 +178,46 @@ export async function logAuditEvent(
 }
 
 /**
- * Store audit event (to be implemented with actual storage)
+ * Store audit event to Supabase audit_logs table
  */
 async function storeAuditEvent(event: AuditEvent): Promise<void> {
-  // TODO: Implement storage to Supabase or external service
-  // For now, we'll just log that we would store it
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[AUDIT STORE]', JSON.stringify(event, null, 2));
+  try {
+    // Dynamic import to avoid circular dependencies and ensure server-only usage
+    const { createServerClient } = await import('@/lib/supabase-server');
+    const supabase = await createServerClient();
+
+    const { error } = await supabase.from('audit_logs').insert({
+      event_type: event.type,
+      severity: event.severity,
+      user_id: event.userId || null,
+      user_email: event.userEmail || null,
+      ip_address: event.ipAddress || null,
+      user_agent: event.userAgent || null,
+      request_id: event.requestId || null,
+      session_id: event.sessionId || null,
+      resource_type: event.resource?.type || null,
+      resource_id: event.resource?.id || null,
+      outcome: event.outcome,
+      details: event.details || {},
+      created_at: event.timestamp.toISOString(),
+    });
+
+    if (error) {
+      // Log the error but don't throw - audit logging should not break the app
+      logger.error('Failed to store audit event to Supabase', error, {
+        module: 'audit',
+        extra: { eventType: event.type },
+      });
+    }
+  } catch (error) {
+    // Fallback to console logging if Supabase is unavailable
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[AUDIT STORE FALLBACK]', JSON.stringify(event, null, 2));
+    }
+    logger.warn('Audit event storage fallback to console', {
+      module: 'audit',
+      extra: { eventType: event.type, error: String(error) },
+    });
   }
 }
 
