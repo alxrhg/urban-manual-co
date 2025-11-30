@@ -187,7 +187,7 @@ export default function TransitConnector({
               className={`
                 flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all text-[11px] font-medium
                 ${isSelected
-                  ? 'bg-white dark:bg-gray-700 text-stone-900 dark:text-white shadow-sm'
+                  ? 'bg-white dark:bg-gray-700 text-stone-900 dark:text-white'
                   : 'text-stone-500 dark:text-gray-400 hover:text-stone-700 dark:hover:text-gray-300'
                 }
               `}
