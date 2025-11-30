@@ -118,8 +118,8 @@ async def search_faiss(request: FaissSearchRequest) -> FaissSearchResponse:
         except HTTPException:
             raise
         except Exception as exc:
-            logger.error("Failed to embed query text for FAISS search: %s", exc)
-            raise HTTPException(status_code=500, detail=str(exc))
+            logger.error("Failed to embed query text for FAISS search: %s", exc, exc_info=True)
+            raise HTTPException(status_code=500, detail="An internal error occurred during query text embedding.")
 
     if not query_vector:
         raise HTTPException(status_code=400, detail="Query vector is required for FAISS search.")
