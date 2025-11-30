@@ -182,7 +182,7 @@ export default function TransitConnector({
   const distance = localEstimates?.distance;
 
   return (
-    <div className={`relative flex flex-col items-center justify-center py-2 gap-1.5 ${className}`}>
+    <div className={`relative flex items-center justify-center py-2 gap-2 ${className}`}>
       {/* Mode Selector Pills */}
       <div className="flex items-center gap-0.5 p-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
         {(['walking', 'transit', 'driving'] as TransitMode[]).map((m) => {
@@ -214,7 +214,7 @@ export default function TransitConnector({
           );
         })}
       </div>
-      {/* Distance indicator */}
+      {/* Distance indicator - inline */}
       {distance !== undefined && distance > 0 && (
         <span className="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
           {formatDistance(distance)}
