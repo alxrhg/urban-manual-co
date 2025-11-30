@@ -35,6 +35,9 @@ import RouteMapBox from '@/components/trip/RouteMapBox';
 import DestinationBox from '@/components/trip/DestinationBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import LocalEvents from '@/components/trip/LocalEvents';
+import TripBucketList from '@/components/trip/TripBucketList';
+import DayDropZone from '@/components/trip/DayDropZone';
+import { DndContext, DragOverlay, DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import {
   analyzeScheduleForWarnings,
   detectConflicts,
@@ -100,6 +103,34 @@ export default function TripPage() {
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [showMapBox, setShowMapBox] = useState(false);
   const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
+  const [bucketDragItem, setBucketDragItem] = useState<Destination | null>(null);
+
+  // Handle bucket list drag events
+  const handleBucketDragStart = useCallback((event: DragStartEvent) => {
+    const data = event.active.data.current;
+    if (data?.type === 'bucket-item') {
+      setBucketDragItem(data.destination);
+    }
+  }, []);
+
+  const handleBucketDragEnd = useCallback((event: DragEndEvent) => {
+    setBucketDragItem(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const overId = String(over.id);
+    if (overId.startsWith('day-drop-')) {
+      const dayNumber = parseInt(overId.replace('day-drop-', ''), 10);
+      const data = active.data.current;
+      if (data?.type === 'bucket-item' && data.destination) {
+        addPlace(data.destination, dayNumber);
+      }
+    }
+  }, [addPlace]);
+
+  const handleAddFromBucket = useCallback((destination: Destination, dayNumber: number) => {
+    addPlace(destination, dayNumber);
+  }, [addPlace]);
 
   // Extract flights and hotels from itinerary
   const flights = useMemo(() => {
@@ -648,6 +679,7 @@ export default function TripPage() {
                 </button>
               </div>
             ) : (
+              <DndContext onDragStart={handleBucketDragStart} onDragEnd={handleBucketDragEnd}>
               <div className="lg:flex lg:gap-6">
                 {/* Main Itinerary Column */}
                 <div className="flex-1 space-y-4">
@@ -682,23 +714,24 @@ export default function TripPage() {
 
                   {/* Selected Day Timeline */}
                   {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
-                    <DayTimeline
-                      key={day.dayNumber}
-                      day={day}
-                      nightlyHotel={nightlyHotelByDay[day.dayNumber] || null}
-                      onReorderItems={reorderItems}
-                      onRemoveItem={isEditMode ? removeItem : undefined}
-                      onEditItem={handleEditItem}
-                      onTimeChange={updateItemTime}
-                      onTravelModeChange={handleTravelModeChange}
-                      onAddItem={openPlaceSelector}
-                      onOptimizeDay={handleOptimizeDay}
-                      onAutoFillDay={handleAutoFillDay}
-                      activeItemId={activeItemId}
-                      isOptimizing={optimizingDay === day.dayNumber}
-                      isAutoFilling={autoFillingDay === day.dayNumber}
-                      isEditMode={isEditMode}
-                    />
+                    <DayDropZone key={day.dayNumber} dayNumber={day.dayNumber}>
+                      <DayTimeline
+                        day={day}
+                        nightlyHotel={nightlyHotelByDay[day.dayNumber] || null}
+                        onReorderItems={reorderItems}
+                        onRemoveItem={isEditMode ? removeItem : undefined}
+                        onEditItem={handleEditItem}
+                        onTimeChange={updateItemTime}
+                        onTravelModeChange={handleTravelModeChange}
+                        onAddItem={openPlaceSelector}
+                        onOptimizeDay={handleOptimizeDay}
+                        onAutoFillDay={handleAutoFillDay}
+                        activeItemId={activeItemId}
+                        isOptimizing={optimizingDay === day.dayNumber}
+                        isAutoFilling={autoFillingDay === day.dayNumber}
+                        isEditMode={isEditMode}
+                      />
+                    </DayDropZone>
                   ))}
                 </div>
 
@@ -759,6 +792,12 @@ export default function TripPage() {
                     />
                   ) : (
                     <>
+                      {/* Bucket List - Saved places matching trip destinations */}
+                      <TripBucketList
+                        destinations={destinations}
+                        onAddToTrip={handleAddFromBucket}
+                        selectedDayNumber={selectedDayNumber}
+                      />
                       <SmartSuggestions
                         days={days}
                         destination={primaryCity}
@@ -781,6 +820,38 @@ export default function TripPage() {
                   )}
                 </div>
               </div>
+
+              {/* Drag Overlay for bucket list items */}
+              <DragOverlay>
+                {bucketDragItem && (
+                  <div className="flex items-center gap-3 p-2 rounded-xl border border-stone-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl cursor-grabbing w-64">
+                    <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-stone-100 dark:bg-gray-800 flex-shrink-0">
+                      {bucketDragItem.image || bucketDragItem.image_thumbnail ? (
+                        <Image
+                          src={bucketDragItem.image_thumbnail || bucketDragItem.image || ''}
+                          alt={bucketDragItem.name}
+                          fill
+                          className="object-cover"
+                          sizes="48px"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <MapPin className="w-5 h-5 text-stone-300 dark:text-gray-600" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-stone-900 dark:text-white truncate">
+                        {bucketDragItem.name}
+                      </p>
+                      <p className="text-[10px] text-stone-500 dark:text-gray-400 capitalize truncate">
+                        {bucketDragItem.category?.replace(/_/g, ' ')}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </DragOverlay>
+              </DndContext>
             )}
 
             {/* Mobile Section */}
