@@ -71,8 +71,8 @@ function TimelineCardComponent({
 
   return (
     <div
-      className={`h-full flex items-stretch ${
-        isActive ? 'bg-gray-50 dark:bg-gray-800/50' : ''
+      className={`h-full flex items-stretch rounded-lg bg-gray-50 dark:bg-gray-800/40 ${
+        isActive ? 'bg-gray-100 dark:bg-gray-800' : ''
       }`}
       onClick={() => onEdit?.(item)}
       role="button"
@@ -86,7 +86,7 @@ function TimelineCardComponent({
       }}
     >
       {/* Left accent bar */}
-      <div className={`w-0.5 flex-shrink-0 ${styleSet.accent}`} />
+      <div className={`w-1 flex-shrink-0 rounded-l-lg ${styleSet.accent}`} />
 
       {/* Card content */}
       <div className="flex-1 flex items-start gap-2.5 pl-3 pr-2 py-2 min-w-0">
