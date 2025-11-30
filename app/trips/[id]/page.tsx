@@ -683,9 +683,9 @@ export default function TripPage() {
               <DndContext onDragStart={handleBucketDragStart} onDragEnd={handleBucketDragEnd}>
               <div className="lg:flex lg:gap-6">
                 {/* Main Itinerary Column */}
-                <div className="flex-1 space-y-4">
+                <div className="flex-1 min-w-0 space-y-4">
                   {/* Day Tabs + Edit Toggle */}
-                  <div className="flex items-center gap-4 mb-4 overflow-hidden">
+                  <div className="flex items-center gap-4 mb-4">
                     <DayTabNav
                       days={days}
                       selectedDayNumber={selectedDayNumber}

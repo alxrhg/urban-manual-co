@@ -33,7 +33,7 @@ export default function DayTabNav({
   }, [selectedDayNumber]);
 
   return (
-    <div className={`relative min-w-0 flex-1 ${className}`}>
+    <div className={`relative flex-1 min-w-0 overflow-hidden ${className}`}>
       {/* Tabs Container - scrollable horizontally */}
       <div
         ref={scrollRef}
