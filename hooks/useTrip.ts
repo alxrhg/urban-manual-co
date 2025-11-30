@@ -9,12 +9,12 @@ interface Day {
   date: string;
   city: string;
   meals: {
-    breakfast?: any;
-    lunch?: any;
-    dinner?: any;
+    breakfast?: ItineraryItem | null;
+    lunch?: ItineraryItem | null;
+    dinner?: ItineraryItem | null;
   };
-  activities: any[];
-  hotel?: any;
+  activities: ItineraryItem[];
+  hotel?: ItineraryItem | null;
 }
 
 interface TripWithDays extends Trip {

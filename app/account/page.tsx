@@ -373,15 +373,6 @@ export default function Account() {
       }))
       .filter(d => d.latitude && d.longitude);
 
-    // Debug logging to help diagnose map issues
-    console.log('[Account] Countries found:', Array.from(uniqueCountries));
-    console.log('[Account] Countries from destinations:', Array.from(countriesFromDestinations));
-    console.log('[Account] Countries from cities:', countriesFromCities);
-    console.log('[Account] Unique cities:', Array.from(uniqueCities));
-    console.log('[Account] Visited places count:', visitedPlaces.length);
-    console.log('[Account] Visited destinations with coords:', visitedDestinationsWithCoords.length);
-    console.log('[Account] Visited places with country field:', visitedPlaces.filter(p => p.destination?.country).map(p => ({ slug: p.destination_slug, country: p.destination?.country, city: p.destination?.city })));
-
     const curationCompletionPercentage = totalDestinations > 0
       ? Math.round((visitedPlaces.length / totalDestinations) * 100)
       : 0;

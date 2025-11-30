@@ -6,10 +6,11 @@
 'use client';
 
 import { Calendar, Clock, MapPin } from 'lucide-react';
+import type { ArchitectureDestination } from '@/types/architecture';
 
 interface DayItinerary {
   date: string;
-  destinations: any[];
+  destinations: ArchitectureDestination[];
   narrative: string;
   total_time_minutes: number;
   walking_distance_km: number;

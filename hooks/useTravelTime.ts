@@ -7,7 +7,6 @@ interface Location {
   longitude?: number | null;
   lat?: number | null;
   lng?: number | null;
-  [key: string]: any;
 }
 
 interface TravelTimeResult {

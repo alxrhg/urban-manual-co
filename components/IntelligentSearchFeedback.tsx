@@ -3,10 +3,19 @@
 import { Sparkles, MapPin, Filter, Lightbulb, TrendingUp, Calendar, HelpCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+interface SearchFilters {
+  michelin?: boolean;
+  crown?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  openNow?: boolean;
+}
+
 interface IntentData {
   city?: string;
   category?: string;
-  filters?: any;
+  filters?: SearchFilters;
   intent?: string;
   confidence?: number;
   clarifications?: string[];
