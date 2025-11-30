@@ -109,38 +109,48 @@ export default function TripPage() {
     );
   }, [days]);
 
-  // Compute which hotel covers each night (for multi-night stays)
+  // Compute which hotel covers each night based on check-in/check-out dates
   const nightlyHotelByDay = useMemo(() => {
     const hotelMap: Record<number, typeof hotels[0] | null> = {};
+    if (!trip?.start_date) return hotelMap;
+
+    const tripStart = new Date(trip.start_date);
+    tripStart.setHours(0, 0, 0, 0);
 
     hotels.forEach(hotel => {
-      const checkInDay = hotel.dayNumber;
       const checkInDate = hotel.parsedNotes?.checkInDate;
       const checkOutDate = hotel.parsedNotes?.checkOutDate;
 
+      if (!checkInDate) return;
+
+      // Calculate actual check-in day number based on trip start
+      const inDate = new Date(checkInDate);
+      inDate.setHours(0, 0, 0, 0);
+      const checkInDayNum = Math.floor((inDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
       // Calculate number of nights
       let nights = 1;
-      if (checkInDate && checkOutDate) {
+      if (checkOutDate) {
         try {
-          const inDate = new Date(checkInDate);
           const outDate = new Date(checkOutDate);
+          outDate.setHours(0, 0, 0, 0);
           nights = Math.max(1, Math.ceil((outDate.getTime() - inDate.getTime()) / (1000 * 60 * 60 * 24)));
         } catch {
           nights = 1;
         }
       }
 
-      // Mark this hotel for each night it covers (except the check-in day which has its own)
-      for (let i = 1; i < nights; i++) {
-        const nightDay = checkInDay + i;
-        if (!hotelMap[nightDay]) {
+      // Mark this hotel for the check-in day and each subsequent night
+      for (let i = 0; i < nights; i++) {
+        const nightDay = checkInDayNum + i;
+        if (nightDay > 0 && !hotelMap[nightDay]) {
           hotelMap[nightDay] = hotel;
         }
       }
     });
 
     return hotelMap;
-  }, [hotels]);
+  }, [hotels, trip?.start_date]);
 
   // Generate trip warnings based on analysis
   useMemo(() => {

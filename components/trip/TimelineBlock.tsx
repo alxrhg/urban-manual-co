@@ -81,16 +81,18 @@ export default function TimelineBlock({
 
     // Hotel
     if (itemType === 'hotel' && item.parsedNotes) {
+      const hotelImage = item.destination?.image || item.parsedNotes.image;
       return (
         <LodgingCard
           name={item.title || item.parsedNotes.name || 'Accommodation'}
           address={item.parsedNotes.address}
-          checkIn={item.parsedNotes.checkInDate || item.parsedNotes.checkInTime}
-          checkOut={item.parsedNotes.checkOutDate || item.parsedNotes.checkOutTime}
+          checkIn={item.parsedNotes.checkInDate}
+          checkOut={item.parsedNotes.checkOutDate}
           confirmationNumber={item.parsedNotes.hotelConfirmation || item.parsedNotes.confirmationNumber}
           phone={item.parsedNotes.phone}
           website={item.parsedNotes.website}
           notes={item.parsedNotes.notes}
+          image={hotelImage}
           compact
         />
       );

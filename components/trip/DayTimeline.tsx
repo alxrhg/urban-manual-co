@@ -148,10 +148,25 @@ export default function DayTimeline({
 
   // Separate hotels from regular activities
   const { regularItems, hotelItem, isExternalHotel } = useMemo(() => {
-    const hotels = day.items.filter(item => item.parsedNotes?.type === 'hotel');
+    // Filter hotels: only include if check-in date matches this day's date
+    const hotels = day.items.filter(item => {
+      if (item.parsedNotes?.type !== 'hotel') return false;
+
+      // If hotel has a check-in date, verify it matches this day
+      const checkInDate = item.parsedNotes?.checkInDate;
+      if (checkInDate && day.date) {
+        const checkIn = new Date(checkInDate);
+        const dayDate = new Date(day.date);
+        checkIn.setHours(0, 0, 0, 0);
+        dayDate.setHours(0, 0, 0, 0);
+        return checkIn.getTime() === dayDate.getTime();
+      }
+      return true; // No check-in date set, show on assigned day
+    });
+
     const regular = day.items.filter(item => item.parsedNotes?.type !== 'hotel');
 
-    // Use nightlyHotel (multi-night from another day) if provided, else use day's hotel
+    // Use nightlyHotel (from nightlyHotelByDay map) if provided, else use matching hotel
     const effectiveHotel = nightlyHotel || hotels[0] || null;
     const isExternal = !!nightlyHotel && !hotels.length;
 
@@ -160,7 +175,7 @@ export default function DayTimeline({
       hotelItem: effectiveHotel,
       isExternalHotel: isExternal, // True if hotel is from a different day (multi-night)
     };
-  }, [day.items, nightlyHotel]);
+  }, [day.items, day.date, nightlyHotel]);
 
   // Render regular items with transit connectors (view mode)
   const renderItemsWithConnectors = () => {
@@ -215,16 +230,49 @@ export default function DayTimeline({
   const renderHotelSection = () => {
     if (!hotelItem) return null;
 
+    const checkInDate = hotelItem.parsedNotes?.checkInDate;
+    const checkOutDate = hotelItem.parsedNotes?.checkOutDate;
+
+    // Calculate night number (which night of the stay is this?)
+    let nightLabel = 'Tonight\'s Stay';
+    let nightsInfo = '';
+
+    if (checkInDate && checkOutDate && day.date) {
+      const checkIn = new Date(checkInDate);
+      const checkOut = new Date(checkOutDate);
+      const dayDate = new Date(day.date);
+      checkIn.setHours(0, 0, 0, 0);
+      checkOut.setHours(0, 0, 0, 0);
+      dayDate.setHours(0, 0, 0, 0);
+
+      const totalNights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+      const currentNight = Math.ceil((dayDate.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+      if (totalNights > 1) {
+        nightsInfo = `Night ${currentNight} of ${totalNights}`;
+      } else {
+        nightsInfo = '1 night';
+      }
+
+      // Format dates for display
+      const formatDate = (d: Date) => format(d, 'EEE, MMM d');
+      nightLabel = isExternalHotel
+        ? `Continuing stay (${formatDate(checkIn)} → ${formatDate(checkOut)})`
+        : 'Tonight\'s Stay';
+    }
+
     return (
       <div className="mt-4 pt-4 border-t border-stone-200 dark:border-gray-800">
-        <div className="flex items-center gap-2 mb-3 px-2">
-          <Moon className="w-4 h-4 text-stone-400" />
-          <span className="text-xs font-medium text-stone-500 dark:text-gray-400 uppercase tracking-wide">
-            Tonight&apos;s Stay
-          </span>
-          {isExternalHotel && (
-            <span className="text-[10px] text-stone-400 dark:text-gray-500 italic">
-              (continuing)
+        <div className="flex items-center justify-between mb-3 px-2">
+          <div className="flex items-center gap-2">
+            <Moon className="w-4 h-4 text-stone-400" />
+            <span className="text-xs font-medium text-stone-500 dark:text-gray-400 uppercase tracking-wide">
+              {nightLabel}
+            </span>
+          </div>
+          {nightsInfo && (
+            <span className="text-[10px] text-stone-400 dark:text-gray-500 bg-stone-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+              {nightsInfo}
             </span>
           )}
         </div>
@@ -232,7 +280,7 @@ export default function DayTimeline({
           item={hotelItem}
           index={regularItems.length}
           onEdit={onEditItem}
-          onTimeChange={isExternalHotel ? undefined : onTimeChange} // Can't edit time on external hotel
+          onTimeChange={isExternalHotel ? undefined : onTimeChange}
           isActive={hotelItem.id === activeItemId}
         />
       </div>
