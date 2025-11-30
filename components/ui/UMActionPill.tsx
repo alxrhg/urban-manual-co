@@ -29,7 +29,7 @@ export default function UMActionPill({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "inline-flex items-center justify-center px-4 h-[38px]",
+        "inline-flex items-center justify-center px-4 h-[44px]",
         "rounded-xl border text-sm font-medium transition",
         // Light mode
         variant === "default" &&
