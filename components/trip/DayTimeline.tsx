@@ -192,17 +192,25 @@ export default function DayTimeline({
     }
 
     return (
-      <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+      <div className="mt-4 pt-4 border-t border-gray-100/60 dark:border-gray-800/50">
         <div className="flex items-center gap-2 mb-3">
           <Moon className="w-3.5 h-3.5 text-gray-400" />
           <span className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">
             Overnight
           </span>
+          {nightsInfo && (
+            <span className="text-[10px] text-gray-500 dark:text-gray-400 bg-gray-100/80 dark:bg-gray-800/60 px-2 py-0.5 rounded-full backdrop-blur-sm">
+              {nightsInfo}
+            </span>
+          )}
         </div>
         <div
-          className="p-3 border border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer"
+          className="p-3 rounded-xl cursor-pointer bg-white/60 dark:bg-gray-800/40 backdrop-blur-sm ring-1 ring-gray-200/60 dark:ring-gray-700/40 shadow-sm shadow-gray-200/30 dark:shadow-gray-900/30"
           onClick={() => onEditItem?.(hotelItem)}
         >
+          {/* Top highlight */}
+          <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/60 to-transparent dark:via-white/10 rounded-t-xl" />
+
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
@@ -212,20 +220,15 @@ export default function DayTimeline({
                 {hotelItem.parsedNotes?.address || hotelItem.destination?.formatted_address}
               </p>
             </div>
-            {nightsInfo && (
-              <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
-                {nightsInfo}
-              </span>
-            )}
           </div>
-          <div className="flex items-center gap-4 mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-4 mt-2 pt-2 border-t border-gray-100/50 dark:border-gray-700/30">
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-gray-400 uppercase">Check-in</span>
-              <span className="text-xs text-gray-600 dark:text-gray-300 tabular-nums">{checkInTime}</span>
+              <span className="text-[10px] text-gray-400 uppercase tracking-tight">Check-in</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300 tabular-nums tracking-tight">{checkInTime}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] text-gray-400 uppercase">Check-out</span>
-              <span className="text-xs text-gray-600 dark:text-gray-300 tabular-nums">{checkOutTime}</span>
+              <span className="text-[10px] text-gray-400 uppercase tracking-tight">Check-out</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300 tabular-nums tracking-tight">{checkOutTime}</span>
             </div>
           </div>
         </div>
@@ -300,9 +303,9 @@ export default function DayTimeline({
   const isScrollable = timelineHeight > maxHeight;
 
   return (
-    <div className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900">
+    <div className="rounded-2xl overflow-hidden bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm ring-1 ring-gray-200/60 dark:ring-gray-800/60 shadow-sm shadow-gray-200/30 dark:shadow-gray-900/30">
       {/* Day Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
+      <div className="flex items-center justify-between p-4 border-b border-gray-100/60 dark:border-gray-800/50">
         <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-3">
           <span className="text-lg font-normal text-gray-900 dark:text-white">
             Day {day.dayNumber}
@@ -321,7 +324,7 @@ export default function DayTimeline({
 
       {/* Day Intelligence Bar */}
       {day.items.length > 0 && (
-        <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
+        <div className="px-4 py-2 border-b border-gray-100/60 dark:border-gray-800/50">
           <DayIntelligence
             dayNumber={day.dayNumber}
             date={day.date}

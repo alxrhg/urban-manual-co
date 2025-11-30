@@ -51,7 +51,7 @@ function getIconForItem(item: EnrichedItineraryItem) {
 }
 
 /**
- * TimelineCard - Flat inline card for planner-style timeline
+ * TimelineCard - Glass-style card inspired by iOS 26 Liquid Glass
  */
 function TimelineCardComponent({
   item,
@@ -69,9 +69,14 @@ function TimelineCardComponent({
 
   return (
     <div
-      className={`h-full flex items-stretch rounded-lg bg-gray-50 dark:bg-gray-800/40 cursor-pointer ${
-        isActive ? 'ring-1 ring-gray-900 dark:ring-white' : ''
-      }`}
+      className={`
+        h-full rounded-xl cursor-pointer overflow-hidden
+        bg-white/80 dark:bg-gray-800/60
+        backdrop-blur-sm
+        shadow-sm shadow-gray-200/50 dark:shadow-gray-900/50
+        ring-1 ring-gray-200/60 dark:ring-gray-700/40
+        ${isActive ? 'ring-gray-400 dark:ring-gray-500 shadow-md' : ''}
+      `}
       onClick={() => onEdit?.(item)}
       role="button"
       tabIndex={0}
@@ -83,11 +88,11 @@ function TimelineCardComponent({
         }
       }}
     >
-      {/* Left accent bar */}
-      <div className={`w-1 flex-shrink-0 rounded-l-lg ${styleSet.accent}`} />
+      {/* Top highlight edge */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent dark:via-white/20" />
 
       {/* Card content */}
-      <div className="flex-1 flex items-center gap-2.5 pl-3 pr-2 py-2 min-w-0">
+      <div className="flex items-center gap-2.5 px-3 py-2.5 min-w-0 h-full">
         {/* Icon */}
         <div className={`flex-shrink-0 ${styleSet.iconColor}`}>
           {getIconForItem(item)}
@@ -99,12 +104,12 @@ function TimelineCardComponent({
             {item.title || 'Untitled stop'}
           </p>
           <div className="flex items-center gap-1.5">
-            <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+            <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums tracking-tight">
               {startLabel}–{endLabel}
             </span>
             {item.destination?.neighborhood && (
               <>
-                <span className="text-gray-300 dark:text-gray-700">·</span>
+                <span className="text-gray-200 dark:text-gray-700">·</span>
                 <span className="text-xs text-gray-400 dark:text-gray-500 truncate">
                   {item.destination.neighborhood}
                 </span>
@@ -114,7 +119,7 @@ function TimelineCardComponent({
         </div>
 
         {/* Duration */}
-        <span className="flex-shrink-0 text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+        <span className="flex-shrink-0 text-xs text-gray-400 dark:text-gray-500 tabular-nums tracking-tight">
           {formatDuration(duration)}
         </span>
 

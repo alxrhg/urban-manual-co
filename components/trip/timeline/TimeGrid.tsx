@@ -33,8 +33,8 @@ function TimeGridComponent({
         <span className="w-12 text-[11px] text-gray-400 dark:text-gray-500 tabular-nums flex-shrink-0">
           {label}
         </span>
-        {/* Horizontal line */}
-        <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800" />
+        {/* Horizontal line - lighter */}
+        <div className="flex-1 h-px bg-gray-100/60 dark:bg-gray-800/50" />
       </div>
     );
   }
