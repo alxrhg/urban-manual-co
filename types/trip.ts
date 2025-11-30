@@ -221,6 +221,8 @@ export interface TripLocation {
 export interface ItineraryItemNotes {
   type?: ItineraryItemType;
   raw?: string;
+  /** Minutes since midnight for start time */
+  startMinutes?: number;
   duration?: number; // in minutes
   image?: string;
   city?: string;

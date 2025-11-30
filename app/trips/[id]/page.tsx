@@ -24,7 +24,7 @@ import {
   Check,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
-import DayTimeline from '@/components/trip/DayTimeline';
+import TimeBlockBoard, { TemplateBlock } from '@/components/trip/TimeBlockBoard';
 import { TransitMode } from '@/components/trip/TransitConnector';
 import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
@@ -43,6 +43,7 @@ import {
   detectConflicts,
   checkClosureDays,
 } from '@/lib/intelligence/schedule-analyzer';
+import { formatTimeFromMinutes, parseTimeToMinutes } from '@/lib/intelligence/types';
 import type { FlightData, ActivityData } from '@/types/trip';
 import { parseDestinations, formatDestinationsFromField } from '@/types/trip';
 import type { Destination } from '@/types/destination';
@@ -73,6 +74,7 @@ export default function TripPage() {
     addActivity,
     removeItem,
     updateItemTime,
+    updateItemSchedule,
     updateItemNotes,
     updateItem,
     refresh,
@@ -104,6 +106,12 @@ export default function TripPage() {
   const [showMapBox, setShowMapBox] = useState(false);
   const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
   const [bucketDragItem, setBucketDragItem] = useState<Destination | null>(null);
+  const [selectedBlockIds, setSelectedBlockIds] = useState<string[]>([]);
+
+  const handleSelectDay = useCallback((dayNumber: number) => {
+    setSelectedDayNumber(dayNumber);
+    setSelectedBlockIds([]);
+  }, []);
 
   // Handle bucket list drag events
   const handleBucketDragStart = useCallback((event: DragStartEvent) => {
@@ -131,6 +139,64 @@ export default function TripPage() {
   const handleAddFromBucket = useCallback((destination: Destination, dayNumber: number) => {
     addPlace(destination, dayNumber);
   }, [addPlace]);
+
+  const handleScheduleChange = useCallback((itemId: string, startMinutes: number, durationMinutes?: number) => {
+    updateItemSchedule(itemId, startMinutes, durationMinutes);
+  }, [updateItemSchedule]);
+
+  const handleSplitBlock = useCallback((item: EnrichedItineraryItem, startMinutes: number, durationMinutes: number) => {
+    const half = Math.max(30, Math.floor(durationMinutes / 2));
+    updateItemSchedule(item.id, startMinutes, half);
+    addActivity(
+      {
+        type: 'activity',
+        activityType: 'other',
+        title: `${item.title} (cont.)`,
+        duration: durationMinutes - half,
+        notes: item.description || undefined,
+      },
+      selectedDayNumber,
+      formatTimeFromMinutes(startMinutes + half)
+    );
+  }, [addActivity, selectedDayNumber, updateItemSchedule]);
+
+  const handleDuplicateBlocks = useCallback((itemIds: string[], targetDay: number) => {
+    days.forEach((day) => {
+      if (itemIds.length === 0 || day.dayNumber !== selectedDayNumber) return;
+      day.items.filter((i) => itemIds.includes(i.id)).forEach((item) => {
+        const duration = item.parsedNotes?.duration || 60;
+        const start = item.parsedNotes?.startMinutes || (item.time ? parseTimeToMinutes(item.time) : 9 * 60);
+
+        if (item.destination) {
+          addPlace(item.destination, targetDay, formatTimeFromMinutes(start));
+        } else {
+          addActivity(
+            {
+              type: 'activity',
+              activityType: 'other',
+              title: item.title,
+              duration,
+            },
+            targetDay,
+            formatTimeFromMinutes(start)
+          );
+        }
+      });
+    });
+  }, [addActivity, addPlace, days, selectedDayNumber]);
+
+  const handleAddTemplate = useCallback((template: TemplateBlock, dayNumber: number, startMinutes: number) => {
+    addActivity(
+      {
+        type: 'activity',
+        activityType: template.category === 'transit' ? 'other' : 'other',
+        title: template.label,
+        duration: template.duration,
+      },
+      dayNumber,
+      formatTimeFromMinutes(startMinutes)
+    );
+  }, [addActivity]);
 
   // Extract flights and hotels from itinerary
   const flights = useMemo(() => {
@@ -688,7 +754,7 @@ export default function TripPage() {
                     <DayTabNav
                       days={days}
                       selectedDayNumber={selectedDayNumber}
-                      onSelectDay={setSelectedDayNumber}
+                      onSelectDay={handleSelectDay}
                     />
                     <button
                       onClick={() => setIsEditMode(!isEditMode)}
@@ -715,21 +781,14 @@ export default function TripPage() {
                   {/* Selected Day Timeline */}
                   {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
                     <DayDropZone key={day.dayNumber} dayNumber={day.dayNumber}>
-                      <DayTimeline
+                      <TimeBlockBoard
                         day={day}
-                        nightlyHotel={nightlyHotelByDay[day.dayNumber] || null}
-                        onReorderItems={reorderItems}
-                        onRemoveItem={isEditMode ? removeItem : undefined}
-                        onEditItem={handleEditItem}
-                        onTimeChange={updateItemTime}
-                        onTravelModeChange={handleTravelModeChange}
-                        onAddItem={openPlaceSelector}
-                        onOptimizeDay={handleOptimizeDay}
-                        onAutoFillDay={handleAutoFillDay}
-                        activeItemId={activeItemId}
-                        isOptimizing={optimizingDay === day.dayNumber}
-                        isAutoFilling={autoFillingDay === day.dayNumber}
-                        isEditMode={isEditMode}
+                        onScheduleChange={handleScheduleChange}
+                        onSplitBlock={handleSplitBlock}
+                        onDuplicateBlocks={handleDuplicateBlocks}
+                        onAddTemplate={handleAddTemplate}
+                        selectedIds={selectedBlockIds}
+                        onSelect={setSelectedBlockIds}
                       />
                     </DayDropZone>
                   ))}

@@ -6,6 +6,7 @@ import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, TrainData, Ac
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
 import type { Destination } from '@/types/destination';
 import { recalculateDayTimes, calculateTripDays, addDaysToDate } from '@/lib/utils/time-calculations';
+import { formatTimeFromMinutes, parseTimeToMinutes } from '@/lib/intelligence/types';
 
 export interface TripDay {
   dayNumber: number;
@@ -98,15 +99,24 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       const daysArray: TripDay[] = [];
 
       for (let i = 1; i <= Math.max(numDays, 1); i++) {
-        const dayItems = (items || [])
-          .filter((item) => item.day === i)
-          .map((item) => ({
-            ...item,
-            destination: item.destination_slug
-              ? destinationsMap[item.destination_slug]
-              : undefined,
-            parsedNotes: parseItineraryNotes(item.notes),
-          }));
+      const dayItems = (items || [])
+        .filter((item) => item.day === i)
+        .map((item) => ({
+          ...item,
+          destination: item.destination_slug
+            ? destinationsMap[item.destination_slug]
+            : undefined,
+          parsedNotes: (() => {
+            const parsed = parseItineraryNotes(item.notes);
+            if (!parsed) return null;
+
+            // Hydrate start minutes from legacy time field if needed
+            if (parsed.startMinutes == null && item.time) {
+              parsed.startMinutes = parseTimeToMinutes(item.time);
+            }
+            return parsed;
+          })(),
+        }));
 
         daysArray.push({
           dayNumber: i,
@@ -673,6 +683,96 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, []);
 
+  const updateItemSchedule = useCallback(
+    async (
+      itemId: string,
+      startMinutes: number,
+      durationMinutes?: number,
+      dayNumber?: number,
+    ) => {
+      try {
+        const supabase = createClient();
+        if (!supabase) return;
+
+        const updates: Record<string, unknown> = {
+          time: formatTimeFromMinutes(startMinutes),
+        };
+
+        if (dayNumber != null) {
+          updates.day = dayNumber;
+        }
+
+        const applyDuration = durationMinutes != null ? durationMinutes : undefined;
+
+        const { error } = await supabase
+          .from('itinerary_items')
+          .update(updates)
+          .eq('id', itemId);
+
+        if (error) throw error;
+
+        // Optimistically update local state
+        setDays((prev) => {
+          let movedItem: EnrichedItineraryItem | null = null;
+
+          const withoutItem = prev.map((day) => ({
+            ...day,
+            items: day.items.filter((item) => {
+              if (item.id === itemId) {
+                movedItem = item;
+                return false;
+              }
+              return true;
+            }),
+          }));
+
+          if (!movedItem) return prev;
+
+          const parsed = movedItem.parsedNotes || {};
+          const nextNotes: ItineraryItemNotes = {
+            ...parsed,
+            startMinutes,
+            duration: applyDuration ?? parsed.duration,
+          };
+
+          const updatedItem: EnrichedItineraryItem = {
+            ...movedItem,
+            day: dayNumber ?? movedItem.day,
+            time: formatTimeFromMinutes(startMinutes),
+            notes: stringifyItineraryNotes(nextNotes),
+            parsedNotes: nextNotes,
+          };
+
+          return withoutItem.map((day) =>
+            day.dayNumber === updatedItem.day
+              ? { ...day, items: [...day.items, updatedItem] }
+              : day
+          );
+        });
+
+        const itemNotes = days
+          .flatMap((d) => d.items)
+          .find((i) => i.id === itemId)?.parsedNotes;
+
+        const { error: notesError } = await supabase
+          .from('itinerary_items')
+          .update({
+            notes: stringifyItineraryNotes({
+              ...itemNotes,
+              startMinutes,
+              duration: applyDuration ?? itemNotes?.duration,
+            }),
+          })
+          .eq('id', itemId);
+
+        if (notesError) throw notesError;
+      } catch (err) {
+        console.error('Error updating schedule:', err);
+      }
+    },
+    [days]
+  );
+
   // Update item notes
   const updateItemNotes = useCallback(async (itemId: string, notesText: string) => {
     // Find the item and update its parsed notes
@@ -774,6 +874,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     addActivity,
     removeItem,
     updateItemTime,
+    updateItemSchedule,
     updateItemNotes,
     updateItem,
     refresh: fetchTrip,
