@@ -1,0 +1,1 @@
+export { CMSPageRenderer } from './CMSPageRenderer';
