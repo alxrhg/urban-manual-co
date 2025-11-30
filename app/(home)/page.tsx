@@ -1,17 +1,14 @@
 /**
- * Homepage - Server-Side Rendered (Optimized)
+ * Homepage - ISR (Incremental Static Regeneration)
  *
- * Performance optimizations:
- * - Cached data (60s for destinations, 5min for filters)
- * - Limited initial load (50 destinations)
- * - User data fetched client-side (non-blocking)
- * - Minimal destination fields (reduces payload ~70%)
+ * OPTIMIZED FOR SPEED:
+ * - Pre-rendered HTML with initial content (SEO-friendly)
+ * - Cached data revalidates every 60 seconds
+ * - User-specific data fetched client-side (non-blocking)
  */
 
-import { Suspense } from "react";
-import { loadHomepageData } from "./loaders";
 import HomepageClient from "@/components/homepage/HomepageClient";
-import HomeLoading from "./loading";
+import { loadHomepageData } from "./loaders";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -28,10 +25,11 @@ export const metadata: Metadata = {
   },
 };
 
-// Force dynamic to ensure caching works correctly
-export const dynamic = "force-dynamic";
+// ISR - revalidate every 60 seconds for fresh content
+export const revalidate = 60;
 
-async function HomepageContent() {
+export default async function HomePage() {
+  // Fetch data server-side (cached with unstable_cache)
   const { destinations, cities, categories, totalCount } = await loadHomepageData();
 
   return (
@@ -41,13 +39,5 @@ async function HomepageContent() {
       initialCategories={categories}
       totalCount={totalCount}
     />
-  );
-}
-
-export default function HomePage() {
-  return (
-    <Suspense fallback={<HomeLoading />}>
-      <HomepageContent />
-    </Suspense>
   );
 }
