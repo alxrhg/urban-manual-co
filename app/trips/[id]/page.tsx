@@ -685,7 +685,7 @@ export default function TripPage() {
                 {/* Main Itinerary Column */}
                 <div className="flex-1 space-y-4">
                   {/* Day Tabs + Edit Toggle */}
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4 mb-4 overflow-hidden">
                     <DayTabNav
                       days={days}
                       selectedDayNumber={selectedDayNumber}
@@ -693,7 +693,7 @@ export default function TripPage() {
                     />
                     <button
                       onClick={() => setIsEditMode(!isEditMode)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                         isEditMode
                           ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
                           : 'text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800'
