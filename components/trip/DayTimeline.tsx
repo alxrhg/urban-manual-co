@@ -429,38 +429,47 @@ export default function DayTimeline({
   const getCategoryStyles = (item: EnrichedItineraryItem) => {
     const type = item.parsedNotes?.type || item.destination?.category || 'default';
 
+    const base = {
+      text: 'text-stone-900 dark:text-white',
+      border: 'border-stone-200 dark:border-gray-800',
+      iconBg: 'bg-white/80 dark:bg-gray-900/70',
+      shadow: 'shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)]',
+    };
+
     if (type === 'breakfast' || type === 'restaurant' || type === 'bar') {
       return {
-        bg: 'bg-orange-50',
-        border: 'border-orange-100',
-        text: 'text-orange-900',
-        iconColor: 'text-orange-500',
+        ...base,
+        bg: 'bg-amber-50 dark:bg-amber-900/10',
+        border: 'border-amber-100 dark:border-amber-900/40',
+        iconColor: 'text-amber-600',
+        iconBg: 'bg-amber-100 dark:bg-amber-900/30',
       };
     }
 
     if (type === 'museum' || type === 'gallery') {
       return {
-        bg: 'bg-indigo-50',
-        border: 'border-indigo-100',
-        text: 'text-indigo-900',
-        iconColor: 'text-indigo-500',
+        ...base,
+        bg: 'bg-indigo-50 dark:bg-indigo-900/10',
+        border: 'border-indigo-100 dark:border-indigo-900/40',
+        iconColor: 'text-indigo-600',
+        iconBg: 'bg-indigo-100 dark:bg-indigo-900/30',
       };
     }
 
     if (type === 'flight' || type === 'train') {
       return {
-        bg: 'bg-sky-50',
-        border: 'border-sky-100',
-        text: 'text-sky-900',
-        iconColor: 'text-sky-500',
+        ...base,
+        bg: 'bg-sky-50 dark:bg-sky-900/10',
+        border: 'border-sky-100 dark:border-sky-900/40',
+        iconColor: 'text-sky-600',
+        iconBg: 'bg-sky-100 dark:bg-sky-900/30',
       };
     }
 
     return {
-      bg: 'bg-white',
-      border: 'border-stone-200 dark:border-gray-800',
-      text: 'text-stone-900 dark:text-white',
-      iconColor: 'text-stone-500',
+      ...base,
+      bg: 'bg-white dark:bg-gray-900',
+      iconColor: 'text-stone-500 dark:text-gray-400',
     };
   };
 
@@ -539,14 +548,13 @@ export default function DayTimeline({
             onPointerDown={(event) => handleDragStart(item.id, 'move', start, duration, event.clientY)}
           >
             <div
-              className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-2xl shadow-[0_12px_30px_-18px_rgba(0,0,0,0.45)] relative overflow-hidden transition-transform duration-150 ${
-                isEditMode ? 'hover:scale-[1.01]' : ''
+              className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-xl ${styleSet.shadow} relative overflow-hidden transition-transform duration-150 ${
+                isEditMode ? 'hover:scale-[1.005]' : ''
               } ${item.id === activeItemId ? 'ring-2 ring-stone-300 dark:ring-gray-600' : ''}`}
               onClick={() => onEditItem?.(item)}
             >
-              <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/40 mix-blend-overlay pointer-events-none" />
               {isEditMode && (
-                <div className="absolute inset-x-3 top-2 flex items-center justify-between text-[10px] text-stone-400">
+                <div className="absolute inset-x-4 top-2 flex items-center justify-between text-[10px] text-stone-400">
                   <span className="flex items-center gap-1 uppercase tracking-wide font-semibold">
                     <GripVertical className="w-3 h-3" />
                     Drag / resize
@@ -555,13 +563,15 @@ export default function DayTimeline({
                 </div>
               )}
               <div className="flex items-start gap-3 px-4 py-3 relative z-10">
-                <div className={`w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center ${styleSet.iconColor} shadow-sm`}>
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center ${styleSet.iconBg} ${styleSet.iconColor} border border-white/70 dark:border-gray-800/60`}
+                >
                   {getIconForItem(item)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 text-[11px] text-stone-500 uppercase tracking-[0.08em]">
+                  <div className="flex items-center gap-2 text-[11px] text-stone-500 dark:text-gray-400 uppercase tracking-[0.08em]">
                     <span>{startLabel}</span>
-                    <span className="text-stone-300">•</span>
+                    <span className="text-stone-300 dark:text-gray-600">•</span>
                     <span>{endLabel}</span>
                   </div>
                   <p className="text-sm font-semibold leading-tight text-stone-900 dark:text-white mt-0.5 line-clamp-1">
@@ -576,14 +586,14 @@ export default function DayTimeline({
               {isEditMode && (
                 <>
                   <div
-                    className="absolute inset-x-3 top-0 h-2 cursor-n-resize"
+                    className="absolute inset-x-4 top-0 h-2 cursor-n-resize"
                     onPointerDown={(event) => {
                       event.stopPropagation();
                       handleDragStart(item.id, 'resize-start', start, duration, event.clientY);
                     }}
                   />
                   <div
-                    className="absolute inset-x-3 bottom-0 h-2 cursor-s-resize"
+                    className="absolute inset-x-4 bottom-0 h-2 cursor-s-resize"
                     onPointerDown={(event) => {
                       event.stopPropagation();
                       handleDragStart(item.id, 'resize-end', start, duration, event.clientY);
