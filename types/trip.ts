@@ -84,7 +84,7 @@ export interface UpdateTrip {
   notes?: string | null;
 }
 
-export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'custom';
+export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'event' | 'custom';
 
 export interface ItineraryItem {
   id: string; // UUID
@@ -179,6 +179,15 @@ export interface ItineraryItemNotes {
   travelTimeToNext?: number; // in minutes
   travelDistanceToNext?: number; // in km
   travelModeToNext?: 'walking' | 'driving' | 'transit' | 'flight';
+  // Event-specific fields
+  eventType?: 'concert' | 'show' | 'sports' | 'exhibition' | 'festival' | 'tour' | 'other';
+  venue?: string;
+  eventDate?: string;
+  eventTime?: string;
+  endTime?: string;
+  ticketUrl?: string;
+  ticketConfirmation?: string;
+  seatInfo?: string;
 }
 
 /**

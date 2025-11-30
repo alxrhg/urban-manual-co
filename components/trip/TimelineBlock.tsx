@@ -3,8 +3,8 @@
 import { useState, useCallback } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, X } from 'lucide-react';
-import { formatTimeDisplay } from '@/lib/utils/time-calculations';
+import { GripVertical, X, Clock } from 'lucide-react';
+import { formatTimeDisplay, formatDuration } from '@/lib/utils/time-calculations';
 import FlightStatusCard from '@/components/trips/FlightStatusCard';
 import LodgingCard from '@/components/trips/LodgingCard';
 import PlaceCard from '@/components/trips/PlaceCard';
@@ -13,26 +13,29 @@ import MealCard from '@/components/trips/MealCard';
 import EventCard from '@/components/trips/EventCard';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
-interface TripItemCardProps {
+interface TimelineBlockProps {
   item: EnrichedItineraryItem;
   index: number;
   onEdit?: (item: EnrichedItineraryItem) => void;
   onRemove?: (id: string) => void;
+  onTimeChange?: (id: string, time: string) => void;
   isActive?: boolean;
-  isViewOnly?: boolean;
+  isDraggable?: boolean;
 }
 
 /**
- * Inner card component that uses sortable hook (only used in edit mode)
+ * TimelineBlock - Unified time block for all itinerary item types
+ * Layout: Time column (left) | Content (center) | Actions (right on hover)
  */
-function SortableTripItemCard({
+export default function TimelineBlock({
   item,
   index,
   onEdit,
   onRemove,
+  onTimeChange,
   isActive = false,
-  children,
-}: TripItemCardProps & { children: React.ReactNode }) {
+  isDraggable = true,
+}: TimelineBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isTouched, setIsTouched] = useState(false);
 
@@ -43,7 +46,7 @@ function SortableTripItemCard({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: item.id });
+  } = useSortable({ id: item.id, disabled: !isDraggable });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -51,6 +54,7 @@ function SortableTripItemCard({
   };
 
   const showControls = isHovered || isTouched || isActive;
+  const itemType = item.parsedNotes?.type;
 
   const handleTouchStart = useCallback(() => {
     setIsTouched(true);
@@ -60,129 +64,9 @@ function SortableTripItemCard({
     setTimeout(() => setIsTouched(false), 2000);
   }, []);
 
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`group relative mb-2 sm:mb-2 ${isDragging ? 'z-50 opacity-50' : ''}`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-    >
-      <div className="relative">
-        {/* Drag Handle */}
-        <div
-          {...attributes}
-          {...listeners}
-          className={`
-            absolute top-2 sm:top-3 left-2 sm:left-3 z-10
-            cursor-grab active:cursor-grabbing
-            p-2 sm:p-1 -m-1 sm:m-0
-            bg-white/90 dark:bg-gray-900/90 rounded-xl sm:rounded-lg backdrop-blur-sm
-            transition-opacity duration-200
-            ${showControls ? 'opacity-100' : 'opacity-0 sm:group-hover:opacity-100'}
-          `}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <GripVertical className="w-5 h-5 sm:w-4 sm:h-4 text-stone-400 dark:text-gray-500" />
-        </div>
-
-        {/* Remove Button */}
-        {onRemove && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove?.(item.id);
-            }}
-            className={`
-              absolute top-2 sm:top-3 right-2 sm:right-3 z-10
-              p-2.5 sm:p-1.5 -m-1 sm:m-0
-              rounded-xl sm:rounded-lg
-              bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
-              text-stone-400 hover:text-red-500 active:text-red-600
-              hover:bg-red-50 active:bg-red-100 dark:hover:bg-red-900/20 dark:active:bg-red-900/30
-              transition-all duration-200
-              min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0
-              flex items-center justify-center
-              ${showControls ? 'opacity-100' : 'opacity-0 sm:group-hover:opacity-100'}
-            `}
-            aria-label="Remove item"
-          >
-            <X className="w-5 h-5 sm:w-4 sm:h-4" />
-          </button>
-        )}
-
-        {/* Clickable wrapper for edit */}
-        <div
-          onClick={() => onEdit?.(item)}
-          className={`
-            ${onEdit ? 'cursor-pointer' : ''} rounded-2xl transition-all
-            ${onEdit ? 'active:scale-[0.98] sm:active:scale-100' : ''}
-            ${isActive ? 'ring-2 ring-stone-300 dark:ring-gray-600' : ''}
-            ${onEdit ? 'hover:ring-1 hover:ring-stone-200 dark:hover:ring-stone-700' : ''}
-            ${onEdit ? 'active:ring-1 active:ring-stone-300 dark:active:ring-stone-600' : ''}
-          `}
-        >
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * View-only card wrapper (no sortable functionality)
- */
-function ViewOnlyTripItemCard({
-  item,
-  onEdit,
-  isActive = false,
-  children,
-}: {
-  item: EnrichedItineraryItem;
-  onEdit?: (item: EnrichedItineraryItem) => void;
-  isActive?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="group relative mb-2 sm:mb-2">
-      <div className="relative">
-        <div
-          onClick={() => onEdit?.(item)}
-          className={`
-            ${onEdit ? 'cursor-pointer' : ''} rounded-2xl transition-all
-            ${onEdit ? 'active:scale-[0.98] sm:active:scale-100' : ''}
-            ${isActive ? 'ring-2 ring-stone-300 dark:ring-gray-600' : ''}
-            ${onEdit ? 'hover:ring-1 hover:ring-stone-200 dark:hover:ring-stone-700' : ''}
-            ${onEdit ? 'active:ring-1 active:ring-stone-300 dark:active:ring-stone-600' : ''}
-          `}
-        >
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * TripItemCard - Mobile-optimized card renderer
- * Features: Touch-friendly controls, swipe hints, proper touch targets
- * All cards follow a cohesive design pattern with stone palette
- */
-export default function TripItemCard({
-  item,
-  index,
-  onEdit,
-  onRemove,
-  isActive = false,
-  isViewOnly = false,
-}: TripItemCardProps) {
-  const itemType = item.parsedNotes?.type;
-
   // Render the appropriate card based on item type
   const renderCardContent = () => {
-    // Render FlightStatusCard for flights
+    // Flight
     if (itemType === 'flight' && item.parsedNotes) {
       return (
         <FlightStatusCard
@@ -193,7 +77,7 @@ export default function TripItemCard({
       );
     }
 
-    // Render LodgingCard for hotels
+    // Hotel
     if (itemType === 'hotel' && item.parsedNotes) {
       return (
         <LodgingCard
@@ -210,7 +94,7 @@ export default function TripItemCard({
       );
     }
 
-    // Render EventCard for events
+    // Event
     if (itemType === 'event' && item.parsedNotes) {
       return (
         <EventCard
@@ -221,7 +105,7 @@ export default function TripItemCard({
       );
     }
 
-    // Render TransportCard for trains
+    // Train
     if (itemType === 'train' && item.parsedNotes) {
       return (
         <TransportCard
@@ -241,7 +125,7 @@ export default function TripItemCard({
       );
     }
 
-    // Render TransportCard for drives
+    // Drive
     if (itemType === 'drive' && item.parsedNotes) {
       return (
         <TransportCard
@@ -258,7 +142,7 @@ export default function TripItemCard({
       );
     }
 
-    // Render MealCard for breakfast
+    // Breakfast/Meal
     if (itemType === 'breakfast' && item.parsedNotes) {
       return (
         <MealCard
@@ -276,7 +160,7 @@ export default function TripItemCard({
       );
     }
 
-    // Default: PlaceCard for places, custom items, etc.
+    // Default: PlaceCard
     const image = item.destination?.image || item.destination?.image_thumbnail || item.parsedNotes?.image;
     const category = item.parsedNotes?.category || item.destination?.category;
     const neighborhood = item.destination?.neighborhood ?? undefined;
@@ -297,26 +181,135 @@ export default function TripItemCard({
     );
   };
 
-  // Use view-only wrapper when not in edit mode (no sortable context needed)
-  if (isViewOnly) {
-    return (
-      <ViewOnlyTripItemCard item={item} onEdit={onEdit} isActive={isActive}>
-        {renderCardContent()}
-      </ViewOnlyTripItemCard>
-    );
-  }
-
-  // Use sortable wrapper for edit mode
   return (
-    <SortableTripItemCard
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`
+        group relative flex gap-0
+        transition-all duration-200
+        ${isDragging ? 'z-50 opacity-50 scale-[1.02]' : ''}
+        ${isActive ? 'ring-2 ring-stone-300 dark:ring-gray-600 rounded-2xl' : ''}
+      `}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Time Column */}
+      <div className="flex-shrink-0 w-16 sm:w-20 py-4 pr-3 flex flex-col items-end justify-start">
+        {item.time ? (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              // Could open a time picker here
+            }}
+            className="text-sm font-medium text-stone-700 dark:text-stone-300 tabular-nums hover:text-stone-900 dark:hover:text-white transition-colors"
+          >
+            {formatTimeDisplay(item.time)}
+          </button>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onTimeChange?.(item.id, '09:00');
+            }}
+            className="text-[11px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors flex items-center gap-1"
+          >
+            <Clock className="w-3 h-3" />
+            <span className="hidden sm:inline">set time</span>
+          </button>
+        )}
+        {item.parsedNotes?.duration && (
+          <span className="text-[10px] text-stone-400 dark:text-stone-500 mt-1">
+            {formatDuration(item.parsedNotes.duration)}
+          </span>
+        )}
+        {/* Index badge */}
+        <div className="mt-2 w-5 h-5 rounded-full bg-stone-200 dark:bg-gray-700 text-stone-600 dark:text-gray-300 text-[10px] font-semibold flex items-center justify-center">
+          {index + 1}
+        </div>
+      </div>
+
+      {/* Content Column */}
+      <div className="flex-1 min-w-0 relative">
+        {/* Drag Handle */}
+        {isDraggable && (
+          <div
+            {...attributes}
+            {...listeners}
+            className={`
+              absolute top-3 left-3 z-10
+              cursor-grab active:cursor-grabbing
+              p-2 sm:p-1.5 -m-1
+              bg-white/90 dark:bg-gray-900/90 rounded-xl sm:rounded-lg backdrop-blur-sm
+              transition-opacity duration-200
+              ${showControls ? 'opacity-100' : 'opacity-0'}
+            `}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <GripVertical className="w-4 h-4 text-stone-400 dark:text-gray-500" />
+          </div>
+        )}
+
+        {/* Remove Button */}
+        {onRemove && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove(item.id);
+            }}
+            className={`
+              absolute top-3 right-3 z-10
+              p-2 sm:p-1.5 -m-1
+              rounded-xl sm:rounded-lg
+              bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
+              text-stone-400 hover:text-red-500 active:text-red-600
+              hover:bg-red-50 active:bg-red-100 dark:hover:bg-red-900/20
+              transition-all duration-200
+              min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0
+              flex items-center justify-center
+              ${showControls ? 'opacity-100' : 'opacity-0'}
+            `}
+            aria-label="Remove item"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
+
+        {/* Card Content - Clickable */}
+        <div
+          onClick={() => onEdit?.(item)}
+          className={`
+            ${onEdit ? 'cursor-pointer' : ''}
+            transition-all duration-200
+            ${onEdit ? 'hover:ring-1 hover:ring-stone-200 dark:hover:ring-stone-700 rounded-2xl' : ''}
+            ${onEdit ? 'active:scale-[0.99]' : ''}
+          `}
+        >
+          {renderCardContent()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Non-draggable version of TimelineBlock for view-only mode
+ */
+export function ViewOnlyTimelineBlock({
+  item,
+  index,
+  onEdit,
+  isActive = false,
+}: Omit<TimelineBlockProps, 'onRemove' | 'onTimeChange' | 'isDraggable'>) {
+  return (
+    <TimelineBlock
       item={item}
       index={index}
       onEdit={onEdit}
-      onRemove={onRemove}
       isActive={isActive}
-      isViewOnly={false}
-    >
-      {renderCardContent()}
-    </SortableTripItemCard>
+      isDraggable={false}
+    />
   );
 }

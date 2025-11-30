@@ -20,9 +20,11 @@ import {
   Square,
   CheckSquare,
   X,
+  Pencil,
+  Check,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
-import TripDaySection from '@/components/trip/TripDaySection';
+import DayTimeline from '@/components/trip/DayTimeline';
 import DayTabNav from '@/components/trip/DayTabNav';
 import FloatingActionBar from '@/components/trip/FloatingActionBar';
 import AlertsDropdown from '@/components/trip/AlertsDropdown';
@@ -76,6 +78,7 @@ export default function TripPage() {
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
   const [autoFillingDay, setAutoFillingDay] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'itinerary' | 'flights' | 'hotels' | 'notes'>('itinerary');
+  const [isEditMode, setIsEditMode] = useState(false);
   const [tripNotes, setTripNotes] = useState('');
   const [checklistItems, setChecklistItems] = useState<{ id: string; text: string; checked: boolean }[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState('');
@@ -578,23 +581,42 @@ export default function TripPage() {
               <div className="lg:flex lg:gap-6">
                 {/* Main Itinerary Column */}
                 <div className="flex-1 space-y-4">
-                  {/* Horizontal Day Tabs */}
-                  <DayTabNav
-                    days={days}
-                    selectedDayNumber={selectedDayNumber}
-                    onSelectDay={setSelectedDayNumber}
-                    className="mb-4"
-                  />
+                  {/* Day Tabs + Edit Toggle */}
+                  <div className="flex items-center justify-between mb-4">
+                    <DayTabNav
+                      days={days}
+                      selectedDayNumber={selectedDayNumber}
+                      onSelectDay={setSelectedDayNumber}
+                    />
+                    <button
+                      onClick={() => setIsEditMode(!isEditMode)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                        isEditMode
+                          ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
+                          : 'text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800'
+                      }`}
+                    >
+                      {isEditMode ? (
+                        <>
+                          <Check className="w-3 h-3" />
+                          Done
+                        </>
+                      ) : (
+                        <>
+                          <Pencil className="w-3 h-3" />
+                          Edit
+                        </>
+                      )}
+                    </button>
+                  </div>
 
-                  {/* Selected Day Only */}
+                  {/* Selected Day Timeline */}
                   {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
-                    <TripDaySection
+                    <DayTimeline
                       key={day.dayNumber}
                       day={day}
-                      isSelected={true}
-                      onSelect={() => {}}
                       onReorderItems={reorderItems}
-                      onRemoveItem={removeItem}
+                      onRemoveItem={isEditMode ? removeItem : undefined}
                       onEditItem={handleEditItem}
                       onAddItem={openPlaceSelector}
                       onOptimizeDay={handleOptimizeDay}
@@ -602,6 +624,7 @@ export default function TripPage() {
                       activeItemId={activeItemId}
                       isOptimizing={optimizingDay === day.dayNumber}
                       isAutoFilling={autoFillingDay === day.dayNumber}
+                      isEditMode={isEditMode}
                     />
                   ))}
                 </div>
