@@ -30,6 +30,7 @@ import AddPlaceBox from '@/components/trip/AddPlaceBox';
 import AddHotelBox from '@/components/trip/AddHotelBox';
 import EditHotelBox from '@/components/trip/EditHotelBox';
 import DestinationBox from '@/components/trip/DestinationBox';
+import HotelListCard from '@/components/trip/HotelListCard';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import RouteMapBox from '@/components/trip/RouteMapBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
@@ -822,7 +823,9 @@ export default function TripPage() {
                 tripStartDate={trip?.start_date}
                 tripEndDate={trip?.end_date}
                 onSelect={(hotel, options) => {
-                  addHotel(hotel, selectedDayNumber, options);
+                  // Add hotel to the check-in day (nightStart), defaulting to day 1
+                  const checkInDay = options.nightStart || 1;
+                  addHotel(hotel, checkInDay, options);
                   setShowAddHotelBox(false);
                 }}
                 onClose={() => setShowAddHotelBox(false)}
@@ -830,11 +833,11 @@ export default function TripPage() {
             )}
 
             {!editingHotel && !showAddHotelBox && hotels.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
-                <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">No hotels added yet</p>
+              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No hotels added yet</p>
                 <button
                   onClick={() => setShowAddHotelBox(true)}
-                  className="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
                 >
                   Add accommodation
                 </button>
@@ -842,36 +845,15 @@ export default function TripPage() {
             ) : !editingHotel && !showAddHotelBox && (
               <>
                 {hotels.map((hotel) => (
-                  <div
+                  <HotelListCard
                     key={hotel.id}
+                    hotel={hotel}
                     onClick={() => setEditingHotel(hotel)}
-                    className="p-4 border border-stone-200 dark:border-gray-800 rounded-2xl hover:bg-stone-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-stone-400">Day {hotel.dayNumber}</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-stone-900 dark:text-white">
-                        {hotel.title}
-                      </p>
-                      {hotel.parsedNotes?.address && (
-                        <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
-                          {hotel.parsedNotes.address}
-                        </p>
-                      )}
-                      {(hotel.parsedNotes?.checkInDate || hotel.parsedNotes?.checkOutDate) && (
-                        <p className="text-xs text-stone-400 mt-2">
-                          {hotel.parsedNotes?.checkInDate && `Check-in: ${hotel.parsedNotes.checkInDate}`}
-                          {hotel.parsedNotes?.checkInDate && hotel.parsedNotes?.checkOutDate && ' · '}
-                          {hotel.parsedNotes?.checkOutDate && `Check-out: ${hotel.parsedNotes.checkOutDate}`}
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  />
                 ))}
                 <button
                   onClick={() => setShowAddHotelBox(true)}
-                  className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-stone-500 dark:text-gray-400 hover:border-stone-300 dark:hover:border-gray-700 transition-colors"
+                  className="w-full py-3 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
                 >
                   + Add another hotel
                 </button>
