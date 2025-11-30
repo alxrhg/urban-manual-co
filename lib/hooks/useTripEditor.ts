@@ -412,7 +412,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, [trip, userId, days, onError]);
 
-  // Add a hotel
+  // Add a hotel (enforces one hotel per night by removing overlaps)
   const addHotel = useCallback(async (
     destination: Destination,
     dayNumber: number,
@@ -431,8 +431,50 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
   ) => {
     if (!trip || !userId) return;
 
+    // Find and remove overlapping hotels (one hotel per night rule)
+    const newNightStart = options?.nightStart || dayNumber;
+    const newNightEnd = options?.nightEnd || newNightStart;
+
+    // Collect all hotels from all days
+    const allHotels = days.flatMap(d =>
+      d.items.filter(item => item.parsedNotes?.type === 'hotel')
+        .map(item => ({ ...item, dayNumber: d.dayNumber }))
+    );
+
+    // Find hotels that overlap with the new hotel's date range
+    const overlappingHotelIds: string[] = [];
+    allHotels.forEach(hotel => {
+      const hotelNightStart = Number(hotel.parsedNotes?.nightStart) || hotel.dayNumber;
+      const hotelNightEnd = Number(hotel.parsedNotes?.nightEnd) || hotelNightStart;
+
+      // Check for overlap: ranges overlap if one starts before the other ends
+      const hasOverlap = newNightStart <= hotelNightEnd && newNightEnd >= hotelNightStart;
+      if (hasOverlap) {
+        overlappingHotelIds.push(hotel.id);
+      }
+    });
+
+    // Remove overlapping hotels first
+    if (overlappingHotelIds.length > 0) {
+      const supabase = createClient();
+      if (supabase) {
+        // Delete from database
+        await supabase.from('itinerary_items')
+          .delete()
+          .in('id', overlappingHotelIds);
+
+        // Update local state
+        setDays((prev) =>
+          prev.map((d) => ({
+            ...d,
+            items: d.items.filter(item => !overlappingHotelIds.includes(item.id))
+          }))
+        );
+      }
+    }
+
     const currentDay = days.find((d) => d.dayNumber === dayNumber);
-    const orderIndex = currentDay?.items.length || 0;
+    const orderIndex = currentDay?.items.filter(item => !overlappingHotelIds.includes(item.id)).length || 0;
 
     const notesData: ItineraryItemNotes = {
       type: 'hotel',

@@ -13,6 +13,7 @@ interface AddHotelBoxProps {
   city?: string | null;
   tripStartDate?: string | null;
   tripEndDate?: string | null;
+  defaultNightStart?: number; // Pre-select check-in for this night
   onSelect?: (hotel: Destination, options: HotelOptions) => void;
   onClose?: () => void;
   className?: string;
@@ -39,6 +40,7 @@ export default function AddHotelBox({
   city,
   tripStartDate,
   tripEndDate,
+  defaultNightStart,
   onSelect,
   onClose,
   className = '',
@@ -48,10 +50,34 @@ export default function AddHotelBox({
   const [hotels, setHotels] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Calculate default dates based on defaultNightStart
+  const getDefaultCheckInDate = () => {
+    if (!tripStartDate) return '';
+    if (!defaultNightStart || defaultNightStart <= 1) return tripStartDate;
+
+    const startDate = new Date(tripStartDate);
+    startDate.setDate(startDate.getDate() + defaultNightStart - 1);
+    return startDate.toISOString().split('T')[0];
+  };
+
+  const getDefaultCheckOutDate = () => {
+    if (!tripEndDate) return '';
+    const checkIn = getDefaultCheckInDate();
+    if (!checkIn) return tripEndDate;
+
+    // Default to one night stay
+    const checkInDate = new Date(checkIn);
+    checkInDate.setDate(checkInDate.getDate() + 1);
+    const endDate = tripEndDate ? new Date(tripEndDate) : checkInDate;
+
+    // Don't go past trip end date
+    return checkInDate > endDate ? tripEndDate : checkInDate.toISOString().split('T')[0];
+  };
+
   // Selected hotel state
   const [selectedHotel, setSelectedHotel] = useState<Destination | null>(null);
-  const [checkInDate, setCheckInDate] = useState(tripStartDate || '');
-  const [checkOutDate, setCheckOutDate] = useState(tripEndDate || '');
+  const [checkInDate, setCheckInDate] = useState(getDefaultCheckInDate());
+  const [checkOutDate, setCheckOutDate] = useState(getDefaultCheckOutDate());
 
   // Google search state
   const [googleQuery, setGoogleQuery] = useState('');

@@ -31,6 +31,7 @@ import AddHotelBox from '@/components/trip/AddHotelBox';
 import EditHotelBox from '@/components/trip/EditHotelBox';
 import DestinationBox from '@/components/trip/DestinationBox';
 import HotelListCard from '@/components/trip/HotelListCard';
+import HotelsByNight from '@/components/trip/HotelsByNight';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import RouteMapBox from '@/components/trip/RouteMapBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
@@ -88,6 +89,7 @@ export default function TripPage() {
   const [warnings, setWarnings] = useState<PlannerWarning[]>([]);
   const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
   const [showAddHotelBox, setShowAddHotelBox] = useState(false);
+  const [addHotelForNight, setAddHotelForNight] = useState<number | null>(null);
   const [editingHotel, setEditingHotel] = useState<EnrichedItineraryItem | null>(null);
   const [viewingItem, setViewingItem] = useState<EnrichedItineraryItem | null>(null);
   const [showTripSettings, setShowTripSettings] = useState(false);
@@ -822,42 +824,32 @@ export default function TripPage() {
                 city={trip?.destination}
                 tripStartDate={trip?.start_date}
                 tripEndDate={trip?.end_date}
+                defaultNightStart={addHotelForNight || undefined}
                 onSelect={(hotel, options) => {
-                  // Add hotel to the check-in day (nightStart), defaulting to day 1
-                  const checkInDay = options.nightStart || 1;
+                  // Add hotel to the check-in day (nightStart)
+                  const checkInDay = options.nightStart || addHotelForNight || 1;
                   addHotel(hotel, checkInDay, options);
                   setShowAddHotelBox(false);
+                  setAddHotelForNight(null);
                 }}
-                onClose={() => setShowAddHotelBox(false)}
+                onClose={() => {
+                  setShowAddHotelBox(false);
+                  setAddHotelForNight(null);
+                }}
               />
             )}
 
-            {!editingHotel && !showAddHotelBox && hotels.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No hotels added yet</p>
-                <button
-                  onClick={() => setShowAddHotelBox(true)}
-                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
-                >
-                  Add accommodation
-                </button>
-              </div>
-            ) : !editingHotel && !showAddHotelBox && (
-              <>
-                {hotels.map((hotel) => (
-                  <HotelListCard
-                    key={hotel.id}
-                    hotel={hotel}
-                    onClick={() => setEditingHotel(hotel)}
-                  />
-                ))}
-                <button
-                  onClick={() => setShowAddHotelBox(true)}
-                  className="w-full py-3 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
-                >
-                  + Add another hotel
-                </button>
-              </>
+            {/* Hotels by Night View */}
+            {!editingHotel && !showAddHotelBox && (
+              <HotelsByNight
+                hotels={hotels}
+                totalDays={days.length}
+                onAddHotel={(night) => {
+                  setAddHotelForNight(night);
+                  setShowAddHotelBox(true);
+                }}
+                onEditHotel={(hotel) => setEditingHotel(hotel)}
+              />
             )}
           </div>
         )}
