@@ -20,6 +20,8 @@ import {
   Square,
   CheckSquare,
   X,
+  List,
+  Clock,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import TripDaySection from '@/components/trip/TripDaySection';
@@ -36,6 +38,8 @@ import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import RouteMapBox from '@/components/trip/RouteMapBox';
 import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import LocalEvents from '@/components/trip/LocalEvents';
+import DateCarousel from '@/components/trip/DateCarousel';
+import TimelineDay, { itemToTimelineEvent } from '@/components/trip/TimelineDay';
 import {
   analyzeScheduleForWarnings,
   detectConflicts,
@@ -83,6 +87,7 @@ export default function TripPage() {
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
   const [autoFillingDay, setAutoFillingDay] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'itinerary' | 'flights' | 'hotels' | 'notes'>('itinerary');
+  const [viewMode, setViewMode] = useState<'list' | 'timeline'>('list');
   const [tripNotes, setTripNotes] = useState('');
   const [checklistItems, setChecklistItems] = useState<{ id: string; text: string; checked: boolean }[]>([]);
   const [newChecklistItem, setNewChecklistItem] = useState('');
@@ -120,6 +125,55 @@ export default function TripPage() {
       return dayNumber >= nightStart && dayNumber <= nightEnd;
     }) || null;
   }, [hotels]);
+
+  // Calculate trip dates for DateCarousel
+  const tripDates = useMemo(() => {
+    if (!trip?.start_date || !trip?.end_date) return null;
+    return {
+      startDate: new Date(trip.start_date),
+      endDate: new Date(trip.end_date),
+    };
+  }, [trip?.start_date, trip?.end_date]);
+
+  // Get selected date based on day number
+  const selectedDate = useMemo(() => {
+    if (!tripDates) return new Date();
+    const date = new Date(tripDates.startDate);
+    date.setDate(date.getDate() + selectedDayNumber - 1);
+    return date;
+  }, [tripDates, selectedDayNumber]);
+
+  // Get dates with events for DateCarousel indicators
+  const eventDates = useMemo(() => {
+    if (!tripDates) return [];
+    return days
+      .filter(day => day.items.length > 0)
+      .map(day => {
+        const date = new Date(tripDates.startDate);
+        date.setDate(date.getDate() + day.dayNumber - 1);
+        return date;
+      });
+  }, [tripDates, days]);
+
+  // Convert items to timeline events for TimelineDay
+  const timelineEvents = useMemo(() => {
+    const day = days.find(d => d.dayNumber === selectedDayNumber);
+    if (!day) return [];
+
+    return day.items
+      .map(item => itemToTimelineEvent(item, selectedDate))
+      .filter((e): e is NonNullable<typeof e> => e !== null);
+  }, [days, selectedDayNumber, selectedDate]);
+
+  // Handle date selection from DateCarousel
+  const handleSelectDate = useCallback((date: Date) => {
+    if (!tripDates) return;
+    const diffDays = Math.floor(
+      (date.getTime() - tripDates.startDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    const dayNumber = Math.max(1, diffDays + 1);
+    setSelectedDayNumber(dayNumber);
+  }, [tripDates]);
 
   // Generate trip warnings based on analysis
   useMemo(() => {
@@ -594,34 +648,101 @@ export default function TripPage() {
               <div className="lg:flex lg:gap-6">
                 {/* Main Itinerary Column */}
                 <div className="flex-1 space-y-4">
-                  {/* Horizontal Day Tabs */}
-                  <DayTabNav
-                    days={days}
-                    selectedDayNumber={selectedDayNumber}
-                    onSelectDay={setSelectedDayNumber}
-                    className="mb-4"
-                  />
+                  {/* View Mode Toggle + Date Carousel */}
+                  <div className="flex items-center gap-3 mb-2">
+                    {/* View Mode Toggle */}
+                    <div className="flex items-center gap-1 p-1 bg-stone-100 dark:bg-gray-800 rounded-lg">
+                      <button
+                        onClick={() => setViewMode('list')}
+                        className={`p-2 rounded-md transition-colors ${
+                          viewMode === 'list'
+                            ? 'bg-white dark:bg-gray-700 shadow-sm'
+                            : 'hover:bg-stone-200 dark:hover:bg-gray-700'
+                        }`}
+                        title="List view"
+                      >
+                        <List className={`w-4 h-4 ${viewMode === 'list' ? 'text-stone-900 dark:text-white' : 'text-stone-500 dark:text-gray-400'}`} />
+                      </button>
+                      <button
+                        onClick={() => setViewMode('timeline')}
+                        className={`p-2 rounded-md transition-colors ${
+                          viewMode === 'timeline'
+                            ? 'bg-white dark:bg-gray-700 shadow-sm'
+                            : 'hover:bg-stone-200 dark:hover:bg-gray-700'
+                        }`}
+                        title="Timeline view"
+                      >
+                        <Clock className={`w-4 h-4 ${viewMode === 'timeline' ? 'text-stone-900 dark:text-white' : 'text-stone-500 dark:text-gray-400'}`} />
+                      </button>
+                    </div>
 
-                  {/* Selected Day Only */}
-                  {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
-                    <TripDaySection
-                      key={day.dayNumber}
-                      day={day}
-                      isSelected={true}
-                      onSelect={() => {}}
-                      onReorderItems={reorderItems}
-                      onRemoveItem={removeItem}
-                      onEditItem={handleEditItem}
-                      onAddItem={openPlaceSelector}
-                      onOptimizeDay={handleOptimizeDay}
-                      onAutoFillDay={handleAutoFillDay}
-                      activeItemId={activeItemId}
-                      isOptimizing={optimizingDay === day.dayNumber}
-                      isAutoFilling={autoFillingDay === day.dayNumber}
-                      hotelForNight={getHotelForNight(day.dayNumber)}
-                      onHotelClick={(hotel) => setEditingHotel(hotel)}
+                    {/* Date Carousel (only when trip has dates) */}
+                    {tripDates && (
+                      <div className="flex-1 overflow-hidden">
+                        <DateCarousel
+                          startDate={tripDates.startDate}
+                          endDate={tripDates.endDate}
+                          selectedDate={selectedDate}
+                          onSelectDate={handleSelectDate}
+                          eventDates={eventDates}
+                        />
+                      </div>
+                    )}
+
+                    {/* Fallback: Day tabs when no dates */}
+                    {!tripDates && (
+                      <DayTabNav
+                        days={days}
+                        selectedDayNumber={selectedDayNumber}
+                        onSelectDay={setSelectedDayNumber}
+                        className="flex-1"
+                      />
+                    )}
+                  </div>
+
+                  {/* List View */}
+                  {viewMode === 'list' && (
+                    <>
+                      {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
+                        <TripDaySection
+                          key={day.dayNumber}
+                          day={day}
+                          isSelected={true}
+                          onSelect={() => {}}
+                          onReorderItems={reorderItems}
+                          onRemoveItem={removeItem}
+                          onEditItem={handleEditItem}
+                          onAddItem={openPlaceSelector}
+                          onOptimizeDay={handleOptimizeDay}
+                          onAutoFillDay={handleAutoFillDay}
+                          activeItemId={activeItemId}
+                          isOptimizing={optimizingDay === day.dayNumber}
+                          isAutoFilling={autoFillingDay === day.dayNumber}
+                          hotelForNight={getHotelForNight(day.dayNumber)}
+                          onHotelClick={(hotel) => setEditingHotel(hotel)}
+                        />
+                      ))}
+                    </>
+                  )}
+
+                  {/* Timeline View */}
+                  {viewMode === 'timeline' && (
+                    <TimelineDay
+                      date={selectedDate}
+                      events={timelineEvents}
+                      hourHeightPx={60}
+                      onEventClick={(event) => {
+                        if (event.item) {
+                          handleEditItem(event.item);
+                        }
+                      }}
+                      onTimeSlotClick={(time) => {
+                        // Could be used to add events at a specific time
+                        console.log('Clicked time slot:', time);
+                      }}
+                      className="mb-4"
                     />
-                  ))}
+                  )}
                 </div>
 
                 {/* Sidebar (Desktop) */}

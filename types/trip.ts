@@ -135,12 +135,20 @@ export interface TripLocation {
 }
 
 /**
+ * Event types for timeline view
+ */
+export type TimelineEventType = 'flight' | 'meal' | 'activity' | 'transport' | 'hotel';
+
+/**
  * Parsed notes data structure (stored as JSON in notes field)
  */
 export interface ItineraryItemNotes {
   type?: ItineraryItemType;
+  eventType?: TimelineEventType; // For timeline view categorization
   raw?: string;
-  duration?: number; // in minutes
+  duration?: number; // in minutes (alias for durationMinutes)
+  durationMinutes?: number; // Duration in minutes for timeline
+  endTime?: string; // Explicit end time (e.g., "11:30 AM")
   image?: string;
   city?: string;
   category?: string;
