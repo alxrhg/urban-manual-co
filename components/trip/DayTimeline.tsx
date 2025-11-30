@@ -412,7 +412,7 @@ export default function DayTimeline({
             </span>
           )}
         </div>
-        <div className="p-3 bg-gradient-to-r from-stone-50 to-white dark:from-gray-900 dark:to-gray-800 border border-stone-200 dark:border-gray-800 rounded-2xl shadow-sm">
+        <div className="p-3 bg-gradient-to-r from-stone-50 to-white dark:from-gray-900 dark:to-gray-800 border border-stone-200 dark:border-gray-800 rounded-2xl">
           <div className="flex items-center gap-3">
             <Moon className="w-4 h-4 text-amber-500" />
             <div className="flex-1">
@@ -433,7 +433,6 @@ export default function DayTimeline({
       text: 'text-stone-900 dark:text-white',
       border: 'border-stone-200 dark:border-gray-800',
       iconBg: 'bg-white/80 dark:bg-gray-900/70',
-      shadow: 'shadow-[0_8px_24px_-12px_rgba(15,23,42,0.25)]',
     };
 
     if (type === 'breakfast' || type === 'restaurant' || type === 'bar') {
@@ -552,8 +551,8 @@ export default function DayTimeline({
             onPointerDown={(event) => handleDragStart(item.id, 'move', start, duration, event.clientY)}
           >
             <div
-              className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-xl ${styleSet.shadow} relative overflow-hidden transition-transform duration-150 ${
-                isEditMode ? 'hover:scale-[1.005]' : ''
+            className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-xl relative overflow-hidden transition-colors duration-150 ${
+                isEditMode ? '' : ''
               } ${item.id === activeItemId ? 'ring-2 ring-stone-300 dark:ring-gray-600' : ''}`}
               onClick={() => onEditItem?.(item)}
             >
@@ -610,7 +609,7 @@ export default function DayTimeline({
 
           {nextItem && (
             <div
-              className="absolute left-[52px] right-0"
+              className="absolute left-[52px] right-0 flex justify-end pr-3"
               style={{ top: connectorTop, height: connectorHeight }}
             >
               <TransitConnector
