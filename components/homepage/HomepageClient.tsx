@@ -3,8 +3,10 @@
 /**
  * HomepageClient - Client-side interactive component for the homepage
  *
- * This component receives initial data from the server and handles
- * all interactive features including search, filtering, and navigation.
+ * OPTIMIZED:
+ * - Receives minimal data from server (50 destinations, essential fields)
+ * - Fetches user data client-side (non-blocking SSR)
+ * - Lazy loads more destinations on scroll/pagination
  */
 
 import React, {
@@ -41,22 +43,21 @@ import {
 import GreetingHero from "@/src/features/search/GreetingHero";
 import { SearchFiltersComponent } from "@/src/features/search/SearchFilters";
 import { type ExtractedIntent } from "@/app/api/intent/schema";
-import { type RefinementTag } from "@/components/RefinementChips";
 import { capitalizeCity } from "@/lib/utils";
 import { isOpenNow } from "@/lib/utils/opening-hours";
 import { DestinationCard } from "@/components/DestinationCard";
 import HomeMapSplitView from "@/components/HomeMapSplitView";
 import { EditModeToggle } from "@/components/EditModeToggle";
 import { useItemsPerPage } from "@/hooks/useGridColumns";
-import { useDestinationLoading } from "@/hooks/useDestinationLoading";
 import { getContextAwareLoadingMessage } from "@/src/lib/context/loading-message";
 import { useAdminEditMode } from "@/contexts/AdminEditModeContext";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { useDrawer } from "@/contexts/DrawerContext";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
+import { useAuth } from "@/contexts/AuthContext";
 import type { User } from "@supabase/supabase-js";
 
-// Lazy load components
+// Lazy load heavy components
 const DestinationDrawer = dynamic(
   () =>
     import("@/src/features/detail/DestinationDrawer").then((mod) => ({
@@ -65,18 +66,18 @@ const DestinationDrawer = dynamic(
   { ssr: false, loading: () => null }
 );
 
-const SequencePredictionsInline = dynamic(
-  () =>
-    import("@/components/SequencePredictionsInline").then((mod) => ({
-      default: mod.SequencePredictionsInline,
-    })),
-  { ssr: false }
-);
-
 const SmartRecommendations = dynamic(
   () =>
     import("@/components/SmartRecommendations").then((mod) => ({
       default: mod.SmartRecommendations,
+    })),
+  { ssr: false }
+);
+
+const SequencePredictionsInline = dynamic(
+  () =>
+    import("@/components/SequencePredictionsInline").then((mod) => ({
+      default: mod.SequencePredictionsInline,
     })),
   { ssr: false }
 );
@@ -121,14 +122,6 @@ const IntentConfirmationChips = dynamic(
   { ssr: false }
 );
 
-const RefinementChips = dynamic(
-  () =>
-    import("@/components/RefinementChips").then((mod) => ({
-      default: mod.RefinementChips,
-    })),
-  { ssr: false }
-);
-
 const FollowUpSuggestions = dynamic(
   () =>
     import("@/components/FollowUpSuggestions").then((mod) => ({
@@ -140,15 +133,30 @@ const FollowUpSuggestions = dynamic(
 // Featured cities to show first
 const FEATURED_CITIES = ["Taipei", "Tokyo", "New York", "London"];
 
-// Props interface for server-provided data
+// Minimal destination type (matches server)
+type MinimalDestination = Pick<
+  Destination,
+  | "id"
+  | "slug"
+  | "name"
+  | "city"
+  | "country"
+  | "category"
+  | "image"
+  | "image_thumbnail"
+  | "michelin_stars"
+  | "crown"
+  | "rating"
+  | "price_level"
+  | "micro_description"
+>;
+
+// Props interface - simplified, user data fetched client-side
 export interface HomepageClientProps {
-  initialDestinations: Destination[];
+  initialDestinations: MinimalDestination[];
   initialCities: string[];
   initialCategories: string[];
-  initialUser: User | null;
-  initialUserProfile: UserProfile | null;
-  initialVisitedSlugs: string[];
-  initialIsAdmin: boolean;
+  totalCount: number;
 }
 
 function getCategoryIcon(
@@ -168,12 +176,10 @@ export default function HomepageClient({
   initialDestinations,
   initialCities,
   initialCategories,
-  initialUser,
-  initialUserProfile,
-  initialVisitedSlugs,
-  initialIsAdmin,
+  totalCount,
 }: HomepageClientProps) {
   const router = useRouter();
+  const { user } = useAuth(); // Fetch user client-side (non-blocking)
   const {
     isEditMode: adminEditMode,
     toggleEditMode,
@@ -184,17 +190,20 @@ export default function HomepageClient({
   const { openDrawer: openGlobalDrawer } = useDrawerStore();
   const { openDrawer, closeDrawer } = useDrawer();
 
-  // Initialize state with server-provided data
-  const [destinations, setDestinations] = useState<Destination[]>(initialDestinations);
-  const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>(initialDestinations);
-  const [cities, setCities] = useState<string[]>(initialCities);
-  const [categories, setCategories] = useState<string[]>(initialCategories);
-  const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(
-    new Set(initialVisitedSlugs)
-  );
-  const [isAdmin, setIsAdmin] = useState(initialIsAdmin);
-  const [user] = useState<User | null>(initialUser);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(initialUserProfile);
+  // Initialize state with server-provided data (minimal)
+  const [destinations, setDestinations] = useState<MinimalDestination[]>(initialDestinations);
+  const [filteredDestinations, setFilteredDestinations] = useState<MinimalDestination[]>(initialDestinations);
+  const [cities] = useState<string[]>(initialCities);
+  const [categories] = useState<string[]>(initialCategories);
+
+  // User data - fetched client-side (non-blocking SSR)
+  const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+  // Loading more destinations
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(initialDestinations.length < totalCount);
 
   // UI state
   const [searchTerm, setSearchTerm] = useState("");
@@ -231,8 +240,6 @@ export default function HomepageClient({
     }>
   >([]);
   const [searchIntent, setSearchIntent] = useState<ExtractedIntent | null>(null);
-  const [inferredTags, setInferredTags] = useState<any>(null);
-  const [activeFilters, setActiveFilters] = useState<Set<string>>(new Set());
   const [seasonalContext, setSeasonalContext] = useState<any>(null);
 
   // Session/context state
@@ -275,10 +282,9 @@ export default function HomepageClient({
   });
 
   // Hooks
-  const destinationLoading = useDestinationLoading();
   const itemsPerPage = useItemsPerPage(4);
   const editModeActive = isAdmin && adminEditMode;
-  const isDestinationsLoading = searching;
+  const isDestinationsLoading = searching || loadingMore;
 
   // Loading message
   const currentLoadingText = useMemo(() => {
@@ -475,12 +481,9 @@ export default function HomepageClient({
           setFilteredDestinations(data.destinations);
         }
 
-        // Update intent and tags
+        // Update intent and suggestions
         if (data.intent) {
           setSearchIntent(data.intent);
-        }
-        if (data.inferredTags) {
-          setInferredTags(data.inferredTags);
         }
         if (data.followUpSuggestions) {
           setFollowUpSuggestions(data.followUpSuggestions);
@@ -630,54 +633,58 @@ export default function HomepageClient({
     }
   }, [chatMessages]);
 
-  // Fetch user-specific data on client
+  // Fetch user-specific data on client (non-blocking SSR)
   useEffect(() => {
-    if (user) {
-      // Fetch last session
-      fetch(`/api/conversation/${user.id}`)
-        .then((res) => res.ok ? res.json() : null)
-        .then((data) => {
-          if (data?.session_id && data?.messages?.length > 0) {
-            setLastSession({
-              id: data.session_id,
-              last_activity: data.last_activity || new Date().toISOString(),
-              context_summary: data.context,
-            });
-            const lastActivity = new Date(data.last_activity || Date.now());
-            const hoursSince = (Date.now() - lastActivity.getTime()) / (1000 * 60 * 60);
-            if (hoursSince < 24) {
-              setShowSessionResume(true);
-            }
+    if (!user) return;
+
+    // Set admin status
+    const role = user.app_metadata?.role;
+    setIsAdmin(role === "admin");
+
+    // Fetch user profile
+    fetch("/api/homepage/profile", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.profile) {
+          setUserProfile(data.profile);
+          setUserContext({
+            favoriteCities: data.profile.favorite_cities || [],
+            favoriteCategories: data.profile.favorite_categories || [],
+            travelStyle: data.profile.travel_style,
+          });
+        }
+      })
+      .catch(() => {});
+
+    // Fetch visited places
+    fetch("/api/homepage/visited", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.slugs) {
+          setVisitedSlugs(new Set(data.slugs));
+        }
+      })
+      .catch(() => {});
+
+    // Fetch last session (low priority)
+    fetch(`/api/conversation/${user.id}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.session_id && data?.messages?.length > 0) {
+          setLastSession({
+            id: data.session_id,
+            last_activity: data.last_activity || new Date().toISOString(),
+            context_summary: data.context,
+          });
+          const lastActivity = new Date(data.last_activity || Date.now());
+          const hoursSince = (Date.now() - lastActivity.getTime()) / (1000 * 60 * 60);
+          if (hoursSince < 24) {
+            setShowSessionResume(true);
           }
-        })
-        .catch(() => {});
-
-      // Fetch enriched greeting context
-      if (userProfile) {
-        const favoriteCity = userProfile.favorite_cities?.[0];
-        const params = new URLSearchParams({ userId: user.id });
-        if (favoriteCity) params.append("favoriteCity", favoriteCity);
-
-        fetch(`/api/greeting/context?${params.toString()}`)
-          .then((res) => res.ok ? res.json() : null)
-          .then((data) => {
-            if (data?.success && data?.context) {
-              setEnrichedGreetingContext(data.context);
-            }
-          })
-          .catch(() => {});
-      }
-
-      // Set user context from profile
-      if (userProfile) {
-        setUserContext({
-          favoriteCities: userProfile.favorite_cities || [],
-          favoriteCategories: userProfile.favorite_categories || [],
-          travelStyle: userProfile.travel_style,
-        });
-      }
-    }
-  }, [user, userProfile]);
+        }
+      })
+      .catch(() => {});
+  }, [user]);
 
   // Computed values
   const featuredCities = useMemo(

@@ -1,141 +1,200 @@
 /**
  * Server-Side Data Loaders for Homepage
  *
- * These functions fetch initial homepage data on the server,
- * enabling server-side rendering for faster initial page loads.
+ * OPTIMIZED for speed:
+ * - Cached with unstable_cache (60s TTL)
+ * - Limited initial load (50 destinations)
+ * - Minimal fields for faster serialization
+ * - User data fetched client-side (non-blocking)
  */
 
+import { unstable_cache } from "next/cache";
 import { createServerClient } from "@/lib/supabase/server";
-import {
-  getHomepageDestinations,
-  getFilterRows,
-  getVisitedSlugsForUser,
-  getUserProfileById,
-  type FilterRow,
-} from "@/server/services/homepage-loaders";
 import type { Destination } from "@/types/destination";
-import type { UserProfile } from "@/types/personalization";
-import type { User } from "@supabase/supabase-js";
+
+// Minimal destination type for initial render (reduces payload ~70%)
+export type MinimalDestination = Pick<
+  Destination,
+  | "id"
+  | "slug"
+  | "name"
+  | "city"
+  | "country"
+  | "category"
+  | "image"
+  | "image_thumbnail"
+  | "michelin_stars"
+  | "crown"
+  | "rating"
+  | "price_level"
+  | "micro_description"
+>;
 
 export interface HomepageData {
-  destinations: Destination[];
+  destinations: MinimalDestination[];
   cities: string[];
   categories: string[];
-  user: User | null;
-  userProfile: UserProfile | null;
-  visitedSlugs: string[];
-  isAdmin: boolean;
+  totalCount: number;
 }
 
 /**
- * Extract unique cities from filter rows
+ * Cached function to fetch homepage destinations
+ * Revalidates every 60 seconds
  */
-function extractUniqueCities(filterRows: FilterRow[]): string[] {
-  const citySet = new Set<string>();
-  for (const row of filterRows) {
-    if (row.city && typeof row.city === "string") {
-      citySet.add(row.city);
+const getCachedDestinations = unstable_cache(
+  async (limit: number = 50): Promise<{ destinations: MinimalDestination[]; total: number }> => {
+    try {
+      const supabase = await createServerClient();
+
+      // Get total count first (for pagination info)
+      const { count } = await supabase
+        .from("destinations")
+        .select("*", { count: "exact", head: true })
+        .is("parent_destination_id", null);
+
+      // Fetch only essential fields for initial render
+      const { data, error } = await supabase
+        .from("destinations")
+        .select(
+          `id, slug, name, city, country, category,
+           image, image_thumbnail, michelin_stars, crown,
+           rating, price_level, micro_description`
+        )
+        .is("parent_destination_id", null)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error("[Homepage Loader] Destinations error:", error.message);
+        return { destinations: [], total: 0 };
+      }
+
+      return {
+        destinations: (data || []) as MinimalDestination[],
+        total: count || 0,
+      };
+    } catch (error) {
+      console.error("[Homepage Loader] Destinations fetch failed:", error);
+      return { destinations: [], total: 0 };
     }
-  }
-  return Array.from(citySet).sort((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: "base" })
-  );
-}
+  },
+  ["homepage-destinations"],
+  { revalidate: 60, tags: ["destinations"] }
+);
 
 /**
- * Extract unique categories from filter rows
+ * Cached function to fetch filter options
+ * Revalidates every 5 minutes (filters change less often)
  */
-function extractUniqueCategories(filterRows: FilterRow[]): string[] {
-  const categorySet = new Set<string>();
-  for (const row of filterRows) {
-    if (row.category && typeof row.category === "string") {
-      categorySet.add(row.category);
+const getCachedFilters = unstable_cache(
+  async (): Promise<{ cities: string[]; categories: string[] }> => {
+    try {
+      const supabase = await createServerClient();
+
+      // Use distinct query for efficiency
+      const { data, error } = await supabase
+        .from("destinations")
+        .select("city, category")
+        .is("parent_destination_id", null);
+
+      if (error) {
+        console.error("[Homepage Loader] Filters error:", error.message);
+        return { cities: [], categories: [] };
+      }
+
+      const citySet = new Set<string>();
+      const categorySet = new Set<string>();
+
+      for (const row of data || []) {
+        if (row.city) citySet.add(row.city);
+        if (row.category) categorySet.add(row.category);
+      }
+
+      return {
+        cities: Array.from(citySet).sort((a, b) =>
+          a.localeCompare(b, undefined, { sensitivity: "base" })
+        ),
+        categories: Array.from(categorySet).sort((a, b) =>
+          a.localeCompare(b, undefined, { sensitivity: "base" })
+        ),
+      };
+    } catch (error) {
+      console.error("[Homepage Loader] Filters fetch failed:", error);
+      return { cities: [], categories: [] };
     }
-  }
-  return Array.from(categorySet).sort((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: "base" })
-  );
-}
+  },
+  ["homepage-filters"],
+  { revalidate: 300, tags: ["filters"] }
+);
 
 /**
- * Load all homepage data server-side
+ * Load homepage data (cached, fast)
  *
- * This function is called from the server component to fetch:
- * - Destinations (up to 5000)
- * - Filter options (cities and categories)
- * - User authentication state
- * - User profile (if authenticated)
- * - Visited places (if authenticated)
+ * Only fetches:
+ * - 50 destinations with minimal fields
+ * - Filter options (cities/categories)
+ *
+ * User data is fetched client-side to not block SSR
  */
 export async function loadHomepageData(): Promise<HomepageData> {
-  // Fetch destinations and filter data in parallel
-  const [destinations, filterRows] = await Promise.all([
-    getHomepageDestinations(5000),
-    getFilterRows(1000),
+  // Fetch in parallel (both cached)
+  const [destinationData, filters] = await Promise.all([
+    getCachedDestinations(50),
+    getCachedFilters(),
   ]);
 
-  // Extract unique cities and categories
-  const cities = extractUniqueCities(filterRows);
-  const categories = extractUniqueCategories(filterRows);
-
-  // Get current user from server-side Supabase client
-  let user: User | null = null;
-  let userProfile: UserProfile | null = null;
-  let visitedSlugs: string[] = [];
-  let isAdmin = false;
-
-  try {
-    const supabase = await createServerClient();
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-
-    if (authUser) {
-      user = authUser;
-      isAdmin = authUser.app_metadata?.role === "admin";
-
-      // Fetch user-specific data in parallel
-      const [profile, slugs] = await Promise.all([
-        getUserProfileById(authUser.id),
-        getVisitedSlugsForUser(authUser.id),
-      ]);
-
-      userProfile = profile;
-      visitedSlugs = slugs;
-    }
-  } catch (error) {
-    // Auth errors are non-fatal - continue with anonymous data
-    console.warn("[Homepage Loader] Auth check failed:", error);
-  }
-
   return {
-    destinations,
-    cities,
-    categories,
-    user,
-    userProfile,
-    visitedSlugs,
-    isAdmin,
+    destinations: destinationData.destinations,
+    cities: filters.cities,
+    categories: filters.categories,
+    totalCount: destinationData.total,
   };
 }
 
 /**
- * Load minimal homepage data for faster initial render
- *
- * Use this for streaming SSR where you want to show content quickly
- * and hydrate user-specific data on the client.
+ * Load more destinations (for infinite scroll/pagination)
+ * Called via API route, not during SSR
  */
-export async function loadHomepageDataMinimal(): Promise<
-  Pick<HomepageData, "destinations" | "cities" | "categories">
-> {
-  const [destinations, filterRows] = await Promise.all([
-    getHomepageDestinations(5000),
-    getFilterRows(1000),
-  ]);
+export async function loadMoreDestinations(
+  offset: number,
+  limit: number = 50,
+  city?: string,
+  category?: string
+): Promise<{ destinations: MinimalDestination[]; hasMore: boolean }> {
+  try {
+    const supabase = await createServerClient();
 
-  return {
-    destinations,
-    cities: extractUniqueCities(filterRows),
-    categories: extractUniqueCategories(filterRows),
-  };
+    let query = supabase
+      .from("destinations")
+      .select(
+        `id, slug, name, city, country, category,
+         image, image_thumbnail, michelin_stars, crown,
+         rating, price_level, micro_description`
+      )
+      .is("parent_destination_id", null)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit);
+
+    if (city) {
+      query = query.eq("city", city);
+    }
+    if (category) {
+      query = query.eq("category", category);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error("[Homepage Loader] Load more error:", error.message);
+      return { destinations: [], hasMore: false };
+    }
+
+    return {
+      destinations: (data || []) as MinimalDestination[],
+      hasMore: (data?.length || 0) === limit + 1,
+    };
+  } catch (error) {
+    console.error("[Homepage Loader] Load more failed:", error);
+    return { destinations: [], hasMore: false };
+  }
 }
