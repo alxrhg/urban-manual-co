@@ -10,13 +10,13 @@ interface TimeGridProps {
 }
 
 /**
- * TimeGrid - Renders the hour and half-hour markers on the timeline
+ * TimeGrid - Simple time labels aligned to the left
  */
 function TimeGridComponent({
   startHour,
   endHour,
   minutesToPixels,
-  showHalfHours = true,
+  showHalfHours = false,
 }: TimeGridProps) {
   const labels = [];
 
@@ -24,35 +24,30 @@ function TimeGridComponent({
     const top = minutesToPixels(hour * 60);
     const label = `${hour.toString().padStart(2, '0')}:00`;
 
-    // Hour marker
     labels.push(
       <div
         key={`hour-${hour}`}
-        className="absolute left-0 right-0 pointer-events-none"
-        style={{ top }}
+        className="absolute left-0 pointer-events-none"
+        style={{ top: top - 6 }}
       >
-        <div className="flex items-center gap-3">
-          <div className="w-12 text-[11px] text-right text-gray-400 dark:text-gray-500 tabular-nums pr-1">
-            {label}
-          </div>
-          <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
-        </div>
+        <span className="text-[11px] text-gray-400 dark:text-gray-500 tabular-nums">
+          {label}
+        </span>
       </div>
     );
 
-    // Half-hour marker (30 minutes after the hour)
+    // Half-hour label (optional)
     if (showHalfHours && hour < endHour) {
       const halfHourTop = minutesToPixels(hour * 60 + 30);
       labels.push(
         <div
           key={`half-${hour}`}
-          className="absolute left-0 right-0 pointer-events-none"
-          style={{ top: halfHourTop }}
+          className="absolute left-0 pointer-events-none"
+          style={{ top: halfHourTop - 6 }}
         >
-          <div className="flex items-center gap-3">
-            <div className="w-12" /> {/* Spacer for alignment */}
-            <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800 border-dashed" style={{ borderTopWidth: '1px', borderStyle: 'dashed' }} />
-          </div>
+          <span className="text-[10px] text-gray-300 dark:text-gray-600 tabular-nums">
+            {hour.toString().padStart(2, '0')}:30
+          </span>
         </div>
       );
     }

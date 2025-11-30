@@ -40,25 +40,24 @@ interface TimelineCardProps {
 
 function getIconForItem(item: EnrichedItineraryItem) {
   const type = item.parsedNotes?.type || item.destination?.category;
-  if (type === 'breakfast' || type === 'cafe') return <Coffee className="w-4 h-4" />;
-  if (type === 'restaurant') return <Utensils className="w-4 h-4" />;
-  if (type === 'bar') return <Martini className="w-4 h-4" />;
-  if (type === 'museum' || type === 'gallery') return <Landmark className="w-4 h-4" />;
-  if (type === 'flight') return <Plane className="w-4 h-4" />;
-  if (type === 'train') return <Train className="w-4 h-4" />;
-  if (type === 'activity') return <Camera className="w-4 h-4" />;
-  return <MapPin className="w-4 h-4" />;
+  if (type === 'breakfast' || type === 'cafe') return <Coffee className="w-3.5 h-3.5" />;
+  if (type === 'restaurant') return <Utensils className="w-3.5 h-3.5" />;
+  if (type === 'bar') return <Martini className="w-3.5 h-3.5" />;
+  if (type === 'museum' || type === 'gallery') return <Landmark className="w-3.5 h-3.5" />;
+  if (type === 'flight') return <Plane className="w-3.5 h-3.5" />;
+  if (type === 'train') return <Train className="w-3.5 h-3.5" />;
+  if (type === 'activity') return <Camera className="w-3.5 h-3.5" />;
+  return <MapPin className="w-3.5 h-3.5" />;
 }
 
 /**
- * TimelineCard - Individual card on the timeline
+ * TimelineCard - Flat inline card for planner-style timeline
  */
 function TimelineCardComponent({
   item,
   start,
   duration,
   height,
-  laneOffset,
   isActive = false,
   isEditMode = false,
   onEdit,
@@ -72,8 +71,8 @@ function TimelineCardComponent({
 
   return (
     <div
-      className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-lg relative overflow-hidden transition-colors duration-150 ${
-        isActive ? 'ring-1 ring-gray-300 dark:ring-gray-600' : ''
+      className={`h-full flex items-stretch ${
+        isActive ? 'bg-gray-50 dark:bg-gray-800/50' : ''
       }`}
       onClick={() => onEdit?.(item)}
       role="button"
@@ -86,68 +85,64 @@ function TimelineCardComponent({
         }
       }}
     >
-      {/* Edit mode drag handle */}
-      {isEditMode && (
-        <div className="absolute inset-x-4 top-2 flex items-center justify-between text-[10px] text-gray-400">
-          <span className="flex items-center gap-1 uppercase tracking-wide font-medium">
-            <GripVertical className="w-3 h-3" />
-            Drag
-          </span>
-          <span className="tabular-nums">{formatTimeDisplay(formatMinutesToTime(duration))}</span>
-        </div>
-      )}
+      {/* Left accent bar */}
+      <div className={`w-0.5 flex-shrink-0 ${styleSet.accent}`} />
 
       {/* Card content */}
-      <div className="flex items-start gap-3 px-3 py-2.5 relative z-10">
-        <div
-          className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${styleSet.iconBg} ${styleSet.iconColor}`}
-        >
+      <div className="flex-1 flex items-start gap-2.5 pl-3 pr-2 py-2 min-w-0">
+        {/* Icon */}
+        <div className={`flex-shrink-0 mt-0.5 ${styleSet.iconColor}`}>
           {getIconForItem(item)}
         </div>
-        <div className="flex-1 min-w-0 pt-0.5">
-          <p className="text-sm font-medium leading-tight text-gray-900 dark:text-white line-clamp-1">
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-gray-900 dark:text-white leading-tight truncate">
             {item.title || 'Untitled stop'}
           </p>
           <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="text-[11px] text-gray-400 dark:text-gray-500 tabular-nums">
-              {startLabel} – {endLabel}
+            <span className="text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+              {startLabel}–{endLabel}
             </span>
             {item.destination?.neighborhood && (
               <>
-                <span className="text-gray-300 dark:text-gray-600">·</span>
-                <span className="text-[11px] text-gray-400 dark:text-gray-500 truncate">
+                <span className="text-gray-300 dark:text-gray-700">·</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500 truncate">
                   {item.destination.neighborhood}
                 </span>
               </>
             )}
           </div>
-          {/* Expanded content when card is tall enough */}
           {showExpandedContent && item.parsedNotes?.notes && (
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1 line-clamp-2">
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1 line-clamp-2">
               {item.parsedNotes.notes}
             </p>
           )}
         </div>
-        {/* Duration badge */}
-        <div className="flex-shrink-0 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
-          <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums">
-            {formatDuration(duration)}
-          </span>
-        </div>
+
+        {/* Duration */}
+        <span className="flex-shrink-0 text-xs text-gray-400 dark:text-gray-500 tabular-nums">
+          {formatDuration(duration)}
+        </span>
+
+        {/* Edit mode indicator */}
+        {isEditMode && (
+          <GripVertical className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0" />
+        )}
       </div>
 
       {/* Resize handles in edit mode */}
       {isEditMode && onDragStart && (
         <>
           <div
-            className="absolute inset-x-4 top-0 h-2 cursor-n-resize"
+            className="absolute inset-x-0 top-0 h-2 cursor-n-resize"
             onPointerDown={(event) => {
               event.stopPropagation();
               onDragStart(item.id, 'resize-start', start, duration, event.clientY);
             }}
           />
           <div
-            className="absolute inset-x-4 bottom-0 h-2 cursor-s-resize"
+            className="absolute inset-x-0 bottom-0 h-2 cursor-s-resize"
             onPointerDown={(event) => {
               event.stopPropagation();
               onDragStart(item.id, 'resize-end', start, duration, event.clientY);

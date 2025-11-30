@@ -391,13 +391,15 @@ export default function DayTimeline({
                 className="relative"
                 style={{ height: `${timelineHeight}px` }}
               >
-                {/* Time grid with half-hour markers */}
-                <TimeGrid
-                  startHour={startHour}
-                  endHour={endHour}
-                  minutesToPixels={minutesToPixels}
-                  showHalfHours={true}
-                />
+                {/* Time labels */}
+                <div className="w-12">
+                  <TimeGrid
+                    startHour={startHour}
+                    endHour={endHour}
+                    minutesToPixels={minutesToPixels}
+                    showHalfHours={false}
+                  />
+                </div>
 
                 {/* Current time indicator */}
                 <CurrentTimeIndicator
@@ -409,7 +411,7 @@ export default function DayTimeline({
                 />
 
                 {/* Timeline cards */}
-                <div className="absolute inset-0 left-16 z-10">
+                <div className="absolute inset-0 left-14">
                   {renderBlocks()}
                 </div>
               </div>
@@ -428,10 +430,10 @@ export default function DayTimeline({
 
         {/* Add Stop Button */}
         {day.items.length > 0 && (
-          <div className="mt-4">
+          <div className="mt-3 ml-14">
             <button
               onClick={() => onAddItem?.(day.dayNumber)}
-              className="w-full flex items-center justify-center gap-2 py-3 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-dashed border-gray-200 dark:border-gray-800 rounded-xl hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <Plus className="w-3 h-3" />
               Add stop

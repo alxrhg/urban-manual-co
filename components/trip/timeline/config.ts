@@ -8,7 +8,7 @@ export const TIMELINE_CONFIG = {
   gridMinutes: 30,
   defaultStartHour: 6,
   defaultEndHour: 24,
-  minCardHeight: 48,
+  minCardHeight: 44,
   laneOffset: 8,
   scrollableMaxHeight: 500,
 } as const;
@@ -27,80 +27,64 @@ export type CategoryType =
   | 'default';
 
 export interface CategoryStyle {
-  text: string;
-  border: string;
-  bg: string;
-  iconBg: string;
+  accent: string;
   iconColor: string;
 }
 
 const baseStyle: CategoryStyle = {
-  text: 'text-gray-900 dark:text-white',
-  border: 'border-gray-200 dark:border-gray-800',
-  bg: 'bg-white dark:bg-gray-900',
-  iconBg: 'bg-gray-100 dark:bg-gray-800',
-  iconColor: 'text-gray-500 dark:text-gray-400',
+  accent: 'bg-gray-300 dark:bg-gray-600',
+  iconColor: 'text-gray-400 dark:text-gray-500',
 };
 
 export const CATEGORY_STYLES: Record<string, CategoryStyle> = {
-  // Food & Drink
+  // Food & Drink - amber accent
   breakfast: {
-    ...baseStyle,
-    iconColor: 'text-amber-600 dark:text-amber-500',
-    iconBg: 'bg-amber-50 dark:bg-amber-900/20',
+    accent: 'bg-amber-400 dark:bg-amber-500',
+    iconColor: 'text-amber-500 dark:text-amber-400',
   },
   cafe: {
-    ...baseStyle,
-    iconColor: 'text-amber-600 dark:text-amber-500',
-    iconBg: 'bg-amber-50 dark:bg-amber-900/20',
+    accent: 'bg-amber-400 dark:bg-amber-500',
+    iconColor: 'text-amber-500 dark:text-amber-400',
   },
   restaurant: {
-    ...baseStyle,
-    iconColor: 'text-amber-600 dark:text-amber-500',
-    iconBg: 'bg-amber-50 dark:bg-amber-900/20',
+    accent: 'bg-amber-400 dark:bg-amber-500',
+    iconColor: 'text-amber-500 dark:text-amber-400',
   },
   bar: {
-    ...baseStyle,
-    iconColor: 'text-amber-600 dark:text-amber-500',
-    iconBg: 'bg-amber-50 dark:bg-amber-900/20',
+    accent: 'bg-amber-400 dark:bg-amber-500',
+    iconColor: 'text-amber-500 dark:text-amber-400',
   },
 
-  // Culture
+  // Culture - gray accent
   museum: {
-    ...baseStyle,
-    iconColor: 'text-gray-600 dark:text-gray-400',
-    iconBg: 'bg-gray-100 dark:bg-gray-800',
+    accent: 'bg-gray-400 dark:bg-gray-500',
+    iconColor: 'text-gray-500 dark:text-gray-400',
   },
   gallery: {
-    ...baseStyle,
-    iconColor: 'text-gray-600 dark:text-gray-400',
-    iconBg: 'bg-gray-100 dark:bg-gray-800',
+    accent: 'bg-gray-400 dark:bg-gray-500',
+    iconColor: 'text-gray-500 dark:text-gray-400',
   },
 
-  // Transport
+  // Transport - blue accent
   flight: {
-    ...baseStyle,
-    iconColor: 'text-blue-600 dark:text-blue-500',
-    iconBg: 'bg-blue-50 dark:bg-blue-900/20',
+    accent: 'bg-blue-400 dark:bg-blue-500',
+    iconColor: 'text-blue-500 dark:text-blue-400',
   },
   train: {
-    ...baseStyle,
-    iconColor: 'text-blue-600 dark:text-blue-500',
-    iconBg: 'bg-blue-50 dark:bg-blue-900/20',
+    accent: 'bg-blue-400 dark:bg-blue-500',
+    iconColor: 'text-blue-500 dark:text-blue-400',
   },
 
-  // Activities
+  // Activities - emerald accent
   activity: {
-    ...baseStyle,
-    iconColor: 'text-emerald-600 dark:text-emerald-500',
-    iconBg: 'bg-emerald-50 dark:bg-emerald-900/20',
+    accent: 'bg-emerald-400 dark:bg-emerald-500',
+    iconColor: 'text-emerald-500 dark:text-emerald-400',
   },
 
-  // Accommodation
+  // Accommodation - amber accent
   hotel: {
-    ...baseStyle,
-    iconColor: 'text-amber-600 dark:text-amber-500',
-    iconBg: 'bg-amber-50 dark:bg-amber-900/20',
+    accent: 'bg-amber-400 dark:bg-amber-500',
+    iconColor: 'text-amber-500 dark:text-amber-400',
   },
 
   // Default
