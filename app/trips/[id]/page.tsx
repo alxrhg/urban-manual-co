@@ -73,6 +73,7 @@ export default function TripPage() {
     addActivity,
     removeItem,
     updateItemTime,
+    updateItemDuration,
     updateItemNotes,
     updateItem,
     refresh,
@@ -722,6 +723,7 @@ export default function TripPage() {
                         onRemoveItem={isEditMode ? removeItem : undefined}
                         onEditItem={handleEditItem}
                         onTimeChange={updateItemTime}
+                        onDurationChange={updateItemDuration}
                         onTravelModeChange={handleTravelModeChange}
                         onAddItem={openPlaceSelector}
                         onOptimizeDay={handleOptimizeDay}

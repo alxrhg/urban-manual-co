@@ -673,6 +673,47 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, []);
 
+  const updateItemDuration = useCallback(async (itemId: string, duration: number) => {
+    let existingNotes: ItineraryItemNotes | undefined;
+    for (const day of days) {
+      const item = day.items.find((i) => i.id === itemId);
+      if (item) {
+        existingNotes = item.parsedNotes;
+        break;
+      }
+    }
+
+    const updatedNotes: ItineraryItemNotes = {
+      ...existingNotes,
+      duration,
+    };
+
+    setDays((prev) =>
+      prev.map((d) => ({
+        ...d,
+        items: d.items.map((item) =>
+          item.id === itemId
+            ? { ...item, notes: stringifyItineraryNotes(updatedNotes), parsedNotes: updatedNotes }
+            : item
+        ),
+      }))
+    );
+
+    try {
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { error } = await supabase
+        .from('itinerary_items')
+        .update({ notes: stringifyItineraryNotes(updatedNotes) })
+        .eq('id', itemId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error updating duration:', err);
+    }
+  }, [days]);
+
   // Update item notes
   const updateItemNotes = useCallback(async (itemId: string, notesText: string) => {
     // Find the item and update its parsed notes
@@ -774,6 +815,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     addActivity,
     removeItem,
     updateItemTime,
+    updateItemDuration,
     updateItemNotes,
     updateItem,
     refresh: fetchTrip,

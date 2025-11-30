@@ -1,30 +1,34 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
-import { format, parseISO } from 'date-fns';
-import { Plus, Sparkles, Loader2, Moon } from 'lucide-react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { format, parseISO, isToday } from 'date-fns';
 import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  arrayMove,
-} from '@dnd-kit/sortable';
-import TimelineBlock, { ViewOnlyTimelineBlock } from './TimelineBlock';
+  Plus,
+  Sparkles,
+  Loader2,
+  Moon,
+  MapPin,
+  Coffee,
+  Utensils,
+  Martini,
+  Landmark,
+  Train,
+  Camera,
+  Plane,
+  GripVertical,
+} from 'lucide-react';
 import TransitConnector, { TransitMode } from './TransitConnector';
 import DayIntelligence from './DayIntelligence';
 import { NeighborhoodTags } from './NeighborhoodBreakdown';
 import { getAirportCoordinates } from '@/lib/utils/airports';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+import {
+  calculateDuration,
+  estimateDuration,
+  formatMinutesToTime,
+  formatTimeDisplay,
+  parseTimeToMinutes,
+} from '@/lib/utils/time-calculations';
 
 interface DayTimelineProps {
   day: TripDay;
@@ -33,6 +37,7 @@ interface DayTimelineProps {
   onRemoveItem?: (itemId: string) => void;
   onEditItem?: (item: EnrichedItineraryItem) => void;
   onTimeChange?: (itemId: string, time: string) => void;
+  onDurationChange?: (itemId: string, duration: number) => void;
   onTravelModeChange?: (itemId: string, mode: TransitMode) => void;
   onAddItem?: (dayNumber: number, category?: string) => void;
   onOptimizeDay?: (dayNumber: number) => void;
@@ -51,9 +56,10 @@ export default function DayTimeline({
   day,
   nightlyHotel,
   onReorderItems,
-  onRemoveItem,
+  onRemoveItem: _onRemoveItem,
   onEditItem,
   onTimeChange,
+  onDurationChange,
   onTravelModeChange,
   onAddItem,
   onOptimizeDay,
@@ -63,34 +69,23 @@ export default function DayTimeline({
   isAutoFilling = false,
   isEditMode = false,
 }: DayTimelineProps) {
-  // Sensors for drag and drop
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: { distance: 8 },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 200,
-        tolerance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (over && active.id !== over.id) {
-        const oldIndex = day.items.findIndex((item) => item.id === active.id);
-        const newIndex = day.items.findIndex((item) => item.id === over.id);
-        const newItems = arrayMove(day.items, oldIndex, newIndex);
-        onReorderItems?.(day.dayNumber, newItems);
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+  const [livePositions, setLivePositions] = useState<
+    Record<string, { start: number; duration: number }>
+  >({});
+  const [localEdits, setLocalEdits] = useState<
+    Record<string, { time?: string; duration?: number }>
+  >({});
+  const [dragState, setDragState] = useState<
+    | null
+    | {
+        itemId: string;
+        mode: 'move' | 'resize-start' | 'resize-end';
+        startY: number;
+        initialStart: number;
+        initialDuration: number;
       }
-    },
-    [day.dayNumber, day.items, onReorderItems]
-  );
+  >(null);
 
   const formatDayDate = (dateStr: string | null) => {
     if (!dateStr) return null;
@@ -102,6 +97,18 @@ export default function DayTimeline({
   };
 
   const formattedDate = formatDayDate(day.date);
+
+  const updateLocalEdit = useCallback((id: string, updates: { time?: string; duration?: number }) => {
+    setLocalEdits((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], ...updates },
+    }));
+  }, []);
+
+  useEffect(() => {
+    setLivePositions({});
+    setLocalEdits({});
+  }, [day.dayNumber]);
 
   // Helper to get coordinates for transit connectors
   const getFromLocation = (item: EnrichedItineraryItem) => {
@@ -177,54 +184,183 @@ export default function DayTimeline({
     };
   }, [day.items, day.date, nightlyHotel]);
 
-  // Render regular items with transit connectors (view mode)
-  const renderItemsWithConnectors = () => {
-    return regularItems.map((item, index) => {
-      const nextItem = regularItems[index + 1];
-      const fromLocation = getFromLocation(item);
-      const toLocation = nextItem ? getToLocation(nextItem) : undefined;
+  const parseItemStartMinutes = useCallback(
+    (item: EnrichedItineraryItem, index: number): number => {
+      const override = localEdits[item.id]?.time;
+      const baseTime = override || item.time || item.parsedNotes?.departureTime;
+      if (baseTime) return parseTimeToMinutes(baseTime);
 
-      // Get saved travel mode from item's parsedNotes, default to walking
-      const savedTravelMode = (item.parsedNotes?.travelModeToNext as TransitMode) || 'walking';
+      // Fallback spacing for items without time
+      return 6 * 60 + index * 75;
+    },
+    [localEdits]
+  );
 
-      return (
-        <div key={item.id}>
-          <ViewOnlyTimelineBlock
-            item={item}
-            index={index}
-            onEdit={onEditItem}
-            onTimeChange={onTimeChange}
-            isActive={item.id === activeItemId}
-          />
-          {index < regularItems.length - 1 && (
-            <TransitConnector
-              from={fromLocation}
-              to={toLocation}
-              mode={savedTravelMode}
-              itemId={item.id}
-              onModeChange={onTravelModeChange}
-            />
-          )}
-        </div>
-      );
+  const parseItemDuration = useCallback(
+    (item: EnrichedItineraryItem): number => {
+      const overrideDuration = localEdits[item.id]?.duration;
+      if (overrideDuration) return overrideDuration;
+
+      if (item.parsedNotes?.duration) return item.parsedNotes.duration;
+      if (item.parsedNotes?.departureTime && item.parsedNotes?.arrivalTime) {
+        return calculateDuration(item.parsedNotes.departureTime, item.parsedNotes.arrivalTime);
+      }
+
+      const category = item.parsedNotes?.category || item.parsedNotes?.type || item.destination?.category;
+      return estimateDuration(category);
+    },
+    [localEdits]
+  );
+
+  const positionedItems = useMemo(() => {
+    const itemsWithTimes = regularItems.map((item, index) => {
+      const start = livePositions[item.id]?.start ?? parseItemStartMinutes(item, index);
+      const duration = Math.max(livePositions[item.id]?.duration ?? parseItemDuration(item), 30);
+      return {
+        item,
+        start,
+        duration,
+        end: start + duration,
+      };
     });
+
+    const sorted = [...itemsWithTimes].sort((a, b) => a.start - b.start);
+    const lanes: number[] = [];
+
+    return sorted.map((entry) => {
+      let laneIndex = lanes.findIndex((end) => entry.start >= end);
+      if (laneIndex === -1) {
+        laneIndex = lanes.length;
+        lanes.push(entry.end);
+      } else {
+        lanes[laneIndex] = entry.end;
+      }
+
+      return { ...entry, laneIndex, laneCount: lanes.length };
+    });
+  }, [livePositions, parseItemDuration, parseItemStartMinutes, regularItems]);
+
+  const earliestMinute = Math.min(360, positionedItems.reduce((min, item) => Math.min(min, item.start), Infinity));
+  const latestMinute = Math.max(
+    1320,
+    positionedItems.reduce((max, item) => Math.max(max, item.end + 45), 0)
+  );
+
+  const startHour = Math.max(6, Math.floor(earliestMinute / 60));
+  const endHour = Math.min(24, Math.ceil(latestMinute / 60));
+  const pixelsPerMinute = 1.05;
+  const gridMinutes = 30;
+  const timelineHeight = (endHour * 60 - startHour * 60) * pixelsPerMinute;
+
+  const minutesToPixels = useCallback(
+    (minutes: number) => (minutes - startHour * 60) * pixelsPerMinute,
+    [startHour, pixelsPerMinute]
+  );
+
+  const snapToGrid = (minutes: number) => Math.round(minutes / gridMinutes) * gridMinutes;
+
+  const handleDragStart = (
+    itemId: string,
+    mode: 'move' | 'resize-start' | 'resize-end',
+    start: number,
+    duration: number,
+    clientY: number
+  ) => {
+    if (!isEditMode) return;
+    setDragState({ itemId, mode, initialStart: start, initialDuration: duration, startY: clientY });
   };
 
-  // Render draggable items (edit mode) - includes regular items only
-  const renderDraggableItems = () => {
-    return regularItems.map((item, index) => (
-      <TimelineBlock
-        key={item.id}
-        item={item}
-        index={index}
-        onEdit={onEditItem}
-        onRemove={onRemoveItem}
-        onTimeChange={onTimeChange}
-        isActive={item.id === activeItemId}
-        isDraggable={true}
-      />
-    ));
-  };
+  const finalizePosition = useCallback(
+    (itemId: string, start: number, duration: number) => {
+      const snappedStart = Math.max(startHour * 60, snapToGrid(start));
+      const snappedDuration = Math.max(15, snapToGrid(duration));
+      const newTime = formatMinutesToTime(snappedStart % (24 * 60));
+
+      setLivePositions((prev) => ({
+        ...prev,
+        [itemId]: { start: snappedStart, duration: snappedDuration },
+      }));
+      updateLocalEdit(itemId, { time: newTime, duration: snappedDuration });
+      onTimeChange?.(itemId, newTime);
+      onDurationChange?.(itemId, snappedDuration);
+
+      if (onReorderItems) {
+        const updatedItems = day.items.map((item) =>
+          item.id === itemId
+            ? { ...item, time: newTime, parsedNotes: { ...item.parsedNotes, duration: snappedDuration } }
+            : item
+        );
+        const sorted = [...updatedItems].sort(
+          (a, b) => parseTimeToMinutes(a.time || '00:00') - parseTimeToMinutes(b.time || '00:00')
+        );
+        const orderChanged = sorted.some((item, idx) => item.id !== updatedItems[idx]?.id);
+        if (orderChanged) {
+          onReorderItems(day.dayNumber, sorted as EnrichedItineraryItem[]);
+        }
+      }
+    },
+    [day.dayNumber, day.items, onDurationChange, onReorderItems, onTimeChange, startHour, updateLocalEdit]
+  );
+
+  useEffect(() => {
+    if (!dragState) return;
+
+    const handleMove = (event: PointerEvent) => {
+      const base = positionedItems.find((p) => p.item.id === dragState.itemId);
+      if (!base || !timelineRef.current) return;
+
+      const deltaMinutes = (event.clientY - dragState.startY) / pixelsPerMinute;
+      if (dragState.mode === 'move') {
+        const nextStart = Math.max(startHour * 60, dragState.initialStart + deltaMinutes);
+        setLivePositions((prev) => ({
+          ...prev,
+          [dragState.itemId]: {
+            start: nextStart,
+            duration: base.duration,
+          },
+        }));
+      }
+
+      if (dragState.mode === 'resize-end') {
+        const nextDuration = Math.max(15, dragState.initialDuration + deltaMinutes);
+        setLivePositions((prev) => ({
+          ...prev,
+          [dragState.itemId]: {
+            start: base.start,
+            duration: nextDuration,
+          },
+        }));
+      }
+
+      if (dragState.mode === 'resize-start') {
+        const nextStart = dragState.initialStart + deltaMinutes;
+        const nextDuration = Math.max(15, dragState.initialDuration - deltaMinutes);
+        setLivePositions((prev) => ({
+          ...prev,
+          [dragState.itemId]: {
+            start: Math.max(startHour * 60, nextStart),
+            duration: nextDuration,
+          },
+        }));
+      }
+    };
+
+    const handleUp = () => {
+      const pending = livePositions[dragState.itemId];
+      const base = positionedItems.find((p) => p.item.id === dragState.itemId);
+      const finalStart = pending?.start ?? base?.start ?? startHour * 60;
+      const finalDuration = pending?.duration ?? base?.duration ?? 60;
+      finalizePosition(dragState.itemId, finalStart, finalDuration);
+      setDragState(null);
+    };
+
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleUp);
+    return () => {
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+    };
+  }, [dragState, finalizePosition, livePositions, positionedItems, pixelsPerMinute, startHour]);
 
   // Render hotel section at the bottom
   const renderHotelSection = () => {
@@ -276,15 +412,206 @@ export default function DayTimeline({
             </span>
           )}
         </div>
-        <ViewOnlyTimelineBlock
-          item={hotelItem}
-          index={regularItems.length}
-          onEdit={onEditItem}
-          onTimeChange={isExternalHotel ? undefined : onTimeChange}
-          isActive={hotelItem.id === activeItemId}
-        />
+        <div className="p-3 bg-gradient-to-r from-stone-50 to-white dark:from-gray-900 dark:to-gray-800 border border-stone-200 dark:border-gray-800 rounded-2xl shadow-sm">
+          <div className="flex items-center gap-3">
+            <Moon className="w-4 h-4 text-amber-500" />
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-stone-900 dark:text-white">{hotelItem.title || 'Hotel'}</p>
+              <p className="text-xs text-stone-500 dark:text-gray-400">{hotelItem.parsedNotes?.address || hotelItem.destination?.formatted_address}</p>
+            </div>
+            <span className="text-xs text-stone-500 dark:text-gray-400">{hotelItem.parsedNotes?.checkInTime || 'Check-in'}</span>
+          </div>
+        </div>
       </div>
     );
+  };
+
+  const getCategoryStyles = (item: EnrichedItineraryItem) => {
+    const type = item.parsedNotes?.type || item.destination?.category || 'default';
+
+    if (type === 'breakfast' || type === 'restaurant' || type === 'bar') {
+      return {
+        bg: 'bg-orange-50',
+        border: 'border-orange-100',
+        text: 'text-orange-900',
+        iconColor: 'text-orange-500',
+      };
+    }
+
+    if (type === 'museum' || type === 'gallery') {
+      return {
+        bg: 'bg-indigo-50',
+        border: 'border-indigo-100',
+        text: 'text-indigo-900',
+        iconColor: 'text-indigo-500',
+      };
+    }
+
+    if (type === 'flight' || type === 'train') {
+      return {
+        bg: 'bg-sky-50',
+        border: 'border-sky-100',
+        text: 'text-sky-900',
+        iconColor: 'text-sky-500',
+      };
+    }
+
+    return {
+      bg: 'bg-white',
+      border: 'border-stone-200 dark:border-gray-800',
+      text: 'text-stone-900 dark:text-white',
+      iconColor: 'text-stone-500',
+    };
+  };
+
+  const getIconForItem = (item: EnrichedItineraryItem) => {
+    const type = item.parsedNotes?.type || item.destination?.category;
+    if (type === 'breakfast' || type === 'cafe') return <Coffee className="w-4 h-4" />;
+    if (type === 'restaurant') return <Utensils className="w-4 h-4" />;
+    if (type === 'bar') return <Martini className="w-4 h-4" />;
+    if (type === 'museum' || type === 'gallery') return <Landmark className="w-4 h-4" />;
+    if (type === 'flight') return <Plane className="w-4 h-4" />;
+    if (type === 'train') return <Train className="w-4 h-4" />;
+    if (type === 'activity') return <Camera className="w-4 h-4" />;
+    return <MapPin className="w-4 h-4" />;
+  };
+
+  const renderTimeGrid = () => {
+    const labels = [];
+    for (let hour = startHour; hour <= endHour; hour++) {
+      const top = minutesToPixels(hour * 60);
+      const label = `${hour.toString().padStart(2, '0')}:00`;
+      labels.push(
+        <div key={hour} className="absolute left-0 right-0" style={{ top }}>
+          <div className="flex items-center gap-3">
+            <div className="w-12 text-[11px] text-right text-stone-400 tabular-nums">{label}</div>
+            <div className="flex-1 h-px bg-gradient-to-r from-stone-200/80 via-stone-100 to-transparent dark:from-gray-800 dark:via-gray-800" />
+          </div>
+        </div>
+      );
+    }
+    return labels;
+  };
+
+  const renderCurrentTime = () => {
+    if (!day.date || !isToday(new Date(day.date))) return null;
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    if (currentMinutes < startHour * 60 || currentMinutes > endHour * 60) return null;
+
+    const top = minutesToPixels(currentMinutes);
+    return (
+      <div
+        className="absolute left-0 right-0 pointer-events-none"
+        style={{ top }}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-12 text-[11px] text-right text-red-500 tabular-nums">
+            {formatTimeDisplay(formatMinutesToTime(currentMinutes))}
+          </div>
+          <div className="flex-1 h-px bg-red-500" />
+        </div>
+      </div>
+    );
+  };
+
+  const renderBlocks = () => {
+    return positionedItems.map(({ item, start, duration, laneIndex }, index) => {
+      const styleSet = getCategoryStyles(item);
+      const top = minutesToPixels(start);
+      const height = Math.max(duration * pixelsPerMinute, 44);
+      const laneOffset = laneIndex * 14;
+      const widthStyle = `calc(100% - ${laneOffset}px)`;
+      const startLabel = formatTimeDisplay(formatMinutesToTime(start));
+      const endLabel = formatTimeDisplay(formatMinutesToTime(start + duration));
+      const travelMode = (item.parsedNotes?.travelModeToNext as TransitMode) || 'walking';
+      const nextItem = positionedItems[index + 1];
+      const connectorTop = minutesToPixels(start + duration) + 6;
+      const connectorHeight = nextItem ? Math.max(minutesToPixels(nextItem.start) - connectorTop - 12, 18) : 0;
+      const fromLocation = getFromLocation(item);
+      const toLocation = nextItem ? getToLocation(nextItem.item) : undefined;
+
+      return (
+        <div key={item.id} className="relative">
+          <div
+            className={`absolute left-0 right-0 ${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+            style={{ top, height, marginLeft: laneOffset, width: widthStyle }}
+            onPointerDown={(event) => handleDragStart(item.id, 'move', start, duration, event.clientY)}
+          >
+            <div
+              className={`h-full border ${styleSet.border} ${styleSet.bg} ${styleSet.text} rounded-2xl shadow-[0_12px_30px_-18px_rgba(0,0,0,0.45)] relative overflow-hidden transition-transform duration-150 ${
+                isEditMode ? 'hover:scale-[1.01]' : ''
+              } ${item.id === activeItemId ? 'ring-2 ring-stone-300 dark:ring-gray-600' : ''}`}
+              onClick={() => onEditItem?.(item)}
+            >
+              <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/40 mix-blend-overlay pointer-events-none" />
+              {isEditMode && (
+                <div className="absolute inset-x-3 top-2 flex items-center justify-between text-[10px] text-stone-400">
+                  <span className="flex items-center gap-1 uppercase tracking-wide font-semibold">
+                    <GripVertical className="w-3 h-3" />
+                    Drag / resize
+                  </span>
+                  <span className="tabular-nums">{formatTimeDisplay(formatMinutesToTime(duration))}</span>
+                </div>
+              )}
+              <div className="flex items-start gap-3 px-4 py-3 relative z-10">
+                <div className={`w-9 h-9 rounded-xl bg-white/70 flex items-center justify-center ${styleSet.iconColor} shadow-sm`}>
+                  {getIconForItem(item)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 text-[11px] text-stone-500 uppercase tracking-[0.08em]">
+                    <span>{startLabel}</span>
+                    <span className="text-stone-300">•</span>
+                    <span>{endLabel}</span>
+                  </div>
+                  <p className="text-sm font-semibold leading-tight text-stone-900 dark:text-white mt-0.5 line-clamp-1">
+                    {item.title || 'Untitled stop'}
+                  </p>
+                  {item.destination?.neighborhood && (
+                    <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-1">{item.destination.neighborhood}</p>
+                  )}
+                </div>
+              </div>
+
+              {isEditMode && (
+                <>
+                  <div
+                    className="absolute inset-x-3 top-0 h-2 cursor-n-resize"
+                    onPointerDown={(event) => {
+                      event.stopPropagation();
+                      handleDragStart(item.id, 'resize-start', start, duration, event.clientY);
+                    }}
+                  />
+                  <div
+                    className="absolute inset-x-3 bottom-0 h-2 cursor-s-resize"
+                    onPointerDown={(event) => {
+                      event.stopPropagation();
+                      handleDragStart(item.id, 'resize-end', start, duration, event.clientY);
+                    }}
+                  />
+                </>
+              )}
+            </div>
+          </div>
+
+          {nextItem && (
+            <div
+              className="absolute left-[52px] right-0"
+              style={{ top: connectorTop, height: connectorHeight }}
+            >
+              <TransitConnector
+                from={fromLocation}
+                to={toLocation}
+                mode={travelMode}
+                itemId={item.id}
+                onModeChange={onTravelModeChange}
+                className="h-full"
+              />
+            </div>
+          )}
+        </div>
+      );
+    });
   };
 
   return (
@@ -382,30 +709,20 @@ export default function DayTimeline({
               </div>
             )}
           </div>
-        ) : isEditMode ? (
-          /* Edit Mode - Draggable */
-          <>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={regularItems.map((item) => item.id)}
-                strategy={verticalListSortingStrategy}
-              >
-                <div className="space-y-2">
-                  {renderDraggableItems()}
-                </div>
-              </SortableContext>
-            </DndContext>
-            {renderHotelSection()}
-          </>
         ) : (
-          /* View Mode - With Transit Connectors */
           <>
-            <div className="space-y-0">
-              {renderItemsWithConnectors()}
+            <div className="relative">
+              <div
+                ref={timelineRef}
+                className="relative"
+                style={{ height: `${timelineHeight}px` }}
+              >
+                {renderTimeGrid()}
+                {renderCurrentTime()}
+                <div className="absolute inset-0 left-12">
+                  {renderBlocks()}
+                </div>
+              </div>
             </div>
             {renderHotelSection()}
           </>
