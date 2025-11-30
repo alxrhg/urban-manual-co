@@ -194,22 +194,6 @@ export default function TripDaySection({
     return transit?.durationMinutes;
   };
 
-  // Get hotel night info
-  const getHotelNightInfo = () => {
-    if (!hotelForNight) return { nightNumber: undefined, totalNights: undefined };
-
-    // Ensure we have valid numbers (nightStart defaults to current day if not set)
-    const nightStart = Number(hotelForNight.parsedNotes?.nightStart) || day.dayNumber;
-    const nightEnd = Number(hotelForNight.parsedNotes?.nightEnd) || nightStart;
-    const totalNights = Math.max(1, nightEnd - nightStart + 1);
-
-    // Night number is which night of the stay (1-indexed)
-    // If on Day 3 and nightStart is 3, this is Night 1 of the stay
-    const nightNumber = Math.max(1, day.dayNumber - nightStart + 1);
-
-    return { nightNumber, totalNights };
-  };
-
   // Render items with TransitConnector between them
   const renderItemsWithConnectors = () => {
     const items = day.items.map((item, index) => {
@@ -257,33 +241,39 @@ export default function TripDaySection({
     });
 
     // Add ReturnToHotelCard at the end if there's a hotel for this night
-    if (hotelForNight && day.items.length > 0) {
-      const { nightNumber, totalNights } = getHotelNightInfo();
+    // But only if the hotel is NOT already displayed as an item in this day
+    const hotelAlreadyInDay = hotelForNight && day.items.some(item => item.id === hotelForNight.id);
+    const hasNonHotelItems = day.items.some(item => item.parsedNotes?.type !== 'hotel');
+
+    if (hotelForNight && hasNonHotelItems && !hotelAlreadyInDay) {
       const travelTime = getHotelTravelTime();
       const hotelName = hotelForNight.title || hotelForNight.parsedNotes?.name || 'Hotel';
       const hotelAddress = hotelForNight.parsedNotes?.address || hotelForNight.destination?.formatted_address || undefined;
 
-      items.push(
-        <div key="return-to-hotel">
-          {/* Connector to hotel */}
-          <TransitConnector
-            from={getFromLocation(day.items[day.items.length - 1])}
-            to={{
-              latitude: hotelForNight.destination?.latitude ?? hotelForNight.parsedNotes?.latitude ?? 0,
-              longitude: hotelForNight.destination?.longitude ?? hotelForNight.parsedNotes?.longitude ?? 0,
-            }}
-            mode="walk"
-          />
-          <ReturnToHotelCard
-            hotelName={hotelName}
-            hotelAddress={hotelAddress}
-            nightNumber={nightNumber}
-            totalNights={totalNights}
-            travelTimeMinutes={travelTime}
-            onClick={() => onHotelClick?.(hotelForNight)}
-          />
-        </div>
-      );
+      // Get last non-hotel item for transit connector
+      const lastNonHotelItem = [...day.items].reverse().find(item => item.parsedNotes?.type !== 'hotel');
+
+      if (lastNonHotelItem) {
+        items.push(
+          <div key="return-to-hotel">
+            {/* Connector to hotel */}
+            <TransitConnector
+              from={getFromLocation(lastNonHotelItem)}
+              to={{
+                latitude: hotelForNight.destination?.latitude ?? hotelForNight.parsedNotes?.latitude ?? 0,
+                longitude: hotelForNight.destination?.longitude ?? hotelForNight.parsedNotes?.longitude ?? 0,
+              }}
+              mode="walk"
+            />
+            <ReturnToHotelCard
+              hotelName={hotelName}
+              hotelAddress={hotelAddress}
+              travelTimeMinutes={travelTime}
+              onClick={() => onHotelClick?.(hotelForNight)}
+            />
+          </div>
+        );
+      }
     }
 
     return items;
