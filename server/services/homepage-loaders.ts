@@ -2,6 +2,7 @@ import type { Destination } from '@/types/destination';
 import type { UserProfile } from '@/types/personalization';
 import { createServiceRoleClient, createServerClient } from '@/lib/supabase-server';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { unstable_cache } from 'next/cache';
 
 export type FilterRow = { city: string | null; category: string | null };
 
@@ -123,70 +124,83 @@ export async function getVisitedSlugsForUser(userId: string) {
   }
 }
 
-export async function getFilterRows(limit = 1000) {
-  const client = await getSupabaseClient();
-  if (!client) {
-    return [];
-  }
-  
-  try {
-    const { data, error } = await client
-      .from('destinations')
-      .select('city, category')
-      .is('parent_destination_id', null)
-      .limit(limit)
-      .order('city');
-
-    if (error) {
-      throw error;
-    }
-
-    return (data ?? []) as FilterRow[];
-  } catch (error: any) {
-    // Handle network errors and placeholder client errors gracefully
-    if (error?.message?.includes('placeholder') || 
-        error?.message?.includes('invalid') ||
-        error?.message?.includes('fetch failed') ||
-        error?.code === 'ECONNREFUSED' ||
-        error?.code === 'ETIMEDOUT') {
-      console.warn('[Homepage Loaders] Database error fetching filter rows:', error?.message);
+// Cached version of filter rows - revalidates every 5 minutes
+export const getFilterRows = unstable_cache(
+  async (limit = 1000): Promise<FilterRow[]> => {
+    const client = await getSupabaseClient();
+    if (!client) {
       return [];
     }
-    throw error;
-  }
-}
 
-export async function getHomepageDestinations(limit = 5000) {
-  const client = await getSupabaseClient();
-  if (!client) {
-    console.warn('[Homepage Loaders] No Supabase client available, returning empty destinations');
-    return [];
-  }
-  
-  try {
-    const { data, error } = await client
-      .from('destinations')
-      .select('id, slug, name, city, country, neighborhood, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, tags, parent_destination_id, opening_hours_json, timezone_id, utc_offset, rating, price_level, architect, design_firm_id, architectural_style, design_period, designer_name, architect_info_json, instagram_handle, instagram_url, latitude, longitude, created_at')
-      .is('parent_destination_id', null)
-      .limit(limit)
-      .order('created_at', { ascending: false })
-      .order('id', { ascending: false }); // Fallback: newer IDs (higher numbers) first
+    try {
+      const { data, error } = await client
+        .from('destinations')
+        .select('city, category')
+        .is('parent_destination_id', null)
+        .limit(limit)
+        .order('city');
 
-    if (error) {
+      if (error) {
+        throw error;
+      }
+
+      return (data ?? []) as FilterRow[];
+    } catch (error: any) {
+      // Handle network errors and placeholder client errors gracefully
+      if (error?.message?.includes('placeholder') ||
+          error?.message?.includes('invalid') ||
+          error?.message?.includes('fetch failed') ||
+          error?.code === 'ECONNREFUSED' ||
+          error?.code === 'ETIMEDOUT') {
+        console.warn('[Homepage Loaders] Database error fetching filter rows:', error?.message);
+        return [];
+      }
       throw error;
     }
+  },
+  ['homepage-filter-rows'],
+  { revalidate: 300, tags: ['filters'] }
+);
 
-    return (data ?? []) as Destination[];
-  } catch (error: any) {
-    // Handle network errors and placeholder client errors gracefully
-    if (error?.message?.includes('placeholder') || 
-        error?.message?.includes('invalid') ||
-        error?.message?.includes('fetch failed') ||
-        error?.code === 'ECONNREFUSED' ||
-        error?.code === 'ETIMEDOUT') {
-      console.warn('[Homepage Loaders] Database error fetching destinations:', error?.message);
+// Cached version of homepage destinations - revalidates every 60 seconds
+// OPTIMIZED: Only fetch essential fields for initial render
+export const getHomepageDestinations = unstable_cache(
+  async (limit = 50): Promise<Destination[]> => {
+    const client = await getSupabaseClient();
+    if (!client) {
+      console.warn('[Homepage Loaders] No Supabase client available, returning empty destinations');
       return [];
     }
-    throw error;
-  }
-}
+
+    try {
+      // Only fetch essential fields for grid display - reduces payload by ~70%
+      const { data, error } = await client
+        .from('destinations')
+        .select(`id, slug, name, city, country, category,
+                 image, image_thumbnail, michelin_stars, crown,
+                 rating, price_level, micro_description`)
+        .is('parent_destination_id', null)
+        .limit(limit)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return (data ?? []) as Destination[];
+    } catch (error: any) {
+      // Handle network errors and placeholder client errors gracefully
+      if (error?.message?.includes('placeholder') ||
+          error?.message?.includes('invalid') ||
+          error?.message?.includes('fetch failed') ||
+          error?.code === 'ECONNREFUSED' ||
+          error?.code === 'ETIMEDOUT') {
+        console.warn('[Homepage Loaders] Database error fetching destinations:', error?.message);
+        return [];
+      }
+      throw error;
+    }
+  },
+  ['homepage-destinations-cached'],
+  { revalidate: 60, tags: ['destinations'] }
+);
