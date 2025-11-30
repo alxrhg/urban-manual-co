@@ -22,6 +22,8 @@ import {
   X,
   List,
   Clock,
+  LayoutGrid,
+  Layers,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import TripDaySection from '@/components/trip/TripDaySection';
@@ -40,6 +42,7 @@ import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import LocalEvents from '@/components/trip/LocalEvents';
 import DateCarousel from '@/components/trip/DateCarousel';
 import TimelineDay, { itemToTimelineEvent } from '@/components/trip/TimelineDay';
+import TripOverviewDrawer from '@/components/trip/TripOverviewDrawer';
 import {
   analyzeScheduleForWarnings,
   detectConflicts,
@@ -99,6 +102,9 @@ export default function TripPage() {
   const [viewingItem, setViewingItem] = useState<EnrichedItineraryItem | null>(null);
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [showMapBox, setShowMapBox] = useState(false);
+  const [showOverviewDrawer, setShowOverviewDrawer] = useState(false);
+  const [timelineMode, setTimelineMode] = useState<'view' | 'edit'>('view');
+  const [showTimeGroups, setShowTimeGroups] = useState(false);
 
   // Extract flights and hotels from itinerary
   const flights = useMemo(() => {
@@ -650,6 +656,15 @@ export default function TripPage() {
                 <div className="flex-1 space-y-4">
                   {/* View Mode Toggle + Date Carousel */}
                   <div className="flex items-center gap-3 mb-2">
+                    {/* Overview Button */}
+                    <button
+                      onClick={() => setShowOverviewDrawer(true)}
+                      className="p-2 rounded-lg bg-stone-100 dark:bg-gray-800 hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
+                      title="Trip overview"
+                    >
+                      <Layers className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+                    </button>
+
                     {/* View Mode Toggle */}
                     <div className="flex items-center gap-1 p-1 bg-stone-100 dark:bg-gray-800 rounded-lg">
                       <button
@@ -674,6 +689,19 @@ export default function TripPage() {
                       >
                         <Clock className={`w-4 h-4 ${viewMode === 'timeline' ? 'text-stone-900 dark:text-white' : 'text-stone-500 dark:text-gray-400'}`} />
                       </button>
+                      {viewMode === 'timeline' && (
+                        <button
+                          onClick={() => setShowTimeGroups(!showTimeGroups)}
+                          className={`p-2 rounded-md transition-colors ${
+                            showTimeGroups
+                              ? 'bg-white dark:bg-gray-700 shadow-sm'
+                              : 'hover:bg-stone-200 dark:hover:bg-gray-700'
+                          }`}
+                          title="Group by time of day"
+                        >
+                          <LayoutGrid className={`w-4 h-4 ${showTimeGroups ? 'text-stone-900 dark:text-white' : 'text-stone-500 dark:text-gray-400'}`} />
+                        </button>
+                      )}
                     </div>
 
                     {/* Date Carousel (only when trip has dates) */}
@@ -731,14 +759,17 @@ export default function TripPage() {
                       date={selectedDate}
                       events={timelineEvents}
                       hourHeightPx={60}
+                      mode={timelineMode}
+                      showTimeGroups={showTimeGroups}
+                      onModeChange={setTimelineMode}
                       onEventClick={(event) => {
                         if (event.item) {
                           handleEditItem(event.item);
                         }
                       }}
                       onTimeSlotClick={(time) => {
-                        // Could be used to add events at a specific time
-                        console.log('Clicked time slot:', time);
+                        // Open add place for the selected time
+                        setShowAddPlaceBox(true);
                       }}
                       className="mb-4"
                     />
@@ -1092,6 +1123,23 @@ export default function TripPage() {
         isAIPlanning={isAIPlanning}
         isSaving={saving}
       />
+
+      {/* Trip Overview Drawer */}
+      {showOverviewDrawer && (
+        <TripOverviewDrawer
+          trip={trip}
+          days={days}
+          onClose={() => setShowOverviewDrawer(false)}
+          onOpenDay={(dayNumber) => {
+            setSelectedDayNumber(dayNumber);
+            setShowOverviewDrawer(false);
+          }}
+          onOpenMap={() => {
+            setShowMapBox(true);
+            setShowOverviewDrawer(false);
+          }}
+        />
+      )}
 
     </main>
   );
