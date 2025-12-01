@@ -6,7 +6,6 @@
 import { NextRequest } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { openai, OPENAI_MODEL } from '@/lib/openai';
-import { withErrorHandling } from '@/lib/errors';
 import {
   genAI,
   GEMINI_MODEL,
@@ -58,10 +57,10 @@ function normalizeUserId(userId?: string | null) {
   return ['anonymous', 'guest'].includes(userId) ? undefined : userId;
 }
 
-export const POST = withErrorHandling(async (
+export async function POST(
   request: NextRequest,
-  context: any
-) => {
+  context: { params: Promise<{ user_id: string }> }
+) {
   const encoder = new TextEncoder();
 
   try {
@@ -498,4 +497,4 @@ export const POST = withErrorHandling(async (
       }
     );
   }
-});
+}
