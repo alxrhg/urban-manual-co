@@ -32,8 +32,14 @@ export const GET = withErrorHandling(async () => {
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count);
 
-  return NextResponse.json({
+  // Add cache headers - categories rarely change
+  const response = NextResponse.json({
     categories,
     total: categories.length,
   });
+  response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
+  return response;
 });
+
+// Enable ISR - revalidate every 5 minutes
+export const revalidate = 300;

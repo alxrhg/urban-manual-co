@@ -33,7 +33,10 @@ export async function GET() {
     // Extract unique cities
     const cities = [...new Set(data.map((d: { city: string }) => d.city))].sort();
 
-    return NextResponse.json({ cities });
+    // Add cache headers - city list rarely changes
+    const response = NextResponse.json({ cities });
+    response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
+    return response;
   } catch (error) {
     console.error('Error in cities API:', error);
     return NextResponse.json(
@@ -42,3 +45,6 @@ export async function GET() {
     );
   }
 }
+
+// Enable ISR - revalidate every 5 minutes
+export const revalidate = 300;
