@@ -56,21 +56,21 @@ function DraggablePlaceCard({ place, onAddToTrip }: DraggablePlaceCardProps) {
       ref={setNodeRef}
       style={style}
       className={`
-        group flex items-center gap-3 p-2 rounded-xl border border-stone-200 dark:border-gray-800
+        group flex items-center gap-3 p-2 rounded-xl border border-gray-200 dark:border-gray-800
         bg-white dark:bg-gray-900 cursor-grab active:cursor-grabbing
-        hover:border-stone-300 dark:hover:border-gray-700 transition-all
+        hover:border-gray-300 dark:hover:border-gray-700 transition-all
         ${isDragging ? 'opacity-50 shadow-lg' : ''}
       `}
       {...listeners}
       {...attributes}
     >
       {/* Drag Handle */}
-      <div className="flex-shrink-0 text-stone-300 dark:text-gray-600 group-hover:text-stone-400 dark:group-hover:text-gray-500">
+      <div className="flex-shrink-0 text-gray-300 dark:text-gray-600 group-hover:text-gray-400 dark:group-hover:text-gray-500">
         <GripVertical className="w-4 h-4" />
       </div>
 
       {/* Image */}
-      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-stone-100 dark:bg-gray-800 flex-shrink-0">
+      <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
         {dest.image || dest.image_thumbnail ? (
           <Image
             src={dest.image_thumbnail || dest.image || ''}
@@ -81,17 +81,17 @@ function DraggablePlaceCard({ place, onAddToTrip }: DraggablePlaceCardProps) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-stone-300 dark:text-gray-600" />
+            <MapPin className="w-5 h-5 text-gray-300 dark:text-gray-600" />
           </div>
         )}
       </div>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-stone-900 dark:text-white truncate">
+        <p className="text-xs font-medium text-gray-900 dark:text-white truncate">
           {dest.name}
         </p>
-        <div className="flex items-center gap-2 text-[10px] text-stone-500 dark:text-gray-400">
+        <div className="flex items-center gap-2 text-[10px] text-gray-500 dark:text-gray-400">
           <span className="capitalize truncate">{dest.category?.replace(/_/g, ' ')}</span>
           {dest.rating && (
             <span className="flex items-center gap-0.5">
@@ -108,7 +108,7 @@ function DraggablePlaceCard({ place, onAddToTrip }: DraggablePlaceCardProps) {
           e.stopPropagation();
           onAddToTrip(dest);
         }}
-        className="flex-shrink-0 p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 dark:hover:bg-gray-800 dark:hover:text-white transition-colors opacity-0 group-hover:opacity-100"
+        className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-white transition-colors opacity-0 group-hover:opacity-100"
         title="Add to current day"
       >
         <span className="text-xs font-medium">+</span>
@@ -200,27 +200,27 @@ export default function TripBucketList({
   }
 
   return (
-    <div className={`border border-stone-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900 ${className}`}>
+    <div className={`border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900 ${className}`}>
       {/* Header */}
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="w-full flex items-center justify-between p-4 hover:bg-stone-50 dark:hover:bg-gray-800/50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Bookmark className="w-4 h-4 text-stone-400" />
-          <h3 className="text-sm font-medium text-stone-900 dark:text-white">
+          <Bookmark className="w-4 h-4 text-gray-400" />
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white">
             Bucket List
           </h3>
           {!loading && savedPlaces.length > 0 && (
-            <span className="text-xs text-stone-400 dark:text-gray-500">
+            <span className="text-xs text-gray-400 dark:text-gray-500">
               ({savedPlaces.length})
             </span>
           )}
         </div>
         {isCollapsed ? (
-          <ChevronDown className="w-4 h-4 text-stone-400" />
+          <ChevronDown className="w-4 h-4 text-gray-400" />
         ) : (
-          <ChevronUp className="w-4 h-4 text-stone-400" />
+          <ChevronUp className="w-4 h-4 text-gray-400" />
         )}
       </button>
 
@@ -229,20 +229,20 @@ export default function TripBucketList({
         <div className="px-4 pb-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
             </div>
           ) : savedPlaces.length === 0 ? (
             <div className="text-center py-6">
-              <p className="text-xs text-stone-400 dark:text-gray-500 mb-1">
+              <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">
                 No saved places in
               </p>
-              <p className="text-xs text-stone-500 dark:text-gray-400 font-medium">
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 {destinations.join(', ')}
               </p>
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-[10px] text-stone-400 dark:text-gray-500 uppercase tracking-wide mb-2">
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2">
                 Drag to add to itinerary
               </p>
               {savedPlaces.map((place) => (

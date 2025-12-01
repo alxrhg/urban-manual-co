@@ -38,17 +38,17 @@ const BOOKING_STATUS_OPTIONS = [
   { value: 'need-to-book', label: 'Need to book', color: 'text-amber-600 bg-amber-50' },
   { value: 'booked', label: 'Booked', color: 'text-green-600 bg-green-50' },
   { value: 'waitlist', label: 'Waitlist', color: 'text-blue-600 bg-blue-50' },
-  { value: 'walk-in', label: 'Walk-in', color: 'text-stone-600 bg-stone-50' },
+  { value: 'walk-in', label: 'Walk-in', color: 'text-gray-600 bg-gray-50' },
 ];
 const PRIORITY_OPTIONS = [
   { value: 'must-do', label: 'Must do', color: 'text-red-600 bg-red-50', icon: Flag },
   { value: 'want-to', label: 'Want to', color: 'text-amber-600 bg-amber-50', icon: Star },
-  { value: 'if-time', label: 'If time', color: 'text-stone-500 bg-stone-50', icon: Clock },
+  { value: 'if-time', label: 'If time', color: 'text-gray-500 bg-gray-50', icon: Clock },
 ];
 const VISITED_STATUS_OPTIONS = [
-  { value: 'planned', label: 'Planned', icon: Circle, color: 'text-stone-400' },
+  { value: 'planned', label: 'Planned', icon: Circle, color: 'text-gray-400' },
   { value: 'visited', label: 'Visited', icon: CheckCircle2, color: 'text-green-500' },
-  { value: 'skipped', label: 'Skipped', icon: XCircle, color: 'text-stone-400' },
+  { value: 'skipped', label: 'Skipped', icon: XCircle, color: 'text-gray-400' },
 ];
 
 /**
@@ -265,7 +265,7 @@ export default function DestinationBox({
       case 'hotel':
         return { icon: Building2, color: 'text-purple-500', bg: 'bg-purple-50 dark:bg-purple-900/20', label: 'Hotel' };
       default:
-        return { icon: MapPin, color: 'text-stone-500', bg: 'bg-stone-50 dark:bg-gray-800', label: 'Place' };
+        return { icon: MapPin, color: 'text-gray-500', bg: 'bg-gray-50 dark:bg-gray-800', label: 'Place' };
     }
   };
 
@@ -287,18 +287,18 @@ export default function DestinationBox({
   };
 
   return (
-    <div className={`border border-stone-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900 ${className}`}>
+    <div className={`border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden bg-white dark:bg-gray-900 ${className}`}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-stone-100 dark:border-gray-800 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
           <div className={`p-1.5 rounded-lg ${typeInfo.bg}`}>
             <TypeIcon className={`w-4 h-4 ${typeInfo.color}`} />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-medium text-stone-900 dark:text-white truncate">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
               {name}
             </h3>
-            <span className="text-[10px] text-stone-400 dark:text-gray-500">{typeInfo.label}</span>
+            <span className="text-[10px] text-gray-400 dark:text-gray-500">{typeInfo.label}</span>
           </div>
         </div>
         <div className="flex items-center gap-1">
@@ -313,25 +313,25 @@ export default function DestinationBox({
           ) : (
             <button
               onClick={() => setIsEditing(true)}
-              className="p-1.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               title="Edit"
             >
-              <Pencil className="w-4 h-4 text-stone-400" />
+              <Pencil className="w-4 h-4 text-gray-400" />
             </button>
           )}
           {onClose && (
             <button
               onClick={onClose}
-              className="p-1.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
+              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors flex-shrink-0"
             >
-              <X className="w-4 h-4 text-stone-400" />
+              <X className="w-4 h-4 text-gray-400" />
             </button>
           )}
         </div>
       </div>
 
       {/* Quick Status Bar (always visible) */}
-      <div className="px-4 py-2 bg-stone-50/50 dark:bg-gray-800/30 border-b border-stone-100 dark:border-gray-800 flex items-center justify-between gap-2">
+      <div className="px-4 py-2 bg-gray-50/50 dark:bg-gray-800/30 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2">
         {/* Visited Status Toggle */}
         <div className="flex items-center gap-1">
           {VISITED_STATUS_OPTIONS.map(status => {
@@ -341,7 +341,7 @@ export default function DestinationBox({
               <button
                 key={status.value}
                 onClick={() => quickUpdateVisitedStatus(status.value)}
-                className={`p-1.5 rounded-lg transition-colors ${isActive ? status.color + ' bg-white dark:bg-gray-700' : 'text-stone-300 hover:text-stone-500'}`}
+                className={`p-1.5 rounded-lg transition-colors ${isActive ? status.color + ' bg-white dark:bg-gray-700' : 'text-gray-300 hover:text-gray-500'}`}
                 title={status.label}
               >
                 <Icon className="w-4 h-4" />
@@ -363,7 +363,7 @@ export default function DestinationBox({
                 className={`w-4 h-4 transition-colors ${
                   star <= (parsedNotes?.personalRating || 0)
                     ? 'text-yellow-400 fill-yellow-400'
-                    : 'text-stone-300 hover:text-yellow-300'
+                    : 'text-gray-300 hover:text-yellow-300'
                 }`}
               />
             </button>
@@ -387,7 +387,7 @@ export default function DestinationBox({
               </span>
             )}
             {parsedNotes?.duration && (
-              <span className="px-2 py-0.5 text-xs text-stone-500 bg-stone-100 dark:bg-gray-800 rounded-full flex items-center gap-1">
+              <span className="px-2 py-0.5 text-xs text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center gap-1">
                 <Timer className="w-3 h-3" />
                 {DURATION_OPTIONS.find(d => d.value === parsedNotes.duration)?.label || `${parsedNotes.duration} min`}
               </span>
@@ -420,85 +420,85 @@ export default function DestinationBox({
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Airline</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Airline</label>
                     <input
                       type="text"
                       value={editAirline}
                       onChange={(e) => setEditAirline(e.target.value)}
                       placeholder="e.g., United"
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Flight #</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Flight #</label>
                     <input
                       type="text"
                       value={editFlightNumber}
                       onChange={(e) => setEditFlightNumber(e.target.value)}
                       placeholder="e.g., UA123"
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">From</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">From</label>
                     <input
                       type="text"
                       value={editFrom}
                       onChange={(e) => setEditFrom(e.target.value)}
                       placeholder="e.g., JFK"
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">To</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">To</label>
                     <input
                       type="text"
                       value={editTo}
                       onChange={(e) => setEditTo(e.target.value)}
                       placeholder="e.g., CDG"
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Departure Date</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Departure Date</label>
                     <input
                       type="date"
                       value={editDepartureDate}
                       onChange={(e) => setEditDepartureDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Departure Time</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Departure Time</label>
                     <input
                       type="time"
                       value={editDepartureTime}
                       onChange={(e) => setEditDepartureTime(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Arrival Date</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Arrival Date</label>
                     <input
                       type="date"
                       value={editArrivalDate}
                       onChange={(e) => setEditArrivalDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Arrival Time</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Arrival Time</label>
                     <input
                       type="time"
                       value={editArrivalTime}
                       onChange={(e) => setEditArrivalTime(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                 </div>
@@ -507,21 +507,21 @@ export default function DestinationBox({
               <>
                 <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
                   <div className="text-center">
-                    <p className="text-lg font-semibold text-stone-900 dark:text-white">{parsedNotes?.from || '---'}</p>
-                    <p className="text-xs text-stone-500">{parsedNotes?.departureTime || '--:--'}</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{parsedNotes?.from || '---'}</p>
+                    <p className="text-xs text-gray-500">{parsedNotes?.departureTime || '--:--'}</p>
                   </div>
                   <div className="flex-1 flex items-center justify-center px-4">
-                    <div className="flex-1 h-px bg-stone-300 dark:bg-gray-600" />
+                    <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600" />
                     <Plane className="w-4 h-4 mx-2 text-blue-500" />
-                    <div className="flex-1 h-px bg-stone-300 dark:bg-gray-600" />
+                    <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600" />
                   </div>
                   <div className="text-center">
-                    <p className="text-lg font-semibold text-stone-900 dark:text-white">{parsedNotes?.to || '---'}</p>
-                    <p className="text-xs text-stone-500">{parsedNotes?.arrivalTime || '--:--'}</p>
+                    <p className="text-lg font-semibold text-gray-900 dark:text-white">{parsedNotes?.to || '---'}</p>
+                    <p className="text-xs text-gray-500">{parsedNotes?.arrivalTime || '--:--'}</p>
                   </div>
                 </div>
                 {parsedNotes?.departureDate && (
-                  <div className="flex items-center gap-2 text-xs text-stone-500">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{parsedNotes.departureDate}</span>
                   </div>
@@ -538,63 +538,63 @@ export default function DestinationBox({
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Train Line</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Train Line</label>
                     <input
                       type="text"
                       value={editTrainLine}
                       onChange={(e) => setEditTrainLine(e.target.value)}
                       placeholder="e.g., Eurostar"
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Train #</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Train #</label>
                     <input
                       type="text"
                       value={editTrainNumber}
                       onChange={(e) => setEditTrainNumber(e.target.value)}
                       placeholder="e.g., 9001"
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">From</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">From</label>
                     <input
                       type="text"
                       value={editFrom}
                       onChange={(e) => setEditFrom(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">To</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">To</label>
                     <input
                       type="text"
                       value={editTo}
                       onChange={(e) => setEditTo(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Departure</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Departure</label>
                     <input
                       type="time"
                       value={editDepartureTime}
                       onChange={(e) => setEditDepartureTime(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Arrival</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Arrival</label>
                     <input
                       type="time"
                       value={editArrivalTime}
                       onChange={(e) => setEditArrivalTime(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                 </div>
@@ -603,21 +603,21 @@ export default function DestinationBox({
               <>
                 <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-stone-900 dark:text-white">{parsedNotes?.from || '---'}</p>
-                    <p className="text-xs text-stone-500">{parsedNotes?.departureTime || '--:--'}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{parsedNotes?.from || '---'}</p>
+                    <p className="text-xs text-gray-500">{parsedNotes?.departureTime || '--:--'}</p>
                   </div>
                   <div className="flex-1 flex items-center justify-center px-4">
-                    <div className="flex-1 h-px bg-stone-300 dark:bg-gray-600" />
+                    <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600" />
                     <Train className="w-4 h-4 mx-2 text-orange-500" />
-                    <div className="flex-1 h-px bg-stone-300 dark:bg-gray-600" />
+                    <div className="flex-1 h-px bg-gray-300 dark:bg-gray-600" />
                   </div>
                   <div className="text-center">
-                    <p className="text-sm font-semibold text-stone-900 dark:text-white">{parsedNotes?.to || '---'}</p>
-                    <p className="text-xs text-stone-500">{parsedNotes?.arrivalTime || '--:--'}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{parsedNotes?.to || '---'}</p>
+                    <p className="text-xs text-gray-500">{parsedNotes?.arrivalTime || '--:--'}</p>
                   </div>
                 </div>
                 {parsedNotes?.trainLine && (
-                  <div className="flex items-center gap-2 text-xs text-stone-500">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Train className="w-3.5 h-3.5" />
                     <span>{parsedNotes.trainLine} {parsedNotes.trainNumber}</span>
                   </div>
@@ -634,41 +634,41 @@ export default function DestinationBox({
               <>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Check-in Date</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Check-in Date</label>
                     <input
                       type="date"
                       value={editCheckInDate}
                       onChange={(e) => setEditCheckInDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Check-in Time</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Check-in Time</label>
                     <input
                       type="time"
                       value={editCheckInTime}
                       onChange={(e) => setEditCheckInTime(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Check-out Date</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Check-out Date</label>
                     <input
                       type="date"
                       value={editCheckOutDate}
                       onChange={(e) => setEditCheckOutDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Check-out Time</label>
+                    <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Check-out Time</label>
                     <input
                       type="time"
                       value={editCheckOutTime}
                       onChange={(e) => setEditCheckOutTime(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                     />
                   </div>
                 </div>
@@ -677,10 +677,10 @@ export default function DestinationBox({
                     type="checkbox"
                     checked={editBreakfastIncluded}
                     onChange={(e) => setEditBreakfastIncluded(e.target.checked)}
-                    className="w-4 h-4 rounded border-stone-300"
+                    className="w-4 h-4 rounded border-gray-300"
                   />
-                  <Coffee className="w-4 h-4 text-stone-400" />
-                  <span className="text-sm text-stone-700 dark:text-gray-300">Breakfast included</span>
+                  <Coffee className="w-4 h-4 text-gray-400" />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Breakfast included</span>
                 </label>
               </>
             ) : (
@@ -688,14 +688,14 @@ export default function DestinationBox({
                 {(parsedNotes?.checkInDate || parsedNotes?.checkOutDate) && (
                   <div className="flex items-center justify-between text-xs">
                     <div>
-                      <p className="text-stone-500">Check-in</p>
-                      <p className="font-medium text-stone-900 dark:text-white">
+                      <p className="text-gray-500">Check-in</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
                         {parsedNotes?.checkInDate || '---'} {parsedNotes?.checkInTime && `at ${parsedNotes.checkInTime}`}
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-stone-500">Check-out</p>
-                      <p className="font-medium text-stone-900 dark:text-white">
+                      <p className="text-gray-500">Check-out</p>
+                      <p className="font-medium text-gray-900 dark:text-white">
                         {parsedNotes?.checkOutDate || '---'} {parsedNotes?.checkOutTime && `at ${parsedNotes.checkOutTime}`}
                       </p>
                     </div>
@@ -717,11 +717,11 @@ export default function DestinationBox({
           <>
             {isEditing ? (
               <div>
-                <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Category</label>
+                <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Category</label>
                 <select
                   value={editCategory}
                   onChange={(e) => setEditCategory(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                 >
                   <option value="">Select category...</option>
                   {CATEGORIES.map(cat => (
@@ -732,12 +732,12 @@ export default function DestinationBox({
             ) : (
               <div className="flex flex-wrap items-center gap-2">
                 {category && (
-                  <span className="px-2.5 py-1 bg-stone-100 dark:bg-gray-800 text-stone-600 dark:text-gray-300 text-xs font-medium rounded-full capitalize">
+                  <span className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-medium rounded-full capitalize">
                     {category}
                   </span>
                 )}
                 {neighborhood && (
-                  <span className="px-2.5 py-1 bg-stone-50 dark:bg-gray-800/50 text-stone-500 dark:text-gray-400 text-xs rounded-full">
+                  <span className="px-2.5 py-1 bg-gray-50 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 text-xs rounded-full">
                     {neighborhood}
                   </span>
                 )}
@@ -749,14 +749,14 @@ export default function DestinationBox({
                 {rating && (
                   <div className="flex items-center gap-1">
                     <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                    <span className="font-medium text-stone-700 dark:text-gray-300">{rating.toFixed(1)}</span>
+                    <span className="font-medium text-gray-700 dark:text-gray-300">{rating.toFixed(1)}</span>
                     {reviewCount && (
-                      <span className="text-stone-400 dark:text-gray-500">({reviewCount.toLocaleString()})</span>
+                      <span className="text-gray-400 dark:text-gray-500">({reviewCount.toLocaleString()})</span>
                     )}
                   </div>
                 )}
                 {priceLevel && priceLevel > 0 && (
-                  <span className="text-stone-500 dark:text-gray-400">
+                  <span className="text-gray-500 dark:text-gray-400">
                     {'$'.repeat(priceLevel)}
                   </span>
                 )}
@@ -765,13 +765,13 @@ export default function DestinationBox({
 
             {!isEditing && description && (
               <div>
-                <p className={`text-sm text-stone-600 dark:text-gray-300 leading-relaxed ${!showMore ? 'line-clamp-3' : ''}`}>
+                <p className={`text-sm text-gray-600 dark:text-gray-300 leading-relaxed ${!showMore ? 'line-clamp-3' : ''}`}>
                   {description}
                 </p>
                 {description.length > 150 && (
                   <button
                     onClick={() => setShowMore(!showMore)}
-                    className="flex items-center gap-1 mt-1.5 text-xs text-stone-500 dark:text-gray-400 hover:text-stone-700 dark:hover:text-gray-300 transition-colors"
+                    className="flex items-center gap-1 mt-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                   >
                     {showMore ? 'Show less' : 'Show more'}
                     <ChevronDown className={`w-3 h-3 transition-transform ${showMore ? 'rotate-180' : ''}`} />
@@ -783,7 +783,7 @@ export default function DestinationBox({
         )}
 
         {!isEditing && address && (
-          <div className="flex items-start gap-2 text-xs text-stone-500 dark:text-gray-400">
+          <div className="flex items-start gap-2 text-xs text-gray-500 dark:text-gray-400">
             <MapPin className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
             <p className="leading-relaxed">{address}</p>
           </div>
@@ -793,15 +793,15 @@ export default function DestinationBox({
         {isEditing && (
           <>
             {/* Duration */}
-            <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+            <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-2 mb-2">
-                <Timer className="w-3.5 h-3.5 text-stone-400" />
-                <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Duration</span>
+                <Timer className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Duration</span>
               </div>
               <select
                 value={editDuration}
                 onChange={(e) => setEditDuration(Number(e.target.value))}
-                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
               >
                 {DURATION_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -810,10 +810,10 @@ export default function DestinationBox({
             </div>
 
             {/* Priority */}
-            <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+            <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-2 mb-2">
-                <Flag className="w-3.5 h-3.5 text-stone-400" />
-                <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Priority</span>
+                <Flag className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Priority</span>
               </div>
               <div className="flex gap-2">
                 {PRIORITY_OPTIONS.map(opt => (
@@ -823,7 +823,7 @@ export default function DestinationBox({
                     className={`flex-1 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
                       editPriority === opt.value
                         ? opt.color
-                        : 'bg-stone-100 dark:bg-gray-800 text-stone-500 hover:bg-stone-200'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:bg-gray-200'
                     }`}
                   >
                     {opt.label}
@@ -833,15 +833,15 @@ export default function DestinationBox({
             </div>
 
             {/* Booking Status */}
-            <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+            <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-2 mb-2">
-                <CalendarCheck className="w-3.5 h-3.5 text-stone-400" />
-                <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Booking Status</span>
+                <CalendarCheck className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Booking Status</span>
               </div>
               <select
                 value={editBookingStatus}
                 onChange={(e) => setEditBookingStatus(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
               >
                 <option value="">Not set</option>
                 {BOOKING_STATUS_OPTIONS.map(opt => (
@@ -851,16 +851,16 @@ export default function DestinationBox({
             </div>
 
             {/* Tags */}
-            <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+            <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
               <div className="flex items-center gap-2 mb-2">
-                <Tag className="w-3.5 h-3.5 text-stone-400" />
-                <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Tags</span>
+                <Tag className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Tags</span>
               </div>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {editTags.map(tag => (
                   <span
                     key={tag}
-                    className="px-2 py-1 bg-stone-100 dark:bg-gray-800 text-stone-600 dark:text-gray-300 text-xs rounded-full flex items-center gap-1"
+                    className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs rounded-full flex items-center gap-1"
                   >
                     {tag}
                     <button onClick={() => handleRemoveTag(tag)} className="hover:text-red-500">
@@ -876,12 +876,12 @@ export default function DestinationBox({
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag(newTag))}
                   placeholder="Add custom tag..."
-                  className="flex-1 px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                  className="flex-1 px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                 />
                 <button
                   onClick={() => handleAddTag(newTag)}
                   disabled={!newTag}
-                  className="px-3 py-2 bg-stone-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm disabled:opacity-50"
+                  className="px-3 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-lg text-sm disabled:opacity-50"
                 >
                   Add
                 </button>
@@ -891,7 +891,7 @@ export default function DestinationBox({
                   <button
                     key={tag}
                     onClick={() => handleAddTag(tag)}
-                    className="px-2 py-1 bg-stone-50 dark:bg-gray-800/50 text-stone-400 text-xs rounded-full hover:bg-stone-100 hover:text-stone-600 transition-colors"
+                    className="px-2 py-1 bg-gray-50 dark:bg-gray-800/50 text-gray-400 text-xs rounded-full hover:bg-gray-100 hover:text-gray-600 transition-colors"
                   >
                     + {tag}
                   </button>
@@ -907,7 +907,7 @@ export default function DestinationBox({
             {parsedNotes.tags.map(tag => (
               <span
                 key={tag}
-                className="px-2 py-0.5 bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 text-xs rounded-full"
+                className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-xs rounded-full"
               >
                 {tag}
               </span>
@@ -916,30 +916,30 @@ export default function DestinationBox({
         )}
 
         {/* Scheduled Time */}
-        <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+        <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-3.5 h-3.5 text-stone-400" />
-            <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Scheduled Time</span>
+            <Clock className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Scheduled Time</span>
           </div>
           {isEditing ? (
             <input
               type="time"
               value={editTime}
               onChange={(e) => setEditTime(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+              className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
             />
           ) : (
-            <p className="text-sm text-stone-700 dark:text-gray-300">
-              {item.time || <span className="text-stone-400 dark:text-gray-500 italic">No time set</span>}
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {item.time || <span className="text-gray-400 dark:text-gray-500 italic">No time set</span>}
             </p>
           )}
         </div>
 
         {/* Reservation Info */}
-        <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+        <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-2 mb-2">
-            <Ticket className="w-3.5 h-3.5 text-stone-400" />
-            <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Reservation Info</span>
+            <Ticket className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Reservation Info</span>
           </div>
           {isEditing ? (
             <div className="space-y-2">
@@ -948,14 +948,14 @@ export default function DestinationBox({
                 value={editConfirmation}
                 onChange={(e) => setEditConfirmation(e.target.value)}
                 placeholder="Confirmation number"
-                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
               />
               <input
                 type="tel"
                 value={editPhone}
                 onChange={(e) => setEditPhone(e.target.value)}
                 placeholder="Phone number"
-                className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
               />
               {(itemType === 'place' || !itemType) && (
                 <input
@@ -964,41 +964,41 @@ export default function DestinationBox({
                   onChange={(e) => setEditPartySize(e.target.value)}
                   placeholder="Party size"
                   min="1"
-                  className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                  className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm"
                 />
               )}
             </div>
           ) : (
             <div className="space-y-1">
               {(parsedNotes?.confirmationNumber || parsedNotes?.hotelConfirmation) && (
-                <div className="flex items-center gap-2 text-sm text-stone-700 dark:text-gray-300">
+                <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                   <span className="font-mono">{parsedNotes?.confirmationNumber || parsedNotes?.hotelConfirmation}</span>
                 </div>
               )}
               {parsedNotes?.phone && (
-                <div className="flex items-center gap-2 text-sm text-stone-700 dark:text-gray-300">
-                  <Phone className="w-3.5 h-3.5 text-stone-400" />
+                <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <Phone className="w-3.5 h-3.5 text-gray-400" />
                   <span>{parsedNotes.phone}</span>
                 </div>
               )}
               {parsedNotes?.partySize && (
-                <div className="flex items-center gap-2 text-sm text-stone-700 dark:text-gray-300">
-                  <Users className="w-3.5 h-3.5 text-stone-400" />
+                <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <Users className="w-3.5 h-3.5 text-gray-400" />
                   <span>{parsedNotes.partySize} guests</span>
                 </div>
               )}
               {!parsedNotes?.confirmationNumber && !parsedNotes?.hotelConfirmation && !parsedNotes?.phone && (
-                <p className="text-sm text-stone-400 dark:text-gray-500 italic">No reservation info</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500 italic">No reservation info</p>
               )}
             </div>
           )}
         </div>
 
         {/* Notes */}
-        <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+        <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-2 mb-2">
-            <StickyNote className="w-3.5 h-3.5 text-stone-400" />
-            <span className="text-xs font-medium text-stone-500 dark:text-gray-400">Notes</span>
+            <StickyNote className="w-3.5 h-3.5 text-gray-400" />
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Notes</span>
           </div>
           {isEditing ? (
             <textarea
@@ -1006,23 +1006,23 @@ export default function DestinationBox({
               onChange={(e) => setEditNotes(e.target.value)}
               placeholder="Add notes..."
               rows={3}
-              className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm resize-none"
+              className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm resize-none"
             />
           ) : (
-            <p className="text-sm text-stone-700 dark:text-gray-300">
-              {parsedNotes?.notes || parsedNotes?.raw || <span className="text-stone-400 dark:text-gray-500 italic">No notes</span>}
+            <p className="text-sm text-gray-700 dark:text-gray-300">
+              {parsedNotes?.notes || parsedNotes?.raw || <span className="text-gray-400 dark:text-gray-500 italic">No notes</span>}
             </p>
           )}
         </div>
 
         {/* Links */}
         {!isEditing && website && (
-          <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+          <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
             <a
               href={website}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs text-stone-600 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
+              className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <Globe className="w-3.5 h-3.5" />
               <span className="truncate">{website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}</span>
@@ -1033,7 +1033,7 @@ export default function DestinationBox({
 
         {/* Remove Button */}
         {isEditing && onRemove && (
-          <div className="pt-3 border-t border-stone-100 dark:border-gray-800">
+          <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
             <button
               onClick={handleRemove}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"

@@ -52,8 +52,8 @@ export default function DayTabNav({
                 px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
                 min-h-[40px] sm:min-h-0
                 ${isSelected
-                  ? 'font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
-                  : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+                  ? 'font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
+                  : 'font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                 }
               `}
             >

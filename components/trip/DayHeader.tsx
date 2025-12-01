@@ -33,21 +33,21 @@ export default function DayHeader({
         flex items-center justify-between
         py-5 px-6
         bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-sm
-        border-b border-stone-100 dark:border-stone-800/50
+        border-b border-gray-100 dark:border-gray-800/50
         transition-colors duration-200
-        hover:bg-stone-50/50 dark:hover:bg-stone-900/30
+        hover:bg-gray-50/50 dark:hover:bg-gray-900/30
         ${className}
       `}
     >
       {/* Left: Day Number + Date */}
       <div className="flex items-baseline gap-4">
         {/* Day number with editorial italic styling */}
-        <span className="font-display italic text-2xl text-stone-900 dark:text-white tracking-tight">
+        <span className="font-display italic text-2xl text-gray-900 dark:text-white tracking-tight">
           Day {dayNumber}
         </span>
         {/* Date in refined uppercase */}
         {formattedDate && (
-          <span className="text-[11px] uppercase tracking-[0.15em] text-stone-400 dark:text-stone-500 font-medium">
+          <span className="text-[11px] uppercase tracking-[0.15em] text-gray-400 dark:text-gray-500 font-medium">
             {formattedDate}
           </span>
         )}
@@ -57,14 +57,14 @@ export default function DayHeader({
       <div className="flex items-center gap-3">
         {/* Item Count Badge */}
         {itemCount > 0 && (
-          <span className="text-[11px] text-stone-400 dark:text-stone-500 tabular-nums">
+          <span className="text-[11px] text-gray-400 dark:text-gray-500 tabular-nums">
             {itemCount} {itemCount === 1 ? 'stop' : 'stops'}
           </span>
         )}
         {/* Expand/Collapse indicator */}
         <ChevronDown
           className={`
-            w-4 h-4 text-stone-300 dark:text-stone-600
+            w-4 h-4 text-gray-300 dark:text-gray-600
             transition-transform duration-300
             ${isExpanded ? 'rotate-0' : '-rotate-90'}
           `}

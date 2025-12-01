@@ -34,7 +34,7 @@ const categoryColors = {
   exhibition: 'text-blue-500 bg-blue-100 dark:bg-blue-900/30',
   festival: 'text-amber-500 bg-amber-100 dark:bg-amber-900/30',
   theater: 'text-red-500 bg-red-100 dark:bg-red-900/30',
-  other: 'text-stone-500 bg-stone-100 dark:bg-gray-800',
+  other: 'text-gray-500 bg-gray-100 dark:bg-gray-800',
 };
 
 /**
@@ -100,16 +100,16 @@ export default function LocalEvents({
   const displayEvents = expanded ? events : events.slice(0, 3);
 
   return (
-    <div className={`border border-stone-200 dark:border-gray-800 rounded-2xl overflow-hidden ${className}`}>
+    <div className={`border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-stone-100 dark:border-gray-800 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-stone-400" />
-          <h3 className="text-sm font-medium text-stone-900 dark:text-white">
+          <Calendar className="w-4 h-4 text-gray-400" />
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white">
             What's On
           </h3>
         </div>
-        <span className="text-xs text-stone-400">
+        <span className="text-xs text-gray-400">
           {events.length} events
         </span>
       </div>
@@ -118,11 +118,11 @@ export default function LocalEvents({
       <div className="p-4">
         {loading ? (
           <div className="flex items-center justify-center py-6">
-            <Loader2 className="w-4 h-4 animate-spin text-stone-400" />
-            <span className="ml-2 text-xs text-stone-500">Finding events...</span>
+            <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+            <span className="ml-2 text-xs text-gray-500">Finding events...</span>
           </div>
         ) : events.length === 0 ? (
-          <p className="text-xs text-stone-400 dark:text-gray-500 text-center py-4">
+          <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-4">
             No events found during your trip dates
           </p>
         ) : (
@@ -134,22 +134,22 @@ export default function LocalEvents({
               return (
                 <div
                   key={event.id}
-                  className="flex items-start gap-3 p-3 rounded-xl hover:bg-stone-50 dark:hover:bg-gray-800/50 transition-colors group"
+                  className="flex items-start gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors group"
                 >
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${colorClass}`}>
                     <Icon className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-900 dark:text-white truncate">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                       {event.title}
                     </p>
                     <div className="flex items-center gap-2 mt-0.5">
                       {event.venue && (
-                        <span className="text-xs text-stone-500 dark:text-gray-400 truncate">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
                           {event.venue}
                         </span>
                       )}
-                      <span className="text-xs text-stone-400">
+                      <span className="text-xs text-gray-400">
                         {new Date(event.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </span>
                     </div>
@@ -160,7 +160,7 @@ export default function LocalEvents({
                         href={event.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-gray-300"
+                        className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <ExternalLink className="w-3.5 h-3.5" />
@@ -169,7 +169,7 @@ export default function LocalEvents({
                     {onAddToTrip && (
                       <button
                         onClick={() => onAddToTrip(event)}
-                        className="p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-gray-300"
+                        className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                       >
                         <Plus className="w-3.5 h-3.5" />
                       </button>
@@ -182,7 +182,7 @@ export default function LocalEvents({
             {events.length > 3 && (
               <button
                 onClick={() => setExpanded(!expanded)}
-                className="w-full py-2 text-xs font-medium text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
+                className="w-full py-2 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 {expanded ? 'Show less' : `Show ${events.length - 3} more`}
               </button>

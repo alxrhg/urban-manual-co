@@ -58,7 +58,7 @@ export default function ItineraryCard({
       className={`
         group relative
         ${isDragging ? 'z-50 opacity-50' : ''}
-        ${isActive ? 'ring-2 ring-stone-400/50 rounded-2xl' : ''}
+        ${isActive ? 'ring-2 ring-gray-400/50 rounded-2xl' : ''}
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -67,9 +67,9 @@ export default function ItineraryCard({
         onClick={() => onEdit?.(item)}
         className={`
           w-full flex items-center gap-3 p-3
-          bg-white dark:bg-stone-900
-          hover:bg-stone-50 dark:hover:bg-stone-800
-          border border-stone-200 dark:border-stone-800
+          bg-white dark:bg-gray-900
+          hover:bg-gray-50 dark:hover:bg-gray-800
+          border border-gray-200 dark:border-gray-800
           rounded-2xl
           transition-all duration-200
           text-left
@@ -82,8 +82,8 @@ export default function ItineraryCard({
           onClick={(e) => e.stopPropagation()}
           className={`
             flex-shrink-0 p-1.5 -ml-1 cursor-grab active:cursor-grabbing
-            text-stone-300 dark:text-stone-600
-            hover:text-stone-500 dark:hover:text-stone-400
+            text-gray-300 dark:text-gray-600
+            hover:text-gray-500 dark:hover:text-gray-400
             transition-opacity duration-200
             ${isHovered ? 'opacity-100' : 'opacity-0'}
           `}
@@ -92,14 +92,14 @@ export default function ItineraryCard({
         </div>
 
         {/* Index Badge */}
-        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
-          <span className="text-xs font-medium text-stone-600 dark:text-stone-400">
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
             {index + 1}
           </span>
         </div>
 
         {/* Thumbnail */}
-        <div className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800">
+        <div className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
           {image ? (
             <Image
               src={image}
@@ -119,7 +119,7 @@ export default function ItineraryCard({
             </div>
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <MapPin className="w-6 h-6 text-stone-400" />
+              <MapPin className="w-6 h-6 text-gray-400" />
             </div>
           )}
         </div>
@@ -127,22 +127,22 @@ export default function ItineraryCard({
         {/* Content */}
         <div className="flex-1 min-w-0">
           {/* Title */}
-          <h3 className="text-sm font-medium text-stone-900 dark:text-white truncate">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
             {item.title}
           </h3>
 
           {/* Meta Row 1: Neighborhood & Category */}
           <div className="flex items-center gap-2 mt-0.5">
             {neighborhood && (
-              <span className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400 truncate">
+              <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 truncate">
                 <MapPin className="w-3 h-3 flex-shrink-0" />
                 {neighborhood}
               </span>
             )}
             {category && (
               <>
-                {neighborhood && <span className="text-stone-300 dark:text-stone-600">·</span>}
-                <span className="text-xs text-stone-500 dark:text-stone-400 truncate">
+                {neighborhood && <span className="text-gray-300 dark:text-gray-600">·</span>}
+                <span className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {category}
                 </span>
               </>
@@ -152,15 +152,15 @@ export default function ItineraryCard({
           {/* Meta Row 2: Time & Rating */}
           <div className="flex items-center gap-2 mt-1">
             {item.time && (
-              <span className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
+              <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                 <Clock className="w-3 h-3" />
                 {formatTimeDisplay(item.time)}
               </span>
             )}
             {rating && (
               <>
-                {item.time && <span className="text-stone-300 dark:text-stone-600">·</span>}
-                <span className="flex items-center gap-1 text-xs text-stone-500 dark:text-stone-400">
+                {item.time && <span className="text-gray-300 dark:text-gray-600">·</span>}
+                <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                   <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                   {rating.toFixed(1)}
                 </span>
@@ -177,7 +177,7 @@ export default function ItineraryCard({
           }}
           className={`
             flex-shrink-0 p-2 rounded-full
-            text-stone-300 dark:text-stone-600
+            text-gray-300 dark:text-gray-600
             hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20
             transition-all duration-200
             ${isHovered ? 'opacity-100' : 'opacity-0'}

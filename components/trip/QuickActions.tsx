@@ -80,17 +80,17 @@ export default function QuickActions({
   const actions = customActions || newStyleActions || defaultActions;
 
   return (
-    <div className="grid grid-cols-3 border-y border-stone-100 dark:border-stone-800/50">
+    <div className="grid grid-cols-3 border-y border-gray-100 dark:border-gray-800/50">
       {actions.map((action, index) => {
         const isFirst = index === 0;
         const isLast = index === actions.length - 1;
 
         const content = (
           <div className="flex items-center justify-center gap-2.5">
-            <span className="text-stone-500 dark:text-stone-400 transition-colors duration-200 group-hover:text-stone-900 dark:group-hover:text-white">
+            <span className="text-gray-500 dark:text-gray-400 transition-colors duration-200 group-hover:text-gray-900 dark:group-hover:text-white">
               {action.icon}
             </span>
-            <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-stone-400 dark:text-stone-500 transition-colors duration-200 group-hover:text-stone-700 dark:group-hover:text-stone-300">
+            <span className="text-[10px] uppercase tracking-[0.2em] font-medium text-gray-400 dark:text-gray-500 transition-colors duration-200 group-hover:text-gray-700 dark:group-hover:text-gray-300">
               {action.label}
             </span>
           </div>
@@ -102,8 +102,8 @@ export default function QuickActions({
           flex items-center justify-center
           bg-white dark:bg-[#0a0a0a]
           transition-all duration-200
-          hover:bg-stone-50 dark:hover:bg-stone-900/50
-          ${!isLast ? 'border-r border-stone-100 dark:border-stone-800/50' : ''}
+          hover:bg-gray-50 dark:hover:bg-gray-900/50
+          ${!isLast ? 'border-r border-gray-100 dark:border-gray-800/50' : ''}
         `;
 
         if (action.href) {

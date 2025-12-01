@@ -85,7 +85,7 @@ function SortableTripItemCard({
           `}
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical className="w-5 h-5 sm:w-4 sm:h-4 text-stone-400 dark:text-gray-500" />
+          <GripVertical className="w-5 h-5 sm:w-4 sm:h-4 text-gray-400 dark:text-gray-500" />
         </div>
 
         {/* Remove Button */}
@@ -100,7 +100,7 @@ function SortableTripItemCard({
               p-2.5 sm:p-1.5 -m-1 sm:m-0
               rounded-xl sm:rounded-lg
               bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
-              text-stone-400 hover:text-red-500 active:text-red-600
+              text-gray-400 hover:text-red-500 active:text-red-600
               hover:bg-red-50 active:bg-red-100 dark:hover:bg-red-900/20 dark:active:bg-red-900/30
               transition-all duration-200
               min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0
@@ -119,9 +119,9 @@ function SortableTripItemCard({
           className={`
             ${onEdit ? 'cursor-pointer' : ''} rounded-2xl transition-all
             ${onEdit ? 'active:scale-[0.98] sm:active:scale-100' : ''}
-            ${isActive ? 'ring-2 ring-stone-300 dark:ring-gray-600' : ''}
-            ${onEdit ? 'hover:ring-1 hover:ring-stone-200 dark:hover:ring-stone-700' : ''}
-            ${onEdit ? 'active:ring-1 active:ring-stone-300 dark:active:ring-stone-600' : ''}
+            ${isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600' : ''}
+            ${onEdit ? 'hover:ring-1 hover:ring-gray-200 dark:hover:ring-gray-700' : ''}
+            ${onEdit ? 'active:ring-1 active:ring-gray-300 dark:active:ring-gray-600' : ''}
           `}
         >
           {children}
@@ -153,9 +153,9 @@ function ViewOnlyTripItemCard({
           className={`
             ${onEdit ? 'cursor-pointer' : ''} rounded-2xl transition-all
             ${onEdit ? 'active:scale-[0.98] sm:active:scale-100' : ''}
-            ${isActive ? 'ring-2 ring-stone-300 dark:ring-gray-600' : ''}
-            ${onEdit ? 'hover:ring-1 hover:ring-stone-200 dark:hover:ring-stone-700' : ''}
-            ${onEdit ? 'active:ring-1 active:ring-stone-300 dark:active:ring-stone-600' : ''}
+            ${isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600' : ''}
+            ${onEdit ? 'hover:ring-1 hover:ring-gray-200 dark:hover:ring-gray-700' : ''}
+            ${onEdit ? 'active:ring-1 active:ring-gray-300 dark:active:ring-gray-600' : ''}
           `}
         >
           {children}
