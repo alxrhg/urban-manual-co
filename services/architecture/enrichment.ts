@@ -3,16 +3,24 @@
  * Handles enrichment of architecture data from various sources
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Lazy Supabase client to avoid build-time errors
+let _supabase: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase credentials');
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase credentials');
+    }
+
+    _supabase = createClient(supabaseUrl, supabaseKey);
+  }
+  return _supabase;
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface ArchitectEnrichmentData {
   bio?: string;
@@ -57,7 +65,7 @@ export async function enrichArchitect(
 
   updateData.updated_at = new Date().toISOString();
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('architects')
     .update(updateData)
     .eq('id', architectId);
@@ -85,7 +93,7 @@ export async function enrichMovement(
 
   updateData.updated_at = new Date().toISOString();
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('design_movements')
     .update(updateData)
     .eq('id', movementId);
@@ -134,6 +142,7 @@ export async function linkMaterialsToDestination(
   materialSlugs: string[]
 ): Promise<void> {
   // Get material IDs
+  const supabase = getSupabase();
   const { data: materials, error: fetchError } = await supabase
     .from('materials')
     .select('id')
@@ -199,7 +208,7 @@ export async function enrichDestinationArchitecture(
 
   updateData.last_enriched_at = new Date().toISOString();
 
-  const { error } = await supabase
+  const { error } = await getSupabase()
     .from('destinations')
     .update(updateData)
     .eq('id', destinationId);

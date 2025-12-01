@@ -3,17 +3,25 @@
  * Core intelligence product - generates architectural journeys
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { ArchitecturalJourney, ArchitectureDestination } from '@/types/architecture';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Lazy Supabase client to avoid build-time errors
+let _supabase: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase credentials');
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase credentials');
+    }
+
+    _supabase = createClient(supabaseUrl, supabaseKey);
+  }
+  return _supabase;
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface JourneyInput {
   city: string;
@@ -64,6 +72,7 @@ async function getDestinationsByMovement(
   movementSlug: string,
   limit = 20
 ): Promise<ArchitectureDestination[]> {
+  const supabase = getSupabase();
   const { data, error } = await supabase
     .from('destinations')
     .select(`
@@ -122,6 +131,7 @@ async function getDestinationsByArchitect(
   architectSlug: string,
   limit = 20
 ): Promise<ArchitectureDestination[]> {
+  const supabase = getSupabase();
   const { data: architect } = await supabase
     .from('architects')
     .select('id')
@@ -177,6 +187,7 @@ async function getDestinationsByMaterial(
   materialSlug: string,
   limit = 20
 ): Promise<ArchitectureDestination[]> {
+  const supabase = getSupabase();
   const { data: material } = await supabase
     .from('materials')
     .select('id')
@@ -242,7 +253,7 @@ async function getDestinationsByCity(
   city: string,
   limit = 20
 ): Promise<ArchitectureDestination[]> {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('destinations')
     .select(`
       id,

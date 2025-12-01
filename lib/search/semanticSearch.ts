@@ -1,6 +1,6 @@
 import { embedText } from '@/lib/llm';
 import { trackContentMetric } from '@/lib/metrics';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 export type SemanticSearchFilters = {
   city?: string;
@@ -8,33 +8,48 @@ export type SemanticSearchFilters = {
   open_now?: boolean;
 };
 
-const url = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL) as string;
-// Support both new (publishable/secret) and legacy (anon/service_role) key naming
-const key = (
-  process.env.SUPABASE_SECRET_KEY ||
-  process.env.SUPABASE_SERVICE_ROLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-) as string;
-const supabase = createClient(url, key);
+// Lazy Supabase client to avoid build-time errors
+let _supabase: SupabaseClient | null = null;
+
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+    // Support both new (publishable/secret) and legacy (anon/service_role) key naming
+    const key =
+      process.env.SUPABASE_SECRET_KEY ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!url || !key) {
+      throw new Error('Missing Supabase credentials for semantic search');
+    }
+
+    _supabase = createClient(url, key);
+  }
+  return _supabase;
+}
+
 const SEMANTIC_SEARCH_RPC = process.env.NEXT_PUBLIC_SEMANTIC_SEARCH_RPC || 'search_destinations_intelligent';
 
 type SemanticSearchDependencies = {
   embed: typeof embedText;
-  supabaseClient: typeof supabase;
+  supabaseClient: SupabaseClient;
   metricTracker: typeof trackContentMetric;
 };
 
-const defaultDeps: SemanticSearchDependencies = {
-  embed: embedText,
-  supabaseClient: supabase,
-  metricTracker: trackContentMetric,
-};
+function getDefaultDeps(): SemanticSearchDependencies {
+  return {
+    embed: embedText,
+    supabaseClient: getSupabase(),
+    metricTracker: trackContentMetric,
+  };
+}
 
 export function createSemanticBlendSearch(
   deps: Partial<SemanticSearchDependencies> = {}
 ) {
-  const resolved: SemanticSearchDependencies = { ...defaultDeps, ...deps };
+  const resolved: SemanticSearchDependencies = { ...getDefaultDeps(), ...deps };
 
   return async function semanticBlendSearch(
     query: string,
@@ -80,7 +95,20 @@ export function createSemanticBlendSearch(
   };
 }
 
-export const semanticBlendSearch = createSemanticBlendSearch();
+// Lazy initialization to avoid build-time errors
+let _semanticBlendSearch: ReturnType<typeof createSemanticBlendSearch> | null = null;
+
+export function getSemanticBlendSearch() {
+  if (!_semanticBlendSearch) {
+    _semanticBlendSearch = createSemanticBlendSearch();
+  }
+  return _semanticBlendSearch;
+}
+
+// For backward compatibility - wraps the lazy getter
+export const semanticBlendSearch = async (query: string, filters: SemanticSearchFilters = {}) => {
+  return getSemanticBlendSearch()(query, filters);
+};
 
 async function runSemanticRpc(
   embedding: number[],
@@ -133,7 +161,7 @@ async function fallbackSearch(
 async function keywordFallbackSearch(
   query: string,
   filters: SemanticSearchFilters,
-  client: typeof supabase
+  client: SupabaseClient
 ) {
   try {
     let keywordQuery = client

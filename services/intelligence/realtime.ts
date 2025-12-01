@@ -3,16 +3,24 @@
  * Weather adjustments, crowding intelligence, event integration
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Lazy Supabase client to avoid build-time errors
+let _supabase: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase credentials');
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase credentials');
+    }
+
+    _supabase = createClient(supabaseUrl, supabaseKey);
+  }
+  return _supabase;
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface RealtimeAdjustment {
   type: 'weather' | 'crowding' | 'event' | 'availability';
@@ -52,7 +60,7 @@ async function checkWeatherAdjustments(
   const adjustments: RealtimeAdjustment[] = [];
 
   // Fetch weather data for destinations
-  const { data: destinations } = await supabase
+  const { data: destinations } = await getSupabase()
     .from('destinations')
     .select('id, name, current_weather_json, weather_forecast_json')
     .in('id', destinationIds);
@@ -91,7 +99,7 @@ async function checkEvents(
   const adjustments: RealtimeAdjustment[] = [];
 
   // Fetch events for destinations
-  const { data: destinations } = await supabase
+  const { data: destinations } = await getSupabase()
     .from('destinations')
     .select('id, name, nearby_events_json')
     .in('id', destinationIds);

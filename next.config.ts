@@ -80,9 +80,9 @@ const nextConfig: NextConfig = {
   experimental: {
     // Optimize CSS bundling
     optimizeCss: true,
-    // Enable Partial Prerendering (cacheComponents in Next.js 16)
-    // Renders static shell instantly, streams dynamic content
-    cacheComponents: true,
+    // Note: cacheComponents (PPR) disabled - incompatible with route segment configs
+    // (dynamic, revalidate, runtime, dynamicParams) and ssr: false dynamic imports
+    // We use ISR + Streaming with Suspense instead for similar performance
     // Optimize package imports for smaller bundles
     optimizePackageImports: [
       'lucide-react',
