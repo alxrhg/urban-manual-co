@@ -15,7 +15,7 @@ import type { TravelIntelligenceOutput, TravelIntelligenceInput } from '@/servic
 
 interface IntelligenceDashboardProps {
   intelligence?: TravelIntelligenceOutput;
-  onGenerate?: (input: TravelIntelligenceInput) => void;
+  onGenerate?: (input: Partial<TravelIntelligenceInput>) => void;
 }
 
 export function IntelligenceDashboard({ intelligence, onGenerate }: IntelligenceDashboardProps) {
