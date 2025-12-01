@@ -1,13 +1,23 @@
 /**
  * Confirm Dialog Component
- * Beautiful confirmation dialog to replace native confirm()
- * Framer/Webflow-style with smooth animations
+ * Beautiful confirmation dialog using shadcn AlertDialog
+ * Replaces native confirm() with accessible, animated dialogs
  */
 'use client';
 
-import { useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Info, CheckCircle } from 'lucide-react';
+import * as React from 'react';
+import { AlertTriangle, Info, Loader2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
 
 export type ConfirmDialogType = 'danger' | 'warning' | 'info';
 
@@ -34,129 +44,51 @@ export function ConfirmDialog({
   type = 'info',
   isLoading = false,
 }: ConfirmDialogProps) {
-  // Handle ESC key
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && !isLoading) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose, isLoading]);
-
-  // Prevent body scroll when open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
-
   const icons = {
-    danger: <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />,
-    warning: <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />,
-    info: <Info className="h-6 w-6 text-blue-600 dark:text-blue-400" />,
+    danger: <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />,
+    warning: <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />,
+    info: <Info className="h-5 w-5 text-blue-600 dark:text-blue-400" />,
   };
 
-  const buttonStyles = {
-    danger: 'bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white',
-    warning: 'bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600 text-white',
-    info: 'bg-black hover:bg-gray-800 dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black',
+  const actionStyles = {
+    danger: 'bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white border-transparent',
+    warning: 'bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-500 dark:hover:bg-yellow-600 text-white border-transparent',
+    info: 'bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-50 dark:hover:bg-neutral-200 text-white dark:text-neutral-900 border-transparent',
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={!isLoading ? onClose : undefined}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-            aria-hidden="true"
-          />
-
-          {/* Dialog */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{
-                duration: 0.2,
-                ease: [0.4, 0, 0.2, 1]
-              }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-gray-950 rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-gray-200 dark:border-gray-800"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="dialog-title"
-              aria-describedby="dialog-description"
-            >
-              {/* Content */}
-              <div className="p-6">
-                {/* Icon and Title */}
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="flex-shrink-0 mt-0.5">
-                    {icons[type]}
-                  </div>
-                  <div className="flex-1">
-                    <h2
-                      id="dialog-title"
-                      className="text-lg font-semibold text-gray-900 dark:text-white mb-2"
-                    >
-                      {title}
-                    </h2>
-                    <p
-                      id="dialog-description"
-                      className="text-sm text-gray-600 dark:text-gray-400"
-                    >
-                      {message}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="bg-gray-50 dark:bg-gray-900/50 px-6 py-4 flex items-center justify-end gap-3 border-t border-gray-200 dark:border-gray-800">
-                <button
-                  onClick={onClose}
-                  disabled={isLoading}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {cancelText}
-                </button>
-                <button
-                  onClick={onConfirm}
-                  disabled={isLoading}
-                  className={`px-4 py-2 text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed min-w-[100px] ${buttonStyles[type]}`}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      Loading...
-                    </span>
-                  ) : (
-                    confirmText
-                  )}
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    <AlertDialog open={isOpen} onOpenChange={(open) => !open && !isLoading && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-3">
+            {icons[type]}
+            {title}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {message}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isLoading} onClick={onClose}>
+            {cancelText}
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={onConfirm}
+            disabled={isLoading}
+            className={cn(actionStyles[type], 'min-w-[100px]')}
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Loading...
+              </span>
+            ) : (
+              confirmText
+            )}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -235,6 +167,3 @@ export function useConfirmDialog() {
 
   return { confirm, Dialog };
 }
-
-// Add React import for hook
-import * as React from 'react';

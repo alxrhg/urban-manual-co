@@ -3,6 +3,17 @@
 import { useState } from 'react';
 import { X, SlidersHorizontal, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 export interface SearchFilters {
   city?: string;
@@ -45,36 +56,49 @@ export function SearchFiltersComponent({
   }
 
   const hasActiveFilters = Object.keys(filters).length > 0;
+  const filterCount = Object.keys(filters).length;
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-12 h-12 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 rounded-2xl transition-opacity flex-shrink-0"
-        aria-label="Open filters"
-      >
-        <SlidersHorizontal className="h-5 w-5" />
-      </button>
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <Button
+              variant="default"
+              size="icon"
+              className="relative w-12 h-12 rounded-2xl bg-black dark:bg-white text-white dark:text-black hover:opacity-90"
+              aria-label={`Open filters${filterCount > 0 ? ` (${filterCount} active)` : ''}`}
+            >
+              <SlidersHorizontal className="h-5 w-5" />
+              {filterCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
+                  {filterCount}
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">
+          <p>Filter destinations</p>
+        </TooltipContent>
+      </Tooltip>
 
-      {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-xl z-50 p-4 space-y-4">
+      <PopoverContent className="w-80 p-4" align="end">
+        <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Filters</h3>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
-            >
-              <X className="h-4 w-4" />
-            </button>
+            {hasActiveFilters && (
+              <button
+                onClick={clearAll}
+                className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
+              >
+                Clear all
+              </button>
+            )}
           </div>
 
           {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex flex-wrap gap-2 pb-2 border-b border-neutral-200 dark:border-neutral-700">
               {Object.entries(filters).map(([key, value]) => {
                 let displayValue = String(value);
                 if (key === 'openNow' && value === true) displayValue = 'Open Now';
@@ -83,7 +107,7 @@ export function SearchFiltersComponent({
                 else if (key === 'minPrice') displayValue = `Min $${'$'.repeat(value as number)}`;
                 else if (key === 'maxPrice') displayValue = `Max $${'$'.repeat(value as number)}`;
                 else if (key === 'minRating') displayValue = `${value}+ ⭐`;
-                
+
                 return (
                   <Badge
                     key={key}
@@ -100,23 +124,17 @@ export function SearchFiltersComponent({
                   </Badge>
                 );
               })}
-              <button
-                onClick={clearAll}
-                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-              >
-                Clear all
-              </button>
             </div>
           )}
 
-          <div className="space-y-4 max-h-96 overflow-y-auto">
+          <div className="space-y-4 max-h-80 overflow-y-auto">
             {/* City Filter */}
             <div>
               <label className="block text-sm font-medium mb-2">City</label>
               <select
                 value={filters.city || ''}
                 onChange={(e) => updateFilter('city', e.target.value || undefined)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm"
+                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
               >
                 <option value="">Select City</option>
                 {availableCities.map(city => (
@@ -131,7 +149,7 @@ export function SearchFiltersComponent({
               <select
                 value={filters.category || ''}
                 onChange={(e) => updateFilter('category', e.target.value || undefined)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm"
+                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
               >
                 <option value="">Select Category</option>
                 {availableCategories.map(category => (
@@ -147,7 +165,7 @@ export function SearchFiltersComponent({
                   type="checkbox"
                   checked={filters.michelin || false}
                   onChange={(e) => updateFilter('michelin', e.target.checked || undefined)}
-                  className="w-4 h-4 rounded"
+                  className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 focus:ring-neutral-900 dark:focus:ring-white"
                 />
                 <span className="text-sm">Michelin Starred Only</span>
               </label>
@@ -160,7 +178,7 @@ export function SearchFiltersComponent({
                   type="checkbox"
                   checked={filters.crown || false}
                   onChange={(e) => updateFilter('crown', e.target.checked || undefined)}
-                  className="w-4 h-4 rounded"
+                  className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 focus:ring-neutral-900 dark:focus:ring-white"
                 />
                 <span className="text-sm">Crown Badge Only</span>
               </label>
@@ -173,7 +191,7 @@ export function SearchFiltersComponent({
                 <select
                   value={filters.minPrice || ''}
                   onChange={(e) => updateFilter('minPrice', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm"
+                  className="flex-1 px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
                 >
                   <option value="">Min</option>
                   {[1, 2, 3, 4].map(level => (
@@ -183,7 +201,7 @@ export function SearchFiltersComponent({
                 <select
                   value={filters.maxPrice || ''}
                   onChange={(e) => updateFilter('maxPrice', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm"
+                  className="flex-1 px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
                 >
                   <option value="">Max</option>
                   {[1, 2, 3, 4].map(level => (
@@ -199,7 +217,7 @@ export function SearchFiltersComponent({
               <select
                 value={filters.minRating || ''}
                 onChange={(e) => updateFilter('minRating', e.target.value ? parseFloat(e.target.value) : undefined)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm"
+                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
               >
                 <option value="">Any</option>
                 <option value="4.5">4.5+ ⭐</option>
@@ -216,19 +234,17 @@ export function SearchFiltersComponent({
                   type="checkbox"
                   checked={filters.openNow || false}
                   onChange={(e) => updateFilter('openNow', e.target.checked || undefined)}
-                  className="w-4 h-4 rounded"
+                  className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 focus:ring-neutral-900 dark:focus:ring-white"
                 />
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <Clock className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
                   <span className="text-sm">Open Now</span>
                 </div>
               </label>
             </div>
           </div>
         </div>
-        </>
-      )}
-    </div>
+      </PopoverContent>
+    </Popover>
   );
 }
-
