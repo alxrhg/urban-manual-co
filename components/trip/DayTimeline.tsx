@@ -22,6 +22,7 @@ import {
   useTimelinePositions,
   useDragResize,
   TIMELINE_CONFIG,
+  SquareTimelineHighlight,
 } from './timeline';
 
 interface DayTimelineProps {
@@ -79,6 +80,15 @@ export default function DayTimeline({
 
   const formattedDate = formatDayDate(day.date);
 
+  const formatMinutesLabel = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHour = ((hours + 11) % 12) + 1;
+    const paddedMinutes = mins.toString().padStart(2, '0');
+    return `${displayHour}:${paddedMinutes} ${period}`;
+  };
+
   // Separate hotels from regular activities, filter flights by date
   const { regularItems, hotelItem, isExternalHotel } = useMemo(() => {
     const hotels = day.items.filter(item => {
@@ -132,6 +142,31 @@ export default function DayTimeline({
   } = useTimelinePositions({
     items: regularItems,
   });
+
+  const timelineSummary = useMemo(() => {
+    const hasPositions = positionedItems.length > 0;
+    const earliest = hasPositions
+      ? positionedItems.reduce((min, entry) => Math.min(min, entry.start), Infinity)
+      : startHour * 60;
+    const latest = hasPositions
+      ? positionedItems.reduce((max, entry) => Math.max(max, entry.end), 0)
+      : Math.max(startHour * 60 + 120, endHour * 60);
+    const spreadHours = ((latest - earliest) / 60).toFixed(1);
+    const laneCount = positionedItems.reduce((max, entry) => Math.max(max, entry.laneCount ?? 1), 1) || 1;
+
+    const overlapHint = !hasPositions
+      ? 'Ready for new stops'
+      : laneCount > 1
+        ? 'Stacked schedule'
+        : 'Smooth, single-track flow';
+
+    return {
+      timeWindow: `${formatMinutesLabel(earliest)} – ${formatMinutesLabel(latest)}`,
+      spreadHours,
+      overlapHint,
+      laneCount,
+    };
+  }, [positionedItems, startHour, endHour]);
 
   // Use the drag/resize hook
   const {
@@ -357,6 +392,16 @@ export default function DayTimeline({
 
       {/* Day Content */}
       <div className="p-2 sm:p-4">
+        <SquareTimelineHighlight
+          dayNumber={day.dayNumber}
+          dateLabel={formattedDate}
+          stopCount={day.items.length}
+          timeWindow={timelineSummary.timeWindow}
+          spreadHours={timelineSummary.spreadHours}
+          overlapHint={timelineSummary.overlapHint}
+          laneCount={timelineSummary.laneCount}
+        />
+
         {regularItems.length === 0 && !hotelItem ? (
           /* Empty State */
           <div className="py-8 text-center">

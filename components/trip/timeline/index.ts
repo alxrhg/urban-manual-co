@@ -3,6 +3,7 @@ export { TimeGrid } from './TimeGrid';
 export { TimelineCard } from './TimelineCard';
 export { CurrentTimeIndicator } from './CurrentTimeIndicator';
 export { ConnectorLine } from './ConnectorLine';
+export { SquareTimelineHighlight } from './SquareTimelineHighlight';
 
 // Hooks
 export { useTimelinePositions } from './useTimelinePositions';
