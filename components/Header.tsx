@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { User, Map } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
@@ -13,77 +13,81 @@ export function Header() {
   const router = useRouter();
   const { user } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  // Fetch user profile and avatar
-  useEffect(() => {
-    async function fetchProfile() {
-      if (!user?.id) {
-        setAvatarUrl(null);
-        return;
-      }
-
-      try {
-        // Use profiles table (standard Supabase structure)
-        const supabaseClient = createClient();
-        const { data, error } = await supabaseClient
-          .from("profiles")
-          .select("avatar_url")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (!error && data?.avatar_url) {
-          setAvatarUrl(data.avatar_url);
-        } else {
-          setAvatarUrl(null);
-        }
-      } catch {
-        // Ignore errors (table might not exist or RLS blocking)
-        setAvatarUrl(null);
-      }
-    }
-
-    fetchProfile();
-  }, [user]);
-
-  // Determine admin role from user metadata
-  useEffect(() => {
+  // Determine admin role from user metadata (sync, no useEffect needed)
+  const isAdmin = useMemo(() => {
     const role = (user?.app_metadata as Record<string, any> | undefined)?.role;
-    const isAdminUser = role === "admin";
-    setIsAdmin(isAdminUser);
-    if (!isAdminUser) {
-      setBuildVersion(null);
-    }
+    return role === "admin";
   }, [user]);
 
-  // Fetch build version for admins
+  // Single useEffect to fetch all user data in parallel
   useEffect(() => {
-    async function fetchBuildVersion() {
-      if (!isAdmin) return;
-      try {
-        const versionRes = await fetch("/api/build-version");
-        if (!versionRes.ok) {
-          setBuildVersion(null);
-          return;
-        }
-        const versionData = await versionRes.json();
-        // Prioritize GitHub build number, then commit SHA, then version
-        setBuildVersion(
-          versionData.buildNumber ||
-            versionData.shortSha ||
-            versionData.commitSha?.substring(0, 7) ||
-            versionData.version ||
-            null
+    if (!user?.id) {
+      setAvatarUrl(null);
+      setBuildVersion(null);
+      return;
+    }
+
+    // Parallel fetch: avatar and build version (if admin)
+    const fetchUserData = async () => {
+      const promises: Promise<void>[] = [];
+
+      // Fetch avatar
+      promises.push(
+        (async () => {
+          try {
+            const supabaseClient = createClient();
+            const { data, error } = await supabaseClient
+              .from("profiles")
+              .select("avatar_url")
+              .eq("id", user.id)
+              .maybeSingle();
+
+            if (!error && data?.avatar_url) {
+              setAvatarUrl(data.avatar_url);
+            } else {
+              setAvatarUrl(null);
+            }
+          } catch {
+            setAvatarUrl(null);
+          }
+        })()
+      );
+
+      // Fetch build version only for admins
+      if (isAdmin) {
+        promises.push(
+          (async () => {
+            try {
+              const versionRes = await fetch("/api/build-version");
+              if (!versionRes.ok) {
+                setBuildVersion(null);
+                return;
+              }
+              const versionData = await versionRes.json();
+              setBuildVersion(
+                versionData.buildNumber ||
+                  versionData.shortSha ||
+                  versionData.commitSha?.substring(0, 7) ||
+                  versionData.version ||
+                  null
+              );
+            } catch {
+              setBuildVersion(null);
+            }
+          })()
         );
-      } catch {
-        // Ignore version fetch errors
+      } else {
         setBuildVersion(null);
       }
-    }
-    fetchBuildVersion();
-  }, [isAdmin]);
+
+      await Promise.all(promises);
+    };
+
+    fetchUserData();
+  }, [user, isAdmin]);
 
   const navigate = (path: string) => {
     router.push(path);
