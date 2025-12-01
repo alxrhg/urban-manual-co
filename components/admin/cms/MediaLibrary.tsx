@@ -20,6 +20,18 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface MediaItem {
   id: string;
@@ -251,25 +263,27 @@ export function MediaLibrary() {
         <div className="flex items-center gap-3 text-xs text-gray-500">
           <HardDrive className="w-4 h-4" />
           <span>{formatFileSize(storageUsed)} used</span>
-          <span className="text-gray-300 dark:text-gray-700">|</span>
+          <Separator orientation="vertical" className="h-4" />
           <span>{totalCount} files</span>
         </div>
-        <label className="inline-flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium transition-colors hover:opacity-80 cursor-pointer">
-          {uploading ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Upload className="w-4 h-4" />
-          )}
-          Upload
-          <input
-            type="file"
-            multiple
-            accept="image/*,video/*"
-            onChange={handleUpload}
-            className="hidden"
-            disabled={uploading}
-          />
-        </label>
+        <Button asChild className="rounded-full" disabled={uploading}>
+          <label className="cursor-pointer">
+            {uploading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Upload className="w-4 h-4 mr-2" />
+            )}
+            Upload
+            <input
+              type="file"
+              multiple
+              accept="image/*,video/*"
+              onChange={handleUpload}
+              className="hidden"
+              disabled={uploading}
+            />
+          </label>
+        </Button>
       </div>
 
       {/* Error Message */}
@@ -277,12 +291,14 @@ export function MediaLibrary() {
         <div className="flex items-center gap-3 p-4 border border-red-200 dark:border-red-900 rounded-2xl bg-red-50 dark:bg-red-900/10">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setError(null)}
-            className="ml-auto p-1 text-red-400 hover:text-red-600"
+            className="ml-auto h-8 w-8 text-red-400 hover:text-red-600"
           >
             <X className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       )}
 
@@ -290,7 +306,7 @@ export function MediaLibrary() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
+          <Input
             type="text"
             value={searchQuery}
             onChange={(e) => {
@@ -298,55 +314,52 @@ export function MediaLibrary() {
               setPage(1);
             }}
             placeholder="Search files..."
-            className="w-full pl-10 pr-4 py-2.5 bg-transparent border border-gray-200 dark:border-gray-800 rounded-full text-sm placeholder-gray-400 focus:outline-none focus:border-gray-400 dark:focus:border-gray-600"
+            className="pl-10 rounded-full"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
+        <div className="flex items-center gap-1 border border-gray-200 dark:border-gray-800 rounded-lg p-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setViewMode('grid')}
-            className={`p-2 rounded-full transition-colors ${
-              viewMode === 'grid'
-                ? 'bg-gray-100 dark:bg-gray-800 text-black dark:text-white'
-                : 'text-gray-400 hover:text-black dark:hover:text-white'
-            }`}
+            className={viewMode === 'grid' ? 'bg-gray-100 dark:bg-gray-800' : ''}
           >
             <Grid className="w-4 h-4" />
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setViewMode('list')}
-            className={`p-2 rounded-full transition-colors ${
-              viewMode === 'list'
-                ? 'bg-gray-100 dark:bg-gray-800 text-black dark:text-white'
-                : 'text-gray-400 hover:text-black dark:hover:text-white'
-            }`}
+            className={viewMode === 'list' ? 'bg-gray-100 dark:bg-gray-800' : ''}
           >
             <List className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Bulk Actions */}
       {selectedItems.size > 0 && (
         <div className="flex items-center gap-3 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            {selectedItems.size} selected
-          </span>
-          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
-          <button
+          <Badge variant="secondary">{selectedItems.size} selected</Badge>
+          <Separator orientation="vertical" className="h-4" />
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleBulkDelete}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-full transition-colors"
+            className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10"
           >
-            <Trash2 className="w-3 h-3" />
+            <Trash2 className="w-3 h-3 mr-1" />
             Delete
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setSelectedItems(new Set())}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
           >
-            <X className="w-3 h-3" />
+            <X className="w-3 h-3 mr-1" />
             Clear
-          </button>
+          </Button>
         </div>
       )}
 
@@ -354,9 +367,9 @@ export function MediaLibrary() {
       {loading ? (
         <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4' : 'space-y-2'}>
           {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
-            <div
+            <Skeleton
               key={i}
-              className={`bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse ${viewMode === 'grid' ? 'aspect-square' : 'h-16'}`}
+              className={`rounded-2xl ${viewMode === 'grid' ? 'aspect-square' : 'h-16'}`}
             />
           ))}
         </div>
@@ -440,11 +453,9 @@ export function MediaLibrary() {
               className={`py-3 flex items-center justify-between ${selectedItems.has(item.id) ? 'bg-gray-50 dark:bg-gray-900 -mx-4 px-4' : ''}`}
             >
               <div className="flex items-center gap-3">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={selectedItems.has(item.id)}
-                  onChange={() => toggleSelect(item.id)}
-                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-700"
+                  onCheckedChange={() => toggleSelect(item.id)}
                 />
                 <div
                   className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0 cursor-pointer"
@@ -467,18 +478,22 @@ export function MediaLibrary() {
                 <span className="text-xs text-gray-400">
                   {new Date(item.created_at).toLocaleDateString()}
                 </span>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => copyUrl(item.url)}
-                  className="p-1.5 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="h-8 w-8"
                 >
                   {copiedUrl === item.url ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setSelectedMedia(item)}
-                  className="p-1.5 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  className="h-8 w-8"
                 >
                   <Eye className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
           ))}
@@ -488,94 +503,98 @@ export function MediaLibrary() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-4">
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setPage(Math.max(1, page - 1))}
             disabled={page === 1}
-            className="p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-          </button>
+          </Button>
           <span className="text-sm text-gray-500">
             Page {page} of {totalPages}
           </span>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={() => setPage(Math.min(totalPages, page + 1))}
             disabled={page === totalPages}
-            className="p-2 rounded-full text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
-          </button>
+          </Button>
         </div>
       )}
 
       {/* Media Preview Modal */}
-      {selectedMedia && (
-        <div
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-          onClick={() => setSelectedMedia(null)}
-        >
-          <div
-            className="relative max-w-4xl w-full bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setSelectedMedia(null)}
-              className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            {selectedMedia.type === 'image' ? (
-              <img
-                src={selectedMedia.url}
-                alt={selectedMedia.name}
-                className="w-full max-h-[70vh] object-contain bg-gray-100 dark:bg-gray-800"
-              />
-            ) : (
-              <div className="w-full h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-                <ImageIcon className="w-16 h-16 text-gray-400" />
+      <Dialog open={!!selectedMedia} onOpenChange={(open) => !open && setSelectedMedia(null)}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden">
+          {selectedMedia && (
+            <>
+              {selectedMedia.type === 'image' ? (
+                <img
+                  src={selectedMedia.url}
+                  alt={selectedMedia.name}
+                  className="w-full max-h-[70vh] object-contain bg-gray-100 dark:bg-gray-800"
+                />
+              ) : (
+                <div className="w-full h-64 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
+                  <ImageIcon className="w-16 h-16 text-gray-400" />
+                </div>
+              )}
+              <div className="p-6">
+                <DialogHeader>
+                  <DialogTitle className="truncate">{selectedMedia.name}</DialogTitle>
+                </DialogHeader>
+                <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
+                  <span>{formatFileSize(selectedMedia.size)}</span>
+                  <span>{new Date(selectedMedia.created_at).toLocaleDateString()}</span>
+                </div>
+                <div className="mt-4 flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => copyUrl(selectedMedia.url)}
+                    className="rounded-full"
+                  >
+                    {copiedUrl === selectedMedia.url ? <Check className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
+                    Copy URL
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    asChild
+                    className="rounded-full"
+                  >
+                    <a
+                      href={selectedMedia.url}
+                      download={selectedMedia.name}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </a>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(selectedMedia)}
+                    disabled={deleting.has(selectedMedia.id)}
+                    className="ml-auto text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-full"
+                  >
+                    {deleting.has(selectedMedia.id) ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4 mr-2" />
+                    )}
+                    Delete
+                  </Button>
+                </div>
               </div>
-            )}
-            <div className="p-6">
-              <h3 className="font-medium truncate">{selectedMedia.name}</h3>
-              <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
-                <span>{formatFileSize(selectedMedia.size)}</span>
-                <span>{new Date(selectedMedia.created_at).toLocaleDateString()}</span>
-              </div>
-              <div className="mt-4 flex items-center gap-2">
-                <button
-                  onClick={() => copyUrl(selectedMedia.url)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full text-sm transition-colors"
-                >
-                  {copiedUrl === selectedMedia.url ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  Copy URL
-                </button>
-                <a
-                  href={selectedMedia.url}
-                  download={selectedMedia.name}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full text-sm transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </a>
-                <button
-                  onClick={() => handleDelete(selectedMedia)}
-                  disabled={deleting.has(selectedMedia.id)}
-                  className="flex items-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-full text-sm transition-colors ml-auto disabled:opacity-50"
-                >
-                  {deleting.has(selectedMedia.id) ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
