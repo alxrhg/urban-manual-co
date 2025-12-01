@@ -8,6 +8,7 @@ import Image from 'next/image';
 import type { Trip } from '@/types/trip';
 import { parseDestinations, stringifyDestinations } from '@/types/trip';
 import { MultiCityAutocompleteInput } from '@/components/MultiCityAutocompleteInput';
+import DateRangeSelector from '@/components/DateRangeSelector';
 
 // Common travel-related emojis
 const TRIP_EMOJIS = [
@@ -367,30 +368,18 @@ export default function TripSettingsBox({
         </div>
 
         {/* Dates */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-stone-500 dark:text-gray-400 mb-1.5">
-              Start
-            </label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-stone-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-stone-500 dark:text-gray-400 mb-1.5">
-              End
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              min={startDate}
-              className="w-full px-3 py-2 rounded-xl border border-stone-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-stone-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-600 transition-all"
-            />
-          </div>
+        <div>
+          <label className="block text-xs font-medium text-stone-500 dark:text-gray-400 mb-1.5">
+            Dates
+          </label>
+          <DateRangeSelector
+            startDate={startDate}
+            endDate={endDate}
+            onChange={(start, end) => {
+              setStartDate(start);
+              setEndDate(end);
+            }}
+          />
         </div>
 
         {/* Save Button */}

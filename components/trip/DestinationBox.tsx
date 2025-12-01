@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import type { ItineraryItemNotes } from '@/types/trip';
+import DateRangeSelector from '@/components/DateRangeSelector';
 
 interface DestinationBoxProps {
   item: EnrichedItineraryItem;
@@ -633,32 +634,26 @@ export default function DestinationBox({
             {isEditing ? (
               <>
                 <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Check-in Date</label>
-                    <input
-                      type="date"
-                      value={editCheckInDate}
-                      onChange={(e) => setEditCheckInDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
+                  <div className="col-span-2">
+                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Stay dates</label>
+                    <DateRangeSelector
+                      startDate={editCheckInDate}
+                      endDate={editCheckOutDate}
+                      onChange={(start, end) => {
+                        setEditCheckInDate(start);
+                        setEditCheckOutDate(end);
+                      }}
+                      className="bg-stone-50 dark:bg-gray-800"
                     />
                   </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Check-in Time</label>
                     <input
                       type="time"
                       value={editCheckInTime}
                       onChange={(e) => setEditCheckInTime(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-stone-500 dark:text-gray-400 mb-1">Check-out Date</label>
-                    <input
-                      type="date"
-                      value={editCheckOutDate}
-                      onChange={(e) => setEditCheckOutDate(e.target.value)}
                       className="w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-sm"
                     />
                   </div>
