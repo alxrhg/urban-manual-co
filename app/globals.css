@@ -788,6 +788,283 @@
   .stagger-8 { animation-delay: 400ms; }
   .stagger-9 { animation-delay: 450ms; }
   .stagger-10 { animation-delay: 500ms; }
+  .stagger-11 { animation-delay: 550ms; }
+  .stagger-12 { animation-delay: 600ms; }
+
+  /* ============================================
+     ENHANCED MICRO-INTERACTION UTILITIES
+     ============================================ */
+
+  /* Button press feedback */
+  .press-scale {
+    @apply transition-transform duration-150 ease-out active:scale-[0.97];
+  }
+
+  /* Hover lift with enhanced shadow */
+  .hover-lift-shadow {
+    @apply transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)];
+  }
+  .hover-lift-shadow:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Hover glow effect */
+  .hover-glow {
+    @apply transition-shadow duration-300;
+  }
+  .hover-glow:hover {
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.08);
+  }
+  .dark .hover-glow:hover {
+    box-shadow: 0 0 30px rgba(255, 255, 255, 0.05);
+  }
+
+  /* Focus glow for inputs */
+  .focus-glow {
+    @apply transition-shadow duration-200;
+  }
+  .focus-glow:focus {
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.08);
+  }
+  .dark .focus-glow:focus {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+  }
+
+  /* Entrance animations */
+  .animate-enter {
+    animation: enter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-enter-scale {
+    animation: enterScale 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-enter-slide-up {
+    animation: enterSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-enter-slide-down {
+    animation: enterSlideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Exit animations */
+  .animate-exit {
+    animation: exit 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+  }
+
+  .animate-exit-scale {
+    animation: exitScale 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+  }
+
+  /* Shake animation for errors */
+  .animate-shake {
+    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+
+  /* Bounce in animation */
+  .animate-bounce-in {
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  /* Pop animation */
+  .animate-pop {
+    animation: pop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  /* Wiggle for attention */
+  .animate-wiggle {
+    animation: wiggle 0.5s ease-in-out;
+  }
+
+  /* Heartbeat animation */
+  .animate-heartbeat {
+    animation: heartbeat 1s ease-in-out infinite;
+  }
+
+  /* Wave shimmer for skeletons */
+  .animate-shimmer-wave {
+    position: relative;
+    overflow: hidden;
+  }
+  .animate-shimmer-wave::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%
+    );
+    animation: shimmerWave 1.5s infinite linear;
+    transform: translateX(-100%);
+  }
+  .dark .animate-shimmer-wave::after {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 100%
+    );
+  }
+
+  /* Gradient shift animation */
+  .animate-gradient {
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+  }
+
+  /* Float animation */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  /* Fill mode utilities */
+  .fill-forwards { animation-fill-mode: forwards; }
+  .fill-backwards { animation-fill-mode: backwards; }
+  .fill-both { animation-fill-mode: both; }
+}
+
+/* ============================================
+   NEW KEYFRAME ANIMATIONS
+   ============================================ */
+
+@keyframes enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes enterScale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes enterSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes enterSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes exit {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes exitScale {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes shimmerWave {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes pageIn {
