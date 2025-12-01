@@ -36,6 +36,7 @@
 
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { NextResponse } from "next/server";
 
 // Create a Redis instance
 const redis = new Redis({
@@ -129,16 +130,15 @@ export function createRateLimitResponse(
   limit: number,
   remaining: number,
   reset: number
-): Response {
-  return new Response(
-    JSON.stringify({
+): NextResponse {
+  return NextResponse.json(
+    {
       error: message,
       rateLimitExceeded: true,
-    }),
+    },
     {
       status: 429,
       headers: {
-        "Content-Type": "application/json",
         "X-RateLimit-Limit": limit.toString(),
         "X-RateLimit-Remaining": remaining.toString(),
         "X-RateLimit-Reset": new Date(reset).toISOString(),
@@ -256,7 +256,7 @@ export async function enforceRateLimit({
   message,
   limiter,
   memoryLimiter,
-}: EnforceRateLimitOptions): Promise<Response | null> {
+}: EnforceRateLimitOptions): Promise<NextResponse | null> {
   const identifier = getIdentifier(request, userId ?? undefined);
   const activeLimiter = isUpstashConfigured() ? limiter : memoryLimiter;
   const { success, limit, remaining, reset } = await activeLimiter.limit(
