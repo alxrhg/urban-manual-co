@@ -255,7 +255,7 @@ export default function AISuggestionsDrawer({
                   <div className="pt-2 flex gap-2">
                     {isApplied ? (
                       <UMActionPill
-                        variant="secondary"
+                        variant="default"
                         className="w-full justify-center"
                         onClick={() => handleUndoSuggestion(s)}
                       >
@@ -271,7 +271,7 @@ export default function AISuggestionsDrawer({
                       </UMActionPill>
                     ) : (
                       <UMActionPill
-                        variant="secondary"
+                        variant="default"
                         className="w-full justify-center opacity-50 cursor-not-allowed"
                         onClick={() => {}}
                       >
@@ -308,7 +308,7 @@ export default function AISuggestionsDrawer({
                 All suggestions applied
               </div>
               <UMActionPill
-                variant="secondary"
+                variant="default"
                 className="w-full justify-center"
                 onClick={closeDrawer}
               >
