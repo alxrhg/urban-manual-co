@@ -3,9 +3,10 @@
 import { useState, memo } from 'react';
 import { Bookmark, Check, Plus, Loader2 } from 'lucide-react';
 import { useQuickSave } from '@/hooks/useQuickSave';
-import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 interface QuickActionsProps {
   destinationId?: number;
@@ -32,7 +33,6 @@ export const QuickActions = memo(function QuickActions({
   className = '',
   onAddToTrip,
 }: QuickActionsProps) {
-  const { user } = useAuth();
   const { openDrawer } = useDrawer();
   const { openDrawer: openStoreDrawer } = useDrawerStore();
   const [showLoginToast, setShowLoginToast] = useState(false);
@@ -98,27 +98,22 @@ export const QuickActions = memo(function QuickActions({
     }
   };
 
-  const buttonBaseClass = compact
-    ? 'w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200'
-    : 'w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200';
-
+  const buttonSizeClass = compact ? 'h-8 w-8' : 'h-9 w-9';
   const iconSize = compact ? 'w-4 h-4' : 'w-[18px] h-[18px]';
 
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
       {/* Save Button */}
-      <button
+      <Button
         onClick={handleSave}
         disabled={isSaving}
-        className={`
-          ${buttonBaseClass}
-          ${isSaved
-            ? 'bg-black dark:bg-white text-white dark:text-black'
-            : 'bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-          }
-          backdrop-blur-sm shadow-sm hover:shadow-md
-          disabled:opacity-50 disabled:cursor-not-allowed
-        `}
+        variant="muted"
+        size="icon-sm"
+        className={cn(
+          'rounded-full border border-neutral-200/80 bg-white/90 text-gray-700 shadow-sm backdrop-blur-sm transition-all hover:shadow-md dark:border-white/15 dark:bg-gray-900/90 dark:text-gray-200',
+          buttonSizeClass,
+          isSaved && 'border-transparent bg-neutral-900 text-white hover:bg-neutral-900/90 dark:bg-white dark:text-neutral-900'
+        )}
         aria-label={isSaved ? `Remove ${destinationName} from saved` : `Save ${destinationName}`}
         title={isSaved ? 'Saved' : 'Save'}
       >
@@ -127,21 +122,19 @@ export const QuickActions = memo(function QuickActions({
         ) : (
           <Bookmark className={`${iconSize} ${isSaved ? 'fill-current' : ''}`} />
         )}
-      </button>
+      </Button>
 
       {/* Visited Button */}
-      <button
+      <Button
         onClick={handleVisited}
         disabled={isMarkingVisited}
-        className={`
-          ${buttonBaseClass}
-          ${isVisited
-            ? 'bg-emerald-500 text-white'
-            : 'bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
-          }
-          backdrop-blur-sm shadow-sm hover:shadow-md
-          disabled:opacity-50 disabled:cursor-not-allowed
-        `}
+        variant="muted"
+        size="icon-sm"
+        className={cn(
+          'rounded-full border border-neutral-200/80 bg-white/90 text-gray-700 shadow-sm backdrop-blur-sm transition-all hover:shadow-md dark:border-white/15 dark:bg-gray-900/90 dark:text-gray-200',
+          buttonSizeClass,
+          isVisited && 'border-transparent bg-emerald-500 text-white hover:bg-emerald-500/90 dark:bg-emerald-500 dark:text-white'
+        )}
         aria-label={isVisited ? `Unmark ${destinationName} as visited` : `Mark ${destinationName} as visited`}
         title={isVisited ? 'Visited' : 'Mark as visited'}
       >
@@ -150,23 +143,23 @@ export const QuickActions = memo(function QuickActions({
         ) : (
           <Check className={`${iconSize} ${isVisited ? 'stroke-[3]' : ''}`} />
         )}
-      </button>
+      </Button>
 
       {/* Add to Trip Button */}
       {showAddToTrip && (
-        <button
+        <Button
           onClick={handleAddToTrip}
-          className={`
-            ${buttonBaseClass}
-            bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300
-            hover:bg-gray-100 dark:hover:bg-gray-800
-            backdrop-blur-sm shadow-sm hover:shadow-md
-          `}
+          variant="muted"
+          size="icon-sm"
+          className={cn(
+            'rounded-full border border-neutral-200/80 bg-white/90 text-gray-700 shadow-sm backdrop-blur-sm transition-all hover:shadow-md dark:border-white/15 dark:bg-gray-900/90 dark:text-gray-200',
+            buttonSizeClass
+          )}
           aria-label={`Add ${destinationName} to trip`}
           title="Add to trip"
         >
           <Plus className={iconSize} />
-        </button>
+        </Button>
       )}
 
       {/* Login Toast */}
