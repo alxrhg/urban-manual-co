@@ -187,7 +187,7 @@ export class ItineraryBuilderAgent extends BaseAgent {
         }
 
         // Apply nearest neighbor + 2-opt optimization
-        const routeOptimizerTool = this.tools.find((t) => t.name === 'optimize_route');
+        const routeOptimizerTool = this.tools.get('optimize_route');
         if (routeOptimizerTool) {
           try {
             const result = await routeOptimizerTool.execute({
