@@ -5,8 +5,11 @@ import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { SPRING, DURATION, EASE } from '@/lib/animations';
 
+// Omit drag-related props that conflict with Framer Motion
+type OmittedDragProps = 'onDrag' | 'onDragStart' | 'onDragEnd' | 'onDragOver' | 'onDragEnter' | 'onDragLeave' | 'onDragExit';
+
 interface AnimatedButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, OmittedDragProps> {
   children: ReactNode;
   variant?: 'default' | 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
