@@ -76,9 +76,20 @@ const nextConfig: NextConfig = {
   // Enable compression
   compress: true,
 
-  // Optimize CSS
+  // Advanced optimizations for fastest loading
   experimental: {
+    // Optimize CSS bundling
     optimizeCss: true,
+    // Note: cacheComponents (PPR) disabled - incompatible with route segment configs
+    // (dynamic, revalidate, runtime, dynamicParams) and ssr: false dynamic imports
+    // We use ISR + Streaming with Suspense instead for similar performance
+    // Optimize package imports for smaller bundles
+    optimizePackageImports: [
+      'lucide-react',
+      '@supabase/supabase-js',
+      'date-fns',
+      'lodash',
+    ],
   },
 
   // Skip static generation for error pages

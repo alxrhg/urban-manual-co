@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Edge Runtime for faster cold starts (~100ms vs ~1s for Node.js)
+export const runtime = 'edge';
+
 export async function GET() {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -33,7 +36,10 @@ export async function GET() {
     // Extract unique cities
     const cities = [...new Set(data.map((d: { city: string }) => d.city))].sort();
 
-    return NextResponse.json({ cities });
+    // Add cache headers - city list rarely changes
+    const response = NextResponse.json({ cities });
+    response.headers.set('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1200');
+    return response;
   } catch (error) {
     console.error('Error in cities API:', error);
     return NextResponse.json(
@@ -42,3 +48,6 @@ export async function GET() {
     );
   }
 }
+
+// Enable ISR - revalidate every 5 minutes
+export const revalidate = 300;

@@ -3,18 +3,26 @@
  * Core intelligence system - Intelligence is the product, not a feature
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { ArchitectureDestination, ArchitecturalJourney, ArchitecturalInsight } from '@/types/architecture';
 import { generateRealTimeAdjustments } from './realtime';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// Lazy Supabase client to avoid build-time errors
+let _supabase: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase credentials');
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase credentials');
+    }
+
+    _supabase = createClient(supabaseUrl, supabaseKey);
+  }
+  return _supabase;
 }
-
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 export interface TravelIntelligenceInput {
   destination: string; // City
@@ -117,7 +125,7 @@ export async function generateTravelIntelligence(
 async function generateArchitecturalJourney(
   input: TravelIntelligenceInput
 ): Promise<ArchitecturalJourney> {
-  let query = supabase
+  let query = getSupabase()
     .from('destinations')
     .select(`
       id,

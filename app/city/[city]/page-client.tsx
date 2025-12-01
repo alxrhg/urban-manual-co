@@ -19,6 +19,15 @@ import { CityClock } from '@/components/CityClock';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 
+/**
+ * Props for the CityPageClient component
+ * Initial data is fetched server-side for faster loading
+ */
+export interface CityPageClientProps {
+  initialDestinations?: Destination[];
+  initialCategories?: string[];
+}
+
 const DestinationDrawer = dynamic(
   () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
   {
@@ -43,7 +52,10 @@ function capitalizeCategory(category: string): string {
     .join(' ');
 }
 
-export default function CityPageClient() {
+export default function CityPageClient({
+  initialDestinations = [],
+  initialCategories = [],
+}: CityPageClientProps) {
   const { user } = useAuth();
   const router = useRouter();
   const params = useParams();
@@ -61,15 +73,20 @@ export default function CityPageClient() {
     toggleEditMode();
   };
 
-  const [destinations, setDestinations] = useState<Destination[]>([]);
-  const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  // Track whether we have SSR data
+  const hasSSRData = initialDestinations.length > 0;
+
+  // Initialize state with SSR data if available
+  const [destinations, setDestinations] = useState<Destination[]>(initialDestinations);
+  const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>(initialDestinations);
+  const [categories, setCategories] = useState<string[]>(initialCategories);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [advancedFilters, setAdvancedFilters] = useState<{
     michelin?: boolean;
     crown?: boolean;
   }>({});
-  const [loading, setLoading] = useState(true);
+  // Skip loading state if we have SSR data
+  const [loading, setLoading] = useState(!hasSSRData);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
@@ -101,15 +118,19 @@ export default function CityPageClient() {
   };
 
   useEffect(() => {
-    setLoading(true);
-    fetchDestinations();
+    // Skip fetching destinations if we have SSR data
+    if (!hasSSRData) {
+      setLoading(true);
+      fetchDestinations();
+    }
+    // Always fetch user-specific data
     if (user) {
       fetchVisitedPlaces();
     } else {
       setVisitedSlugs(new Set());
     }
     setCurrentPage(1);
-  }, [citySlug, user]);
+  }, [citySlug, user, hasSSRData]);
 
   useEffect(() => {
     if (destinations.length > 0) {

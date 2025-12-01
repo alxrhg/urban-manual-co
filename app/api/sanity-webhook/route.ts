@@ -11,17 +11,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
 // Optional: Sanity webhook secret for verification
 const SANITY_WEBHOOK_SECRET = process.env.SANITY_WEBHOOK_SECRET;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error('Missing Supabase credentials for webhook');
-}
+/**
+ * Get Supabase client lazily to avoid build-time errors
+ */
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+  if (!supabaseUrl || !supabaseServiceKey) {
+    throw new Error('Missing Supabase credentials for webhook');
+  }
+
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
 /**
  * Verify webhook signature (optional but recommended)
@@ -95,6 +100,9 @@ function mapSanityToSupabase(sanityDoc: any): any {
 
 export async function POST(request: NextRequest) {
   try {
+    // Get Supabase client (throws if credentials missing)
+    const supabase = getSupabaseClient();
+
     let webhookData: { projectId?: string; dataset?: string; ids?: string[] };
 
     // Verify webhook secret - required in production for security

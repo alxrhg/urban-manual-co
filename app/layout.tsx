@@ -7,17 +7,17 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { DrawerProvider } from "@/contexts/DrawerContext";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/react";
-import { SplashScreen } from "@/components/SplashScreen";
 import { TRPCProvider } from "@/lib/trpc/provider";
-import { CookieConsent } from "@/components/CookieConsent";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { ToastContainer } from "@/components/Toast";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 import DrawerMount from "@/components/DrawerMount";
 import MyStatsig from "./my-statsig";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
+import { SplashScreen } from "@/components/SplashScreen";
+import { CookieConsent } from "@/components/CookieConsent";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -87,8 +87,26 @@ export default function RootLayout({
         )}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Distinctive typography - Outfit for body, Instrument Serif & Playfair Display for headings */}
-        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+        {/* Critical fonts - Outfit for body text (preloaded for faster LCP) */}
+        <link
+          rel="preload"
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap"
+          as="style"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+        {/* Non-critical fonts - loaded after initial render with display=swap for non-blocking */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;700&family=Instrument+Serif:ital@0;1&family=Playfair+Display:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+        {/* Code font - only needed in admin/code sections */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
         
         {/* DNS Prefetch for additional domains */}
         <link rel="dns-prefetch" href="https://vitals.vercel-insights.com" />
@@ -96,6 +114,11 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://maps.googleapis.com" />
         <link rel="dns-prefetch" href="https://cdn.amcharts.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+
+        {/* Prefetch common navigation targets for instant page loads */}
+        <link rel="prefetch" href="/cities" as="document" />
+        <link rel="prefetch" href="/city/tokyo" as="document" />
+        <link rel="prefetch" href="/city/london" as="document" />
 
         {/* RSS Feed */}
         <link
