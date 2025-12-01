@@ -67,10 +67,7 @@ export async function POST(
     // Get user context first for rate limiting
     const supabase = await createServerClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const paramsValue = context?.params && typeof context.params.then === 'function'
-      ? await context.params
-      : context?.params;
-    const { user_id } = paramsValue || {};
+    const { user_id } = await context.params;
     const userId = normalizeUserId(user?.id || user_id || undefined);
 
     // Rate limiting: 5 requests per 10 seconds for conversation
