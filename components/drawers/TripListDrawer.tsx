@@ -4,14 +4,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import UMFeaturePill from "@/components/ui/UMFeaturePill";
-import UMActionPill from "@/components/ui/UMActionPill";
 import UMSectionTitle from "@/components/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
-import { Loader2, AlertCircle, MapPin, Calendar, ChevronRight, Plane, Plus } from 'lucide-react';
+import { AlertCircle, MapPin, Plane, Plus } from 'lucide-react';
 import Image from 'next/image';
 import { formatTripDateRange } from '@/lib/utils';
 import { formatDestinationsFromField } from '@/types/trip';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
 
 const LOADING_TIMEOUT = 15000; // 15 seconds
 
@@ -174,8 +174,8 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
   if (loading) {
     return (
       <div className="px-6 py-12 flex flex-col items-center justify-center space-y-3">
-        <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
-        <p className="text-xs text-neutral-500">Loading trips...</p>
+        <Spinner className="size-6 text-gray-400" />
+        <p className="text-xs text-gray-500">Loading trips...</p>
       </div>
     );
   }
@@ -186,11 +186,11 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
         <AlertCircle className="w-8 h-8 text-red-500 mx-auto" />
         <div className="space-y-2">
           <p className="text-sm font-medium text-gray-900 dark:text-white">Failed to load</p>
-          <p className="text-xs text-neutral-500">{error}</p>
+          <p className="text-xs text-gray-500">{error}</p>
         </div>
-        <UMActionPill onClick={fetchTrips}>
+        <Button variant="outline" onClick={fetchTrips} className="rounded-full">
           Try Again
-        </UMActionPill>
+        </Button>
       </div>
     );
   }
@@ -198,46 +198,49 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
   return (
     <div className="px-5 py-6 space-y-6">
       {/* MAIN CTA */}
-      <button
+      <Button
         onClick={handleNewTrip}
-        className="w-full h-12 bg-black dark:bg-white text-white dark:text-black rounded-xl font-medium text-sm hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-sm"
+        className="w-full h-12 rounded-full"
       >
-        <Plus className="w-4 h-4" />
+        <Plus className="w-4 h-4 mr-2" />
         Create New Trip
-      </button>
+      </Button>
 
       {/* LIST HEADER */}
       <div className="flex items-center justify-between px-1">
         <UMSectionTitle>My Trips</UMSectionTitle>
-        <button
+        <Button
+          variant="link"
+          size="sm"
           onClick={() => {
             closeDrawer();
             setTimeout(() => {
               router.push('/trips');
             }, 200);
           }}
-          className="text-xs font-medium text-neutral-500 hover:text-black dark:hover:text-white transition-colors"
+          className="text-xs text-gray-500 hover:text-black dark:hover:text-white p-0 h-auto"
         >
           View All
-        </button>
+        </Button>
       </div>
 
       {/* TRIP LIST */}
       <div className="space-y-3">
         {trips.length === 0 ? (
-          <div className="text-center py-16 px-6 border border-dashed border-neutral-200 dark:border-neutral-800 rounded-2xl bg-neutral-50/50 dark:bg-neutral-900/50">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center">
-              <Plane className="w-6 h-6 text-neutral-400 dark:text-neutral-500" />
+          <div className="text-center py-16 px-6 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl bg-gray-50/50 dark:bg-gray-900/50">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <Plane className="w-6 h-6 text-gray-400 dark:text-gray-500" />
             </div>
-            <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-6">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
               Start planning your next adventure
             </p>
-            <button 
+            <Button
+              variant="link"
               onClick={handleNewTrip}
-              className="text-xs font-medium text-black dark:text-white underline underline-offset-4 decoration-neutral-300 dark:decoration-neutral-700 hover:decoration-black dark:hover:decoration-white transition-all"
+              className="text-xs font-medium underline underline-offset-4"
             >
               Start Planning
-            </button>
+            </Button>
           </div>
         ) : (
           trips.map((trip) => {

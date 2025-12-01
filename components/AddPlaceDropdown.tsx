@@ -1,11 +1,25 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Search, Plus, Check } from 'lucide-react';
+import { Search, Plus, Check, MapPin } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from '@/components/ui/command';
 
 interface AddPlaceDropdownProps {
   onPlaceAdded?: () => void;
@@ -18,20 +32,6 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [adding, setAdding] = useState<string | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Search destinations
   useEffect(() => {
@@ -82,13 +82,13 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
       }
 
       // Add to visited
-      const { error } =         await (supabase
-          .from('visited_places')
-          .insert as any)({
-            user_id: user.id,
-            destination_slug: destination.slug,
-            visited_at: new Date().toISOString()
-          });
+      const { error } = await (supabase
+        .from('visited_places')
+        .insert as any)({
+          user_id: user.id,
+          destination_slug: destination.slug,
+          visited_at: new Date().toISOString()
+        });
 
       if (error) throw error;
 
@@ -116,72 +116,53 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
   };
 
   return (
-    <div ref={dropdownRef} className="relative">
-      <button
-        onClick={() => {
-          setIsOpen(!isOpen);
-          if (!isOpen) {
-            setTimeout(() => inputRef.current?.focus(), 100);
-          }
-        }}
-        className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity flex items-center gap-2"
-      >
-        <Plus className="h-4 w-4" />
-        Add Place
-      </button>
-
-      {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 overflow-hidden">
-          {/* Search Input */}
-          <div className="p-3 border-b border-gray-200 dark:border-gray-800">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                ref={inputRef}
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search places..."
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:border-black dark:focus:border-white text-sm"
-              />
-            </div>
-          </div>
-
-          {/* Results */}
-          <div className="max-h-96 overflow-y-auto">
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button className="rounded-full">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Place
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-80 p-0" align="end">
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search places..."
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
+          <CommandList>
             {loading ? (
               <div className="p-8 text-center">
                 <Spinner className="size-6 mx-auto text-gray-400" />
                 <p className="text-xs text-gray-500 mt-2">Searching...</p>
               </div>
             ) : results.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <p className="text-xs">
-                  {searchQuery ? 'No places found' : 'Start typing to search'}
-                </p>
-              </div>
+              <CommandEmpty>
+                {searchQuery ? 'No places found' : 'Start typing to search'}
+              </CommandEmpty>
             ) : (
-              <div className="divide-y divide-gray-200 dark:divide-gray-800">
+              <CommandGroup>
                 {results.map((destination) => (
-                  <button
+                  <CommandItem
                     key={destination.slug}
-                    onClick={() => handleAddPlace(destination)}
+                    value={destination.slug}
+                    onSelect={() => handleAddPlace(destination)}
                     disabled={adding === destination.slug}
-                    className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-dark-blue-700 transition-colors text-left disabled:opacity-50"
+                    className="flex items-center gap-3 p-2"
                   >
                     {/* Image */}
-                    <div className="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <div className="relative w-10 h-10 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                       {destination.image ? (
                         <Image
                           src={destination.image}
                           alt={destination.name}
                           fill
                           className="object-cover"
-                          sizes="48px"
+                          sizes="40px"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400">
-                          <span className="text-lg">📍</span>
+                          <MapPin className="w-4 h-4" />
                         </div>
                       )}
                     </div>
@@ -192,7 +173,7 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
                         {destination.name}
                       </div>
                       <div className="text-xs text-gray-500 truncate">
-                        {capitalizeCity(destination.city)} • {destination.category}
+                        {capitalizeCity(destination.city)} · {destination.category}
                       </div>
                     </div>
 
@@ -200,15 +181,15 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
                     {adding === destination.slug ? (
                       <Spinner className="size-4 text-gray-400 flex-shrink-0" />
                     ) : (
-                      <Check className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <Check className="h-4 w-4 text-gray-400 flex-shrink-0 opacity-0 group-aria-selected:opacity-100" />
                     )}
-                  </button>
+                  </CommandItem>
                 ))}
-              </div>
+              </CommandGroup>
             )}
-          </div>
-        </div>
-      )}
-    </div>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

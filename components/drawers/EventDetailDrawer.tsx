@@ -1,8 +1,17 @@
 'use client';
 
-import { X, Plane, MapPin, Clock, Calendar, ExternalLink } from 'lucide-react';
+import { Plane, MapPin, Clock } from 'lucide-react';
 import Image from 'next/image';
 import type { TimeBlock } from '@/lib/intelligence/types';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 
 interface EventDetailDrawerProps {
   event: TimeBlock | null;
@@ -14,7 +23,7 @@ interface EventDetailDrawerProps {
 
 /**
  * EventDetailDrawer - Flight/event detail view
- * Lovably style: serif headers, info grid, route visualizer
+ * Using shadcn Sheet for consistent drawer behavior
  */
 export default function EventDetailDrawer({
   event,
@@ -23,7 +32,7 @@ export default function EventDetailDrawer({
   onEdit,
   onRemove,
 }: EventDetailDrawerProps) {
-  if (!isOpen || !event) return null;
+  if (!event) return null;
 
   const isFlight = event.type === 'flight';
 
@@ -39,33 +48,19 @@ export default function EventDetailDrawer({
   };
 
   return (
-    <div className="fixed inset-0 z-50">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/20 dark:bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Drawer */}
-      <div className="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white dark:bg-[#0a0a0a] shadow-2xl animate-in slide-in-from-right duration-300">
-        {/* Header */}
-        <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-gray-900">
-          <h2 className="font-serif text-xl text-gray-900 dark:text-white">
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="w-full max-w-md p-0 flex flex-col">
+        <SheetHeader className="p-6 border-b border-gray-100 dark:border-gray-900">
+          <SheetTitle className="font-serif text-xl">
             {isFlight ? 'Flight Details' : 'Event Details'}
-          </h2>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
+          </SheetTitle>
+        </SheetHeader>
 
         {/* Content */}
-        <div className="overflow-y-auto h-[calc(100%-80px)]">
+        <div className="flex-1 overflow-y-auto">
           {/* Hero Image or Route Visualizer */}
           {isFlight ? (
-            <div className="flex justify-between items-center py-8 px-6 bg-gray-50 dark:bg-gray-900/50 my-4 mx-4 rounded-sm">
+            <div className="flex justify-between items-center py-8 px-6 bg-gray-50 dark:bg-gray-900/50 my-4 mx-4 rounded-lg">
               <div className="text-center">
                 <p className="text-3xl font-serif text-gray-900 dark:text-white">
                   {event.startTime || '--:--'}
@@ -93,7 +88,7 @@ export default function EventDetailDrawer({
               </div>
             </div>
           ) : event.place?.image ? (
-            <div className="relative h-48 mx-4 my-4 rounded-sm overflow-hidden">
+            <div className="relative h-48 mx-4 my-4 rounded-lg overflow-hidden">
               <Image
                 src={event.place.image}
                 alt={event.title}
@@ -115,8 +110,10 @@ export default function EventDetailDrawer({
             )}
           </div>
 
+          <Separator />
+
           {/* Info Grid */}
-          <div className="grid grid-cols-2 gap-y-6 gap-x-4 p-6 border-t border-gray-100 dark:border-gray-900">
+          <div className="grid grid-cols-2 gap-y-6 gap-x-4 p-6">
             {/* Time */}
             {timeRange && (
               <div className="flex flex-col gap-1">
@@ -170,41 +167,42 @@ export default function EventDetailDrawer({
 
           {/* Notes */}
           {event.notes && (
-            <div className="px-6 py-4 border-t border-gray-100 dark:border-gray-900">
-              <span className="text-[10px] uppercase tracking-widest text-gray-400 block mb-2">
-                Notes
-              </span>
-              <p className="text-sm text-gray-700 dark:text-gray-300">
-                {event.notes}
-              </p>
-            </div>
+            <>
+              <Separator />
+              <div className="px-6 py-4">
+                <span className="text-[10px] uppercase tracking-widest text-gray-400 block mb-2">
+                  Notes
+                </span>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
+                  {event.notes}
+                </p>
+              </div>
+            </>
           )}
-
-          {/* Actions */}
-          <div className="p-6 border-t border-gray-100 dark:border-gray-900 space-y-3">
-            {onEdit && (
-              <button
-                onClick={onEdit}
-                className="w-full py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-sm hover:opacity-90 transition-opacity"
-              >
-                Edit Details
-              </button>
-            )}
-            {onRemove && (
-              <button
-                onClick={() => {
-                  if (window.confirm(`Remove "${event.title}" from your trip?`)) {
-                    onRemove();
-                  }
-                }}
-                className="w-full py-3 text-red-600 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/10 rounded-sm transition-colors"
-              >
-                Remove from Trip
-              </button>
-            )}
-          </div>
         </div>
-      </div>
-    </div>
+
+        {/* Actions */}
+        <SheetFooter className="p-6 border-t border-gray-100 dark:border-gray-900 flex-col gap-3 sm:flex-col">
+          {onEdit && (
+            <Button onClick={onEdit} className="w-full rounded-full">
+              Edit Details
+            </Button>
+          )}
+          {onRemove && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (window.confirm(`Remove "${event.title}" from your trip?`)) {
+                  onRemove();
+                }
+              }}
+              className="w-full text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-full"
+            >
+              Remove from Trip
+            </Button>
+          )}
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
