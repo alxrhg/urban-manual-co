@@ -57,6 +57,7 @@ export interface Adjustment {
   message: string;
   affected_destinations: number[];
   suggested_alternatives?: ArchitectureDestination[];
+  severity: 'info' | 'warning' | 'critical';
 }
 
 /**
