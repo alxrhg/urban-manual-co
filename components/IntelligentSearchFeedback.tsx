@@ -116,9 +116,9 @@ export function IntelligentSearchFeedback({
                     </span>
                   ))
                 )}
-                {intent.filters?.michelinStar && (
+                {intent.filters?.michelin && (
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-                    ⭐ {intent.filters.michelinStar} Michelin
+                    ⭐ {intent.filters.michelin} Michelin
                   </span>
                 )}
                 {intent.filters?.rating && (
