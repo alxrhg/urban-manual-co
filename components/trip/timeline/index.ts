@@ -10,5 +10,5 @@ export type { PositionedItem } from './useTimelinePositions';
 export { useDragResize } from './useDragResize';
 
 // Config
-export { TIMELINE_CONFIG, CATEGORY_STYLES, getCategoryStyle } from './config';
+export { TIMELINE_CONFIG, CATEGORY_STYLES, getCategoryStyle, getStripePattern } from './config';
 export type { CategoryStyle, CategoryType } from './config';

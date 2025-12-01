@@ -17,7 +17,7 @@ import {
   formatMinutesToTime,
   formatTimeDisplay,
 } from '@/lib/utils/time-calculations';
-import { getCategoryStyle } from './config';
+import { getCategoryStyle, getStripePattern } from './config';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
 interface TimelineCardProps {
@@ -51,12 +51,14 @@ function getIconForItem(item: EnrichedItineraryItem) {
 }
 
 /**
- * TimelineCard - Clean, minimal card following Apple HIG
+ * TimelineCard - Square UI inspired card with stripe accent
+ * Features: Category-based coloring, stripe pattern, shadow effects
  */
 function TimelineCardComponent({
   item,
   start,
   duration,
+  height,
   isActive = false,
   isEditMode = false,
   onEdit,
@@ -66,16 +68,22 @@ function TimelineCardComponent({
   const styleSet = getCategoryStyle(type);
   const startLabel = formatTimeDisplay(formatMinutesToTime(start));
   const endLabel = formatTimeDisplay(formatMinutesToTime(start + duration));
+  const stripePattern = getStripePattern(styleSet.stripeColor);
+
+  // Show stripe only if card is tall enough
+  const showStripe = height >= 60;
 
   return (
     <div
       className={`
-        h-full rounded-2xl cursor-pointer
-        bg-gray-50/80 dark:bg-gray-800/50
-        backdrop-blur-sm
+        group relative h-full rounded-xl cursor-pointer overflow-hidden
+        ${styleSet.bgColor}
+        border ${styleSet.borderColor}
+        shadow-sm hover:shadow-md
+        transition-all duration-200 ease-out
         ${isActive
-          ? 'ring-2 ring-gray-900 dark:ring-white'
-          : 'ring-1 ring-black/[0.04] dark:ring-white/[0.06]'
+          ? 'ring-2 ring-gray-900 dark:ring-white shadow-lg'
+          : 'hover:scale-[1.01]'
         }
       `}
       onClick={() => onEdit?.(item)}
@@ -89,8 +97,11 @@ function TimelineCardComponent({
         }
       }}
     >
-      {/* Card content - 12px padding, 8px gap */}
-      <div className="flex items-center gap-2 px-3 py-3 h-full">
+      {/* Card content */}
+      <div className="flex items-center gap-2.5 px-3 py-2.5 h-full">
+        {/* Category indicator dot */}
+        <div className={`flex-shrink-0 w-2 h-2 rounded-full ${styleSet.accent}`} />
+
         {/* Icon */}
         <div className={`flex-shrink-0 ${styleSet.iconColor}`}>
           {getIconForItem(item)}
@@ -98,38 +109,48 @@ function TimelineCardComponent({
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <p className="text-[15px] font-medium text-gray-900 dark:text-white leading-tight truncate">
+          <p className="text-[14px] font-semibold text-gray-900 dark:text-white leading-tight truncate">
             {item.title || 'Untitled stop'}
           </p>
-          <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">
+          <p className="text-[12px] text-gray-500 dark:text-gray-400 truncate mt-0.5">
             {startLabel}–{endLabel}
-            {item.destination?.neighborhood && ` · ${item.destination.neighborhood}`}
+            {item.destination?.neighborhood && (
+              <span className="text-gray-400 dark:text-gray-500"> · {item.destination.neighborhood}</span>
+            )}
           </p>
         </div>
 
-        {/* Duration pill */}
-        <span className="flex-shrink-0 text-[13px] text-gray-500 dark:text-gray-400 tabular-nums">
+        {/* Duration pill - Square UI style */}
+        <span className="flex-shrink-0 text-[11px] font-medium text-gray-500 dark:text-gray-400 tabular-nums bg-white/60 dark:bg-black/20 px-2 py-0.5 rounded-full">
           {formatDuration(duration)}
         </span>
 
         {/* Edit mode grip */}
         {isEditMode && (
-          <GripVertical className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
+          <GripVertical className="w-4 h-4 text-gray-300 dark:text-gray-600 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
         )}
       </div>
+
+      {/* Square UI stripe pattern at bottom */}
+      {showStripe && (
+        <div
+          className="absolute bottom-0 left-0 right-0 h-1.5 rounded-b-xl"
+          style={{ background: stripePattern }}
+        />
+      )}
 
       {/* Resize handles */}
       {isEditMode && onDragStart && (
         <>
           <div
-            className="absolute inset-x-0 top-0 h-2 cursor-n-resize"
+            className="absolute inset-x-0 top-0 h-2 cursor-n-resize opacity-0 hover:opacity-100 bg-gradient-to-b from-black/5 to-transparent"
             onPointerDown={(e) => {
               e.stopPropagation();
               onDragStart(item.id, 'resize-start', start, duration, e.clientY);
             }}
           />
           <div
-            className="absolute inset-x-0 bottom-0 h-2 cursor-s-resize"
+            className="absolute inset-x-0 bottom-0 h-2 cursor-s-resize opacity-0 hover:opacity-100 bg-gradient-to-t from-black/5 to-transparent"
             onPointerDown={(e) => {
               e.stopPropagation();
               onDragStart(item.id, 'resize-end', start, duration, e.clientY);

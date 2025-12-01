@@ -13,7 +13,8 @@ interface CurrentTimeIndicatorProps {
 }
 
 /**
- * CurrentTimeIndicator - Shows the current time line on today's timeline
+ * CurrentTimeIndicator - Square UI inspired time indicator
+ * Features: Purple/violet theme, triangle marker, animated pulse
  */
 function CurrentTimeIndicatorComponent({
   date,
@@ -63,12 +64,32 @@ function CurrentTimeIndicatorComponent({
       aria-label={`Current time: ${timeLabel}`}
     >
       <div className="flex items-center">
-        <div className="w-12 text-[11px] text-right text-red-500 font-medium tabular-nums pr-2">
+        {/* Time label - Square UI violet style */}
+        <div className="w-12 text-[11px] text-right text-violet-600 dark:text-violet-400 font-semibold tabular-nums pr-1.5">
           {timeLabel}
         </div>
-        <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shadow-sm" />
-        <div className="flex-1 h-0.5 bg-red-500" />
+
+        {/* Triangle marker - Square UI style */}
+        <div className="relative flex items-center">
+          {/* Triangle pointing right */}
+          <div
+            className="w-0 h-0 -mr-px"
+            style={{
+              borderTop: '5px solid transparent',
+              borderBottom: '5px solid transparent',
+              borderLeft: '6px solid rgb(139 92 246)', // violet-500
+            }}
+          />
+          {/* Pulsing dot for animation effect */}
+          <div className="absolute -left-1 w-2 h-2 rounded-full bg-violet-500 animate-pulse opacity-50" />
+        </div>
+
+        {/* Line - violet gradient */}
+        <div className="flex-1 h-[2px] bg-gradient-to-r from-violet-500 to-violet-400/50 dark:from-violet-500 dark:to-violet-500/30" />
       </div>
+
+      {/* Vertical indicator line extending below (Square UI style) */}
+      <div className="absolute left-12 top-full w-[2px] h-4 bg-gradient-to-b from-violet-500 to-transparent" />
     </div>
   );
 }
