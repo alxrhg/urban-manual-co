@@ -137,7 +137,9 @@ export default function DateRangeSelector({
         </div>
         <div className="grid grid-cols-7 gap-1">
           {days.map(({ date, inMonth }) => {
-            const disabled = (min && date < min) || (max && date > max);
+            const disabled = Boolean(
+              (min && date < min) || (max && date > max)
+            );
             const isStart = rangeStart && isSameDay(date, rangeStart);
             const isEnd = rangeEnd && isSameDay(date, rangeEnd);
             const inRange =
