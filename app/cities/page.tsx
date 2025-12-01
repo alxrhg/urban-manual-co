@@ -14,6 +14,9 @@ import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
  * - No loading spinner on initial page load
  */
 
+// Enable Incremental Static Regeneration - revalidate every 10 minutes
+export const revalidate = 600;
+
 export const metadata: Metadata = {
   title: 'Discover Cities - Urban Manual',
   description:

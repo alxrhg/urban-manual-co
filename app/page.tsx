@@ -18,6 +18,10 @@ import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
  * - Improved Core Web Vitals (LCP, FCP)
  */
 
+// Enable Incremental Static Regeneration - revalidate every 5 minutes
+// This pre-renders the page at build time and regenerates it in the background
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: 'Urban Manual - Curated Travel Destinations Worldwide',
   description:
