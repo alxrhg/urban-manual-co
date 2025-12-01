@@ -12,9 +12,8 @@ import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
  * - Streaming with Suspense for instant shell
  */
 
-// Static generation with ISR
-export const revalidate = 600; // 10 minutes
-export const dynamic = 'force-static';
+// ISR: Revalidate every 10 minutes
+export const revalidate = 600;
 
 export const metadata: Metadata = {
   title: 'Discover Cities - Urban Manual',

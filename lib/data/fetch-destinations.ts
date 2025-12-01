@@ -10,12 +10,29 @@ import { Destination } from '@/types/destination';
 import { unstable_cache } from 'next/cache';
 
 /**
+ * Check if Supabase is properly configured for server-side use
+ */
+function isSupabaseConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+
+  // Check that both are present and have valid lengths
+  return !!(url && url.includes('supabase') && key && key.length >= 50);
+}
+
+/**
  * Fetch initial destinations for the homepage
  * Uses service role client for unauthenticated server-side fetching
  * Cached for 5 minutes to reduce database load
  */
 export const fetchInitialDestinations = unstable_cache(
   async (limit: number = 100): Promise<Destination[]> => {
+    // Skip database queries during build if Supabase isn't configured
+    if (!isSupabaseConfigured()) {
+      console.log('[SSR] Supabase not configured, skipping destination fetch');
+      return [];
+    }
+
     try {
       const supabase = createServiceRoleClient();
 
@@ -70,6 +87,11 @@ export const fetchInitialDestinations = unstable_cache(
  */
 export const fetchFilterOptions = unstable_cache(
   async (): Promise<{ cities: string[]; categories: string[] }> => {
+    // Skip database queries during build if Supabase isn't configured
+    if (!isSupabaseConfigured()) {
+      return { cities: [], categories: [] };
+    }
+
     try {
       const supabase = createServiceRoleClient();
 
@@ -127,6 +149,11 @@ export const fetchFilterOptions = unstable_cache(
  */
 export const fetchCityDestinations = unstable_cache(
   async (citySlug: string): Promise<Destination[]> => {
+    // Skip database queries during build if Supabase isn't configured
+    if (!isSupabaseConfigured()) {
+      return [];
+    }
+
     try {
       const supabase = createServiceRoleClient();
 
@@ -186,6 +213,11 @@ export const fetchCityStats = unstable_cache(
     count: number;
     featuredImage?: string;
   }>> => {
+    // Skip database queries during build if Supabase isn't configured
+    if (!isSupabaseConfigured()) {
+      return [];
+    }
+
     try {
       const supabase = createServiceRoleClient();
 
@@ -257,6 +289,11 @@ export const fetchCityStats = unstable_cache(
  */
 export const fetchTrendingDestinations = unstable_cache(
   async (limit: number = 12): Promise<Destination[]> => {
+    // Skip database queries during build if Supabase isn't configured
+    if (!isSupabaseConfigured()) {
+      return [];
+    }
+
     try {
       const supabase = createServiceRoleClient();
 

@@ -19,11 +19,12 @@ import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
  * - LCP: <1s
  */
 
-// Force static generation at build time, revalidate in background
+// ISR: Revalidate in background every 5 minutes
 export const revalidate = 300;
 
-// Prefer static rendering for fastest initial load
-export const dynamic = 'force-static';
+// Allow dynamic rendering on first request (then cached via ISR)
+// This ensures data is fetched when Supabase is available at runtime
+// rather than at build time when credentials may not be available
 
 export const metadata: Metadata = {
   title: 'Urban Manual - Curated Travel Destinations Worldwide',
