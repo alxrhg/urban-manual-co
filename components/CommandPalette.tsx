@@ -82,10 +82,11 @@ export function CommandPalette() {
     const searchTimeout = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&limit=6`);
+        const response = await fetch(`/api/search/suggest?q=${encodeURIComponent(searchQuery)}&limit=10`);
         if (response.ok) {
           const data = await response.json();
-          setSearchResults(data.results || []);
+          // Use the destinations from the suggest endpoint
+          setSearchResults(data.suggestions?.destinations || []);
         }
       } catch (error) {
         console.error('Search error:', error);
@@ -129,17 +130,25 @@ export function CommandPalette() {
 
           {/* Search Results */}
           {searchResults.length > 0 && (
-            <CommandGroup heading="Search Results">
+            <CommandGroup heading="Destinations">
               {searchResults.map((result) => (
                 <CommandItem
                   key={result.slug}
-                  value={result.name}
+                  value={`${result.name} ${result.city || ''} ${result.category || ''}`}
                   onSelect={() => runCommand(() => router.push(`/destination/${result.slug}`))}
                 >
-                  <MapPin className="mr-2 h-4 w-4" />
-                  <span>{result.name}</span>
-                  {result.city && (
-                    <span className="ml-2 text-gray-400 dark:text-gray-500 text-xs">{result.city}</span>
+                  <MapPin className="mr-2 h-4 w-4 shrink-0" />
+                  <div className="flex flex-col min-w-0">
+                    <span className="truncate">{result.name}</span>
+                    {(result.city || result.category) && (
+                      <span className="text-gray-400 dark:text-gray-500 text-xs truncate">
+                        {[result.city, result.country].filter(Boolean).join(', ')}
+                        {result.category && ` · ${result.category}`}
+                      </span>
+                    )}
+                  </div>
+                  {result.michelin_stars && result.michelin_stars > 0 && (
+                    <span className="ml-auto text-xs text-amber-500 shrink-0">{'★'.repeat(result.michelin_stars)}</span>
                   )}
                 </CommandItem>
               ))}
