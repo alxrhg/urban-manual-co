@@ -134,6 +134,11 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://cdn.amcharts.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
 
+        {/* Prefetch common navigation targets for instant page loads */}
+        <link rel="prefetch" href="/cities" as="document" />
+        <link rel="prefetch" href="/city/tokyo" as="document" />
+        <link rel="prefetch" href="/city/london" as="document" />
+
         {/* RSS Feed */}
         <link
           rel="alternate"

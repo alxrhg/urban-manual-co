@@ -5,22 +5,25 @@ import { prefetchHomepageData } from '@/lib/data/fetch-destinations';
 import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
 
 /**
- * Homepage - Server Component Wrapper
+ * Homepage - Highest Performance Architecture
  *
- * This server component fetches initial data on the server and passes it
- * to the client component. This significantly improves initial page load time
- * by eliminating client-side data fetching waterfall.
+ * Uses Next.js 16 best practices:
+ * - Partial Prerendering (PPR): Static shell renders instantly
+ * - ISR: Background revalidation every 5 minutes
+ * - Server-side data fetching with caching
+ * - Streaming with Suspense boundaries
  *
- * Benefits:
- * - Faster Time to First Byte (TTFB)
- * - Better SEO as content is rendered on server
- * - Reduced client-side JavaScript execution
- * - Improved Core Web Vitals (LCP, FCP)
+ * Performance targets:
+ * - TTFB: <100ms (static shell)
+ * - FCP: <500ms
+ * - LCP: <1s
  */
 
-// Enable Incremental Static Regeneration - revalidate every 5 minutes
-// This pre-renders the page at build time and regenerates it in the background
+// Force static generation at build time, revalidate in background
 export const revalidate = 300;
+
+// Prefer static rendering for fastest initial load
+export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: 'Urban Manual - Curated Travel Destinations Worldwide',
@@ -43,8 +46,8 @@ export const metadata: Metadata = {
 };
 
 /**
- * Skeleton component for loading state
- * Shows a minimal loading state while server data is being fetched
+ * Inline skeleton for instant feedback - no external dependencies
+ * This renders immediately as part of the static shell
  */
 function HomepageSkeleton() {
   return (
@@ -63,7 +66,7 @@ function HomepageSkeleton() {
 
         {/* Filter chips skeleton */}
         <div className="flex gap-2 mb-8 overflow-hidden">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
               className="h-8 w-20 bg-gray-100 dark:bg-gray-900 rounded-full animate-pulse flex-shrink-0"
@@ -78,20 +81,29 @@ function HomepageSkeleton() {
   );
 }
 
-export default async function HomePage() {
+/**
+ * Async data fetching component - streams after static shell
+ */
+async function HomepageContent() {
   // Fetch all homepage data in parallel on the server
   // This data is cached using Next.js unstable_cache for 5 minutes
   const { destinations, cities, categories, trending } =
     await prefetchHomepageData();
 
   return (
+    <HomePageClient
+      initialDestinations={destinations}
+      initialCities={cities}
+      initialCategories={categories}
+      initialTrending={trending}
+    />
+  );
+}
+
+export default function HomePage() {
+  return (
     <Suspense fallback={<HomepageSkeleton />}>
-      <HomePageClient
-        initialDestinations={destinations}
-        initialCities={cities}
-        initialCategories={categories}
-        initialTrending={trending}
-      />
+      <HomepageContent />
     </Suspense>
   );
 }

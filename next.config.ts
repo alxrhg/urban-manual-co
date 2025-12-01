@@ -76,9 +76,19 @@ const nextConfig: NextConfig = {
   // Enable compression
   compress: true,
 
-  // Optimize CSS
+  // Advanced optimizations for fastest loading
   experimental: {
+    // Optimize CSS bundling
     optimizeCss: true,
+    // Enable Partial Prerendering for instant static shell with streaming dynamic content
+    ppr: true,
+    // Optimize package imports for smaller bundles
+    optimizePackageImports: [
+      'lucide-react',
+      '@supabase/supabase-js',
+      'date-fns',
+      'lodash',
+    ],
   },
 
   // Skip static generation for error pages

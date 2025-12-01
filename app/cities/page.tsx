@@ -5,17 +5,16 @@ import { fetchCityStats } from '@/lib/data/fetch-destinations';
 import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
 
 /**
- * Cities Page - Server Component Wrapper
+ * Cities Page - Highest Performance Architecture
  *
- * Fetches city statistics on the server for faster initial load.
- * Benefits:
- * - Faster Time to First Byte (TTFB)
- * - Content rendered on server for SEO
- * - No loading spinner on initial page load
+ * - Static generation at build time
+ * - ISR every 10 minutes for fresh data
+ * - Streaming with Suspense for instant shell
  */
 
-// Enable Incremental Static Regeneration - revalidate every 10 minutes
-export const revalidate = 600;
+// Static generation with ISR
+export const revalidate = 600; // 10 minutes
+export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: 'Discover Cities - Urban Manual',
@@ -32,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * Skeleton component for loading state
+ * Inline skeleton - renders as static shell
  */
 function CitiesSkeleton() {
   return (
@@ -46,7 +45,7 @@ function CitiesSkeleton() {
       <div className="mb-12">
         <div className="h-6 w-32 bg-gray-100 dark:bg-gray-900 rounded animate-pulse mb-6" />
         <div className="flex gap-5 overflow-hidden">
-          {Array.from({ length: 4 }).map((_, i) => (
+          {[1, 2, 3, 4].map((i) => (
             <div
               key={i}
               className="flex-shrink-0 w-[280px] h-[200px] bg-gray-100 dark:bg-gray-900 rounded-2xl animate-pulse"
@@ -61,21 +60,27 @@ function CitiesSkeleton() {
   );
 }
 
-export default async function CitiesPage() {
-  // Fetch city stats on the server
+/**
+ * Async data fetching - streams after static shell
+ */
+async function CitiesContent() {
   const cityStats = await fetchCityStats();
-
-  // Extract unique countries from city stats
   const countries = Array.from(
     new Set(cityStats.map(s => s.country).filter(Boolean))
   ).sort();
 
   return (
+    <CitiesPageClient
+      initialCityStats={cityStats}
+      initialCountries={countries}
+    />
+  );
+}
+
+export default function CitiesPage() {
+  return (
     <Suspense fallback={<CitiesSkeleton />}>
-      <CitiesPageClient
-        initialCityStats={cityStats}
-        initialCountries={countries}
-      />
+      <CitiesContent />
     </Suspense>
   );
 }

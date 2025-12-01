@@ -3,7 +3,37 @@ import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
 import { Metadata } from 'next';
 import { generateCityMetadata, generateCityBreadcrumb } from '@/lib/metadata';
 import CityPageClient from './page-client';
-import { fetchCityDestinations } from '@/lib/data/fetch-destinations';
+import { fetchCityDestinations, fetchCityStats } from '@/lib/data/fetch-destinations';
+
+// Static generation with ISR
+export const revalidate = 300; // 5 minutes
+export const dynamicParams = true; // Allow dynamic cities not in generateStaticParams
+
+/**
+ * Pre-generate pages for top cities at build time
+ * This ensures instant loading for popular destinations
+ */
+export async function generateStaticParams() {
+  try {
+    const cityStats = await fetchCityStats();
+    // Pre-render top 20 cities by destination count
+    return cityStats
+      .slice(0, 20)
+      .map((stat) => ({ city: stat.city }));
+  } catch {
+    // Fallback to popular cities if fetch fails
+    return [
+      { city: 'tokyo' },
+      { city: 'london' },
+      { city: 'new-york' },
+      { city: 'paris' },
+      { city: 'taipei' },
+      { city: 'bangkok' },
+      { city: 'singapore' },
+      { city: 'hong-kong' },
+    ];
+  }
+}
 
 // Generate metadata for SEO
 export async function generateMetadata({
@@ -16,10 +46,11 @@ export async function generateMetadata({
 }
 
 /**
- * City Page - Server Component Wrapper
+ * City Page - Highest Performance Architecture
  *
- * Fetches city destinations on the server for faster initial load.
- * Data is cached for 5 minutes using Next.js unstable_cache.
+ * - Static generation for top 20 cities at build time
+ * - ISR for other cities (generated on-demand, cached)
+ * - Streaming with Suspense for dynamic content
  */
 export default async function CityPage({
   params,
