@@ -2,17 +2,13 @@
 
 import { useMemo, useRef, useEffect, useCallback } from 'react';
 import { format, parseISO } from 'date-fns';
-import {
-  Plus,
-  Sparkles,
-  Loader2,
-  Moon,
-} from 'lucide-react';
+import { Calendar, Plus, Sparkles, Loader2, Moon } from 'lucide-react';
 import TransitConnector, { TransitMode } from './TransitConnector';
 import DayIntelligence from './DayIntelligence';
 import { NeighborhoodTags } from './NeighborhoodBreakdown';
 import { getAirportCoordinates } from '@/lib/utils/airports';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+import { formatDuration, formatMinutesToTime, formatTimeDisplay } from '@/lib/utils/time-calculations';
 
 // Import new timeline components
 import {
@@ -319,25 +315,53 @@ export default function DayTimeline({
   };
 
   const isScrollable = timelineHeight > maxHeight;
+  const totalDuration = useMemo(
+    () => positionedItems.reduce((sum, item) => sum + item.duration, 0),
+    [positionedItems]
+  );
+  const dayWindow = useMemo(() => {
+    if (!positionedItems.length) return null;
+    const startLabel = formatTimeDisplay(formatMinutesToTime(positionedItems[0].start));
+    const endLabel = formatTimeDisplay(
+      formatMinutesToTime(positionedItems[positionedItems.length - 1].end)
+    );
+    return `${startLabel} – ${endLabel}`;
+  }, [positionedItems]);
 
   return (
-    <div className="rounded-2xl overflow-hidden bg-white dark:bg-gray-900 ring-1 ring-black/[0.04] dark:ring-white/[0.06]">
+    <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-white via-slate-50 to-white dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 ring-1 ring-black/[0.04] dark:ring-white/[0.06] shadow-lg shadow-black/5 dark:shadow-black/40">
       {/* Day Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-black/[0.04] dark:border-white/[0.06]">
-        <div className="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2">
-          <span className="text-[17px] font-semibold text-gray-900 dark:text-white">
-            Day {day.dayNumber}
-          </span>
-          {formattedDate && (
-            <span className="text-[13px] text-gray-500 dark:text-gray-400">
-              {formattedDate}
-            </span>
-          )}
-          <NeighborhoodTags items={regularItems} />
+      <div className="px-4 py-4 border-b border-black/[0.04] dark:border-white/[0.06] bg-gradient-to-r from-indigo-50/60 via-white to-white dark:from-indigo-500/10 dark:via-gray-900 dark:to-gray-950">
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-600 text-white text-[12px] font-semibold shadow-sm shadow-indigo-200">
+                Day {day.dayNumber}
+              </span>
+              {formattedDate && (
+                <span className="text-[13px] text-gray-600 dark:text-gray-300 font-medium">
+                  {formattedDate}
+                </span>
+              )}
+              <NeighborhoodTags items={regularItems} />
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-[12px] text-gray-600 dark:text-gray-300">
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.08]">
+                <Calendar className="w-3 h-3" />
+                {dayWindow || 'Timeline pending'}
+              </span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.08]">
+                {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
+              </span>
+              {totalDuration > 0 && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/[0.03] dark:bg-white/[0.06] border border-black/[0.04] dark:border-white/[0.08]">
+                  <Sparkles className="w-3 h-3" />
+                  {formatDuration(totalDuration)} planned
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-        <span className="text-[13px] text-gray-400 dark:text-gray-500">
-          {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
-        </span>
       </div>
 
       {/* Day Intelligence Bar */}
@@ -404,7 +428,7 @@ export default function DayTimeline({
             >
               <div
                 ref={timelineRef}
-                className="relative transition-[height] duration-300 ease-out"
+                className="relative transition-[height] duration-300 ease-out rounded-3xl border border-black/[0.04] dark:border-white/[0.08] bg-white/70 dark:bg-gray-900/70 shadow-inner shadow-black/5 dark:shadow-black/40"
                 style={{ height: `${timelineHeight}px` }}
               >
                 {/* Time grid with hour lines */}
