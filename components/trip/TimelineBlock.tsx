@@ -210,7 +210,7 @@ export default function TimelineBlock({
         group relative flex gap-0
         transition-all duration-200
         ${isDragging ? 'z-50 opacity-50 scale-[1.02]' : ''}
-        ${isActive ? 'ring-2 ring-stone-300 dark:ring-gray-600 rounded-2xl' : ''}
+        ${isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600 rounded-2xl' : ''}
       `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -243,7 +243,7 @@ export default function TimelineBlock({
               }
             }}
             autoFocus
-            className="w-full text-sm font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-gray-800 rounded px-1 py-0.5 tabular-nums focus:outline-none focus:ring-2 focus:ring-stone-400"
+            className="w-full text-sm font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 rounded px-1 py-0.5 tabular-nums focus:outline-none focus:ring-2 focus:ring-gray-400"
             onClick={(e) => e.stopPropagation()}
           />
         ) : item.time ? (
@@ -253,7 +253,7 @@ export default function TimelineBlock({
               setEditTimeValue(item.time || '09:00');
               setIsEditingTime(true);
             }}
-            className="text-sm font-medium text-stone-700 dark:text-stone-300 tabular-nums hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-gray-800 px-1 py-0.5 rounded transition-colors"
+            className="text-sm font-medium text-gray-700 dark:text-gray-300 tabular-nums hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 px-1 py-0.5 rounded transition-colors"
           >
             {formatTimeDisplay(item.time)}
           </button>
@@ -264,19 +264,19 @@ export default function TimelineBlock({
               setEditTimeValue('09:00');
               setIsEditingTime(true);
             }}
-            className="text-[11px] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors flex items-center gap-1"
+            className="text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex items-center gap-1"
           >
             <Clock className="w-3 h-3" />
             <span className="hidden sm:inline">set time</span>
           </button>
         )}
         {item.parsedNotes?.duration && (
-          <span className="text-[10px] text-stone-400 dark:text-stone-500 mt-1">
+          <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">
             {formatDuration(item.parsedNotes.duration)}
           </span>
         )}
         {/* Index badge */}
-        <div className="mt-2 w-5 h-5 rounded-full bg-stone-200 dark:bg-gray-700 text-stone-600 dark:text-gray-300 text-[10px] font-semibold flex items-center justify-center">
+        <div className="mt-2 w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-[10px] font-semibold flex items-center justify-center">
           {index + 1}
         </div>
       </div>
@@ -298,7 +298,7 @@ export default function TimelineBlock({
             `}
             onClick={(e) => e.stopPropagation()}
           >
-            <GripVertical className="w-4 h-4 text-stone-400 dark:text-gray-500" />
+            <GripVertical className="w-4 h-4 text-gray-400 dark:text-gray-500" />
           </div>
         )}
 
@@ -314,7 +314,7 @@ export default function TimelineBlock({
               p-2 sm:p-1.5 -m-1
               rounded-xl sm:rounded-lg
               bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
-              text-stone-400 hover:text-red-500 active:text-red-600
+              text-gray-400 hover:text-red-500 active:text-red-600
               hover:bg-red-50 active:bg-red-100 dark:hover:bg-red-900/20
               transition-all duration-200
               min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0
@@ -333,7 +333,7 @@ export default function TimelineBlock({
           className={`
             ${onEdit ? 'cursor-pointer' : ''}
             transition-all duration-200
-            ${onEdit ? 'hover:ring-1 hover:ring-stone-200 dark:hover:ring-stone-700 rounded-2xl' : ''}
+            ${onEdit ? 'hover:ring-1 hover:ring-gray-200 dark:hover:ring-gray-700 rounded-2xl' : ''}
             ${onEdit ? 'active:scale-[0.99]' : ''}
           `}
         >

@@ -66,7 +66,7 @@ export default function MapDrawer({
         className={`
           fixed top-4 right-4 bottom-4 z-50
           w-[calc(100%-2rem)] md:w-[420px]
-          bg-white dark:bg-stone-900
+          bg-white dark:bg-gray-900
           rounded-2xl
           shadow-2xl shadow-black/20
           transition-all duration-500 ease-out
@@ -74,16 +74,16 @@ export default function MapDrawer({
         `}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-stone-100 dark:border-stone-800">
-          <h3 className="text-xs font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400">
+        <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800">
+          <h3 className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
             Route Map
           </h3>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
             aria-label="Close map"
           >
-            <X className="w-4 h-4 text-stone-900 dark:text-white" strokeWidth={1.5} />
+            <X className="w-4 h-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
           </button>
         </div>
 
@@ -101,9 +101,9 @@ export default function MapDrawer({
         </div>
 
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-stone-100 dark:border-stone-800 bg-white dark:bg-stone-900 rounded-b-2xl">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-b-2xl">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-stone-500 dark:text-stone-400">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               Day {selectedDayNumber} · {days[selectedDayNumber - 1]?.items.length || 0} stops
             </span>
           </div>

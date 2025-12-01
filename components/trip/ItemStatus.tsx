@@ -47,8 +47,8 @@ export default function ItemStatus({
     },
     unknown: {
       icon: Clock,
-      color: 'text-stone-500 dark:text-gray-400',
-      bg: 'bg-stone-100 dark:bg-gray-800',
+      color: 'text-gray-500 dark:text-gray-400',
+      bg: 'bg-gray-100 dark:bg-gray-800',
       label: '',
     },
   };
@@ -66,7 +66,7 @@ export default function ItemStatus({
           </span>
         )}
         {waitMinutes !== undefined && waitMinutes > 0 && (
-          <span className="text-[9px] text-stone-400 dark:text-gray-500">
+          <span className="text-[9px] text-gray-400 dark:text-gray-500">
             ~{waitMinutes}min wait
           </span>
         )}
@@ -86,7 +86,7 @@ export default function ItemStatus({
       )}
 
       {waitMinutes !== undefined && waitMinutes > 0 && (
-        <div className="flex items-center gap-1 text-[10px] text-stone-500 dark:text-gray-400">
+        <div className="flex items-center gap-1 text-[10px] text-gray-500 dark:text-gray-400">
           <Clock className="w-3 h-3" />
           <span>~{waitMinutes} min wait</span>
         </div>

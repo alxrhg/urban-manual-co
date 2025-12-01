@@ -86,9 +86,9 @@ export default function TripHero({
       ) : (
         /* Gradient mesh for trips without cover image */
         <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-br from-stone-100 via-stone-50 to-amber-50/30 dark:from-stone-950 dark:via-neutral-900 dark:to-stone-900" />
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-100 via-gray-50 to-amber-50/30 dark:from-gray-950 dark:via-neutral-900 dark:to-gray-900" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-100/40 via-transparent to-transparent dark:from-amber-900/20" />
-          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-stone-200/50 to-transparent dark:from-stone-800/30" />
+          <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-gray-200/50 to-transparent dark:from-gray-800/30" />
         </div>
       )}
 
@@ -106,7 +106,7 @@ export default function TripHero({
             <p
               className={`
                 text-[11px] uppercase tracking-[0.25em] font-medium
-                text-stone-500 dark:text-stone-400 mb-4
+                text-gray-500 dark:text-gray-400 mb-4
                 opacity-0 ${mounted ? 'animate-fade-in' : ''}
               `}
               style={{ animationDelay: '0.1s' }}
@@ -123,7 +123,7 @@ export default function TripHero({
               onChange={(e) => setEditTitle(e.target.value)}
               onBlur={handleTitleSubmit}
               onKeyDown={(e) => e.key === 'Enter' && handleTitleSubmit()}
-              className="text-4xl md:text-6xl lg:text-7xl font-display text-stone-900 dark:text-white leading-[1.1] tracking-[-0.02em] bg-transparent border-none outline-none w-full focus:ring-0"
+              className="text-4xl md:text-6xl lg:text-7xl font-display text-gray-900 dark:text-white leading-[1.1] tracking-[-0.02em] bg-transparent border-none outline-none w-full focus:ring-0"
               autoFocus
             />
           ) : (
@@ -131,7 +131,7 @@ export default function TripHero({
               onClick={() => onTitleChange ? setIsEditing(true) : onTitleClick?.()}
               className={`
                 text-4xl md:text-6xl lg:text-7xl font-display
-                text-stone-900 dark:text-white
+                text-gray-900 dark:text-white
                 leading-[1.1] tracking-[-0.02em]
                 opacity-0 ${mounted ? 'animate-slide-up' : ''}
                 ${onTitleChange || onTitleClick ? 'cursor-pointer hover:opacity-80 transition-opacity duration-300' : ''}
@@ -145,8 +145,8 @@ export default function TripHero({
           {/* Decorative accent line */}
           <div
             className={`
-              mt-6 h-px w-16 bg-gradient-to-r from-stone-300 to-transparent
-              dark:from-stone-700 dark:to-transparent
+              mt-6 h-px w-16 bg-gradient-to-r from-gray-300 to-transparent
+              dark:from-gray-700 dark:to-transparent
               opacity-0 ${mounted ? 'animate-fade-in' : ''}
             `}
             style={{ animationDelay: '0.4s' }}

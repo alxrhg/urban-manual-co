@@ -98,8 +98,8 @@ export default function CrowdIndicator({
       label: 'Quiet',
     },
     moderate: {
-      color: 'text-stone-500 dark:text-gray-400',
-      bg: 'bg-stone-100 dark:bg-gray-800',
+      color: 'text-gray-500 dark:text-gray-400',
+      bg: 'bg-gray-100 dark:bg-gray-800',
       label: 'Moderate',
     },
     busy: {
@@ -132,7 +132,7 @@ export default function CrowdIndicator({
         {label}
       </span>
       {betterTime && (
-        <span className="text-[10px] text-stone-400 dark:text-gray-500">
+        <span className="text-[10px] text-gray-400 dark:text-gray-500">
           Try {betterTime} instead
         </span>
       )}

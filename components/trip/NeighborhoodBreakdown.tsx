@@ -104,26 +104,26 @@ export default function NeighborhoodBreakdown({
 
   return (
     <div className={`space-y-2 ${className}`}>
-      <p className="text-xs font-medium text-stone-500 dark:text-gray-400 uppercase tracking-wide">
+      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
         Neighborhoods
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
         {neighborhoods.map((neighborhood, index) => (
           <div key={neighborhood.name} className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 dark:bg-gray-800 rounded-full">
-              <MapPin className="w-3 h-3 text-stone-400" />
-              <span className="text-xs font-medium text-stone-700 dark:text-gray-300">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 rounded-full">
+              <MapPin className="w-3 h-3 text-gray-400" />
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                 {neighborhood.name}
               </span>
-              <span className="text-[10px] text-stone-400 dark:text-gray-500">
+              <span className="text-[10px] text-gray-400 dark:text-gray-500">
                 ({neighborhood.items.length})
               </span>
             </div>
 
             {/* Transit time arrow */}
             {index < neighborhoods.length - 1 && transitTimes[index] && (
-              <div className="flex items-center gap-1 text-[10px] text-stone-400">
+              <div className="flex items-center gap-1 text-[10px] text-gray-400">
                 <span>→</span>
                 <Clock className="w-2.5 h-2.5" />
                 <span>{transitTimes[index].minutes}m</span>
@@ -157,7 +157,7 @@ export function NeighborhoodTags({ items }: { items: DestinationItem[] }) {
       {neighborhoods.map(n => (
         <span
           key={n}
-          className="px-1.5 py-0.5 text-[9px] text-stone-500 dark:text-gray-400 bg-stone-100 dark:bg-gray-800 rounded"
+          className="px-1.5 py-0.5 text-[9px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded"
         >
           {n}
         </span>

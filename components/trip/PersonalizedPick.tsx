@@ -93,26 +93,26 @@ export default function PersonalizedPick({
   };
 
   return (
-    <div className={`border border-stone-200 dark:border-gray-800 rounded-xl p-4 ${className}`}>
+    <div className={`border border-gray-200 dark:border-gray-800 rounded-xl p-4 ${className}`}>
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-          <Sparkles className="w-4 h-4 text-stone-500" />
+        <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+          <Sparkles className="w-4 h-4 text-gray-500" />
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-stone-500 dark:text-gray-400 mb-2">
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
             Based on your style
           </p>
 
           {loading ? (
             <div className="flex items-center gap-2 py-2">
-              <Loader2 className="w-4 h-4 animate-spin text-stone-400" />
-              <span className="text-xs text-stone-400">Finding a match...</span>
+              <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+              <span className="text-xs text-gray-400">Finding a match...</span>
             </div>
           ) : recommendation ? (
             <div className="flex items-center gap-3">
               {recommendation.destination.image_thumbnail ? (
-                <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-stone-100 dark:bg-gray-800">
+                <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
                   <img
                     src={recommendation.destination.image_thumbnail}
                     alt={recommendation.destination.name}
@@ -120,32 +120,32 @@ export default function PersonalizedPick({
                   />
                 </div>
               ) : (
-                <div className="w-12 h-12 rounded-lg bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-5 h-5 text-stone-300" />
+                <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-5 h-5 text-gray-300" />
                 </div>
               )}
 
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-stone-900 dark:text-white truncate">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                   {recommendation.destination.name}
                 </p>
-                <p className="text-xs text-stone-500 dark:text-gray-400 truncate">
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                   {recommendation.reason}
                 </p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] text-stone-400 capitalize">
+                  <span className="text-[10px] text-gray-400 capitalize">
                     {recommendation.destination.category}
                   </span>
                   {recommendation.destination.rating && (
                     <>
-                      <span className="w-0.5 h-0.5 rounded-full bg-stone-300" />
-                      <span className="text-[10px] text-stone-400">
+                      <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+                      <span className="text-[10px] text-gray-400">
                         {recommendation.destination.rating.toFixed(1)}
                       </span>
                     </>
                   )}
-                  <span className="w-0.5 h-0.5 rounded-full bg-stone-300" />
-                  <span className="text-[10px] text-stone-400">
+                  <span className="w-0.5 h-0.5 rounded-full bg-gray-300" />
+                  <span className="text-[10px] text-gray-400">
                     {Math.round(recommendation.matchScore * 100)}% match
                   </span>
                 </div>
@@ -153,7 +153,7 @@ export default function PersonalizedPick({
 
               <button
                 onClick={handleAdd}
-                className="p-2 text-stone-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               >
                 <Plus className="w-4 h-4" />
               </button>
@@ -163,7 +163,7 @@ export default function PersonalizedPick({
 
         <button
           onClick={() => setDismissed(true)}
-          className="p-1 text-stone-300 hover:text-stone-500 transition-colors"
+          className="p-1 text-gray-300 hover:text-gray-500 transition-colors"
         >
           <X className="w-4 h-4" />
         </button>

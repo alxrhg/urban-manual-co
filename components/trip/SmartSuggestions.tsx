@@ -293,18 +293,18 @@ export default function SmartSuggestions({
   }
 
   return (
-    <div className={`border border-stone-200 dark:border-gray-800 rounded-2xl p-5 ${className}`}>
+    <div className={`border border-gray-200 dark:border-gray-800 rounded-2xl p-5 ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium text-[15px] text-stone-900 dark:text-white flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-stone-400" />
+        <h3 className="font-medium text-[15px] text-gray-900 dark:text-white flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-gray-400" />
           Ask AI
         </h3>
         {destination && hasLoadedAI && (
           <button
             onClick={fetchAISuggestions}
             disabled={isLoadingAI}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50"
           >
             {isLoadingAI ? (
               <Loader2 className="w-3 h-3 animate-spin" />
@@ -326,12 +326,12 @@ export default function SmartSuggestions({
               onKeyDown={handleNLKeyDown}
               placeholder={`"Add dinner near the Eiffel Tower..."`}
               disabled={isProcessingNL}
-              className="w-full px-3 py-2.5 pr-10 text-sm text-stone-700 dark:text-gray-300 bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl placeholder:text-stone-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-700 disabled:opacity-50"
+              className="w-full px-3 py-2.5 pr-10 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50"
             />
             <button
               onClick={processNLInput}
               disabled={!nlInput.trim() || isProcessingNL}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {isProcessingNL ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -341,7 +341,7 @@ export default function SmartSuggestions({
             </button>
           </div>
           {nlResult && (
-            <p className="mt-1.5 text-xs text-stone-500 dark:text-gray-400">
+            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
               {nlResult}
             </p>
           )}
@@ -351,8 +351,8 @@ export default function SmartSuggestions({
       {/* Loading state */}
       {isLoadingAI && aiSuggestions.length === 0 && (
         <div className="flex items-center justify-center py-4">
-          <Loader2 className="w-4 h-4 animate-spin text-stone-400" />
-          <span className="ml-2 text-xs text-stone-500">Analyzing your trip...</span>
+          <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+          <span className="ml-2 text-xs text-gray-500">Analyzing your trip...</span>
         </div>
       )}
 
@@ -371,12 +371,12 @@ export default function SmartSuggestions({
                   );
                 }
               }}
-              className="w-full flex items-center gap-3 text-left group hover:bg-stone-50 dark:hover:bg-gray-800/50 px-2 py-2 -mx-2 rounded-lg transition-colors"
+              className="w-full flex items-center gap-3 text-left group hover:bg-gray-50 dark:hover:bg-gray-800/50 px-2 py-2 -mx-2 rounded-lg transition-colors"
             >
-              <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                <Plus className="w-4 h-4 text-stone-400" />
+              <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                <Plus className="w-4 h-4 text-gray-400" />
               </div>
-              <span className="text-sm text-stone-600 dark:text-gray-400 group-hover:text-stone-900 dark:group-hover:text-white transition-colors">
+              <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
                 {suggestion.text}
               </span>
             </button>
@@ -387,10 +387,10 @@ export default function SmartSuggestions({
             <button
               key={`${suggestion.destination.slug}-${index}`}
               onClick={() => onAddAISuggestion?.(suggestion)}
-              className="w-full flex items-center gap-3 text-left group hover:bg-stone-50 dark:hover:bg-gray-800/50 px-2 py-2 -mx-2 rounded-lg transition-colors"
+              className="w-full flex items-center gap-3 text-left group hover:bg-gray-50 dark:hover:bg-gray-800/50 px-2 py-2 -mx-2 rounded-lg transition-colors"
             >
               {suggestion.destination.image_thumbnail ? (
-                <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-stone-100 dark:bg-gray-800">
+                <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
                   <img
                     src={suggestion.destination.image_thumbnail}
                     alt={suggestion.destination.name}
@@ -398,20 +398,20 @@ export default function SmartSuggestions({
                   />
                 </div>
               ) : (
-                <div className="w-8 h-8 rounded-lg flex-shrink-0 bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
-                  <Sparkles className="w-3.5 h-3.5 text-stone-400" />
+                <div className="w-8 h-8 rounded-lg flex-shrink-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                  <Sparkles className="w-3.5 h-3.5 text-gray-400" />
                 </div>
               )}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-stone-900 dark:text-white truncate group-hover:text-stone-900 dark:group-hover:text-white">
+                  <span className="text-sm text-gray-900 dark:text-white truncate group-hover:text-gray-900 dark:group-hover:text-white">
                     {suggestion.destination.name}
                   </span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 rounded flex-shrink-0">
+                  <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded flex-shrink-0">
                     Day {suggestion.day}
                   </span>
                 </div>
-                <p className="text-xs text-stone-400 dark:text-gray-500 truncate">
+                <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
                   {suggestion.destination.category} · {suggestion.startTime}
                 </p>
               </div>
@@ -420,7 +420,7 @@ export default function SmartSuggestions({
 
           {/* Empty state */}
           {localSuggestions.length === 0 && aiSuggestions.length === 0 && !isLoadingAI && (
-            <p className="text-xs text-stone-500 dark:text-gray-400 py-2 text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400 py-2 text-center">
               Your trip looks well-planned
             </p>
           )}

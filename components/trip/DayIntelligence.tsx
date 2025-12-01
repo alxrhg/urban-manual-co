@@ -147,7 +147,7 @@ export default function DayIntelligence({
         <button
           onClick={onAutoFill}
           disabled={isAutoFilling}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-600 dark:text-gray-400 border border-stone-200 dark:border-gray-700 rounded-full hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
         >
           {isAutoFilling ? (
             <Loader2 className="w-3 h-3 animate-spin" />
@@ -164,16 +164,16 @@ export default function DayIntelligence({
     <div className={`flex flex-wrap items-center gap-3 ${className}`}>
       {/* Utilization meter */}
       <div className="flex items-center gap-2">
-        <Clock className="w-3.5 h-3.5 text-stone-400" />
+        <Clock className="w-3.5 h-3.5 text-gray-400" />
         <div className="flex items-center gap-1.5">
-          <div className="w-16 h-1.5 bg-stone-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
                 analysis.isOverstuffed
                   ? 'bg-red-500'
                   : analysis.utilization > 80
                   ? 'bg-amber-500'
-                  : 'bg-stone-900 dark:bg-white'
+                  : 'bg-gray-900 dark:bg-white'
               }`}
               style={{ width: `${Math.min(100, analysis.utilization)}%` }}
             />
@@ -181,7 +181,7 @@ export default function DayIntelligence({
           <span className={`text-[10px] font-medium ${
             analysis.isOverstuffed
               ? 'text-red-600 dark:text-red-400'
-              : 'text-stone-500 dark:text-gray-400'
+              : 'text-gray-500 dark:text-gray-400'
           }`}>
             {analysis.utilization}%
           </span>
@@ -193,7 +193,7 @@ export default function DayIntelligence({
 
       {/* Transit time */}
       {analysis.totalTransitMinutes > 0 && (
-        <div className="flex items-center gap-1 text-[10px] text-stone-400">
+        <div className="flex items-center gap-1 text-[10px] text-gray-400">
           <Route className="w-3 h-3" />
           <span>{Math.round(analysis.totalTransitMinutes)} min transit</span>
         </div>
@@ -214,7 +214,7 @@ export default function DayIntelligence({
           <button
             onClick={onOptimizeDay}
             disabled={isOptimizing}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-gray-800 rounded transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors disabled:opacity-50"
           >
             {isOptimizing ? (
               <Loader2 className="w-3 h-3 animate-spin" />
@@ -230,7 +230,7 @@ export default function DayIntelligence({
           <button
             onClick={onAutoFill}
             disabled={isAutoFilling}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-gray-800 rounded transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors disabled:opacity-50"
           >
             {isAutoFilling ? (
               <Loader2 className="w-3 h-3 animate-spin" />

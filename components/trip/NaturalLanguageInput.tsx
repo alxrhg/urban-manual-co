@@ -95,12 +95,12 @@ export default function NaturalLanguageInput({
   ];
 
   return (
-    <div className={`border border-stone-200 dark:border-gray-800 rounded-2xl overflow-hidden ${className}`}>
+    <div className={`border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-stone-100 dark:border-gray-800">
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-stone-400" />
-          <h3 className="text-sm font-medium text-stone-900 dark:text-white">
+          <Sparkles className="w-4 h-4 text-gray-400" />
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white">
             Ask AI
           </h3>
         </div>
@@ -116,12 +116,12 @@ export default function NaturalLanguageInput({
             onKeyDown={handleKeyDown}
             placeholder={city ? `"Add a nice dinner spot in ${city}..."` : 'Set a destination first'}
             disabled={!city || isProcessing}
-            className="w-full px-4 py-3 pr-12 text-sm text-stone-700 dark:text-gray-300 bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl placeholder:text-stone-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-700 disabled:opacity-50"
+            className="w-full px-4 py-3 pr-12 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50"
           />
           <button
             onClick={processInput}
             disabled={!input.trim() || !city || isProcessing}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-stone-400 hover:text-stone-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {isProcessing ? (
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -133,7 +133,7 @@ export default function NaturalLanguageInput({
 
         {/* Result message */}
         {lastResult && (
-          <p className="mt-2 text-xs text-stone-500 dark:text-gray-400">
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
             {lastResult}
           </p>
         )}
@@ -145,7 +145,7 @@ export default function NaturalLanguageInput({
               <button
                 key={suggestion}
                 onClick={() => setInput(suggestion)}
-                className="px-2.5 py-1 text-[11px] text-stone-500 dark:text-gray-400 bg-stone-100 dark:bg-gray-800 rounded-full hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors"
+                className="px-2.5 py-1 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
               >
                 {suggestion}
               </button>
