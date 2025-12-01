@@ -11,11 +11,10 @@ import {
   Coffee,
   Search,
   Home,
-  User,
   Map,
   Plane,
   Heart,
-  Settings,
+  User,
   Moon,
   Sun,
 } from 'lucide-react';
@@ -105,14 +104,14 @@ export function CommandPalette() {
 
   return (
     <>
-      {/* Search trigger button */}
+      {/* Search trigger button - matches design system */}
       <button
         onClick={() => setOpen(true)}
-        className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-neutral-500 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 rounded-lg hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+        className="hidden md:flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
       >
         <Search className="h-4 w-4" />
         <span>Search...</span>
-        <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 px-1.5 font-mono text-[10px] font-medium text-neutral-500 dark:text-neutral-400">
+        <kbd className="ml-2 pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-1.5 font-mono text-[10px] font-medium text-gray-400 dark:text-gray-500">
           <span className="text-xs">⌘</span>K
         </kbd>
       </button>
@@ -140,7 +139,7 @@ export function CommandPalette() {
                   <MapPin className="mr-2 h-4 w-4" />
                   <span>{result.name}</span>
                   {result.city && (
-                    <span className="ml-2 text-neutral-500 text-xs">{result.city}</span>
+                    <span className="ml-2 text-gray-400 dark:text-gray-500 text-xs">{result.city}</span>
                   )}
                 </CommandItem>
               ))}
@@ -191,7 +190,7 @@ export function CommandPalette() {
                   >
                     <MapPin className="mr-2 h-4 w-4" />
                     <span>{city.name}</span>
-                    <span className="ml-2 text-neutral-500 text-xs">{city.country}</span>
+                    <span className="ml-2 text-gray-400 dark:text-gray-500 text-xs">{city.country}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
