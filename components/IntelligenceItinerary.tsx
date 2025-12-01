@@ -91,7 +91,7 @@ export function IntelligenceItinerary({ itinerary }: IntelligenceItineraryProps)
                   </p>
                   {destination.architect && (
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      by {destination.architect.name || destination.architect}
+                      by {typeof destination.architect === 'string' ? destination.architect : destination.architect.name}
                     </p>
                   )}
                 </div>
