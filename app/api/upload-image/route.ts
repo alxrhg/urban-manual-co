@@ -1,9 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, AuthError } from '@/lib/adminAuth';
+import {
+  uploadRatelimit,
+  memoryUploadRatelimit,
+  getIdentifier,
+  createRateLimitResponse,
+  isUpstashConfigured,
+} from '@/lib/rate-limit';
+import { withErrorHandling } from '@/lib/errors';
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
     const { serviceClient: supabaseAdmin } = await requireAdmin(request);
+
+    // Rate limiting: 3 uploads per minute
+    const identifier = getIdentifier(request);
+    const limiter = isUpstashConfigured() ? uploadRatelimit : memoryUploadRatelimit;
+    const { success, limit, remaining, reset } = await limiter.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse('Upload rate limit exceeded. Please try again later.', limit, remaining, reset);
+    }
 
     // Get form data
     const formData = await request.formData();
@@ -26,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Generate unique filename
     const fileExt = file.name.split('.').pop();
-    const fileName = slug 
+    const fileName = slug
       ? `${slug}-${Date.now()}.${fileExt}`
       : `upload-${Date.now()}.${fileExt}`;
     const filePath = `destinations/${fileName}`;
@@ -49,7 +66,7 @@ export async function POST(request: NextRequest) {
       .from('destination-images')
       .getPublicUrl(filePath);
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       url: urlData.publicUrl,
       path: filePath
     });
@@ -58,7 +75,6 @@ export async function POST(request: NextRequest) {
     if (error instanceof AuthError) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
-    console.error('Upload error:', error);
-    return NextResponse.json({ error: error.message || 'Upload failed' }, { status: 500 });
+    throw error;
   }
-}
+});

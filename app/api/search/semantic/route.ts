@@ -1,8 +1,8 @@
 /**
  * Semantic Search API Route
- * 
+ *
  * POST /api/search/semantic
- * 
+ *
  * Performs semantic search using Upstash Vector and returns full destination data from Supabase.
  */
 
@@ -10,11 +10,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateTextEmbedding } from '@/lib/ml/embeddings';
 import { queryVectorIndex } from '@/lib/upstash-vector';
 import { createClient } from '@supabase/supabase-js';
+import { withErrorHandling } from '@/lib/errors';
+import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  const identifier = getIdentifier(request);
+  const limiter = isUpstashConfigured() ? searchRatelimit : memorySearchRatelimit;
+  const { success, limit, remaining, reset } = await limiter.limit(identifier);
+
+  if (!success) {
+    return createRateLimitResponse('Rate limit exceeded. Please try again later.', limit, remaining, reset);
+  }
+
   try {
     const body = await request.json();
     const { query, limit = 10, filters = {} } = body;
@@ -99,4 +109,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
+import { withErrorHandling } from '@/lib/errors';
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const city = searchParams.get('city');
@@ -94,6 +95,6 @@ export async function GET(request: NextRequest) {
       },
     }, { status: 200 });
   }
-}
+});
 
 

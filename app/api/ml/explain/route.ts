@@ -5,11 +5,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withErrorHandling } from '@/lib/errors';
 import { createServerClient } from '@/lib/supabase-server';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const { user_id, destination_id, method = 'shap' } = body;
@@ -58,9 +59,9 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const destinationId = searchParams.get('destination_id');
@@ -108,5 +109,5 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 

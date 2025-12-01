@@ -52,7 +52,9 @@ export async function generateJSON(system: string, user: string): Promise<any | 
       const text = resp.choices?.[0]?.message?.content || '';
       const match = text.match(/\{[\s\S]*\}/);
       if (match) return JSON.parse(match[0]);
-    } catch (_) {}
+    } catch (e) {
+      console.warn('OpenAI JSON generation failed, falling back to Gemini:', e instanceof Error ? e.message : e);
+    }
   }
   // Fallback to Gemini (using consolidated client)
   if (isGeminiAvailable()) {

@@ -6,6 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withErrorHandling } from '@/lib/errors';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 
@@ -28,7 +29,7 @@ function isLocalhostUrl(url: string): boolean {
   );
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async (request: NextRequest) => {
   try {
     // Check if ML service is configured and not localhost
     if (!ML_SERVICE_URL || isLocalhostUrl(ML_SERVICE_URL)) {
@@ -111,4 +112,4 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     );
   }
-}
+});

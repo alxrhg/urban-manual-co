@@ -3,10 +3,19 @@
 import { Sparkles, MapPin, Filter, Lightbulb, TrendingUp, Calendar, HelpCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
+interface SearchFilters {
+  michelin?: boolean;
+  crown?: boolean;
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  openNow?: boolean;
+}
+
 interface IntentData {
   city?: string;
   category?: string;
-  filters?: any;
+  filters?: SearchFilters;
   intent?: string;
   confidence?: number;
   clarifications?: string[];
@@ -107,14 +116,14 @@ export function IntelligentSearchFeedback({
                     </span>
                   ))
                 )}
-                {intent.filters?.michelinStar && (
+                {intent.filters?.michelin && (
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-                    ⭐ {intent.filters.michelinStar} Michelin
+                    ⭐ {intent.filters.michelin} Michelin
                   </span>
                 )}
-                {intent.filters?.rating && (
+                {intent.filters?.minRating && (
                   <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-                    ⭐ {intent.filters.rating}+ rating
+                    ⭐ {intent.filters.minRating}+ rating
                   </span>
                 )}
               </div>

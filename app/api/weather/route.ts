@@ -5,8 +5,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchWeather } from '@/lib/enrichment/weather';
+import { withErrorHandling } from '@/lib/errors';
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const lat = parseFloat(searchParams.get('lat') || '0');
@@ -36,5 +37,5 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 

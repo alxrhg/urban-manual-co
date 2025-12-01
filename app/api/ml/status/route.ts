@@ -5,6 +5,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { withErrorHandling } from '@/lib/errors';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 const HEALTH_ENDPOINT = `${ML_SERVICE_URL}/api/health`;
@@ -19,7 +20,7 @@ async function fetchJson(url: string, timeoutMs = 3000) {
   return response.json();
 }
 
-export async function GET() {
+export const GET = withErrorHandling(async () => {
   try {
     // Check health endpoint
     const healthData = await fetchJson(HEALTH_ENDPOINT);
@@ -52,4 +53,4 @@ export async function GET() {
       { status: 503 }
     );
   }
-}
+});

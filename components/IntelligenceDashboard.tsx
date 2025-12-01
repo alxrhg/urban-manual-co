@@ -11,10 +11,11 @@ import { ArchitecturalJourney } from './ArchitecturalJourney';
 import { IntelligenceItinerary } from './IntelligenceItinerary';
 import { DesignInsights } from './DesignInsights';
 import { IntelligenceAlerts } from './IntelligenceAlerts';
+import type { TravelIntelligenceOutput, TravelIntelligenceInput } from '@/services/intelligence/engine';
 
 interface IntelligenceDashboardProps {
-  intelligence?: any; // TravelIntelligenceOutput
-  onGenerate?: (input: any) => void;
+  intelligence?: TravelIntelligenceOutput;
+  onGenerate?: (input: Partial<TravelIntelligenceInput>) => void;
 }
 
 export function IntelligenceDashboard({ intelligence, onGenerate }: IntelligenceDashboardProps) {

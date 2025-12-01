@@ -70,7 +70,7 @@ export default function MapPage() {
           // Extract unique categories (case-insensitive deduplication)
           const categoryLowerSet = new Set<string>();
           const uniqueCategories: string[] = [];
-          (destData || []).forEach((d: any) => {
+          (destData || []).forEach((d: Destination) => {
             if (d.category) {
               const categoryLower = d.category.toLowerCase();
               if (!categoryLowerSet.has(categoryLower)) {

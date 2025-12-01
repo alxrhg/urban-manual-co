@@ -1,8 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, AuthError } from '@/lib/adminAuth';
+import { withErrorHandling } from '@/lib/errors';
+import { conversationRatelimit, memoryConversationRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
+    // Rate limiting for AI endpoints
+    const identifier = getIdentifier(request);
+    const limiter = isUpstashConfigured() ? conversationRatelimit : memoryConversationRatelimit;
+    const { success, limit, remaining, reset } = await limiter.limit(identifier);
+
+    if (!success) {
+      return createRateLimitResponse('Rate limit exceeded. Please try again later.', limit, remaining, reset);
+    }
+
     await requireAdmin(request);
 
     const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
@@ -118,4 +129,4 @@ Guidelines:
       { status: 500 }
     );
   }
-}
+});

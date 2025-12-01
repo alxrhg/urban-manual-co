@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase-server';
+import { withErrorHandling } from '@/lib/errors';
 
 /**
  * GET /api/recommendations/discovery
  * Get personalized recommendations using Google Discovery Engine
- * 
+ *
  * Query parameters:
  * - userId: User ID (optional, will use session if not provided)
  * - city: Filter by city (optional)
  * - category: Filter by category (optional)
  * - pageSize: Number of recommendations (default: 10)
  */
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId') || undefined;
@@ -77,5 +78,5 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 

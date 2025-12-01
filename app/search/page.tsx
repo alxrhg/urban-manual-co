@@ -335,8 +335,8 @@ function SearchPageContent() {
                   {paginatedResults.map((d, idx) => (
                     <DestinationCard
                       key={d.id}
-                      destination={d as any}
-                      onClick={() => router.push(`/destination/${(d as any).slug || d.id}`)}
+                      destination={d as DestinationType}
+                      onClick={() => router.push(`/destination/${d.slug || d.id}`)}
                       index={startIndex + idx}
                       showBadges={true}
                     />

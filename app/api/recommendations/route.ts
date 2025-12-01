@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { AIRecommendationEngine } from '@/lib/ai-recommendations/engine';
+import { withErrorHandling } from '@/lib/errors';
 
 // Rate limiting (simple in-memory, use Redis in production)
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -26,7 +27,7 @@ function checkRateLimit(userId: string): boolean {
   return true;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async (request: NextRequest) => {
   try {
     // 1. Get query parameters first (for slug-based recommendations)
     const searchParams = request.nextUrl.searchParams;
@@ -167,10 +168,10 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 // Force refresh endpoint (POST)
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
     const supabase = await createServerClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -216,7 +217,7 @@ export async function POST(request: NextRequest) {
       cached: false,
       count: result.length
     });
-    
+
   } catch (error: any) {
     console.error('[API] Error:', error);
     return NextResponse.json(
@@ -224,4 +225,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

@@ -6,13 +6,14 @@ import { generateSearchResponseContext } from '@/lib/search/generateSearchContex
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { getUserLocation } from '@/lib/location/getUserLocation';
 import { expandNearbyLocations, getLocationContext, findLocationByName } from '@/lib/search/expandLocations';
+import { withErrorHandling } from '@/lib/errors';
 
 /**
  * POST /api/search/follow-up
- * 
+ *
  * Handles conversational follow-up queries that build on previous search context.
  * Combines the original query with the follow-up message for better understanding.
- * 
+ *
  * Request body:
  * {
  *   originalQuery: string;
@@ -22,7 +23,7 @@ import { expandNearbyLocations, getLocationContext, findLocationByName } from '@
  *   refinements?: string[]; // Optional: applied refinements so far
  * }
  */
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const {
@@ -250,7 +251,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
 /**
  * Intelligently combine original query with follow-up message

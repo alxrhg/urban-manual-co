@@ -6,12 +6,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { withErrorHandling } from '@/lib/errors';
 import { createServerClient } from '@/lib/supabase-server';
 
 const ML_SERVICE_URL = process.env.ML_SERVICE_URL || 'http://localhost:8000';
 const CF_ENDPOINT_BASE = `${ML_SERVICE_URL}/api/recommendations`;
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async (request: NextRequest) => {
   try {
     // Get user from session
     const supabase = await createServerClient();
@@ -75,9 +76,9 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withErrorHandling(async (request: NextRequest) => {
   try {
     // Get user from session
     const supabase = await createServerClient();
@@ -135,4 +136,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

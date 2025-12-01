@@ -1,30 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neighborhoodsDistrictsService } from '@/services/intelligence/neighborhoods-districts';
+import { withErrorHandling } from '@/lib/errors';
 
 /**
  * GET /api/intelligence/districts/:city
  * Get districts for a city
  */
-export async function GET(
+export const GET = withErrorHandling(async (
   request: NextRequest,
   { params }: { params: Promise<{ city: string }> }
-) {
-  try {
-    const resolvedParams = await params;
-    const city = decodeURIComponent(resolvedParams.city);
+) => {
+  const resolvedParams = await params;
+  const city = decodeURIComponent(resolvedParams.city);
 
-    const districts = await neighborhoodsDistrictsService.getDistrictsByCity(city);
+  const districts = await neighborhoodsDistrictsService.getDistrictsByCity(city);
 
-    return NextResponse.json({
-      districts,
-      count: districts.length,
-    });
-  } catch (error: any) {
-    console.error('Error getting districts:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    districts,
+    count: districts.length,
+  });
+});
 

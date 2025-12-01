@@ -6,10 +6,11 @@
 'use client';
 
 import { Calendar, Clock, MapPin } from 'lucide-react';
+import type { ArchitectureDestination } from '@/types/architecture';
 
 interface DayItinerary {
   date: string;
-  destinations: any[];
+  destinations: ArchitectureDestination[];
   narrative: string;
   total_time_minutes: number;
   walking_distance_km: number;
@@ -90,7 +91,7 @@ export function IntelligenceItinerary({ itinerary }: IntelligenceItineraryProps)
                   </p>
                   {destination.architect && (
                     <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      by {destination.architect.name || destination.architect}
+                      by {typeof destination.architect === 'string' ? destination.architect : destination.architect.name}
                     </p>
                   )}
                 </div>

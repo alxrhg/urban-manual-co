@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { withErrorHandling } from '@/lib/errors';
 
 function getSupabaseClient() {
   // Use service role client for admin operations (bypasses RLS)
@@ -28,7 +29,7 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandling(async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
 
@@ -128,4 +129,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

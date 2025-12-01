@@ -77,8 +77,6 @@ export default function AISuggestionsDrawer({
   ];
 
   const handleApplySuggestion = (suggestion: Suggestion) => {
-    console.log("Apply suggestion:", suggestion);
-    // TODO: Implement individual suggestion application
     if (suggestion.actions && trip && onApply) {
       const updated = applyAIActions(trip, suggestion.actions);
       onApply(updated);
@@ -87,7 +85,6 @@ export default function AISuggestionsDrawer({
 
   const applyAllChanges = () => {
     if (!trip || !onApply) {
-      console.log("AI suggestions applied.");
       closeDrawer();
       return;
     }
