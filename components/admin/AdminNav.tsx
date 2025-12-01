@@ -1,45 +1,44 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const NAV_LINKS = [
-  { href: '/admin', label: 'Overview' },
-  { href: '/admin/destinations', label: 'Destinations' },
-  { href: '/admin/analytics', label: 'Analytics' },
-  { href: '/admin/searches', label: 'Searches' },
-  { href: '/admin/enrich', label: 'Enrich' },
-  { href: '/admin/reindex', label: 'Reindex' },
+  { href: '/admin', label: 'Overview', value: 'overview' },
+  { href: '/admin/destinations', label: 'Destinations', value: 'destinations' },
+  { href: '/admin/analytics', label: 'Analytics', value: 'analytics' },
+  { href: '/admin/searches', label: 'Searches', value: 'searches' },
+  { href: '/admin/enrich', label: 'Enrich', value: 'enrich' },
+  { href: '/admin/reindex', label: 'Reindex', value: 'reindex' },
 ];
 
-function isActive(pathname: string, href: string) {
-  if (href === '/admin') {
-    return pathname === '/admin';
-  }
-  return pathname.startsWith(href);
+function getActiveValue(pathname: string) {
+  if (pathname === '/admin') return 'overview';
+  const match = NAV_LINKS.find(link => link.href !== '/admin' && pathname.startsWith(link.href));
+  return match?.value || 'overview';
 }
 
 export function AdminNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const activeValue = getActiveValue(pathname || '');
 
   return (
-    <nav className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-      {NAV_LINKS.map((link) => {
-        const active = isActive(pathname || '', link.href);
-        return (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`transition-all ${
-              active
-                ? 'font-medium text-black dark:text-white'
-                : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
-            }`}
+    <Tabs value={activeValue} onValueChange={(value) => {
+      const link = NAV_LINKS.find(l => l.value === value);
+      if (link) router.push(link.href);
+    }}>
+      <TabsList className="h-auto p-1 bg-gray-100 dark:bg-gray-800">
+        {NAV_LINKS.map((link) => (
+          <TabsTrigger
+            key={link.value}
+            value={link.value}
+            className="text-xs px-3 py-1.5"
           >
             {link.label}
-          </Link>
-        );
-      })}
-    </nav>
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }

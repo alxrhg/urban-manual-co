@@ -10,7 +10,6 @@ import {
   Crown,
   Star,
   Globe,
-  Bookmark,
   Search,
   Activity,
   Clock,
@@ -18,6 +17,11 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface DashboardStats {
   totalDestinations: number;
@@ -145,7 +149,7 @@ export function DashboardOverview() {
       </div>
 
       {/* Stats Row - Text-first inline stats */}
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-6">
+      <div className="pb-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <StatItem
             label="Destinations"
@@ -171,8 +175,10 @@ export function DashboardOverview() {
         </div>
       </div>
 
+      <Separator />
+
       {/* Content Stats - Definition list style */}
-      <div className="border-b border-gray-200 dark:border-gray-800 pb-6">
+      <div className="pb-6 pt-6">
         <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-4">
           Content Highlights
         </h3>
@@ -204,8 +210,10 @@ export function DashboardOverview() {
         </dl>
       </div>
 
+      <Separator />
+
       {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-6">
         {/* Recent Destinations - Simple list */}
         <div>
           <div className="flex items-center justify-between mb-4">
@@ -225,8 +233,8 @@ export function DashboardOverview() {
               Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="py-3 flex items-center justify-between">
                   <div className="space-y-1.5">
-                    <div className="h-4 w-32 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
-                    <div className="h-3 w-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-20" />
                   </div>
                 </div>
               ))
@@ -261,8 +269,8 @@ export function DashboardOverview() {
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="space-y-1.5">
-                  <div className="h-4 w-24 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
-                  <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-2 w-full" />
                 </div>
               ))
             ) : (
@@ -272,14 +280,10 @@ export function DashboardOverview() {
                     <span className="text-gray-700 dark:text-gray-300">{city.city}</span>
                     <span className="text-gray-400 tabular-nums">{city.count}</span>
                   </div>
-                  <div className="h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gray-900 dark:bg-white rounded-full"
-                      style={{
-                        width: `${(city.count / (stats?.topCities[0]?.count || 1)) * 100}%`,
-                      }}
-                    />
-                  </div>
+                  <Progress
+                    value={(city.count / (stats?.topCities[0]?.count || 1)) * 100}
+                    className="h-1"
+                  />
                 </div>
               ))
             )}
@@ -287,25 +291,31 @@ export function DashboardOverview() {
         </div>
       </div>
 
-      {/* System Status - Inline */}
-      <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+      {/* System Status - Inline with Badge */}
+      <Separator />
+      <div className="pt-6">
         <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-4">
           System Status
         </h3>
-        <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-3">
           {stats?.systemHealth.map((item, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm">
+            <Badge
+              key={i}
+              variant={item.status === 'healthy' ? 'success' : item.status === 'warning' ? 'warning' : 'destructive'}
+              className="flex items-center gap-1.5 px-3 py-1"
+            >
               {getStatusIcon(item.status)}
-              <span className="text-gray-700 dark:text-gray-300">{item.name}</span>
-              <span className="text-gray-400">·</span>
-              <span className="text-gray-400">{item.message}</span>
-            </div>
+              <span>{item.name}</span>
+              <span className="opacity-60">·</span>
+              <span className="opacity-60">{item.message}</span>
+            </Badge>
           ))}
         </div>
       </div>
 
       {/* Quick Actions - Simple links */}
-      <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
+      <Separator />
+      <div className="pt-6">
         <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-4">
           Quick Actions
         </h3>
@@ -320,7 +330,7 @@ export function DashboardOverview() {
   );
 }
 
-// Text-first stat item
+// Text-first stat item with shadcn Skeleton
 function StatItem({
   label,
   value,
@@ -336,14 +346,14 @@ function StatItem({
     <div>
       <dt className="text-xs text-gray-500 dark:text-gray-400 mb-1">{label}</dt>
       {loading ? (
-        <div className="h-7 w-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+        <Skeleton className="h-7 w-16" />
       ) : (
         <dd className="flex items-baseline gap-2">
           <span className="text-2xl font-medium text-black dark:text-white tabular-nums">
             {value.toLocaleString()}
           </span>
           {sublabel && (
-            <span className="text-xs text-gray-400">{sublabel}</span>
+            <Badge variant="secondary" className="text-xs">{sublabel}</Badge>
           )}
         </dd>
       )}
@@ -351,7 +361,7 @@ function StatItem({
   );
 }
 
-// Definition list item with icon
+// Definition list item with icon and shadcn Skeleton
 function DefinitionItem({
   icon,
   term,
@@ -369,7 +379,7 @@ function DefinitionItem({
       <div>
         <dt className="text-xs text-gray-500 dark:text-gray-400">{term}</dt>
         {loading ? (
-          <div className="h-5 w-10 bg-gray-100 dark:bg-gray-800 rounded animate-pulse mt-0.5" />
+          <Skeleton className="h-5 w-10 mt-0.5" />
         ) : (
           <dd className="text-sm font-medium text-black dark:text-white tabular-nums">
             {value.toLocaleString()}
