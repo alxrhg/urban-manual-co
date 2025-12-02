@@ -25,7 +25,17 @@ import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 const INLINE_TYPES = ['destination', 'account-new', 'trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai'];
 
 export default function DrawerMount() {
-  const { isOpen, type, props, closeAll, displayMode } = useDrawerStore();
+  // Use individual selectors for proper reactivity
+  const stack = useDrawerStore((state) => state.stack);
+  const globalDisplayMode = useDrawerStore((state) => state.globalDisplayMode);
+  const closeAll = useDrawerStore((state) => state.closeAll);
+
+  // Compute derived state
+  const current = stack.length > 0 ? stack[stack.length - 1] : null;
+  const isOpen = stack.length > 0;
+  const type = current?.type ?? null;
+  const props = current?.props ?? {};
+  const displayMode = current?.displayMode ?? globalDisplayMode;
   const closeDrawer = closeAll;
   const drawerStyle = useDrawerStyle();
 

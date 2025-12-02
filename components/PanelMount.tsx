@@ -55,8 +55,17 @@ export function PanelLayout({
   minPanelSize = 25,
   maxPanelSize = 50,
 }: PanelLayoutProps) {
-  const { isOpen, type, props, displayMode, closeAll } = useDrawerStore();
-  const open = isOpen;
+  // Use individual selectors for proper reactivity
+  const stack = useDrawerStore((state) => state.stack);
+  const globalDisplayMode = useDrawerStore((state) => state.globalDisplayMode);
+  const closeAll = useDrawerStore((state) => state.closeAll);
+
+  // Compute derived state
+  const current = stack.length > 0 ? stack[stack.length - 1] : null;
+  const open = stack.length > 0;
+  const type = current?.type ?? null;
+  const props = current?.props ?? {};
+  const displayMode = current?.displayMode ?? globalDisplayMode;
   const closeDrawer = closeAll;
 
   // Track if we're on mobile
@@ -214,8 +223,15 @@ function PanelHeader({ title, onClose }: PanelHeaderProps) {
  * InlinePanelContent - Renders just the panel content for custom layouts
  */
 export function InlinePanelContent() {
-  const { isOpen, type, props, closeAll } = useDrawerStore();
-  const open = isOpen;
+  // Use individual selectors for proper reactivity
+  const stack = useDrawerStore((state) => state.stack);
+  const closeAll = useDrawerStore((state) => state.closeAll);
+
+  // Compute derived state
+  const current = stack.length > 0 ? stack[stack.length - 1] : null;
+  const open = stack.length > 0;
+  const type = current?.type ?? null;
+  const props = current?.props ?? {};
   const closeDrawer = closeAll;
 
   if (!open || !type) return null;
