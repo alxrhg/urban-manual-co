@@ -77,9 +77,8 @@ export default function GoogleStaticMap({
           {infoWindowContent.rating && <p className="text-gray-600 dark:text-gray-400 mt-1">⭐ {infoWindowContent.rating.toFixed(1)}</p>}
         </div>
       )}
-      <div className="absolute bottom-3 right-3 bg-white/80 dark:bg-gray-900/70 text-[10px] uppercase tracking-wide px-2 py-1 rounded z-10">
-        Powered by Google Maps
-      </div>
+      {/* Hide Google's "View larger map" link in bottom-left */}
+      <div className="absolute bottom-0 left-0 w-32 h-8 bg-gray-100 dark:bg-gray-800 z-10" />
     </div>
   );
 }
