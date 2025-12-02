@@ -374,15 +374,17 @@ export function useRealtimeTrip({
       // Setup presence
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState<TripPresence>();
-        const presenceList = Object.values(state).flat();
+        const presenceList = Object.values(state).flat() as TripPresence[];
         setPresence(presenceList);
         onPresenceChange?.(presenceList);
       })
       .on('presence', { event: 'join' }, ({ newPresences }) => {
-        setPresence((prev) => [...prev, ...newPresences]);
+        const typedPresences = newPresences as unknown as TripPresence[];
+        setPresence((prev) => [...prev, ...typedPresences]);
       })
       .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-        const leftIds = leftPresences.map((p) => p.userId);
+        const typedPresences = leftPresences as unknown as TripPresence[];
+        const leftIds = typedPresences.map((p) => p.userId);
         setPresence((prev) => prev.filter((p) => !leftIds.includes(p.userId)));
       });
 
