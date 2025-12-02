@@ -61,13 +61,17 @@ export const getOpenAI = () => {
   return _openai;
 };
 
-export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
-export const OPENAI_MODEL_COMPLEX = process.env.OPENAI_MODEL_COMPLEX || 'gpt-4.1'; // For complex queries
-export const OPENAI_MODEL_VISION = process.env.OPENAI_MODEL_VISION || 'gpt-4o'; // For image analysis
+// GPT-5 nano: Fastest, most cost-efficient GPT-5 model - ideal for search/intent detection
+export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5-nano';
+// GPT-5: Full GPT-5 for complex reasoning tasks
+export const OPENAI_MODEL_COMPLEX = process.env.OPENAI_MODEL_COMPLEX || 'gpt-5';
+// GPT-4.1: Best non-reasoning model for vision/image analysis
+export const OPENAI_MODEL_VISION = process.env.OPENAI_MODEL_VISION || 'gpt-4.1';
+// text-embedding-3-large: Most capable embedding model
 export const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-large';
 
 /**
- * Determine if a query is complex and should use GPT-4.1
+ * Determine if a query is complex and should use GPT-5
  * Complex queries: long, multi-part, reasoning, comparisons, planning
  */
 export function isComplexQuery(query: string, conversationHistory: Array<{role: string, content: string}> = []): boolean {
