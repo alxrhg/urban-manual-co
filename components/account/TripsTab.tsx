@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { Trip } from '@/types/trip';
 import { Plane, Plus } from 'lucide-react';
 import TripCard from '@/components/trips/TripCard';
-import UMActionPill from '@/components/ui/UMActionPill';
-import UMFeaturePill from '@/components/ui/UMFeaturePill';
+import { Button } from '@/components/ui/button';
 
 interface TripsTabProps {
   trips: Trip[];
@@ -27,10 +26,10 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
         <p className="text-xs text-neutral-500 dark:text-neutral-400">
           {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
         </p>
-        <UMActionPill variant="primary" onClick={handleNewTrip}>
-          <Plus className="w-4 h-4 mr-1" />
+        <Button onClick={handleNewTrip} className="rounded-full">
+          <Plus className="w-4 h-4" />
           New Trip
-        </UMActionPill>
+        </Button>
       </div>
 
       {/* Trips Grid */}
@@ -45,10 +44,10 @@ export default function TripsTab({ trips, onTripsUpdated }: TripsTabProps) {
           <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-6 max-w-sm mx-auto">
             Start planning your next adventure by creating your first trip.
           </p>
-          <UMFeaturePill onClick={handleNewTrip}>
-            <Plus className="w-4 h-4 mr-2" />
+          <Button onClick={handleNewTrip} className="rounded-full">
+            <Plus className="w-4 h-4" />
             Create Trip
-          </UMFeaturePill>
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

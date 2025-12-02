@@ -2,16 +2,39 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Card({ className, ...props }: React.ComponentProps<"div">) {
+type CardProps = {
+  className?: string;
+  children?: React.ReactNode;
+  onClick?: () => void;
+};
+
+function Card({ className, children, onClick }: CardProps) {
+  const baseClasses = cn(
+    "rounded-2xl border border-gray-200 dark:border-gray-800",
+    "bg-white dark:bg-gray-900",
+    "text-gray-900 dark:text-white",
+    "overflow-hidden",
+    onClick && "cursor-pointer text-left w-full",
+    className
+  );
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        data-slot="card"
+        onClick={onClick}
+        className={baseClasses}
+      >
+        {children}
+      </button>
+    );
+  }
+
   return (
-    <div
-      data-slot="card"
-      className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
-        className
-      )}
-      {...props}
-    />
+    <div data-slot="card" className={baseClasses}>
+      {children}
+    </div>
   );
 }
 

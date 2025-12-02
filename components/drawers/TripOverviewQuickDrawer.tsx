@@ -3,13 +3,12 @@
 import { useRouter } from 'next/navigation';
 import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
-import { DrawerSection } from '@/components/ui/DrawerSection';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import Image from 'next/image';
 import { useTrip } from '@/hooks/useTrip';
 import { formatTripDateWithYear } from '@/lib/utils';
-import UMFeaturePill from '@/components/ui/UMFeaturePill';
-import { MapPin, Calendar, Clock, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { MapPin, Calendar, ArrowRight } from 'lucide-react';
 
 interface Trip {
   id?: string;
@@ -258,19 +257,20 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
       {/* FOOTER ACTIONS */}
       <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-t border-gray-100 dark:border-gray-800">
         <div className="grid grid-cols-2 gap-3">
-          <button
-            className="w-full py-3 rounded-xl border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors bg-white dark:bg-gray-950 font-medium text-sm"
+          <Button
+            variant="outline"
+            className="w-full py-3 rounded-xl"
             onClick={handleEditTrip}
           >
             Edit Trip
-          </button>
-          
-          <button
-            className="w-full py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-medium text-sm hover:opacity-90 transition-opacity"
+          </Button>
+
+          <Button
+            className="w-full py-3 rounded-xl"
             onClick={handleViewFullTrip}
           >
             View Full Trip
-          </button>
+          </Button>
         </div>
       </div>
     </Drawer>

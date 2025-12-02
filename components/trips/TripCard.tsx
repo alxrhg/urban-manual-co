@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Calendar, MapPin, ArrowUpRight, Plane, Utensils } from "lucide-react";
-import UMCard from "@/components/ui/UMCard";
+import { Card } from "@/components/ui/card";
 import { formatTripDateRange, calculateTripDays } from "@/lib/utils";
 
 interface Trip {
@@ -66,12 +66,12 @@ export default function TripCard({ trip, onView, onEdit }: TripCardProps) {
   const dateDisplay = formatTripDateRange(trip.startDate, trip.endDate);
 
   return (
-    <UMCard
-      className="group relative overflow-hidden cursor-pointer border-0 ring-1 ring-black/5 dark:ring-white/10"
+    <Card
+      className="group relative cursor-pointer border-0 ring-1 ring-black/5 dark:ring-white/10"
       onClick={onView}
     >
       {/* Cover Image & Overlay */}
-      <div className="relative aspect-[4/3] bg-neutral-100 dark:bg-neutral-800">
+      <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800">
         {trip.coverImage ? (
           <Image
             src={trip.coverImage}
@@ -81,17 +81,17 @@ export default function TripCard({ trip, onView, onEdit }: TripCardProps) {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900">
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
             <div className="flex flex-col items-center gap-2">
               {trip.city ? (
                 <>
-                  <MapPin className="w-8 h-8 text-neutral-400 dark:text-neutral-500" />
-                  <span className="text-xs font-medium text-neutral-400 dark:text-neutral-500">{trip.city}</span>
+                  <MapPin className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                  <span className="text-xs font-medium text-gray-400 dark:text-gray-500">{trip.city}</span>
                 </>
               ) : (
                 <>
-                  <Plane className="w-8 h-8 text-neutral-300 dark:text-neutral-600" />
-                  <span className="text-xs font-medium text-neutral-300 dark:text-neutral-600">Add cover photo</span>
+                  <Plane className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+                  <span className="text-xs font-medium text-gray-300 dark:text-gray-600">Add cover photo</span>
                 </>
               )}
             </div>
@@ -161,6 +161,6 @@ export default function TripCard({ trip, onView, onEdit }: TripCardProps) {
           </div>
         </div>
       </div>
-    </UMCard>
+    </Card>
   );
 }
