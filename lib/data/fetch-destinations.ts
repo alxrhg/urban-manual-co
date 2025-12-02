@@ -58,7 +58,8 @@ export const fetchInitialDestinations = unstable_cache(
           tags,
           opening_hours_json,
           latitude,
-          longitude
+          longitude,
+          parent_destination_id
         `)
         .order('rating', { ascending: false, nullsFirst: false })
         .limit(limit);
@@ -179,7 +180,8 @@ export const fetchCityDestinations = unstable_cache(
           tags,
           opening_hours_json,
           latitude,
-          longitude
+          longitude,
+          parent_destination_id
         `)
         .eq('city', citySlug)
         .order('name');
@@ -313,7 +315,8 @@ export const fetchTrendingDestinations = unstable_cache(
           michelin_stars,
           crown,
           rating,
-          tags
+          tags,
+          parent_destination_id
         `)
         .order('rating', { ascending: false, nullsFirst: false })
         .limit(limit * 2); // Fetch more to filter
