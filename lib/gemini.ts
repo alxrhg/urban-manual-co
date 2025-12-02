@@ -14,9 +14,9 @@ const GOOGLE_API_KEY =
   process.env.NEXT_PUBLIC_GOOGLE_API_KEY ||
   '';
 
-// Model configuration
-export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest';
-export const GEMINI_MODEL_PRO = process.env.GEMINI_MODEL_PRO || 'gemini-1.5-pro-latest';
+// Model configuration - using stable model names (not "-latest" which is deprecated)
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+export const GEMINI_MODEL_PRO = process.env.GEMINI_MODEL_PRO || 'gemini-1.5-pro';
 
 // Initialize client (lazy)
 let _genAI: GoogleGenerativeAI | null = null;
