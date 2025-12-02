@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, X } from 'lucide-react';
+import { Send, X, Maximize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ConversationBubble } from './ConversationBubble';
 import { useAuth } from '@/contexts/AuthContext';
+import { useDrawer } from '@/contexts/DrawerContext';
 import { trackSuggestionAcceptance } from '@/lib/metrics/conversationMetrics';
 import { ensureConversationSessionToken, persistConversationSessionToken } from '@/lib/chat/sessionToken';
 
@@ -38,6 +39,13 @@ export function ConversationInterfaceStreaming({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
+  const { openDrawer } = useDrawer();
+
+  // Expand to full chat drawer
+  function handleExpandToFullChat() {
+    onClose(); // Close mini chat
+    openDrawer('chat'); // Open full chat drawer
+  }
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -283,15 +291,24 @@ export function ConversationInterfaceStreaming({
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Travel Intelligence {useStreaming && '⚡ Streaming'}
+                Travel Intelligence
               </span>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded-2xl transition-colors"
-            >
-              <X className="h-4 w-4 text-gray-500" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleExpandToFullChat}
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                title="Expand to full chat"
+              >
+                <Maximize2 className="h-4 w-4 text-gray-500" />
+              </button>
+              <button
+                onClick={onClose}
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X className="h-4 w-4 text-gray-500" />
+              </button>
+            </div>
           </div>
 
           {/* Messages */}

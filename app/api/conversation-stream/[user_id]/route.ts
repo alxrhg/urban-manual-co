@@ -582,14 +582,43 @@ Remember: DO NOT list places. The grid shows results. Your job is to ask questio
             hasContext: Object.keys(session.context).length > 0,
           });
 
-          // Get suggestions for next turn
-          const suggestions = await getContextSuggestions({ ...session.context, ...contextUpdates });
+          // Generate smart quick reply suggestions based on detected intent
+          let quickReplies: string[] = [];
+          const ctx = { ...session.context, ...contextUpdates };
 
-          // Send completion message
+          // If we have a city but no category, suggest categories
+          if (ctx.city && !ctx.category) {
+            quickReplies = ['Restaurants', 'Cafes', 'Bars', 'Hotels'];
+          }
+          // If we have category but no mood, suggest vibes
+          else if (ctx.category && !ctx.mood) {
+            quickReplies = ['Casual', 'Upscale', 'Romantic', 'Trendy'];
+          }
+          // If we have mood, suggest refinements
+          else if (ctx.mood) {
+            quickReplies = ['Show more', 'Different vibe', 'Higher budget', 'Hidden gems'];
+          }
+          // Default suggestions based on city
+          else if (ctx.city) {
+            quickReplies = [`Best of ${ctx.city}`, 'Local favorites', 'Fine dining', 'Coffee shops'];
+          }
+          // Fallback to context suggestions
+          else {
+            const fallbackSuggestions = await getContextSuggestions(ctx);
+            quickReplies = fallbackSuggestions.slice(0, 4);
+          }
+
+          // Send completion message with smart quick replies
           controller.enqueue(encoder.encode(createSSEMessage({
             type: 'complete',
             intent,
-            suggestions: suggestions.slice(0, 3),
+            suggestions: quickReplies,
+            searchResults: searchResults.slice(0, 5).map((r: any) => ({
+              slug: r.slug,
+              name: r.name,
+              city: r.city,
+              category: r.category,
+            })),
             session_id: session.sessionId,
             session_token: session.sessionToken,
             model: usedModel,
