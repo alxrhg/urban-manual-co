@@ -20,18 +20,31 @@ import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
 import TripSettingsDrawer from '@/components/drawers/TripSettingsDrawer';
 import AccountDrawerNew from '@/components/drawers/AccountDrawer';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plane, Settings, MapPin, PlusCircle, Sparkles } from 'lucide-react';
+import { Plane, Settings, MapPin, PlusCircle, Sparkles, ChevronLeft, Building2 } from 'lucide-react';
 
 // Types that are handled by inline PanelLayout on desktop
 const INLINE_TYPES = ['destination', 'account-new', 'trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai'];
 
-function DrawerHeader({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
+interface DrawerHeaderProps {
+  icon: React.ElementType;
+  title: string;
+  onBack?: () => void;
+}
+
+function DrawerHeader({ icon: Icon, title, onBack }: DrawerHeaderProps) {
   return (
     <div className="flex items-center gap-3 p-6 pb-4">
-      <div className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800">
-        <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-      </div>
+      {onBack ? (
+        <Button variant="ghost" size="icon" onClick={onBack} className="-ml-2 h-10 w-10">
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+      ) : (
+        <div className="p-2 rounded-xl bg-gray-100 dark:bg-gray-800">
+          <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+        </div>
+      )}
       <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
         {title}
       </h1>
@@ -111,7 +124,11 @@ export default function DrawerMount() {
       {open && type === 'trip-settings' && props?.trip && !shouldSkipOverlay('trip-settings') && (
         <Sheet open={open} onOpenChange={(o) => !o && closeDrawer()}>
           <SheetContent side="card-right" className="flex flex-col p-0" hideCloseButton>
-            <DrawerHeader icon={Settings} title="Trip Settings" />
+            <DrawerHeader
+              icon={Settings}
+              title="Trip Settings"
+              onBack={closeDrawer}
+            />
             <ScrollArea className="flex-1">
               <TripSettingsDrawer
                 trip={props.trip}
@@ -126,7 +143,11 @@ export default function DrawerMount() {
       {open && type === 'place-selector' && !shouldSkipOverlay('place-selector') && (
         <Sheet open={open} onOpenChange={(o) => !o && closeDrawer()}>
           <SheetContent side="card-right" className="flex flex-col p-0" hideCloseButton>
-            <DrawerHeader icon={PlusCircle} title="Add Place" />
+            <DrawerHeader
+              icon={PlusCircle}
+              title="Add Place"
+              onBack={closeDrawer}
+            />
             <ScrollArea className="flex-1">
               <PlaceSelectorDrawer
                 tripId={props?.tripId}
@@ -148,7 +169,11 @@ export default function DrawerMount() {
       {open && type === 'trip-add-hotel' && !shouldSkipOverlay('trip-add-hotel') && (
         <Sheet open={open} onOpenChange={(o) => !o && closeDrawer()}>
           <SheetContent side="card-right" className="flex flex-col p-0" hideCloseButton>
-            <DrawerHeader icon={MapPin} title="Select Hotel" />
+            <DrawerHeader
+              icon={Building2}
+              title="Select Hotel"
+              onBack={closeDrawer}
+            />
             <ScrollArea className="flex-1">
               <AddHotelDrawer
                 trip={props.trip || null}
@@ -163,7 +188,11 @@ export default function DrawerMount() {
       {open && type === 'add-flight' && !shouldSkipOverlay('add-flight') && (
         <Sheet open={open} onOpenChange={(o) => !o && closeDrawer()}>
           <SheetContent side="card-right" className="flex flex-col p-0" hideCloseButton>
-            <DrawerHeader icon={Plane} title="Add Flight" />
+            <DrawerHeader
+              icon={Plane}
+              title="Add Flight"
+              onBack={closeDrawer}
+            />
             <ScrollArea className="flex-1">
               <AddFlightDrawer
                 tripId={props?.tripId}
@@ -178,7 +207,11 @@ export default function DrawerMount() {
       {open && type === 'trip-ai' && !shouldSkipOverlay('trip-ai') && (
         <Sheet open={open} onOpenChange={(o) => !o && closeDrawer()}>
           <SheetContent side="card-right" className="flex flex-col p-0 max-w-2xl" hideCloseButton>
-            <DrawerHeader icon={Sparkles} title="AI Suggestions" />
+            <DrawerHeader
+              icon={Sparkles}
+              title="AI Suggestions"
+              onBack={closeDrawer}
+            />
             <ScrollArea className="flex-1">
               <AISuggestionsDrawer
                 day={props.day || null}
