@@ -1,17 +1,18 @@
 'use client';
 
-import { ReactNode, forwardRef, useState } from 'react';
-import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { ReactNode, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { SPRING, DURATION, EASE } from '@/lib/animations';
 
-interface AnimatedCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface AnimatedCardProps {
   children: ReactNode;
   variant?: 'default' | 'elevated' | 'outlined' | 'ghost';
   hover?: 'lift' | 'glow' | 'scale' | 'tilt' | 'none';
   pressable?: boolean;
   className?: string;
   as?: 'div' | 'article' | 'button' | 'a';
+  onClick?: () => void;
 }
 
 /**
@@ -22,101 +23,89 @@ interface AnimatedCardProps extends React.HTMLAttributes<HTMLDivElement> {
  * - Press feedback
  * - Smooth transitions
  */
-export const AnimatedCard = forwardRef<HTMLDivElement, AnimatedCardProps>(
-  (
-    {
-      children,
-      variant = 'default',
-      hover = 'lift',
-      pressable = false,
-      className = '',
-      as = 'div',
-      onClick,
-      ...props
-    },
-    ref
-  ) => {
-    const shouldReduceMotion = useReducedMotion();
-    const [isHovered, setIsHovered] = useState(false);
+export function AnimatedCard({
+  children,
+  variant = 'default',
+  hover = 'lift',
+  pressable = false,
+  className = '',
+  as = 'div',
+  onClick,
+}: AnimatedCardProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const [isHovered, setIsHovered] = useState(false);
 
-    const variantStyles = {
-      default:
-        'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl',
-      elevated:
-        'bg-white dark:bg-gray-900 rounded-2xl shadow-lg dark:shadow-gray-900/50',
-      outlined:
-        'bg-transparent border border-gray-200 dark:border-gray-800 rounded-2xl',
-      ghost: 'bg-transparent rounded-2xl',
-    };
+  const variantStyles = {
+    default:
+      'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl',
+    elevated:
+      'bg-white dark:bg-gray-900 rounded-2xl shadow-lg dark:shadow-gray-900/50',
+    outlined:
+      'bg-transparent border border-gray-200 dark:border-gray-800 rounded-2xl',
+    ghost: 'bg-transparent rounded-2xl',
+  };
 
-    const MotionComponent = motion[as as 'div'];
-
-    if (shouldReduceMotion) {
-      const StaticComponent = as;
-      return (
-        <StaticComponent
-          ref={ref as any}
-          className={cn(variantStyles[variant], className)}
-          onClick={onClick}
-          {...props}
-        >
-          {children}
-        </StaticComponent>
-      );
-    }
-
-    // Calculate hover animations based on type
-    const getHoverAnimation = () => {
-      switch (hover) {
-        case 'lift':
-          return { y: -4, boxShadow: '0 12px 24px -8px rgba(0, 0, 0, 0.15)' };
-        case 'glow':
-          return { boxShadow: '0 0 30px rgba(0, 0, 0, 0.1)' };
-        case 'scale':
-          return { scale: 1.02 };
-        case 'tilt':
-          return {}; // Handled separately with mouse position
-        case 'none':
-        default:
-          return {};
-      }
-    };
-
+  if (shouldReduceMotion) {
+    const StaticComponent = as;
     return (
-      <MotionComponent
-        ref={ref as any}
-        className={cn(variantStyles[variant], 'cursor-pointer', className)}
+      <StaticComponent
+        className={cn(variantStyles[variant], onClick && 'cursor-pointer', className)}
         onClick={onClick}
-        onHoverStart={() => setIsHovered(true)}
-        onHoverEnd={() => setIsHovered(false)}
-        whileHover={hover !== 'none' ? getHoverAnimation() : undefined}
-        whileTap={pressable ? { scale: 0.98 } : undefined}
-        transition={SPRING.snappy}
-        {...props}
       >
         {children}
-
-        {/* Glow overlay for glow effect */}
-        {hover === 'glow' && (
-          <motion.div
-            className="absolute inset-0 rounded-2xl pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isHovered ? 1 : 0 }}
-            transition={{ duration: DURATION.fast }}
-            style={{
-              background:
-                'radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%)',
-            }}
-          />
-        )}
-      </MotionComponent>
+      </StaticComponent>
     );
   }
-);
 
-AnimatedCard.displayName = 'AnimatedCard';
+  // Calculate hover animations based on type
+  const getHoverAnimation = () => {
+    switch (hover) {
+      case 'lift':
+        return { y: -4, boxShadow: '0 12px 24px -8px rgba(0, 0, 0, 0.15)' };
+      case 'glow':
+        return { boxShadow: '0 0 30px rgba(0, 0, 0, 0.1)' };
+      case 'scale':
+        return { scale: 1.02 };
+      case 'tilt':
+        return {}; // Handled separately with mouse position
+      case 'none':
+      default:
+        return {};
+    }
+  };
 
-interface TiltCardProps extends AnimatedCardProps {
+  return (
+    <motion.div
+      className={cn(variantStyles[variant], onClick && 'cursor-pointer', className)}
+      onClick={onClick}
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      whileHover={hover !== 'none' ? getHoverAnimation() : undefined}
+      whileTap={pressable ? { scale: 0.98 } : undefined}
+      transition={SPRING.snappy}
+    >
+      {children}
+
+      {/* Glow overlay for glow effect */}
+      {hover === 'glow' && (
+        <motion.div
+          className="absolute inset-0 rounded-2xl pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isHovered ? 1 : 0 }}
+          transition={{ duration: DURATION.fast }}
+          style={{
+            background:
+              'radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%)',
+          }}
+        />
+      )}
+    </motion.div>
+  );
+}
+
+interface TiltCardProps {
+  children: ReactNode;
+  className?: string;
   tiltAmount?: number;
   glareEnabled?: boolean;
 }
@@ -129,7 +118,6 @@ export function TiltCard({
   tiltAmount = 10,
   glareEnabled = true,
   className = '',
-  ...props
 }: TiltCardProps) {
   const shouldReduceMotion = useReducedMotion();
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -159,7 +147,7 @@ export function TiltCard({
 
   if (shouldReduceMotion) {
     return (
-      <div className={className} {...props}>
+      <div className={className}>
         {children}
       </div>
     );
@@ -182,7 +170,6 @@ export function TiltCard({
         transformStyle: 'preserve-3d',
         perspective: 1000,
       }}
-      {...props}
     >
       {children}
 
