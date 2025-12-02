@@ -7,8 +7,11 @@ import { useDrawer } from '@/contexts/DrawerContext';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
-import { DrawerHeader } from '@/components/ui/DrawerHeader';
-import { DrawerSection } from '@/components/ui/DrawerSection';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import {
   Settings,
   MapPin,
@@ -17,9 +20,8 @@ import {
   Bookmark,
   ChevronRight,
   User,
-  Edit3,
+  Pencil,
 } from 'lucide-react';
-import Image from 'next/image';
 
 interface UserStats {
   visited: number;
@@ -27,115 +29,41 @@ interface UserStats {
   trips: number;
 }
 
-function ProfileAvatar({
-  avatarUrl,
-  displayUsername,
-  size = "lg"
-}: {
-  avatarUrl: string | null;
-  displayUsername: string;
-  size?: "sm" | "lg";
-}) {
-  const sizeClasses = size === "lg" ? "h-16 w-16" : "h-10 w-10";
-  const textClasses = size === "lg" ? "text-2xl" : "text-sm";
-
-  return (
-    <div className={`relative ${sizeClasses} flex items-center justify-center overflow-hidden rounded-full border-2 border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900`}>
-      {avatarUrl ? (
-        <Image
-          src={avatarUrl}
-          alt="Profile"
-          fill
-          className="object-cover"
-          sizes={size === "lg" ? "64px" : "40px"}
-        />
-      ) : (
-        <span className={`${textClasses} font-medium text-gray-400 dark:text-gray-500`}>
-          {displayUsername.charAt(0).toUpperCase()}
-        </span>
-      )}
-    </div>
-  );
-}
-
-function StatCard({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: React.ElementType;
-  value: number;
-  label: string;
-}) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-1 p-4 rounded-2xl bg-gray-50/50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800">
-      <div className="p-2 rounded-full bg-white dark:bg-gray-800 shadow-sm mb-1">
-        <Icon className="h-4 w-4 text-gray-900 dark:text-white" />
-      </div>
-      <span className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">
-        {value}
-      </span>
-      <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">{label}</span>
-    </div>
-  );
-}
-
-function NavItem({
-  icon: Icon,
-  label,
-  description,
-  onClick,
-  isDanger = false,
-}: {
+interface NavItemProps {
   icon: React.ElementType;
   label: string;
   description?: string;
+  badge?: number;
   onClick: () => void;
-  isDanger?: boolean;
-}) {
+}
+
+function NavItem({ icon: Icon, label, description, badge, onClick }: NavItemProps) {
   return (
     <button
       onClick={onClick}
-      className={`group w-full flex items-center gap-4 p-3 rounded-xl border border-transparent hover:border-gray-100 dark:hover:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900 transition-all duration-200 text-left ${
-        isDanger ? 'hover:bg-red-50 dark:hover:bg-red-900/10 hover:border-red-100 dark:hover:border-red-900/30' : ''
-      }`}
+      className="group flex w-full items-center gap-3 rounded-xl p-3 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
     >
-      <div
-        className={`flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
-          isDanger
-            ? 'bg-red-50 text-red-500 dark:bg-red-900/20 dark:text-red-400'
-            : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 group-hover:bg-white dark:group-hover:bg-black group-hover:text-black dark:group-hover:text-white group-hover:shadow-sm'
-        }`}
-      >
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-600 transition-colors group-hover:bg-white group-hover:text-gray-900 group-hover:shadow-sm dark:bg-gray-800 dark:text-gray-400 dark:group-hover:bg-gray-900 dark:group-hover:text-white">
         <Icon className="h-5 w-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <p
-          className={`text-sm font-medium ${
-            isDanger
-              ? 'text-red-600 dark:text-red-400'
-              : 'text-gray-900 dark:text-white'
-          }`}
-        >
+        <p className="text-sm font-medium text-gray-900 dark:text-white">
           {label}
         </p>
         {description && (
-          <p
-            className={`text-xs mt-0.5 ${
-              isDanger
-                ? 'text-red-500/70 dark:text-red-400/70'
-                : 'text-gray-500 dark:text-gray-400'
-            }`}
-          >
+          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
             {description}
           </p>
         )}
       </div>
-      <ChevronRight
-        className={`h-4 w-4 transition-transform group-hover:translate-x-0.5 ${
-          isDanger ? 'text-red-400' : 'text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400'
-        }`}
-      />
+      <div className="flex items-center gap-2">
+        {badge !== undefined && badge > 0 && (
+          <Badge variant="secondary" className="text-xs">
+            {badge}
+          </Badge>
+        )}
+        <ChevronRight className="h-4 w-4 text-gray-400 transition-transform group-hover:translate-x-0.5 dark:text-gray-600" />
+      </div>
     </button>
   );
 }
@@ -143,8 +71,8 @@ function NavItem({
 export function AccountDrawer() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { isDrawerOpen, closeDrawer: closeLegacyDrawer, openDrawer: openLegacyDrawer } = useDrawer();
-  const { openSide, closeDrawer: closeStoreDrawer } = useDrawerStore();
+  const { isDrawerOpen, closeDrawer, openDrawer } = useDrawer();
+  const { openSide } = useDrawerStore();
   const isOpen = isDrawerOpen('account');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
@@ -209,131 +137,156 @@ export function AccountDrawer() {
 
   const handleSignOut = async () => {
     await signOut();
-    closeLegacyDrawer();
+    closeDrawer();
     router.push('/');
   };
 
   const handleNavigate = (path: string) => {
-    closeLegacyDrawer();
+    closeDrawer();
     setTimeout(() => router.push(path), 200);
   };
 
   const displayUsername = username || user?.email?.split('@')[0] || 'User';
+  const userInitials = displayUsername.charAt(0).toUpperCase();
 
+  // Logged out state
   if (!user) {
     return (
-      <Drawer isOpen={isOpen} onClose={closeLegacyDrawer} position="right">
-        <div className="h-full flex flex-col">
-          <DrawerHeader
-            title="Welcome"
-            rightAccessory={
-              <button
-                onClick={closeLegacyDrawer}
-                className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-              >
-                <span className="sr-only">Close</span>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            }
-          />
+      <Drawer isOpen={isOpen} onClose={closeDrawer} position="right">
+        <div className="flex h-full flex-col">
+          <div className="p-6 pb-2">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Welcome</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Sign in to access your personal travel guide
+            </p>
+          </div>
 
-          <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center mb-6">
+          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
               <User className="h-8 w-8 text-gray-400" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
               Sign in to Urban Manual
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 max-w-xs mx-auto">
+            <p className="mb-8 max-w-xs text-sm text-gray-500 dark:text-gray-400">
               Unlock your personal travel guide. Save places, create trips, and sync across devices.
             </p>
-            
-            <button
-              onClick={() => openLegacyDrawer('login')}
-              className="w-full py-3 rounded-xl bg-black dark:bg-white text-white dark:text-black font-medium hover:opacity-90 transition-opacity"
+
+            <Button
+              onClick={() => openDrawer('login')}
+              className="w-full"
+              size="lg"
             >
               Sign In / Sign Up
-            </button>
+            </Button>
           </div>
         </div>
       </Drawer>
     );
   }
 
+  // Logged in state
   return (
-    <Drawer isOpen={isOpen} onClose={closeLegacyDrawer} position="right">
-      <div className="h-full flex flex-col bg-white dark:bg-gray-950">
-        {/* Custom Header Area */}
-        <div className="px-6 pt-8 pb-6">
-          <div className="flex items-start justify-between mb-6">
-            <ProfileAvatar avatarUrl={avatarUrl} displayUsername={displayUsername} size="lg" />
-            <button 
-              onClick={closeLegacyDrawer}
-              className="p-2 -mr-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              <span className="sr-only">Close</span>
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+    <Drawer isOpen={isOpen} onClose={closeDrawer} position="right">
+      <div className="flex h-full flex-col bg-white dark:bg-gray-950">
+        {/* Header with profile */}
+        <div className="p-6 pb-4">
+          <div className="flex items-start gap-4">
+            <Avatar className="h-16 w-16 border-2 border-gray-100 dark:border-gray-800">
+              {avatarUrl && <AvatarImage src={avatarUrl} alt={displayUsername} />}
+              <AvatarFallback className="text-xl">{userInitials}</AvatarFallback>
+            </Avatar>
+            <div className="flex-1 min-w-0 pt-1">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+                {displayUsername}
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                {user.email}
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleNavigate('/account')}
+                className="mt-2 -ml-3 h-8 text-xs text-gray-600 dark:text-gray-400"
+              >
+                <Pencil className="h-3 w-3" />
+                Edit Profile
+              </Button>
+            </div>
           </div>
-          
-          <div>
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white tracking-tight">
-              {displayUsername}
-            </h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {user.email}
-            </p>
-          </div>
-
-          <button
-            onClick={() => handleNavigate('/account')}
-            className="mt-4 flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-black dark:hover:text-white transition-colors"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            Edit Profile
-          </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {/* Navigation Groups */}
-          <div className="px-4 space-y-8 pb-12">
-            {/* Library */}
+        <Separator />
+
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-4 p-6">
+          <div className="flex flex-col items-center gap-1 rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+            <span className="text-xl font-semibold text-gray-900 dark:text-white">
+              {stats.saved}
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
+              Saved
+            </span>
+          </div>
+          <div className="flex flex-col items-center gap-1 rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+            <span className="text-xl font-semibold text-gray-900 dark:text-white">
+              {stats.visited}
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
+              Visited
+            </span>
+          </div>
+          <div className="flex flex-col items-center gap-1 rounded-xl bg-gray-50 p-3 dark:bg-gray-900">
+            <span className="text-xl font-semibold text-gray-900 dark:text-white">
+              {stats.trips}
+            </span>
+            <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">
+              Trips
+            </span>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Navigation */}
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-6">
+            {/* Library section */}
             <div>
-              <h3 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+              <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Library
               </h3>
               <div className="space-y-1">
                 <NavItem
                   icon={Bookmark}
                   label="Saved Places"
-                  description={`${stats.saved} curated spots`}
-                  onClick={() => openLegacyDrawer('saved-places', 'account')}
+                  description="Your curated spots"
+                  badge={stats.saved}
+                  onClick={() => openDrawer('saved-places', 'account')}
                 />
                 <NavItem
                   icon={MapPin}
                   label="Visited Places"
-                  description={`${stats.visited} experiences logged`}
-                  onClick={() => openLegacyDrawer('visited-places', 'account')}
+                  description="Experiences logged"
+                  badge={stats.visited}
+                  onClick={() => openDrawer('visited-places', 'account')}
                 />
                 <NavItem
                   icon={Compass}
                   label="Trip Plans"
-                  description={`${stats.trips} itineraries`}
+                  description="Your itineraries"
+                  badge={stats.trips}
                   onClick={() => {
-                    closeLegacyDrawer();
+                    closeDrawer();
                     openSide('trip-list');
                   }}
                 />
               </div>
             </div>
 
-            {/* Preferences */}
+            {/* Preferences section */}
             <div>
-              <h3 className="px-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+              <h3 className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">
                 Preferences
               </h3>
               <div className="space-y-1">
@@ -341,22 +294,23 @@ export function AccountDrawer() {
                   icon={Settings}
                   label="Settings"
                   description="App preferences & privacy"
-                  onClick={() => openLegacyDrawer('settings', 'account')}
+                  onClick={() => openDrawer('settings', 'account')}
                 />
               </div>
             </div>
           </div>
-        </div>
+        </ScrollArea>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-100 dark:border-gray-900">
-          <button
+        <div className="border-t border-gray-200 p-4 dark:border-gray-800">
+          <Button
+            variant="ghost"
             onClick={handleSignOut}
-            className="flex w-full items-center justify-center gap-2 p-3 rounded-xl text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+            className="w-full justify-center text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="h-4 w-4" />
             Sign Out
-          </button>
+          </Button>
         </div>
       </div>
     </Drawer>
