@@ -62,10 +62,11 @@ export default function DrawerMount() {
         <Drawer
           isOpen={open}
           onClose={closeDrawer}
-          title="Your Trips"
+          title="Trips"
           style={drawerStyle}
           position="right"
-          desktopWidth="420px"
+          desktopWidth="400px"
+          desktopSpacing="right-6 top-6 bottom-6"
         >
           <TripListDrawer {...props} />
         </Drawer>
