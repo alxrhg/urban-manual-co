@@ -36,7 +36,8 @@ export default function DrawerMount() {
         <Drawer
           isOpen={open}
           onClose={closeDrawer}
-          desktopWidth="420px"
+          desktopWidth="400px"
+          desktopSpacing="right-6 top-6 bottom-6"
           style={drawerStyle}
           position="right"
         >
