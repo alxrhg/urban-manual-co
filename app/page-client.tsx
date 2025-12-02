@@ -81,7 +81,7 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useDestinationLoading } from '@/hooks/useDestinationLoading';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
-import { AIAssistant } from '@/components/AIAssistant';
+import { HomepageChat, type ChatMessageDestination } from '@/components/homepage-chat';
 import { ScrollToTop } from '@/components/ScrollToTop';
 
 // Lazy load components that are conditionally rendered or not immediately visible
@@ -3494,7 +3494,28 @@ export default function HomePageClient({
             }}
           />
         )}
-        <AIAssistant />
+        <HomepageChat
+          onDestinationClick={async (dest: ChatMessageDestination) => {
+            try {
+              const supabase = createClient();
+              const { data: destination, error } = await supabase
+                .from('destinations')
+                .select('*')
+                .eq('slug', dest.slug)
+                .single();
+
+              if (error || !destination) {
+                console.error('Failed to fetch destination:', error);
+                return;
+              }
+
+              setSelectedDestination(destination as Destination);
+              openDrawer('destination');
+            } catch (error) {
+              console.error('Error fetching destination:', error);
+            }
+          }}
+        />
         <ScrollToTop threshold={400} />
       </main>
     </ErrorBoundary>
