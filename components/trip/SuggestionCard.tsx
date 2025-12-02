@@ -19,7 +19,7 @@ export default function SuggestionCard({
 }: SuggestionCardProps) {
   return (
     <div
-      className={`rounded-[var(--um-radius-lg)] border border-[var(--um-border)] p-5 hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors cursor-pointer ${
+      className={`rounded-[var(--um-radius-lg)] border border-[var(--um-border)] p-5 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors cursor-pointer ${
         className || ''
       }`}
       onClick={onClick}

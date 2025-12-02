@@ -84,7 +84,7 @@ export function AvatarUpload({
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative">
-        <div className="w-32 h-32 rounded-full overflow-hidden bg-neutral-800 dark:bg-neutral-800 border border-neutral-700 dark:border-neutral-700 flex items-center justify-center shadow-lg">
+        <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-800 dark:bg-gray-800 border border-gray-700 dark:border-gray-700 flex items-center justify-center shadow-lg">
           {avatarUrl ? (
             <Image
               src={avatarUrl}
@@ -94,7 +94,7 @@ export function AvatarUpload({
               className="w-full h-full object-cover"
             />
           ) : (
-            <span className="text-neutral-400 dark:text-neutral-400 text-4xl font-medium">
+            <span className="text-gray-400 dark:text-gray-400 text-4xl font-medium">
               {getInitials(displayName)}
             </span>
           )}

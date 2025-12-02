@@ -8,6 +8,12 @@ import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
 import { ChatDrawer } from "@/components/ChatDrawer";
 import { LoginDrawer } from "@/components/LoginDrawer";
+import { CommandPalette } from "@/components/CommandPalette";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function Header() {
   const router = useRouter();
@@ -105,8 +111,9 @@ export function Header() {
         </span>
       )}
 
-      {user ? (
-        <>
+      {/* Trips button - always visible */}
+      <Tooltip>
+        <TooltipTrigger asChild>
           <button
             onClick={() => navigate('/trips')}
             className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
@@ -115,34 +122,54 @@ export function Header() {
             <Map className="w-4 h-4" />
             <span>Trips</span>
           </button>
-          <button
-            onClick={() => openDrawer('account')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
-            aria-label="Open account drawer"
-          >
-            {avatarUrl ? (
-              <span className="w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                <img
-                  src={avatarUrl}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              </span>
-            ) : (
-              <User className="w-4 h-4" />
-            )}
-            <span>Account</span>
-          </button>
-        </>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>{user ? 'View your trips' : 'Plan a trip'}</p>
+        </TooltipContent>
+      </Tooltip>
+
+      {user ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => openDrawer('account')}
+              className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+              aria-label="Open account drawer"
+            >
+              {avatarUrl ? (
+                <span className="w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                  <img
+                    src={avatarUrl}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                </span>
+              ) : (
+                <User className="w-4 h-4" />
+              )}
+              <span>Account</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Account settings</p>
+          </TooltipContent>
+        </Tooltip>
       ) : (
-        <button
-          onClick={() => openDrawer('login')}
-          className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
-          aria-label="Sign in"
-        >
-          <User className="w-4 h-4" />
-          <span>Sign In</span>
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => openDrawer('login')}
+              className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+              aria-label="Sign in"
+            >
+              <User className="w-4 h-4" />
+              <span>Sign In</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Sign in to save trips</p>
+          </TooltipContent>
+        </Tooltip>
       )}
     </>
   );
@@ -166,7 +193,10 @@ export function Header() {
             Urban Manual®
           </button>
 
-          <div className="flex items-center gap-2">{actionButtons}</div>
+          <div className="flex items-center gap-2">
+            <CommandPalette />
+            {actionButtons}
+          </div>
         </nav>
       </div>
       {/* Chat Drawer - Only render when open */}

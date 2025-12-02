@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import UMCard from "@/components/ui/UMCard";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import UMSectionTitle from "@/components/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { useTrip } from '@/hooks/useTrip';
@@ -187,7 +188,7 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
         {/* TRIP SUMMARY */}
         <section className="space-y-4">
           <UMSectionTitle>Trip Summary</UMSectionTitle>
-          <UMCard className="p-4 space-y-3">
+          <Card className="p-4 space-y-3">
             <p className="text-xs text-gray-500 dark:text-gray-400">
               {days.length} day{days.length !== 1 ? 's' : ''} · {cities.length > 0 ? cities.join(', ') : 'No cities'}
             </p>
@@ -227,7 +228,7 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
                 )}
               </div>
             )}
-          </UMCard>
+          </Card>
         </section>
 
         {/* HOTELS SECTION */}
@@ -236,14 +237,14 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
             <UMSectionTitle>Hotels</UMSectionTitle>
             <div className="space-y-4">
               {hotels.map((hotel, idx) => (
-                <UMCard key={idx} className="p-4">
+                <Card key={idx} className="p-4">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
                     {hotel.name}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {hotel.city}
                   </p>
-                </UMCard>
+                </Card>
               ))}
             </div>
           </section>
@@ -257,12 +258,12 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
             {flights.map((flight, idx) => {
               const from = flight.from || flight.departure || flight.depart || '';
               const to = flight.to || flight.arrival || flight.arrive || '';
-              const time = flight.departureTime && flight.arrivalTime 
+              const time = flight.departureTime && flight.arrivalTime
                 ? `${flight.departureTime} – ${flight.arrivalTime}`
                 : flight.departureTime || '';
 
               return (
-                <UMCard key={idx} className="p-4">
+                <Card key={idx} className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -287,7 +288,7 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
                       <span className="text-xs font-mono font-medium">{flight.confirmationNumber}</span>
                     </div>
                   )}
-                </UMCard>
+                </Card>
               );
             })}
             </div>
@@ -297,14 +298,12 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
         {/* VIEW FULL TRIP BUTTON */}
         {displayTrip.id && (
           <div className="pt-4">
-            <UMCard
-              className="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/10 transition bg-black dark:bg-white text-white dark:text-black"
+            <Button
+              className="w-full py-4 rounded-2xl"
               onClick={handleViewTrip}
             >
-              <p className="text-sm font-medium text-center">
-                View Full Trip →
-              </p>
-            </UMCard>
+              View Full Trip →
+            </Button>
           </div>
         )}
       </div>

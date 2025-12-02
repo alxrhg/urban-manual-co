@@ -22,7 +22,7 @@ export default function ProfileAvatar({ avatarUrl, initials, onUpload }: {
   return (
     <div className="flex flex-col items-center text-center um-transition">
       <div
-        className="relative group w-36 h-36 rounded-[6px] overflow-hidden bg-neutral-800 border border-neutral-700 um-transition cursor-pointer"
+        className="relative group w-36 h-36 rounded-[6px] overflow-hidden bg-gray-800 border border-gray-700 um-transition cursor-pointer"
         onClick={() => setOpen(true)}
       >
         {avatarUrl && !imageError ? (
@@ -34,7 +34,7 @@ export default function ProfileAvatar({ avatarUrl, initials, onUpload }: {
             onError={() => setImageError(true)}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-neutral-400 text-3xl font-medium">
+          <div className="flex items-center justify-center h-full text-gray-400 text-3xl font-medium">
             {initials}
           </div>
         )}
@@ -47,11 +47,11 @@ export default function ProfileAvatar({ avatarUrl, initials, onUpload }: {
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm um-transition" onClick={() => setOpen(false)} />
-          <div className="relative bg-neutral-900 p-6 rounded-xl w-full max-w-md um-transition">
-            <p className="text-neutral-300 text-sm mb-4">Upload a new profile photo</p>
-            <input type="file" accept="image/*" onChange={handleFile} className="text-neutral-300 text-sm" />
+          <div className="relative bg-gray-900 p-6 rounded-xl w-full max-w-md um-transition">
+            <p className="text-gray-300 text-sm mb-4">Upload a new profile photo</p>
+            <input type="file" accept="image/*" onChange={handleFile} className="text-gray-300 text-sm" />
             <div className="mt-6 flex justify-end">
-              <button className="text-neutral-300 hover:text-white um-transition" onClick={() => setOpen(false)}>
+              <button className="text-gray-300 hover:text-white um-transition" onClick={() => setOpen(false)}>
                 Done
               </button>
             </div>

@@ -9,10 +9,12 @@ import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { DrawerProvider } from "@/contexts/DrawerContext";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
-import { ToastContainer } from "@/components/Toast";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 import DrawerMount from "@/components/DrawerMount";
+import { PanelLayout } from "@/components/PanelMount";
 import MyStatsig from "./my-statsig";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
@@ -219,26 +221,30 @@ export default function RootLayout({
           >
             <SkipNavigation />
             <SplashScreen />
-            <TRPCProvider>
-              <AuthProvider>
-                <DrawerProvider>
-                  <Suspense fallback={null}>
-                    <AdminEditModeProvider>
-                      <ItineraryProvider>
-                        <Header />
-                        <main id="main-content" className="min-h-screen page-transition" role="main">
-                          {children}
-                        </main>
-                        <Footer />
-                        <CookieConsent />
-                        <DrawerMount />
-                      </ItineraryProvider>
-                    </AdminEditModeProvider>
-                  </Suspense>
-                </DrawerProvider>
-              </AuthProvider>
-            </TRPCProvider>
-            <ToastContainer />
+            <TooltipProvider>
+              <TRPCProvider>
+                <AuthProvider>
+                  <DrawerProvider>
+                    <Suspense fallback={null}>
+                      <AdminEditModeProvider>
+                        <ItineraryProvider>
+                          <Header />
+                          <PanelLayout>
+                            <main id="main-content" className="min-h-screen page-transition" role="main">
+                              {children}
+                            </main>
+                            <Footer />
+                          </PanelLayout>
+                          <CookieConsent />
+                          <DrawerMount />
+                        </ItineraryProvider>
+                      </AdminEditModeProvider>
+                    </Suspense>
+                  </DrawerProvider>
+                </AuthProvider>
+              </TRPCProvider>
+            </TooltipProvider>
+            <Toaster position="top-right" richColors closeButton />
             <GoogleAnalytics />
             <Analytics />
             <SpeedInsights />

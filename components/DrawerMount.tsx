@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 import { AccountDrawer } from '@/components/AccountDrawer';
@@ -20,9 +21,27 @@ import AccountDrawerNew from '@/components/drawers/AccountDrawer';
 import { Drawer } from '@/components/ui/Drawer';
 import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 
+// Types that are handled by inline PanelLayout on desktop
+const INLINE_TYPES = ['destination', 'account-new', 'trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai'];
+
 export default function DrawerMount() {
-  const { open, type, props, closeDrawer } = useDrawerStore();
+  const { open, type, props, closeDrawer, displayMode } = useDrawerStore();
   const drawerStyle = useDrawerStyle();
+
+  // Track desktop state for conditional rendering
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
+    checkDesktop();
+    window.addEventListener('resize', checkDesktop);
+    return () => window.removeEventListener('resize', checkDesktop);
+  }, []);
+
+  // Helper to check if we should skip overlay (handled by PanelLayout instead)
+  const shouldSkipOverlay = (drawerType: string) => {
+    return displayMode === 'inline' && isDesktop && INLINE_TYPES.includes(drawerType);
+  };
 
   return (
     <>
@@ -32,7 +51,8 @@ export default function DrawerMount() {
       <VisitedPlacesDrawer />
 
       {/* New drawers that use the global drawer store */}
-      {open && type === 'account-new' && (
+      {/* Only render as overlay if not in inline mode on desktop */}
+      {open && type === 'account-new' && !shouldSkipOverlay('account-new') && (
         <Drawer
           isOpen={open}
           onClose={closeDrawer}
@@ -44,12 +64,15 @@ export default function DrawerMount() {
         </Drawer>
       )}
 
-      <DestinationDrawer
-        isOpen={open && type === 'destination'}
-        onClose={closeDrawer}
-        destination={props.place || props.destination || null}
-        {...props}
-      />
+      {/* DestinationDrawer - skip overlay when in inline mode on desktop */}
+      {!shouldSkipOverlay('destination') && (
+        <DestinationDrawer
+          isOpen={open && type === 'destination'}
+          onClose={closeDrawer}
+          destination={props.place || props.destination || null}
+          {...props}
+        />
+      )}
 
       <TripOverviewDrawer
         isOpen={open && type === 'trip-overview'}
@@ -57,7 +80,7 @@ export default function DrawerMount() {
         trip={props?.trip ?? null}
       />
 
-      {open && type === 'trip-list' && (
+      {open && type === 'trip-list' && !shouldSkipOverlay('trip-list') && (
         <Drawer
           isOpen={open}
           onClose={closeDrawer}
@@ -76,7 +99,7 @@ export default function DrawerMount() {
         trip={props.trip || null}
       />
 
-      {open && type === 'trip-settings' && props?.trip && (
+      {open && type === 'trip-settings' && props?.trip && !shouldSkipOverlay('trip-settings') && (
         <Drawer
           isOpen={open}
           onClose={closeDrawer}
@@ -93,7 +116,7 @@ export default function DrawerMount() {
         </Drawer>
       )}
 
-      {open && type === 'place-selector' && (
+      {open && type === 'place-selector' && !shouldSkipOverlay('place-selector') && (
         <Drawer
           isOpen={open}
           onClose={closeDrawer}
@@ -117,7 +140,7 @@ export default function DrawerMount() {
         </Drawer>
       )}
 
-      {open && type === 'trip-add-hotel' && (
+      {open && type === 'trip-add-hotel' && !shouldSkipOverlay('trip-add-hotel') && (
         <Drawer
           isOpen={open}
           onClose={closeDrawer}
@@ -134,7 +157,7 @@ export default function DrawerMount() {
         </Drawer>
       )}
 
-      {open && type === 'add-flight' && (
+      {open && type === 'add-flight' && !shouldSkipOverlay('add-flight') && (
         <Drawer
           isOpen={open}
           onClose={closeDrawer}
@@ -151,7 +174,7 @@ export default function DrawerMount() {
         </Drawer>
       )}
 
-      {open && type === 'trip-ai' && (
+      {open && type === 'trip-ai' && !shouldSkipOverlay('trip-ai') && (
         <Drawer
           isOpen={open}
           onClose={closeDrawer}

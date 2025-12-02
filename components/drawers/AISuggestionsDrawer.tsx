@@ -1,11 +1,12 @@
 "use client";
 
-import UMCard from "@/components/ui/UMCard";
-import UMActionPill from "@/components/ui/UMActionPill";
 import UMSectionTitle from "@/components/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { applyAIActions } from "@/lib/intelligence/actionRouter";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 
 interface Suggestion {
   id?: string | number;
@@ -110,7 +111,7 @@ export default function AISuggestionsDrawer({
   };
 
   return (
-    <div className="px-6 py-6 space-y-10">
+    <div className="px-6 py-6 space-y-8">
       {/* TITLE */}
       <div className="space-y-1">
         <h1 className="text-2xl font-light text-gray-900 dark:text-white">
@@ -130,11 +131,11 @@ export default function AISuggestionsDrawer({
         <section className="space-y-6">
           <UMSectionTitle>Recommended Improvements</UMSectionTitle>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {suggestions.map((s) => (
-              <UMCard key={s.id || Math.random()} className="p-4 space-y-3">
+              <Card key={s.id || Math.random()} className="overflow-hidden">
                 {s.image && (
-                  <div className="w-full h-40 relative overflow-hidden rounded-[16px]">
+                  <div className="w-full h-40 relative">
                     <Image
                       src={s.image}
                       alt={s.title || "Suggestion"}
@@ -144,27 +145,26 @@ export default function AISuggestionsDrawer({
                   </div>
                 )}
 
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {s.title || s.text || "Suggestion"}
-                  </p>
-                  {s.detail && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {s.detail}
+                <CardContent className="p-4 space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {s.title || s.text || "Suggestion"}
                     </p>
-                  )}
-                </div>
+                    {s.detail && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {s.detail}
+                      </p>
+                    )}
+                  </div>
 
-                <div className="pt-2">
-                  <UMActionPill
-                    variant="primary"
-                    className="w-full justify-center"
+                  <Button
+                    className="w-full rounded-full"
                     onClick={() => handleApplySuggestion(s)}
                   >
                     Apply
-                  </UMActionPill>
-                </div>
-              </UMCard>
+                  </Button>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </section>
@@ -172,15 +172,15 @@ export default function AISuggestionsDrawer({
 
       {/* APPLY ALL */}
       {suggestions.length > 0 && (
-        <section className="pt-4 border-t border-gray-200 dark:border-gray-800">
-          <UMActionPill
-            variant="primary"
-            className="w-full justify-center mt-4"
+        <>
+          <Separator />
+          <Button
+            className="w-full rounded-full"
             onClick={applyAllChanges}
           >
             Apply All Changes
-          </UMActionPill>
-        </section>
+          </Button>
+        </>
       )}
     </div>
   );

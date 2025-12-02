@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
-import { Plane, Loader2 } from 'lucide-react';
+import { Plane } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Spinner } from '@/components/ui/spinner';
 
 interface AddFlightDrawerProps {
   tripId?: string;
@@ -86,27 +91,23 @@ export default function AddFlightDrawer({
 
       {/* Airline & Flight Number */}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-            Airline *
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="airline">Airline *</Label>
+          <Input
+            id="airline"
             type="text"
             value={airline}
             onChange={(e) => setAirline(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
             placeholder="e.g. United"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-            Flight #
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="flightNumber">Flight #</Label>
+          <Input
+            id="flightNumber"
             type="text"
             value={flightNumber}
             onChange={(e) => setFlightNumber(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
             placeholder="e.g. UA123"
           />
         </div>
@@ -114,111 +115,96 @@ export default function AddFlightDrawer({
 
       {/* From / To */}
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-            From *
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="from">From *</Label>
+          <Input
+            id="from"
             type="text"
             value={from}
             onChange={(e) => setFrom(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
             placeholder="e.g. JFK"
           />
         </div>
-        <div>
-          <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-            To *
-          </label>
-          <input
+        <div className="space-y-2">
+          <Label htmlFor="to">To *</Label>
+          <Input
+            id="to"
             type="text"
             value={to}
             onChange={(e) => setTo(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
             placeholder="e.g. LAX"
           />
         </div>
       </div>
 
       {/* Departure */}
-      <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-          Departure
-        </label>
+      <div className="space-y-2">
+        <Label>Departure</Label>
         <div className="grid grid-cols-2 gap-4">
-          <input
+          <Input
             type="date"
             value={departureDate}
             onChange={(e) => setDepartureDate(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
           />
-          <input
+          <Input
             type="time"
             value={departureTime}
             onChange={(e) => setDepartureTime(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
           />
         </div>
       </div>
 
       {/* Arrival */}
-      <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-          Arrival
-        </label>
+      <div className="space-y-2">
+        <Label>Arrival</Label>
         <div className="grid grid-cols-2 gap-4">
-          <input
+          <Input
             type="date"
             value={arrivalDate}
             onChange={(e) => setArrivalDate(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
           />
-          <input
+          <Input
             type="time"
             value={arrivalTime}
             onChange={(e) => setArrivalTime(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
           />
         </div>
       </div>
 
       {/* Confirmation Number */}
-      <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-          Confirmation #
-        </label>
-        <input
+      <div className="space-y-2">
+        <Label htmlFor="confirmation">Confirmation #</Label>
+        <Input
+          id="confirmation"
           type="text"
           value={confirmationNumber}
           onChange={(e) => setConfirmationNumber(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
           placeholder="Optional"
         />
       </div>
 
       {/* Notes */}
-      <div>
-        <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-          Notes
-        </label>
-        <textarea
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes</Label>
+        <Textarea
+          id="notes"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
-          className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white resize-none"
           placeholder="Seat, luggage, etc."
+          className="resize-none"
         />
       </div>
 
       {/* Submit Button */}
-      <button
+      <Button
         onClick={handleSubmit}
         disabled={saving || !isValid}
-        className="w-full py-3 rounded-xl bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+        className="w-full rounded-full"
       >
-        {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+        {saving && <Spinner className="size-4 mr-2" />}
         Add Flight
-      </button>
+      </Button>
     </div>
   );
 }

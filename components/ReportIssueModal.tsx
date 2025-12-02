@@ -1,10 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { X, AlertTriangle, Send, Loader2, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Send, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface ReportIssueModalProps {
   isOpen: boolean;
@@ -92,34 +100,20 @@ export function ReportIssueModal({
     onClose();
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={handleClose}
-      />
-
-      {/* Modal */}
-      <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-md w-full mx-4 max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex items-center gap-2">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="max-w-md max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
-            <h2 className="text-lg font-semibold">Report an Issue</h2>
-          </div>
-          <button
-            onClick={handleClose}
-            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+            Report an Issue
+          </DialogTitle>
+          <DialogDescription>
+            Help us keep <span className="font-medium text-gray-900 dark:text-white">{destinationName}</span> accurate by reporting any issues.
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Content */}
-        <div className="p-4 overflow-y-auto max-h-[60vh]">
+        <div className="flex-1 overflow-y-auto py-4">
           {isSubmitted ? (
             <div className="text-center py-8">
               <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
@@ -132,15 +126,11 @@ export function ReportIssueModal({
               </Button>
             </div>
           ) : (
-            <>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Help us keep <span className="font-medium text-gray-900 dark:text-white">{destinationName}</span> accurate by reporting any issues.
-              </p>
-
+            <div className="space-y-4">
               {/* Issue Type Selection */}
-              <div className="space-y-2 mb-4">
+              <div className="space-y-2">
                 <label className="text-sm font-medium">What's wrong?</label>
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid grid-cols-1 gap-2 max-h-[240px] overflow-y-auto pr-1">
                   {issueTypes.map((type) => (
                     <button
                       key={type.value}
@@ -160,7 +150,7 @@ export function ReportIssueModal({
               </div>
 
               {/* Additional Details */}
-              <div className="mb-4">
+              <div>
                 <label className="text-sm font-medium mb-2 block">
                   Additional details (optional)
                 </label>
@@ -168,7 +158,7 @@ export function ReportIssueModal({
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
                   placeholder="Provide more context about the issue..."
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
                   rows={3}
                   maxLength={500}
                 />
@@ -179,7 +169,7 @@ export function ReportIssueModal({
 
               {/* Email for non-authenticated users */}
               {!user && (
-                <div className="mb-4">
+                <div>
                   <label className="text-sm font-medium mb-2 block">
                     Your email (optional)
                   </label>
@@ -188,24 +178,23 @@ export function ReportIssueModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="We'll notify you when the issue is resolved"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
                   />
                 </div>
               )}
 
               {/* Error */}
               {error && (
-                <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
+                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
                   {error}
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
 
-        {/* Footer */}
         {!isSubmitted && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex justify-end gap-2">
+          <DialogFooter>
             <Button variant="ghost" size="sm" onClick={handleClose}>
               Cancel
             </Button>
@@ -227,9 +216,9 @@ export function ReportIssueModal({
                 </>
               )}
             </Button>
-          </div>
+          </DialogFooter>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

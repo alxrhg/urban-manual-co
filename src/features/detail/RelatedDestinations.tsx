@@ -44,7 +44,7 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
     <div className="space-y-12 mt-12">
       {similar.length > 0 && (
         <section>
-          <h3 className="text-sm tracking-wide uppercase text-neutral-500 mb-4">
+          <h3 className="text-sm tracking-wide uppercase text-gray-500 mb-4">
             Similar Vibe
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
@@ -108,7 +108,7 @@ export function RelatedDestinations({ destinationId }: { destinationId: string }
 
       {complementary.length > 0 && (
         <section>
-          <h3 className="text-sm tracking-wide uppercase text-neutral-500 mb-4">
+          <h3 className="text-sm tracking-wide uppercase text-gray-500 mb-4">
             Pair With
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">

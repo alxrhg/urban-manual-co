@@ -9,21 +9,21 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-white/15 dark:bg-[#1A1C1F] dark:text-white/90 dark:hover:bg-white/5",
+        default: "bg-black text-white hover:bg-gray-900 dark:bg-white dark:text-black dark:hover:bg-gray-200",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 rounded-xl",
         outline:
-          "border border-neutral-200 dark:border-white/15 bg-transparent hover:bg-neutral-50 dark:hover:bg-white/5 text-neutral-800 dark:text-white/90",
+          "border border-gray-200 dark:border-gray-800 bg-transparent hover:bg-gray-50 dark:hover:bg-gray-900 text-gray-800 dark:text-white",
         secondary:
-          "border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-white/15 dark:bg-[#1A1C1F] dark:text-white/90 dark:hover:bg-white/5",
+          "border border-gray-200 bg-white text-gray-800 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-white dark:hover:bg-gray-800",
         ghost:
-          "hover:bg-neutral-50 dark:hover:bg-white/5",
+          "hover:bg-gray-100 dark:hover:bg-gray-800",
         muted:
-          "border border-neutral-200 dark:border-white/15 bg-white dark:bg-[#1A1C1F] text-neutral-800 dark:text-white/90 hover:bg-neutral-50 dark:hover:bg-white/5",
+          "border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
         subtle:
-          "text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-white/90 hover:bg-neutral-50 dark:hover:bg-white/5",
+          "text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
         pill:
-          "rounded-full border border-neutral-200 dark:border-white/15 bg-white dark:bg-[#1A1C1F] text-xs font-medium text-neutral-800 dark:text-white/90 hover:bg-neutral-50 dark:hover:bg-white/5",
+          "rounded-full border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-xs font-medium text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

@@ -42,7 +42,7 @@ export function ForYouSectionML() {
   return (
     <section className="mb-12">
       <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-sm tracking-wide uppercase text-neutral-500 flex items-center gap-2">
+        <h2 className="text-sm tracking-wide uppercase text-gray-500 flex items-center gap-2">
           For You
           {isMLPowered && (
             <span
@@ -62,7 +62,7 @@ export function ForYouSectionML() {
             </span>
           )}
         </h2>
-        <div className="h-px flex-1 bg-neutral-200 dark:bg-neutral-700" />
+        <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700" />
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">
@@ -118,7 +118,7 @@ export function ForYouSectionML() {
               </div>
               {isMLPowered && (
                 <div className="flex items-center justify-between mt-1">
-                  <div className="text-xs text-neutral-500 dark:text-neutral-400 line-clamp-1">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
                     {rec.reason}
                   </div>
                   <ExplanationPanel destinationId={rec.destination_id} trigger="hover" />

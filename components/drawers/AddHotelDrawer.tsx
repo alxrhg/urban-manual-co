@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import UMCard from "@/components/ui/UMCard";
-import UMActionPill from "@/components/ui/UMActionPill";
 import UMSectionTitle from "@/components/ui/UMSectionTitle";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { MapPin } from "lucide-react";
 
 export default function AddHotelDrawer({
   day,
@@ -50,15 +52,14 @@ export default function AddHotelDrawer({
   };
 
   return (
-    <div className="px-6 py-8 space-y-10">
+    <div className="px-6 py-8 space-y-8">
       {/* SEARCH BAR */}
       <div>
-        <input
+        <Input
           type="text"
           placeholder="Search hotels..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full px-4 py-2.5 rounded-2xl text-sm border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 placeholder:text-gray-400 dark:placeholder:text-gray-500 text-gray-900 dark:text-white focus:outline-none focus:border-black dark:focus:border-white transition-colors"
         />
       </div>
 
@@ -66,41 +67,48 @@ export default function AddHotelDrawer({
       <UMSectionTitle>Recommended Hotels</UMSectionTitle>
 
       {/* RESULTS */}
-      <div className="space-y-8">
+      <div className="space-y-4">
         {filtered.map((hotel) => (
-          <UMCard
+          <Card
             key={hotel.id}
-            className="p-4 space-y-3 cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/10 transition-colors"
+            className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors overflow-hidden"
             onClick={() => handleSelectHotel(hotel)}
           >
-            {hotel.image && (
-              <img
-                src={hotel.image}
-                alt={hotel.name}
-                className="w-full h-40 object-cover rounded-[16px]"
-              />
+            {hotel.image ? (
+              <div className="relative w-full h-40">
+                <img
+                  src={hotel.image}
+                  alt={hotel.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-full h-40 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                <MapPin className="w-8 h-8 text-gray-300 dark:text-gray-600" />
+              </div>
             )}
 
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {hotel.name}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {hotel.city}
-              </p>
-            </div>
+            <CardContent className="p-4 space-y-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                  {hotel.name}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {hotel.city}
+                </p>
+              </div>
 
-            <UMActionPill
-              variant="primary"
-              className="w-full justify-center"
-              onClick={(e) => {
-                e?.stopPropagation();
-                handleSelectHotel(hotel);
-              }}
-            >
-              Select Hotel
-            </UMActionPill>
-          </UMCard>
+              <Button
+                className="w-full rounded-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelectHotel(hotel);
+                }}
+              >
+                Select Hotel
+              </Button>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </div>
