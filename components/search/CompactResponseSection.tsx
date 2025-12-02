@@ -56,7 +56,7 @@ export function CompactResponseSection({
     <div className={`relative mb-8 ${className}`}>
       {/* Query (uppercase) */}
       {query && (
-        <h2 className="text-xs font-medium tracking-widest uppercase text-neutral-500 mb-4">
+        <h2 className="text-xs font-medium tracking-widest uppercase text-gray-500 mb-4">
           {query.toUpperCase()}
         </h2>
       )}
@@ -69,18 +69,18 @@ export function CompactResponseSection({
         <div className="space-y-3 pr-2">
           {/* Contextual response messages */}
           {messages.length === 0 ? (
-            <p className="text-sm leading-relaxed text-neutral-400">
+            <p className="text-sm leading-relaxed text-gray-400">
               Start a conversation to refine your search...
             </p>
           ) : (
             messages.map((message, i) => (
               <div key={i} className="flex flex-col gap-1">
                 {message.role === 'assistant' ? (
-                  <p className="text-sm leading-relaxed text-neutral-700">
+                  <p className="text-sm leading-relaxed text-gray-700">
                     {message.content}
                   </p>
                 ) : (
-                  <p className="text-sm leading-relaxed text-neutral-500 italic">
+                  <p className="text-sm leading-relaxed text-gray-500 italic">
                     → {message.content}
                   </p>
                 )}
@@ -90,7 +90,7 @@ export function CompactResponseSection({
 
           {/* Loading indicator */}
           {isLoading && (
-            <p className="text-sm text-neutral-400 italic">
+            <p className="text-sm text-gray-400 italic">
               with our in-house travel intelligence…
             </p>
           )}
@@ -104,7 +104,7 @@ export function CompactResponseSection({
             <button
               key={i}
               onClick={() => onChipClick(suggestion.refinement)}
-              className="px-3 py-1.5 text-xs font-medium border border-neutral-300 rounded-full hover:border-neutral-900 hover:bg-gray-900 hover:text-white transition-all duration-200 active:scale-95"
+              className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-full hover:border-gray-900 hover:bg-gray-900 hover:text-white transition-all duration-200 active:scale-95"
             >
               {suggestion.label}
             </button>
@@ -121,7 +121,7 @@ export function CompactResponseSection({
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask a follow-up..."
             disabled={isLoading}
-            className="w-full px-0 py-2 text-sm border-b border-neutral-200 dark:border-neutral-700 focus:border-neutral-900 dark:focus:border-neutral-100 focus:outline-none placeholder:text-neutral-400 dark:placeholder:text-neutral-500 bg-transparent text-neutral-900 dark:text-neutral-100 disabled:opacity-50 transition-colors duration-200"
+            className="w-full px-0 py-2 text-sm border-b border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-gray-100 focus:outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-transparent text-gray-900 dark:text-gray-100 disabled:opacity-50 transition-colors duration-200"
           />
         </form>
       )}

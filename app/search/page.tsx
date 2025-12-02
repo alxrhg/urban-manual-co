@@ -248,7 +248,7 @@ function SearchPageContent() {
   return (
     <>
       <div className="w-full px-6 md:px-10 py-20 min-h-screen">
-      <p className="text-xs tracking-widest text-neutral-400 mb-8">
+      <p className="text-xs tracking-widest text-gray-400 mb-8">
         {new Date().getHours() < 12 ? 'GOOD MORNING' : new Date().getHours() < 18 ? 'GOOD AFTERNOON' : 'GOOD EVENING'}
       </p>
 
@@ -313,7 +313,7 @@ function SearchPageContent() {
       {/* Results */}
       {!searchState.isLoading && searchState.filteredResults.length > 0 && (
         <>
-      <div className="mb-4 text-sm text-neutral-500">
+      <div className="mb-4 text-sm text-gray-500">
         Showing {searchState.filteredResults.length}
         {searchState.allResults.length > 0 && searchState.filteredResults.length !== searchState.allResults.length && (
           <span> of {searchState.allResults.length}</span>
@@ -404,7 +404,7 @@ function SearchPageContent() {
                 )}
 
       {searchState.refinements.length > 0 && (
-        <button onClick={clearFilters} className="mt-6 text-sm text-neutral-500 hover:text-neutral-900">
+        <button onClick={clearFilters} className="mt-6 text-sm text-gray-500 hover:text-gray-900">
           Clear all filters
         </button>
                 )}
@@ -427,7 +427,7 @@ export default function SearchPage() {
   return (
     <Suspense fallback={
       <div className="px-6 md:px-10 py-10">
-        <div className="text-sm text-neutral-500 mb-4">with our in-house travel intelligence…</div>
+        <div className="text-sm text-gray-500 mb-4">with our in-house travel intelligence…</div>
         <Skeleton className="h-4 w-48 rounded mb-6" />
         <Skeleton className="h-5 w-80 rounded mb-8" />
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6">

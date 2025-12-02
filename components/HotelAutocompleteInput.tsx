@@ -138,16 +138,16 @@ export function HotelAutocompleteInput({
           }}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full px-4 py-2 rounded-xl border border-neutral-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed pr-10 ${className}`}
+          className={`w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed pr-10 ${className}`}
         />
         {searchQuery && !disabled && (
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-neutral-100 dark:hover:bg-white/5 rounded transition-colors"
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-white/5 rounded transition-colors"
             aria-label="Clear"
           >
-            <X className="w-4 h-4 text-neutral-500" />
+            <X className="w-4 h-4 text-gray-500" />
           </button>
         )}
       </div>
@@ -156,10 +156,10 @@ export function HotelAutocompleteInput({
       {showSuggestions && filteredHotels.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1A1C1F] border border-neutral-200 dark:border-white/10 rounded-xl shadow-lg max-h-60 overflow-y-auto"
+          className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1A1C1F] border border-gray-200 dark:border-white/10 rounded-xl shadow-lg max-h-60 overflow-y-auto"
         >
           {loading && (
-            <div className="px-4 py-2 text-sm text-neutral-500 dark:text-neutral-400">
+            <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
               Searching...
             </div>
           )}
@@ -168,7 +168,7 @@ export function HotelAutocompleteInput({
               key={hotel.id}
               type="button"
               onClick={() => handleSelectHotel(hotel)}
-              className="w-full px-4 py-3 text-left hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors border-b border-neutral-100 dark:border-white/5 last:border-b-0"
+              className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-white/5 transition-colors border-b border-gray-100 dark:border-white/5 last:border-b-0"
             >
               <div className="flex items-center gap-3">
                 {hotel.image && (
@@ -185,7 +185,7 @@ export function HotelAutocompleteInput({
                     {hotel.name}
                   </p>
                   {hotel.city && (
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {hotel.city}
                     </p>
                   )}

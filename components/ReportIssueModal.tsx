@@ -109,7 +109,7 @@ export function ReportIssueModal({
             Report an Issue
           </DialogTitle>
           <DialogDescription>
-            Help us keep <span className="font-medium text-neutral-900 dark:text-white">{destinationName}</span> accurate by reporting any issues.
+            Help us keep <span className="font-medium text-gray-900 dark:text-white">{destinationName}</span> accurate by reporting any issues.
           </DialogDescription>
         </DialogHeader>
 
@@ -118,7 +118,7 @@ export function ReportIssueModal({
             <div className="text-center py-8">
               <CheckCircle className="h-12 w-12 text-emerald-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Thank You!</h3>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                 Your report has been submitted. Our team will review it and make updates if needed.
               </p>
               <Button onClick={handleClose} variant="default" size="sm">
@@ -138,12 +138,12 @@ export function ReportIssueModal({
                       className={cn(
                         'text-left p-3 rounded-xl border transition-all',
                         selectedType === type.value
-                          ? 'border-neutral-900 dark:border-white bg-neutral-50 dark:bg-neutral-800'
-                          : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600'
+                          ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                       )}
                     >
                       <p className="text-sm font-medium">{type.label}</p>
-                      <p className="text-xs text-neutral-500">{type.description}</p>
+                      <p className="text-xs text-gray-500">{type.description}</p>
                     </button>
                   ))}
                 </div>
@@ -158,11 +158,11 @@ export function ReportIssueModal({
                   value={details}
                   onChange={(e) => setDetails(e.target.value)}
                   placeholder="Provide more context about the issue..."
-                  className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
                   rows={3}
                   maxLength={500}
                 />
-                <p className="text-xs text-neutral-400 mt-1 text-right">
+                <p className="text-xs text-gray-400 mt-1 text-right">
                   {details.length}/500
                 </p>
               </div>
@@ -178,7 +178,7 @@ export function ReportIssueModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="We'll notify you when the issue is resolved"
-                    className="w-full px-3 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
                   />
                 </div>
               )}

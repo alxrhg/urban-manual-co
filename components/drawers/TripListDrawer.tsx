@@ -253,11 +253,11 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
               <button
                 key={trip.id}
                 onClick={() => handleSelectTrip(trip)}
-                className="group relative w-full border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden hover:border-neutral-300 dark:hover:border-neutral-700 transition-all text-left bg-white dark:bg-neutral-900"
+                className="group relative w-full border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:border-gray-300 dark:hover:border-gray-700 transition-all text-left bg-white dark:bg-gray-900"
               >
                 <div className="flex">
                   {/* Left: Image */}
-                  <div className="relative w-24 h-24 sm:w-28 sm:h-full bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 self-center">
+                  <div className="relative w-24 h-24 sm:w-28 sm:h-full bg-gray-100 dark:bg-gray-800 flex-shrink-0 self-center">
                     {coverImage ? (
                       <Image
                         src={coverImage}
@@ -268,7 +268,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <MapPin className="w-6 h-6 text-neutral-300 dark:text-neutral-600" />
+                        <MapPin className="w-6 h-6 text-gray-300 dark:text-gray-600" />
                       </div>
                     )}
                   </div>
@@ -291,8 +291,8 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-neutral-100 dark:border-neutral-800">
-                      <div className="flex flex-col text-xs text-neutral-500">
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-dashed border-gray-100 dark:border-gray-800">
+                      <div className="flex flex-col text-xs text-gray-500">
                         {trip.destination && (
                           <span className="flex items-center gap-1 truncate max-w-[120px]">
                             <MapPin className="w-3 h-3 flex-shrink-0" />
@@ -300,7 +300,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1 text-xs text-neutral-400">
+                      <div className="flex items-center gap-1 text-xs text-gray-400">
                         {dateRange ? (
                           <span>{dateRange}</span>
                         ) : (

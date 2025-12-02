@@ -90,7 +90,7 @@ export function SearchFiltersComponent({
             {hasActiveFilters && (
               <button
                 onClick={clearAll}
-                className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300"
+                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
               >
                 Clear all
               </button>
@@ -98,7 +98,7 @@ export function SearchFiltersComponent({
           </div>
 
           {hasActiveFilters && (
-            <div className="flex flex-wrap gap-2 pb-2 border-b border-neutral-200 dark:border-neutral-700">
+            <div className="flex flex-wrap gap-2 pb-2 border-b border-gray-200 dark:border-gray-700">
               {Object.entries(filters).map(([key, value]) => {
                 let displayValue = String(value);
                 if (key === 'openNow' && value === true) displayValue = 'Open Now';
@@ -134,7 +134,7 @@ export function SearchFiltersComponent({
               <select
                 value={filters.city || ''}
                 onChange={(e) => updateFilter('city', e.target.value || undefined)}
-                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
               >
                 <option value="">Select City</option>
                 {availableCities.map(city => (
@@ -149,7 +149,7 @@ export function SearchFiltersComponent({
               <select
                 value={filters.category || ''}
                 onChange={(e) => updateFilter('category', e.target.value || undefined)}
-                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
               >
                 <option value="">Select Category</option>
                 {availableCategories.map(category => (
@@ -165,7 +165,7 @@ export function SearchFiltersComponent({
                   type="checkbox"
                   checked={filters.michelin || false}
                   onChange={(e) => updateFilter('michelin', e.target.checked || undefined)}
-                  className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 focus:ring-neutral-900 dark:focus:ring-white"
+                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 focus:ring-neutral-900 dark:focus:ring-white"
                 />
                 <span className="text-sm">Michelin Starred Only</span>
               </label>
@@ -178,7 +178,7 @@ export function SearchFiltersComponent({
                   type="checkbox"
                   checked={filters.crown || false}
                   onChange={(e) => updateFilter('crown', e.target.checked || undefined)}
-                  className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 focus:ring-neutral-900 dark:focus:ring-white"
+                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 focus:ring-neutral-900 dark:focus:ring-white"
                 />
                 <span className="text-sm">Crown Badge Only</span>
               </label>
@@ -191,7 +191,7 @@ export function SearchFiltersComponent({
                 <select
                   value={filters.minPrice || ''}
                   onChange={(e) => updateFilter('minPrice', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="flex-1 px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
                 >
                   <option value="">Min</option>
                   {[1, 2, 3, 4].map(level => (
@@ -201,7 +201,7 @@ export function SearchFiltersComponent({
                 <select
                   value={filters.maxPrice || ''}
                   onChange={(e) => updateFilter('maxPrice', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="flex-1 px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
+                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
                 >
                   <option value="">Max</option>
                   {[1, 2, 3, 4].map(level => (
@@ -217,7 +217,7 @@ export function SearchFiltersComponent({
               <select
                 value={filters.minRating || ''}
                 onChange={(e) => updateFilter('minRating', e.target.value ? parseFloat(e.target.value) : undefined)}
-                className="w-full px-3 py-2 border border-neutral-300 dark:border-neutral-600 rounded-lg bg-white dark:bg-neutral-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white focus:outline-none"
               >
                 <option value="">Any</option>
                 <option value="4.5">4.5+ ⭐</option>
@@ -234,10 +234,10 @@ export function SearchFiltersComponent({
                   type="checkbox"
                   checked={filters.openNow || false}
                   onChange={(e) => updateFilter('openNow', e.target.checked || undefined)}
-                  className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-600 focus:ring-neutral-900 dark:focus:ring-white"
+                  className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 focus:ring-neutral-900 dark:focus:ring-white"
                 />
                 <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                  <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                   <span className="text-sm">Open Now</span>
                 </div>
               </label>

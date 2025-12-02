@@ -1465,7 +1465,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 e.stopPropagation();
                 setIsEditMode(!isEditMode);
               }}
-              className={`p-2 rounded-lg transition-colors ${isEditMode ? 'bg-black dark:bg-white text-white dark:text-black' : 'hover:bg-neutral-50 dark:hover:bg-white/5'}`}
+              className={`p-2 rounded-lg transition-colors ${isEditMode ? 'bg-black dark:bg-white text-white dark:text-black' : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
               aria-label={isEditMode ? 'Exit edit mode' : 'Edit destination'}
               title={isEditMode ? 'Exit edit mode' : 'Edit destination (Admin)'}
             >
@@ -2055,7 +2055,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div>
               <a
                 href={`/city/${destination.city}`}
-                className="inline-flex items-center px-3 h-[28px] rounded-lg border border-neutral-200 dark:border-white/20 text-xs font-medium text-neutral-600 dark:text-neutral-300 bg-white dark:bg-[#1A1C1F] cursor-pointer hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors"
+                className="inline-flex items-center px-3 h-[28px] rounded-lg border border-gray-200 dark:border-white/20 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-[#1A1C1F] cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
