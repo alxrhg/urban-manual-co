@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Trip as TripSchema, ItineraryItem, TripLocation, ItineraryItemNotes } from '@/types/trip';
@@ -29,7 +29,32 @@ export function TripProvider({ children }: { children: ReactNode }) {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [activeTrip, setActiveTripState] = useState<Trip | null>(null);
 
-  const fetchTrips = async () => {
+  // Helper to parse notes from itinerary item
+  const parseItemNotes = useCallback((notes: string | null): ItineraryItemNotes => {
+    if (!notes) return {};
+    try {
+      return JSON.parse(notes) as ItineraryItemNotes;
+    } catch {
+      return { raw: notes };
+    }
+  }, []);
+
+  // Transform itinerary items to TripLocation format
+  const transformItemToLocation = useCallback((item: ItineraryItem, tripDestination: string, index: number): TripLocation => {
+    const notesData = parseItemNotes(item.notes);
+    return {
+      id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now() + index,
+      name: item.title,
+      city: notesData.city || tripDestination || '',
+      category: item.description || '',
+      image: notesData.image || '/placeholder-image.jpg',
+      time: item.time || undefined,
+      notes: notesData.raw || undefined,
+      duration: notesData.duration || undefined,
+    };
+  }, [parseItemNotes]);
+
+  const fetchTrips = useCallback(async () => {
     if (!user) {
       setTrips([]);
       setActiveTripState(null);
@@ -40,72 +65,48 @@ export function TripProvider({ children }: { children: ReactNode }) {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
 
+      // Single optimized query with join - eliminates N+1 problem
       const { data: tripsData, error: tripsError } = await supabaseClient
         .from('trips')
-        .select('*')
+        .select(`
+          *,
+          itinerary_items (
+            id, title, description, day, order_index, time, notes
+          )
+        `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (tripsError) throw tripsError;
 
-      // Fetch locations for each trip
-      const tripsWithLocations = await Promise.all(
-        (tripsData as TripSchema[] || []).map(async (trip) => {
-          const { data: itemsData, error: itemsError } = await supabaseClient
-            .from('itinerary_items')
-            .select('*')
-            .eq('trip_id', trip.id)
-            .order('day', { ascending: true })
-            .order('order_index', { ascending: true });
+      // Transform trips with their embedded itinerary items
+      const tripsWithLocations = (tripsData || []).map((trip: TripSchema & { itinerary_items?: ItineraryItem[] }) => {
+        const items = trip.itinerary_items || [];
+        // Sort items by day and order_index (Supabase nested ordering may not work)
+        const sortedItems = [...items].sort((a, b) => {
+          const dayDiff = (a.day || 0) - (b.day || 0);
+          if (dayDiff !== 0) return dayDiff;
+          return (a.order_index || 0) - (b.order_index || 0);
+        });
 
-          if (itemsError) {
-            console.error('Error fetching itinerary items:', itemsError);
-            return {
-              id: trip.id,
-              name: trip.title,
-              destination: trip.destination || '',
-              locations: [],
-            };
-          }
+        const locations: TripLocation[] = sortedItems.map((item, index) =>
+          transformItemToLocation(item, trip.destination || '', index)
+        );
 
-          const locations: TripLocation[] = (itemsData as ItineraryItem[] || []).map((item, index) => {
-            // Parse notes for additional data
-            let notesData: ItineraryItemNotes = {};
-            if (item.notes) {
-              try {
-                notesData = JSON.parse(item.notes) as ItineraryItemNotes;
-              } catch {
-                notesData = { raw: item.notes };
-              }
-            }
-
-            return {
-              id: parseInt(item.id.replace(/-/g, '').substring(0, 10), 16) || Date.now() + index,
-              name: item.title,
-              city: notesData.city || trip.destination || '',
-              category: item.description || '',
-              image: notesData.image || '/placeholder-image.jpg',
-              time: item.time || undefined,
-              notes: notesData.raw || undefined,
-              duration: notesData.duration || undefined,
-            };
-          });
-
-          return {
-            id: trip.id,
-            name: trip.title,
-            destination: trip.destination || '',
-            locations,
-          };
-        })
-      );
+        return {
+          id: trip.id,
+          name: trip.title,
+          destination: trip.destination || '',
+          locations,
+        };
+      });
 
       setTrips(tripsWithLocations);
     } catch (error) {
       console.error('Error fetching trips:', error);
       setTrips([]);
     }
-  };
+  }, [user, transformItemToLocation]);
 
   useEffect(() => {
     if (user) {
@@ -116,16 +117,18 @@ export function TripProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  const setActiveTrip = (tripId: string | null) => {
+  const setActiveTrip = useCallback((tripId: string | null) => {
     if (!tripId) {
       setActiveTripState(null);
       return;
     }
-    const trip = trips.find((t) => t.id === tripId);
-    setActiveTripState(trip || null);
-  };
+    setActiveTripState(currentTrips => {
+      const trip = trips.find((t) => t.id === tripId);
+      return trip || null;
+    });
+  }, [trips]);
 
-  const createTrip = async (name: string, destination: string) => {
+  const createTrip = useCallback(async (name: string, destination: string) => {
     if (!user) return;
 
     try {
@@ -157,9 +160,9 @@ export function TripProvider({ children }: { children: ReactNode }) {
       console.error('Error creating trip:', error);
       throw error;
     }
-  };
+  }, [user, fetchTrips, setActiveTrip]);
 
-  const deleteTrip = async (tripId: string) => {
+  const deleteTrip = useCallback(async (tripId: string) => {
     if (!user) return;
 
     try {
@@ -185,26 +188,25 @@ export function TripProvider({ children }: { children: ReactNode }) {
       await fetchTrips();
 
       // Clear active trip if it was deleted
-      if (activeTrip?.id === tripId) {
-        setActiveTripState(null);
-      }
+      setActiveTripState(current => current?.id === tripId ? null : current);
     } catch (error) {
       console.error('Error deleting trip:', error);
       throw error;
     }
-  };
+  }, [user, fetchTrips]);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    trips,
+    activeTrip,
+    setActiveTrip,
+    createTrip,
+    deleteTrip,
+    refreshTrips: fetchTrips,
+  }), [trips, activeTrip, setActiveTrip, createTrip, deleteTrip, fetchTrips]);
 
   return (
-    <TripContext.Provider
-      value={{
-        trips,
-        activeTrip,
-        setActiveTrip,
-        createTrip,
-        deleteTrip,
-        refreshTrips: fetchTrips,
-      }}
-    >
+    <TripContext.Provider value={contextValue}>
       {children}
     </TripContext.Provider>
   );

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Cookie } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { X } from 'lucide-react';
 
 const CONSENT_STORAGE_KEY = 'cookie_consent';
 const CONSENT_COOKIE_NAME = 'cookie_consent';
@@ -177,7 +177,7 @@ export function CookieConsent() {
     };
   }, []); // Empty deps - always active
 
-  const savePreferences = (prefs: CookiePreferences) => {
+  const savePreferences = useCallback((prefs: CookiePreferences) => {
     persistConsent(prefs);
 
     // Update Google Analytics consent signals
@@ -185,7 +185,7 @@ export function CookieConsent() {
       window.gtag('consent', 'update', {
         // Behavioral analytics consent signals
         analytics_storage: prefs.analytics ? 'granted' : 'denied',
-        
+
         // Advertising consent signals
         ad_storage: prefs.marketing ? 'granted' : 'denied',
         ad_user_data: prefs.marketing ? 'granted' : 'denied',
@@ -204,29 +204,52 @@ export function CookieConsent() {
     setIsVisible(false);
     setHasCheckedConsent(true);
     setShowDetails(false);
-  };
+  }, []);
 
-  const acceptAll = () => {
+  const acceptAll = useCallback(() => {
     savePreferences({
       necessary: true,
       analytics: true,
       marketing: true,
       personalization: true,
     });
-  };
+  }, [savePreferences]);
 
-  const acceptNecessary = () => {
+  const acceptNecessary = useCallback(() => {
     savePreferences({
       necessary: true,
       analytics: false,
       marketing: false,
       personalization: false,
     });
-  };
+  }, [savePreferences]);
 
-  const saveCustom = () => {
+  const saveCustom = useCallback(() => {
     savePreferences(preferences);
-  };
+  }, [savePreferences, preferences]);
+
+  // Memoized handlers for toggle buttons
+  const toggleAnalytics = useCallback(() => {
+    setPreferences(prev => ({ ...prev, analytics: !prev.analytics }));
+  }, []);
+
+  const toggleMarketing = useCallback(() => {
+    setPreferences(prev => ({ ...prev, marketing: !prev.marketing }));
+  }, []);
+
+  const togglePersonalization = useCallback(() => {
+    setPreferences(prev => ({ ...prev, personalization: !prev.personalization }));
+  }, []);
+
+  const openSettings = useCallback(() => {
+    setIsVisible(true);
+    setShowDetails(true);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setShowDetails(false);
+    if (getStoredConsent() !== null) setIsVisible(false);
+  }, []);
 
   // Show minimal bottom-left banner if no consent
   const hasConsent = getStoredConsent() !== null;
@@ -244,10 +267,7 @@ export function CookieConsent() {
             🍪 Accept cookies
           </button>
           <button
-            onClick={() => {
-              setIsVisible(true);
-              setShowDetails(true);
-            }}
+            onClick={openSettings}
             className="px-4 py-2 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors shadow-lg whitespace-nowrap"
           >
             Settings
@@ -264,10 +284,7 @@ export function CookieConsent() {
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">Cookie Settings</h3>
                 <button
-                  onClick={() => {
-                    setShowDetails(false);
-                    if (hasConsent) setIsVisible(false);
-                  }}
+                  onClick={closeModal}
                   className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                   aria-label="Close"
                 >
@@ -311,7 +328,7 @@ export function CookieConsent() {
                   </div>
                   <div className="flex-shrink-0">
                     <button
-                      onClick={() => setPreferences(prev => ({ ...prev, analytics: !prev.analytics }))}
+                      onClick={toggleAnalytics}
                       className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                         preferences.analytics
                           ? 'bg-black dark:bg-white'
@@ -339,7 +356,7 @@ export function CookieConsent() {
                   </div>
                   <div className="flex-shrink-0">
                     <button
-                      onClick={() => setPreferences(prev => ({ ...prev, marketing: !prev.marketing }))}
+                      onClick={toggleMarketing}
                       className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                         preferences.marketing
                           ? 'bg-black dark:bg-white'
@@ -367,7 +384,7 @@ export function CookieConsent() {
                   </div>
                   <div className="flex-shrink-0">
                     <button
-                      onClick={() => setPreferences(prev => ({ ...prev, personalization: !prev.personalization }))}
+                      onClick={togglePersonalization}
                       className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
                         preferences.personalization
                           ? 'bg-black dark:bg-white'

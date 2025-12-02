@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Search, ChevronDown, SlidersHorizontal, LayoutGrid, Map, Plus, X, Loader2, Globe2 } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Search, ChevronDown, SlidersHorizontal, LayoutGrid, Map, Plus, X, Loader2 } from 'lucide-react';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import Image from 'next/image';
@@ -107,6 +107,20 @@ export function NavigationRow({
     setFilterSearchQuery(filters.searchQuery || '');
   }, [filters.searchQuery]);
 
+  // Memoized filter handlers
+  const updateFilter = useCallback((key: keyof SearchFilters, value: string | number | boolean) => {
+    onFiltersChange({ ...filters, [key]: value });
+  }, [filters, onFiltersChange]);
+
+  const clearFilter = useCallback((key: keyof SearchFilters) => {
+    const newFilters = { ...filters };
+    delete newFilters[key];
+    onFiltersChange(newFilters);
+    if (key === 'nearMe') {
+      onLocationChange?.(null, null, nearMeRadius);
+    }
+  }, [filters, onFiltersChange, onLocationChange, nearMeRadius]);
+
   // Handle search query changes with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -119,22 +133,9 @@ export function NavigationRow({
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [filterSearchQuery]);
+  }, [filterSearchQuery, filters.searchQuery, updateFilter, clearFilter]);
 
-  function updateFilter(key: keyof SearchFilters, value: string | number | boolean) {
-    onFiltersChange({ ...filters, [key]: value });
-  }
-
-  function clearFilter(key: keyof SearchFilters) {
-    const newFilters = { ...filters };
-    delete newFilters[key];
-    onFiltersChange(newFilters);
-    if (key === 'nearMe') {
-      onLocationChange?.(null, null, nearMeRadius);
-    }
-  }
-
-  function toggleNearMe(enabled: boolean) {
+  const toggleNearMe = useCallback((enabled: boolean) => {
     if (enabled) {
       if (!hasLocation) {
         requestLocation();
@@ -149,15 +150,15 @@ export function NavigationRow({
       clearFilter('nearMeRadius');
       onLocationChange?.(null, null, nearMeRadius);
     }
-  }
+  }, [hasLocation, requestLocation, updateFilter, nearMeRadius, latitude, longitude, onLocationChange, clearFilter]);
 
-  function updateRadius(radius: number) {
+  const updateRadius = useCallback((radius: number) => {
     setNearMeRadius(radius);
     updateFilter('nearMeRadius', radius);
     if (filters.nearMe && hasLocation && latitude && longitude) {
       onLocationChange?.(latitude, longitude, radius);
     }
-  }
+  }, [updateFilter, filters.nearMe, hasLocation, latitude, longitude, onLocationChange]);
 
   useEffect(() => {
     if (filters.nearMe && hasLocation && latitude && longitude) {
@@ -165,15 +166,48 @@ export function NavigationRow({
     }
   }, [hasLocation, latitude, longitude, filters.nearMe, nearMeRadius, onLocationChange]);
 
-  const activeFilterCount = Object.keys(filters).length;
+  // Memoized computed values
+  const activeFilterCount = useMemo(() => Object.keys(filters).length, [filters]);
   const hasActiveFilters = activeFilterCount > 0;
-  const displayedCities = showAllCities ? cities : cities.slice(0, 4);
-  const getCategoryIcon = (category: string) => getCategoryIconComponent(category);
+  const displayedCities = useMemo(() => showAllCities ? cities : cities.slice(0, 4), [showAllCities, cities]);
+  const getCategoryIcon = useCallback((category: string) => getCategoryIconComponent(category), []);
 
-  const formatDistance = (km: number) => {
+  // Memoize formatDistance as it's used in JSX
+  const formatDistance = useCallback((km: number) => {
     if (km < 1) return `${Math.round(km * 1000)}m`;
     return `${km}km`;
-  };
+  }, []);
+
+  // Memoized event handlers to prevent unnecessary re-renders
+  const handleClearSearch = useCallback(() => onSearchChange(''), [onSearchChange]);
+  const handleToggleCitiesDropdown = useCallback(() => setIsCitiesDropdownOpen(prev => !prev), []);
+  const handleToggleFiltersOpen = useCallback(() => setIsFiltersOpen(prev => !prev), []);
+  const handleCloseFilters = useCallback(() => setIsFiltersOpen(false), []);
+  const handleSetGridView = useCallback(() => onViewModeChange('grid'), [onViewModeChange]);
+  const handleSetMapView = useCallback(() => onViewModeChange('map'), [onViewModeChange]);
+
+  const handleClearAllCategories = useCallback(() => {
+    onCategoryChange('');
+    onAdvancedFiltersChange({
+      ...advancedFilters,
+      category: undefined,
+      michelin: undefined,
+    });
+  }, [onCategoryChange, onAdvancedFiltersChange, advancedFilters]);
+
+  const handleToggleMichelin = useCallback(() => {
+    const newValue = !advancedFilters.michelin;
+    onCategoryChange('');
+    onAdvancedFiltersChange({
+      ...advancedFilters,
+      category: undefined,
+      michelin: newValue || undefined,
+    });
+  }, [advancedFilters, onCategoryChange, onAdvancedFiltersChange]);
+
+  const handleToggleNearMeFilter = useCallback(() => {
+    toggleNearMe(!filters.nearMe);
+  }, [toggleNearMe, filters.nearMe]);
 
   return (
     <>
@@ -192,7 +226,7 @@ export function NavigationRow({
               />
               {searchTerm && (
                 <button
-                  onClick={() => onSearchChange('')}
+                  onClick={handleClearSearch}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                   aria-label="Clear search"
                 >
@@ -205,7 +239,7 @@ export function NavigationRow({
           {/* 2. Cities Selector - Dropdown, capsule style */}
           <div className="relative" ref={citiesDropdownRef}>
             <button
-              onClick={() => setIsCitiesDropdownOpen(!isCitiesDropdownOpen)}
+              onClick={handleToggleCitiesDropdown}
               className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180 whitespace-nowrap"
             >
               <span>{selectedCity ? capitalizeCity(selectedCity) : 'All Cities'}</span>
@@ -250,7 +284,7 @@ export function NavigationRow({
           {/* 3. Filter Button - Right of city buttons */}
           <div className="relative">
             <button
-              onClick={() => setIsFiltersOpen(!isFiltersOpen)}
+              onClick={handleToggleFiltersOpen}
               className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-full text-sm font-medium text-gray-900 dark:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-all duration-180"
               aria-label={isFiltersOpen ? 'Close filters' : 'Open filters'}
               aria-expanded={isFiltersOpen}
@@ -278,14 +312,7 @@ export function NavigationRow({
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
             <button
-              onClick={() => {
-                onCategoryChange('');
-                onAdvancedFiltersChange({
-                  ...advancedFilters,
-                  category: undefined,
-                  michelin: undefined,
-                });
-              }}
+              onClick={handleClearAllCategories}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-180 ${
                 !selectedCategory && !advancedFilters.michelin
                   ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
@@ -294,18 +321,10 @@ export function NavigationRow({
             >
               All
             </button>
-            
+
             {/* Michelin chip */}
             <button
-              onClick={() => {
-                const newValue = !advancedFilters.michelin;
-                onCategoryChange('');
-                onAdvancedFiltersChange({
-                  ...advancedFilters,
-                  category: undefined,
-                  michelin: newValue || undefined,
-                });
-              }}
+              onClick={handleToggleMichelin}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-180 ${
                 advancedFilters.michelin
                   ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
@@ -354,7 +373,7 @@ export function NavigationRow({
           {/* 5. View Toggle - Segmented control */}
           <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1 flex-shrink-0">
             <button
-              onClick={() => onViewModeChange('grid')}
+              onClick={handleSetGridView}
               className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
                 viewMode === 'grid'
                   ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
@@ -366,7 +385,7 @@ export function NavigationRow({
               <span>Grid</span>
             </button>
             <button
-              onClick={() => onViewModeChange('map')}
+              onClick={handleSetMapView}
               className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all rounded-full ${
                 viewMode === 'map'
                   ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
@@ -561,7 +580,7 @@ export function NavigationRow({
                     <span className="text-sm text-gray-700 dark:text-gray-300">Use current location</span>
                     <button
                       type="button"
-                      onClick={() => toggleNearMe(!filters.nearMe)}
+                      onClick={handleToggleNearMeFilter}
                       disabled={loading}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                         filters.nearMe ? 'bg-gray-900 dark:bg-white' : 'bg-gray-200 dark:bg-gray-700'
@@ -617,7 +636,7 @@ export function NavigationRow({
               {/* Apply Button */}
               <div className="pt-2">
                 <button
-                  onClick={() => setIsFiltersOpen(false)}
+                  onClick={handleCloseFilters}
                   className="w-full py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full text-sm font-medium hover:opacity-90 transition-opacity"
                 >
                   Apply Filters

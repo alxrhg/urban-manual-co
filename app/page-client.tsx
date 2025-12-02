@@ -71,7 +71,7 @@ import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
 import { DistanceBadge } from '@/components/DistanceBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
 import { type RefinementTag } from '@/components/RefinementChips';
-import { capitalizeCity } from '@/lib/utils';
+import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
 import { DestinationCard } from '@/components/DestinationCard';
 import HomeMapSplitView from '@/components/HomeMapSplitView';
@@ -183,14 +183,7 @@ function getCategoryIcon(
   return getCategoryIconComponent(category);
 }
 
-function capitalizeCategory(category: string): string {
-  return category
-    .split(" ")
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
-}
-
-// Use capitalizeCity from lib/utils.ts instead of duplicate function
+// capitalizeCategory imported from @/lib/utils
 
 function slugify(value: string): string {
   return value
