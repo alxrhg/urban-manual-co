@@ -14,6 +14,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 import DrawerMount from "@/components/DrawerMount";
+import { PanelLayout } from "@/components/PanelMount";
 import MyStatsig from "./my-statsig";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
@@ -228,10 +229,12 @@ export default function RootLayout({
                       <AdminEditModeProvider>
                         <ItineraryProvider>
                           <Header />
-                          <main id="main-content" className="min-h-screen page-transition" role="main">
-                            {children}
-                          </main>
-                          <Footer />
+                          <PanelLayout>
+                            <main id="main-content" className="min-h-screen page-transition" role="main">
+                              {children}
+                            </main>
+                            <Footer />
+                          </PanelLayout>
                           <CookieConsent />
                           <DrawerMount />
                         </ItineraryProvider>

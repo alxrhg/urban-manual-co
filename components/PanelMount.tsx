@@ -20,9 +20,11 @@ import TripListDrawer from '@/components/drawers/TripListDrawer';
 import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
 import TripSettingsDrawer from '@/components/drawers/TripSettingsDrawer';
 import AccountDrawerNew from '@/components/drawers/AccountDrawer';
+import { DestinationDrawer } from '@/src/features/detail/DestinationDrawer';
 
 // Map of drawer types to their titles
 const DRAWER_TITLES: Record<string, string> = {
+  'destination': 'Details',
   'account-new': 'Account',
   'trip-list': 'Your Trips',
   'trip-settings': 'Trip Settings',
@@ -70,6 +72,16 @@ export function PanelLayout({
     if (!open || !type) return null;
 
     switch (type) {
+      case 'destination':
+        return (
+          <DestinationDrawer
+            isOpen={open}
+            onClose={closeDrawer}
+            destination={props?.place || props?.destination || null}
+            renderMode="inline"
+            {...props}
+          />
+        );
       case 'account-new':
         return <AccountDrawerNew isOpen={open} onClose={closeDrawer} />;
       case 'trip-list':
@@ -131,6 +143,9 @@ export function PanelLayout({
   const panelTitle = type ? DRAWER_TITLES[type] || '' : '';
   const shouldShowInline = displayMode === 'inline' && !isMobile && open && panelContent;
 
+  // Check if type handles its own header (like destination)
+  const hasOwnHeader = type === 'destination';
+
   // Desktop inline mode: split pane
   if (shouldShowInline) {
     return (
@@ -148,10 +163,18 @@ export function PanelLayout({
           minSize={minPanelSize}
           maxSize={maxPanelSize}
         >
-          <div className="h-full flex flex-col bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800">
-            <PanelHeader title={panelTitle} onClose={closeDrawer} />
-            <ScrollArea className="flex-1">{panelContent}</ScrollArea>
-          </div>
+          {hasOwnHeader ? (
+            // Destination drawer handles its own layout
+            <div className="h-full border-l border-gray-200 dark:border-gray-800">
+              {panelContent}
+            </div>
+          ) : (
+            // Other drawers need wrapper with header
+            <div className="h-full flex flex-col bg-white dark:bg-gray-950 border-l border-gray-200 dark:border-gray-800">
+              <PanelHeader title={panelTitle} onClose={closeDrawer} />
+              <ScrollArea className="flex-1">{panelContent}</ScrollArea>
+            </div>
+          )}
         </ResizablePanel>
       </ResizablePanelGroup>
     );
@@ -199,6 +222,17 @@ export function InlinePanelContent() {
   let content: React.ReactNode = null;
 
   switch (type) {
+    case 'destination':
+      content = (
+        <DestinationDrawer
+          isOpen={open}
+          onClose={closeDrawer}
+          destination={props?.place || props?.destination || null}
+          renderMode="inline"
+          {...props}
+        />
+      );
+      break;
     case 'account-new':
       content = <AccountDrawerNew isOpen={open} onClose={closeDrawer} />;
       break;

@@ -83,6 +83,7 @@ interface DestinationDrawerProps {
   onDestinationClick?: (slug: string) => void;
   onEdit?: (destination: Destination) => void; // Callback for editing destination
   onDestinationUpdate?: () => void; // Callback when destination is updated/deleted
+  renderMode?: 'drawer' | 'inline'; // 'inline' renders without Drawer wrapper for split-pane
 }
 
 function capitalizeCity(city: string): string {
@@ -201,7 +202,7 @@ function parseTime(timeStr: string): number {
   return hours * 60 + minutes;
 }
 
-export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick, onEdit, onDestinationUpdate }: DestinationDrawerProps) {
+export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, onVisitToggle, onDestinationClick, onEdit, onDestinationUpdate, renderMode = 'drawer' }: DestinationDrawerProps) {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [isReviewersExpanded, setIsReviewersExpanded] = useState(false);
   const [isContactExpanded, setIsContactExpanded] = useState(false);
@@ -1687,30 +1688,9 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     </div>
   );
 
-  return (
-    <>
-      <Drawer
-        isOpen={isOpen}
-        onClose={onClose}
-        mobileVariant="side"
-        desktopSpacing="right-4 top-4 bottom-4"
-        desktopWidth="420px"
-        position="right"
-        style="glassy"
-        backdropOpacity="18"
-        keepStateOnClose={true}
-        zIndex={9999}
-        headerContent={headerContent}
-        footerContent={
-          <>
-            {/* Mobile Footer */}
-            <div className="md:hidden">{mobileFooterContent}</div>
-            {/* Desktop Footer */}
-            <div className="hidden md:block">{desktopFooterContent}</div>
-          </>
-        }
-      >
-        <div className="p-6">
+  // Main content that can be rendered in drawer or inline
+  const mainContent = (
+    <div className="p-6">
           {(addToTripError || actionError) && (
             <div className="mb-4 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3 flex gap-2 text-xs text-red-800 dark:text-red-200">
               <AlertCircle className="h-4 w-4 mt-0.5" />
@@ -3601,6 +3581,99 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           </>
           )}
         </div>
+  );
+
+  // Return based on render mode
+  if (renderMode === 'inline') {
+    // Inline mode for split-pane - render without Drawer wrapper
+    if (!isOpen) return null;
+
+    return (
+      <>
+        <div className="h-full flex flex-col bg-white dark:bg-gray-950">
+          {/* Inline Header */}
+          {headerContent}
+
+          {/* Scrollable Content */}
+          <div className="flex-1 overflow-y-auto">
+            {mainContent}
+          </div>
+
+          {/* Footer */}
+          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800">
+            {desktopFooterContent}
+          </div>
+        </div>
+
+        {/* Modals still need to be rendered */}
+        {destination?.id && (
+          <SaveDestinationModal
+            destinationId={destination.id}
+            destinationSlug={destination.slug}
+            isOpen={showSaveModal}
+            onClose={async () => {
+              setShowSaveModal(false);
+              if (user && destination?.slug) {
+                try {
+                  const supabase = createClient();
+                  const { data } = await supabase
+                    .from('saved_places')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .eq('destination_slug', destination.slug)
+                    .maybeSingle();
+                  setIsSaved(!!data);
+                } catch (error) {
+                  console.error('Error checking saved status:', error);
+                }
+              }
+            }}
+          />
+        )}
+        {destination && (
+          <VisitedModal
+            destinationSlug={destination.slug}
+            destinationName={destination.name}
+            isOpen={showVisitedModal}
+            onClose={() => setShowVisitedModal(false)}
+            onUpdate={async () => {
+              setShowVisitedModal(false);
+              setIsVisited(true);
+              if (destination.slug) {
+                onVisitToggle?.(destination.slug, true);
+              }
+            }}
+          />
+        )}
+      </>
+    );
+  }
+
+  // Default drawer mode
+  return (
+    <>
+      <Drawer
+        isOpen={isOpen}
+        onClose={onClose}
+        mobileVariant="side"
+        desktopSpacing="right-4 top-4 bottom-4"
+        desktopWidth="420px"
+        position="right"
+        style="glassy"
+        backdropOpacity="18"
+        keepStateOnClose={true}
+        zIndex={9999}
+        headerContent={headerContent}
+        footerContent={
+          <>
+            {/* Mobile Footer */}
+            <div className="md:hidden">{mobileFooterContent}</div>
+            {/* Desktop Footer */}
+            <div className="hidden md:block">{desktopFooterContent}</div>
+          </>
+        }
+      >
+        {mainContent}
       </Drawer>
 
       {/* Save Destination Modal */}
