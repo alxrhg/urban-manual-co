@@ -6,7 +6,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { createClient } from '@/lib/supabase/client';
-import { Drawer } from '@/components/ui/Drawer';
+import {
+  Sheet,
+  SheetContent,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -152,43 +155,45 @@ export function AccountDrawer() {
   // Logged out state
   if (!user) {
     return (
-      <Drawer isOpen={isOpen} onClose={closeDrawer} position="right">
-        <div className="flex h-full flex-col">
-          <div className="p-6 pb-2">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Welcome</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Sign in to access your personal travel guide
-            </p>
-          </div>
-
-          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-              <User className="h-8 w-8 text-gray-400" />
+      <Sheet open={isOpen} onOpenChange={(open) => !open && closeDrawer()}>
+        <SheetContent side="card-right" className="flex flex-col p-0" hideCloseButton>
+          <div className="flex h-full flex-col">
+            <div className="p-6 pb-2">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Welcome</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Sign in to access your personal travel guide
+              </p>
             </div>
-            <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-              Sign in to Urban Manual
-            </h3>
-            <p className="mb-8 max-w-xs text-sm text-gray-500 dark:text-gray-400">
-              Unlock your personal travel guide. Save places, create trips, and sync across devices.
-            </p>
 
-            <Button
-              onClick={() => openDrawer('login')}
-              className="w-full"
-              size="lg"
-            >
-              Sign In / Sign Up
-            </Button>
+            <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
+              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
+                <User className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
+                Sign in to Urban Manual
+              </h3>
+              <p className="mb-8 max-w-xs text-sm text-gray-500 dark:text-gray-400">
+                Unlock your personal travel guide. Save places, create trips, and sync across devices.
+              </p>
+
+              <Button
+                onClick={() => openDrawer('login')}
+                className="w-full"
+                size="lg"
+              >
+                Sign In / Sign Up
+              </Button>
+            </div>
           </div>
-        </div>
-      </Drawer>
+        </SheetContent>
+      </Sheet>
     );
   }
 
   // Logged in state
   return (
-    <Drawer isOpen={isOpen} onClose={closeDrawer} position="right">
-      <div className="flex h-full flex-col bg-white dark:bg-gray-950">
+    <Sheet open={isOpen} onOpenChange={(open) => !open && closeDrawer()}>
+      <SheetContent side="card-right" className="flex flex-col p-0" hideCloseButton>
         {/* Header with profile */}
         <div className="p-6 pb-4">
           <div className="flex items-start gap-4">
@@ -312,7 +317,7 @@ export function AccountDrawer() {
             Sign Out
           </Button>
         </div>
-      </div>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 }

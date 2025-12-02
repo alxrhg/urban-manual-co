@@ -21,7 +21,7 @@ const SheetOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-black/20 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -31,7 +31,7 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = DialogPrimitive.Overlay.displayName
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-white dark:bg-gray-900 p-6 shadow-2xl transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
+  "fixed z-50 gap-4 bg-white dark:bg-gray-950 shadow-2xl transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
   {
     variants: {
       side: {
@@ -41,6 +41,11 @@ const sheetVariants = cva(
         left: "inset-y-0 left-0 h-full w-3/4 border-r border-gray-200 dark:border-gray-800 data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm",
         right:
           "inset-y-0 right-0 h-full w-3/4 border-l border-gray-200 dark:border-gray-800 data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
+        // Card variants - floating with margins and rounded corners
+        "card-right":
+          "top-4 bottom-4 right-4 w-[calc(100%-2rem)] max-w-md rounded-2xl border border-gray-200 dark:border-gray-800 ring-1 ring-black/5 dark:ring-white/5 data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right max-md:inset-x-0 max-md:top-auto max-md:right-0 max-md:bottom-0 max-md:w-full max-md:max-w-full max-md:rounded-b-none max-md:rounded-t-[28px] max-md:max-h-[96vh]",
+        "card-left":
+          "top-4 bottom-4 left-4 w-[calc(100%-2rem)] max-w-md rounded-2xl border border-gray-200 dark:border-gray-800 ring-1 ring-black/5 dark:ring-white/5 data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left max-md:inset-x-0 max-md:top-auto max-md:left-0 max-md:bottom-0 max-md:w-full max-md:max-w-full max-md:rounded-b-none max-md:rounded-t-[28px] max-md:max-h-[96vh]",
       },
     },
     defaultVariants: {
@@ -51,12 +56,14 @@ const sheetVariants = cva(
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  hideCloseButton?: boolean;
+}
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
+>(({ side = "right", className, children, hideCloseButton = false, ...props }, ref) => (
   <SheetPortal>
     <SheetOverlay />
     <DialogPrimitive.Content
@@ -64,10 +71,12 @@ const SheetContent = React.forwardRef<
       className={cn(sheetVariants({ side }), className)}
       {...props}
     >
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-2 opacity-70 transition-opacity hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
+      {!hideCloseButton && (
+        <DialogPrimitive.Close className="absolute right-4 top-4 z-10 rounded-full p-2 opacity-70 transition-opacity hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 disabled:pointer-events-none">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      )}
       {children}
     </DialogPrimitive.Content>
   </SheetPortal>
