@@ -675,12 +675,9 @@ export default function HomePageClient({
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const fallbackDestinationsRef = useRef<Destination[] | null>(null);
-  const discoveryBootstrapRef = useRef<Destination[] | null>(null);
-  const discoveryBootstrapPromiseRef = useRef<Promise<Destination[]> | null>(
-    null
-  );
-  // Track whether Discovery Engine is available - null means not checked yet
-  const discoveryEngineAvailableRef = useRef<boolean | null>(null);
+  // Cache for AI-powered search bootstrap
+  const aiSearchBootstrapRef = useRef<Destination[] | null>(null);
+  const aiSearchBootstrapPromiseRef = useRef<Promise<Destination[]> | null>(null);
   const lastSearchedQueryRef = useRef<string>(""); // Track last searched query to prevent duplicates
 
   // Loading text variants
@@ -822,9 +819,9 @@ export default function HomePageClient({
     }
   };
 
-  // Helper function to apply Discovery Engine data (reduces code duplication)
-  const applyDiscoveryEngineData = async (
-    discoveryBaseline: Destination[],
+  // Helper function to apply AI search data (reduces code duplication)
+  const applyAISearchData = async (
+    searchResults: Destination[],
     options: {
       updateDestinations?: boolean;
       updateFilters?: boolean;
@@ -837,35 +834,33 @@ export default function HomePageClient({
       compareWithExisting,
     } = options;
 
-    if (!discoveryBaseline.length) {
+    if (!searchResults.length) {
       return false;
     }
 
     if (updateFilters) {
-      const { cities: discoveryCities, categories: discoveryCategories } =
-        extractFilterOptions(discoveryBaseline);
+      const { cities: searchCities, categories: searchCategories } =
+        extractFilterOptions(searchResults);
 
       if (compareWithExisting) {
-        // Only update if Discovery Engine has more options
-        if (discoveryCities.length > compareWithExisting.cities.length) {
-          setCities(discoveryCities);
+        // Only update if AI search has more options
+        if (searchCities.length > compareWithExisting.cities.length) {
+          setCities(searchCities);
         }
-        if (
-          discoveryCategories.length > compareWithExisting.categories.length
-        ) {
-          setCategories(discoveryCategories);
+        if (searchCategories.length > compareWithExisting.categories.length) {
+          setCategories(searchCategories);
         }
       } else {
         // Always update if no comparison
-        setCities(discoveryCities);
-        setCategories(discoveryCategories);
+        setCities(searchCities);
+        setCategories(searchCategories);
       }
     }
 
     if (updateDestinations) {
-      setDestinations(discoveryBaseline);
+      setDestinations(searchResults);
       const filtered = filterDestinationsWithData(
-        discoveryBaseline,
+        searchResults,
         "",
         {},
         "",
@@ -879,161 +874,66 @@ export default function HomePageClient({
     return true;
   };
 
-  const fetchDiscoveryBootstrap = async (): Promise<Destination[]> => {
-    // Skip if we already know Discovery Engine is unavailable
-    if (discoveryEngineAvailableRef.current === false) {
-      return [];
+  /**
+   * Fetch initial destinations using OpenAI-powered semantic search
+   * Uses /api/search which leverages OpenAI embeddings for vector search
+   */
+  const fetchAISearchBootstrap = async (): Promise<Destination[]> => {
+    // Return cached data if available
+    if (aiSearchBootstrapRef.current !== null) {
+      return aiSearchBootstrapRef.current;
     }
 
-    if (discoveryBootstrapRef.current !== null) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log("[Discovery Engine] Using cached bootstrap data");
-      }
-      return discoveryBootstrapRef.current;
-    }
-
-    if (discoveryBootstrapPromiseRef.current) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log("[Discovery Engine] Waiting for existing bootstrap request");
-      }
-      return discoveryBootstrapPromiseRef.current;
+    // Wait for existing request if in progress
+    if (aiSearchBootstrapPromiseRef.current) {
+      return aiSearchBootstrapPromiseRef.current;
     }
 
     const promise = (async () => {
       const startTime = Date.now();
       try {
-        if (process.env.NODE_ENV === 'development') {
-          console.log("[Discovery Engine] Starting bootstrap request...");
-        }
-        const response = await fetch("/api/search/discovery", {
+        // Use the OpenAI-powered search endpoint
+        const response = await fetch("/api/search", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            query: "top destinations",
-            pageSize: 200,
+            query: "popular destinations travel recommendations",
             userId: user?.id,
             filters: {},
           }),
         });
 
-        const elapsed = Date.now() - startTime;
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[Discovery Engine] Response received (${elapsed}ms):`, {
-            status: response.status,
-            statusText: response.statusText,
-            ok: response.ok,
-          });
-        }
-
         if (!response.ok) {
-          if (response.status === 503) {
-            // 503 is expected when Discovery Engine is not configured - mark as unavailable
-            // to skip future calls and use Supabase fallback
-            discoveryEngineAvailableRef.current = false;
-            if (process.env.NODE_ENV === 'development') {
-              console.debug(
-                "[Discovery Engine] Service unavailable (503) - Discovery Engine not configured, using Supabase fallback"
-              );
-            }
-          } else {
-            let errorDetails: Record<string, unknown> | null = null;
-            try {
-              errorDetails = (await response.json()) as Record<string, unknown>;
-            } catch {
-              // Ignore parse errors and fall back to status text
-            }
-            const detailMessage =
-              (typeof errorDetails?.error === "string" && errorDetails.error) ||
-              (typeof errorDetails?.details === "string" &&
-                errorDetails.details) ||
-              response.statusText;
-            if (process.env.NODE_ENV === 'development') {
-              console.warn("[Discovery Engine] Bootstrap request failed:", {
-                status: response.status,
-                message: detailMessage,
-              });
-              console.debug("[Discovery Engine] Falling back to Supabase only");
-            }
-          }
-
-          discoveryBootstrapRef.current = null;
+          console.warn("[AI Search] Bootstrap request failed:", response.status);
+          aiSearchBootstrapRef.current = null;
           return [];
         }
 
-        const payload: {
-          results?: unknown;
-          source?: string;
-          fallback?: boolean;
-          available?: boolean;
-        } = await response.json().catch(() => ({ results: [] as unknown[] }));
+        const payload = await response.json();
+        const results = Array.isArray(payload.results) ? payload.results : [];
 
-        // Mark Discovery Engine as available on successful response
-        if (payload.available !== false) {
-          discoveryEngineAvailableRef.current = true;
+        aiSearchBootstrapRef.current = results;
+
+        if (process.env.NODE_ENV === 'development' && results.length > 0) {
+          console.log(
+            `[AI Search] Bootstrapped ${results.length} destinations (${Date.now() - startTime}ms)`,
+            { searchTier: payload.searchTier }
+          );
         }
 
-        const normalized = Array.isArray(payload.results)
-          ? payload.results
-              .map(normalizeDiscoveryEngineRecord)
-              .filter((item): item is Destination => Boolean(item))
-          : [];
-
-        discoveryBootstrapRef.current = normalized;
-
-        if (normalized.length > 0) {
-          if (process.env.NODE_ENV === 'development') {
-            console.log(
-              `[Discovery Engine] Successfully bootstrapped ${normalized.length} destinations`,
-              {
-                source: payload.source || "unknown",
-                fallback: payload.fallback || false,
-                elapsed: `${Date.now() - startTime}ms`,
-              }
-            );
-          }
-        } else {
-          if (process.env.NODE_ENV === 'development') {
-            console.warn(
-              "[Discovery Engine] Bootstrap returned no destinations",
-              {
-                source: payload.source || "unknown",
-                fallback: payload.fallback || false,
-              }
-            );
-          }
-        }
-
-        return normalized;
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        // Mark as unavailable on configuration/503 errors to skip future calls
-        if (message.includes("503") || message.includes("not configured") || message.includes("disabled")) {
-          discoveryEngineAvailableRef.current = false;
-        }
-        // Only warn if it's not a 503/configuration error
-        if (process.env.NODE_ENV === 'development') {
-          if (!message.includes("503") && !message.includes("not configured") && !message.includes("disabled")) {
-            console.warn("[Discovery Engine] Bootstrap failed:", message, {
-              elapsed: `${Date.now() - startTime}ms`,
-            });
-          } else {
-            console.debug(
-              "[Discovery Engine] Bootstrap failed (expected):",
-              message
-            );
-          }
-          console.debug("[Discovery Engine] Falling back to Supabase only");
-        }
-        discoveryBootstrapRef.current = null;
+        return results;
+      } catch (error) {
+        console.warn("[AI Search] Bootstrap failed:", error);
+        aiSearchBootstrapRef.current = null;
         return [];
       } finally {
-        discoveryBootstrapPromiseRef.current = null;
+        aiSearchBootstrapPromiseRef.current = null;
       }
     })();
 
-    discoveryBootstrapPromiseRef.current = promise;
+    aiSearchBootstrapPromiseRef.current = promise;
     return promise;
   };
 
@@ -1047,7 +947,7 @@ export default function HomePageClient({
     // Skip client-side fetching if we have SSR data
     // This significantly improves initial page load time
     if (hasSSRData) {
-      // We already have data from SSR, just enhance with Discovery Engine if needed
+      // We already have data from SSR, just enhance with AI Search if needed
       void fetchFilterData();
       return;
     }
@@ -1285,10 +1185,10 @@ export default function HomePageClient({
   // and updates selectedCity/selectedCategory when needed, avoiding duplicate filter initialization
 
   // Fetch filter data (cities and categories) first for faster initial display
-  // OPTIMIZED: Call Discovery Engine once at start, reuse result throughout
+  // OPTIMIZED: Call AI Search once at start, reuse result throughout
   const fetchFilterData = async () => {
-    // OPTIMIZATION: Call Discovery Engine once at the start (cached by ref)
-    const discoveryBaselinePromise = fetchDiscoveryBootstrap();
+    // OPTIMIZATION: Call AI Search once at the start (cached by ref)
+    const aiSearchPromise = fetchAISearchBootstrap();
 
     try {
       if (process.env.NODE_ENV === 'development') {
@@ -1341,18 +1241,18 @@ export default function HomePageClient({
           }
         }
 
-        const discoveryBaseline = await discoveryBaselinePromise;
-        if (discoveryBaseline.length) {
+        const aiSearchResults = await aiSearchPromise;
+        if (aiSearchResults.length) {
           const { cities: discoveryCities, categories: discoveryCategories } =
-            extractFilterOptions(discoveryBaseline);
+            extractFilterOptions(aiSearchResults);
           React.startTransition(() => {
             setCities(discoveryCities);
             setCategories(discoveryCategories);
           });
           if (destinations.length === 0) {
-            setDestinations(discoveryBaseline);
+            setDestinations(aiSearchResults);
             const filtered = filterDestinationsWithData(
-              discoveryBaseline,
+              aiSearchResults,
               "",
               {},
               "",
@@ -1379,12 +1279,12 @@ export default function HomePageClient({
         setCategories(uniqueCategories);
       });
 
-      // OPTIMIZATION: Reuse the already-started Discovery Engine call
-      const discoveryBaseline = await discoveryBaselinePromise;
-      if (discoveryBaseline.length) {
+      // OPTIMIZATION: Reuse the already-started AI Search call
+      const aiSearchResults = await aiSearchPromise;
+      if (aiSearchResults.length) {
         const { cities: discoveryCities, categories: discoveryCategories } =
-          extractFilterOptions(discoveryBaseline);
-        // OPTIMIZATION: Batch state updates - only update if Discovery Engine has more
+          extractFilterOptions(aiSearchResults);
+        // OPTIMIZATION: Batch state updates - only update if AI Search has more
         const updates: { cities?: string[]; categories?: string[] } = {};
         if (discoveryCities.length > uniqueCities.length) {
           updates.cities = discoveryCities;
@@ -1399,8 +1299,8 @@ export default function HomePageClient({
           });
         }
         if (destinations.length === 0) {
-          setDestinations(discoveryBaseline);
-          const filtered = filterDestinationsWithData(discoveryBaseline);
+          setDestinations(aiSearchResults);
+          const filtered = filterDestinationsWithData(aiSearchResults);
           setFilteredDestinations(filtered);
         }
       }
@@ -1418,21 +1318,21 @@ export default function HomePageClient({
         console.warn("[Filter Data] Exception:", error?.message || error);
       }
 
-      // OPTIMIZATION: Reuse Discovery Engine call (already started)
+      // OPTIMIZATION: Reuse AI Search call (already started)
       try {
-        const discoveryBaseline = await discoveryBaselinePromise;
-        if (discoveryBaseline.length) {
+        const aiSearchResults = await aiSearchPromise;
+        if (aiSearchResults.length) {
           const { cities: discoveryCities, categories: discoveryCategories } =
-            extractFilterOptions(discoveryBaseline);
+            extractFilterOptions(aiSearchResults);
           // OPTIMIZATION: Batch state updates
           React.startTransition(() => {
             setCities(discoveryCities);
             setCategories(discoveryCategories);
           });
           if (destinations.length === 0) {
-            setDestinations(discoveryBaseline);
+            setDestinations(aiSearchResults);
             const filtered = filterDestinationsWithData(
-              discoveryBaseline,
+              aiSearchResults,
               "",
               {},
               "",
@@ -1734,16 +1634,16 @@ export default function HomePageClient({
           }
         }
 
-        const discoveryBaseline = await fetchDiscoveryBootstrap().catch(
+        const aiSearchResults = await fetchAISearchBootstrap().catch(
           () => []
         );
-        if (discoveryBaseline.length) {
-          setDestinations(discoveryBaseline);
+        if (aiSearchResults.length) {
+          setDestinations(aiSearchResults);
           // Don't filter destinations if there's an active AI chat search (submittedQuery)
           // AI chat handles its own filtering via performAISearch
           if (!submittedQuery) {
             const filtered = filterDestinationsWithData(
-              discoveryBaseline,
+              aiSearchResults,
               searchTerm,
               advancedFilters,
               selectedCity,
@@ -1755,7 +1655,7 @@ export default function HomePageClient({
             setFilteredDestinations(filtered);
           }
           const { cities: discoveryCities, categories: discoveryCategories } =
-            extractFilterOptions(discoveryBaseline);
+            extractFilterOptions(aiSearchResults);
           React.startTransition(() => {
             if (discoveryCities.length) setCities(discoveryCities);
             if (discoveryCategories.length) setCategories(discoveryCategories);
@@ -1794,12 +1694,12 @@ export default function HomePageClient({
       }
 
       setDiscoveryEngineLoading(true);
-      fetchDiscoveryBootstrap()
-        .then(discoveryBaseline => {
-          if (discoveryBaseline.length > 0) {
+      fetchAISearchBootstrap()
+        .then(aiSearchResults => {
+          if (aiSearchResults.length > 0) {
             const merged = [
               ...(destinationsData as Destination[]),
-              ...discoveryBaseline,
+              ...aiSearchResults,
             ];
             const uniqueMerged = merged.filter(
               (dest, index, self) =>
@@ -1827,7 +1727,7 @@ export default function HomePageClient({
               const {
                 cities: discoveryCities,
                 categories: discoveryCategories,
-              } = extractFilterOptions(discoveryBaseline);
+              } = extractFilterOptions(aiSearchResults);
               const updates: { cities?: string[]; categories?: string[] } = {};
               if (discoveryCities.length > uniqueCities.length) {
                 updates.cities = discoveryCities;
@@ -1845,7 +1745,7 @@ export default function HomePageClient({
           }
         })
         .catch(() => {
-          // Discovery Engine failed - that's fine, we already have initial data
+          // AI Search failed - that's fine, we already have initial data
         })
         .finally(() => {
           setDiscoveryEngineLoading(false);
@@ -1855,8 +1755,8 @@ export default function HomePageClient({
         console.warn("Error fetching destinations:", error?.message || error);
       }
 
-      const discoveryBaseline = await fetchDiscoveryBootstrap().catch(() => []);
-      if (!discoveryBaseline.length) {
+      const aiSearchResults = await fetchAISearchBootstrap().catch(() => []);
+      if (!aiSearchResults.length) {
         await applyFallbackData({ updateDestinations: true });
       }
     }
@@ -3140,7 +3040,7 @@ export default function HomePageClient({
                       });
                     }
 
-                    // Track click event to Discovery Engine for personalization
+                    // Track click event to AI Search for personalization
                     if (user?.id) {
                       fetch("/api/discovery/track-event", {
                         method: "POST",
@@ -3154,7 +3054,7 @@ export default function HomePageClient({
                       }).catch(error => {
                         if (process.env.NODE_ENV === 'development') {
                           console.warn(
-                            "Failed to track Discovery Engine event:",
+                            "Failed to track AI Search event:",
                             error
                           );
                         }

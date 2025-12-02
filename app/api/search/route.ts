@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { embedText } from '@/lib/llm';
+import { embedText, generateJSON } from '@/lib/llm';
 import {
   searchRatelimit,
   memorySearchRatelimit,
@@ -9,6 +9,22 @@ import {
 } from '@/lib/rate-limit';
 import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/errors';
+
+// Intent detection result type
+interface SearchIntent {
+  keywords: string[];
+  city?: string;
+  category?: string;
+  brand?: string;
+  mood?: string;
+  expandedQuery?: string;
+  filters?: {
+    openNow?: boolean;
+    priceLevel?: number;
+    rating?: number;
+    michelinStar?: number;
+  };
+}
 
 // Generate embedding for a query using OpenAI embeddings via provider-agnostic helper
 async function generateEmbedding(query: string): Promise<number[] | null> {
@@ -21,36 +37,75 @@ async function generateEmbedding(query: string): Promise<number[] | null> {
   }
 }
 
-// AI-powered query understanding (kept for filter extraction)
-async function understandQuery(query: string): Promise<{
-  keywords: string[];
-  city?: string;
-  category?: string;
-  brand?: string;
-  filters?: {
-    openNow?: boolean;
-    priceLevel?: number;
-    rating?: number;
-    michelinStar?: number;
-  };
-}> {
-  // For now, prefer lightweight, deterministic parsing to avoid external deps
+/**
+ * GPT-powered query understanding for better search intent detection
+ * Uses OpenAI to extract city, category, mood, price level, and expand the query
+ */
+async function understandQueryWithGPT(query: string): Promise<SearchIntent> {
+  try {
+    const systemPrompt = `You are a travel search intent analyzer. Extract search intent from user queries about destinations, restaurants, hotels, bars, cafes, and cultural spots.
+
+Return a JSON object with these fields:
+- city: the city name if mentioned (normalize to proper case, e.g., "Tokyo", "New York", "Paris")
+- category: one of "Restaurant", "Hotel", "Bar", "Cafe", "Culture", "Shop" if applicable
+- brand: hotel/restaurant brand if mentioned (e.g., "Aman", "Four Seasons", "Nobu")
+- mood: the vibe/mood if expressed (e.g., "romantic", "casual", "upscale", "trendy", "cozy", "family-friendly")
+- priceLevel: 1-4 if price is mentioned (1=budget, 2=moderate, 3=upscale, 4=luxury)
+- rating: minimum rating if quality is emphasized (e.g., "best" = 4.5, "top" = 4.0)
+- michelinStar: 1-3 if Michelin is mentioned
+- keywords: array of important search terms not covered by other fields
+- expandedQuery: an enhanced version of the query for better semantic search
+
+Be concise. Only include fields that are clearly implied by the query.`;
+
+    const result = await generateJSON(systemPrompt, query);
+
+    if (result) {
+      return {
+        keywords: result.keywords || [],
+        city: result.city,
+        category: result.category,
+        brand: result.brand,
+        mood: result.mood,
+        expandedQuery: result.expandedQuery,
+        filters: {
+          priceLevel: result.priceLevel,
+          rating: result.rating,
+          michelinStar: result.michelinStar,
+        },
+      };
+    }
+  } catch (error) {
+    console.warn('[Search API] GPT intent detection failed, using fallback:', error);
+  }
+
+  // Fallback to regex-based parsing
   return parseQueryFallback(query);
 }
 
+// AI-powered query understanding with GPT fallback
+async function understandQuery(query: string): Promise<SearchIntent> {
+  // Use GPT for better intent detection
+  return understandQueryWithGPT(query);
+}
+
 // Fallback parser if AI is unavailable
-function parseQueryFallback(query: string): {
-  keywords: string[];
-  city?: string;
-  category?: string;
-  brand?: string;
-  filters?: any;
-} {
+function parseQueryFallback(query: string): SearchIntent {
   const lowerQuery = query.toLowerCase();
   const words = query.split(/\s+/);
 
-  const cities = ['tokyo', 'paris', 'new york', 'london', 'rome', 'barcelona', 'berlin', 'amsterdam', 'sydney', 'dubai'];
-  const categories = ['restaurant', 'cafe', 'hotel', 'bar', 'shop', 'museum', 'park', 'temple', 'shrine'];
+  // Expanded city list
+  const cities = [
+    'tokyo', 'paris', 'new york', 'london', 'rome', 'barcelona', 'berlin',
+    'amsterdam', 'sydney', 'dubai', 'hong kong', 'singapore', 'bangkok',
+    'los angeles', 'san francisco', 'miami', 'chicago', 'seattle',
+    'kyoto', 'osaka', 'milan', 'florence', 'venice', 'lisbon', 'madrid',
+    'copenhagen', 'stockholm', 'vienna', 'prague', 'budapest', 'athens',
+    'marrakech', 'cape town', 'melbourne', 'toronto', 'vancouver', 'montreal',
+    'mexico city', 'buenos aires', 'rio de janeiro', 'seoul', 'taipei'
+  ];
+
+  const categories = ['restaurant', 'cafe', 'hotel', 'bar', 'shop', 'museum', 'park', 'temple', 'shrine', 'gallery', 'culture'];
 
   // Common hotel/restaurant brands
   const brands = [
@@ -58,14 +113,38 @@ function parseQueryFallback(query: string): {
     'peninsula', 'park hyatt', 'rosewood', 'bulgari', 'belmond',
     'six senses', 'one&only', 'shangri-la', 'st regis', 'raffles',
     'como', 'w hotels', 'edition', 'soho house', 'ace hotel',
-    'marriott', 'hilton', 'hyatt', 'intercontinental', 'fairmont'
+    'marriott', 'hilton', 'hyatt', 'intercontinental', 'fairmont',
+    'nobu', 'momofuku', 'shake shack', 'eleven madison', 'noma'
   ];
+
+  // Mood indicators
+  const moodIndicators: Record<string, string> = {
+    'romantic': 'romantic', 'date': 'romantic', 'anniversary': 'romantic',
+    'casual': 'casual', 'relaxed': 'casual', 'laid-back': 'casual',
+    'fancy': 'upscale', 'upscale': 'upscale', 'fine dining': 'upscale', 'elegant': 'upscale',
+    'trendy': 'trendy', 'hip': 'trendy', 'cool': 'trendy', 'instagram': 'trendy',
+    'cozy': 'cozy', 'intimate': 'cozy', 'quiet': 'cozy',
+    'family': 'family-friendly', 'kids': 'family-friendly', 'children': 'family-friendly',
+    'business': 'business', 'meeting': 'business', 'work': 'business',
+  };
+
+  // Price level indicators
+  const priceIndicators: Record<string, number> = {
+    'cheap': 1, 'budget': 1, 'affordable': 1, 'inexpensive': 1,
+    'moderate': 2, 'mid-range': 2, 'reasonable': 2,
+    'upscale': 3, 'nice': 3, 'fancy': 3,
+    'luxury': 4, 'expensive': 4, 'high-end': 4, 'splurge': 4,
+  };
 
   let city: string | undefined;
   let category: string | undefined;
   let brand: string | undefined;
+  let mood: string | undefined;
+  let priceLevel: number | undefined;
+  let rating: number | undefined;
   const keywords: string[] = [];
 
+  // Extract city
   for (const cityName of cities) {
     if (lowerQuery.includes(cityName)) {
       city = cityName;
@@ -73,6 +152,7 @@ function parseQueryFallback(query: string): {
     }
   }
 
+  // Extract category
   for (const cat of categories) {
     if (lowerQuery.includes(cat)) {
       category = cat;
@@ -80,7 +160,7 @@ function parseQueryFallback(query: string): {
     }
   }
 
-  // Check for brand names in query
+  // Extract brand
   for (const brandName of brands) {
     if (lowerQuery.includes(brandName)) {
       brand = brandName;
@@ -88,16 +168,68 @@ function parseQueryFallback(query: string): {
     }
   }
 
-  for (const word of words) {
-    const lowerWord = word.toLowerCase();
-    if (!city?.includes(lowerWord) && !category?.includes(lowerWord) && !brand?.includes(lowerWord)) {
-      if (word.length > 2) {
-        keywords.push(word);
-      }
+  // Extract mood
+  for (const [indicator, moodValue] of Object.entries(moodIndicators)) {
+    if (lowerQuery.includes(indicator)) {
+      mood = moodValue;
+      break;
     }
   }
 
-  return { keywords, city, category, brand };
+  // Extract price level
+  for (const [indicator, level] of Object.entries(priceIndicators)) {
+    if (lowerQuery.includes(indicator)) {
+      priceLevel = level;
+      break;
+    }
+  }
+
+  // Extract quality indicators
+  if (lowerQuery.includes('best') || lowerQuery.includes('top rated')) {
+    rating = 4.5;
+  } else if (lowerQuery.includes('top') || lowerQuery.includes('great')) {
+    rating = 4.0;
+  }
+
+  // Extract michelin
+  let michelinStar: number | undefined;
+  if (lowerQuery.includes('michelin')) {
+    if (lowerQuery.includes('3 star') || lowerQuery.includes('three star')) {
+      michelinStar = 3;
+    } else if (lowerQuery.includes('2 star') || lowerQuery.includes('two star')) {
+      michelinStar = 2;
+    } else {
+      michelinStar = 1;
+    }
+  }
+
+  // Extract keywords (words not matched by other extractors)
+  for (const word of words) {
+    const lowerWord = word.toLowerCase();
+    if (
+      !city?.includes(lowerWord) &&
+      !category?.includes(lowerWord) &&
+      !brand?.includes(lowerWord) &&
+      !Object.keys(moodIndicators).includes(lowerWord) &&
+      !Object.keys(priceIndicators).includes(lowerWord) &&
+      word.length > 2
+    ) {
+      keywords.push(word);
+    }
+  }
+
+  return {
+    keywords,
+    city,
+    category,
+    brand,
+    mood,
+    filters: {
+      priceLevel,
+      rating,
+      michelinStar,
+    }
+  };
 }
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
@@ -194,8 +326,11 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     
     console.log('[Search API] Query:', query, 'Intent:', JSON.stringify(intent, null, 2));
 
-    // Generate embedding for vector search
-    const queryEmbedding = await generateEmbedding(query);
+    // Use expanded query for better semantic search if GPT provided one
+    const searchQuery = intent.expandedQuery || query;
+
+    // Generate embedding for vector search (use expanded query for better semantic matching)
+    const queryEmbedding = await generateEmbedding(searchQuery);
 
     let results: any[] = [];
     let searchTier = 'basic';
@@ -414,7 +549,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       }
     }
 
-    // Rank and sort results
+    // Rank and sort results with mood-aware boosting
     const lowerQuery = query.toLowerCase();
     const rankedResults = results
       .map((dest: any) => {
@@ -422,6 +557,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         const lowerName = (dest.name || '').toLowerCase();
         const lowerDesc = (dest.description || '').toLowerCase();
         const lowerCategory = (dest.category || '').toLowerCase();
+        const destTags = (dest.tags || dest.vibe_tags || []).map((t: string) => t?.toLowerCase() || '');
 
         // Boost for exact matches
         if (lowerName.includes(lowerQuery)) score += 0.2;
@@ -435,6 +571,33 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         // Boost for city match
         if (intent.city && dest.city && dest.city.toLowerCase().includes(intent.city.toLowerCase())) {
           score += 0.1;
+        }
+
+        // Boost for mood/vibe match (check tags and description)
+        if (intent.mood) {
+          const moodLower = intent.mood.toLowerCase();
+          if (destTags.some((tag: string) => tag.includes(moodLower))) {
+            score += 0.15; // Strong boost for tag match
+          }
+          if (lowerDesc.includes(moodLower)) {
+            score += 0.1; // Boost for description match
+          }
+          // Map mood to related terms for broader matching
+          const moodSynonyms: Record<string, string[]> = {
+            'romantic': ['intimate', 'date', 'couples', 'candlelit', 'elegant'],
+            'casual': ['relaxed', 'laid-back', 'informal', 'easy-going'],
+            'upscale': ['fine dining', 'elegant', 'sophisticated', 'luxury', 'premium'],
+            'trendy': ['hip', 'instagram', 'modern', 'stylish', 'cool'],
+            'cozy': ['warm', 'intimate', 'charming', 'comfortable'],
+            'family-friendly': ['kids', 'children', 'family', 'casual'],
+          };
+          const synonyms = moodSynonyms[moodLower] || [];
+          for (const syn of synonyms) {
+            if (destTags.some((tag: string) => tag.includes(syn)) || lowerDesc.includes(syn)) {
+              score += 0.05;
+              break;
+            }
+          }
         }
 
         // Boost for Michelin stars
@@ -466,14 +629,24 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       suggestions.push(`Try "best ${intent.category}s in Paris"`);
     }
 
-    // Generate AI insight banner if conversation context exists
+    // Generate AI insight banner based on detected intent or conversation context
     let aiInsightBanner: string | null = null;
-    if (conversationContext && (conversationContext.city || conversationContext.category)) {
-      const contextParts: string[] = [];
-      if (conversationContext.city) contextParts.push(conversationContext.city);
-      if (conversationContext.category) contextParts.push(conversationContext.category);
-      if (conversationContext.mood) contextParts.push(conversationContext.mood);
-      aiInsightBanner = `Tailored for ${contextParts.join(', ')}`;
+    const contextParts: string[] = [];
+
+    // Add detected intent elements
+    if (intent.mood) contextParts.push(intent.mood);
+    if (intent.city) contextParts.push(intent.city);
+    if (intent.category) contextParts.push(intent.category);
+
+    // Add conversation context elements if not already covered
+    if (conversationContext) {
+      if (conversationContext.city && !intent.city) contextParts.push(conversationContext.city);
+      if (conversationContext.category && !intent.category) contextParts.push(conversationContext.category);
+      if (conversationContext.mood && !intent.mood) contextParts.push(conversationContext.mood);
+    }
+
+    if (contextParts.length > 0) {
+      aiInsightBanner = `Tailored for ${contextParts.join(' • ')}`;
     }
 
     // Log search interaction (best-effort)
