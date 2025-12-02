@@ -18,6 +18,7 @@ interface DestinationCardProps {
   showQuickActions?: boolean;
   className?: string;
   onAddToTrip?: () => void;
+  parentDestinationName?: string;
 }
 
 /**
@@ -33,6 +34,7 @@ export const DestinationCard = memo(function DestinationCard({
   showQuickActions = true,
   className = '',
   onAddToTrip,
+  parentDestinationName,
 }: DestinationCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
@@ -220,6 +222,14 @@ export const DestinationCard = memo(function DestinationCard({
         >
           {destination.name}
         </h3>
+
+        {/* Parent Destination - Shows when nested inside another destination */}
+        {parentDestinationName && (
+          <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+            <MapPin className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">Inside {parentDestinationName}</span>
+          </div>
+        )}
 
         {/* Micro Description - Always show with fallback, stuck to title */}
         <div className="text-xs text-gray-600 dark:text-gray-400 line-clamp-1">

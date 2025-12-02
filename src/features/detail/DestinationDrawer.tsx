@@ -1011,9 +1011,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       try {
         // Load parent if this is a nested destination
         if (destination.parent_destination_id) {
-          const parent = await getParentDestination(supabaseClient, destination.id!);
-          setParentDestination(parent);
-      } else {
+          // Directly fetch parent by ID since we already have parent_destination_id
+          const { data: parent, error: parentError } = await supabaseClient
+            .from('destinations')
+            .select('*')
+            .eq('id', destination.parent_destination_id)
+            .single();
+
+          if (!parentError && parent) {
+            setParentDestination(parent as Destination);
+          } else {
+            console.warn('[DestinationDrawer] Failed to load parent destination:', parentError);
+            setParentDestination(null);
+          }
+        } else {
           setParentDestination(null);
         }
 
