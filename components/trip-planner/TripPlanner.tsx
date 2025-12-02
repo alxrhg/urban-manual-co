@@ -1,49 +1,35 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDrawerStore } from '@/lib/stores/drawer-store';
-import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTripEditor } from '@/lib/hooks/useTripEditor';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
-  Plane,
-  Hotel,
-  CalendarDays,
-  StickyNote,
-  Sparkles,
+  ArrowLeft,
   Plus,
+  Sparkles,
+  Settings2,
   Loader2,
 } from 'lucide-react';
-import { PageLoader } from '@/components/LoadingStates';
-import { TripHeader } from './TripHeader';
-import { TripDayCard } from './TripDayCard';
-import { TripEmptyState } from './TripEmptyState';
-import { TripFlightsTab } from './TripFlightsTab';
-import { TripHotelsTab } from './TripHotelsTab';
-import { TripNotesTab } from './TripNotesTab';
-import { TripSidebar } from './TripSidebar';
-import { AddToTripDialog } from './AddToTripDialog';
-import {
-  analyzeScheduleForWarnings,
-  detectConflicts,
-  checkClosureDays,
-} from '@/lib/intelligence/schedule-analyzer';
-import type { FlightData, ActivityData } from '@/types/trip';
 import { parseDestinations } from '@/types/trip';
+import { TripDayView } from './TripDayView';
+import { TripItemSheet } from './TripItemSheet';
+import { AddSheet } from './AddSheet';
+import { SettingsSheet } from './SettingsSheet';
+import { EmptyTrip } from './EmptyTrip';
+import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import type { Destination } from '@/types/destination';
-import type { PlannerWarning } from '@/lib/intelligence/types';
+import type { FlightData, TrainData, ActivityData } from '@/types/trip';
 
 export function TripPlanner() {
   const params = useParams();
   const router = useRouter();
   const tripId = params?.id as string;
   const { user } = useAuth();
-  const openDrawer = useDrawerStore((s) => s.openDrawer);
 
-  // Trip Editor Hook
   const {
     trip,
     days,
@@ -56,419 +42,238 @@ export function TripPlanner() {
     addActivity,
     removeItem,
     updateItemTime,
-    updateItemNotes,
     updateItem,
     refresh,
   } = useTripEditor({
     tripId,
     userId: user?.id,
-    onError: (error) => console.error('Trip editor error:', error),
+    onError: (error) => console.error('Trip error:', error),
   });
 
-  // Parse destinations for multi-city support
+  // UI State
+  const [selectedDay, setSelectedDay] = useState(1);
+  const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
+  const [showAddSheet, setShowAddSheet] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [isAIPlanning, setIsAIPlanning] = useState(false);
+
   const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
   const primaryCity = destinations[0] || '';
 
-  // UI State
-  const [selectedDayNumber, setSelectedDayNumber] = useState(1);
-  const [activeItemId, setActiveItemId] = useState<string | null>(null);
-  const [isAIPlanning, setIsAIPlanning] = useState(false);
-  const [activeTab, setActiveTab] = useState('itinerary');
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [warnings, setWarnings] = useState<PlannerWarning[]>([]);
-  const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [sidebarView, setSidebarView] = useState<'suggestions' | 'settings' | 'map' | 'item'>('suggestions');
+  const currentDay = days.find(d => d.dayNumber === selectedDay);
 
-  // Extract flights and hotels from itinerary
-  const flights = useMemo(() => {
-    return days.flatMap(d =>
-      d.items.filter(item => item.parsedNotes?.type === 'flight')
-        .map(item => ({ ...item, dayNumber: d.dayNumber }))
-    );
-  }, [days]);
+  // Handlers
+  const handleAddPlace = (destination: Destination) => {
+    addPlace(destination, selectedDay);
+    setShowAddSheet(false);
+  };
 
-  const hotels = useMemo(() => {
-    const hotelItems = days.flatMap(d =>
-      d.items.filter(item => item.parsedNotes?.type === 'hotel')
-        .map(item => ({ ...item, dayNumber: d.dayNumber }))
-    );
-    return hotelItems.sort((a, b) => {
-      if (!trip?.start_date) return (a.dayNumber || 0) - (b.dayNumber || 0);
-      const getDay = (h: typeof hotelItems[0]) => {
-        if (h.parsedNotes?.checkInDate) {
-          const tripStart = new Date(trip.start_date!);
-          const checkIn = new Date(h.parsedNotes.checkInDate);
-          return Math.floor((checkIn.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        }
-        return h.dayNumber;
-      };
-      return getDay(a) - getDay(b);
-    });
-  }, [days, trip?.start_date]);
+  const handleAddFlight = (data: FlightData) => {
+    addFlight(data, selectedDay);
+    setShowAddSheet(false);
+  };
 
-  // Generate trip warnings
-  useMemo(() => {
-    const newWarnings: PlannerWarning[] = [];
-    const scheduleItems = days.flatMap(d =>
-      d.items.map(item => ({
-        id: item.id,
-        title: item.title,
-        dayNumber: d.dayNumber,
-        time: item.time,
-        duration: item.parsedNotes?.duration,
-        category: item.parsedNotes?.category || item.destination?.category,
-        parsedNotes: item.parsedNotes,
-      }))
-    );
+  const handleAddTrain = (data: TrainData) => {
+    addTrain(data, selectedDay);
+    setShowAddSheet(false);
+  };
 
-    newWarnings.push(...analyzeScheduleForWarnings(scheduleItems));
-    newWarnings.push(...detectConflicts(scheduleItems));
-    newWarnings.push(...checkClosureDays(scheduleItems, trip?.start_date ?? undefined));
+  const handleAddActivity = (data: ActivityData) => {
+    addActivity(data, selectedDay);
+    setShowAddSheet(false);
+  };
 
-    days.forEach(day => {
-      if (day.items.length === 0) {
-        newWarnings.push({
-          id: `empty-day-${day.dayNumber}`,
-          type: 'timing',
-          severity: 'low',
-          message: `Day ${day.dayNumber} has no activities planned`,
-          suggestion: 'Add some places to fill your day',
-        });
-      }
-      if (day.items.length > 6) {
-        newWarnings.push({
-          id: `busy-day-${day.dayNumber}`,
-          type: 'timing',
-          severity: 'medium',
-          message: `Day ${day.dayNumber} looks very packed (${day.items.length} stops)`,
-          suggestion: 'Consider spreading activities across multiple days',
-        });
-      }
-    });
-
-    setWarnings(newWarnings.slice(0, 10));
-  }, [days, trip?.start_date]);
-
-  // Callbacks
-  const handleAddPlace = useCallback((destination: Destination, dayNumber?: number) => {
-    addPlace(destination, dayNumber || selectedDayNumber);
-    setShowAddDialog(false);
-  }, [addPlace, selectedDayNumber]);
-
-  const handleAddFlight = useCallback((flightData: FlightData) => {
-    addFlight(flightData, selectedDayNumber);
-    setShowAddDialog(false);
-  }, [addFlight, selectedDayNumber]);
-
-  const handleAddActivity = useCallback((activityData: ActivityData) => {
-    addActivity(activityData, selectedDayNumber);
-    setShowAddDialog(false);
-  }, [addActivity, selectedDayNumber]);
-
-  const handleEditItem = useCallback((item: EnrichedItineraryItem) => {
-    setSelectedItem(item);
-    setSidebarView('item');
-    setActiveItemId(item.id);
-  }, []);
-
-  const handleAIPlanning = async () => {
+  const handleAIPlan = async () => {
     if (!trip || !user || !primaryCity || !trip.start_date || !trip.end_date) {
-      setSidebarView('settings');
+      setShowSettings(true);
       return;
     }
 
+    setIsAIPlanning(true);
     try {
-      setIsAIPlanning(true);
-      const allItems = days.flatMap(day => day.items);
-
-      if (allItems.length > 0) {
-        const response = await fetch('/api/intelligence/smart-fill', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            city: primaryCity,
-            existingItems: allItems.map(item => ({
-              day: days.find(d => d.items.includes(item))?.dayNumber || 1,
-              time: item.time,
-              title: item.title,
-              destination_slug: item.destination_slug,
-              category: item.parsedNotes?.category || item.destination?.category,
-            })),
-            tripDays: days.length,
-          }),
-        });
-
-        if (response.ok) {
-          const result = await response.json();
-          for (const suggestion of result.suggestions || []) {
-            if (suggestion.destination) {
-              await addPlace(suggestion.destination, suggestion.day, suggestion.startTime);
-            }
-          }
-        }
-      } else {
-        const response = await fetch('/api/intelligence/multi-day-plan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            city: primaryCity,
-            startDate: trip.start_date,
-            endDate: trip.end_date,
-            userId: user.id,
-          }),
-        });
-
-        if (response.ok) {
-          await refresh();
-        }
-      }
-      await refresh();
+      const response = await fetch('/api/intelligence/multi-day-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city: primaryCity,
+          startDate: trip.start_date,
+          endDate: trip.end_date,
+          userId: user.id,
+        }),
+      });
+      if (response.ok) await refresh();
     } catch (err) {
-      console.error('AI Planning error:', err);
+      console.error('AI planning error:', err);
     } finally {
       setIsAIPlanning(false);
     }
   };
 
-  // Loading state
+  // Loading
   if (loading) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 bg-gray-50 dark:bg-gray-950 min-h-screen">
-        <PageLoader />
-      </main>
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
     );
   }
 
   // Not found
   if (!trip) {
     return (
-      <TripEmptyState
-        type="not-found"
-        onBack={() => router.push('/trips')}
-      />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white dark:bg-gray-950 px-6">
+        <p className="text-gray-500 mb-4">Trip not found</p>
+        <Button variant="outline" asChild>
+          <Link href="/trips">Back to trips</Link>
+        </Button>
+      </div>
     );
   }
 
   return (
-    <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <TripHeader
-          trip={trip}
-          destinations={destinations}
-          warnings={warnings}
-          onSettingsClick={() => setSidebarView('settings')}
-          onMapClick={() => setSidebarView('map')}
-          onDismissWarning={(id) => setWarnings(prev => prev.filter(w => w.id !== id))}
-        />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
+      {/* Header - Fixed */}
+      <header className="sticky top-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center justify-between px-4 h-14">
+          <Button variant="ghost" size="icon" asChild className="shrink-0">
+            <Link href="/trips">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
 
-        {/* Main Content */}
-        <div className="lg:flex lg:gap-6">
-          {/* Left Column - Main Content */}
-          <div className="flex-1 min-w-0">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="flex items-center justify-between gap-4 mb-4">
-                <TabsList>
-                  <TabsTrigger value="itinerary" className="gap-1.5">
-                    <CalendarDays className="w-4 h-4" />
-                    Itinerary
-                  </TabsTrigger>
-                  <TabsTrigger value="flights" className="gap-1.5">
-                    <Plane className="w-4 h-4" />
-                    Flights
-                    {flights.length > 0 && (
-                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                        {flights.length}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger value="hotels" className="gap-1.5">
-                    <Hotel className="w-4 h-4" />
-                    Hotels
-                    {hotels.length > 0 && (
-                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-                        {hotels.length}
-                      </Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger value="notes" className="gap-1.5">
-                    <StickyNote className="w-4 h-4" />
-                    Notes
-                  </TabsTrigger>
-                </TabsList>
-
-                {/* Quick Actions */}
-                <div className="hidden sm:flex items-center gap-2">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={handleAIPlanning}
-                    disabled={isAIPlanning || saving}
-                  >
-                    {isAIPlanning ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-4 h-4" />
-                    )}
-                    {isAIPlanning ? 'Planning...' : 'Auto-plan'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAddDialog(true)}
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add
-                  </Button>
-                </div>
-              </div>
-
-              {/* Itinerary Tab */}
-              <TabsContent value="itinerary" className="mt-0">
-                {days.length === 0 ? (
-                  <TripEmptyState
-                    type="no-days"
-                    onAddFirst={() => setShowAddDialog(true)}
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    {/* Day Selector */}
-                    <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                      {days.map((day) => (
-                        <Button
-                          key={day.dayNumber}
-                          variant={selectedDayNumber === day.dayNumber ? 'default' : 'outline'}
-                          size="sm"
-                          onClick={() => setSelectedDayNumber(day.dayNumber)}
-                          className="flex-shrink-0"
-                        >
-                          Day {day.dayNumber}
-                          {day.date && (
-                            <span className="ml-1 text-xs opacity-70">
-                              {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                            </span>
-                          )}
-                        </Button>
-                      ))}
-                    </div>
-
-                    {/* Edit Mode Toggle */}
-                    <div className="flex items-center justify-end">
-                      <Button
-                        variant={isEditMode ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setIsEditMode(!isEditMode)}
-                      >
-                        {isEditMode ? 'Done' : 'Edit'}
-                      </Button>
-                    </div>
-
-                    {/* Selected Day */}
-                    {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => (
-                      <TripDayCard
-                        key={day.dayNumber}
-                        day={day}
-                        isEditMode={isEditMode}
-                        activeItemId={activeItemId}
-                        onEditItem={handleEditItem}
-                        onRemoveItem={isEditMode ? removeItem : undefined}
-                        onAddItem={() => setShowAddDialog(true)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              {/* Flights Tab */}
-              <TabsContent value="flights" className="mt-0">
-                <TripFlightsTab
-                  flights={flights}
-                  onEditFlight={handleEditItem}
-                  onAddFlight={() => {
-                    openDrawer('add-flight', {
-                      tripId: trip.id,
-                      dayNumber: selectedDayNumber,
-                      onAdd: handleAddFlight,
-                    });
-                  }}
-                />
-              </TabsContent>
-
-              {/* Hotels Tab */}
-              <TabsContent value="hotels" className="mt-0">
-                <TripHotelsTab
-                  hotels={hotels}
-                  tripStartDate={trip.start_date}
-                  selectedItem={selectedItem}
-                  onEditHotel={handleEditItem}
-                  onAddHotel={() => setShowAddDialog(true)}
-                />
-              </TabsContent>
-
-              {/* Notes Tab */}
-              <TabsContent value="notes" className="mt-0">
-                <TripNotesTab tripId={trip.id} />
-              </TabsContent>
-            </Tabs>
+          <div className="flex-1 min-w-0 mx-3">
+            <h1 className="text-base font-semibold text-gray-900 dark:text-white truncate text-center">
+              {trip.title}
+            </h1>
+            {primaryCity && (
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center truncate">
+                {primaryCity}
+              </p>
+            )}
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
-            <TripSidebar
-              view={sidebarView}
-              trip={trip}
-              days={days}
-              destinations={destinations}
-              selectedDayNumber={selectedDayNumber}
-              selectedItem={selectedItem}
-              activeItemId={activeItemId}
-              onViewChange={setSidebarView}
-              onUpdateTrip={updateTrip}
-              onDeleteTrip={() => router.push('/trips')}
-              onUpdateItemTime={updateItemTime}
-              onUpdateItem={updateItem}
-              onRemoveItem={(id) => {
-                removeItem(id);
-                setSelectedItem(null);
-                setActiveItemId(null);
-              }}
-              onCloseItem={() => {
-                setSelectedItem(null);
-                setActiveItemId(null);
-                setSidebarView('suggestions');
-              }}
-              onMarkerClick={setActiveItemId}
-            />
-          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowSettings(true)}
+            className="shrink-0"
+          >
+            <Settings2 className="w-5 h-5" />
+          </Button>
         </div>
 
-        {/* Add Dialog */}
-        <AddToTripDialog
-          open={showAddDialog}
-          onOpenChange={setShowAddDialog}
-          city={primaryCity}
-          dayNumber={selectedDayNumber}
-          onAddPlace={handleAddPlace}
-          onAddFlight={handleAddFlight}
-          onAddActivity={handleAddActivity}
-          onAddTrain={(trainData) => {
-            addTrain(trainData, selectedDayNumber);
-            setShowAddDialog(false);
-          }}
-        />
+        {/* Day Pills - Scrollable */}
+        {days.length > 0 && (
+          <ScrollArea className="w-full">
+            <div className="flex gap-2 px-4 pb-3">
+              {days.map((day) => {
+                const isSelected = selectedDay === day.dayNumber;
+                const dateStr = day.date
+                  ? new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' })
+                  : null;
 
-        {/* Mobile Floating Action Button */}
-        <div className="fixed bottom-6 right-6 sm:hidden z-50">
+                return (
+                  <button
+                    key={day.dayNumber}
+                    onClick={() => setSelectedDay(day.dayNumber)}
+                    className={`
+                      flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors
+                      ${isSelected
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
+                      }
+                    `}
+                  >
+                    <span>Day {day.dayNumber}</span>
+                    {dateStr && (
+                      <span className={`ml-1.5 ${isSelected ? 'opacity-70' : 'text-gray-400 dark:text-gray-500'}`}>
+                        {dateStr}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <ScrollBar orientation="horizontal" className="invisible" />
+          </ScrollArea>
+        )}
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto pb-24">
+        {days.length === 0 ? (
+          <EmptyTrip onSetup={() => setShowSettings(true)} onAIPlan={handleAIPlan} />
+        ) : currentDay ? (
+          <TripDayView
+            day={currentDay}
+            onItemClick={setSelectedItem}
+            onAddClick={() => setShowAddSheet(true)}
+          />
+        ) : null}
+      </main>
+
+      {/* Bottom Action Bar - Fixed */}
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 safe-area-pb">
+        <div className="flex items-center justify-around px-4 py-3">
           <Button
-            size="lg"
-            onClick={() => setShowAddDialog(true)}
-            className="rounded-full shadow-lg h-14 w-14"
+            variant="ghost"
+            size="sm"
+            onClick={handleAIPlan}
+            disabled={isAIPlanning || saving}
+            className="flex-1"
           >
-            <Plus className="w-6 h-6" />
+            {isAIPlanning ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <Sparkles className="w-4 h-4 mr-2" />
+            )}
+            {isAIPlanning ? 'Planning...' : 'Auto-plan'}
+          </Button>
+
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-2" />
+
+          <Button
+            size="sm"
+            onClick={() => setShowAddSheet(true)}
+            className="flex-1"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
           </Button>
         </div>
       </div>
-    </main>
+
+      {/* Sheets */}
+      <TripItemSheet
+        item={selectedItem}
+        onClose={() => setSelectedItem(null)}
+        onTimeChange={(time) => selectedItem && updateItemTime(selectedItem.id, time)}
+        onUpdate={(updates) => selectedItem && updateItem(selectedItem.id, updates)}
+        onRemove={() => {
+          if (selectedItem) {
+            removeItem(selectedItem.id);
+            setSelectedItem(null);
+          }
+        }}
+      />
+
+      <AddSheet
+        open={showAddSheet}
+        onOpenChange={setShowAddSheet}
+        city={primaryCity}
+        onAddPlace={handleAddPlace}
+        onAddFlight={handleAddFlight}
+        onAddTrain={handleAddTrain}
+        onAddActivity={handleAddActivity}
+      />
+
+      <SettingsSheet
+        open={showSettings}
+        onOpenChange={setShowSettings}
+        trip={trip}
+        onUpdate={updateTrip}
+        onDelete={() => router.push('/trips')}
+      />
+    </div>
   );
 }
