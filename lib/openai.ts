@@ -67,9 +67,9 @@ export const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-5-nano';
 export const OPENAI_MODEL_COMPLEX = process.env.OPENAI_MODEL_COMPLEX || 'gpt-5';
 // GPT-4.1: Best non-reasoning model for vision/image analysis
 export const OPENAI_MODEL_VISION = process.env.OPENAI_MODEL_VISION || 'gpt-4.1';
-// text-embedding-3-small: 1536-dim embedding model (matches existing DB embeddings)
-// Note: text-embedding-3-large produces 3072 dims which requires DB schema change
-export const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-small';
+// text-embedding-3-large: 3072-dim embedding model (best quality)
+// Note: Requires DB schema to support 3072 dimensions
+export const OPENAI_EMBEDDING_MODEL = process.env.OPENAI_EMBEDDING_MODEL || 'text-embedding-3-large';
 
 /**
  * Determine if a query is complex and should use GPT-5

@@ -6,12 +6,7 @@
 import { NextRequest } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { openai, OPENAI_MODEL } from '@/lib/openai';
-import {
-  genAI,
-  GEMINI_MODEL,
-  getGeminiModel,
-  isGeminiAvailable,
-} from '@/lib/gemini';
+// Note: Using OpenAI for all conversation (Gemini imports removed)
 import { URBAN_MANUAL_EDITOR_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';
 import { formatFewShots } from '@/lib/ai/fewShots';
 import {
@@ -34,17 +29,24 @@ import { embedText, generateJSON } from '@/lib/llm';
 
 const CONVERSATION_MODEL = process.env.OPENAI_CONVERSATION_MODEL || OPENAI_MODEL;
 
-// Simple, conversational system prompt for Gemini
-const CHAT_SYSTEM_PROMPT = `You are a friendly and knowledgeable travel assistant for Urban Manual. You help users discover amazing restaurants, hotels, cafes, and destinations from our curated collection.
+// Conversational system prompt for OpenAI - helps refine search through dialogue
+const CHAT_SYSTEM_PROMPT = `You are a friendly travel concierge for Urban Manual. Your job is to help users discover amazing places through natural conversation.
 
-Guidelines:
-- Be conversational, warm, and helpful - like talking to a knowledgeable friend
-- Only recommend places from our knowledge base (I'll provide search results)
-- If you don't have information about a place, say so honestly
-- Feel free to have natural conversations about travel, food, and destinations
-- Keep responses concise but engaging (2-4 sentences typically)
-- Ask follow-up questions when helpful
-- Be enthusiastic about great places but honest about limitations`;
+GUIDELINES:
+- Acknowledge their request and what you found (e.g., "Great choice! I've found some wonderful spots...")
+- DO NOT list specific place names - the results grid shows those
+- Ask ONE follow-up question to refine results if needed
+- Be warm, brief (1-2 sentences max), and natural
+- If they've given enough detail, just confirm and encourage exploring the results
+
+EXAMPLES:
+- User: "restaurants in tokyo" → "Tokyo has incredible dining! Are you looking for something specific - casual izakaya vibes, fine dining, or a particular cuisine?"
+- User: "romantic dinner" → "I've pulled some romantic spots! Intimate and cozy, or something more upscale?"
+- User: "best coffee" → "Got some great coffee spots! Looking for specialty beans, a work-friendly cafe, or just great ambiance?"
+- User: "casual ramen" → "Perfect! I've got some great casual ramen spots. Check out the results - any preference for style?"
+- User: "something trendy and instagrammable" → "Ooh I love that vibe! Found some gorgeous spots. Take a look at these!"
+
+Keep responses SHORT. One acknowledgment + one optional question. Let the grid do the showing.`;
 
 // Smart search interface
 interface SmartSearchResult {
@@ -61,13 +63,14 @@ interface SmartSearchResult {
 /**
  * GPT-powered smart search for conversation
  * Uses OpenAI for intent detection and Supabase for search
+ * Includes diversity and proper intent filtering
  */
 async function smartSearch(
   query: string,
   supabase: any,
   options?: { city?: string; category?: string; userId?: string }
 ): Promise<SmartSearchResult> {
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 20; // Fetch more for diversity
 
   // Extract intent using GPT
   let intent: any = {};
@@ -77,9 +80,10 @@ async function smartSearch(
 Return a JSON object with these fields:
 - city: the city name if mentioned (normalize to proper case, e.g., "Tokyo", "New York", "Paris")
 - category: one of "Restaurant", "Hotel", "Bar", "Cafe", "Culture", "Shop" if applicable
-- mood: the vibe/mood if expressed (e.g., "romantic", "casual", "upscale", "trendy", "cozy")
+- mood: the vibe/mood if expressed (e.g., "romantic", "casual", "upscale", "trendy", "cozy", "hidden gem", "local favorite", "instagram-worthy")
+- priceLevel: 1-4 if price is implied (1=budget, 2=moderate, 3=upscale, 4=luxury)
 - keywords: array of important search terms not covered by other fields
-- expandedQuery: an enhanced version of the query for better semantic search
+- expandedQuery: an enhanced version of the query that captures the full intent for semantic search
 
 Be concise. Only include fields that are clearly implied by the query.`;
 
@@ -89,6 +93,7 @@ Be concise. Only include fields that are clearly implied by the query.`;
         city: result.city || options?.city,
         category: result.category || options?.category,
         mood: result.mood,
+        priceLevel: result.priceLevel,
         keywords: result.keywords || [],
         expandedQuery: result.expandedQuery,
       };
@@ -101,24 +106,27 @@ Be concise. Only include fields that are clearly implied by the query.`;
   if (options?.city && !intent.city) intent.city = options.city;
   if (options?.category && !intent.category) intent.category = options.category;
 
-  // Use expanded query for better semantic search
-  const searchQuery = intent.expandedQuery || query;
+  // Build semantic search query that includes mood/vibe for better matching
+  let searchQuery = intent.expandedQuery || query;
+  if (intent.mood && !searchQuery.toLowerCase().includes(intent.mood.toLowerCase())) {
+    searchQuery = `${searchQuery} ${intent.mood} atmosphere vibe`;
+  }
 
   let results: any[] = [];
 
-  // Strategy 1: Vector similarity search
+  // Strategy 1: Vector similarity search with intent filters
   try {
     const embedding = await embedText(searchQuery);
     if (embedding) {
       const { data: vectorResults, error: vectorError } = await supabase.rpc('match_destinations', {
         query_embedding: embedding,
-        match_threshold: 0.7,
+        match_threshold: 0.65, // Lower threshold for more diversity
         match_count: PAGE_SIZE,
         filter_city: intent.city || null,
         filter_category: intent.category || null,
         filter_michelin_stars: null,
-        filter_min_rating: null,
-        filter_max_price_level: null,
+        filter_min_rating: intent.mood === 'upscale' || intent.mood === 'luxury' ? 4.0 : null,
+        filter_max_price_level: intent.priceLevel || null,
         filter_brand: null,
         search_query: query
       });
@@ -132,12 +140,12 @@ Be concise. Only include fields that are clearly implied by the query.`;
     console.log('[SmartSearch] Vector search not available, using fallback');
   }
 
-  // Strategy 2: Full-text search fallback
+  // Strategy 2: Full-text search fallback with category/mood filtering
   if (results.length === 0) {
     try {
       let fallbackQuery = supabase
         .from('destinations')
-        .select('slug, name, city, category, micro_description, description, image, michelin_stars, rating, price_level')
+        .select('slug, name, city, category, micro_description, description, image, michelin_stars, rating, price_level, vibe_tags')
         .limit(PAGE_SIZE);
 
       // Apply city filter
@@ -150,8 +158,13 @@ Be concise. Only include fields that are clearly implied by the query.`;
         fallbackQuery = fallbackQuery.ilike('category', `%${intent.category}%`);
       }
 
-      // Text search
-      fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%`);
+      // Apply price filter
+      if (intent.priceLevel) {
+        fallbackQuery = fallbackQuery.lte('price_level', intent.priceLevel);
+      }
+
+      // Order by rating for quality results
+      fallbackQuery = fallbackQuery.order('rating', { ascending: false, nullsFirst: false });
 
       const { data: fallbackResults } = await fallbackQuery;
       if (fallbackResults) {
@@ -168,8 +181,9 @@ Be concise. Only include fields that are clearly implied by the query.`;
     try {
       const { data: cityResults } = await supabase
         .from('destinations')
-        .select('slug, name, city, category, micro_description, description, image, michelin_stars, rating, price_level')
+        .select('slug, name, city, category, micro_description, description, image, michelin_stars, rating, price_level, vibe_tags')
         .ilike('city', `%${intent.city}%`)
+        .order('rating', { ascending: false, nullsFirst: false })
         .limit(PAGE_SIZE);
 
       if (cityResults && cityResults.length > 0) {
@@ -180,6 +194,46 @@ Be concise. Only include fields that are clearly implied by the query.`;
       console.error('[SmartSearch] City fallback error:', error);
     }
   }
+
+  // Add diversity: shuffle results slightly to avoid always showing the same order
+  if (results.length > 5) {
+    // Keep top 3, shuffle the rest
+    const top3 = results.slice(0, 3);
+    const rest = results.slice(3);
+    for (let i = rest.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [rest[i], rest[j]] = [rest[j], rest[i]];
+    }
+    results = [...top3, ...rest];
+  }
+
+  // Filter by mood if we have vibe_tags
+  if (intent.mood && results.length > 0) {
+    const moodLower = intent.mood.toLowerCase();
+    const moodSynonyms: Record<string, string[]> = {
+      'romantic': ['intimate', 'date', 'candlelit', 'cozy'],
+      'casual': ['relaxed', 'laid-back', 'chill', 'everyday'],
+      'upscale': ['fine dining', 'elegant', 'sophisticated', 'luxury'],
+      'trendy': ['hip', 'instagram', 'modern', 'stylish'],
+      'cozy': ['warm', 'intimate', 'homey', 'charming'],
+      'hidden gem': ['local', 'secret', 'underrated', 'off-the-beaten-path'],
+    };
+    const synonyms = [moodLower, ...(moodSynonyms[moodLower] || [])];
+
+    // Boost results that match the mood
+    results = results.map(r => {
+      const tags = (r.vibe_tags || []).map((t: string) => t?.toLowerCase() || '');
+      const desc = (r.description || '').toLowerCase();
+      const matchesMood = synonyms.some(syn => tags.includes(syn) || desc.includes(syn));
+      return { ...r, _moodMatch: matchesMood };
+    });
+
+    // Sort mood matches to the top
+    results.sort((a: any, b: any) => (b._moodMatch ? 1 : 0) - (a._moodMatch ? 1 : 0));
+  }
+
+  // Limit final results
+  results = results.slice(0, 10);
 
   // Generate AI insight banner
   let aiInsightBanner: string | undefined;
@@ -370,172 +424,44 @@ export async function POST(
             console.log('[Conversation] Smart search found', searchResults.length, 'results');
             console.log('[Conversation] Detected intent:', JSON.stringify(detectedIntent));
 
-            if (searchResults.length > 0) {
-              // Format search results for response generation
-              const resultsText = searchResults.slice(0, 5).map((r: any, idx: number) =>
-                `${idx + 1}. ${r.name} (${r.city}) - ${r.micro_description || r.description || r.category}${r.michelin_stars ? ` ⭐ ${r.michelin_stars} Michelin` : ''}${r.rating ? ` (${r.rating}/5)` : ''}`
-              ).join('\n');
+            // Build context info for the conversation
+            const moodContext = detectedIntent.mood ? `User vibe: ${detectedIntent.mood}.` : '';
+            const cityContext = detectedIntent.city ? `Looking in: ${detectedIntent.city}.` : '';
+            const categoryContext = detectedIntent.category ? `Category: ${detectedIntent.category}.` : '';
+            const resultCount = searchResults.length;
 
-              // Build a context-aware prompt based on detected intent
-              const moodContext = detectedIntent.mood ? `The user is looking for a ${detectedIntent.mood} vibe.` : '';
-              const cityContext = detectedIntent.city ? `They're interested in ${detectedIntent.city}.` : '';
-
-              // Use Gemini to generate a conversational response
-              if (genAI) {
-                try {
-                  const model = genAI.getGenerativeModel({
-                    model: GEMINI_MODEL,
-                    generationConfig: {
-                      temperature: 0.8,
-                      maxOutputTokens: 500,
-                    },
-                    systemInstruction: CHAT_SYSTEM_PROMPT,
-                  });
-
-                  // Build conversation history for chat
-                  const history = recentMessages.slice(-5).map((msg: any) => ({
-                    role: msg.role === 'user' ? 'user' : 'model',
-                    parts: [{ text: msg.content }],
-                  }));
-
-                  // Build the current prompt with search results and context
-                  const currentPrompt = `${contextInfo ? `Context: ${JSON.stringify({ ...session.context, ...contextUpdates })}\n\n` : ''}${moodContext} ${cityContext}
-
-Here are our top recommendations from the knowledge base:
-
-${resultsText}
-
-User asked: "${message}"
-
-${aiInsightBanner ? `(AI insight: ${aiInsightBanner})\n\n` : ''}Provide a helpful, conversational response recommending 2-3 specific places that best match their request. Be enthusiastic and mention what makes each place special.`;
-
-                  // Start chat with history if available
-                  let result;
-                  if (history.length > 0) {
-                    const chat = model.startChat({ history });
-                    result = await chat.sendMessageStream(currentPrompt);
-                  } else {
-                    result = await model.generateContentStream(currentPrompt);
-                  }
-
-                  for await (const chunk of result.stream) {
-                    const content = chunk.text();
-                    if (content) {
-                      assistantResponse += content;
-                      controller.enqueue(encoder.encode(createSSEMessage({
-                        type: 'chunk',
-                        content
-                      })));
-                    }
-                  }
-
-                  usedModel = `smart-search+${GEMINI_MODEL}`;
-                } catch (error: any) {
-                  console.error('Gemini response error:', error);
-                  // Fallback to smart formatted response (not generic!)
-                  const topPicks = searchResults.slice(0, 3);
-                  const moodDesc = detectedIntent.mood ? `${detectedIntent.mood} ` : '';
-                  const cityDesc = detectedIntent.city || 'your destination';
-
-                  assistantResponse = `Here are some ${moodDesc}spots I'd recommend in ${cityDesc}:\n\n${topPicks.map((r: any) =>
-                    `• **${r.name}** - ${r.micro_description || r.description || r.category}${r.michelin_stars ? ` (${r.michelin_stars}⭐ Michelin)` : ''}`
-                  ).join('\n')}\n\nWould you like more details on any of these?`;
-
-                  controller.enqueue(encoder.encode(createSSEMessage({
-                    type: 'chunk',
-                    content: assistantResponse
-                  })));
-                  usedModel = 'smart-search';
-                }
-              } else if (openai && openai.chat) {
-                // Use OpenAI if Gemini not available
-                try {
-                  const openaiMessages = [
-                    { role: 'system' as const, content: `${CHAT_SYSTEM_PROMPT}\n\n${moodContext} ${cityContext}\n\nHere are search results:\n${resultsText}` },
-                    ...recentMessages.map((msg: any) => ({
-                      role: (msg.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
-                      content: msg.content,
-                    })),
-                    { role: 'user' as const, content: message },
-                  ];
-
-                  const stream = await openai.chat.completions.create({
-                    model: CONVERSATION_MODEL,
-                    messages: openaiMessages,
-                    temperature: 0.9,
-                    max_tokens: 600,
-                    stream: true,
-                  });
-
-                  for await (const chunk of stream) {
-                    const content = chunk.choices?.[0]?.delta?.content || '';
-                    if (content) {
-                      assistantResponse += content;
-                      controller.enqueue(encoder.encode(createSSEMessage({
-                        type: 'chunk',
-                        content
-                      })));
-                    }
-                  }
-
-                  usedModel = `smart-search+${CONVERSATION_MODEL}`;
-                } catch (error: any) {
-                  console.error('OpenAI response error:', error);
-                }
-              } else {
-                // No LLM available - use smart formatted response
-                const topPicks = searchResults.slice(0, 3);
-                const moodDesc = detectedIntent.mood ? `${detectedIntent.mood} ` : '';
-                const cityDesc = detectedIntent.city || 'your destination';
-
-                assistantResponse = `Here are some ${moodDesc}spots I'd recommend in ${cityDesc}:\n\n${topPicks.map((r: any) =>
-                  `• **${r.name}** - ${r.micro_description || r.description || r.category}${r.michelin_stars ? ` (${r.michelin_stars}⭐ Michelin)` : ''}`
-                ).join('\n')}\n\nWould you like more details on any of these?`;
-
-                controller.enqueue(encoder.encode(createSSEMessage({
-                  type: 'chunk',
-                  content: assistantResponse
-                })));
-                usedModel = 'smart-search';
-              }
-            }
-          } catch (searchError: any) {
-            console.error('Smart search error:', searchError);
-          }
-
-          // Fallback: General conversation if no search results
-          if (!assistantResponse && searchResults.length === 0) {
-            if (genAI) {
+            // Use OpenAI for conversational response (asking questions, not listing places)
+            if (openai && openai.chat) {
               try {
-                const model = genAI.getGenerativeModel({
-                  model: GEMINI_MODEL,
-                  generationConfig: {
-                    temperature: 0.9,
-                    maxOutputTokens: 600,
+                const openaiMessages = [
+                  {
+                    role: 'system' as const,
+                    content: `${CHAT_SYSTEM_PROMPT}
+
+Current search context:
+${moodContext} ${cityContext} ${categoryContext}
+Found ${resultCount} matching results (shown in the grid).
+${contextInfo ? `Session context: ${JSON.stringify({ ...session.context, ...contextUpdates })}` : ''}
+
+Remember: DO NOT list places. The grid shows results. Your job is to ask questions to refine the search.`
                   },
-                  systemInstruction: CHAT_SYSTEM_PROMPT,
+                  ...recentMessages.map((msg: any) => ({
+                    role: (msg.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant',
+                    content: msg.content,
+                  })),
+                  { role: 'user' as const, content: message },
+                ];
+
+                const stream = await openai.chat.completions.create({
+                  model: CONVERSATION_MODEL,
+                  messages: openaiMessages,
+                  temperature: 0.9,
+                  max_tokens: 200, // Keep responses short
+                  stream: true,
                 });
 
-                // Build conversation history for chat
-                const history = recentMessages.slice(-5).map((msg: any) => ({
-                  role: msg.role === 'user' ? 'user' : 'model',
-                  parts: [{ text: msg.content }],
-                }));
-
-                // Build the current prompt
-                const currentPrompt = `${contextInfo ? `Context: ${JSON.stringify({ ...session.context, ...contextUpdates })}\n\n` : ''}User: ${message}`;
-
-                // Start chat with history if available
-                let result;
-                if (history.length > 0) {
-                  const chat = model.startChat({ history });
-                  result = await chat.sendMessageStream(currentPrompt);
-                } else {
-                  result = await model.generateContentStream(currentPrompt);
-                }
-
-                for await (const chunk of result.stream) {
-                  const content = chunk.text();
+                for await (const chunk of stream) {
+                  const content = chunk.choices?.[0]?.delta?.content || '';
                   if (content) {
                     assistantResponse += content;
                     controller.enqueue(encoder.encode(createSSEMessage({
@@ -545,12 +471,44 @@ ${aiInsightBanner ? `(AI insight: ${aiInsightBanner})\n\n` : ''}Provide a helpfu
                   }
                 }
 
-                usedModel = GEMINI_MODEL;
+                usedModel = `openai-${CONVERSATION_MODEL}`;
               } catch (error: any) {
-                console.error('Gemini fallback error:', error);
+                console.error('OpenAI conversation error:', error);
+                // Fallback to a simple clarifying question
+                const questions = [
+                  "What kind of vibe are you looking for?",
+                  "Any particular occasion or mood in mind?",
+                  "Are you thinking casual or something more upscale?",
+                  "What's the occasion - date night, work meeting, or just exploring?",
+                ];
+                assistantResponse = questions[Math.floor(Math.random() * questions.length)];
+                controller.enqueue(encoder.encode(createSSEMessage({
+                  type: 'chunk',
+                  content: assistantResponse
+                })));
+                usedModel = 'fallback';
               }
-            } else if (openai && openai.chat) {
-              // Fallback to OpenAI
+            } else {
+              // No OpenAI available - use simple conversational fallback
+              const questions = [
+                "What kind of experience are you after?",
+                "Any particular mood or vibe you're going for?",
+                "Casual or upscale - what's the occasion?",
+              ];
+              assistantResponse = questions[Math.floor(Math.random() * questions.length)];
+              controller.enqueue(encoder.encode(createSSEMessage({
+                type: 'chunk',
+                content: assistantResponse
+              })));
+              usedModel = 'fallback';
+            }
+          } catch (searchError: any) {
+            console.error('Smart search error:', searchError);
+          }
+
+          // Fallback: General conversation if search failed
+          if (!assistantResponse) {
+            if (openai && openai.chat) {
               try {
                 const openaiMessages = [
                   { role: 'system' as const, content: `${CHAT_SYSTEM_PROMPT}${contextInfo}` },
@@ -565,7 +523,7 @@ ${aiInsightBanner ? `(AI insight: ${aiInsightBanner})\n\n` : ''}Provide a helpfu
                   model: CONVERSATION_MODEL,
                   messages: openaiMessages,
                   temperature: 0.9,
-                  max_tokens: 600,
+                  max_tokens: 200,
                   stream: true,
                 });
 
