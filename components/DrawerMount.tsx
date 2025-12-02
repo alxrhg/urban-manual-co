@@ -17,6 +17,7 @@ import TripOverviewDrawer from '@/components/drawers/TripOverviewDrawer';
 import TripOverviewQuickDrawer from '@/components/drawers/TripOverviewQuickDrawer';
 import PlaceSelectorDrawer from '@/components/drawers/PlaceSelectorDrawer';
 import TripSettingsDrawer from '@/components/drawers/TripSettingsDrawer';
+import ShareTripDrawer from '@/components/drawers/ShareTripDrawer';
 import AccountDrawerNew from '@/components/drawers/AccountDrawer';
 import { Drawer } from '@/components/ui/Drawer';
 import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
@@ -201,6 +202,26 @@ export default function DrawerMount() {
         destinationName={props?.destinationName || ''}
         destinationCity={props?.destinationCity}
       />
+
+      {/* Share Trip Drawer */}
+      {open && type === 'share-trip' && props?.trip && (
+        <Drawer
+          isOpen={open}
+          onClose={closeDrawer}
+          title="Share Trip"
+          style={drawerStyle}
+          position="right"
+          desktopWidth="420px"
+        >
+          <ShareTripDrawer
+            trip={props.trip}
+            isOwner={props?.isOwner ?? false}
+            onShareCreated={props?.onShareCreated}
+            onCollaboratorAdded={props?.onCollaboratorAdded}
+            onCollaboratorRemoved={props?.onCollaboratorRemoved}
+          />
+        </Drawer>
+      )}
     </>
   );
 }

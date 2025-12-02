@@ -350,3 +350,105 @@ export function stringifyItineraryNotes(notes: ItineraryItemNotes): string {
   return JSON.stringify(notes);
 }
 
+// ============================================================================
+// SHARED TRIP TYPES
+// ============================================================================
+
+/**
+ * Share link for a trip (view-only access)
+ */
+export interface TripShare {
+  id: string;
+  trip_id: string;
+  share_token: string;
+  created_by: string;
+  access_level: 'view';
+  created_at: string;
+}
+
+/**
+ * Collaborator on a trip (can edit)
+ */
+export interface TripCollaborator {
+  id: string;
+  trip_id: string;
+  user_id: string;
+  role: 'editor' | 'viewer';
+  invited_by: string;
+  invited_email: string | null;
+  status: 'pending' | 'accepted' | 'declined';
+  created_at: string;
+  accepted_at: string | null;
+  // Joined user data
+  user?: {
+    id: string;
+    email: string;
+    user_metadata?: {
+      full_name?: string;
+      avatar_url?: string;
+      name?: string;
+    };
+  };
+}
+
+/**
+ * Pending invite for users not yet registered
+ */
+export interface TripInvite {
+  id: string;
+  trip_id: string;
+  email: string;
+  role: 'editor' | 'viewer';
+  invite_token: string;
+  invited_by: string;
+  created_at: string;
+}
+
+/**
+ * Access information for a trip
+ */
+export interface TripAccess {
+  canView: boolean;
+  canEdit: boolean;
+  accessType: 'owner' | 'collaborator' | 'share_link' | 'public' | 'none';
+  role?: 'owner' | 'editor' | 'viewer';
+}
+
+/**
+ * Trip with sharing information
+ */
+export interface TripWithSharing extends Trip {
+  share?: TripShare | null;
+  collaborators?: TripCollaborator[];
+  access?: TripAccess;
+}
+
+/**
+ * Presence data for real-time collaboration
+ */
+export interface TripPresence {
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  lastSeen: string;
+  currentDay?: number;
+  isActive: boolean;
+  cursorPosition?: {
+    itemId?: string;
+    field?: string;
+  };
+}
+
+/**
+ * Real-time event types for trip collaboration
+ */
+export type TripRealtimeEvent =
+  | { type: 'TRIP_UPDATED'; payload: Partial<Trip> }
+  | { type: 'ITEM_ADDED'; payload: ItineraryItem }
+  | { type: 'ITEM_UPDATED'; payload: { id: string; changes: Partial<ItineraryItem> } }
+  | { type: 'ITEM_DELETED'; payload: { id: string } }
+  | { type: 'ITEMS_REORDERED'; payload: { day: number; items: { id: string; order_index: number }[] } }
+  | { type: 'PRESENCE_UPDATE'; payload: TripPresence }
+  | { type: 'COLLABORATOR_JOINED'; payload: TripCollaborator }
+  | { type: 'COLLABORATOR_LEFT'; payload: { userId: string } };
+

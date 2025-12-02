@@ -22,6 +22,7 @@ import {
   X,
   Pencil,
   Check,
+  Share2,
 } from 'lucide-react';
 import { PageLoader } from '@/components/LoadingStates';
 import DayTimeline from '@/components/trip/DayTimeline';
@@ -37,6 +38,7 @@ import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import LocalEvents from '@/components/trip/LocalEvents';
 import TripBucketList from '@/components/trip/TripBucketList';
 import DayDropZone from '@/components/trip/DayDropZone';
+import { CollaboratorPresence } from '@/components/trip/CollaboratorPresence';
 import { DndContext, DragOverlay, DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import {
   analyzeScheduleForWarnings,
@@ -105,6 +107,10 @@ export default function TripPage() {
   const [showMapBox, setShowMapBox] = useState(false);
   const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
   const [bucketDragItem, setBucketDragItem] = useState<Destination | null>(null);
+  const [showShareDrawer, setShowShareDrawer] = useState(false);
+
+  // Check if user is the trip owner
+  const isOwner = trip?.user_id === user?.id;
 
   // Handle bucket list drag events
   const handleBucketDragStart = useCallback((event: DragStartEvent) => {
@@ -579,6 +585,13 @@ export default function TripPage() {
                 title="View Map"
               >
                 <Map className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+              </button>
+              <button
+                onClick={() => openDrawer('share-trip', { trip, isOwner })}
+                className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                title="Share Trip"
+              >
+                <Share2 className="w-5 h-5 text-stone-500 dark:text-gray-400" />
               </button>
               <button
                 onClick={() => setShowTripSettings(true)}
