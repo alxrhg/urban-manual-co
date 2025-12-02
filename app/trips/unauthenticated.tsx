@@ -1,7 +1,6 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Plane } from 'lucide-react';
 
 export default function TripsUnauthenticated() {
   const router = useRouter();
@@ -9,12 +8,9 @@ export default function TripsUnauthenticated() {
   return (
     <main className="w-full px-6 md:px-10 py-20">
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-full max-w-sm text-center">
-          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-6 mx-auto">
-            <Plane className="h-7 w-7 text-gray-400" />
-          </div>
-          <h1 className="text-2xl font-light mb-3">Trips</h1>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-8">
+        <div className="w-full max-w-sm">
+          <h1 className="text-2xl font-light mb-8">Trips</h1>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">
             Sign in to plan and organize your travels
           </p>
           <button
