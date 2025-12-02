@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -344,7 +344,6 @@ export default function TripPage() {
   const tripId = params?.id as string;
   const { user } = useAuth();
   const openDrawer = useDrawerStore((s) => s.openDrawer);
-  const sectionRefs = useRef<Map<number, HTMLElement>>(new Map());
   const [activeDay, setActiveDay] = useState(1);
   const [isAIPlanning, setIsAIPlanning] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
