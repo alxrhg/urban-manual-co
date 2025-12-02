@@ -88,10 +88,24 @@ function HomepageSkeleton() {
 
 /**
  * Async data fetching - streams after static shell
+ * Gracefully handles missing Supabase credentials during development
  */
 async function HomepageContent() {
-  const { destinations, cities, categories, trending } =
-    await prefetchHomepageData();
+  let destinations: any[] = [];
+  let cities: string[] = [];
+  let categories: string[] = [];
+  let trending: any[] = [];
+
+  try {
+    const data = await prefetchHomepageData();
+    destinations = data.destinations;
+    cities = data.cities;
+    categories = data.categories;
+    trending = data.trending;
+  } catch (error) {
+    console.error('[Homepage] Error fetching initial data:', error);
+    // Continue with empty data - client will fetch
+  }
 
   return (
     <HomePageComponent
