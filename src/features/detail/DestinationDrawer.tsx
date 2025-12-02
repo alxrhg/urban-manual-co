@@ -46,7 +46,8 @@ import { NestedDestinations } from '@/components/NestedDestinations';
 import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
 import { createClient } from '@/lib/supabase/client';
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
-import { Drawer } from '@/components/ui/Drawer';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { architectNameToSlug } from '@/lib/architect-utils';
 import { DestinationCard } from '@/components/DestinationCard';
 
@@ -1394,28 +1395,28 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   if (!destination) {
     // Show loading state if destination is null
     return (
-      <Drawer
-        isOpen={isOpen}
-        onClose={onClose}
-        mobileVariant="side"
-        desktopSpacing="right-4 top-4 bottom-4"
-        desktopWidth="420px"
-        position="right"
-        style="glassy"
-        backdropOpacity="18"
-        headerContent={
-          <div className="flex items-center justify-between w-full">
+      <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <SheetContent side="card-right" className="flex flex-col p-0 w-[420px]" hideCloseButton>
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800">
             <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4 text-gray-600 dark:text-gray-300" />
+            </button>
           </div>
-        }
-      >
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="text-center">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading destination...</p>
+          {/* Loading content */}
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center">
+              <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-500 dark:text-gray-400">Loading destination...</p>
+            </div>
           </div>
-        </div>
-      </Drawer>
+        </SheetContent>
+      </Sheet>
     );
   }
 
@@ -3652,29 +3653,31 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   // Default drawer mode
   return (
     <>
-      <Drawer
-        isOpen={isOpen}
-        onClose={onClose}
-        mobileVariant="side"
-        desktopSpacing="right-4 top-4 bottom-4"
-        desktopWidth="420px"
-        position="right"
-        style="glassy"
-        backdropOpacity="18"
-        keepStateOnClose={true}
-        zIndex={9999}
-        headerContent={headerContent}
-        footerContent={
-          <>
+      <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <SheetContent
+          side="card-right"
+          className="flex flex-col p-0 w-[420px] max-md:w-full"
+          hideCloseButton
+        >
+          {/* Header */}
+          <div className="flex-shrink-0">
+            {headerContent}
+          </div>
+
+          {/* Scrollable Content */}
+          <ScrollArea className="flex-1">
+            {mainContent}
+          </ScrollArea>
+
+          {/* Footer */}
+          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800">
             {/* Mobile Footer */}
             <div className="md:hidden">{mobileFooterContent}</div>
             {/* Desktop Footer */}
             <div className="hidden md:block">{desktopFooterContent}</div>
-          </>
-        }
-      >
-        {mainContent}
-      </Drawer>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Save Destination Modal */}
       {destination?.id && (
