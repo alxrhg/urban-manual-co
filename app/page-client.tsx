@@ -679,6 +679,8 @@ export default function HomePageClient({
   const discoveryBootstrapPromiseRef = useRef<Promise<Destination[]> | null>(
     null
   );
+  // Track whether Discovery Engine is available - null means not checked yet
+  const discoveryEngineAvailableRef = useRef<boolean | null>(null);
   const lastSearchedQueryRef = useRef<string>(""); // Track last searched query to prevent duplicates
 
   // Loading text variants
@@ -878,6 +880,11 @@ export default function HomePageClient({
   };
 
   const fetchDiscoveryBootstrap = async (): Promise<Destination[]> => {
+    // Skip if we already know Discovery Engine is unavailable
+    if (discoveryEngineAvailableRef.current === false) {
+      return [];
+    }
+
     if (discoveryBootstrapRef.current !== null) {
       if (process.env.NODE_ENV === 'development') {
         console.log("[Discovery Engine] Using cached bootstrap data");
@@ -922,7 +929,9 @@ export default function HomePageClient({
 
         if (!response.ok) {
           if (response.status === 503) {
-            // 503 is expected when Discovery Engine is not configured - use debug log instead of warn
+            // 503 is expected when Discovery Engine is not configured - mark as unavailable
+            // to skip future calls and use Supabase fallback
+            discoveryEngineAvailableRef.current = false;
             if (process.env.NODE_ENV === 'development') {
               console.debug(
                 "[Discovery Engine] Service unavailable (503) - Discovery Engine not configured, using Supabase fallback"
@@ -957,7 +966,13 @@ export default function HomePageClient({
           results?: unknown;
           source?: string;
           fallback?: boolean;
+          available?: boolean;
         } = await response.json().catch(() => ({ results: [] as unknown[] }));
+
+        // Mark Discovery Engine as available on successful response
+        if (payload.available !== false) {
+          discoveryEngineAvailableRef.current = true;
+        }
 
         const normalized = Array.isArray(payload.results)
           ? payload.results
@@ -993,9 +1008,13 @@ export default function HomePageClient({
         return normalized;
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : String(error);
+        // Mark as unavailable on configuration/503 errors to skip future calls
+        if (message.includes("503") || message.includes("not configured") || message.includes("disabled")) {
+          discoveryEngineAvailableRef.current = false;
+        }
         // Only warn if it's not a 503/configuration error
         if (process.env.NODE_ENV === 'development') {
-          if (!message.includes("503") && !message.includes("not configured")) {
+          if (!message.includes("503") && !message.includes("not configured") && !message.includes("disabled")) {
             console.warn("[Discovery Engine] Bootstrap failed:", message, {
               elapsed: `${Date.now() - startTime}ms`,
             });

@@ -47,29 +47,49 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       );
     }
 
-    const discoveryEngine = getDiscoveryEngineService();
     const flags = getFeatureFlags();
-    
-    // Check if Discovery Engine is available
-    const isAvailable = discoveryEngine.isAvailable();
-    
-    if (!isAvailable) {
-      // Discovery Engine is the primary search feature and must be configured
-      // Log error in all environments to ensure configuration is noticed
-      if (!hasWarnedAboutDiscoveryEngine) {
-        console.error('[Discovery Engine API] ERROR: Discovery Engine is not configured. This is the primary search feature and must be set up.');
-        console.error('[Discovery Engine API] Required environment variables: GOOGLE_CLOUD_PROJECT_ID, DISCOVERY_ENGINE_DATA_STORE_ID, and Google Cloud credentials');
-        hasWarnedAboutDiscoveryEngine = true;
-      }
+
+    // Check if Discovery Engine feature is enabled via environment variable
+    // Discovery Engine is OPTIONAL - the app works fine with Supabase search
+    if (!flags.useDiscoveryEngine) {
+      // Return 503 quietly - this is expected when Discovery Engine is not enabled
       return NextResponse.json(
-        { 
+        {
           results: [],
           totalSize: 0,
           query,
-          source: 'error',
+          source: 'disabled',
           fallback: true,
-          error: 'Discovery Engine not configured',
-          message: 'Discovery Engine is the primary search feature and must be configured. Please set up Google Cloud Discovery Engine.',
+          available: false,
+          message: 'Discovery Engine is not enabled. Set USE_DISCOVERY_ENGINE=true to enable.',
+        },
+        { status: 503 }
+      );
+    }
+
+    const discoveryEngine = getDiscoveryEngineService();
+
+    // Check if Discovery Engine is available (credentials configured)
+    const isAvailable = discoveryEngine.isAvailable();
+
+    if (!isAvailable) {
+      // Discovery Engine is enabled but not properly configured
+      // Only log warning once to avoid log spam
+      if (!hasWarnedAboutDiscoveryEngine) {
+        console.warn('[Discovery Engine API] Discovery Engine is enabled but not configured.');
+        console.warn('[Discovery Engine API] Required: GOOGLE_CLOUD_PROJECT_ID, DISCOVERY_ENGINE_DATA_STORE_ID, and Google Cloud credentials');
+        console.warn('[Discovery Engine API] The app will use Supabase search as fallback.');
+        hasWarnedAboutDiscoveryEngine = true;
+      }
+      return NextResponse.json(
+        {
+          results: [],
+          totalSize: 0,
+          query,
+          source: 'misconfigured',
+          fallback: true,
+          available: false,
+          message: 'Discovery Engine is enabled but not configured. Check environment variables.',
         },
         { status: 503 }
       );
@@ -88,7 +108,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     }
 
     // A/B testing: Check if user should use Discovery Engine or fallback
-    let useDiscoveryEngine = flags.useDiscoveryEngine;
+    let useDiscoveryEngine: boolean = flags.useDiscoveryEngine;
     if (finalUserId && flags.abTests.some((t) => t.name === 'search_quality' && t.enabled)) {
       const variant = getABTestVariant(finalUserId, 'search_quality');
       useDiscoveryEngine = variant === 'discovery_engine';
@@ -211,20 +231,41 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       );
     }
 
-    const discoveryEngine = getDiscoveryEngineService();
+    const flags = getFeatureFlags();
 
-    if (!discoveryEngine.isAvailable()) {
-      // Discovery Engine is the primary search feature and must be configured
-      console.error('[Discovery Engine API] ERROR: Discovery Engine is not configured. This is the primary search feature and must be set up.');
+    // Check if Discovery Engine feature is enabled
+    if (!flags.useDiscoveryEngine) {
       return NextResponse.json(
-        { 
+        {
           results: [],
           totalSize: 0,
           query,
-          source: 'error',
+          source: 'disabled',
           fallback: true,
-          error: 'Discovery Engine not configured',
-          message: 'Discovery Engine is the primary search feature and must be configured. Please set up Google Cloud Discovery Engine.',
+          available: false,
+          message: 'Discovery Engine is not enabled. Set USE_DISCOVERY_ENGINE=true to enable.',
+        },
+        { status: 503 }
+      );
+    }
+
+    const discoveryEngine = getDiscoveryEngineService();
+
+    if (!discoveryEngine.isAvailable()) {
+      // Discovery Engine enabled but not configured - log warning once
+      if (!hasWarnedAboutDiscoveryEngine) {
+        console.warn('[Discovery Engine API] Discovery Engine is enabled but not configured.');
+        hasWarnedAboutDiscoveryEngine = true;
+      }
+      return NextResponse.json(
+        {
+          results: [],
+          totalSize: 0,
+          query,
+          source: 'misconfigured',
+          fallback: true,
+          available: false,
+          message: 'Discovery Engine is enabled but not configured. Check environment variables.',
         },
         { status: 503 }
       );
