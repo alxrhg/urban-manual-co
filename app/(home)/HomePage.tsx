@@ -15,6 +15,7 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { PanelLayout } from '@/components/PanelMount';
 
 // ============================================================================
 // Lazy-loaded Components
@@ -144,46 +145,48 @@ export const HomePage = memo(function HomePage({
   };
 
   return (
-    <div className="w-full min-h-screen bg-white dark:bg-gray-950" data-component="HomePage">
-      {/* Main Content */}
-      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section */}
-        <section className="mb-8 md:mb-12">
-          <HeroSection
-            userName={userName}
-            onSearch={handleSearch}
-            onAISearch={handleAISearch}
-            isAIEnabled={true}
-            showGreeting={true}
-          />
-        </section>
+    <PanelLayout defaultPanelSize={35} minPanelSize={25} maxPanelSize={50}>
+      <div className="w-full min-h-screen bg-white dark:bg-gray-950" data-component="HomePage">
+        {/* Main Content */}
+        <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Hero Section */}
+          <section className="mb-8 md:mb-12">
+            <HeroSection
+              userName={userName}
+              onSearch={handleSearch}
+              onAISearch={handleAISearch}
+              isAIEnabled={true}
+              showGreeting={true}
+            />
+          </section>
 
-        {/* Filter Bar */}
-        <section className="mb-6">
-          <FilterBar
-            cities={cities.length > 0 ? cities : initialCities}
-            categories={categories.length > 0 ? categories : initialCategories}
-            showViewToggle={true}
-          />
-        </section>
+          {/* Filter Bar */}
+          <section className="mb-6">
+            <FilterBar
+              cities={cities.length > 0 ? cities : initialCities}
+              categories={categories.length > 0 ? categories : initialCategories}
+              showViewToggle={true}
+            />
+          </section>
 
-        {/* Content Section */}
-        <AnimatePresence mode="wait">
-          <motion.section
-            key={viewMode}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderContent()}
-          </motion.section>
-        </AnimatePresence>
-      </main>
+          {/* Content Section */}
+          <AnimatePresence mode="wait">
+            <motion.section
+              key={viewMode}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              {renderContent()}
+            </motion.section>
+          </AnimatePresence>
+        </main>
 
-      {/* Drawer Manager */}
-      <DrawerManager />
-    </div>
+        {/* Drawer Manager - handles overlay mode on mobile */}
+        <DrawerManager />
+      </div>
+    </PanelLayout>
   );
 });
 
