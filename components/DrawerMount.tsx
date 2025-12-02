@@ -25,7 +25,8 @@ import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 const INLINE_TYPES = ['destination', 'account-new', 'trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai'];
 
 export default function DrawerMount() {
-  const { open, type, props, closeDrawer, displayMode } = useDrawerStore();
+  const { isOpen, type, props, closeAll, displayMode } = useDrawerStore();
+  const closeDrawer = closeAll;
   const drawerStyle = useDrawerStyle();
 
   // Track desktop state for conditional rendering
@@ -52,37 +53,37 @@ export default function DrawerMount() {
 
       {/* New drawers that use the global drawer store */}
       {/* Only render as overlay if not in inline mode on desktop */}
-      {open && type === 'account-new' && !shouldSkipOverlay('account-new') && (
+      {isOpen && type === 'account-new' && !shouldSkipOverlay('account-new') && (
         <Drawer
-          isOpen={open}
+          isOpen={isOpen}
           onClose={closeDrawer}
           desktopWidth="420px"
           style={drawerStyle}
           position="right"
         >
-          <AccountDrawerNew isOpen={open} onClose={closeDrawer} />
+          <AccountDrawerNew isOpen={isOpen} onClose={closeDrawer} />
         </Drawer>
       )}
 
       {/* DestinationDrawer - skip overlay when in inline mode on desktop */}
       {!shouldSkipOverlay('destination') && (
         <DestinationDrawer
-          isOpen={open && type === 'destination'}
+          isOpen={isOpen && type === 'destination'}
           onClose={closeDrawer}
-          destination={props.place || props.destination || null}
-          {...props}
+          destination={(props.place || props.destination || null) as any}
+          {...(props as any)}
         />
       )}
 
       <TripOverviewDrawer
-        isOpen={open && type === 'trip-overview'}
+        isOpen={isOpen && type === 'trip-overview'}
         onClose={closeDrawer}
-        trip={props?.trip ?? null}
+        trip={(props?.trip as any) ?? null}
       />
 
-      {open && type === 'trip-list' && !shouldSkipOverlay('trip-list') && (
+      {isOpen && type === 'trip-list' && !shouldSkipOverlay('trip-list') && (
         <Drawer
-          isOpen={open}
+          isOpen={isOpen}
           onClose={closeDrawer}
           title="Your Trips"
           style={drawerStyle}
@@ -94,14 +95,14 @@ export default function DrawerMount() {
       )}
 
       <TripOverviewQuickDrawer
-        isOpen={open && type === 'trip-overview-quick'}
+        isOpen={isOpen && type === 'trip-overview-quick'}
         onClose={closeDrawer}
-        trip={props.trip || null}
+        trip={(props.trip as any) || null}
       />
 
-      {open && type === 'trip-settings' && props?.trip && !shouldSkipOverlay('trip-settings') && (
+      {isOpen && type === 'trip-settings' && props?.trip && !shouldSkipOverlay('trip-settings') && (
         <Drawer
-          isOpen={open}
+          isOpen={isOpen}
           onClose={closeDrawer}
           title="Trip Settings"
           style={drawerStyle}
@@ -109,16 +110,16 @@ export default function DrawerMount() {
           desktopWidth="420px"
         >
           <TripSettingsDrawer
-            trip={props.trip}
-            onUpdate={props?.onUpdate}
-            onDelete={props?.onDelete}
+            trip={props.trip as any}
+            onUpdate={props?.onUpdate as any}
+            onDelete={props?.onDelete as any}
           />
         </Drawer>
       )}
 
-      {open && type === 'place-selector' && !shouldSkipOverlay('place-selector') && (
+      {isOpen && type === 'place-selector' && !shouldSkipOverlay('place-selector') && (
         <Drawer
-          isOpen={open}
+          isOpen={isOpen}
           onClose={closeDrawer}
           title="Add Place"
           style={drawerStyle}
@@ -126,23 +127,23 @@ export default function DrawerMount() {
           desktopWidth="420px"
         >
           <PlaceSelectorDrawer
-            tripId={props?.tripId}
-            dayNumber={props?.dayNumber}
-            city={props?.city}
-            category={props?.category}
-            onSelect={props?.onSelect}
-            day={props?.day}
-            trip={props?.trip}
-            index={props?.index}
-            mealType={props?.mealType}
-            replaceIndex={props?.replaceIndex}
+            tripId={props?.tripId as any}
+            dayNumber={props?.dayNumber as any}
+            city={props?.city as any}
+            category={props?.category as any}
+            onSelect={props?.onSelect as any}
+            day={props?.day as any}
+            trip={props?.trip as any}
+            index={props?.index as any}
+            mealType={props?.mealType as any}
+            replaceIndex={props?.replaceIndex as any}
           />
         </Drawer>
       )}
 
-      {open && type === 'trip-add-hotel' && !shouldSkipOverlay('trip-add-hotel') && (
+      {isOpen && type === 'trip-add-hotel' && !shouldSkipOverlay('trip-add-hotel') && (
         <Drawer
-          isOpen={open}
+          isOpen={isOpen}
           onClose={closeDrawer}
           title="Select Hotel"
           style={drawerStyle}
@@ -150,16 +151,16 @@ export default function DrawerMount() {
           desktopWidth="420px"
         >
           <AddHotelDrawer
-            trip={props.trip || null}
-            day={props.day || null}
-            index={props.index}
+            trip={(props.trip as any) || null}
+            day={(props.day as any) || null}
+            index={props.index as any}
           />
         </Drawer>
       )}
 
-      {open && type === 'add-flight' && !shouldSkipOverlay('add-flight') && (
+      {isOpen && type === 'add-flight' && !shouldSkipOverlay('add-flight') && (
         <Drawer
-          isOpen={open}
+          isOpen={isOpen}
           onClose={closeDrawer}
           title="Add Flight"
           style={drawerStyle}
@@ -167,16 +168,16 @@ export default function DrawerMount() {
           desktopWidth="420px"
         >
           <AddFlightDrawer
-            tripId={props?.tripId}
-            dayNumber={props?.dayNumber}
-            onAdd={props?.onAdd}
+            tripId={props?.tripId as any}
+            dayNumber={props?.dayNumber as any}
+            onAdd={props?.onAdd as any}
           />
         </Drawer>
       )}
 
-      {open && type === 'trip-ai' && !shouldSkipOverlay('trip-ai') && (
+      {isOpen && type === 'trip-ai' && !shouldSkipOverlay('trip-ai') && (
         <Drawer
-          isOpen={open}
+          isOpen={isOpen}
           onClose={closeDrawer}
           title="AI Suggestions"
           fullScreen={true}
@@ -184,22 +185,22 @@ export default function DrawerMount() {
           style={drawerStyle}
         >
           <AISuggestionsDrawer
-            day={props.day || null}
-            trip={props.trip || null}
-            index={props.index}
-            suggestions={props.suggestions}
-            onApply={props.onApply}
+            day={(props.day as any) || null}
+            trip={(props.trip as any) || null}
+            index={props.index as any}
+            suggestions={props.suggestions as any}
+            onApply={props.onApply as any}
           />
         </Drawer>
       )}
 
       {/* Quick Trip Selector - for one-click add to trip */}
       <QuickTripSelector
-        isOpen={open && type === 'quick-trip-selector'}
+        isOpen={isOpen && type === 'quick-trip-selector'}
         onClose={closeDrawer}
-        destinationSlug={props?.destinationSlug || ''}
-        destinationName={props?.destinationName || ''}
-        destinationCity={props?.destinationCity}
+        destinationSlug={(props?.destinationSlug as string) || ''}
+        destinationName={(props?.destinationName as string) || ''}
+        destinationCity={props?.destinationCity as any}
       />
     </>
   );

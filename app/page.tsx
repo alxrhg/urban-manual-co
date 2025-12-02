@@ -1,30 +1,30 @@
 import { Suspense } from 'react';
 import { Metadata } from 'next';
-import HomePageClient from './page-client';
 import { prefetchHomepageData } from '@/lib/data/fetch-destinations';
-import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
+
+// New modular architecture imports
+import { HomePage as HomePageComponent } from './(home)/HomePage';
 
 /**
- * Homepage - Highest Performance Architecture
+ * Homepage - Rebuilt Architecture v2
  *
- * Uses Next.js 16 best practices:
- * - Partial Prerendering (PPR): Static shell renders instantly
- * - ISR: Background revalidation every 5 minutes
- * - Server-side data fetching with caching
- * - Streaming with Suspense boundaries
+ * Features:
+ * - Modular component architecture
+ * - Zustand state management (unified drawer & homepage stores)
+ * - Enhanced drawer system with stack navigation
+ * - Grid/Map/Split view modes
+ * - Advanced filtering with URL sync
+ * - Keyboard navigation support
  *
- * Performance targets:
- * - TTFB: <100ms (static shell)
- * - FCP: <500ms
- * - LCP: <1s
+ * Performance:
+ * - Server-side data prefetching (ISR)
+ * - Partial Prerendering (PPR)
+ * - Streaming with Suspense
+ * - Lazy-loaded heavy components
  */
 
 // ISR: Revalidate in background every 5 minutes
 export const revalidate = 300;
-
-// Allow dynamic rendering on first request (then cached via ISR)
-// This ensures data is fetched when Supabase is available at runtime
-// rather than at build time when credentials may not be available
 
 export const metadata: Metadata = {
   title: 'Urban Manual - Curated Travel Destinations Worldwide',
@@ -47,52 +47,54 @@ export const metadata: Metadata = {
 };
 
 /**
- * Inline skeleton for instant feedback - no external dependencies
- * This renders immediately as part of the static shell
+ * Inline skeleton for instant feedback - renders as static shell
  */
 function HomepageSkeleton() {
   return (
-    <main className="w-full min-h-screen px-6 md:px-10 py-20">
-      <div className="max-w-[1800px] mx-auto">
+    <main className="w-full min-h-screen bg-white dark:bg-gray-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero skeleton */}
         <div className="mb-12">
-          <div className="h-8 w-64 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse mb-4" />
-          <div className="h-4 w-96 bg-gray-100 dark:bg-gray-900 rounded animate-pulse" />
+          <div className="h-3 w-40 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-12" />
+          <div className="h-3 w-64 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
         </div>
 
-        {/* Search skeleton */}
-        <div className="mb-8">
-          <div className="h-12 w-full max-w-2xl bg-gray-100 dark:bg-gray-900 rounded-2xl animate-pulse" />
-        </div>
-
-        {/* Filter chips skeleton */}
-        <div className="flex gap-2 mb-8 overflow-hidden">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div
-              key={i}
-              className="h-8 w-20 bg-gray-100 dark:bg-gray-900 rounded-full animate-pulse flex-shrink-0"
-            />
-          ))}
+        {/* Filter bar skeleton */}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
+          <div className="h-8 w-28 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
+          <div className="h-8 w-20 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse" />
+          <div className="h-8 w-20 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse" />
+          <div className="flex-1" />
+          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse" />
         </div>
 
         {/* Grid skeleton */}
-        <SearchGridSkeleton />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div key={i} className="flex flex-col animate-pulse">
+              <div className="aspect-video rounded-2xl bg-gray-200 dark:bg-gray-800 mb-3" />
+              <div className="space-y-2">
+                <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-3/4" />
+                <div className="h-2 bg-gray-200 dark:bg-gray-800 rounded w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </main>
   );
 }
 
 /**
- * Async data fetching component - streams after static shell
+ * Async data fetching - streams after static shell
  */
 async function HomepageContent() {
-  // Fetch all homepage data in parallel on the server
-  // This data is cached using Next.js unstable_cache for 5 minutes
   const { destinations, cities, categories, trending } =
     await prefetchHomepageData();
 
   return (
-    <HomePageClient
+    <HomePageComponent
       initialDestinations={destinations}
       initialCities={cities}
       initialCategories={categories}

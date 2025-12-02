@@ -55,7 +55,9 @@ export function PanelLayout({
   minPanelSize = 25,
   maxPanelSize = 50,
 }: PanelLayoutProps) {
-  const { open, type, props, displayMode, closeDrawer } = useDrawerStore();
+  const { isOpen, type, props, displayMode, closeAll } = useDrawerStore();
+  const open = isOpen;
+  const closeDrawer = closeAll;
 
   // Track if we're on mobile
   const [isMobile, setIsMobile] = React.useState(false);
@@ -77,9 +79,9 @@ export function PanelLayout({
           <DestinationDrawer
             isOpen={open}
             onClose={closeDrawer}
-            destination={props?.place || props?.destination || null}
+            destination={(props?.place || props?.destination || null) as any}
             renderMode="inline"
-            {...props}
+            {...(props as any)}
           />
         );
       case 'account-new':
@@ -89,50 +91,50 @@ export function PanelLayout({
       case 'trip-settings':
         return props?.trip ? (
           <TripSettingsDrawer
-            trip={props.trip}
-            onUpdate={props?.onUpdate}
-            onDelete={props?.onDelete}
+            trip={props.trip as any}
+            onUpdate={props?.onUpdate as any}
+            onDelete={props?.onDelete as any}
           />
         ) : null;
       case 'place-selector':
         return (
           <PlaceSelectorDrawer
-            tripId={props?.tripId}
-            dayNumber={props?.dayNumber}
-            city={props?.city}
-            category={props?.category}
-            onSelect={props?.onSelect}
-            day={props?.day}
-            trip={props?.trip}
-            index={props?.index}
-            mealType={props?.mealType}
-            replaceIndex={props?.replaceIndex}
+            tripId={props?.tripId as any}
+            dayNumber={props?.dayNumber as any}
+            city={props?.city as any}
+            category={props?.category as any}
+            onSelect={props?.onSelect as any}
+            day={props?.day as any}
+            trip={props?.trip as any}
+            index={props?.index as any}
+            mealType={props?.mealType as any}
+            replaceIndex={props?.replaceIndex as any}
           />
         );
       case 'trip-add-hotel':
         return (
           <AddHotelDrawer
-            trip={props?.trip || null}
-            day={props?.day || null}
-            index={props?.index}
+            trip={(props?.trip as any) || null}
+            day={(props?.day as any) || null}
+            index={props?.index as any}
           />
         );
       case 'add-flight':
         return (
           <AddFlightDrawer
-            tripId={props?.tripId}
-            dayNumber={props?.dayNumber}
-            onAdd={props?.onAdd}
+            tripId={props?.tripId as any}
+            dayNumber={props?.dayNumber as any}
+            onAdd={props?.onAdd as any}
           />
         );
       case 'trip-ai':
         return (
           <AISuggestionsDrawer
-            day={props?.day || null}
-            trip={props?.trip || null}
-            index={props?.index}
-            suggestions={props?.suggestions}
-            onApply={props?.onApply}
+            day={(props?.day as any) || null}
+            trip={(props?.trip as any) || null}
+            index={props?.index as any}
+            suggestions={props?.suggestions as any}
+            onApply={props?.onApply as any}
           />
         );
       default:
@@ -212,7 +214,9 @@ function PanelHeader({ title, onClose }: PanelHeaderProps) {
  * InlinePanelContent - Renders just the panel content for custom layouts
  */
 export function InlinePanelContent() {
-  const { open, type, props, closeDrawer } = useDrawerStore();
+  const { isOpen, type, props, closeAll } = useDrawerStore();
+  const open = isOpen;
+  const closeDrawer = closeAll;
 
   if (!open || !type) return null;
 
@@ -227,9 +231,9 @@ export function InlinePanelContent() {
         <DestinationDrawer
           isOpen={open}
           onClose={closeDrawer}
-          destination={props?.place || props?.destination || null}
+          destination={(props?.place || props?.destination || null) as any}
           renderMode="inline"
-          {...props}
+          {...(props as any)}
         />
       );
       break;
@@ -242,54 +246,54 @@ export function InlinePanelContent() {
     case 'trip-settings':
       content = props?.trip ? (
         <TripSettingsDrawer
-          trip={props.trip}
-          onUpdate={props?.onUpdate}
-          onDelete={props?.onDelete}
+          trip={props.trip as any}
+          onUpdate={props?.onUpdate as any}
+          onDelete={props?.onDelete as any}
         />
       ) : null;
       break;
     case 'place-selector':
       content = (
         <PlaceSelectorDrawer
-          tripId={props?.tripId}
-          dayNumber={props?.dayNumber}
-          city={props?.city}
-          category={props?.category}
-          onSelect={props?.onSelect}
-          day={props?.day}
-          trip={props?.trip}
-          index={props?.index}
-          mealType={props?.mealType}
-          replaceIndex={props?.replaceIndex}
+          tripId={props?.tripId as any}
+          dayNumber={props?.dayNumber as any}
+          city={props?.city as any}
+          category={props?.category as any}
+          onSelect={props?.onSelect as any}
+          day={props?.day as any}
+          trip={props?.trip as any}
+          index={props?.index as any}
+          mealType={props?.mealType as any}
+          replaceIndex={props?.replaceIndex as any}
         />
       );
       break;
     case 'trip-add-hotel':
       content = (
         <AddHotelDrawer
-          trip={props?.trip || null}
-          day={props?.day || null}
-          index={props?.index}
+          trip={(props?.trip as any) || null}
+          day={(props?.day as any) || null}
+          index={props?.index as any}
         />
       );
       break;
     case 'add-flight':
       content = (
         <AddFlightDrawer
-          tripId={props?.tripId}
-          dayNumber={props?.dayNumber}
-          onAdd={props?.onAdd}
+          tripId={props?.tripId as any}
+          dayNumber={props?.dayNumber as any}
+          onAdd={props?.onAdd as any}
         />
       );
       break;
     case 'trip-ai':
       content = (
         <AISuggestionsDrawer
-          day={props?.day || null}
-          trip={props?.trip || null}
-          index={props?.index}
-          suggestions={props?.suggestions}
-          onApply={props?.onApply}
+          day={(props?.day as any) || null}
+          trip={(props?.trip as any) || null}
+          index={props?.index as any}
+          suggestions={props?.suggestions as any}
+          onApply={props?.onApply as any}
         />
       );
       break;
