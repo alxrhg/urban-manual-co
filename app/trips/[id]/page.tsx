@@ -49,7 +49,7 @@ import type { Destination } from '@/types/destination';
 import type { PlannerWarning } from '@/lib/intelligence/types';
 
 /**
- * TripPage - Clean, minimal design with stone palette
+ * TripPage - Clean, minimal design matching site patterns
  * Features: Stats grid, collapsible day sections, travel intelligence
  */
 export default function TripPage() {
@@ -492,7 +492,7 @@ export default function TripPage() {
   // Loading state
   if (loading) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 bg-stone-50 dark:bg-gray-950 min-h-screen">
+      <main className="w-full px-6 md:px-10 py-20">
         <PageLoader />
       </main>
     );
@@ -501,13 +501,13 @@ export default function TripPage() {
   // Not found
   if (!trip) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-20 min-h-screen bg-stone-50 dark:bg-gray-950">
+      <main className="w-full px-6 md:px-10 py-20">
         <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-xs text-stone-500 dark:text-gray-400 mb-4">Trip not found</p>
+          <div className="w-full max-w-sm">
+            <h1 className="text-2xl font-light mb-8">Trip not found</h1>
             <Link
               href="/trips"
-              className="text-sm text-stone-900 dark:text-white hover:underline min-h-[44px] flex items-center justify-center"
+              className="text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors"
             >
               Back to trips
             </Link>
@@ -523,69 +523,44 @@ export default function TripPage() {
     .find(item => item.destination?.image)?.destination?.image;
 
   return (
-    <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950">
-      <div className="max-w-4xl mx-auto">
-        {/* Header - Mobile optimized */}
-        <div className="mb-6 sm:mb-8">
-          {/* Mobile: Stacked layout, Desktop: Inline */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-            {/* Top row on mobile: Back + Actions */}
-            <div className="flex items-center justify-between sm:contents">
-              {/* Back Button */}
+    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+      <div className="w-full">
+        {/* Header - Matches other pages */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-6">
+            {/* Back + Title */}
+            <div className="flex items-center gap-4 min-w-0">
               <Link
                 href="/trips"
-                className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors min-h-[44px] min-w-[44px] -ml-2 pl-2"
+                className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span className="hidden sm:inline">Trips</span>
               </Link>
-
-              {/* Mobile Actions */}
-              <div className="flex items-center gap-1 sm:hidden">
-                <AlertsDropdown
-                  warnings={warnings}
-                  onDismiss={(id) => setWarnings(prev => prev.filter(w => w.id !== id))}
-                />
-                <button
-                  onClick={() => setShowTripSettings(true)}
-                  className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-                  title="Settings"
-                >
-                  <Settings className="w-5 h-5 text-stone-500 dark:text-gray-400" />
-                </button>
-              </div>
+              <h1 className="text-2xl font-light truncate">
+                {trip.title}
+              </h1>
             </div>
 
-            {/* Desktop: Spacer */}
-            <div className="hidden sm:block flex-1" />
-
-            {/* Trip Title */}
-            <h1 className="text-xl sm:text-2xl font-light text-stone-900 dark:text-white truncate">
-              {trip.title}
-            </h1>
-
-            {/* Desktop: Spacer */}
-            <div className="hidden sm:block flex-1" />
-
-            {/* Desktop Action Buttons */}
-            <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 flex-shrink-0">
               <AlertsDropdown
                 warnings={warnings}
                 onDismiss={(id) => setWarnings(prev => prev.filter(w => w.id !== id))}
               />
               <button
                 onClick={() => setShowMapBox(true)}
-                className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="hidden sm:flex p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 title="View Map"
               >
-                <Map className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+                <Map className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
               <button
                 onClick={() => setShowTripSettings(true)}
-                className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 title="Settings"
               >
-                <Settings className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+                <Settings className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
             </div>
           </div>
@@ -605,36 +580,23 @@ export default function TripPage() {
           )}
         </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-4">
+        {/* Tab Navigation - Matches account page style */}
+        <div className="mb-12">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
               {(['itinerary', 'flights', 'hotels', 'notes'] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`
-                    transition-all flex items-center gap-1.5 whitespace-nowrap
-                    px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
-                    min-h-[40px] sm:min-h-0
-                    ${activeTab === tab
-                      ? 'font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
-                      : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
-                    }
-                  `}
+                  className={`transition-all ${
+                    activeTab === tab
+                      ? 'font-medium text-black dark:text-white'
+                      : 'font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300'
+                  }`}
                 >
-                  {tab === 'notes' && <StickyNote className="w-3.5 h-3.5 sm:w-3 sm:h-3" />}
-                  {tab === 'flights' && flights.length > 0 && (
-                    <span className="w-4 h-4 rounded-full bg-stone-200 dark:bg-gray-700 text-[10px] flex items-center justify-center">
-                      {flights.length}
-                    </span>
-                  )}
-                  {tab === 'hotels' && hotels.length > 0 && (
-                    <span className="w-4 h-4 rounded-full bg-stone-200 dark:bg-gray-700 text-[10px] flex items-center justify-center">
-                      {hotels.length}
-                    </span>
-                  )}
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tab === 'flights' && flights.length > 0 && ` (${flights.length})`}
+                  {tab === 'hotels' && hotels.length > 0 && ` (${hotels.length})`}
                 </button>
               ))}
             </div>
@@ -644,7 +606,7 @@ export default function TripPage() {
               <button
                 onClick={handleAITripPlanning}
                 disabled={isAIPlanning || saving}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-stone-900 dark:bg-white dark:text-gray-900 rounded-full hover:opacity-80 disabled:opacity-50 transition-opacity"
+                className="flex items-center gap-2 px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50"
               >
                 {isAIPlanning ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
@@ -655,7 +617,7 @@ export default function TripPage() {
               </button>
               <button
                 onClick={() => setShowAddPlaceBox(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-stone-200 dark:border-gray-800 rounded-full hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 text-xs font-medium rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
               >
                 <Plus className="w-3 h-3" />
                 Add
@@ -669,12 +631,12 @@ export default function TripPage() {
           <div className="fade-in">
             {days.length === 0 ? (
               /* Empty State */
-              <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
-                <MapPin className="h-12 w-12 mx-auto text-stone-300 dark:text-gray-700 mb-4" />
-                <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">No days in your trip yet</p>
+              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
+                <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No days in your trip yet</p>
                 <button
                   onClick={() => openPlaceSelector(1)}
-                  className="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
                 >
                   Add your first stop
                 </button>
@@ -693,10 +655,10 @@ export default function TripPage() {
                     />
                     <button
                       onClick={() => setIsEditMode(!isEditMode)}
-                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                      className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-2xl transition-colors ${
                         isEditMode
-                          ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
-                          : 'text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800'
+                          ? 'bg-black dark:bg-white text-white dark:text-black'
+                          : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                       }`}
                     >
                       {isEditMode ? (
@@ -826,8 +788,8 @@ export default function TripPage() {
               {/* Drag Overlay for bucket list items */}
               <DragOverlay>
                 {bucketDragItem && (
-                  <div className="flex items-center gap-3 p-2 rounded-xl border border-stone-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl cursor-grabbing w-64">
-                    <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-stone-100 dark:bg-gray-800 flex-shrink-0">
+                  <div className="flex items-center gap-3 p-2 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl cursor-grabbing w-64">
+                    <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                       {bucketDragItem.image || bucketDragItem.image_thumbnail ? (
                         <Image
                           src={bucketDragItem.image_thumbnail || bucketDragItem.image || ''}
@@ -838,15 +800,15 @@ export default function TripPage() {
                         />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center">
-                          <MapPin className="w-5 h-5 text-stone-300 dark:text-gray-600" />
+                          <MapPin className="w-5 h-5 text-gray-300 dark:text-gray-600" />
                         </div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-stone-900 dark:text-white truncate">
+                      <p className="text-xs font-medium truncate">
                         {bucketDragItem.name}
                       </p>
-                      <p className="text-[10px] text-stone-500 dark:text-gray-400 capitalize truncate">
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 capitalize truncate">
                         {bucketDragItem.category?.replace(/_/g, ' ')}
                       </p>
                     </div>
@@ -931,11 +893,11 @@ export default function TripPage() {
         {activeTab === 'flights' && (
           <div className="fade-in space-y-4">
             {flights.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
-                <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">No flights added yet</p>
+              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No flights added yet</p>
                 <button
                   onClick={() => openFlightDrawer(selectedDayNumber)}
-                  className="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
                 >
                   Add a flight
                 </button>
@@ -946,18 +908,18 @@ export default function TripPage() {
                   <div
                     key={flight.id}
                     onClick={() => handleEditItem(flight)}
-                    className="p-4 border border-stone-200 dark:border-gray-800 rounded-2xl hover:bg-stone-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
+                    className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer transition-colors"
                   >
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-stone-400">Day {flight.dayNumber}</span>
-                      <span className="text-xs text-stone-400">{flight.parsedNotes?.departureDate}</span>
+                      <span className="text-xs text-gray-400">Day {flight.dayNumber}</span>
+                      <span className="text-xs text-gray-400">{flight.parsedNotes?.departureDate}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-stone-900 dark:text-white">
+                        <p className="text-sm font-medium">
                           {flight.parsedNotes?.from} → {flight.parsedNotes?.to}
                         </p>
-                        <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {flight.parsedNotes?.airline} {flight.parsedNotes?.flightNumber}
                           {flight.parsedNotes?.departureTime && ` · ${flight.parsedNotes.departureTime}`}
                         </p>
@@ -967,7 +929,7 @@ export default function TripPage() {
                 ))}
                 <button
                   onClick={() => openFlightDrawer(selectedDayNumber)}
-                  className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-stone-500 dark:text-gray-400 hover:border-stone-300 dark:hover:border-gray-700 transition-colors"
+                  className="w-full py-3 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
                 >
                   + Add another flight
                 </button>
@@ -980,11 +942,11 @@ export default function TripPage() {
         {activeTab === 'hotels' && (
           <div className="fade-in">
             {hotels.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl">
-                <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">No hotels added yet</p>
+              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No hotels added yet</p>
                 <button
                   onClick={() => openPlaceSelector(selectedDayNumber)}
-                  className="px-4 py-2 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
                 >
                   Add accommodation
                 </button>
@@ -1018,27 +980,27 @@ export default function TripPage() {
                         onClick={() => handleEditItem(hotel)}
                         className={`p-4 border rounded-2xl cursor-pointer transition-colors ${
                           selectedItem?.id === hotel.id
-                            ? 'border-stone-400 dark:border-gray-600 bg-stone-50 dark:bg-gray-800/50'
-                            : 'border-stone-200 dark:border-gray-800 hover:bg-stone-50 dark:hover:bg-gray-800/50'
+                            ? 'border-gray-400 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50'
+                            : 'border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                         }`}
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-stone-400">Day {checkInDayNum}</span>
-                          <span className="text-xs text-stone-400 bg-stone-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                          <span className="text-xs text-gray-400">Day {checkInDayNum}</span>
+                          <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
                             {nights} {nights === 1 ? 'night' : 'nights'}
                           </span>
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-stone-900 dark:text-white">
+                          <p className="text-sm font-medium">
                             {hotel.title}
                           </p>
                           {hotel.parsedNotes?.address && (
-                            <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                               {hotel.parsedNotes.address}
                             </p>
                           )}
                           {(hotel.parsedNotes?.checkInDate || hotel.parsedNotes?.checkOutDate) && (
-                            <p className="text-xs text-stone-400 mt-2">
+                            <p className="text-xs text-gray-400 mt-2">
                               {hotel.parsedNotes?.checkInDate && `Check-in: ${hotel.parsedNotes.checkInDate}`}
                               {hotel.parsedNotes?.checkInDate && hotel.parsedNotes?.checkOutDate && ' · '}
                               {hotel.parsedNotes?.checkOutDate && `Check-out: ${hotel.parsedNotes.checkOutDate}`}
@@ -1050,7 +1012,7 @@ export default function TripPage() {
                   })}
                   <button
                     onClick={() => openPlaceSelector(selectedDayNumber)}
-                    className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-stone-500 dark:text-gray-400 hover:border-stone-300 dark:hover:border-gray-700 transition-colors"
+                    className="w-full py-3 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl text-xs font-medium text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
                   >
                     + Add another hotel
                   </button>
@@ -1106,10 +1068,10 @@ export default function TripPage() {
         {activeTab === 'notes' && (
           <div className="fade-in space-y-6">
             {/* Checklist / Todo List */}
-            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
+            <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl">
               <div className="flex items-center gap-2 mb-4">
-                <ListChecks className="w-4 h-4 text-stone-500" />
-                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Checklist</h3>
+                <ListChecks className="w-4 h-4 text-gray-500" />
+                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">Checklist</h3>
               </div>
 
               {/* Add new item */}
@@ -1129,7 +1091,7 @@ export default function TripPage() {
                     }
                   }}
                   placeholder="Add item (press Enter)"
-                  className="flex-1 px-3 py-2 text-sm text-stone-700 dark:text-gray-300 bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-lg placeholder:text-stone-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-700"
+                  className="flex-1 px-3 py-2 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-black dark:focus:border-white"
                 />
                 <button
                   onClick={() => {
@@ -1142,7 +1104,7 @@ export default function TripPage() {
                       setNewChecklistItem('');
                     }
                   }}
-                  className="px-3 py-2 text-sm font-medium text-white bg-stone-900 dark:bg-white dark:text-gray-900 rounded-lg hover:opacity-80 transition-opacity"
+                  className="px-3 py-2 text-sm font-medium text-white bg-black dark:bg-white dark:text-black rounded-lg hover:opacity-80 transition-opacity"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -1151,14 +1113,14 @@ export default function TripPage() {
               {/* Checklist items */}
               <div className="space-y-2">
                 {checklistItems.length === 0 ? (
-                  <p className="text-xs text-stone-400 dark:text-gray-500 text-center py-4">
+                  <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-4">
                     No items yet. Add packing items, reminders, or tasks.
                   </p>
                 ) : (
                   checklistItems.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50 dark:hover:bg-gray-800/50 group"
+                      className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 group"
                     >
                       <button
                         onClick={() => setChecklistItems(prev =>
@@ -1169,15 +1131,15 @@ export default function TripPage() {
                         {item.checked ? (
                           <CheckSquare className="w-5 h-5 text-green-500" />
                         ) : (
-                          <Square className="w-5 h-5 text-stone-400 dark:text-gray-500" />
+                          <Square className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                         )}
                       </button>
-                      <span className={`flex-1 text-sm ${item.checked ? 'text-stone-400 dark:text-gray-500 line-through' : 'text-stone-700 dark:text-gray-300'}`}>
+                      <span className={`flex-1 text-sm ${item.checked ? 'text-gray-400 dark:text-gray-500 line-through' : ''}`}>
                         {item.text}
                       </span>
                       <button
                         onClick={() => setChecklistItems(prev => prev.filter(i => i.id !== item.id))}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-stone-400 hover:text-red-500 transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 transition-all"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -1188,16 +1150,16 @@ export default function TripPage() {
             </div>
 
             {/* Free-form Notes */}
-            <div className="p-6 border border-stone-200 dark:border-gray-800 rounded-2xl">
+            <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl">
               <div className="flex items-center gap-2 mb-4">
-                <StickyNote className="w-4 h-4 text-stone-500" />
-                <h3 className="text-xs font-medium text-stone-500 dark:text-gray-400">Notes</h3>
+                <StickyNote className="w-4 h-4 text-gray-500" />
+                <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400">Notes</h3>
               </div>
               <textarea
                 value={tripNotes}
                 onChange={(e) => setTripNotes(e.target.value)}
                 placeholder="Add notes for your trip... reservations, reminders, etc."
-                className="w-full min-h-[150px] p-4 text-sm text-stone-700 dark:text-gray-300 bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl resize-y placeholder:text-stone-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-stone-300 dark:focus:ring-gray-700"
+                className="w-full min-h-[150px] p-4 text-sm bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl resize-y placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-black dark:focus:border-white"
               />
             </div>
           </div>
