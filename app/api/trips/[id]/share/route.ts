@@ -8,6 +8,9 @@ import {
 } from '@/lib/errors';
 import type { TripShare } from '@/types/trip';
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic';
+
 interface RouteContext {
   params: Promise<{ id: string }>;
 }
