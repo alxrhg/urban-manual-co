@@ -13,7 +13,6 @@ import {
   ensureConversationSessionToken,
   persistConversationSessionToken,
 } from '@/lib/chat/sessionToken';
-import { trackSuggestionAcceptance } from '@/lib/metrics/conversationMetrics';
 import { cn } from '@/lib/utils';
 
 export type ChatViewMode = 'minimized' | 'compact' | 'expanded';
@@ -345,7 +344,16 @@ export const HomepageChat = memo(function HomepageChat({
   // Suggestion click handler
   const handleSuggestionClick = useCallback(
     async (suggestion: string) => {
-      await trackSuggestionAcceptance(sessionId || '', suggestion, user?.id);
+      // Track suggestion acceptance via API (fire and forget)
+      fetch('/api/metrics/suggestion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: sessionId || '',
+          suggestionText: suggestion,
+          userId: user?.id,
+        }),
+      }).catch(console.error);
       handleSubmit(suggestion);
     },
     [sessionId, user?.id, handleSubmit]
@@ -471,7 +479,7 @@ export const HomepageChat = memo(function HomepageChat({
               onSubmit={handleSubmit}
               isLoading={isLoading || isStreaming}
               disabled={!isOnline}
-              autoFocus={viewMode !== 'minimized'}
+              autoFocus
               placeholder={
                 !isOnline
                   ? 'You appear to be offline...'
