@@ -46,6 +46,7 @@ export default function TripPage() {
     updateItemDuration,
     updateItemNotes,
     updateItem,
+    moveItemToDay,
     refresh,
   } = useTripEditor({
     tripId,
@@ -183,6 +184,24 @@ export default function TripPage() {
   const handleAutoplan = useCallback(async () => {
     await handleAddSuggestion({ dayNumber: selectedDayNumber });
   }, [handleAddSuggestion, selectedDayNumber]);
+
+  // Handle item updates with automatic day move when dates change
+  const handleItemUpdate = useCallback((itemId: string, updates: Record<string, unknown>) => {
+    // Update the item notes
+    updateItem(itemId, updates);
+
+    // Check if check-in date or departure date changed - if so, move to correct day
+    const checkInDate = updates.checkInDate as string | undefined;
+    const departureDate = updates.departureDate as string | undefined;
+    const dateToCheck = checkInDate || departureDate;
+
+    if (dateToCheck && trip?.start_date) {
+      const targetDay = calculateDayNumberFromDate(trip.start_date, trip.end_date, dateToCheck);
+      if (targetDay !== null) {
+        moveItemToDay(itemId, targetDay);
+      }
+    }
+  }, [updateItem, moveItemToDay, trip?.start_date, trip?.end_date]);
 
   // Loading state
   if (loading) {
@@ -380,7 +399,7 @@ export default function TripPage() {
                 onClose={() => setSelectedItem(null)}
                 onTimeChange={updateItemTime}
                 onNotesChange={updateItemNotes}
-                onItemUpdate={updateItem}
+                onItemUpdate={handleItemUpdate}
                 onRemove={(itemId) => {
                   removeItem(itemId);
                   setSelectedItem(null);
@@ -456,7 +475,7 @@ export default function TripPage() {
               onClose={() => setSelectedItem(null)}
               onTimeChange={updateItemTime}
               onNotesChange={updateItemNotes}
-              onItemUpdate={updateItem}
+              onItemUpdate={handleItemUpdate}
               onRemove={(itemId) => {
                 removeItem(itemId);
                 setSelectedItem(null);

@@ -899,6 +899,61 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, [days]);
 
+  // Move an item to a different day
+  const moveItemToDay = useCallback(async (itemId: string, newDayNumber: number) => {
+    // Find the item and its current day
+    let currentDayNumber: number | null = null;
+    let itemToMove: EnrichedItineraryItem | null = null;
+
+    for (const day of days) {
+      const item = day.items.find((i) => i.id === itemId);
+      if (item) {
+        currentDayNumber = day.dayNumber;
+        itemToMove = item;
+        break;
+      }
+    }
+
+    if (!itemToMove || currentDayNumber === null || currentDayNumber === newDayNumber) {
+      return; // Nothing to do
+    }
+
+    const newDay = days.find((d) => d.dayNumber === newDayNumber);
+    const newOrderIndex = newDay?.items.length || 0;
+
+    // Optimistic update - move item between days
+    setDays((prev) =>
+      prev.map((d) => {
+        if (d.dayNumber === currentDayNumber) {
+          // Remove from current day
+          return { ...d, items: d.items.filter((item) => item.id !== itemId) };
+        }
+        if (d.dayNumber === newDayNumber) {
+          // Add to new day
+          return { ...d, items: [...d.items, { ...itemToMove!, day: newDayNumber, order_index: newOrderIndex }] };
+        }
+        return d;
+      })
+    );
+
+    try {
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { error } = await supabase
+        .from('itinerary_items')
+        .update({ day: newDayNumber, order_index: newOrderIndex })
+        .eq('id', itemId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error('Error moving item:', err);
+      // Revert on error - refresh to get correct state
+      fetchTrip();
+      onError?.(err instanceof Error ? err : new Error('Failed to move item'));
+    }
+  }, [days, fetchTrip, onError]);
+
   return {
     trip,
     days,
@@ -916,6 +971,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     updateItemDuration,
     updateItemNotes,
     updateItem,
+    moveItemToDay,
     refresh: fetchTrip,
   };
 }
