@@ -405,13 +405,12 @@ export function DestinationForm({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1.5">Slug *</label>
+              <label className="block text-sm font-medium mb-1.5">Slug</label>
               <input
                 type="text"
-                required
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                placeholder="auto-generated if empty"
+                placeholder="auto-generated from name if empty"
                 className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
