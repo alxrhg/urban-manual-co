@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useDrawer } from '@/contexts/DrawerContext';
 import {
   Settings,
@@ -137,7 +136,6 @@ function SettingsItem({
 export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const openDrawer = useDrawerStore((s) => s.openDrawer);
   const { openDrawer: openLegacyDrawer } = useDrawer();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
@@ -347,7 +345,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
             count={stats.trips}
             onClick={() => {
               onClose();
-              openDrawer('trip-list');
+              openLegacyDrawer('trips');
             }}
             accent
           />

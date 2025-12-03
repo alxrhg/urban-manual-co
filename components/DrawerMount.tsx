@@ -7,6 +7,7 @@ import { AccountDrawer } from '@/components/AccountDrawer';
 import { DestinationDrawer } from '@/src/features/detail/DestinationDrawer';
 import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
+import { TripsDrawer } from '@/components/TripsDrawer';
 import { QuickTripSelector } from '@/components/QuickTripSelector';
 
 import AddHotelDrawer from '@/components/drawers/AddHotelDrawer';
@@ -49,6 +50,7 @@ export default function DrawerMount() {
       <AccountDrawer />
       <SavedPlacesDrawer />
       <VisitedPlacesDrawer />
+      <TripsDrawer />
 
       {/* New drawers that use the global drawer store */}
       {/* Only render as overlay if not in inline mode on desktop */}
