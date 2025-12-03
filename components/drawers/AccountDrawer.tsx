@@ -137,7 +137,7 @@ function SettingsItem({
 export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const openSide = useDrawerStore((s) => s.openSide);
+  const openDrawer = useDrawerStore((s) => s.openDrawer);
   const { openDrawer: openLegacyDrawer } = useDrawer();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
@@ -347,7 +347,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
             count={stats.trips}
             onClick={() => {
               onClose();
-              openSide('trip-list');
+              openDrawer('trip-list');
             }}
             accent
           />
