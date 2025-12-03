@@ -190,9 +190,16 @@ export default function TripPage() {
     // Update the item notes
     updateItem(itemId, updates);
 
-    // Check if check-in date or departure date changed - if so, move to correct day
-    const checkInDate = updates.checkInDate as string | undefined;
-    const departureDate = updates.departureDate as string | undefined;
+    // Find the item to get its current/new date
+    let item: EnrichedItineraryItem | undefined;
+    for (const day of days) {
+      item = day.items.find(i => i.id === itemId);
+      if (item) break;
+    }
+
+    // Get the date to check - prefer new value from updates, fall back to existing
+    const checkInDate = (updates.checkInDate as string | undefined) || item?.parsedNotes?.checkInDate;
+    const departureDate = (updates.departureDate as string | undefined) || item?.parsedNotes?.departureDate;
     const dateToCheck = checkInDate || departureDate;
 
     if (dateToCheck && trip?.start_date) {
@@ -201,7 +208,7 @@ export default function TripPage() {
         moveItemToDay(itemId, targetDay);
       }
     }
-  }, [updateItem, moveItemToDay, trip?.start_date, trip?.end_date]);
+  }, [updateItem, moveItemToDay, trip?.start_date, trip?.end_date, days]);
 
   // Loading state
   if (loading) {

@@ -214,9 +214,8 @@ export default function DestinationBox({
         if (editBreakfastIncluded !== (item.parsedNotes?.breakfastIncluded || false)) updates.breakfastIncluded = editBreakfastIncluded;
       }
 
-      if (Object.keys(updates).length > 0) {
-        onItemUpdate(item.id, updates);
-      }
+      // Always call onItemUpdate to trigger day move check even if no fields changed
+      onItemUpdate(item.id, updates);
     }
 
     setIsEditing(false);
