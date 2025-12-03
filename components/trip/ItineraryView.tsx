@@ -50,6 +50,14 @@ export default function ItineraryView({
 
   if (!selectedDay) return null;
 
+  // Sort items by time (items without time go to end)
+  const sortedItems = [...selectedDay.items].sort((a, b) => {
+    if (!a.time && !b.time) return 0;
+    if (!a.time) return 1;
+    if (!b.time) return -1;
+    return a.time.localeCompare(b.time);
+  });
+
   return (
     <div className="space-y-6">
       {/* Day Header with Date Badge */}
@@ -60,19 +68,19 @@ export default function ItineraryView({
       />
 
       {/* Itinerary Items with Timeline */}
-      {selectedDay.items.length > 0 ? (
+      {sortedItems.length > 0 ? (
         <div className="relative">
           {/* Timeline Line */}
           <div className="absolute left-[17px] top-0 bottom-0 w-px bg-stone-200 dark:bg-gray-800" />
 
           {/* Items */}
           <div className="space-y-4">
-            {selectedDay.items.map((item, index) => (
+            {sortedItems.map((item, index) => (
               <ItineraryItemRow
                 key={item.id}
                 item={item}
                 isFirst={index === 0}
-                isLast={index === selectedDay.items.length - 1}
+                isLast={index === sortedItems.length - 1}
                 isActive={item.id === activeItemId}
                 isEditMode={isEditMode}
                 onClick={() => onEditItem?.(item)}

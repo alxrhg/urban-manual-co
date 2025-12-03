@@ -1,13 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowLeft, Bell, Map, Settings, UserPlus, Sparkles, Plus, Pencil } from 'lucide-react';
+import { ArrowLeft, Settings, Sparkles, Plus, Pencil, Check, StickyNote, Loader2 } from 'lucide-react';
 
 interface TripHeaderProps {
   title: string;
-  emoji?: string;
-  heroImage?: string;
   activeContentTab: 'itinerary' | 'flights' | 'hotels' | 'notes';
   onContentTabChange: (tab: 'itinerary' | 'flights' | 'hotels' | 'notes') => void;
   flightCount?: number;
@@ -19,20 +16,16 @@ interface TripHeaderProps {
   onAutoplanClick?: () => void;
   onAddClick?: () => void;
   onEditClick?: () => void;
-  onMapClick?: () => void;
   isEditMode?: boolean;
-  collaborators?: Array<{ name: string; initials: string; color: string }>;
-  notificationCount?: number;
+  isPlanning?: boolean;
 }
 
 /**
- * TripHeader - Header for trip pages
- * Features: Back button, title, hero image, content tabs, day tabs
+ * TripHeader - Clean, minimal header for trip pages
+ * Features: Simple tabs with badges, day selector, action buttons
  */
 export default function TripHeader({
   title,
-  emoji = '🎉',
-  heroImage,
   activeContentTab,
   onContentTabChange,
   flightCount = 0,
@@ -44,170 +37,103 @@ export default function TripHeader({
   onAutoplanClick,
   onAddClick,
   onEditClick,
-  onMapClick,
   isEditMode = false,
-  collaborators = [],
-  notificationCount = 0,
+  isPlanning = false,
 }: TripHeaderProps) {
+  const tabs = ['itinerary', 'flights', 'hotels', 'notes'] as const;
+
   return (
-    <header className="w-full">
-      {/* Top Bar: Back + Title + Icons */}
-      <div className="flex items-center justify-between py-4">
-        {/* Back Button */}
+    <header className="w-full mb-4">
+      {/* Top Bar: Back + Title + Settings */}
+      <div className="flex items-center gap-4 mb-6">
         <Link
           href="/trips"
-          className="flex items-center gap-2 text-sm text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors min-h-[44px] -ml-2 pl-2"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="hidden sm:inline">Trips</span>
         </Link>
 
-        {/* Centered Title with Emoji */}
-        <h1 className="flex-1 text-center text-lg font-semibold text-stone-900 dark:text-white truncate px-4">
-          {emoji} {title}
+        <div className="flex-1" />
+
+        <h1 className="text-xl sm:text-2xl font-light text-stone-900 dark:text-white truncate">
+          {title}
         </h1>
 
-        {/* Right Icons */}
-        <div className="flex items-center gap-1">
-          {/* Collaborators - hidden on mobile */}
-          {collaborators.length > 0 && (
-            <div className="hidden sm:flex items-center -space-x-2 mr-2">
-              {collaborators.slice(0, 2).map((collab, i) => (
-                <div
-                  key={i}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium text-white border-2 border-white dark:border-gray-950"
-                  style={{ backgroundColor: collab.color }}
-                >
-                  {collab.initials}
-                </div>
-              ))}
-              <button className="w-7 h-7 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors border-2 border-white dark:border-gray-950">
-                <UserPlus className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+        <div className="flex-1" />
 
-          {/* Notification Bell */}
-          <button className="relative p-2 text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors">
-            <Bell className="w-5 h-5" />
-            {notificationCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                {notificationCount > 9 ? '9+' : notificationCount}
-              </span>
-            )}
-          </button>
-
-          {/* Map Icon */}
-          <button
-            onClick={onMapClick}
-            className="p-2 text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
-          >
-            <Map className="w-5 h-5" />
-          </button>
-
-          {/* Settings */}
-          <button
-            onClick={onSettingsClick}
-            className="p-2 text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
-          >
-            <Settings className="w-5 h-5" />
-          </button>
-        </div>
+        <button
+          onClick={onSettingsClick}
+          className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+          title="Settings"
+        >
+          <Settings className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+        </button>
       </div>
 
-      {/* Hero Image */}
-      {heroImage && (
-        <div className="relative w-full h-40 sm:h-48 md:h-56 rounded-2xl overflow-hidden mb-6">
-          <Image
-            src={heroImage}
-            alt={title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-          />
-        </div>
-      )}
-
-      {/* Content Tabs Row */}
-      <div className="flex items-center justify-between border-b border-stone-200 dark:border-gray-800 mb-4">
+      {/* Tab Navigation Row */}
+      <div className="flex items-center justify-between gap-4 mb-4">
         {/* Tabs */}
-        <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto">
-          <button
-            onClick={() => onContentTabChange('itinerary')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-              activeContentTab === 'itinerary'
-                ? 'border-stone-900 dark:border-white text-stone-900 dark:text-white'
-                : 'border-transparent text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
-            }`}
-          >
-            Itinerary
-          </button>
-          <button
-            onClick={() => onContentTabChange('flights')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-              activeContentTab === 'flights'
-                ? 'border-stone-900 dark:border-white text-stone-900 dark:text-white'
-                : 'border-transparent text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
-            }`}
-          >
-            {flightCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-stone-200 dark:bg-gray-700 text-xs flex items-center justify-center">
-                {flightCount}
-              </span>
-            )}
-            Flights
-          </button>
-          <button
-            onClick={() => onContentTabChange('hotels')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-              activeContentTab === 'hotels'
-                ? 'border-stone-900 dark:border-white text-stone-900 dark:text-white'
-                : 'border-transparent text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
-            }`}
-          >
-            {hotelCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-stone-200 dark:bg-gray-700 text-xs flex items-center justify-center">
-                {hotelCount}
-              </span>
-            )}
-            Hotels
-          </button>
-          <button
-            onClick={() => onContentTabChange('notes')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-              activeContentTab === 'notes'
-                ? 'border-stone-900 dark:border-white text-stone-900 dark:text-white'
-                : 'border-transparent text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
-            }`}
-          >
-            Notes
-          </button>
+        <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto -mx-1 px-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => onContentTabChange(tab)}
+              className={`
+                transition-all flex items-center gap-1.5 whitespace-nowrap
+                px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
+                min-h-[40px] sm:min-h-0
+                ${activeContentTab === tab
+                  ? 'font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
+                  : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+                }
+              `}
+            >
+              {tab === 'notes' && <StickyNote className="w-3.5 h-3.5 sm:w-3 sm:h-3" />}
+              {tab === 'flights' && flightCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-stone-200 dark:bg-gray-700 text-[10px] flex items-center justify-center">
+                  {flightCount}
+                </span>
+              )}
+              {tab === 'hotels' && hotelCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-stone-200 dark:bg-gray-700 text-[10px] flex items-center justify-center">
+                  {hotelCount}
+                </span>
+              )}
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </button>
+          ))}
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
           <button
             onClick={onAutoplanClick}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-full hover:opacity-90 transition-opacity"
+            disabled={isPlanning}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-stone-900 dark:bg-white dark:text-gray-900 rounded-full hover:opacity-80 disabled:opacity-50 transition-opacity"
           >
-            <Sparkles className="w-4 h-4" />
-            Auto-plan
+            {isPlanning ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Sparkles className="w-3 h-3" />
+            )}
+            {isPlanning ? 'Planning...' : 'Auto-plan'}
           </button>
           <button
             onClick={onAddClick}
-            className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 bg-white dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-stone-700 dark:text-gray-200 text-sm font-medium rounded-full hover:bg-stone-50 dark:hover:bg-gray-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-stone-200 dark:border-gray-800 rounded-full hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
           >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add</span>
+            <Plus className="w-3 h-3" />
+            Add
           </button>
         </div>
       </div>
 
-      {/* Day Tabs Row */}
+      {/* Day Tabs Row (only for itinerary tab) */}
       {days.length > 0 && activeContentTab === 'itinerary' && (
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4 mb-4">
           {/* Day Tabs */}
-          <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto">
+          <div className="flex items-center gap-2 overflow-x-auto">
             {days.map((day) => (
               <button
                 key={day.dayNumber}
@@ -223,21 +149,26 @@ export default function TripHeader({
             ))}
           </div>
 
+          <div className="flex-1" />
+
           {/* Edit Button */}
           <button
             onClick={onEditClick}
-            className={`flex items-center gap-1.5 text-sm font-medium transition-colors flex-shrink-0 ${
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
               isEditMode
-                ? 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'
-                : 'text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
+                ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
+                : 'text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800'
             }`}
           >
             {isEditMode ? (
-              'Done'
+              <>
+                <Check className="w-3 h-3" />
+                Done
+              </>
             ) : (
               <>
-                <Pencil className="w-4 h-4" />
-                <span className="hidden sm:inline">Edit</span>
+                <Pencil className="w-3 h-3" />
+                Edit
               </>
             )}
           </button>
