@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -66,6 +66,29 @@ export default function TripPage() {
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+
+  // Auto-fix items on wrong days based on their dates
+  const hasAutoFixed = useRef(false);
+  useEffect(() => {
+    if (!trip?.start_date || days.length === 0 || hasAutoFixed.current) return;
+
+    // Check all items and move any that are on the wrong day
+    for (const day of days) {
+      for (const item of day.items) {
+        const checkInDate = item.parsedNotes?.checkInDate;
+        const departureDate = item.parsedNotes?.departureDate;
+        const dateToCheck = checkInDate || departureDate;
+
+        if (dateToCheck) {
+          const targetDay = calculateDayNumberFromDate(trip.start_date, trip.end_date, dateToCheck);
+          if (targetDay !== null && targetDay !== day.dayNumber) {
+            moveItemToDay(item.id, targetDay);
+          }
+        }
+      }
+    }
+    hasAutoFixed.current = true;
+  }, [trip?.start_date, trip?.end_date, days, moveItemToDay]);
 
   // Calculate flight and hotel counts
   const { flightCount, hotelCount } = useMemo(() => {
