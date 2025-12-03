@@ -336,6 +336,22 @@ export interface TrainData {
 }
 
 /**
+ * Hotel data structure for adding hotels
+ */
+export interface HotelData {
+  type: 'hotel';
+  name: string;
+  address?: string;
+  checkInDate: string;
+  checkInTime?: string;
+  checkOutDate?: string;
+  checkOutTime?: string;
+  confirmationNumber?: string;
+  roomType?: string;
+  notes?: string;
+}
+
+/**
  * Helper to parse notes JSON safely
  */
 export function parseItineraryNotes(notes: string | null): ItineraryItemNotes | null {

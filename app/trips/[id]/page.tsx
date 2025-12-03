@@ -39,6 +39,7 @@ export default function TripPage() {
     addPlace,
     addFlight,
     addTrain,
+    addHotel,
     addActivity,
     removeItem,
     updateItemTime,
@@ -359,6 +360,14 @@ export default function TripPage() {
                   addTrain(trainData, targetDay);
                   setShowAddPlaceBox(false);
                 }}
+                onAddHotel={(hotelData) => {
+                  // Calculate correct day based on check-in date
+                  const targetDay = hotelData.checkInDate
+                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, hotelData.checkInDate) ?? selectedDayNumber
+                    : selectedDayNumber;
+                  addHotel(hotelData, targetDay);
+                  setShowAddPlaceBox(false);
+                }}
                 onAddActivity={(activityData) => {
                   addActivity(activityData, selectedDayNumber);
                   setShowAddPlaceBox(false);
@@ -425,6 +434,14 @@ export default function TripPage() {
                   ? calculateDayNumberFromDate(trip.start_date, trip.end_date, trainData.departureDate) ?? selectedDayNumber
                   : selectedDayNumber;
                 addTrain(trainData, targetDay);
+                setShowAddPlaceBox(false);
+              }}
+              onAddHotel={(hotelData) => {
+                // Calculate correct day based on check-in date
+                const targetDay = hotelData.checkInDate
+                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, hotelData.checkInDate) ?? selectedDayNumber
+                  : selectedDayNumber;
+                addHotel(hotelData, targetDay);
                 setShowAddPlaceBox(false);
               }}
               onAddActivity={(activityData) => {
