@@ -336,7 +336,7 @@ export function AccountDrawer() {
                   icon={Settings}
                   label="Settings"
                   description="App preferences & privacy"
-                  onClick={() => openLegacyDrawer('settings', 'account')}
+                  onClick={() => handleNavigate('/account?tab=settings')}
                 />
               </div>
             </div>
