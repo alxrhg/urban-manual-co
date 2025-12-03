@@ -211,3 +211,37 @@ export function timesOverlap(
 
   return s1 < e2 && s2 < e1;
 }
+
+/**
+ * Calculate which day number a given date falls on relative to trip start date
+ * Returns the day number (1-indexed) or null if outside trip range
+ */
+export function calculateDayNumberFromDate(
+  tripStartDate: string | null,
+  tripEndDate: string | null,
+  targetDate: string | null
+): number | null {
+  if (!tripStartDate || !targetDate) return null;
+
+  const start = parseDateString(tripStartDate);
+  const target = parseDateString(targetDate);
+
+  if (!start || !target) return null;
+
+  // Calculate difference in days
+  const diffMs = target.getTime() - start.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  // Day number is 1-indexed
+  const dayNumber = diffDays + 1;
+
+  // Check if within trip bounds
+  if (dayNumber < 1) return null;
+
+  if (tripEndDate) {
+    const totalDays = calculateTripDays(tripStartDate, tripEndDate);
+    if (dayNumber > totalDays) return null;
+  }
+
+  return dayNumber;
+}

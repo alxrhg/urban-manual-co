@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { parseDestinations } from '@/types/trip';
+import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 
 // Trip components
 import TripHeader from '@/components/trip/TripHeader';
@@ -343,11 +344,19 @@ export default function TripPage() {
                   setShowAddPlaceBox(false);
                 }}
                 onAddFlight={(flightData) => {
-                  addFlight(flightData, selectedDayNumber);
+                  // Calculate correct day based on departure date
+                  const targetDay = flightData.departureDate
+                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, flightData.departureDate) ?? selectedDayNumber
+                    : selectedDayNumber;
+                  addFlight(flightData, targetDay);
                   setShowAddPlaceBox(false);
                 }}
                 onAddTrain={(trainData) => {
-                  addTrain(trainData, selectedDayNumber);
+                  // Calculate correct day based on departure date
+                  const targetDay = trainData.departureDate
+                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, trainData.departureDate) ?? selectedDayNumber
+                    : selectedDayNumber;
+                  addTrain(trainData, targetDay);
                   setShowAddPlaceBox(false);
                 }}
                 onAddActivity={(activityData) => {
@@ -403,11 +412,19 @@ export default function TripPage() {
                 setShowAddPlaceBox(false);
               }}
               onAddFlight={(flightData) => {
-                addFlight(flightData, selectedDayNumber);
+                // Calculate correct day based on departure date
+                const targetDay = flightData.departureDate
+                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, flightData.departureDate) ?? selectedDayNumber
+                  : selectedDayNumber;
+                addFlight(flightData, targetDay);
                 setShowAddPlaceBox(false);
               }}
               onAddTrain={(trainData) => {
-                addTrain(trainData, selectedDayNumber);
+                // Calculate correct day based on departure date
+                const targetDay = trainData.departureDate
+                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, trainData.departureDate) ?? selectedDayNumber
+                  : selectedDayNumber;
+                addTrain(trainData, targetDay);
                 setShowAddPlaceBox(false);
               }}
               onAddActivity={(activityData) => {
