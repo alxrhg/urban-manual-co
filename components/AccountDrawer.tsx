@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
-import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
@@ -144,7 +143,6 @@ export function AccountDrawer() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { isDrawerOpen, closeDrawer: closeLegacyDrawer, openDrawer: openLegacyDrawer } = useDrawer();
-  const { openSide, closeDrawer: closeStoreDrawer } = useDrawerStore();
   const isOpen = isDrawerOpen('account');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
@@ -323,10 +321,7 @@ export function AccountDrawer() {
                   icon={Compass}
                   label="Trip Plans"
                   description={`${stats.trips} itineraries`}
-                  onClick={() => {
-                    closeLegacyDrawer();
-                    openSide('trip-list');
-                  }}
+                  onClick={() => openLegacyDrawer('trips', 'account')}
                 />
               </div>
             </div>
@@ -341,7 +336,7 @@ export function AccountDrawer() {
                   icon={Settings}
                   label="Settings"
                   description="App preferences & privacy"
-                  onClick={() => openLegacyDrawer('settings', 'account')}
+                  onClick={() => handleNavigate('/account?tab=settings')}
                 />
               </div>
             </div>

@@ -4,12 +4,10 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
-import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useDrawer } from '@/contexts/DrawerContext';
 import {
   Settings,
   MapPin,
-  Compass,
   LogOut,
   Bookmark,
   ChevronRight,
@@ -22,7 +20,6 @@ import Image from 'next/image';
 interface UserStats {
   visited: number;
   saved: number;
-  trips: number;
 }
 
 interface AccountDrawerProps {
@@ -58,42 +55,26 @@ function QuickAction({
   label,
   count,
   onClick,
-  accent = false,
 }: {
   icon: React.ElementType;
   label: string;
   count?: number;
   onClick: () => void;
-  accent?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`group flex flex-col items-center justify-center gap-2 p-5 sm:p-4 rounded-2xl border transition-all duration-200 active:scale-[0.98] min-h-[100px] sm:min-h-[88px] ${
-        accent
-          ? 'bg-stone-900 dark:bg-white border-stone-900 dark:border-white hover:bg-stone-800 dark:hover:bg-gray-100'
-          : 'bg-white dark:bg-gray-900 border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-stone-700 hover:shadow-sm'
-      }`}
+      className="group flex flex-col items-center justify-center gap-2 p-5 sm:p-4 rounded-2xl border transition-all duration-200 active:scale-[0.98] min-h-[100px] sm:min-h-[88px] bg-white dark:bg-gray-900 border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-stone-700 hover:shadow-sm"
     >
-      <div className={`p-2.5 sm:p-2 rounded-xl transition-transform group-hover:scale-110 ${
-        accent
-          ? 'bg-white/20 dark:bg-gray-900/20'
-          : 'bg-stone-100 dark:bg-gray-800'
-      }`}>
-        <Icon className={`w-5 h-5 sm:w-4 sm:h-4 ${
-          accent ? 'text-white dark:text-gray-900' : 'text-stone-600 dark:text-gray-300'
-        }`} />
+      <div className="p-2.5 sm:p-2 rounded-xl transition-transform group-hover:scale-110 bg-stone-100 dark:bg-gray-800">
+        <Icon className="w-5 h-5 sm:w-4 sm:h-4 text-stone-600 dark:text-gray-300" />
       </div>
       <div className="text-center">
-        <p className={`text-sm sm:text-xs font-medium ${
-          accent ? 'text-white dark:text-gray-900' : 'text-stone-900 dark:text-white'
-        }`}>
+        <p className="text-sm sm:text-xs font-medium text-stone-900 dark:text-white">
           {label}
         </p>
         {count !== undefined && (
-          <p className={`text-xs mt-0.5 ${
-            accent ? 'text-white/70 dark:text-gray-900/70' : 'text-stone-500 dark:text-gray-400'
-          }`}>
+          <p className="text-xs mt-0.5 text-stone-500 dark:text-gray-400">
             {count} {count === 1 ? 'place' : 'places'}
           </p>
         )}
@@ -137,14 +118,12 @@ function SettingsItem({
 export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const openSide = useDrawerStore((s) => s.openSide);
   const { openDrawer: openLegacyDrawer } = useDrawer();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [stats, setStats] = useState<UserStats>({
     visited: 0,
     saved: 0,
-    trips: 0,
   });
 
   useEffect(() => {
@@ -152,7 +131,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       if (!user?.id) {
         setAvatarUrl(null);
         setUsername(null);
-        setStats({ visited: 0, saved: 0, trips: 0 });
+        setStats({ visited: 0, saved: 0 });
         return;
       }
 
@@ -180,7 +159,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
           }
         }
 
-        const [visitedResult, savedResult, tripsResult] = await Promise.all([
+        const [visitedResult, savedResult] = await Promise.all([
           supabaseClient
             .from('visited_places')
             .select('*', { count: 'exact', head: true })
@@ -189,16 +168,11 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
             .from('saved_places')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id),
-          supabaseClient
-            .from('trips')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id),
         ]);
 
         setStats({
           visited: visitedResult.count || 0,
           saved: savedResult.count || 0,
-          trips: tripsResult.count || 0,
         });
       } catch (error) {
         console.error('Error fetching profile and stats:', error);
@@ -316,13 +290,12 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         <div className="flex items-center gap-2 mt-5 overflow-x-auto no-scrollbar">
           <StatPill value={stats.saved} label="saved" />
           <StatPill value={stats.visited} label="visited" />
-          <StatPill value={stats.trips} label="trips" />
         </div>
       </div>
 
       {/* Quick actions grid */}
       <div className="px-5 sm:px-6 py-4">
-        <div className="grid grid-cols-3 gap-3 sm:gap-2">
+        <div className="grid grid-cols-2 gap-3 sm:gap-2">
           <QuickAction
             icon={Bookmark}
             label="Saved"
@@ -340,16 +313,6 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
               onClose();
               openLegacyDrawer('visited-places');
             }}
-          />
-          <QuickAction
-            icon={Compass}
-            label="Trips"
-            count={stats.trips}
-            onClick={() => {
-              onClose();
-              openSide('trip-list');
-            }}
-            accent
           />
         </div>
       </div>
