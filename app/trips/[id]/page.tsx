@@ -70,7 +70,12 @@ export default function TripPage() {
   // Auto-fix items on wrong days based on their dates
   const hasAutoFixed = useRef(false);
   useEffect(() => {
-    if (!trip?.start_date || days.length === 0 || hasAutoFixed.current) return;
+    // Wait for data to load and only run once
+    if (loading || !trip?.start_date || days.length === 0 || hasAutoFixed.current) return;
+
+    // Count items to ensure we have data
+    const totalItems = days.reduce((sum, day) => sum + day.items.length, 0);
+    if (totalItems === 0) return;
 
     // Check all items and move any that are on the wrong day
     for (const day of days) {
@@ -88,7 +93,7 @@ export default function TripPage() {
       }
     }
     hasAutoFixed.current = true;
-  }, [trip?.start_date, trip?.end_date, days, moveItemToDay]);
+  }, [loading, trip?.start_date, trip?.end_date, days, moveItemToDay]);
 
   // Calculate flight and hotel counts
   const { flightCount, hotelCount } = useMemo(() => {
