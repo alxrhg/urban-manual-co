@@ -19,6 +19,7 @@ interface TripHeaderProps {
   onAutoplanClick?: () => void;
   onAddClick?: () => void;
   onEditClick?: () => void;
+  isEditMode?: boolean;
   collaborators?: Array<{ name: string; initials: string; color: string }>;
   notificationCount?: number;
 }
@@ -42,6 +43,7 @@ export default function TripHeader({
   onAutoplanClick,
   onAddClick,
   onEditClick,
+  isEditMode = false,
   collaborators = [],
   notificationCount = 0,
 }: TripHeaderProps) {
@@ -220,10 +222,20 @@ export default function TripHeader({
           {/* Edit Button */}
           <button
             onClick={onEditClick}
-            className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+              isEditMode
+                ? 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+            }`}
           >
-            <Pencil className="w-4 h-4" />
-            Edit
+            {isEditMode ? (
+              'Done'
+            ) : (
+              <>
+                <Pencil className="w-4 h-4" />
+                Edit
+              </>
+            )}
           </button>
         </div>
       )}

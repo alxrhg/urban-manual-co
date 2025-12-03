@@ -63,6 +63,7 @@ export default function TripPageRedesign() {
   const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Calculate flight and hotel counts
   const { flightCount, hotelCount } = useMemo(() => {
@@ -228,7 +229,8 @@ export default function TripPageRedesign() {
           onSettingsClick={() => setShowTripSettings(true)}
           onAutoplanClick={handleAutoplan}
           onAddClick={() => setShowAddPlaceBox(true)}
-          onEditClick={() => setShowTripSettings(true)}
+          onEditClick={() => setIsEditMode(!isEditMode)}
+          isEditMode={isEditMode}
           collaborators={[
             { name: 'John Doe', initials: 'JD', color: '#374151' },
             { name: 'Anna Miller', initials: 'AM', color: '#6B7280' },
@@ -252,7 +254,9 @@ export default function TripPageRedesign() {
                 }}
                 onOptimizeDay={handleOptimizeDay}
                 onUpdateItemNotes={(itemId, notes) => updateItem(itemId, notes)}
+                onRemoveItem={removeItem}
                 isOptimizing={optimizingDay !== null}
+                isEditMode={isEditMode}
                 activeItemId={selectedItem?.id}
               />
             )}

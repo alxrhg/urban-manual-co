@@ -23,7 +23,9 @@ interface ItineraryViewProps {
   onAddItem?: (dayNumber: number) => void;
   onOptimizeDay?: (dayNumber: number) => void;
   onUpdateItemNotes?: (itemId: string, notes: Record<string, unknown>) => void;
+  onRemoveItem?: (itemId: string) => void;
   isOptimizing?: boolean;
+  isEditMode?: boolean;
   activeItemId?: string | null;
 }
 
@@ -39,7 +41,9 @@ export default function ItineraryView({
   onAddItem,
   onOptimizeDay,
   onUpdateItemNotes,
+  onRemoveItem,
   isOptimizing = false,
+  isEditMode = false,
   activeItemId,
 }: ItineraryViewProps) {
   const selectedDay = days.find(d => d.dayNumber === selectedDayNumber);
@@ -77,8 +81,10 @@ export default function ItineraryView({
                 isFirst={index === 0}
                 isLast={index === selectedDay.items.length - 1}
                 isActive={item.id === activeItemId}
+                isEditMode={isEditMode}
                 onClick={() => onEditItem?.(item)}
                 onUpdateNotes={onUpdateItemNotes}
+                onRemove={onRemoveItem ? () => onRemoveItem(item.id) : undefined}
               />
             ))}
           </div>
@@ -238,22 +244,39 @@ function ItineraryItemRow({
   isFirst,
   isLast,
   isActive,
+  isEditMode,
   onClick,
   onUpdateNotes,
+  onRemove,
 }: {
   item: EnrichedItineraryItem;
   isFirst: boolean;
   isLast: boolean;
   isActive: boolean;
+  isEditMode?: boolean;
   onClick?: () => void;
   onUpdateNotes?: (itemId: string, notes: Record<string, unknown>) => void;
+  onRemove?: () => void;
 }) {
   const itemType = item.parsedNotes?.type;
 
   return (
-    <div className="relative pl-10">
+    <div className="relative pl-10 group">
       {/* Timeline Dot */}
       <div className="absolute left-[15px] top-4 w-2.5 h-2.5 rounded-full bg-gray-900 dark:bg-white border-2 border-white dark:border-gray-950 z-10" />
+
+      {/* Delete Button (Edit Mode) */}
+      {isEditMode && onRemove && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="absolute -left-2 top-3 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center text-sm font-bold hover:bg-red-600 transition-colors z-20"
+        >
+          −
+        </button>
+      )}
 
       {/* Content Card */}
       {itemType === 'flight' ? (
