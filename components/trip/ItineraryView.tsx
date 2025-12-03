@@ -476,6 +476,15 @@ function HotelCard({
 }) {
   const notes = item.parsedNotes;
 
+  // Use checkInTime from notes, or fall back to item.time, or show placeholder
+  const checkInTime = notes?.checkInTime || item.time || null;
+  const formatTime = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes?.toString().padStart(2, '0')} ${period}`;
+  };
+
   return (
     <div
       onClick={onClick}
@@ -498,11 +507,11 @@ function HotelCard({
                 Check-in at {item.title || 'Hotel'}
               </h4>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-                {notes?.roomType || 'Room'} · {notes?.address || 'Address'}
+                {notes?.roomType ? `${notes.roomType} · ` : ''}{notes?.address || 'Address not set'}
               </p>
             </div>
             <div className="text-sm text-gray-500 flex-shrink-0">
-              {notes?.checkInTime || '2:00 PM'}
+              {checkInTime ? formatTime(checkInTime) : <span className="text-gray-400">Time not set</span>}
             </div>
           </div>
 

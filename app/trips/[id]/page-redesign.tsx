@@ -4,12 +4,10 @@ import { useState, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
-import { parseDestinations, formatDestinationsFromField } from '@/types/trip';
-import type { Destination } from '@/types/destination';
+import { parseDestinations } from '@/types/trip';
 
-// New Figma-inspired components
+// Figma-inspired components
 import TripHeader from '@/components/trip/TripHeader';
-import TripInfoCards from '@/components/trip/TripInfoCards';
 import ItineraryView from '@/components/trip/ItineraryView';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
@@ -21,8 +19,8 @@ import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import DestinationBox from '@/components/trip/DestinationBox';
 
 /**
- * TripPageRedesign - Figma/Instagram-inspired trip detail page
- * Features: Dark theme, pink accents, prominent flight cards, Travel AI sidebar
+ * TripPageRedesign - Figma-inspired trip detail page
+ * Features: Centered title header, content tabs with counts, day tabs, Travel AI sidebar
  */
 export default function TripPageRedesign() {
   const params = useParams();
@@ -59,12 +57,51 @@ export default function TripPageRedesign() {
   const primaryCity = destinations[0] || '';
 
   // UI State
-  const [activeTab, setActiveTab] = useState<'overview' | 'itinerary'>('itinerary');
+  const [activeContentTab, setActiveContentTab] = useState<'itinerary' | 'flights' | 'hotels' | 'notes'>('itinerary');
   const [selectedDayNumber, setSelectedDayNumber] = useState(1);
   const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
   const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
+
+  // Calculate flight and hotel counts
+  const { flightCount, hotelCount } = useMemo(() => {
+    let flights = 0;
+    let hotels = 0;
+    for (const day of days) {
+      for (const item of day.items) {
+        if (item.parsedNotes?.type === 'flight') flights++;
+        if (item.parsedNotes?.type === 'hotel') hotels++;
+      }
+    }
+    return { flightCount: flights, hotelCount: hotels };
+  }, [days]);
+
+  // Get all flights for flights tab
+  const allFlights = useMemo(() => {
+    const flights: EnrichedItineraryItem[] = [];
+    for (const day of days) {
+      for (const item of day.items) {
+        if (item.parsedNotes?.type === 'flight') {
+          flights.push(item);
+        }
+      }
+    }
+    return flights;
+  }, [days]);
+
+  // Get all hotels for hotels tab
+  const allHotels = useMemo(() => {
+    const hotels: EnrichedItineraryItem[] = [];
+    for (const day of days) {
+      for (const item of day.items) {
+        if (item.parsedNotes?.type === 'hotel') {
+          hotels.push(item);
+        }
+      }
+    }
+    return hotels;
+  }, [days]);
 
   // Handlers
   const handleEditItem = useCallback((item: EnrichedItineraryItem) => {
@@ -141,10 +178,9 @@ export default function TripPageRedesign() {
     }
   }, [primaryCity, days, selectedDayNumber, addPlace, refresh, trip?.destination]);
 
-  // Calculate saved places count
-  const savedPlacesCount = useMemo(() => {
-    return days.reduce((acc, day) => acc + day.items.length, 0);
-  }, [days]);
+  const handleAutoplan = useCallback(async () => {
+    await handleAddSuggestion({ dayNumber: selectedDayNumber });
+  }, [handleAddSuggestion, selectedDayNumber]);
 
   // Loading state
   if (loading) {
@@ -176,36 +212,35 @@ export default function TripPageRedesign() {
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative">
+        {/* Header with Tabs */}
         <TripHeader
           title={trip.title}
-          destination={primaryCity}
-          startDate={trip.start_date ?? undefined}
-          endDate={trip.end_date ?? undefined}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
+          emoji="🎉"
+          heroImage={trip.cover_image || undefined}
+          activeContentTab={activeContentTab}
+          onContentTabChange={setActiveContentTab}
+          flightCount={flightCount}
+          hotelCount={hotelCount}
+          days={days}
+          selectedDayNumber={selectedDayNumber}
+          onSelectDay={setSelectedDayNumber}
           onSettingsClick={() => setShowTripSettings(true)}
+          onAutoplanClick={handleAutoplan}
+          onAddClick={() => setShowAddPlaceBox(true)}
+          onEditClick={() => setShowTripSettings(true)}
           collaborators={[
             { name: 'John Doe', initials: 'JD', color: '#374151' },
             { name: 'Anna Miller', initials: 'AM', color: '#6B7280' },
           ]}
+          notificationCount={1}
         />
-
-        {/* Info Cards */}
-        <div className="mt-8 mb-8">
-          <TripInfoCards
-            weather={{ temp: 78, condition: 'sunny' }}
-            savedPlacesCount={savedPlacesCount}
-            onSavedPlacesClick={() => setShowAddPlaceBox(true)}
-          />
-        </div>
 
         {/* Main Content */}
         <div className="lg:flex lg:gap-6">
-          {/* Left Column - Itinerary */}
+          {/* Left Column - Content */}
           <div className="flex-1 min-w-0">
-            {activeTab === 'itinerary' && (
+            {activeContentTab === 'itinerary' && (
               <ItineraryView
                 days={days}
                 selectedDayNumber={selectedDayNumber}
@@ -222,9 +257,67 @@ export default function TripPageRedesign() {
               />
             )}
 
-            {activeTab === 'overview' && (
-              <div className="text-center py-12">
-                <p className="text-gray-500 dark:text-gray-400">Overview tab coming soon</p>
+            {activeContentTab === 'flights' && (
+              <div className="space-y-4">
+                {allFlights.length === 0 ? (
+                  <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+                    <p className="text-gray-500 mb-4">No flights added yet</p>
+                    <button
+                      onClick={() => setShowAddPlaceBox(true)}
+                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
+                    >
+                      Add a flight
+                    </button>
+                  </div>
+                ) : (
+                  allFlights.map((flight) => (
+                    <div
+                      key={flight.id}
+                      onClick={() => handleEditItem(flight)}
+                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                    >
+                      <div className="font-medium text-gray-900 dark:text-white">{flight.title}</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {flight.parsedNotes?.from} → {flight.parsedNotes?.to}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeContentTab === 'hotels' && (
+              <div className="space-y-4">
+                {allHotels.length === 0 ? (
+                  <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+                    <p className="text-gray-500 mb-4">No hotels added yet</p>
+                    <button
+                      onClick={() => setShowAddPlaceBox(true)}
+                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
+                    >
+                      Add a hotel
+                    </button>
+                  </div>
+                ) : (
+                  allHotels.map((hotel) => (
+                    <div
+                      key={hotel.id}
+                      onClick={() => handleEditItem(hotel)}
+                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                    >
+                      <div className="font-medium text-gray-900 dark:text-white">{hotel.title}</div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {hotel.parsedNotes?.checkInTime || 'Check-in time not set'} · {hotel.parsedNotes?.address || 'Address not set'}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {activeContentTab === 'notes' && (
+              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+                <p className="text-gray-500">Notes feature coming soon</p>
               </div>
             )}
           </div>
