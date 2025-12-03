@@ -1031,15 +1031,15 @@ export default function DestinationBox({
           </div>
         )}
 
-        {/* Remove Button */}
-        {isEditing && onRemove && (
+        {/* Remove Button - Always visible */}
+        {onRemove && (
           <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
             <button
               onClick={handleRemove}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-200 dark:border-red-900/30 rounded-xl transition-colors"
             >
-              <Trash2 className="w-3.5 h-3.5" />
-              Remove from Itinerary
+              <Trash2 className="w-4 h-4" />
+              Remove from itinerary
             </button>
           </div>
         )}
