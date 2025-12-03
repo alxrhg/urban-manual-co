@@ -52,13 +52,6 @@ export default function ItineraryView({
 
   return (
     <div className="space-y-4">
-      {/* Day Tabs */}
-      <DayTabs
-        days={days}
-        selectedDayNumber={selectedDayNumber}
-        onSelectDay={onSelectDay}
-      />
-
       {/* Day Header with Date Badge */}
       <DayHeaderSection
         day={selectedDay}
@@ -70,10 +63,10 @@ export default function ItineraryView({
       {selectedDay.items.length > 0 ? (
         <div className="relative">
           {/* Timeline Line */}
-          <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-800" />
+          <div className="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
 
           {/* Items */}
-          <div className="space-y-4">
+          <div className="space-y-3">
             {selectedDay.items.map((item, index) => (
               <ItineraryItemRow
                 key={item.id}
@@ -91,13 +84,13 @@ export default function ItineraryView({
 
           {/* Add Stop Button */}
           {onAddItem && (
-            <div className="relative pl-10 mt-4">
-              <div className="absolute left-[15px] top-3 w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-700 border-2 border-white dark:border-gray-950 z-10" />
+            <div className="relative pl-10 mt-3">
+              <div className="absolute left-[16px] top-3 w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-700 z-10" />
               <button
                 onClick={() => onAddItem(selectedDay.dayNumber)}
-                className="w-full py-3 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-gray-600 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600 transition-colors flex items-center justify-center gap-1.5"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-3.5 h-3.5" />
                 Add stop
               </button>
             </div>
@@ -105,50 +98,19 @@ export default function ItineraryView({
         </div>
       ) : (
         /* Empty State */
-        <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-          <MapPin className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-          <p className="text-gray-500 mb-4">No stops planned for this day</p>
+        <div className="text-center py-10 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/30">
+          <MapPin className="w-10 h-10 mx-auto text-gray-300 dark:text-gray-700 mb-3" />
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No stops planned for this day</p>
           {onAddItem && (
             <button
               onClick={() => onAddItem(selectedDay.dayNumber)}
-              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
+              className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-full hover:opacity-90 transition-opacity"
             >
               Add your first stop
             </button>
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-// Day Tabs Component
-function DayTabs({
-  days,
-  selectedDayNumber,
-  onSelectDay,
-}: {
-  days: TripDay[];
-  selectedDayNumber: number;
-  onSelectDay: (dayNumber: number) => void;
-}) {
-  return (
-    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-      {days.map((day) => (
-        <button
-          key={day.dayNumber}
-          onClick={() => onSelectDay(day.dayNumber)}
-          className={`
-            px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
-            ${day.dayNumber === selectedDayNumber
-              ? 'bg-black dark:bg-white text-white dark:text-gray-900'
-              : 'bg-gray-100 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-            }
-          `}
-        >
-          Day {day.dayNumber}
-        </button>
-      ))}
     </div>
   );
 }
@@ -195,14 +157,14 @@ function DayHeaderSection({
   const dayOfWeek = formatDayOfWeek(day.date);
 
   return (
-    <div className="flex items-center gap-4 mb-6">
+    <div className="flex items-center gap-3 mb-4">
       {/* Date Badge */}
       {day.date && (
-        <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center">
-          <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 tracking-wider">
+        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center">
+          <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 tracking-wider uppercase">
             {month}
           </span>
-          <span className="text-xl font-bold text-gray-900 dark:text-white leading-none">
+          <span className="text-lg font-bold text-gray-900 dark:text-white leading-none">
             {dayNum}
           </span>
         </div>
@@ -210,11 +172,11 @@ function DayHeaderSection({
 
       {/* Day Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
           Day {day.dayNumber}
         </h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {dayOfWeek && `${dayOfWeek} • `}
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          {dayOfWeek && `${dayOfWeek} · `}
           {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
         </p>
       </div>
@@ -224,14 +186,14 @@ function DayHeaderSection({
         <button
           onClick={onAutoOptimize}
           disabled={isOptimizing}
-          className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-full text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors disabled:opacity-50"
+          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50"
         >
           {isOptimizing ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
-            <Clock className="w-4 h-4" />
+            <Clock className="w-3.5 h-3.5" />
           )}
-          Auto-optimize
+          <span className="hidden sm:inline">Optimize route</span>
         </button>
       )}
     </div>
