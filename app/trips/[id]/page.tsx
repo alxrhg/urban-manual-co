@@ -272,7 +272,7 @@ export default function TripPage() {
         {/* Header with Tabs */}
         <TripHeader
           title={trip.title}
-          emoji="🏝️"
+          emoji="🎉"
           heroImage={trip.cover_image || undefined}
           activeContentTab={activeContentTab}
           onContentTabChange={setActiveContentTab}
@@ -286,6 +286,11 @@ export default function TripPage() {
           onAddClick={() => setShowAddPlaceBox(true)}
           onEditClick={() => setIsEditMode(!isEditMode)}
           isEditMode={isEditMode}
+          collaborators={[
+            { name: 'John Doe', initials: 'JD', color: '#374151' },
+            { name: 'Anna Miller', initials: 'AM', color: '#6B7280' },
+          ]}
+          notificationCount={1}
         />
 
         {/* Main Content */}
