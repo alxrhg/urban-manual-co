@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowLeft, Bell, Map, Settings, UserPlus, Sparkles, Plus, Pencil, MoreHorizontal, ChevronDown } from 'lucide-react';
+import { ArrowLeft, MoreHorizontal, ChevronDown, Plus, Pencil } from 'lucide-react';
 
 interface TripHeaderProps {
   title: string;
@@ -25,14 +24,9 @@ interface TripHeaderProps {
   notificationCount?: number;
 }
 
-/**
- * TripHeader - Figma-inspired header for trip pages
- * Features: Centered title with emoji, hero image, content tabs with counts, day tabs
- */
 export default function TripHeader({
   title,
   emoji = '🎉',
-  heroImage,
   activeContentTab,
   onContentTabChange,
   flightCount = 0,
@@ -41,199 +35,131 @@ export default function TripHeader({
   selectedDayNumber = 1,
   onSelectDay,
   onSettingsClick,
-  onAutoplanClick,
   onAddClick,
   onEditClick,
   isEditMode = false,
-  collaborators = [],
-  notificationCount = 0,
 }: TripHeaderProps) {
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showDayPicker, setShowDayPicker] = useState(false);
-
-  const selectedDay = days.find(d => d.dayNumber === selectedDayNumber);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   return (
-    <header className="w-full overflow-hidden">
-      {/* Top Bar: Back + Title + Icons */}
-      <div className="flex items-center justify-between py-2 sm:py-3">
-        {/* Back Button */}
+    <header className="w-full mb-6 sm:mb-8">
+      {/* Top Bar */}
+      <div className="flex items-center justify-between mb-6 sm:mb-8">
+        {/* Back Link */}
         <Link
           href="/trips"
-          className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors flex-shrink-0"
+          className="flex items-center gap-1.5 text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors"
         >
-          <ArrowLeft className="w-5 h-5" />
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-xs hidden sm:inline">Trips</span>
         </Link>
 
-        {/* Centered Title with Emoji */}
-        <h1 className="flex-1 text-center text-base font-semibold text-gray-900 dark:text-white truncate px-3">
+        {/* Title */}
+        <h1 className="text-lg sm:text-xl font-light text-stone-900 dark:text-white truncate px-4">
           {emoji} {title}
         </h1>
 
-        {/* Right Icons - minimal on mobile */}
-        <div className="flex items-center flex-shrink-0">
-          {/* Desktop: Show all icons */}
-          <div className="hidden sm:flex items-center gap-1">
-            {collaborators.length > 0 && (
-              <div className="flex items-center -space-x-2 mr-2">
-                {collaborators.slice(0, 2).map((collab, i) => (
-                  <div
-                    key={i}
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium text-white border-2 border-white dark:border-gray-950"
-                    style={{ backgroundColor: collab.color }}
-                  >
-                    {collab.initials}
-                  </div>
-                ))}
-                <button className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors border-2 border-white dark:border-gray-950">
-                  <UserPlus className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-            <button className="relative p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-              <Bell className="w-5 h-5" />
-              {notificationCount > 0 && (
-                <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {notificationCount}
-                </span>
-              )}
-            </button>
-            <button className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-              <Map className="w-5 h-5" />
-            </button>
-            <button onClick={onSettingsClick} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Mobile: Only menu button */}
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          {/* Desktop: Settings */}
           <button
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="sm:hidden p-1.5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors relative"
+            onClick={onSettingsClick}
+            className="hidden sm:flex p-2 text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors"
           >
             <MoreHorizontal className="w-5 h-5" />
-            {notificationCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-red-500 rounded-full" />
-            )}
+          </button>
+
+          {/* Mobile: Menu */}
+          <button
+            onClick={() => setShowMobileMenu(!showMobileMenu)}
+            className="sm:hidden p-2 text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors"
+          >
+            <MoreHorizontal className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu */}
       {showMobileMenu && (
-        <div className="sm:hidden absolute right-4 top-12 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-lg py-1 min-w-[140px]">
+        <div className="sm:hidden absolute right-4 top-14 z-50 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl shadow-lg py-2 min-w-[160px]">
           <button
             onClick={() => { onSettingsClick?.(); setShowMobileMenu(false); }}
-            className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2"
+            className="w-full px-4 py-2.5 text-left text-sm text-stone-700 dark:text-gray-300 hover:bg-stone-50 dark:hover:bg-gray-800"
           >
-            <Settings className="w-4 h-4" /> Settings
+            Trip Settings
           </button>
-          <button className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2">
-            <Map className="w-4 h-4" /> Map
-          </button>
-          <button className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2">
-            <Bell className="w-4 h-4" /> Notifications
-            {notificationCount > 0 && <span className="ml-auto text-xs text-red-500">{notificationCount}</span>}
-          </button>
-          <button className="w-full px-4 py-2.5 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-2">
-            <UserPlus className="w-4 h-4" /> Invite
+          <button
+            onClick={() => { onAddClick?.(); setShowMobileMenu(false); }}
+            className="w-full px-4 py-2.5 text-left text-sm text-stone-700 dark:text-gray-300 hover:bg-stone-50 dark:hover:bg-gray-800"
+          >
+            Add Place
           </button>
         </div>
       )}
 
-      {/* Hero Image - hidden on mobile */}
-      {heroImage && (
-        <div className="hidden sm:block relative w-full h-48 md:h-56 rounded-2xl overflow-hidden mb-6">
-          <Image
-            src={heroImage}
-            alt={title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-          />
-        </div>
-      )}
+      {/* Content Tabs */}
+      <div className="flex items-center justify-between border-b border-stone-200 dark:border-gray-800 mb-6">
+        <div className="flex items-center gap-6 sm:gap-8">
+          {(['itinerary', 'flights', 'hotels', 'notes'] as const).map((tab) => {
+            const count = tab === 'flights' ? flightCount : tab === 'hotels' ? hotelCount : 0;
+            const isHidden = tab === 'notes'; // Hide notes on mobile
 
-      {/* Content Tabs Row */}
-      <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 mb-2 sm:mb-4">
-        {/* Tabs */}
-        <div className="flex items-center gap-4 sm:gap-6">
-          <button
-            onClick={() => onContentTabChange('itinerary')}
-            className={`pb-2 sm:pb-3 text-sm font-medium border-b-2 transition-colors ${
-              activeContentTab === 'itinerary'
-                ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                : 'border-transparent text-gray-500 dark:text-gray-400'
-            }`}
-          >
-            Itinerary
-          </button>
-          <button
-            onClick={() => onContentTabChange('flights')}
-            className={`pb-2 sm:pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${
-              activeContentTab === 'flights'
-                ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                : 'border-transparent text-gray-500 dark:text-gray-400'
-            }`}
-          >
-            Flights
-            {flightCount > 0 && <span className="text-xs text-gray-400">({flightCount})</span>}
-          </button>
-          <button
-            onClick={() => onContentTabChange('hotels')}
-            className={`pb-2 sm:pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1 ${
-              activeContentTab === 'hotels'
-                ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                : 'border-transparent text-gray-500 dark:text-gray-400'
-            }`}
-          >
-            Hotels
-            {hotelCount > 0 && <span className="text-xs text-gray-400">({hotelCount})</span>}
-          </button>
-          {/* Notes - hidden on mobile */}
-          <button
-            onClick={() => onContentTabChange('notes')}
-            className={`hidden sm:block pb-2 sm:pb-3 text-sm font-medium border-b-2 transition-colors ${
-              activeContentTab === 'notes'
-                ? 'border-gray-900 dark:border-white text-gray-900 dark:text-white'
-                : 'border-transparent text-gray-500 dark:text-gray-400'
-            }`}
-          >
-            Notes
-          </button>
+            return (
+              <button
+                key={tab}
+                onClick={() => onContentTabChange(tab)}
+                className={`
+                  pb-3 text-xs font-medium transition-colors capitalize
+                  ${isHidden ? 'hidden sm:block' : ''}
+                  ${activeContentTab === tab
+                    ? 'text-stone-900 dark:text-white border-b-2 border-stone-900 dark:border-white -mb-px'
+                    : 'text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+                  }
+                `}
+              >
+                {tab}
+                {count > 0 && (
+                  <span className="ml-1.5 text-stone-300 dark:text-gray-600">
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Action Button - single on mobile */}
+        {/* Add Button */}
         <button
           onClick={onAddClick}
-          className="flex items-center justify-center w-8 h-8 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:opacity-90 transition-opacity"
+          className="flex items-center justify-center w-8 h-8 mb-1 bg-stone-900 dark:bg-white text-white dark:text-gray-900 rounded-full hover:opacity-90 transition-opacity"
         >
           <Plus className="w-4 h-4" />
         </button>
       </div>
 
-      {/* Day Tabs Row - Compact on mobile */}
+      {/* Day Tabs - Only for itinerary */}
       {days.length > 0 && activeContentTab === 'itinerary' && (
-        <div className="flex items-center justify-between mb-2 sm:mb-4">
-          {/* Mobile: Day Picker Dropdown */}
+        <div className="flex items-center justify-between">
+          {/* Mobile: Dropdown */}
           <div className="sm:hidden relative">
             <button
               onClick={() => setShowDayPicker(!showDayPicker)}
-              className="flex items-center gap-1 text-sm font-medium text-gray-900 dark:text-white"
+              className="flex items-center gap-1.5 text-sm font-medium text-stone-900 dark:text-white"
             >
               Day {selectedDayNumber}
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <ChevronDown className="w-4 h-4 text-stone-400" />
             </button>
             {showDayPicker && (
-              <div className="absolute left-0 top-8 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg py-1 min-w-[100px]">
+              <div className="absolute left-0 top-8 z-50 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl shadow-lg py-1 min-w-[100px]">
                 {days.map((day) => (
                   <button
                     key={day.dayNumber}
                     onClick={() => { onSelectDay?.(day.dayNumber); setShowDayPicker(false); }}
-                    className={`w-full px-3 py-2 text-left text-sm ${
+                    className={`w-full px-4 py-2 text-left text-sm ${
                       day.dayNumber === selectedDayNumber
-                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-medium'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        ? 'bg-stone-100 dark:bg-gray-800 text-stone-900 dark:text-white font-medium'
+                        : 'text-stone-500 dark:text-gray-400 hover:bg-stone-50 dark:hover:bg-gray-800'
                     }`}
                   >
                     Day {day.dayNumber}
@@ -243,16 +169,16 @@ export default function TripHeader({
             )}
           </div>
 
-          {/* Desktop: Day tabs */}
-          <div className="hidden sm:flex items-center gap-4">
+          {/* Desktop: Day pills */}
+          <div className="hidden sm:flex items-center gap-2">
             {days.map((day) => (
               <button
                 key={day.dayNumber}
                 onClick={() => onSelectDay?.(day.dayNumber)}
-                className={`text-sm font-medium transition-colors ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
                   day.dayNumber === selectedDayNumber
-                    ? 'text-gray-900 dark:text-white'
-                    : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+                    ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'text-stone-400 dark:text-gray-500 hover:bg-stone-100 dark:hover:bg-gray-800 hover:text-stone-600 dark:hover:text-gray-300'
                 }`}
               >
                 Day {day.dayNumber}
@@ -260,16 +186,21 @@ export default function TripHeader({
             ))}
           </div>
 
-          {/* Edit Button */}
+          {/* Edit Toggle */}
           <button
             onClick={onEditClick}
-            className={`flex items-center gap-1 text-sm font-medium transition-colors ${
+            className={`text-xs font-medium transition-colors ${
               isEditMode
                 ? 'text-blue-600 dark:text-blue-400'
-                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                : 'text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
-            {isEditMode ? 'Done' : <><Pencil className="w-3.5 h-3.5" /><span className="hidden sm:inline">Edit</span></>}
+            {isEditMode ? 'Done' : (
+              <span className="flex items-center gap-1">
+                <Pencil className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Edit</span>
+              </span>
+            )}
           </button>
         </div>
       )}

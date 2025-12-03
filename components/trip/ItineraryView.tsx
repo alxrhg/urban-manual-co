@@ -51,7 +51,7 @@ export default function ItineraryView({
   if (!selectedDay) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Day Header with Date Badge */}
       <DayHeaderSection
         day={selectedDay}
@@ -63,10 +63,10 @@ export default function ItineraryView({
       {selectedDay.items.length > 0 ? (
         <div className="relative">
           {/* Timeline Line */}
-          <div className="absolute left-[19px] top-0 bottom-0 w-px bg-gray-200 dark:bg-gray-800" />
+          <div className="absolute left-[17px] top-0 bottom-0 w-px bg-stone-200 dark:bg-gray-800" />
 
           {/* Items */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             {selectedDay.items.map((item, index) => (
               <ItineraryItemRow
                 key={item.id}
@@ -84,11 +84,11 @@ export default function ItineraryView({
 
           {/* Add Stop Button */}
           {onAddItem && (
-            <div className="relative pl-10 mt-3">
-              <div className="absolute left-[16px] top-3 w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-700 z-10" />
+            <div className="relative pl-10 mt-4">
+              <div className="absolute left-[14px] top-3 w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-700 z-10" />
               <button
                 onClick={() => onAddItem(selectedDay.dayNumber)}
-                className="w-full py-2.5 border border-dashed border-gray-200 dark:border-gray-700 rounded-xl text-sm text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-600 transition-colors flex items-center justify-center gap-1.5"
+                className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-xl text-xs text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white hover:border-stone-300 dark:hover:border-gray-700 transition-colors flex items-center justify-center gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add stop
@@ -98,13 +98,13 @@ export default function ItineraryView({
         </div>
       ) : (
         /* Empty State */
-        <div className="text-center py-10 border border-dashed border-gray-200 dark:border-gray-800 rounded-xl bg-gray-50/50 dark:bg-gray-900/30">
-          <MapPin className="w-10 h-10 mx-auto text-gray-300 dark:text-gray-700 mb-3" />
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No stops planned for this day</p>
+        <div className="text-center py-16">
+          <MapPin className="w-8 h-8 mx-auto text-stone-300 dark:text-gray-700 mb-4" />
+          <p className="text-sm text-stone-400 dark:text-gray-500 mb-6">No stops planned yet</p>
           {onAddItem && (
             <button
               onClick={() => onAddItem(selectedDay.dayNumber)}
-              className="px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-full hover:opacity-90 transition-opacity"
+              className="px-5 py-2.5 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
             >
               Add your first stop
             </button>
@@ -157,14 +157,14 @@ function DayHeaderSection({
   const dayOfWeek = formatDayOfWeek(day.date);
 
   return (
-    <div className="flex items-center gap-3 mb-4">
+    <div className="flex items-center gap-3 mb-6">
       {/* Date Badge */}
       {day.date && (
-        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center">
-          <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 tracking-wider uppercase">
+        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-stone-100 dark:bg-gray-900 flex flex-col items-center justify-center">
+          <span className="text-[9px] font-medium text-stone-400 dark:text-gray-500 tracking-wider uppercase">
             {month}
           </span>
-          <span className="text-lg font-bold text-gray-900 dark:text-white leading-none">
+          <span className="text-base font-semibold text-stone-900 dark:text-white leading-none">
             {dayNum}
           </span>
         </div>
@@ -172,10 +172,10 @@ function DayHeaderSection({
 
       {/* Day Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-sm font-medium text-stone-900 dark:text-white">
           Day {day.dayNumber}
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
+        <p className="text-xs text-stone-400 dark:text-gray-500">
           {dayOfWeek && `${dayOfWeek} · `}
           {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
         </p>
@@ -186,14 +186,13 @@ function DayHeaderSection({
         <button
           onClick={onAutoOptimize}
           disabled={isOptimizing}
-          className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50"
+          className="flex-shrink-0 text-xs text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50"
         >
           {isOptimizing ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
             <Clock className="w-3.5 h-3.5" />
           )}
-          <span className="hidden sm:inline">Optimize route</span>
         </button>
       )}
     </div>
@@ -225,7 +224,9 @@ function ItineraryItemRow({
   return (
     <div className="relative pl-10 group">
       {/* Timeline Dot */}
-      <div className="absolute left-[15px] top-4 w-2.5 h-2.5 rounded-full bg-gray-900 dark:bg-white border-2 border-white dark:border-gray-950 z-10" />
+      <div className={`absolute left-[14px] top-4 w-2 h-2 rounded-full z-10 ${
+        isActive ? 'bg-stone-900 dark:bg-white' : 'bg-stone-300 dark:bg-gray-600'
+      }`} />
 
       {/* Delete Button (Edit Mode) */}
       {isEditMode && onRemove && (
@@ -234,9 +235,9 @@ function ItineraryItemRow({
             e.stopPropagation();
             onRemove();
           }}
-          className="absolute -left-2 top-3 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center text-sm font-bold hover:bg-red-600 transition-colors z-20"
+          className="absolute -left-1 top-3 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-20"
         >
-          −
+          ×
         </button>
       )}
 
