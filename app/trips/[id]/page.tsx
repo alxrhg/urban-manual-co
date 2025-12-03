@@ -282,8 +282,6 @@ export default function TripPage() {
           onSettingsClick={() => setShowTripSettings(true)}
           onAutoplanClick={handleAutoplan}
           onAddClick={() => setShowAddPlaceBox(true)}
-          onEditClick={() => setIsEditMode(!isEditMode)}
-          isEditMode={isEditMode}
         />
 
         {/* Main Content */}

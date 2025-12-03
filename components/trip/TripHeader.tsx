@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Settings, Sparkles, Plus, Pencil, Check, StickyNote, Loader2 } from 'lucide-react';
+import { ArrowLeft, Settings, Sparkles, Plus, StickyNote, Loader2 } from 'lucide-react';
 
 interface TripHeaderProps {
   title: string;
@@ -15,8 +15,6 @@ interface TripHeaderProps {
   onSettingsClick?: () => void;
   onAutoplanClick?: () => void;
   onAddClick?: () => void;
-  onEditClick?: () => void;
-  isEditMode?: boolean;
   isPlanning?: boolean;
 }
 
@@ -36,8 +34,6 @@ export default function TripHeader({
   onSettingsClick,
   onAutoplanClick,
   onAddClick,
-  onEditClick,
-  isEditMode = false,
   isPlanning = false,
 }: TripHeaderProps) {
   const tabs = ['itinerary', 'flights', 'hotels', 'notes'] as const;
@@ -148,30 +144,6 @@ export default function TripHeader({
               </button>
             ))}
           </div>
-
-          <div className="flex-1" />
-
-          {/* Edit Button */}
-          <button
-            onClick={onEditClick}
-            className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
-              isEditMode
-                ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
-                : 'text-stone-500 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-800'
-            }`}
-          >
-            {isEditMode ? (
-              <>
-                <Check className="w-3 h-3" />
-                Done
-              </>
-            ) : (
-              <>
-                <Pencil className="w-3 h-3" />
-                Edit
-              </>
-            )}
-          </button>
         </div>
       )}
     </header>
