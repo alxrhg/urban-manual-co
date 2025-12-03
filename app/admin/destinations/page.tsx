@@ -21,10 +21,21 @@ export default function AdminDestinationsPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // Auto-open editor when slug query parameter is present
+  // Auto-open editor when slug query parameter is present, or create modal when create=true
   useEffect(() => {
     const slug = searchParams?.get('slug');
-    if (slug) {
+    const shouldCreate = searchParams?.get('create') === 'true';
+
+    if (shouldCreate) {
+      setEditingDestination(null);
+      setShowCreateModal(true);
+      // Remove create from URL without page reload
+      if (typeof window !== 'undefined') {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('create');
+        window.history.replaceState({}, '', url.toString());
+      }
+    } else if (slug) {
       const fetchDestination = async () => {
         const supabase = createClient({ skipValidation: true });
         const { data } = await supabase

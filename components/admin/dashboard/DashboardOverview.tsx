@@ -320,7 +320,7 @@ export function DashboardOverview() {
           Quick Actions
         </h3>
         <div className="flex flex-wrap gap-2">
-          <ActionLink href="/admin/destinations" icon={<MapPin className="w-4 h-4" />} label="Add Destination" />
+          <ActionLink href="/admin/destinations?create=true" icon={<MapPin className="w-4 h-4" />} label="Add Destination" />
           <ActionLink href="/admin/analytics" icon={<TrendingUp className="w-4 h-4" />} label="View Analytics" />
           <ActionLink href="/admin/enrich" icon={<Globe className="w-4 h-4" />} label="Enrich Data" />
           <ActionLink href="/admin/reindex" icon={<Activity className="w-4 h-4" />} label="Reindex" />
