@@ -139,7 +139,7 @@ export default function TripPageRedesign() {
     } catch (err) {
       console.error('Failed to add suggestion:', err);
     }
-  }, [primaryCity, days, selectedDayNumber, addPlace, refresh]);
+  }, [primaryCity, days, selectedDayNumber, addPlace, refresh, trip?.destination]);
 
   // Calculate saved places count
   const savedPlacesCount = useMemo(() => {
