@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
 import {
@@ -27,8 +26,8 @@ interface ItineraryViewProps {
 }
 
 /**
- * ItineraryView - Figma/Instagram-inspired itinerary display
- * Features: Date badges, timeline dots, flight cards with prominent codes, hotel cards with buttons
+ * ItineraryView - Itinerary display with timeline
+ * Features: Date badges, timeline dots, flight cards, hotel cards
  */
 export default function ItineraryView({
   days,
@@ -64,7 +63,7 @@ export default function ItineraryView({
       {selectedDay.items.length > 0 ? (
         <div className="relative">
           {/* Timeline Line */}
-          <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-gray-800" />
+          <div className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-800" />
 
           {/* Items */}
           <div className="space-y-4">
@@ -83,10 +82,10 @@ export default function ItineraryView({
           {/* Add Stop Button */}
           {onAddItem && (
             <div className="relative pl-10 mt-4">
-              <div className="absolute left-[15px] top-3 w-2.5 h-2.5 rounded-full bg-gray-700 border-2 border-gray-950 z-10" />
+              <div className="absolute left-[15px] top-3 w-2.5 h-2.5 rounded-full bg-gray-300 dark:bg-gray-700 border-2 border-white dark:border-gray-950 z-10" />
               <button
                 onClick={() => onAddItem(selectedDay.dayNumber)}
-                className="w-full py-3 border border-dashed border-gray-700 rounded-xl text-sm text-gray-500 hover:text-white hover:border-gray-600 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-gray-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 Add stop
@@ -96,13 +95,13 @@ export default function ItineraryView({
         </div>
       ) : (
         /* Empty State */
-        <div className="text-center py-12 border border-dashed border-gray-700 rounded-2xl">
-          <MapPin className="w-12 h-12 mx-auto text-gray-700 mb-4" />
+        <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+          <MapPin className="w-12 h-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
           <p className="text-gray-500 mb-4">No stops planned for this day</p>
           {onAddItem && (
             <button
               onClick={() => onAddItem(selectedDay.dayNumber)}
-              className="px-4 py-2 bg-pink-500 text-white text-sm font-medium rounded-full hover:bg-pink-600 transition-colors"
+              className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
             >
               Add your first stop
             </button>
@@ -132,8 +131,8 @@ function DayTabs({
           className={`
             px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
             ${day.dayNumber === selectedDayNumber
-              ? 'bg-white text-gray-900'
-              : 'bg-gray-800/50 text-gray-400 hover:bg-gray-800 hover:text-white'
+              ? 'bg-black dark:bg-white text-white dark:text-gray-900'
+              : 'bg-gray-100 dark:bg-gray-800/50 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
             }
           `}
         >
@@ -189,11 +188,11 @@ function DayHeaderSection({
     <div className="flex items-center gap-4 mb-6">
       {/* Date Badge */}
       {day.date && (
-        <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gray-900 border border-gray-800 flex flex-col items-center justify-center">
-          <span className="text-[10px] font-medium text-pink-500 tracking-wider">
+        <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gray-100 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex flex-col items-center justify-center">
+          <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400 tracking-wider">
             {month}
           </span>
-          <span className="text-xl font-bold text-white leading-none">
+          <span className="text-xl font-bold text-gray-900 dark:text-white leading-none">
             {dayNum}
           </span>
         </div>
@@ -201,10 +200,10 @@ function DayHeaderSection({
 
       {/* Day Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-lg font-semibold text-white">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
           Day {day.dayNumber}
         </h3>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           {dayOfWeek && `${dayOfWeek} • `}
           {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
         </p>
@@ -215,7 +214,7 @@ function DayHeaderSection({
         <button
           onClick={onAutoOptimize}
           disabled={isOptimizing}
-          className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-gray-800/50 border border-gray-700/50 rounded-full text-sm text-gray-300 hover:bg-gray-800 hover:border-gray-600 transition-colors disabled:opacity-50"
+          className="flex-shrink-0 flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700/50 rounded-full text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors disabled:opacity-50"
         >
           {isOptimizing ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -248,7 +247,7 @@ function ItineraryItemRow({
   return (
     <div className="relative pl-10">
       {/* Timeline Dot */}
-      <div className="absolute left-[15px] top-4 w-2.5 h-2.5 rounded-full bg-blue-500 border-2 border-gray-950 z-10" />
+      <div className="absolute left-[15px] top-4 w-2.5 h-2.5 rounded-full bg-gray-900 dark:bg-white border-2 border-white dark:border-gray-950 z-10" />
 
       {/* Content Card */}
       {itemType === 'flight' ? (
@@ -262,7 +261,7 @@ function ItineraryItemRow({
   );
 }
 
-// Flight Card Component - Figma-inspired design
+// Flight Card Component
 function FlightCard({
   item,
   isActive,
@@ -292,13 +291,13 @@ function FlightCard({
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
-        ${isActive ? 'border-blue-500/50 ring-1 ring-blue-500/20' : 'border-gray-800 hover:border-gray-700'}
+        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
+        ${isActive ? 'border-gray-900 dark:border-white ring-1 ring-gray-900/10 dark:ring-white/10' : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'}
       `}
     >
       {/* Flight Header */}
       <div className="px-4 pt-4 pb-3">
-        <div className="flex items-center gap-2 text-gray-400 text-sm mb-4">
+        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-4">
           <Plane className="w-4 h-4" />
           <span>Flight to {destination.name || destination.code}</span>
         </div>
@@ -307,14 +306,14 @@ function FlightCard({
         <div className="flex items-center justify-between">
           {/* Origin */}
           <div>
-            <div className="text-3xl font-bold text-white tracking-tight">
+            <div className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
               {origin.code}
             </div>
             <div className="text-xs text-gray-500 mt-1">
               {origin.name || 'Departure'}
             </div>
-            <div className="text-sm font-medium text-pink-500 mt-1">
-              {notes?.departureTime || '--:--'} <span className="text-pink-400/70">AM</span>
+            <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+              {notes?.departureTime || '--:--'}
             </div>
           </div>
 
@@ -322,40 +321,40 @@ function FlightCard({
           <div className="flex-1 flex flex-col items-center px-4">
             <div className="text-xs text-gray-500 mb-1">{duration}</div>
             <div className="w-full flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-gray-600" />
-              <div className="flex-1 h-px bg-gray-700 relative">
-                <Plane className="w-4 h-4 text-gray-500 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600" />
+              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700 relative">
+                <Plane className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
               </div>
-              <div className="w-2 h-2 rounded-full bg-gray-600" />
+              <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600" />
             </div>
-            <div className="px-2 py-0.5 bg-gray-800 rounded text-xs text-gray-400 mt-2">
+            <div className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-500 dark:text-gray-400 mt-2">
               {flightNumber}
             </div>
           </div>
 
           {/* Destination */}
           <div className="text-right">
-            <div className="text-3xl font-bold text-white tracking-tight">
+            <div className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
               {destination.code}
             </div>
             <div className="text-xs text-gray-500 mt-1">
               {destination.name || 'Arrival'}
             </div>
-            <div className="text-sm font-medium text-pink-500 mt-1">
-              {notes?.arrivalTime || '--:--'} <span className="text-pink-400/70">PM</span>
+            <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+              {notes?.arrivalTime || '--:--'}
             </div>
           </div>
         </div>
       </div>
 
       {/* Footer with details */}
-      <div className="px-4 py-3 bg-gray-900/50 border-t border-gray-800 flex items-center justify-between">
+      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-4 text-xs text-gray-500 font-mono">
           <span>TERMINAL {notes?.terminal || '2'}</span>
           <span>GATE {notes?.gate || '45B'}</span>
           <span>SEAT {notes?.seatNumber || '4A'}</span>
         </div>
-        <button className="text-xs text-gray-400 hover:text-white transition-colors">
+        <button className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
           Details
         </button>
       </div>
@@ -363,7 +362,7 @@ function FlightCard({
   );
 }
 
-// Hotel Card Component - Figma-inspired design
+// Hotel Card Component
 function HotelCard({
   item,
   isActive,
@@ -379,39 +378,39 @@ function HotelCard({
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-gray-900/80 border p-4 cursor-pointer transition-all
-        ${isActive ? 'border-blue-500/50 ring-1 ring-blue-500/20' : 'border-gray-800 hover:border-gray-700'}
+        rounded-2xl bg-white dark:bg-gray-900/80 border p-4 cursor-pointer transition-all
+        ${isActive ? 'border-gray-900 dark:border-white ring-1 ring-gray-900/10 dark:ring-white/10' : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'}
       `}
     >
       <div className="flex gap-4">
         {/* Hotel Icon */}
-        <div className="w-16 h-16 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center flex-shrink-0">
-          <Building2 className="w-7 h-7 text-blue-400" />
+        <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
+          <Building2 className="w-7 h-7 text-gray-500 dark:text-gray-400" />
         </div>
 
         {/* Hotel Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h4 className="font-semibold text-white">
+              <h4 className="font-semibold text-gray-900 dark:text-white">
                 Check-in at {item.title || 'Hotel'}
               </h4>
-              <p className="text-sm text-gray-400 mt-0.5">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                 {notes?.roomType || 'Room'} · {notes?.address || 'Address'}
               </p>
             </div>
             <div className="text-sm text-gray-500 flex-shrink-0">
-              {notes?.checkInTime || '2:00'} <span className="text-gray-600">PM</span>
+              {notes?.checkInTime || '2:00 PM'}
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2 mt-3">
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 rounded-lg text-xs text-gray-300 hover:bg-gray-700 transition-colors">
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
               <Navigation className="w-3 h-3" />
               Get Directions
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 rounded-lg text-xs text-gray-300 hover:bg-gray-700 transition-colors">
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
               <ExternalLink className="w-3 h-3" />
               View Booking
             </button>
@@ -451,8 +450,8 @@ function PlaceCard({
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
-        ${isActive ? 'border-blue-500/50 ring-1 ring-blue-500/20' : 'border-gray-800 hover:border-gray-700'}
+        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
+        ${isActive ? 'border-gray-900 dark:border-white ring-1 ring-gray-900/10 dark:ring-white/10' : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'}
       `}
     >
       {image && (
@@ -464,7 +463,7 @@ function PlaceCard({
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         </div>
       )}
 
@@ -473,7 +472,7 @@ function PlaceCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
-              <h4 className="font-semibold text-white truncate">
+              <h4 className="font-semibold text-gray-900 dark:text-white truncate">
                 {item.title || 'Place'}
               </h4>
             </div>
@@ -484,8 +483,8 @@ function PlaceCard({
             )}
           </div>
           {formattedTime && (
-            <div className="text-sm text-pink-500 flex-shrink-0">
-              {formattedTime.time} <span className="text-pink-400/70">{formattedTime.period}</span>
+            <div className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
+              {formattedTime.time} {formattedTime.period}
             </div>
           )}
         </div>

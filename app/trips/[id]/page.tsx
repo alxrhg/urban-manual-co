@@ -4,10 +4,9 @@ import { useState, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
-import { parseDestinations, formatDestinationsFromField } from '@/types/trip';
-import type { Destination } from '@/types/destination';
+import { parseDestinations } from '@/types/trip';
 
-// New Figma-inspired components
+// Trip components
 import TripHeader from '@/components/trip/TripHeader';
 import TripInfoCards from '@/components/trip/TripInfoCards';
 import ItineraryView from '@/components/trip/ItineraryView';
@@ -21,8 +20,7 @@ import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import DestinationBox from '@/components/trip/DestinationBox';
 
 /**
- * TripPage - Figma/Instagram-inspired trip detail page
- * Features: Dark theme, pink accents, prominent flight cards, Travel AI sidebar
+ * TripPage - Trip detail page with itinerary view
  */
 export default function TripPage() {
   const params = useParams();
@@ -59,7 +57,7 @@ export default function TripPage() {
   const primaryCity = destinations[0] || '';
 
   // UI State
-  const [activeTab, setActiveTab] = useState<'overview' | 'itinerary' | 'budget'>('itinerary');
+  const [activeTab, setActiveTab] = useState<'overview' | 'itinerary'>('itinerary');
   const [selectedDayNumber, setSelectedDayNumber] = useState(1);
   const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
   const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
@@ -139,7 +137,7 @@ export default function TripPage() {
     } catch (err) {
       console.error('Failed to add suggestion:', err);
     }
-  }, [primaryCity, days, selectedDayNumber, addPlace, refresh]);
+  }, [primaryCity, days, selectedDayNumber, addPlace, refresh, trip?.destination]);
 
   // Calculate saved places count
   const savedPlacesCount = useMemo(() => {
@@ -149,7 +147,7 @@ export default function TripPage() {
   // Loading state
   if (loading) {
     return (
-      <main className="min-h-screen bg-gray-950">
+      <main className="min-h-screen bg-white dark:bg-gray-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <PageLoader />
         </div>
@@ -160,12 +158,12 @@ export default function TripPage() {
   // Not found
   if (!trip) {
     return (
-      <main className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <main className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-400 mb-4">Trip not found</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Trip not found</p>
           <button
             onClick={() => router.push('/trips')}
-            className="text-pink-500 hover:text-pink-400"
+            className="text-gray-900 dark:text-white hover:opacity-70 underline underline-offset-4"
           >
             Back to trips
           </button>
@@ -175,7 +173,7 @@ export default function TripPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-950">
+    <main className="min-h-screen bg-white dark:bg-gray-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Header */}
         <TripHeader
@@ -183,13 +181,12 @@ export default function TripPage() {
           destination={primaryCity}
           startDate={trip.start_date ?? undefined}
           endDate={trip.end_date ?? undefined}
-          tripTag="Birthday Celebration"
           activeTab={activeTab}
           onTabChange={setActiveTab}
           onSettingsClick={() => setShowTripSettings(true)}
           collaborators={[
-            { name: 'John Doe', initials: 'JD', color: '#3B82F6' },
-            { name: 'Anna Miller', initials: 'AM', color: '#EC4899' },
+            { name: 'John Doe', initials: 'JD', color: '#374151' },
+            { name: 'Anna Miller', initials: 'AM', color: '#6B7280' },
           ]}
         />
 
@@ -224,13 +221,7 @@ export default function TripPage() {
 
             {activeTab === 'overview' && (
               <div className="text-center py-12">
-                <p className="text-gray-400">Overview tab coming soon</p>
-              </div>
-            )}
-
-            {activeTab === 'budget' && (
-              <div className="text-center py-12">
-                <p className="text-gray-400">Budget tab coming soon</p>
+                <p className="text-gray-500 dark:text-gray-400">Overview tab coming soon</p>
               </div>
             )}
           </div>

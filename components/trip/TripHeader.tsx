@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Share2, Settings, UserPlus } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -11,15 +10,15 @@ interface TripHeaderProps {
   startDate?: string;
   endDate?: string;
   tripTag?: string;
-  activeTab: 'overview' | 'itinerary' | 'budget';
-  onTabChange: (tab: 'overview' | 'itinerary' | 'budget') => void;
+  activeTab: 'overview' | 'itinerary';
+  onTabChange: (tab: 'overview' | 'itinerary') => void;
   onSettingsClick?: () => void;
   onShareClick?: () => void;
   collaborators?: Array<{ name: string; initials: string; color: string }>;
 }
 
 /**
- * TripHeader - Instagram/Figma-inspired header for trip pages
+ * TripHeader - Header for trip pages
  * Features: Back navigation, tab navigation, trip tag, large title, collaborators
  */
 export default function TripHeader({
@@ -56,23 +55,23 @@ export default function TripHeader({
         {/* Back Button */}
         <Link
           href="/trips"
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors min-h-[44px]"
+          className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors min-h-[44px]"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="hidden sm:inline">Back to Trips</span>
         </Link>
 
         {/* Tab Navigation */}
-        <div className="flex items-center bg-gray-900 rounded-full p-1">
-          {(['overview', 'itinerary', 'budget'] as const).map((tab) => (
+        <div className="flex items-center bg-gray-100 dark:bg-gray-900 rounded-full p-1">
+          {(['overview', 'itinerary'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => onTabChange(tab)}
               className={`
                 px-4 py-2 text-sm font-medium rounded-full transition-all
                 ${activeTab === tab
-                  ? 'bg-gray-800 text-white'
-                  : 'text-gray-400 hover:text-gray-200'
+                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
                 }
               `}
             >
@@ -88,13 +87,13 @@ export default function TripHeader({
             {collaborators.slice(0, 2).map((collab, i) => (
               <div
                 key={i}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium text-white border-2 border-gray-950"
+                className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium text-white border-2 border-white dark:border-gray-950"
                 style={{ backgroundColor: collab.color }}
               >
                 {collab.initials}
               </div>
             ))}
-            <button className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:text-white hover:bg-gray-700 transition-colors border-2 border-gray-950">
+            <button className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border-2 border-white dark:border-gray-950">
               <UserPlus className="w-4 h-4" />
             </button>
           </div>
@@ -102,7 +101,7 @@ export default function TripHeader({
           {/* Share */}
           <button
             onClick={onShareClick}
-            className="p-2 text-gray-400 hover:text-white transition-colors"
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <Share2 className="w-5 h-5" />
           </button>
@@ -110,7 +109,7 @@ export default function TripHeader({
           {/* Settings */}
           <button
             onClick={onSettingsClick}
-            className="p-2 text-gray-400 hover:text-white transition-colors"
+            className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <Settings className="w-5 h-5" />
           </button>
@@ -120,20 +119,19 @@ export default function TripHeader({
       {/* Trip Tag */}
       {tripTag && (
         <div className="mb-4">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-pink-500/10 text-pink-400 text-xs font-medium rounded-full border border-pink-500/20">
-            <span className="text-pink-400">✨</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs font-medium rounded-full border border-gray-200 dark:border-gray-700">
             {tripTag}
           </span>
         </div>
       )}
 
       {/* Large Title */}
-      <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight tracking-tight mb-4">
+      <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-gray-900 dark:text-white leading-tight tracking-tight mb-4">
         {title}
       </h1>
 
       {/* Location & Dates */}
-      <div className="flex flex-wrap items-center gap-4 text-gray-400">
+      <div className="flex flex-wrap items-center gap-4 text-gray-500 dark:text-gray-400">
         {destination && (
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -145,7 +143,7 @@ export default function TripHeader({
         )}
         {dateRange && (
           <>
-            <span className="text-gray-600">•</span>
+            <span className="text-gray-300 dark:text-gray-600">•</span>
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
