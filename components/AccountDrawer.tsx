@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
-import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { createClient } from '@/lib/supabase/client';
 import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
@@ -12,7 +11,6 @@ import { DrawerSection } from '@/components/ui/DrawerSection';
 import {
   Settings,
   MapPin,
-  Compass,
   LogOut,
   Bookmark,
   ChevronRight,
@@ -24,7 +22,6 @@ import Image from 'next/image';
 interface UserStats {
   visited: number;
   saved: number;
-  trips: number;
 }
 
 function ProfileAvatar({
@@ -144,14 +141,12 @@ export function AccountDrawer() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const { isDrawerOpen, closeDrawer: closeLegacyDrawer, openDrawer: openLegacyDrawer } = useDrawer();
-  const { openSide, closeDrawer: closeStoreDrawer } = useDrawerStore();
   const isOpen = isDrawerOpen('account');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [stats, setStats] = useState<UserStats>({
     visited: 0,
     saved: 0,
-    trips: 0,
   });
 
   useEffect(() => {
@@ -159,7 +154,7 @@ export function AccountDrawer() {
       if (!user?.id) {
         setAvatarUrl(null);
         setUsername(null);
-        setStats({ visited: 0, saved: 0, trips: 0 });
+        setStats({ visited: 0, saved: 0 });
         return;
       }
 
@@ -177,7 +172,7 @@ export function AccountDrawer() {
           setUsername(profileData.username || null);
         }
 
-        const [visitedResult, savedResult, tripsResult] = await Promise.all([
+        const [visitedResult, savedResult] = await Promise.all([
           supabaseClient
             .from('visited_places')
             .select('*', { count: 'exact', head: true })
@@ -186,16 +181,11 @@ export function AccountDrawer() {
             .from('saved_places')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id),
-          supabaseClient
-            .from('trips')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id),
         ]);
 
         setStats({
           visited: visitedResult.count || 0,
           saved: savedResult.count || 0,
-          trips: tripsResult.count || 0,
         });
       } catch (error) {
         console.error('Error fetching profile and stats:', error);
@@ -318,15 +308,6 @@ export function AccountDrawer() {
                   label="Visited Places"
                   description={`${stats.visited} experiences logged`}
                   onClick={() => openLegacyDrawer('visited-places', 'account')}
-                />
-                <NavItem
-                  icon={Compass}
-                  label="Trip Plans"
-                  description={`${stats.trips} itineraries`}
-                  onClick={() => {
-                    closeLegacyDrawer();
-                    openSide('trip-list');
-                  }}
                 />
               </div>
             </div>
