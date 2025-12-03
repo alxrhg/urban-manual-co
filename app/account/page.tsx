@@ -17,6 +17,7 @@ import { ProfileEditor } from "@/components/ProfileEditor";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
 import { PreferencesTab } from "@/components/account/PreferencesTab";
 import { openCookieSettings } from "@/components/CookieConsent";
+import { TravelStats } from "@/components/account/TravelStats";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
 import { formatDestinationsFromField } from "@/types/trip";
 import type { Trip } from "@/types/trip";
@@ -459,6 +460,15 @@ export default function Account() {
         {/* Profile Tab */}
         {activeTab === 'profile' && (
           <div className="space-y-12 fade-in">
+            {/* Travel Stats - Tripsy-inspired dashboard */}
+            {(trips.length > 0 || stats.uniqueCountries.size > 0) && (
+              <TravelStats
+                trips={trips}
+                visitedCountries={stats.uniqueCountries}
+                visitedCities={stats.uniqueCities}
+              />
+            )}
+
             {/* Curation Completion - Prominent gamification stat */}
             <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
               <div className="flex items-center justify-between mb-4">

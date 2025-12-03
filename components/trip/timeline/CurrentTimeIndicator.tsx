@@ -63,11 +63,16 @@ function CurrentTimeIndicatorComponent({
       aria-label={`Current time: ${timeLabel}`}
     >
       <div className="flex items-center">
-        <div className="w-12 text-[11px] text-right text-red-500 font-medium tabular-nums pr-2">
-          {timeLabel}
+        {/* Time badge with glow effect */}
+        <div className="relative mr-1">
+          <span className="absolute inset-0 bg-orange-500/30 blur-sm rounded-full" />
+          <span className="relative inline-flex items-center gap-1 px-2 py-0.5 bg-orange-500 text-white text-[10px] font-semibold rounded-full shadow-lg">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            {timeLabel}
+          </span>
         </div>
-        <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shadow-sm" />
-        <div className="flex-1 h-0.5 bg-red-500" />
+        {/* Connecting line with gradient */}
+        <div className="flex-1 h-0.5 bg-gradient-to-r from-orange-500 via-orange-400 to-transparent rounded-full shadow-sm" />
       </div>
     </div>
   );
