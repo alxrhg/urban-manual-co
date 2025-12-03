@@ -1,10 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft, Settings, Sparkles, Plus, StickyNote, Loader2 } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowLeft, Settings, Sparkles, Plus, FileText, Loader2, Bell, BookOpen, Pencil, Check } from 'lucide-react';
 
 interface TripHeaderProps {
   title: string;
+  emoji?: string;
+  heroImage?: string;
   activeContentTab: 'itinerary' | 'flights' | 'hotels' | 'notes';
   onContentTabChange: (tab: 'itinerary' | 'flights' | 'hotels' | 'notes') => void;
   flightCount?: number;
@@ -15,15 +18,20 @@ interface TripHeaderProps {
   onSettingsClick?: () => void;
   onAutoplanClick?: () => void;
   onAddClick?: () => void;
+  onEditClick?: () => void;
+  isEditMode?: boolean;
   isPlanning?: boolean;
+  notificationCount?: number;
 }
 
 /**
- * TripHeader - Clean, minimal header for trip pages
- * Features: Simple tabs with badges, day selector, action buttons
+ * TripHeader - Clean header matching Figma design
+ * Features: Hero image, emoji title, tabs with badges, day selector with edit
  */
 export default function TripHeader({
   title,
+  emoji,
+  heroImage,
   activeContentTab,
   onContentTabChange,
   flightCount = 0,
@@ -34,116 +42,201 @@ export default function TripHeader({
   onSettingsClick,
   onAutoplanClick,
   onAddClick,
+  onEditClick,
+  isEditMode = false,
   isPlanning = false,
+  notificationCount = 0,
 }: TripHeaderProps) {
-  const tabs = ['itinerary', 'flights', 'hotels', 'notes'] as const;
-
   return (
-    <header className="w-full mb-4">
-      {/* Top Bar: Back + Title + Settings */}
-      <div className="flex items-center gap-4 mb-6">
+    <header className="w-full mb-6">
+      {/* Top Bar: Back + Title + Icons */}
+      <div className="flex items-center justify-between mb-5">
+        {/* Left: Back to Trips */}
         <Link
           href="/trips"
-          className="flex items-center gap-1.5 text-xs text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors min-h-[44px] -ml-2 pl-2"
+          className="flex items-center gap-1.5 text-sm text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Trips</span>
+          <span>Trips</span>
         </Link>
 
-        <div className="flex-1" />
+        {/* Center: Emoji + Title */}
+        <div className="flex items-center gap-2">
+          {emoji && <span className="text-2xl">{emoji}</span>}
+          <h1 className="text-xl font-semibold text-stone-900 dark:text-white">
+            {title}
+          </h1>
+        </div>
 
-        <h1 className="text-xl sm:text-2xl font-light text-stone-900 dark:text-white truncate">
-          {title}
-        </h1>
+        {/* Right: Icons */}
+        <div className="flex items-center gap-1">
+          {/* Notification Bell */}
+          <button className="relative p-2 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+            <Bell className="w-5 h-5 text-stone-400 dark:text-gray-500" />
+            {notificationCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-orange-500 text-white text-[10px] font-medium rounded-full flex items-center justify-center">
+                {notificationCount}
+              </span>
+            )}
+          </button>
 
-        <div className="flex-1" />
+          {/* Guide/Book Icon */}
+          <button className="p-2 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+            <BookOpen className="w-5 h-5 text-stone-400 dark:text-gray-500" />
+          </button>
 
-        <button
-          onClick={onSettingsClick}
-          className="p-2.5 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-xl transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
-          title="Settings"
-        >
-          <Settings className="w-5 h-5 text-stone-500 dark:text-gray-400" />
-        </button>
+          {/* Settings */}
+          <button
+            onClick={onSettingsClick}
+            className="p-2 hover:bg-stone-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <Settings className="w-5 h-5 text-stone-400 dark:text-gray-500" />
+          </button>
+        </div>
       </div>
 
-      {/* Tab Navigation Row */}
-      <div className="flex items-center justify-between gap-4 mb-4">
+      {/* Hero Image */}
+      {heroImage && (
+        <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-6">
+          <Image
+            src={heroImage}
+            alt={title}
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+      )}
+
+      {/* Content Tabs Row */}
+      <div className="flex items-center justify-between mb-4">
         {/* Tabs */}
-        <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto -mx-1 px-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => onContentTabChange(tab)}
-              className={`
-                transition-all flex items-center gap-1.5 whitespace-nowrap
-                px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
-                min-h-[40px] sm:min-h-0
-                ${activeContentTab === tab
-                  ? 'font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
-                  : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
-                }
-              `}
-            >
-              {tab === 'notes' && <StickyNote className="w-3.5 h-3.5 sm:w-3 sm:h-3" />}
-              {tab === 'flights' && flightCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-stone-200 dark:bg-gray-700 text-[10px] flex items-center justify-center">
-                  {flightCount}
-                </span>
-              )}
-              {tab === 'hotels' && hotelCount > 0 && (
-                <span className="w-4 h-4 rounded-full bg-stone-200 dark:bg-gray-700 text-[10px] flex items-center justify-center">
-                  {hotelCount}
-                </span>
-              )}
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </button>
-          ))}
+        <div className="flex items-center gap-6">
+          {/* Itinerary Tab */}
+          <button
+            onClick={() => onContentTabChange('itinerary')}
+            className={`text-sm font-medium transition-colors ${
+              activeContentTab === 'itinerary'
+                ? 'text-stone-900 dark:text-white'
+                : 'text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+            }`}
+          >
+            Itinerary
+          </button>
+
+          {/* Flights Tab */}
+          <button
+            onClick={() => onContentTabChange('flights')}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+              activeContentTab === 'flights'
+                ? 'text-stone-900 dark:text-white'
+                : 'text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+            }`}
+          >
+            {flightCount > 0 && (
+              <span className="w-5 h-5 rounded-full bg-stone-200 dark:bg-gray-700 text-xs flex items-center justify-center">
+                {flightCount}
+              </span>
+            )}
+            Flights
+          </button>
+
+          {/* Hotels Tab */}
+          <button
+            onClick={() => onContentTabChange('hotels')}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+              activeContentTab === 'hotels'
+                ? 'text-stone-900 dark:text-white'
+                : 'text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+            }`}
+          >
+            {hotelCount > 0 && (
+              <span className="w-5 h-5 rounded-full bg-stone-200 dark:bg-gray-700 text-xs flex items-center justify-center">
+                {hotelCount}
+              </span>
+            )}
+            Hotels
+          </button>
+
+          {/* Notes Tab */}
+          <button
+            onClick={() => onContentTabChange('notes')}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+              activeContentTab === 'notes'
+                ? 'text-stone-900 dark:text-white'
+                : 'text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+            }`}
+          >
+            <FileText className="w-4 h-4" />
+            Notes
+          </button>
         </div>
 
         {/* Action Buttons */}
-        <div className="hidden sm:flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2">
           <button
             onClick={onAutoplanClick}
             disabled={isPlanning}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-stone-900 dark:bg-white dark:text-gray-900 rounded-full hover:opacity-80 disabled:opacity-50 transition-opacity"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-stone-900 dark:bg-white dark:text-gray-900 rounded-full hover:opacity-90 disabled:opacity-50 transition-opacity"
           >
             {isPlanning ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <Sparkles className="w-3 h-3" />
+              <Sparkles className="w-4 h-4" />
             )}
             {isPlanning ? 'Planning...' : 'Auto-plan'}
           </button>
           <button
             onClick={onAddClick}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border border-stone-200 dark:border-gray-800 rounded-full hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-stone-700 dark:text-gray-300 border border-stone-200 dark:border-gray-700 rounded-full hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors"
           >
-            <Plus className="w-3 h-3" />
+            <Plus className="w-4 h-4" />
             Add
           </button>
         </div>
       </div>
 
-      {/* Day Tabs Row (only for itinerary tab) */}
+      {/* Day Pills Row (only for itinerary tab) */}
       {days.length > 0 && activeContentTab === 'itinerary' && (
-        <div className="flex items-center gap-4 mb-4">
-          {/* Day Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto">
+        <div className="flex items-center justify-between">
+          {/* Day Pills */}
+          <div className="flex items-center gap-2">
             {days.map((day) => (
               <button
                 key={day.dayNumber}
                 onClick={() => onSelectDay?.(day.dayNumber)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors whitespace-nowrap ${
+                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
                   day.dayNumber === selectedDayNumber
-                    ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'text-stone-400 dark:text-gray-500 hover:bg-stone-100 dark:hover:bg-gray-800 hover:text-stone-600 dark:hover:text-gray-300'
+                    ? 'text-stone-900 dark:text-white'
+                    : 'text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
                 }`}
               >
                 Day {day.dayNumber}
               </button>
             ))}
           </div>
+
+          {/* Edit Button */}
+          <button
+            onClick={onEditClick}
+            className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${
+              isEditMode
+                ? 'text-stone-900 dark:text-white'
+                : 'text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+            }`}
+          >
+            {isEditMode ? (
+              <>
+                <Check className="w-4 h-4" />
+                Done
+              </>
+            ) : (
+              <>
+                <Pencil className="w-4 h-4" />
+                Edit
+              </>
+            )}
+          </button>
         </div>
       )}
     </header>

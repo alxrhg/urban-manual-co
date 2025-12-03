@@ -272,6 +272,8 @@ export default function TripPage() {
         {/* Header with Tabs */}
         <TripHeader
           title={trip.title}
+          emoji="🏝️"
+          heroImage={trip.cover_image || undefined}
           activeContentTab={activeContentTab}
           onContentTabChange={setActiveContentTab}
           flightCount={flightCount}
@@ -282,6 +284,8 @@ export default function TripPage() {
           onSettingsClick={() => setShowTripSettings(true)}
           onAutoplanClick={handleAutoplan}
           onAddClick={() => setShowAddPlaceBox(true)}
+          onEditClick={() => setIsEditMode(!isEditMode)}
+          isEditMode={isEditMode}
         />
 
         {/* Main Content */}
