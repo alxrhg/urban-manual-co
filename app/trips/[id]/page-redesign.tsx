@@ -21,10 +21,10 @@ import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import DestinationBox from '@/components/trip/DestinationBox';
 
 /**
- * TripPage - Figma/Instagram-inspired trip detail page
+ * TripPageRedesign - Figma/Instagram-inspired trip detail page
  * Features: Dark theme, pink accents, prominent flight cards, Travel AI sidebar
  */
-export default function TripPage() {
+export default function TripPageRedesign() {
   const params = useParams();
   const router = useRouter();
   const tripId = params?.id as string;
