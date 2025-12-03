@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Image from 'next/image';
 import { format, parseISO } from 'date-fns';
 import {
@@ -21,6 +22,7 @@ interface ItineraryViewProps {
   onEditItem?: (item: EnrichedItineraryItem) => void;
   onAddItem?: (dayNumber: number) => void;
   onOptimizeDay?: (dayNumber: number) => void;
+  onUpdateItemNotes?: (itemId: string, notes: Record<string, unknown>) => void;
   isOptimizing?: boolean;
   activeItemId?: string | null;
 }
@@ -36,6 +38,7 @@ export default function ItineraryView({
   onEditItem,
   onAddItem,
   onOptimizeDay,
+  onUpdateItemNotes,
   isOptimizing = false,
   activeItemId,
 }: ItineraryViewProps) {
@@ -75,6 +78,7 @@ export default function ItineraryView({
                 isLast={index === selectedDay.items.length - 1}
                 isActive={item.id === activeItemId}
                 onClick={() => onEditItem?.(item)}
+                onUpdateNotes={onUpdateItemNotes}
               />
             ))}
           </div>
@@ -235,12 +239,14 @@ function ItineraryItemRow({
   isLast,
   isActive,
   onClick,
+  onUpdateNotes,
 }: {
   item: EnrichedItineraryItem;
   isFirst: boolean;
   isLast: boolean;
   isActive: boolean;
   onClick?: () => void;
+  onUpdateNotes?: (itemId: string, notes: Record<string, unknown>) => void;
 }) {
   const itemType = item.parsedNotes?.type;
 
@@ -251,7 +257,7 @@ function ItineraryItemRow({
 
       {/* Content Card */}
       {itemType === 'flight' ? (
-        <FlightCard item={item} isActive={isActive} onClick={onClick} />
+        <FlightCard item={item} isActive={isActive} onClick={onClick} onUpdateNotes={onUpdateNotes} />
       ) : itemType === 'hotel' ? (
         <HotelCard item={item} isActive={isActive} onClick={onClick} />
       ) : (
@@ -261,15 +267,88 @@ function ItineraryItemRow({
   );
 }
 
+// Inline editable field component
+function InlineEditField({
+  label,
+  value,
+  placeholder,
+  onSave,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  onSave: (value: string) => void;
+}) {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editValue, setEditValue] = React.useState(value);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleSave = () => {
+    setIsEditing(false);
+    if (editValue !== value) {
+      onSave(editValue);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      setEditValue(value);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <span className="inline-flex items-center" onClick={(e) => e.stopPropagation()}>
+        <span className="text-gray-400 mr-1">{label}</span>
+        <input
+          ref={inputRef}
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value.toUpperCase())}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+          className="w-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          placeholder={placeholder}
+        />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsEditing(true);
+      }}
+      className="cursor-text hover:bg-gray-200 dark:hover:bg-gray-700 px-1 py-0.5 rounded transition-colors"
+      title="Click to edit"
+    >
+      {label} {value || <span className="text-gray-400">---</span>}
+    </span>
+  );
+}
+
 // Flight Card Component
 function FlightCard({
   item,
   isActive,
   onClick,
+  onUpdateNotes,
 }: {
   item: EnrichedItineraryItem;
   isActive: boolean;
   onClick?: () => void;
+  onUpdateNotes?: (itemId: string, notes: Record<string, unknown>) => void;
 }) {
   const notes = item.parsedNotes;
 
@@ -284,8 +363,16 @@ function FlightCard({
 
   const origin = parseAirport(notes?.from);
   const destination = parseAirport(notes?.to);
-  const duration = notes?.duration || '3h 30m';
-  const flightNumber = `${notes?.airline || 'UA'} ${notes?.flightNumber || ''}`.trim();
+  const duration = notes?.duration || '--';
+  const flightNumber = notes?.flightNumber
+    ? `${notes?.airline || ''} ${notes.flightNumber}`.trim()
+    : notes?.airline || '--';
+
+  const handleUpdateField = (field: string, value: string) => {
+    if (onUpdateNotes) {
+      onUpdateNotes(item.id, { [field]: value });
+    }
+  };
 
   return (
     <div
@@ -347,12 +434,27 @@ function FlightCard({
         </div>
       </div>
 
-      {/* Footer with details */}
+      {/* Footer with editable details */}
       <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-4 text-xs text-gray-500 font-mono">
-          <span>TERMINAL {notes?.terminal || '2'}</span>
-          <span>GATE {notes?.gate || '45B'}</span>
-          <span>SEAT {notes?.seatNumber || '4A'}</span>
+          <InlineEditField
+            label="TERMINAL"
+            value={notes?.terminal || ''}
+            placeholder="T1"
+            onSave={(v) => handleUpdateField('terminal', v)}
+          />
+          <InlineEditField
+            label="GATE"
+            value={notes?.gate || ''}
+            placeholder="A1"
+            onSave={(v) => handleUpdateField('gate', v)}
+          />
+          <InlineEditField
+            label="SEAT"
+            value={notes?.seatNumber || ''}
+            placeholder="1A"
+            onSave={(v) => handleUpdateField('seatNumber', v)}
+          />
         </div>
         <button className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
           Details

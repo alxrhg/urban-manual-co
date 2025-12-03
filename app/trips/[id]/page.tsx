@@ -214,6 +214,7 @@ export default function TripPage() {
                   setShowAddPlaceBox(true);
                 }}
                 onOptimizeDay={handleOptimizeDay}
+                onUpdateItemNotes={(itemId, notes) => updateItemNotes(itemId, notes as Record<string, string>)}
                 isOptimizing={optimizingDay !== null}
                 activeItemId={selectedItem?.id}
               />
