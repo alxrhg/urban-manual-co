@@ -8,7 +8,7 @@ import { parseDestinations } from '@/types/trip';
 import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 
 // Trip components
-import TripHeader from '@/components/trip/TripHeader';
+import TripHeader, { type AddItemType } from '@/components/trip/TripHeader';
 import ItineraryView from '@/components/trip/ItineraryView';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
@@ -215,6 +215,13 @@ export default function TripPage() {
     await handleAddSuggestion({ dayNumber: selectedDayNumber });
   }, [handleAddSuggestion, selectedDayNumber]);
 
+  // Handle add item from dropdown menu
+  const handleAddItemClick = useCallback((type: AddItemType) => {
+    setShowAddPlaceBox(true);
+    // The AddPlaceBox component will handle the different item types
+    // based on its UI - user can switch between tabs for different types
+  }, []);
+
   // Handle item updates with automatic day move when dates change
   const handleItemUpdate = useCallback((itemId: string, updates: Record<string, unknown>) => {
     // Update the item notes
@@ -274,6 +281,7 @@ export default function TripPage() {
         {/* Header with Tabs */}
         <TripHeader
           title={trip.title}
+          trip={trip}
           heroImage={trip.cover_image || undefined}
           activeContentTab={activeContentTab}
           onContentTabChange={setActiveContentTab}
@@ -285,6 +293,7 @@ export default function TripPage() {
           onSettingsClick={() => setShowTripSettings(true)}
           onAutoplanClick={handleAutoplan}
           onAddClick={() => setShowAddPlaceBox(true)}
+          onAddItemClick={handleAddItemClick}
           onEditClick={() => setIsEditMode(!isEditMode)}
           isEditMode={isEditMode}
           onMapClick={() => setShowMapView(true)}
