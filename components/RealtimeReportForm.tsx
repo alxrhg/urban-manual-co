@@ -1,7 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Clock, AlertCircle, Check } from 'lucide-react';
+import { Clock, Check } from 'lucide-react';
+import {
+  FormField,
+  FormErrorSummary,
+  SubmitButton,
+} from '@/components/ui/form-field';
 
 interface RealtimeReportFormProps {
   destinationId: number;
@@ -85,40 +90,35 @@ export function RealtimeReportForm({
       </div>
 
       {/* Wait Time Input */}
-      <div className="space-y-2">
-        <label className="text-xs font-medium text-gray-700 dark:text-gray-300">
-          Current Wait Time (minutes)
-        </label>
-        <div className="flex items-center gap-2">
-          <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-          <input
-            type="number"
-            min="0"
-            max="300"
-            value={waitTime || ''}
-            onChange={(e) => setWaitTime(parseInt(e.target.value) || 0)}
-            className="flex-1 px-3 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-black"
-            placeholder="e.g., 15"
-          />
-        </div>
+      <div className="flex items-start gap-2">
+        <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-8" />
+        <FormField
+          id="wait-time"
+          label="Current Wait Time (minutes)"
+          type="number"
+          min={0}
+          max={300}
+          value={waitTime ? String(waitTime) : ''}
+          onChange={(e) => setWaitTime(parseInt(e.target.value) || 0)}
+          placeholder="e.g., 15"
+          className="flex-1"
+          showValidation={false}
+        />
       </div>
 
       {/* Error Message */}
-      {error && (
-        <div className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
-          <AlertCircle className="h-4 w-4" />
-          <span>{error}</span>
-        </div>
-      )}
+      {error && <FormErrorSummary errors={[error]} />}
 
       {/* Submit Button */}
-      <button
+      <SubmitButton
         onClick={handleSubmit}
-        disabled={submitting}
-        className="w-full px-4 py-2 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+        isLoading={submitting}
+        loadingText="Submitting..."
+        className="w-full"
+        type="button"
       >
-        {submitting ? 'Submitting...' : 'Submit Report'}
-      </button>
+        Submit Report
+      </SubmitButton>
     </div>
   );
 }

@@ -3,14 +3,10 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
-import { Save, X, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Save, X } from 'lucide-react';
 import { cityCountryMap, countryOrder } from '@/data/cityCountryMap';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Spinner } from '@/components/ui/spinner';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -22,6 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  FormField,
+  TextareaField,
+  FormErrorSummary,
+  FormSuccessMessage,
+  SubmitButton,
+  validators,
+} from '@/components/ui/form-field';
 
 interface ProfileEditorProps {
   userId: string;
@@ -172,23 +176,11 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
 
   return (
     <div className="w-full space-y-6">
-      {/* Error Alert */}
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      {/* Error Message */}
+      {error && <FormErrorSummary errors={[error]} />}
 
-      {/* Success Alert */}
-      {success && (
-        <Alert variant="default">
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertTitle>Success</AlertTitle>
-          <AlertDescription>Profile updated successfully!</AlertDescription>
-        </Alert>
-      )}
+      {/* Success Message */}
+      {success && <FormSuccessMessage message="Profile updated successfully!" />}
 
       <div className="space-y-6">
         {/* Personal Information Section */}
@@ -196,43 +188,40 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
           <h3 className="text-xs font-medium mb-4 text-gray-700 dark:text-gray-300">Personal Information</h3>
           <div className="space-y-4">
               {/* Display Name */}
-              <div className="space-y-2">
-                <Label htmlFor="display_name">Display Name</Label>
-                <Input
-                  id="display_name"
-                  type="text"
-                  value={profile.display_name}
-                  onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
-                  placeholder="Your display name"
-                />
-              </div>
+              <FormField
+                id="display_name"
+                label="Display Name"
+                type="text"
+                value={profile.display_name}
+                onChange={(e) => setProfile({ ...profile, display_name: e.target.value })}
+                placeholder="Your display name"
+                showValidation={false}
+              />
 
               {/* Username */}
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  value={profile.username}
-                  onChange={(e) => setProfile({ ...profile, username: e.target.value })}
-                  placeholder="username"
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-500">
-                  Your profile URL: urbanmanual.co/user/{profile.username || 'username'}
-                </p>
-              </div>
+              <FormField
+                id="username"
+                label="Username"
+                type="text"
+                value={profile.username}
+                onChange={(e) => setProfile({ ...profile, username: e.target.value })}
+                placeholder="username"
+                helperText={`Your profile URL: urbanmanual.co/user/${profile.username || 'username'}`}
+                rules={[validators.username()]}
+                validateOnBlur
+              />
 
               {/* Bio */}
-              <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
-                <Textarea
-                  id="bio"
-                  value={profile.bio}
-                  onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                  rows={4}
-                  placeholder="Tell us about yourself..."
-                />
-              </div>
+              <TextareaField
+                id="bio"
+                label="Bio"
+                value={profile.bio}
+                onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                rows={4}
+                placeholder="Tell us about yourself..."
+                maxLength={500}
+                showValidation={false}
+              />
             </div>
           </div>
 
@@ -279,30 +268,27 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
               </div>
 
               {/* Birthday */}
-              <div className="space-y-2">
-                <Label htmlFor="birthday">Birthday</Label>
-                <Input
-                  id="birthday"
-                  type="date"
-                  value={profile.birthday}
-                  onChange={(e) => setProfile({ ...profile, birthday: e.target.value })}
-                />
-                <p className="text-xs text-gray-500 dark:text-gray-500">
-                  Optional - we'll keep this private
-                </p>
-              </div>
+              <FormField
+                id="birthday"
+                label="Birthday"
+                type="date"
+                value={profile.birthday}
+                onChange={(e) => setProfile({ ...profile, birthday: e.target.value })}
+                helperText="Optional - we'll keep this private"
+                showValidation={false}
+              />
 
               {/* Website */}
-              <div className="space-y-2">
-                <Label htmlFor="website_url">Website</Label>
-                <Input
-                  id="website_url"
-                  type="url"
-                  value={profile.website_url}
-                  onChange={(e) => setProfile({ ...profile, website_url: e.target.value })}
-                  placeholder="https://yourwebsite.com"
-                />
-              </div>
+              <FormField
+                id="website_url"
+                label="Website"
+                type="url"
+                value={profile.website_url}
+                onChange={(e) => setProfile({ ...profile, website_url: e.target.value })}
+                placeholder="https://yourwebsite.com"
+                rules={[validators.url()]}
+                validateOnBlur
+              />
             </div>
           </div>
 
@@ -328,24 +314,16 @@ export function ProfileEditor({ userId, onClose, onSaveComplete }: ProfileEditor
 
         {/* Action Buttons */}
         <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-800">
-            <Button
+            <SubmitButton
               onClick={handleSave}
-              disabled={saving}
+              isLoading={saving}
+              loadingText="Saving..."
               className="flex-1"
-              variant="default"
+              type="button"
             >
-              {saving ? (
-                <>
-                  <Spinner className="size-4" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="size-4" />
-                  Save Changes
-                </>
-              )}
-            </Button>
+              <Save className="size-4" />
+              Save Changes
+            </SubmitButton>
             {onClose && (
               <Button
                 onClick={onClose}

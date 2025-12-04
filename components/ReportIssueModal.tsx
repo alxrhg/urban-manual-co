@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { AlertTriangle, Send, Loader2, CheckCircle } from 'lucide-react';
+import { AlertTriangle, Send, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  FormField,
+  TextareaField,
+  FormErrorSummary,
+  SubmitButton,
+} from '@/components/ui/form-field';
 
 interface ReportIssueModalProps {
   isOpen: boolean;
@@ -150,45 +156,33 @@ export function ReportIssueModal({
               </div>
 
               {/* Additional Details */}
-              <div>
-                <label className="text-sm font-medium mb-2 block">
-                  Additional details (optional)
-                </label>
-                <textarea
-                  value={details}
-                  onChange={(e) => setDetails(e.target.value)}
-                  placeholder="Provide more context about the issue..."
-                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
-                  rows={3}
-                  maxLength={500}
-                />
-                <p className="text-xs text-gray-400 mt-1 text-right">
-                  {details.length}/500
-                </p>
-              </div>
+              <TextareaField
+                id="report-details"
+                label="Additional details (optional)"
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                placeholder="Provide more context about the issue..."
+                rows={3}
+                maxLength={500}
+                showValidation={false}
+              />
 
               {/* Email for non-authenticated users */}
               {!user && (
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Your email (optional)
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="We'll notify you when the issue is resolved"
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900 dark:focus:ring-white"
-                  />
-                </div>
+                <FormField
+                  id="report-email"
+                  label="Your email (optional)"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="We'll notify you when the issue is resolved"
+                  helperText="We'll notify you when the issue is resolved"
+                  showValidation={false}
+                />
               )}
 
               {/* Error */}
-              {error && (
-                <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
-                  {error}
-                </div>
-              )}
+              {error && <FormErrorSummary errors={[error]} />}
             </div>
           )}
         </div>
@@ -198,24 +192,17 @@ export function ReportIssueModal({
             <Button variant="ghost" size="sm" onClick={handleClose}>
               Cancel
             </Button>
-            <Button
-              variant="default"
+            <SubmitButton
               size="sm"
               onClick={handleSubmit}
-              disabled={!selectedType || isSubmitting}
+              disabled={!selectedType}
+              isLoading={isSubmitting}
+              loadingText="Submitting..."
+              type="button"
             >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                <>
-                  <Send className="h-4 w-4" />
-                  Submit Report
-                </>
-              )}
-            </Button>
+              <Send className="h-4 w-4" />
+              Submit Report
+            </SubmitButton>
           </DialogFooter>
         )}
       </DialogContent>

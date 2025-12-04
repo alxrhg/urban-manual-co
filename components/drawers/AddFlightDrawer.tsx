@@ -3,11 +3,15 @@
 import { useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { Plane } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Spinner } from '@/components/ui/spinner';
+import {
+  FormField,
+  TextareaField,
+  FormErrorSummary,
+  SubmitButton,
+  validators,
+} from '@/components/ui/form-field';
 
 interface AddFlightDrawerProps {
   tripId?: string;
@@ -36,6 +40,8 @@ export default function AddFlightDrawer({
 }: AddFlightDrawerProps) {
   const { closeDrawer } = useDrawerStore();
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [touched, setTouched] = useState(false);
 
   const [airline, setAirline] = useState('');
   const [flightNumber, setFlightNumber] = useState('');
@@ -48,8 +54,22 @@ export default function AddFlightDrawer({
   const [confirmationNumber, setConfirmationNumber] = useState('');
   const [notes, setNotes] = useState('');
 
-  const handleSubmit = async () => {
-    if (!airline.trim() || !from.trim() || !to.trim()) return;
+  const validateForm = (): string[] => {
+    const validationErrors: string[] = [];
+    if (!airline.trim()) validationErrors.push('Airline is required');
+    if (!from.trim()) validationErrors.push('Departure location is required');
+    if (!to.trim()) validationErrors.push('Destination is required');
+    return validationErrors;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTouched(true);
+
+    const validationErrors = validateForm();
+    setErrors(validationErrors);
+
+    if (validationErrors.length > 0) return;
 
     setSaving(true);
     try {
@@ -73,6 +93,7 @@ export default function AddFlightDrawer({
       closeDrawer();
     } catch (err) {
       console.error('Error adding flight:', err);
+      setErrors(['Failed to add flight. Please try again.']);
     } finally {
       setSaving(false);
     }
@@ -81,7 +102,7 @@ export default function AddFlightDrawer({
   const isValid = airline.trim() && from.trim() && to.trim();
 
   return (
-    <div className="p-4 space-y-6">
+    <form onSubmit={handleSubmit} className="p-4 space-y-6">
       {/* Header Icon */}
       <div className="flex justify-center">
         <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
@@ -89,52 +110,65 @@ export default function AddFlightDrawer({
         </div>
       </div>
 
+      {/* Error Summary */}
+      {touched && errors.length > 0 && (
+        <FormErrorSummary errors={errors} />
+      )}
+
       {/* Airline & Flight Number */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="airline">Airline *</Label>
-          <Input
-            id="airline"
-            type="text"
-            value={airline}
-            onChange={(e) => setAirline(e.target.value)}
-            placeholder="e.g. United"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="flightNumber">Flight #</Label>
-          <Input
-            id="flightNumber"
-            type="text"
-            value={flightNumber}
-            onChange={(e) => setFlightNumber(e.target.value)}
-            placeholder="e.g. UA123"
-          />
-        </div>
+        <FormField
+          id="airline"
+          label="Airline"
+          type="text"
+          value={airline}
+          onChange={(e) => {
+            setAirline(e.target.value);
+            if (touched) setErrors(validateForm());
+          }}
+          placeholder="e.g. United"
+          required
+          error={touched && !airline.trim() ? 'Required' : undefined}
+        />
+        <FormField
+          id="flightNumber"
+          label="Flight #"
+          type="text"
+          value={flightNumber}
+          onChange={(e) => setFlightNumber(e.target.value)}
+          placeholder="e.g. UA123"
+          showValidation={false}
+        />
       </div>
 
       {/* From / To */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="from">From *</Label>
-          <Input
-            id="from"
-            type="text"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            placeholder="e.g. JFK"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="to">To *</Label>
-          <Input
-            id="to"
-            type="text"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            placeholder="e.g. LAX"
-          />
-        </div>
+        <FormField
+          id="from"
+          label="From"
+          type="text"
+          value={from}
+          onChange={(e) => {
+            setFrom(e.target.value);
+            if (touched) setErrors(validateForm());
+          }}
+          placeholder="e.g. JFK"
+          required
+          error={touched && !from.trim() ? 'Required' : undefined}
+        />
+        <FormField
+          id="to"
+          label="To"
+          type="text"
+          value={to}
+          onChange={(e) => {
+            setTo(e.target.value);
+            if (touched) setErrors(validateForm());
+          }}
+          placeholder="e.g. LAX"
+          required
+          error={touched && !to.trim() ? 'Required' : undefined}
+        />
       </div>
 
       {/* Departure */}
@@ -145,11 +179,13 @@ export default function AddFlightDrawer({
             type="date"
             value={departureDate}
             onChange={(e) => setDepartureDate(e.target.value)}
+            aria-label="Departure date"
           />
           <Input
             type="time"
             value={departureTime}
             onChange={(e) => setDepartureTime(e.target.value)}
+            aria-label="Departure time"
           />
         </div>
       </div>
@@ -162,49 +198,47 @@ export default function AddFlightDrawer({
             type="date"
             value={arrivalDate}
             onChange={(e) => setArrivalDate(e.target.value)}
+            aria-label="Arrival date"
           />
           <Input
             type="time"
             value={arrivalTime}
             onChange={(e) => setArrivalTime(e.target.value)}
+            aria-label="Arrival time"
           />
         </div>
       </div>
 
       {/* Confirmation Number */}
-      <div className="space-y-2">
-        <Label htmlFor="confirmation">Confirmation #</Label>
-        <Input
-          id="confirmation"
-          type="text"
-          value={confirmationNumber}
-          onChange={(e) => setConfirmationNumber(e.target.value)}
-          placeholder="Optional"
-        />
-      </div>
+      <FormField
+        id="confirmation"
+        label="Confirmation #"
+        type="text"
+        value={confirmationNumber}
+        onChange={(e) => setConfirmationNumber(e.target.value)}
+        placeholder="Optional"
+        showValidation={false}
+      />
 
       {/* Notes */}
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea
-          id="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={2}
-          placeholder="Seat, luggage, etc."
-          className="resize-none"
-        />
-      </div>
+      <TextareaField
+        id="notes"
+        label="Notes"
+        value={notes}
+        onChange={(e) => setNotes(e.target.value)}
+        rows={2}
+        placeholder="Seat, luggage, etc."
+        showValidation={false}
+      />
 
       {/* Submit Button */}
-      <Button
-        onClick={handleSubmit}
-        disabled={saving || !isValid}
+      <SubmitButton
+        isLoading={saving}
+        loadingText="Adding flight..."
         className="w-full rounded-full"
       >
-        {saving && <Spinner className="size-4 mr-2" />}
         Add Flight
-      </Button>
-    </div>
+      </SubmitButton>
+    </form>
   );
 }

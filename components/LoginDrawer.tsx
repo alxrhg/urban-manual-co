@@ -1,11 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, Suspense, useId } from 'react';
+import React, { useState, useEffect, Suspense, useId, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { AlertCircle, CheckCircle2, Eye, EyeOff, X } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Eye, EyeOff, X, Loader2 } from 'lucide-react';
 import { Drawer } from '@/components/ui/Drawer';
+import {
+  FormField,
+  FormErrorSummary,
+  FormSuccessMessage,
+  SubmitButton,
+  validators,
+} from '@/components/ui/form-field';
 
 interface LoginDrawerProps {
   isOpen: boolean;
@@ -138,44 +144,47 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name Field (Sign Up only) */}
             {isSignUp && (
-              <div>
-                <label htmlFor={`login-name-${uniqueId}`} className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
-                  Name
-                </label>
-                <input
-                  id={`login-name-${uniqueId}`}
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required={isSignUp}
-                  autoComplete="name"
-                  className="w-full px-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
-                  placeholder="Your name"
-                />
-              </div>
+              <FormField
+                id={`login-name-${uniqueId}`}
+                label="Name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                autoComplete="name"
+                placeholder="Your name"
+                rules={[validators.required('Please enter your name')]}
+                validateOnBlur
+                showValidation={false}
+              />
             )}
 
             {/* Email Field */}
-            <div>
-              <label htmlFor={`login-email-${uniqueId}`} className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
-                Email
-              </label>
-              <input
-                id={`login-email-${uniqueId}`}
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="w-full px-4 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
-                placeholder="you@example.com"
-              />
-            </div>
+            <FormField
+              id={`login-email-${uniqueId}`}
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+              placeholder="you@example.com"
+              rules={[
+                validators.required('Email is required'),
+                validators.email('Please enter a valid email'),
+              ]}
+              validateOnBlur
+              showValidation={false}
+            />
 
             {/* Password Field */}
-            <div>
-              <label htmlFor={`login-password-${uniqueId}`} className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
+            <div className="space-y-1.5">
+              <label
+                htmlFor={`login-password-${uniqueId}`}
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              >
                 Password
+                <span className="text-red-500 ml-0.5" aria-hidden="true">*</span>
               </label>
               <div className="relative">
                 <input
@@ -186,49 +195,40 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                   required
                   minLength={6}
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                  className="w-full px-4 pr-14 py-4 sm:py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-base sm:text-sm text-gray-900 dark:text-white min-h-[56px] sm:min-h-[48px]"
+                  className="flex h-11 w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 pr-12 py-2 text-sm text-black dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white focus-visible:ring-offset-2 transition-colors"
                   placeholder="••••••••"
+                  aria-describedby={isSignUp ? `login-password-${uniqueId}-hint` : undefined}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 active:text-gray-800 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5 sm:w-4 sm:h-4" /> : <Eye className="w-5 h-5 sm:w-4 sm:h-4" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {isSignUp && (
-                <p className="text-xs text-gray-400 mt-2">Minimum 6 characters</p>
+                <p id={`login-password-${uniqueId}-hint`} className="text-xs text-gray-500 dark:text-gray-400">
+                  Minimum 6 characters
+                </p>
               )}
             </div>
 
-            {/* Error Alert */}
-            {error && (
-              <Alert variant="destructive" className="rounded-xl">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+            {/* Error Message */}
+            {error && <FormErrorSummary errors={[error]} />}
 
-            {/* Success Alert */}
-            {success && (
-              <Alert variant="default" className="rounded-xl bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                <AlertTitle className="text-green-800 dark:text-green-300">Success</AlertTitle>
-                <AlertDescription className="text-green-700 dark:text-green-400">{success}</AlertDescription>
-              </Alert>
-            )}
+            {/* Success Message */}
+            {success && <FormSuccessMessage message={success} />}
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full px-6 py-4 sm:py-3.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl sm:rounded-xl hover:opacity-90 active:opacity-80 transition-opacity text-sm sm:text-base font-medium disabled:opacity-50 min-h-[56px] sm:min-h-[48px] mt-6"
+            <SubmitButton
+              isLoading={loading}
+              loadingText={isSignUp ? 'Creating account...' : 'Signing in...'}
+              className="w-full mt-6"
             >
-              {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
-            </button>
+              {isSignUp ? 'Create Account' : 'Sign In'}
+            </SubmitButton>
           </form>
 
           {/* Toggle Sign In / Sign Up */}
