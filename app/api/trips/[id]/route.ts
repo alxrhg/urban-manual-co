@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath, revalidateTag } from 'next/cache';
+import { revalidatePath } from 'next/cache';
 import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/errors';
 import type { UpdateTrip } from '@/types/trip';
@@ -99,7 +99,6 @@ export const PATCH = withErrorHandling(async (request: NextRequest, context: Rou
   // Instantly refresh cache with on-demand revalidation
   revalidatePath(`/trips/${id}`);
   revalidatePath('/trips');
-  revalidateTag('trips-list');
 
   return NextResponse.json({ success: true, trip });
 });
@@ -142,7 +141,6 @@ export const DELETE = withErrorHandling(async (request: NextRequest, context: Ro
   // Instantly refresh cache
   revalidatePath(`/trips/${id}`);
   revalidatePath('/trips');
-  revalidateTag('trips-list');
 
   return NextResponse.json({ success: true });
 });
