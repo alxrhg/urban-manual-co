@@ -4,19 +4,18 @@ import type { TripStats as TripStatsType } from '@/lib/trip';
 
 interface TripStatsProps {
   stats: TripStatsType;
-  showCTA?: boolean;
   className?: string;
 }
 
 /**
- * Display trip item counts with emoji icons
+ * Display trip item counts as text
  *
  * Examples:
- * - Full: "✈️ 2 · 🏨 1 · 🍽️ 3 · 📍 2"
- * - Partial: "✈️ 2 · 🏨 1"
+ * - Full: "2 flights · 1 hotel · 3 restaurants · 2 places"
+ * - Partial: "2 flights · 1 hotel"
  * - Empty: "No plans yet"
  */
-export function TripStats({ stats, showCTA, className = '' }: TripStatsProps) {
+export function TripStats({ stats, className = '' }: TripStatsProps) {
   const { flights, hotels, restaurants, places } = stats;
   const total = flights + hotels + restaurants + places;
 
@@ -29,35 +28,16 @@ export function TripStats({ stats, showCTA, className = '' }: TripStatsProps) {
   }
 
   // Build stat items (only show categories with count > 0)
-  const items: { emoji: string; count: number; label: string }[] = [];
+  const items: string[] = [];
 
-  if (flights > 0) items.push({ emoji: '✈️', count: flights, label: 'flights' });
-  if (hotels > 0) items.push({ emoji: '🏨', count: hotels, label: 'hotels' });
-  if (restaurants > 0) items.push({ emoji: '🍽️', count: restaurants, label: 'restaurants' });
-  if (places > 0) items.push({ emoji: '📍', count: places, label: 'places' });
-
-  // If showCTA is true and missing key items, show a prompt
-  if (showCTA) {
-    if (flights === 0 && hotels === 0) {
-      // Show what we have plus a CTA
-      const statDisplay = items.map(item => `${item.emoji} ${item.count}`).join(' · ');
-      return (
-        <span className={`text-sm text-gray-500 dark:text-gray-400 ${className}`}>
-          {statDisplay && <>{statDisplay} · </>}
-          <span className="text-gray-600 dark:text-gray-300">Add flights →</span>
-        </span>
-      );
-    }
-  }
+  if (flights > 0) items.push(`${flights} flight${flights !== 1 ? 's' : ''}`);
+  if (hotels > 0) items.push(`${hotels} hotel${hotels !== 1 ? 's' : ''}`);
+  if (restaurants > 0) items.push(`${restaurants} restaurant${restaurants !== 1 ? 's' : ''}`);
+  if (places > 0) items.push(`${places} place${places !== 1 ? 's' : ''}`);
 
   return (
     <span className={`text-sm text-gray-500 dark:text-gray-400 ${className}`}>
-      {items.map((item, index) => (
-        <span key={item.label}>
-          {index > 0 && ' · '}
-          {item.emoji} {item.count}
-        </span>
-      ))}
+      {items.join(' · ')}
     </span>
   );
 }

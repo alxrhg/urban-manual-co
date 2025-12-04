@@ -13,7 +13,7 @@ export function getActionCTA(stats: TripStats): string | null {
 
   // Empty trip - encourage starting
   if (total === 0) {
-    return '\u2728 Start planning \u2192';
+    return 'Start planning \u2192';
   }
 
   // Has some items but missing key logistics

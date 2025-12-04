@@ -1,17 +1,13 @@
 'use client';
 
 import Image from 'next/image';
-import { getDestinationColors, getGradientStyle } from '@/lib/trip';
+import { MapPin } from 'lucide-react';
 
 interface TripCoverImageProps {
   /** User-uploaded cover image URL */
   coverImageUrl?: string | null;
   /** First destination image from catalog */
   destinationImageUrl?: string | null;
-  /** Destination name/slug for gradient fallback */
-  destination?: string | null;
-  /** Trip emoji for gradient fallback */
-  emoji?: string | null;
   /** Trip title for alt text */
   title: string;
   /** Additional CSS classes */
@@ -21,24 +17,21 @@ interface TripCoverImageProps {
 }
 
 /**
- * Trip cover image with intelligent fallbacks
+ * Trip cover image with fallback to gray placeholder
  *
  * Priority:
  * 1. User-uploaded cover image
  * 2. First destination hero image from catalog
- * 3. Destination-based gradient with trip emoji
- * 4. Default gray gradient with airplane emoji
+ * 3. Gray placeholder with MapPin icon
  */
 export function TripCoverImage({
   coverImageUrl,
   destinationImageUrl,
-  destination,
-  emoji,
   title,
   className = '',
   isPast = false,
 }: TripCoverImageProps) {
-  const baseClasses = `w-20 h-20 rounded-lg flex-shrink-0 overflow-hidden ${isPast ? 'grayscale-[30%]' : ''}`;
+  const baseClasses = `rounded-2xl flex-shrink-0 overflow-hidden bg-gray-100 dark:bg-gray-800 ${isPast ? 'grayscale-[30%]' : ''}`;
   const combinedClasses = `${baseClasses} ${className}`;
 
   // Priority 1: User-uploaded cover image
@@ -71,19 +64,10 @@ export function TripCoverImage({
     );
   }
 
-  // Priority 3 & 4: Gradient with emoji
-  const colors = getDestinationColors(destination);
-  const gradientStyle = getGradientStyle(colors);
-  const displayEmoji = emoji || '✈️';
-
+  // Priority 3: Gray placeholder with icon
   return (
-    <div
-      className={`${combinedClasses} flex items-center justify-center`}
-      style={{ background: gradientStyle }}
-    >
-      <span className="text-2xl" role="img" aria-label="trip icon">
-        {displayEmoji}
-      </span>
+    <div className={`${combinedClasses} flex items-center justify-center`}>
+      <MapPin className="w-6 h-6 text-gray-400 dark:text-gray-500" />
     </div>
   );
 }
