@@ -11,6 +11,7 @@ import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 import TripHeader from '@/components/trip/TripHeader';
 import ItineraryView from '@/components/trip/ItineraryView';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
+import ContextualSuggestions from '@/components/trip/ContextualSuggestions';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
 import TripMapView from '@/components/trips/TripMapView';
 
@@ -471,6 +472,24 @@ export default function TripPage() {
               />
             ) : (
               <>
+                {/* Contextual AI Suggestions */}
+                <ContextualSuggestions
+                  days={days}
+                  destination={primaryCity}
+                  selectedDayNumber={selectedDayNumber}
+                  onSuggestionClick={(suggestion) => {
+                    // Handle suggestion click - open add place box with filters
+                    if (suggestion.action.type === 'search') {
+                      setShowAddPlaceBox(true);
+                    }
+                  }}
+                  onSearch={(query) => {
+                    // Could integrate with search functionality
+                    console.log('Search query:', query);
+                    setShowAddPlaceBox(true);
+                  }}
+                />
+
                 {/* Interactive Map */}
                 <InteractiveMapCard
                   locationName={primaryCity || 'Map'}
@@ -546,9 +565,25 @@ export default function TripPage() {
               }}
             />
           ) : (
-            <TravelAISidebar
-              onAddSuggestion={handleAddSuggestion}
-            />
+            <>
+              {/* Contextual AI Suggestions */}
+              <ContextualSuggestions
+                days={days}
+                destination={primaryCity}
+                selectedDayNumber={selectedDayNumber}
+                onSuggestionClick={(suggestion) => {
+                  if (suggestion.action.type === 'search') {
+                    setShowAddPlaceBox(true);
+                  }
+                }}
+                onSearch={() => setShowAddPlaceBox(true)}
+              />
+
+              {/* Travel AI */}
+              <TravelAISidebar
+                onAddSuggestion={handleAddSuggestion}
+              />
+            </>
           )}
         </div>
       </div>
