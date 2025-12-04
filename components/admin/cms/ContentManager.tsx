@@ -24,6 +24,7 @@ import {
   ChevronDown,
   ArrowUpDown,
   MapPin,
+  Pencil,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Destination } from '@/types/destination';
@@ -48,6 +49,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Popover,
   PopoverContent,
@@ -107,6 +117,19 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
   const [cities, setCities] = useState<string[]>([]);
   const [citySearchQuery, setCitySearchQuery] = useState('');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
+  const [bulkEditValues, setBulkEditValues] = useState<{
+    category?: string;
+    city?: string;
+    crown?: boolean;
+    applyCategory: boolean;
+    applyCity: boolean;
+    applyCrown: boolean;
+  }>({
+    applyCategory: false,
+    applyCity: false,
+    applyCrown: false,
+  });
 
   // Fetch unique cities
   useEffect(() => {
@@ -222,6 +245,49 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
     } catch (error) {
       console.error('Bulk delete failed:', error);
       alert('Failed to delete destinations');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkEdit = async () => {
+    const updates: Record<string, unknown> = {};
+
+    if (bulkEditValues.applyCategory && bulkEditValues.category) {
+      updates.category = bulkEditValues.category;
+    }
+    if (bulkEditValues.applyCity && bulkEditValues.city) {
+      updates.city = bulkEditValues.city;
+    }
+    if (bulkEditValues.applyCrown) {
+      updates.crown = bulkEditValues.crown ?? false;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      alert('Please select at least one field to update');
+      return;
+    }
+
+    setBulkActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('destinations')
+        .update(updates)
+        .in('id', Array.from(selectedItems));
+
+      if (error) throw error;
+
+      setSelectedItems(new Set());
+      setShowBulkEditModal(false);
+      setBulkEditValues({
+        applyCategory: false,
+        applyCity: false,
+        applyCrown: false,
+      });
+      fetchDestinations();
+    } catch (error) {
+      console.error('Bulk edit failed:', error);
+      alert('Failed to update destinations');
     } finally {
       setBulkActionLoading(false);
     }
@@ -450,6 +516,15 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
           <Button
             variant="ghost"
             size="sm"
+            onClick={() => setShowBulkEditModal(true)}
+            disabled={bulkActionLoading}
+          >
+            <Pencil className="w-3 h-3 mr-1" />
+            Edit
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleBulkDelete}
             disabled={bulkActionLoading}
             className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
@@ -467,6 +542,125 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
           </Button>
         </div>
       )}
+
+      {/* Bulk Edit Modal */}
+      <Dialog open={showBulkEditModal} onOpenChange={setShowBulkEditModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit {selectedItems.size} Destinations</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {/* Category */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="bulk-category">Category</Label>
+                <Switch
+                  checked={bulkEditValues.applyCategory}
+                  onCheckedChange={(checked) =>
+                    setBulkEditValues((v) => ({ ...v, applyCategory: checked }))
+                  }
+                />
+              </div>
+              {bulkEditValues.applyCategory && (
+                <Select
+                  value={bulkEditValues.category || ''}
+                  onValueChange={(value) =>
+                    setBulkEditValues((v) => ({ ...v, category: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat} className="capitalize">
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* City */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="bulk-city">City</Label>
+                <Switch
+                  checked={bulkEditValues.applyCity}
+                  onCheckedChange={(checked) =>
+                    setBulkEditValues((v) => ({ ...v, applyCity: checked }))
+                  }
+                />
+              </div>
+              {bulkEditValues.applyCity && (
+                <Select
+                  value={bulkEditValues.city || ''}
+                  onValueChange={(value) =>
+                    setBulkEditValues((v) => ({ ...v, city: value }))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cities.slice(0, 50).map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+
+            {/* Crown */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="bulk-crown">Crown Pick</Label>
+                <Switch
+                  checked={bulkEditValues.applyCrown}
+                  onCheckedChange={(checked) =>
+                    setBulkEditValues((v) => ({ ...v, applyCrown: checked }))
+                  }
+                />
+              </div>
+              {bulkEditValues.applyCrown && (
+                <div className="flex items-center gap-3">
+                  <Switch
+                    checked={bulkEditValues.crown || false}
+                    onCheckedChange={(checked) =>
+                      setBulkEditValues((v) => ({ ...v, crown: checked }))
+                    }
+                  />
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {bulkEditValues.crown ? 'Set as Crown Pick' : 'Remove Crown Pick'}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowBulkEditModal(false)}
+              disabled={bulkActionLoading}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleBulkEdit} disabled={bulkActionLoading}>
+              {bulkActionLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  Updating...
+                </>
+              ) : (
+                'Update All'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Content Area */}
       {loading ? (

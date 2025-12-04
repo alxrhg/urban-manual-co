@@ -15,6 +15,9 @@ import {
   Clock,
   CheckCircle,
   AlertCircle,
+  Plane,
+  UserPlus,
+  Database,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,9 +34,12 @@ interface DashboardStats {
   totalSaves: number;
   totalVisits: number;
   activeUsers: number;
+  newUsersThisWeek: number;
+  totalTrips: number;
   recentSearches: number;
   recentDestinations: { name: string; city: string; category: string; slug: string }[];
   topCities: { city: string; count: number }[];
+  signupTrend: { date: string; count: number }[];
   systemHealth: { name: string; status: 'healthy' | 'warning' | 'error'; message: string }[];
 }
 
@@ -44,43 +50,52 @@ export function DashboardOverview() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { count: totalDestinations } = await supabase
-          .from('destinations')
-          .select('*', { count: 'exact', head: true });
+        // Date calculations
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        const { count: enrichedCount } = await supabase
-          .from('destinations')
-          .select('*', { count: 'exact', head: true })
-          .not('last_enriched_at', 'is', null);
+        // Parallel fetch for performance
+        const [
+          { count: totalDestinations },
+          { count: enrichedCount },
+          { count: michelinCount },
+          { count: crownCount },
+          { count: totalSaves },
+          { count: totalVisits },
+          { count: totalTrips },
+          { data: recentDests },
+          { data: allDests },
+          { data: recentSearchData },
+          { data: savedPlacesData },
+        ] = await Promise.all([
+          supabase.from('destinations').select('*', { count: 'exact', head: true }),
+          supabase.from('destinations').select('*', { count: 'exact', head: true }).not('last_enriched_at', 'is', null),
+          supabase.from('destinations').select('*', { count: 'exact', head: true }).gt('michelin_stars', 0),
+          supabase.from('destinations').select('*', { count: 'exact', head: true }).eq('crown', true),
+          supabase.from('saved_places').select('*', { count: 'exact', head: true }),
+          supabase.from('visited_places').select('*', { count: 'exact', head: true }),
+          supabase.from('trips').select('*', { count: 'exact', head: true }),
+          supabase.from('destinations').select('name, city, category, slug').order('created_at', { ascending: false }).limit(8),
+          supabase.from('destinations').select('city'),
+          supabase.from('user_interactions').select('id').eq('interaction_type', 'search').gte('created_at', weekAgo.toISOString()),
+          supabase.from('saved_places').select('user_id, saved_at').gte('saved_at', weekAgo.toISOString()),
+        ]);
 
-        const { count: michelinCount } = await supabase
-          .from('destinations')
-          .select('*', { count: 'exact', head: true })
-          .gt('michelin_stars', 0);
+        // Calculate unique active users from recent saves
+        const uniqueActiveUsers = new Set(savedPlacesData?.map(sp => sp.user_id) || []);
 
-        const { count: crownCount } = await supabase
-          .from('destinations')
-          .select('*', { count: 'exact', head: true })
-          .eq('crown', true);
+        // Calculate new users this week (approximation from saved_places first save)
+        const userFirstSave: Record<string, string> = {};
+        savedPlacesData?.forEach(sp => {
+          if (!userFirstSave[sp.user_id] || sp.saved_at < userFirstSave[sp.user_id]) {
+            userFirstSave[sp.user_id] = sp.saved_at;
+          }
+        });
+        const newUsersThisWeek = Object.values(userFirstSave).filter(
+          date => new Date(date) >= weekAgo
+        ).length;
 
-        const { count: totalSaves } = await supabase
-          .from('saved_places')
-          .select('*', { count: 'exact', head: true });
-
-        const { count: totalVisits } = await supabase
-          .from('visited_places')
-          .select('*', { count: 'exact', head: true });
-
-        const { data: recentDests } = await supabase
-          .from('destinations')
-          .select('name, city, category, slug')
-          .order('created_at', { ascending: false })
-          .limit(8);
-
-        const { data: allDests } = await supabase
-          .from('destinations')
-          .select('city');
-
+        // Build city counts
         const cityCount: Record<string, number> = {};
         allDests?.forEach(d => {
           if (d.city) {
@@ -93,6 +108,26 @@ export function DashboardOverview() {
           .slice(0, 8)
           .map(([city, count]) => ({ city, count }));
 
+        // Build signup trend (simplified - based on saves per day)
+        const dailySaves: Record<string, number> = {};
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date();
+          date.setDate(date.getDate() - i);
+          const key = date.toISOString().split('T')[0];
+          dailySaves[key] = 0;
+        }
+        savedPlacesData?.forEach(sp => {
+          const date = sp.saved_at.split('T')[0];
+          if (dailySaves[date] !== undefined) {
+            dailySaves[date]++;
+          }
+        });
+
+        const signupTrend = Object.entries(dailySaves).map(([date, count]) => ({
+          date: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
+          count,
+        }));
+
         setStats({
           totalDestinations: totalDestinations || 0,
           enrichedDestinations: enrichedCount || 0,
@@ -100,10 +135,13 @@ export function DashboardOverview() {
           crownPicks: crownCount || 0,
           totalSaves: totalSaves || 0,
           totalVisits: totalVisits || 0,
-          activeUsers: Math.floor(Math.random() * 200) + 50,
-          recentSearches: Math.floor(Math.random() * 1000) + 200,
+          activeUsers: uniqueActiveUsers.size,
+          newUsersThisWeek,
+          totalTrips: totalTrips || 0,
+          recentSearches: recentSearchData?.length || 0,
           recentDestinations: recentDests || [],
           topCities,
+          signupTrend,
           systemHealth: [
             { name: 'Database', status: 'healthy', message: 'Operational' },
             { name: 'Search', status: 'healthy', message: 'Index synced' },
@@ -196,18 +234,83 @@ export function DashboardOverview() {
             loading={loading}
           />
           <DefinitionItem
-            icon={<Search className="w-4 h-4 text-gray-400" />}
-            term="Recent Searches"
-            value={stats?.recentSearches || 0}
+            icon={<Plane className="w-4 h-4 text-blue-500" />}
+            term="Total Trips"
+            value={stats?.totalTrips || 0}
             loading={loading}
           />
           <DefinitionItem
             icon={<Users className="w-4 h-4 text-gray-400" />}
-            term="Active Users"
+            term="Active Users (7d)"
             value={stats?.activeUsers || 0}
             loading={loading}
           />
         </dl>
+      </div>
+
+      <Separator />
+
+      {/* User Activity Stats */}
+      <div className="pb-6 pt-6">
+        <h3 className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-medium mb-4">
+          User Activity (7 days)
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Activity Chart */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>Daily Saves</span>
+              <span>Last 7 days</span>
+            </div>
+            {loading ? (
+              <div className="h-16 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+            ) : (
+              <div className="flex items-end gap-1 h-16">
+                {stats?.signupTrend.map((day, i) => {
+                  const maxCount = Math.max(...(stats?.signupTrend.map(d => d.count) || [1]));
+                  return (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                      <div
+                        className="w-full bg-black dark:bg-white rounded-t transition-all"
+                        style={{
+                          height: `${Math.max((day.count / (maxCount || 1)) * 100, 4)}%`,
+                          minHeight: '2px',
+                        }}
+                      />
+                      <span className="text-[9px] text-gray-400">{day.date}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-3 border border-gray-200 dark:border-gray-800 rounded-xl">
+              <div className="flex items-center gap-2 mb-1">
+                <Search className="w-3.5 h-3.5 text-gray-400" />
+                <span className="text-xs text-gray-500">Searches</span>
+              </div>
+              {loading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                <p className="text-lg font-medium">{stats?.recentSearches || 0}</p>
+              )}
+            </div>
+            <div className="p-3 border border-gray-200 dark:border-gray-800 rounded-xl">
+              <div className="flex items-center gap-2 mb-1">
+                <UserPlus className="w-3.5 h-3.5 text-green-500" />
+                <span className="text-xs text-gray-500">New Users</span>
+              </div>
+              {loading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                <p className="text-lg font-medium">{stats?.newUsersThisWeek || 0}</p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <Separator />
@@ -321,9 +424,10 @@ export function DashboardOverview() {
         </h3>
         <div className="flex flex-wrap gap-2">
           <ActionLink href="/admin/destinations" icon={<MapPin className="w-4 h-4" />} label="Add Destination" />
+          <ActionLink href="/admin/users" icon={<Users className="w-4 h-4" />} label="Manage Users" />
           <ActionLink href="/admin/analytics" icon={<TrendingUp className="w-4 h-4" />} label="View Analytics" />
-          <ActionLink href="/admin/enrich" icon={<Globe className="w-4 h-4" />} label="Enrich Data" />
-          <ActionLink href="/admin/reindex" icon={<Activity className="w-4 h-4" />} label="Reindex" />
+          <ActionLink href="/admin/pipeline" icon={<Database className="w-4 h-4" />} label="Content Pipeline" />
+          <ActionLink href="/admin/searches" icon={<Search className="w-4 h-4" />} label="Search Analytics" />
         </div>
       </div>
     </div>
