@@ -20,6 +20,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { CookieConsent } from "@/components/CookieConsent";
+import { NotificationPrompt } from "@/components/NotificationPrompt";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -242,6 +243,7 @@ export default function RootLayout({
                             <Footer />
                           </PanelLayout>
                           <CookieConsent />
+                          <NotificationPrompt />
                           <DrawerMount />
                         </ItineraryProvider>
                       </AdminEditModeProvider>
