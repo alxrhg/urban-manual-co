@@ -9,6 +9,7 @@ import { PageLoader } from '@/components/LoadingStates';
 import { EmptyState } from '@/components/EmptyStates';
 import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
 import type { Destination } from '@/types/destination';
+import { toast } from '@/lib/toast';
 
 // Helper function to capitalize city names
 function capitalizeCity(city: string): string {
@@ -126,7 +127,7 @@ export default function CollectionDetailPage() {
       setShowEditModal(false);
     } catch (error) {
       console.error('Error updating collection:', error);
-      alert('Failed to update collection');
+      toast.error('Failed to update collection');
     } finally {
       setUpdating(false);
     }
@@ -154,7 +155,7 @@ export default function CollectionDetailPage() {
       router.push('/account');
     } catch (error) {
       console.error('Error deleting collection:', error);
-      alert('Failed to delete collection');
+      toast.error('Failed to delete collection');
     }
   };
 

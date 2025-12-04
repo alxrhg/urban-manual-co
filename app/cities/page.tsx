@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import CitiesPageClient from './page-client';
 import { fetchCityStats } from '@/lib/data/fetch-destinations';
 import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
+import { ErrorState } from '@/components/ui/empty-state';
 
 /**
  * Cities Page - Highest Performance Architecture
@@ -63,17 +64,30 @@ function CitiesSkeleton() {
  * Async data fetching - streams after static shell
  */
 async function CitiesContent() {
-  const cityStats = await fetchCityStats();
-  const countries = Array.from(
-    new Set(cityStats.map(s => s.country).filter(Boolean))
-  ).sort();
+  try {
+    const cityStats = await fetchCityStats();
+    const countries = Array.from(
+      new Set(cityStats.map(s => s.country).filter(Boolean))
+    ).sort();
 
-  return (
-    <CitiesPageClient
-      initialCityStats={cityStats}
-      initialCountries={countries}
-    />
-  );
+    return (
+      <CitiesPageClient
+        initialCityStats={cityStats}
+        initialCountries={countries}
+      />
+    );
+  } catch (error) {
+    console.error('Failed to fetch city stats:', error);
+    return (
+      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
+        <ErrorState
+          variant="fullpage"
+          title="Unable to load cities"
+          description="We couldn't load the cities data. Please try refreshing the page."
+        />
+      </main>
+    );
+  }
 }
 
 export default function CitiesPage() {

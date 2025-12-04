@@ -452,7 +452,7 @@ export default function HomepageClient({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            message: query,
+            query: query,
             conversationHistory,
             userId: user?.id,
           }),
@@ -466,7 +466,7 @@ export default function HomepageClient({
         setConversationHistory((prev) => [
           ...prev,
           { role: "user", content: query },
-          { role: "assistant", content: data.response || "" },
+          { role: "assistant", content: data.content || "" },
         ]);
 
         // Add assistant response
@@ -474,11 +474,11 @@ export default function HomepageClient({
           ...prev,
           {
             type: "assistant",
-            content: data.response || "Here are some recommendations:",
+            content: data.content || "Here are some recommendations:",
           },
         ]);
 
-        setChatResponse(data.response || "");
+        setChatResponse(data.content || "");
 
         // Update destinations from search results
         if (data.destinations && Array.isArray(data.destinations)) {
@@ -489,8 +489,8 @@ export default function HomepageClient({
         if (data.intent) {
           setSearchIntent(data.intent);
         }
-        if (data.followUpSuggestions) {
-          setFollowUpSuggestions(data.followUpSuggestions);
+        if (data.suggestions) {
+          setFollowUpSuggestions(data.suggestions);
         }
       } catch (error) {
         console.error("Search error:", error);

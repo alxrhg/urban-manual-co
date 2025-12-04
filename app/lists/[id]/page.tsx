@@ -21,6 +21,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE } from '@/components/CardStyles';
+import { toast } from '@/lib/toast';
 
 interface List {
   id: string;
@@ -148,7 +149,7 @@ export default function ListDetailPage() {
 
     if (error) {
       console.error('Error updating list:', error);
-      alert('Failed to update list');
+      toast.error('Failed to update list');
     } else {
       setList({
         ...list,
@@ -171,7 +172,7 @@ export default function ListDetailPage() {
 
     if (error) {
       console.error('Error deleting list:', error);
-      alert('Failed to delete list');
+      toast.error('Failed to delete list');
     } else {
       router.push('/lists');
     }
@@ -211,8 +212,9 @@ export default function ListDetailPage() {
 
     if (error) {
       console.error('Error adding destination:', error);
-      alert('Failed to add destination');
+      toast.error('Failed to add destination');
     } else {
+      toast.success('Destination added');
       setDestinations([destination, ...destinations]);
       setSearchQuery("");
       setSearchResults([]);
@@ -232,8 +234,9 @@ export default function ListDetailPage() {
 
     if (error) {
       console.error('Error removing destination:', error);
-      alert('Failed to remove destination');
+      toast.error('Failed to remove destination');
     } else {
+      toast.success('Destination removed');
       setDestinations(destinations.filter(d => d.slug !== slug));
     }
   };
@@ -241,7 +244,7 @@ export default function ListDetailPage() {
   const copyShareLink = () => {
     const url = `${window.location.origin}/lists/${list?.id}`;
     navigator.clipboard.writeText(url);
-    alert('Link copied to clipboard!');
+    toast.success('Link copied to clipboard');
   };
 
   const capitalizeCity = (city: string) => {

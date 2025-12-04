@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { X } from 'lucide-react';
+import { POPUP_EVENTS, notifyPopupResolved } from '@/lib/popup-queue';
 
 const CONSENT_STORAGE_KEY = 'cookie_consent';
 const CONSENT_COOKIE_NAME = 'cookie_consent';
@@ -144,6 +145,8 @@ export function CookieConsent() {
         // Don't show banner if consent exists
         setIsVisible(false);
         setHasCheckedConsent(true);
+        // Notify other popups that cookie consent is already resolved
+        notifyPopupResolved(POPUP_EVENTS.COOKIE_CONSENT_RESOLVED);
       } else {
         // Show banner if no consent is stored (with delay for better UX)
         visibilityTimer = setTimeout(() => {
@@ -204,6 +207,9 @@ export function CookieConsent() {
     setIsVisible(false);
     setHasCheckedConsent(true);
     setShowDetails(false);
+
+    // Notify other popups that cookie consent is resolved
+    notifyPopupResolved(POPUP_EVENTS.COOKIE_CONSENT_RESOLVED);
   }, []);
 
   const acceptAll = useCallback(() => {

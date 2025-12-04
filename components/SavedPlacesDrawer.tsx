@@ -12,7 +12,7 @@ import type { Destination } from '@/types/destination';
 
 interface SavedPlace {
   destination_slug: string;
-  destination: Destination | null;
+  destination: Destination;
 }
 
 export function SavedPlacesDrawer() {
@@ -45,13 +45,18 @@ export function SavedPlacesDrawer() {
           .in('slug', slugs);
 
         if (destData) {
-          const mapped = savedResult.map((item: { destination_slug: string }) => {
-            const dest = destData.find((d: Destination) => d.slug === item.destination_slug);
-            return {
-              destination_slug: item.destination_slug,
-              destination: dest as Destination,
-            };
-          });
+          const mapped = savedResult
+            .map((item: { destination_slug: string }) => {
+              const dest = destData.find((d: Destination) => d.slug === item.destination_slug);
+              return {
+                destination_slug: item.destination_slug,
+                destination: dest as Destination | null,
+              };
+            })
+            // Filter out items where destination wasn't found to prevent count mismatch
+            .filter((item): item is SavedPlace =>
+              item.destination !== null && item.destination !== undefined
+            );
           setSavedPlaces(mapped);
         }
       } else {
@@ -136,14 +141,12 @@ export function SavedPlacesDrawer() {
           ) : (
             <div className="px-4 sm:px-5 space-y-3 pb-4">
               {savedPlaces.map((place) => (
-                place.destination && (
-                  <HorizontalDestinationCard
-                    key={place.destination_slug}
-                    destination={place.destination}
-                    onClick={() => handleSelectPlace(place.destination_slug)}
-                    showBadges={true}
-                  />
-                )
+                <HorizontalDestinationCard
+                  key={place.destination_slug}
+                  destination={place.destination}
+                  onClick={() => handleSelectPlace(place.destination_slug)}
+                  showBadges={true}
+                />
               ))}
             </div>
           )}

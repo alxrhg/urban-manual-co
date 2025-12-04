@@ -361,19 +361,36 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         fallbackQuery = fallbackQuery.ilike('brand', `%${brandFilter}%`);
       }
 
-      // Keyword matching
+      // Keyword matching - search across multiple fields
       if (intent.keywords && intent.keywords.length > 0) {
         const conditions: string[] = [];
         for (const keyword of intent.keywords) {
           conditions.push(`name.ilike.%${keyword}%`);
           conditions.push(`description.ilike.%${keyword}%`);
           conditions.push(`content.ilike.%${keyword}%`);
+          conditions.push(`search_text.ilike.%${keyword}%`);
+          conditions.push(`category.ilike.%${keyword}%`);
         }
         if (conditions.length > 0) {
           fallbackQuery = fallbackQuery.or(conditions.join(','));
         }
       } else {
-        fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%`);
+        // Extract keywords from query as fallback
+        const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'best', 'good', 'great', 'top', 'find', 'show', 'me', 'my', 'looking', 'want', 'like']);
+        const words = query.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2 && !stopWords.has(w));
+
+        if (words.length > 0) {
+          const conditions = words.flatMap((w: string) => [
+            `name.ilike.%${w}%`,
+            `description.ilike.%${w}%`,
+            `content.ilike.%${w}%`,
+            `search_text.ilike.%${w}%`,
+            `category.ilike.%${w}%`,
+          ]);
+          fallbackQuery = fallbackQuery.or(conditions.join(','));
+        } else {
+          fallbackQuery = fallbackQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,content.ilike.%${query}%`);
+        }
       }
 
       if (intent.filters?.rating || filters.rating) {

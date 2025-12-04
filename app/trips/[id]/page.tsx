@@ -250,8 +250,8 @@ export default function TripPage() {
   // Loading state
   if (loading) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950">
-        <div className="max-w-4xl mx-auto">
+      <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950">
+        <div className="max-w-5xl mx-auto">
           <PageLoader />
         </div>
       </main>
@@ -261,12 +261,12 @@ export default function TripPage() {
   // Not found
   if (!trip) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950 flex items-center justify-center">
+      <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-stone-500 dark:text-gray-400 mb-4">Trip not found</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Trip not found</p>
           <button
             onClick={() => router.push('/trips')}
-            className="text-stone-900 dark:text-white hover:opacity-70 transition-opacity"
+            className="text-gray-900 dark:text-white hover:opacity-70 transition-opacity"
           >
             Back to trips
           </button>
@@ -276,8 +276,8 @@ export default function TripPage() {
   }
 
   return (
-    <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950">
-      <div className="max-w-4xl mx-auto">
+    <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950">
+      <div className="max-w-5xl mx-auto">
         {/* Header with Tabs */}
         <TripHeader
           title={trip.title}
@@ -309,10 +309,10 @@ export default function TripPage() {
                 {showMapView && (
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-medium text-stone-900 dark:text-white">Day {selectedDayNumber} Map</h3>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">Day {selectedDayNumber} Map</h3>
                       <button
                         onClick={() => setShowMapView(false)}
-                        className="text-xs text-stone-400 hover:text-stone-900 dark:hover:text-white transition-colors"
+                        className="text-xs text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                       >
                         Hide map
                       </button>
@@ -357,11 +357,11 @@ export default function TripPage() {
             {activeContentTab === 'flights' && (
               <div className="space-y-3">
                 {allFlights.length === 0 ? (
-                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                    <p className="text-sm text-stone-500 dark:text-gray-400 mb-6">No flights added yet</p>
+                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">No flights added yet</p>
                     <button
                       onClick={() => setShowAddPlaceBox(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
                     >
                       Add a flight
                     </button>
@@ -371,10 +371,10 @@ export default function TripPage() {
                     <div
                       key={flight.id}
                       onClick={() => handleEditItem(flight)}
-                      className="p-4 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-stone-300 dark:hover:border-gray-700 transition-all"
+                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-all"
                     >
-                      <div className="text-sm font-medium text-stone-900 dark:text-white">{flight.title}</div>
-                      <div className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">{flight.title}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {flight.parsedNotes?.from} → {flight.parsedNotes?.to}
                       </div>
                     </div>
@@ -386,11 +386,11 @@ export default function TripPage() {
             {activeContentTab === 'hotels' && (
               <div className="space-y-3">
                 {allHotels.length === 0 ? (
-                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                    <p className="text-sm text-stone-500 dark:text-gray-400 mb-6">No hotels added yet</p>
+                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">No hotels added yet</p>
                     <button
                       onClick={() => setShowAddPlaceBox(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
                     >
                       Add a hotel
                     </button>
@@ -400,10 +400,10 @@ export default function TripPage() {
                     <div
                       key={hotel.id}
                       onClick={() => handleEditItem(hotel)}
-                      className="p-4 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-stone-300 dark:hover:border-gray-700 transition-all"
+                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-all"
                     >
-                      <div className="text-sm font-medium text-stone-900 dark:text-white">{hotel.title}</div>
-                      <div className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">{hotel.title}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {hotel.parsedNotes?.checkInTime || 'Check-in time not set'} · {hotel.parsedNotes?.address || 'Address not set'}
                       </div>
                     </div>
@@ -413,8 +413,8 @@ export default function TripPage() {
             )}
 
             {activeContentTab === 'notes' && (
-              <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <p className="text-sm text-stone-500 dark:text-gray-400">Notes feature coming soon</p>
+              <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Notes feature coming soon</p>
               </div>
             )}
           </div>
