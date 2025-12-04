@@ -291,7 +291,7 @@ export default function ItineraryTab({
                       <TransitConnector
                         from={getItemLocation(item)}
                         to={getItemLocation(dayItems[index + 1])}
-                        mode={item.parsedNotes?.travelModeToNext || 'walking'}
+                        mode={getTransitMode(item.parsedNotes?.travelModeToNext)}
                         itemId={item.id}
                         onModeChange={onUpdateTravelMode ? (id, mode) => onUpdateTravelMode(id, mode) : undefined}
                         className="my-1"
@@ -492,4 +492,12 @@ function getItemLocation(item: EnrichedItineraryItem) {
     return { latitude: lat, longitude: lng };
   }
   return undefined;
+}
+
+function getTransitMode(mode: string | undefined): 'walking' | 'driving' | 'transit' {
+  // TransitConnector only supports walking, driving, transit - not flight
+  if (mode === 'walking' || mode === 'driving' || mode === 'transit') {
+    return mode;
+  }
+  return 'walking'; // default fallback
 }
