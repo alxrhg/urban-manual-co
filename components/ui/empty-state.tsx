@@ -271,19 +271,131 @@ export function ErrorState({
   title = 'Something went wrong',
   description = 'An error occurred. Please try again.',
   onRetry,
+  onGoBack,
   className,
+  variant = 'default',
 }: {
   title?: string;
   description?: string;
   onRetry?: () => void;
+  onGoBack?: () => void;
   className?: string;
+  /** Variant changes the visual style */
+  variant?: 'default' | 'inline' | 'fullpage';
 }) {
+  if (variant === 'inline') {
+    // Compact inline error for use within cards/sections
+    return (
+      <div className={cn(
+        'flex items-center gap-3 p-4 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900',
+        className
+      )}>
+        <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-red-800 dark:text-red-200">{title}</p>
+          {description && (
+            <p className="text-xs text-red-600 dark:text-red-400 mt-0.5">{description}</p>
+          )}
+        </div>
+        {onRetry && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRetry}
+            className="text-red-600 hover:text-red-700 hover:bg-red-100 dark:hover:bg-red-900/30"
+          >
+            Retry
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  if (variant === 'fullpage') {
+    // Full page error with more prominent styling
+    return (
+      <div className={cn(
+        'flex flex-col items-center justify-center min-h-[60vh] text-center px-6',
+        className
+      )}>
+        <div className="mb-6 p-6 rounded-full bg-red-100 dark:bg-red-950/30">
+          <AlertCircle className="w-16 h-16 text-red-500" />
+        </div>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          {title}
+        </h1>
+        <p className="text-gray-500 dark:text-gray-400 max-w-md mb-8">
+          {description}
+        </p>
+        <div className="flex gap-3">
+          {onRetry && (
+            <Button onClick={onRetry}>
+              Try again
+            </Button>
+          )}
+          {onGoBack && (
+            <Button variant="outline" onClick={onGoBack}>
+              Go back
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Default variant - standard empty state style
   return (
     <EmptyState
       icon={AlertCircle}
       title={title}
       description={description}
       action={onRetry ? { label: 'Try again', onClick: onRetry } : undefined}
+      secondaryAction={onGoBack ? { label: 'Go back', onClick: onGoBack } : undefined}
+      className={className}
+    />
+  );
+}
+
+/**
+ * Network error state - for fetch/API failures
+ */
+export function NetworkError({
+  onRetry,
+  className,
+}: {
+  onRetry?: () => void;
+  className?: string;
+}) {
+  return (
+    <ErrorState
+      title="Connection error"
+      description="Unable to load data. Check your internet connection and try again."
+      onRetry={onRetry}
+      className={className}
+    />
+  );
+}
+
+/**
+ * Not found error state - for 404 scenarios
+ */
+export function NotFoundError({
+  title = 'Not found',
+  description = "The page or resource you're looking for doesn't exist.",
+  onGoBack,
+  className,
+}: {
+  title?: string;
+  description?: string;
+  onGoBack?: () => void;
+  className?: string;
+}) {
+  return (
+    <EmptyState
+      icon={Search}
+      title={title}
+      description={description}
+      action={onGoBack ? { label: 'Go back', onClick: onGoBack } : undefined}
       className={className}
     />
   );

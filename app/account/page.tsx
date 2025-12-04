@@ -21,6 +21,7 @@ import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
 import { formatDestinationsFromField } from "@/types/trip";
 import type { Trip } from "@/types/trip";
 import type { User } from "@supabase/supabase-js";
+import { toast } from "@/lib/toast";
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic';
@@ -301,7 +302,7 @@ export default function Account() {
     } catch (error) {
       console.error('Error creating collection:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to create collection. Please try again.';
-      alert(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setCreatingCollection(false);
     }
@@ -744,7 +745,7 @@ export default function Account() {
                               await loadUserData();
                             } catch (error) {
                               console.error('Error deleting trip:', error);
-                              alert('Failed to delete trip');
+                              toast.error('Failed to delete trip');
                             }
                           }
                         }}
@@ -786,8 +787,7 @@ export default function Account() {
             <ProfileEditor
               userId={user.id}
               onSaveComplete={() => {
-                // Optionally reload user data or show success message
-                alert('Profile updated successfully!');
+                toast.success('Profile updated successfully');
               }}
             />
             <AccountPrivacyManager />
