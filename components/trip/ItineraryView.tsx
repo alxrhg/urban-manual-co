@@ -709,8 +709,8 @@ function BreakfastCard({
   hotel: EnrichedItineraryItem;
   onClick?: () => void;
 }) {
-  const notes = hotel.parsedNotes;
-  const breakfastTime = notes?.breakfastTime || '07:00 - 10:00';
+  const notes = hotel.parsedNotes as Record<string, unknown> | undefined;
+  const breakfastTime = (notes?.breakfastTime as string) || '07:00 - 10:00';
 
   return (
     <div
