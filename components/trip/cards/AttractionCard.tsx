@@ -2,6 +2,7 @@
 
 import type { ItineraryItem, TripSettings } from './ItineraryCard';
 import PlaceCard from '@/components/trips/PlaceCard';
+import BookingStatus from '@/components/trip/BookingStatus';
 import { formatTimeDisplay } from '@/lib/utils/time-calculations';
 
 interface AttractionCardProps {
@@ -35,17 +36,25 @@ export default function AttractionCard({
         hover:ring-1 hover:ring-stone-300 dark:hover:ring-gray-600
       `}
     >
-      <PlaceCard
-        name={item.title}
-        category={notes?.category || 'attraction'}
-        neighborhood={notes?.city}
-        time={item.time ? formatTimeDisplay(item.time) : undefined}
-        duration={notes?.duration}
-        rating={notes?.personalRating}
-        image={notes?.image}
-        notes={notes?.notes}
-        compact
-      />
+      <div className="relative">
+        <PlaceCard
+          name={item.title}
+          category={notes?.category || 'attraction'}
+          neighborhood={notes?.city}
+          time={item.time ? formatTimeDisplay(item.time) : undefined}
+          duration={notes?.duration}
+          rating={notes?.personalRating}
+          image={notes?.image}
+          notes={notes?.notes}
+          compact
+        />
+        {/* Booking status badge for ticketed attractions */}
+        {notes?.bookingStatus && (
+          <div className="absolute top-3 right-3">
+            <BookingStatus status={notes.bookingStatus} size="sm" />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

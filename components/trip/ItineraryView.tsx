@@ -14,6 +14,57 @@ import {
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import TransitConnector from './TransitConnector';
 import { getAirportCoordinates } from '@/lib/utils/airports';
+import ItineraryCard, { type ItineraryItem as CardItineraryItem, type TripSettings } from './cards/ItineraryCard';
+import { CompactInsertionPoint } from './InsertionPoint';
+
+/**
+ * Maps an EnrichedItineraryItem to the card system's category
+ */
+function getItemCategory(item: EnrichedItineraryItem): CardItineraryItem['category'] {
+  const itemType = item.parsedNotes?.type;
+  const category = item.destination?.category || item.parsedNotes?.category;
+
+  switch (itemType) {
+    case 'flight':
+      return 'flight';
+    case 'hotel':
+      return 'hotel_overnight';
+    case 'train':
+    case 'drive':
+      return 'transport';
+    case 'breakfast':
+    case 'activity':
+      // Check if it's a hotel-related activity
+      if (item.parsedNotes?.isHotel) {
+        return 'hotel_activity';
+      }
+      return 'attraction';
+    default:
+      // Map destination categories
+      if (category) {
+        const lowerCategory = category.toLowerCase();
+        if (lowerCategory.includes('restaurant') || lowerCategory.includes('dining') || lowerCategory === 'cafe' || lowerCategory === 'bar') {
+          return 'restaurant';
+        }
+        if (lowerCategory.includes('hotel') || lowerCategory.includes('lodging')) {
+          return 'hotel_overnight';
+        }
+      }
+      // Default to attraction for places
+      return item.destination ? 'attraction' : 'custom';
+  }
+}
+
+/**
+ * Convert EnrichedItineraryItem to the card system's ItineraryItem format
+ */
+function toCardItem(item: EnrichedItineraryItem): CardItineraryItem {
+  return {
+    ...item,
+    category: getItemCategory(item),
+    parsedNotes: item.parsedNotes ?? null,
+  };
+}
 
 interface ItineraryViewProps {
   days: TripDay[];
@@ -21,6 +72,7 @@ interface ItineraryViewProps {
   onSelectDay: (dayNumber: number) => void;
   onEditItem?: (item: EnrichedItineraryItem) => void;
   onAddItem?: (dayNumber: number) => void;
+  onInsertItem?: (dayNumber: number, afterIndex: number) => void;
   onOptimizeDay?: (dayNumber: number) => void;
   onUpdateItemNotes?: (itemId: string, notes: Record<string, unknown>) => void;
   onRemoveItem?: (itemId: string) => void;
@@ -40,6 +92,7 @@ export default function ItineraryView({
   onSelectDay,
   onEditItem,
   onAddItem,
+  onInsertItem,
   onOptimizeDay,
   onUpdateItemNotes,
   onRemoveItem,
@@ -222,7 +275,7 @@ export default function ItineraryView({
                     onUpdateNotes={onUpdateItemNotes}
                     onRemove={onRemoveItem ? () => onRemoveItem(item.id) : undefined}
                   />
-                  {/* Transit Connector between items */}
+                  {/* Transit Connector and Insertion Point between items */}
                   {nextItem && (
                     <div className="relative pl-10 py-1">
                       <TransitConnector
@@ -230,6 +283,15 @@ export default function ItineraryView({
                         to={toLocation}
                         mode="walking"
                       />
+                      {/* Inline insertion point */}
+                      {onInsertItem && (
+                        <CompactInsertionPoint
+                          dayNumber={selectedDay.dayNumber}
+                          afterIndex={index}
+                          onInsert={onInsertItem}
+                          className="mt-1"
+                        />
+                      )}
                     </div>
                   )}
                 </React.Fragment>
@@ -376,6 +438,13 @@ function DayHeaderSection({
   );
 }
 
+// Default trip settings for card rendering
+const DEFAULT_TRIP_SETTINGS: TripSettings = {
+  id: '',
+  title: '',
+  is24HourTime: false,
+};
+
 // Single itinerary item with timeline dot
 function ItineraryItemRow({
   item,
@@ -386,6 +455,7 @@ function ItineraryItemRow({
   onClick,
   onUpdateNotes,
   onRemove,
+  tripSettings = DEFAULT_TRIP_SETTINGS,
 }: {
   item: EnrichedItineraryItem;
   isFirst: boolean;
@@ -395,8 +465,10 @@ function ItineraryItemRow({
   onClick?: () => void;
   onUpdateNotes?: (itemId: string, notes: Record<string, unknown>) => void;
   onRemove?: () => void;
+  tripSettings?: TripSettings;
 }) {
-  const itemType = item.parsedNotes?.type;
+  // Convert to card system format
+  const cardItem = toCardItem(item);
 
   return (
     <div className="relative pl-10 group">
@@ -418,14 +490,13 @@ function ItineraryItemRow({
         </button>
       )}
 
-      {/* Content Card */}
-      {itemType === 'flight' ? (
-        <FlightCard item={item} isActive={isActive} onClick={onClick} onUpdateNotes={onUpdateNotes} />
-      ) : itemType === 'hotel' ? (
-        <HotelCard item={item} isActive={isActive} onClick={onClick} />
-      ) : (
-        <PlaceCard item={item} isActive={isActive} onClick={onClick} />
-      )}
+      {/* Content Card - Using modular card system */}
+      <ItineraryCard
+        item={cardItem}
+        isSelected={isActive}
+        onSelect={onClick || (() => {})}
+        tripSettings={tripSettings}
+      />
     </div>
   );
 }

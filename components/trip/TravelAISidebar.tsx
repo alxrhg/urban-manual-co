@@ -1,20 +1,18 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Sparkles, ExternalLink, Plus, Send, Loader2 } from 'lucide-react';
+import { Sparkles, Plus, Send, Loader2, RefreshCw, Clock, MapPin } from 'lucide-react';
+import type { AISuggestion } from '@/hooks/useTravelAISuggestions';
 
-interface Suggestion {
-  id: string;
-  text: string;
-  label?: string;
-  category?: string;
-  dayNumber?: number;
-}
+// Re-export for convenience
+export type { AISuggestion };
 
-interface TravelAISidebarProps {
-  suggestions?: Suggestion[];
-  onAddSuggestion?: (suggestion: Suggestion) => void;
+export interface TravelAISidebarProps {
+  suggestions?: AISuggestion[];
+  aiMessage?: string;
+  onAddSuggestion?: (suggestion: AISuggestion) => void;
   onAskQuestion?: (question: string) => Promise<string>;
+  onRefresh?: () => void;
   isLoading?: boolean;
   className?: string;
 }
@@ -22,19 +20,39 @@ interface TravelAISidebarProps {
 /**
  * TravelAISidebar - AI assistant panel for trip suggestions
  * Features: AI message, clickable suggestions, natural language input
+ *
+ * Usage with useTravelAISuggestions hook:
+ * ```tsx
+ * const { suggestions, aiMessage, isLoading, askQuestion, refetch } = useTravelAISuggestions({
+ *   city: 'Paris',
+ *   existingItems: dayItems,
+ * });
+ *
+ * <TravelAISidebar
+ *   suggestions={suggestions}
+ *   aiMessage={aiMessage}
+ *   isLoading={isLoading}
+ *   onAskQuestion={askQuestion}
+ *   onRefresh={refetch}
+ *   onAddSuggestion={handleAddSuggestion}
+ * />
+ * ```
  */
 export default function TravelAISidebar({
   suggestions = [],
+  aiMessage: propAiMessage,
   onAddSuggestion,
   onAskQuestion,
+  onRefresh,
   isLoading = false,
   className = '',
 }: TravelAISidebarProps) {
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [aiMessage, setAiMessage] = useState(
-    'Here are a few suggestions for your free time on Day 2. Would you like to book any?'
-  );
+  const [localAiMessage, setLocalAiMessage] = useState('');
+
+  // Use prop message if provided, otherwise use local state
+  const aiMessage = propAiMessage || localAiMessage || 'Ready to help plan your trip! Ask me anything or check out the suggestions below.';
 
   const handleSubmit = useCallback(async () => {
     if (!input.trim() || !onAskQuestion) return;
@@ -42,10 +60,11 @@ export default function TravelAISidebar({
     setIsProcessing(true);
     try {
       const response = await onAskQuestion(input);
-      setAiMessage(response);
+      setLocalAiMessage(response);
       setInput('');
     } catch (error) {
       console.error('AI question error:', error);
+      setLocalAiMessage('Sorry, I had trouble processing that. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -58,12 +77,39 @@ export default function TravelAISidebar({
     }
   };
 
-  // Default suggestions if none provided
-  const displaySuggestions = suggestions.length > 0 ? suggestions : [
-    { id: '1', text: 'Add a morning cafe', label: 'Recommended', category: 'cafe' },
-    { id: '2', text: 'Add museum for Day 2', label: 'Recommended', category: 'museum', dayNumber: 2 },
-    { id: '3', text: 'Day 2 needs more', label: 'Recommended', dayNumber: 2 },
-  ];
+  // Get icon for suggestion based on category
+  const getSuggestionIcon = (suggestion: AISuggestion) => {
+    if (suggestion.gapContext) {
+      return Clock;
+    }
+    return Plus;
+  };
+
+  // Show placeholder if loading
+  if (isLoading && suggestions.length === 0) {
+    return (
+      <div className={`rounded-2xl bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 overflow-hidden ${className}`}>
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <span className="font-medium text-gray-900 dark:text-white text-sm">Travel AI</span>
+          </div>
+        </div>
+        <div className="p-4 space-y-3">
+          <div className="flex gap-3">
+            <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4" />
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-1/2" />
+            </div>
+          </div>
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-14 bg-gray-100 dark:bg-gray-800/50 rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`rounded-2xl bg-white dark:bg-gray-900/80 border border-gray-200 dark:border-gray-800 overflow-hidden ${className}`}>
@@ -73,9 +119,16 @@ export default function TravelAISidebar({
           <Sparkles className="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span className="font-medium text-gray-900 dark:text-white text-sm">Travel AI</span>
         </div>
-        <button className="p-1 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-          <ExternalLink className="w-4 h-4" />
-        </button>
+        {onRefresh && (
+          <button
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="p-1.5 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
+            aria-label="Refresh suggestions"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+        )}
       </div>
 
       {/* AI Message */}
@@ -92,28 +145,66 @@ export default function TravelAISidebar({
 
       {/* Suggestions */}
       <div className="px-4 pb-4 space-y-2">
-        {displaySuggestions.map((suggestion) => (
-          <button
-            key={suggestion.id}
-            onClick={() => onAddSuggestion?.(suggestion)}
-            disabled={isLoading}
-            className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700/50 hover:border-gray-300 dark:hover:border-gray-600 transition-all text-left group disabled:opacity-50"
-          >
-            <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700/50 flex items-center justify-center flex-shrink-0 group-hover:bg-gray-200 dark:group-hover:bg-gray-700 transition-colors">
-              <Plus className="w-4 h-4 text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-                {suggestion.text}
-              </span>
-              {suggestion.label && (
-                <span className="block text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-                  {suggestion.label}
-                </span>
-              )}
-            </div>
-          </button>
-        ))}
+        {suggestions.length === 0 ? (
+          <p className="text-xs text-gray-400 dark:text-gray-500 text-center py-4">
+            No suggestions available. Try asking a question!
+          </p>
+        ) : (
+          suggestions.map((suggestion) => {
+            const IconComponent = getSuggestionIcon(suggestion);
+            const isGapSuggestion = !!suggestion.gapContext;
+
+            return (
+              <button
+                key={suggestion.id}
+                onClick={() => onAddSuggestion?.(suggestion)}
+                disabled={isLoading}
+                className={`
+                  w-full flex items-center gap-3 p-3 rounded-xl
+                  ${isGapSuggestion
+                    ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/50 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                    : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }
+                  border hover:border-gray-300 dark:hover:border-gray-600
+                  transition-all text-left group disabled:opacity-50
+                `}
+              >
+                <div className={`
+                  w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors
+                  ${isGapSuggestion
+                    ? 'bg-amber-100 dark:bg-amber-800/30 group-hover:bg-amber-200 dark:group-hover:bg-amber-800/50'
+                    : 'bg-gray-100 dark:bg-gray-700/50 group-hover:bg-gray-200 dark:group-hover:bg-gray-700'
+                  }
+                `}>
+                  <IconComponent className={`
+                    w-4 h-4 transition-colors
+                    ${isGapSuggestion
+                      ? 'text-amber-600 dark:text-amber-400'
+                      : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white'
+                    }
+                  `} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
+                    {suggestion.text}
+                  </span>
+                  {suggestion.label && (
+                    <span className="block text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                      {suggestion.label}
+                    </span>
+                  )}
+                  {suggestion.destination && (
+                    <span className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                      <MapPin className="w-3 h-3" />
+                      {suggestion.destination.name}
+                      {suggestion.destination.rating && ` • ${suggestion.destination.rating}★`}
+                    </span>
+                  )}
+                </div>
+              </button>
+            );
+          })
+        )}
       </div>
 
       {/* Input Field */}
