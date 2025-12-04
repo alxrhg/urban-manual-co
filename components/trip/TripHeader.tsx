@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Settings, Sparkles, Plus, Pencil, Loader2 } from 'lucide-react';
+import { ArrowLeft, Settings, Sparkles, Plus, Pencil, Loader2, List, Map } from 'lucide-react';
 
 interface TripHeaderProps {
   title: string;
@@ -20,6 +20,8 @@ interface TripHeaderProps {
   onEditClick?: () => void;
   isEditMode?: boolean;
   isPlanning?: boolean;
+  viewMode?: 'list' | 'map';
+  onViewModeChange?: (mode: 'list' | 'map') => void;
 }
 
 /**
@@ -41,6 +43,8 @@ export default function TripHeader({
   onEditClick,
   isEditMode = false,
   isPlanning = false,
+  viewMode = 'list',
+  onViewModeChange,
 }: TripHeaderProps) {
   return (
     <header className="w-full mb-6">
@@ -144,6 +148,34 @@ export default function TripHeader({
               </button>
             ))}
           </div>
+
+          {/* View Mode Toggle */}
+          {activeContentTab === 'itinerary' && onViewModeChange && (
+            <div className="flex items-center gap-1 p-1 bg-stone-100 dark:bg-gray-800 rounded-lg">
+              <button
+                onClick={() => onViewModeChange('list')}
+                className={`p-1.5 rounded transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-white dark:bg-gray-900 shadow-sm text-stone-900 dark:text-white'
+                    : 'text-stone-500 hover:text-stone-900 dark:hover:text-white'
+                }`}
+                title="List view"
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => onViewModeChange('map')}
+                className={`p-1.5 rounded transition-colors ${
+                  viewMode === 'map'
+                    ? 'bg-white dark:bg-gray-900 shadow-sm text-stone-900 dark:text-white'
+                    : 'text-stone-500 hover:text-stone-900 dark:hover:text-white'
+                }`}
+                title="Map view"
+              >
+                <Map className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

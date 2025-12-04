@@ -12,6 +12,7 @@ import TripHeader from '@/components/trip/TripHeader';
 import ItineraryView from '@/components/trip/ItineraryView';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
+import TripMapView from '@/components/trips/TripMapView';
 
 // Existing components
 import { PageLoader } from '@/components/LoadingStates';
@@ -66,6 +67,7 @@ export default function TripPage() {
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
 
   // Auto-fix items on wrong days based on their dates
   const hasAutoFixed = useRef(false);
@@ -285,6 +287,8 @@ export default function TripPage() {
           onAddClick={() => setShowAddPlaceBox(true)}
           onEditClick={() => setIsEditMode(!isEditMode)}
           isEditMode={isEditMode}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
 
         {/* Main Content */}
@@ -292,22 +296,42 @@ export default function TripPage() {
           {/* Left Column - Content */}
           <div className="flex-1 min-w-0">
             {activeContentTab === 'itinerary' && (
-              <ItineraryView
-                days={days}
-                selectedDayNumber={selectedDayNumber}
-                onSelectDay={setSelectedDayNumber}
-                onEditItem={handleEditItem}
-                onAddItem={(dayNumber) => {
-                  setSelectedDayNumber(dayNumber);
-                  setShowAddPlaceBox(true);
-                }}
-                onOptimizeDay={handleOptimizeDay}
-                onUpdateItemNotes={(itemId, notes) => updateItem(itemId, notes)}
-                onRemoveItem={removeItem}
-                isOptimizing={optimizingDay !== null}
-                isEditMode={isEditMode}
-                activeItemId={selectedItem?.id}
-              />
+              <>
+                {/* Map View */}
+                {viewMode === 'map' && (
+                  <TripMapView
+                    places={(days.find(d => d.dayNumber === selectedDayNumber)?.items || [])
+                      .filter((item) => item.parsedNotes?.type !== 'flight')
+                      .map((item, index) => ({
+                        id: item.id,
+                        name: item.title || 'Place',
+                        latitude: item.parsedNotes?.latitude || item.destination?.latitude,
+                        longitude: item.parsedNotes?.longitude || item.destination?.longitude,
+                        category: item.destination?.category || item.parsedNotes?.category,
+                        order: index + 1,
+                      }))}
+                    className="h-[400px] mb-6"
+                  />
+                )}
+
+                {/* List View */}
+                <ItineraryView
+                  days={days}
+                  selectedDayNumber={selectedDayNumber}
+                  onSelectDay={setSelectedDayNumber}
+                  onEditItem={handleEditItem}
+                  onAddItem={(dayNumber) => {
+                    setSelectedDayNumber(dayNumber);
+                    setShowAddPlaceBox(true);
+                  }}
+                  onOptimizeDay={handleOptimizeDay}
+                  onUpdateItemNotes={(itemId, notes) => updateItem(itemId, notes)}
+                  onRemoveItem={removeItem}
+                  isOptimizing={optimizingDay !== null}
+                  isEditMode={isEditMode}
+                  activeItemId={selectedItem?.id}
+                />
+              </>
             )}
 
             {activeContentTab === 'flights' && (

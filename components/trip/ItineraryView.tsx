@@ -50,13 +50,51 @@ export default function ItineraryView({
 
   if (!selectedDay) return null;
 
+  // Helper to get effective time for sorting (handles hotel checkInTime)
+  const getEffectiveTime = (item: EnrichedItineraryItem): string | null => {
+    // For hotels, use checkInTime from notes
+    if (item.parsedNotes?.type === 'hotel' && item.parsedNotes?.checkInTime) {
+      return item.parsedNotes.checkInTime;
+    }
+    // For flights, use departureTime
+    if (item.parsedNotes?.type === 'flight' && item.parsedNotes?.departureTime) {
+      return item.parsedNotes.departureTime;
+    }
+    return item.time || null;
+  };
+
+  // Convert time string to minutes for proper sorting (handles both 24h and 12h formats)
+  const timeToMinutes = (timeStr: string): number => {
+    // Handle 24-hour format (HH:MM)
+    if (/^\d{1,2}:\d{2}$/.test(timeStr)) {
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      return hours * 60 + minutes;
+    }
+    // Handle 12-hour format (H:MM AM/PM)
+    const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+    if (match) {
+      let hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
+      const period = match[3]?.toUpperCase();
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    }
+    return 0;
+  };
+
   // Sort items by time (items without time go to end)
   const sortedItems = [...selectedDay.items].sort((a, b) => {
-    if (!a.time && !b.time) return 0;
-    if (!a.time) return 1;
-    if (!b.time) return -1;
-    return a.time.localeCompare(b.time);
+    const timeA = getEffectiveTime(a);
+    const timeB = getEffectiveTime(b);
+    if (!timeA && !timeB) return 0;
+    if (!timeA) return 1;
+    if (!timeB) return -1;
+    return timeToMinutes(timeA) - timeToMinutes(timeB);
   });
+
+  // Find hotel for night stay card (hotel with check-in on this day)
+  const nightStayHotel = selectedDay.items.find(item => item.parsedNotes?.type === 'hotel');
 
   return (
     <div className="space-y-6">
@@ -103,19 +141,39 @@ export default function ItineraryView({
               </button>
             </div>
           )}
+
+          {/* Night Stay Card */}
+          {nightStayHotel && (
+            <div className="mt-6">
+              <NightStayCard
+                hotel={nightStayHotel}
+                onClick={() => onEditItem?.(nightStayHotel)}
+              />
+            </div>
+          )}
         </div>
       ) : (
         /* Empty State */
-        <div className="text-center py-16">
-          <MapPin className="w-8 h-8 mx-auto text-stone-300 dark:text-gray-700 mb-4" />
-          <p className="text-sm text-stone-400 dark:text-gray-500 mb-6">No stops planned yet</p>
-          {onAddItem && (
-            <button
-              onClick={() => onAddItem(selectedDay.dayNumber)}
-              className="px-5 py-2.5 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
-            >
-              Add your first stop
-            </button>
+        <div className="space-y-6">
+          <div className="text-center py-16">
+            <MapPin className="w-8 h-8 mx-auto text-stone-300 dark:text-gray-700 mb-4" />
+            <p className="text-sm text-stone-400 dark:text-gray-500 mb-6">No stops planned yet</p>
+            {onAddItem && (
+              <button
+                onClick={() => onAddItem(selectedDay.dayNumber)}
+                className="px-5 py-2.5 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium rounded-full hover:opacity-90 transition-opacity"
+              >
+                Add your first stop
+              </button>
+            )}
+          </div>
+
+          {/* Night Stay Card (even for empty days) */}
+          {nightStayHotel && (
+            <NightStayCard
+              hotel={nightStayHotel}
+              onClick={() => onEditItem?.(nightStayHotel)}
+            />
           )}
         </div>
       )}
@@ -458,7 +516,7 @@ function FlightCard({
   );
 }
 
-// Hotel Card Component
+// Hotel Check-in Card Component
 function HotelCard({
   item,
   isActive,
@@ -521,6 +579,55 @@ function HotelCard({
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Night Stay Card Component - Shows at the end of each day
+function NightStayCard({
+  hotel,
+  onClick,
+}: {
+  hotel: EnrichedItineraryItem;
+  onClick?: () => void;
+}) {
+  const notes = hotel.parsedNotes;
+
+  return (
+    <div
+      onClick={onClick}
+      className="rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900/50 p-4 cursor-pointer transition-all hover:border-indigo-200 dark:hover:border-indigo-800"
+    >
+      <div className="flex items-center gap-4">
+        {/* Moon Icon */}
+        <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center flex-shrink-0">
+          <span className="text-2xl">🌙</span>
+        </div>
+
+        {/* Night Stay Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h4 className="font-medium text-indigo-900 dark:text-indigo-100">
+              Staying at {hotel.title || 'Hotel'}
+            </h4>
+          </div>
+          <p className="text-sm text-indigo-600/70 dark:text-indigo-300/70 mt-0.5">
+            {notes?.roomType && `${notes.roomType} · `}
+            {notes?.address || 'Tonight\'s accommodation'}
+          </p>
+        </div>
+
+        {/* Navigation */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-xs text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
+        >
+          <Navigation className="w-3 h-3" />
+          Navigate
+        </button>
       </div>
     </div>
   );
