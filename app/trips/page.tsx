@@ -5,7 +5,8 @@ import { PageLoader } from '@/components/LoadingStates';
 import TripsPageClient, { type TripWithHealth } from './page-client';
 import TripsUnauthenticated from './unauthenticated';
 
-export const dynamic = 'force-dynamic';
+// Revalidate trips list every minute for fresher trip data
+export const revalidate = 60;
 
 async function getTripsData(userId: string): Promise<TripWithHealth[]> {
   const supabase = await createServerClient();
