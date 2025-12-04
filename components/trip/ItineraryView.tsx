@@ -167,7 +167,7 @@ export default function ItineraryView({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Day Header with Date Badge */}
       <DayHeaderSection
         day={selectedDay}
@@ -177,7 +177,7 @@ export default function ItineraryView({
 
       {/* Morning Cards - Checkout and Breakfast */}
       {(checkoutHotel || breakfastHotel) && (
-        <div className="space-y-3 mb-6">
+        <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
           {checkoutHotel && (
             <div className="relative pl-10">
               <CheckoutCard
@@ -204,7 +204,7 @@ export default function ItineraryView({
           <div className="absolute left-[17px] top-0 bottom-0 w-px bg-stone-200 dark:bg-gray-800" />
 
           {/* Items */}
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {sortedItems.map((item, index) => {
               const nextItem = sortedItems[index + 1];
               const fromLocation = getFromLocation(item);

@@ -120,7 +120,7 @@ export default function TripSettingsDrawer({
   };
 
   return (
-    <div className="p-5 space-y-6">
+    <div className="p-4 sm:p-5 space-y-5 sm:space-y-6">
       {/* Title */}
       <div>
         <label className="block text-xs font-medium text-stone-500 dark:text-stone-400 mb-2 uppercase tracking-wide">

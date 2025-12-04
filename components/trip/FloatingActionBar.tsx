@@ -81,14 +81,14 @@ export default function FloatingActionBar({
                   className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
                 >
                   <MapPin className="w-6 h-6 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
-                  <span className="text-[11px] sm:text-[10px] font-medium text-gray-500">Place</span>
+                  <span className="text-xs sm:text-[10px] font-medium text-gray-500">Place</span>
                 </button>
                 <button
                   onClick={() => { onAddFlight(); setIsExpanded(false); }}
                   className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
                 >
                   <Plane className="w-6 h-6 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
-                  <span className="text-[11px] sm:text-[10px] font-medium text-gray-500">Flight</span>
+                  <span className="text-xs sm:text-[10px] font-medium text-gray-500">Flight</span>
                 </button>
                 {onAddHotel && (
                   <button
@@ -96,7 +96,7 @@ export default function FloatingActionBar({
                     className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
                   >
                     <Hotel className="w-6 h-6 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
-                    <span className="text-[11px] sm:text-[10px] font-medium text-gray-500">Hotel</span>
+                    <span className="text-xs sm:text-[10px] font-medium text-gray-500">Hotel</span>
                   </button>
                 )}
                 {onAddTransport && (
@@ -105,7 +105,7 @@ export default function FloatingActionBar({
                     className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
                   >
                     <Car className="w-6 h-6 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
-                    <span className="text-[11px] sm:text-[10px] font-medium text-gray-500">Transport</span>
+                    <span className="text-xs sm:text-[10px] font-medium text-gray-500">Transport</span>
                   </button>
                 )}
                 <button
@@ -113,7 +113,7 @@ export default function FloatingActionBar({
                   className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
                 >
                   <StickyNote className="w-6 h-6 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
-                  <span className="text-[11px] sm:text-[10px] font-medium text-gray-500">Note</span>
+                  <span className="text-xs sm:text-[10px] font-medium text-gray-500">Note</span>
                 </button>
               </div>
             </div>

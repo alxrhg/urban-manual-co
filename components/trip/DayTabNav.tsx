@@ -37,7 +37,7 @@ export default function DayTabNav({
       {/* Tabs Container - scrollable horizontally */}
       <div
         ref={scrollRef}
-        className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide"
+        className="flex gap-x-2 sm:gap-x-3 md:gap-x-4 text-xs overflow-x-auto scrollbar-hide"
       >
         {days.map((day) => {
           const isSelected = day.dayNumber === selectedDayNumber;

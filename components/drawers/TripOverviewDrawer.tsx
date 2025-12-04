@@ -164,7 +164,7 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
         }
       />
 
-      <div className="px-6 py-6 space-y-8 overflow-y-auto h-[calc(100vh-64px)] pb-20">
+      <div className="px-4 sm:px-6 py-5 sm:py-6 space-y-6 sm:space-y-8 overflow-y-auto h-[calc(100vh-64px)] pb-20">
         {/* COVER IMAGE */}
         {coverImage && (
           <div className="w-full h-48 relative overflow-hidden rounded-[16px]">

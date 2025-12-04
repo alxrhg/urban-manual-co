@@ -66,7 +66,7 @@ export default function TripHeader({
         <div className="hidden sm:block flex-1" />
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={onAutoplanClick}
             disabled={isPlanning}
@@ -111,7 +111,7 @@ export default function TripHeader({
       {/* Content Tabs - Matching /trips tab style */}
       <div className="mb-4">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
+          <div className="flex gap-x-2 sm:gap-x-3 md:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
             {[
               { key: 'itinerary', label: 'Itinerary', count: 0 },
               { key: 'flights', label: 'Flights', count: flightCount },

@@ -116,11 +116,11 @@ export function Header() {
         <TooltipTrigger asChild>
           <button
             onClick={() => navigate('/trips')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+            className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-xs sm:text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
             aria-label="View trips"
           >
             <Map className="w-4 h-4" />
-            <span>Trips</span>
+            <span className="hidden xs:inline sm:inline">Trips</span>
           </button>
         </TooltipTrigger>
         <TooltipContent>
@@ -133,11 +133,11 @@ export function Header() {
           <TooltipTrigger asChild>
             <button
               onClick={() => openDrawer('account')}
-              className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+              className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
               aria-label="Open account drawer"
             >
               {avatarUrl ? (
-                <span className="w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-hidden">
                   <img
                     src={avatarUrl}
                     alt="Profile"
@@ -147,7 +147,7 @@ export function Header() {
               ) : (
                 <User className="w-4 h-4" />
               )}
-              <span>Account</span>
+              <span className="hidden xs:inline sm:inline">Account</span>
             </button>
           </TooltipTrigger>
           <TooltipContent>
@@ -159,11 +159,11 @@ export function Header() {
           <TooltipTrigger asChild>
             <button
               onClick={() => openDrawer('login')}
-              className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+              className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-xs sm:text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
               aria-label="Sign in"
             >
               <User className="w-4 h-4" />
-              <span>Sign In</span>
+              <span className="hidden xs:inline sm:inline">Sign In</span>
             </button>
           </TooltipTrigger>
           <TooltipContent>
@@ -180,7 +180,7 @@ export function Header() {
       role="banner"
     >
       {/* Primary Nav */}
-      <div className="w-full px-6 md:px-10">
+      <div className="w-full px-4 sm:px-6 md:px-10">
         <nav
           className="flex items-center justify-between py-4 w-full"
           aria-label="Main navigation"
@@ -193,7 +193,7 @@ export function Header() {
             Urban Manual®
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <CommandPalette />
             {actionButtons}
           </div>

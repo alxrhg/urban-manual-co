@@ -258,7 +258,7 @@ export function Drawer({
   const renderHeader = () => {
     if (!title && !headerContent) return null;
     return (
-      <div className={`flex-shrink-0 min-h-[3.5rem] px-6 flex items-center justify-between ${headerBackground} border-b border-black/5 dark:border-white/5 z-20`}>
+      <div className={`flex-shrink-0 min-h-[3.5rem] px-4 sm:px-6 flex items-center justify-between ${headerBackground} border-b border-black/5 dark:border-white/5 z-20`}>
         {headerContent || (
           <>
             <div className="w-9" /> {/* Spacer */}

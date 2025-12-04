@@ -141,13 +141,13 @@ export const DestinationCard = memo(function DestinationCard({
           `}
         />
 
-        {/* Quick Actions - Top Right on Hover */}
+        {/* Quick Actions - Top Right, visible on hover (desktop) and always on mobile */}
         {showQuickActions && destination.slug && (
           <div
             className={`
               absolute top-2 right-2 z-20
-              opacity-0 group-hover:opacity-100
-              translate-y-1 group-hover:translate-y-0
+              opacity-100 sm:opacity-0 sm:group-hover:opacity-100
+              translate-y-0 sm:translate-y-1 sm:group-hover:translate-y-0
               transition-all duration-200
             `}
           >

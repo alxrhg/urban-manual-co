@@ -52,7 +52,7 @@ export const metadata: Metadata = {
  */
 function HomepageSkeleton() {
   return (
-    <main className="w-full min-h-screen px-6 md:px-10 py-20">
+    <main className="w-full min-h-screen px-4 sm:px-6 md:px-10 py-20">
       <div className="max-w-[1800px] mx-auto">
         {/* Hero skeleton */}
         <div className="mb-12">

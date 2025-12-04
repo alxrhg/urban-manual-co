@@ -18,7 +18,7 @@ export function DestinationCardList({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-4 md:gap-6 items-start">
       {destinations.slice(0, 50).map((d) => (
         <button
           key={d.id || d.slug}
@@ -30,7 +30,7 @@ export function DestinationCardList({
           }`}
         >
           <div className="font-medium text-sm line-clamp-2 min-h-[2.5rem]">{d.name}</div>
-          <div className="text-[10px] text-gray-500 line-clamp-1">
+          <div className="text-xs text-gray-500 line-clamp-1">
             {d.micro_description || 
              (d.category && d.city 
                ? `${d.category} in ${d.city}`

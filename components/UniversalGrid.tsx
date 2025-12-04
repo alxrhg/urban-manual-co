@@ -34,9 +34,9 @@ export const UniversalGrid = memo(function UniversalGrid<T>({
   emptyState,
 }: UniversalGridProps<T>) {
   const gapClasses = {
-    sm: 'gap-4 md:gap-5',
-    md: 'gap-5 md:gap-7 lg:gap-8',
-    lg: 'gap-6 md:gap-8 lg:gap-10',
+    sm: 'gap-3 sm:gap-4 md:gap-5',
+    md: 'gap-3 sm:gap-4 md:gap-6 lg:gap-8',
+    lg: 'gap-4 sm:gap-5 md:gap-8 lg:gap-10',
   };
 
   if (items.length === 0 && emptyState) {
