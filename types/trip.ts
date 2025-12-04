@@ -647,7 +647,16 @@ export interface ItineraryItemNotes {
   // Activity-specific fields (downtime, hotel time, etc.)
   activityType?: ActivityType;
   linkedHotelId?: string; // Link activity to a hotel (e.g., pool at hotel)
+  linkedFlightId?: string; // Link activity to a flight (e.g., airport lounge)
   location?: string; // Where the activity takes place (e.g., "hotel pool", "room")
+  // Flight sync fields
+  flightId?: string; // Unique ID for flight sync tracking
+  loungeAccess?: boolean; // Whether lounge access is included
+  // Hotel sync fields
+  hotelBookingId?: string; // Unique ID for hotel booking sync tracking
+  hotelItemType?: 'check_in' | 'checkout' | 'breakfast' | 'overnight' | 'lounge'; // Type of hotel-related item
+  hasLounge?: boolean; // Whether hotel has a lounge
+  amenities?: string[]; // Hotel amenities list
 }
 
 /**
