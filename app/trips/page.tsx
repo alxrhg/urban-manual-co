@@ -1,14 +1,45 @@
 import { Suspense } from 'react';
-import { redirect } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase/server';
 import { PageLoader } from '@/components/LoadingStates';
-import TripsPageClient, { type TripWithHealth } from './page-client';
+import TripsPageClient, { type TripWithStats } from './page-client';
 import TripsUnauthenticated from './unauthenticated';
+import type { TripStats } from '@/lib/trip';
 
 // Revalidate trips list every minute for fresher trip data
 export const revalidate = 60;
 
-async function getTripsData(userId: string): Promise<TripWithHealth[]> {
+/**
+ * Categorize an itinerary item based on its notes
+ */
+function categorizeItem(notes: string | null): keyof TripStats | null {
+  if (!notes) return 'places';
+
+  try {
+    const parsed = JSON.parse(notes);
+    const type = parsed?.type?.toLowerCase();
+    const category = parsed?.category?.toLowerCase();
+
+    // Flight detection
+    if (type === 'flight') return 'flights';
+
+    // Hotel detection
+    if (type === 'hotel' || parsed?.isHotel) return 'hotels';
+
+    // Restaurant detection
+    if (type === 'restaurant' || type === 'breakfast' || type === 'meal') return 'restaurants';
+    if (category === 'restaurant' || category === 'cafe' || category === 'bar' ||
+        category === 'coffee' || category === 'bakery' || category === 'food') {
+      return 'restaurants';
+    }
+
+    // Everything else is a place
+    return 'places';
+  } catch {
+    return 'places';
+  }
+}
+
+async function getTripsData(userId: string): Promise<TripWithStats[]> {
   const supabase = await createServerClient();
 
   // Fetch trips
@@ -27,42 +58,41 @@ async function getTripsData(userId: string): Promise<TripWithHealth[]> {
     return [];
   }
 
-  // Fetch item counts for each trip
+  // Fetch items for each trip
   const tripIds = tripsData.map(t => t.id);
 
-  const { data: itemCounts } = await supabase
+  const { data: items } = await supabase
     .from('itinerary_items')
     .select('trip_id, notes')
     .in('trip_id', tripIds);
 
-  // Calculate health metrics for each trip
-  const tripsWithHealth: TripWithHealth[] = tripsData.map(trip => {
-    const tripItems = itemCounts?.filter(i => i.trip_id === trip.id) || [];
-    const itemCount = tripItems.length;
+  // Calculate categorized stats for each trip
+  const tripsWithStats: TripWithStats[] = tripsData.map(trip => {
+    const tripItems = items?.filter(i => i.trip_id === trip.id) || [];
 
-    // Check for hotels and flights in notes
-    let hasHotel = false;
-    let hasFlight = false;
+    // Initialize stats
+    const stats: TripStats = {
+      flights: 0,
+      hotels: 0,
+      restaurants: 0,
+      places: 0,
+    };
 
+    // Categorize each item
     tripItems.forEach(item => {
-      try {
-        const notes = item.notes ? JSON.parse(item.notes) : null;
-        if (notes?.type === 'hotel') hasHotel = true;
-        if (notes?.type === 'flight') hasFlight = true;
-      } catch {
-        // Ignore parse errors
+      const category = categorizeItem(item.notes);
+      if (category) {
+        stats[category]++;
       }
     });
 
     return {
       ...trip,
-      item_count: itemCount,
-      has_hotel: hasHotel,
-      has_flight: hasFlight,
+      stats,
     };
   });
 
-  return tripsWithHealth;
+  return tripsWithStats;
 }
 
 export default async function TripsPage() {
