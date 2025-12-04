@@ -121,14 +121,14 @@ export default function TripHeader({
           {/* Back Link */}
           <Link
             href="/trips"
-            className="flex items-center gap-1.5 text-xs text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors"
+            className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Trips</span>
           </Link>
 
           {/* Title */}
-          <h1 className="text-xl sm:text-2xl font-light text-stone-900 dark:text-white truncate">
+          <h1 className="text-xl sm:text-2xl font-medium text-gray-900 dark:text-white truncate">
             {title}
           </h1>
         </div>
@@ -137,7 +137,7 @@ export default function TripHeader({
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
           {/* Metadata (date range, destination, travelers) */}
           {metadataParts.length > 0 && (
-            <p className="text-xs text-stone-500 dark:text-gray-400">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {metadataParts.join(' · ')}
             </p>
           )}
@@ -150,7 +150,7 @@ export default function TripHeader({
             <button
               onClick={onAutoplanClick}
               disabled={isPlanning}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 min-h-[40px]"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 min-h-[40px]"
             >
               {isPlanning ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -165,7 +165,7 @@ export default function TripHeader({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
-                    className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-stone-700 dark:text-gray-300 text-xs font-medium hover:border-stone-300 dark:hover:border-gray-700 transition-colors min-h-[40px]"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium hover:border-gray-300 dark:hover:border-gray-700 transition-colors min-h-[40px]"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Add
@@ -188,7 +188,7 @@ export default function TripHeader({
             ) : (
               <button
                 onClick={onAddClick}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-stone-700 dark:text-gray-300 text-xs font-medium hover:border-stone-300 dark:hover:border-gray-700 transition-colors min-h-[40px]"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 text-xs font-medium hover:border-gray-300 dark:hover:border-gray-700 transition-colors min-h-[40px]"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add
@@ -197,7 +197,7 @@ export default function TripHeader({
 
             <button
               onClick={onSettingsClick}
-              className="p-2.5 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
+              className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
             >
               <Settings className="w-4 h-4" />
             </button>
@@ -236,8 +236,8 @@ export default function TripHeader({
                   px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
                   min-h-[40px] sm:min-h-0
                   ${activeContentTab === key
-                    ? 'font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
-                    : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+                    ? 'font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
+                    : 'font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                   }
                 `}
               >
@@ -245,8 +245,8 @@ export default function TripHeader({
                   <span className={`
                     w-4 h-4 rounded-full text-[10px] flex items-center justify-center
                     ${activeContentTab === key
-                      ? 'bg-stone-200 dark:bg-gray-700'
-                      : 'bg-stone-100 dark:bg-gray-800'
+                      ? 'bg-gray-200 dark:bg-gray-700'
+                      : 'bg-gray-100 dark:bg-gray-800'
                     }
                   `}>
                     {count}
@@ -261,7 +261,7 @@ export default function TripHeader({
           {activeContentTab === 'itinerary' && onMapClick && (
             <button
               onClick={onMapClick}
-              className="p-2 rounded-lg hover:bg-stone-100 dark:hover:bg-gray-800 text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
               title="View map"
             >
               <Map className="w-4 h-4" />
@@ -281,8 +281,8 @@ export default function TripHeader({
                 onClick={() => onSelectDay?.(day.dayNumber)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap min-h-[32px] ${
                   day.dayNumber === selectedDayNumber
-                    ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'text-stone-400 dark:text-gray-500 hover:bg-stone-100 dark:hover:bg-gray-800 hover:text-stone-600 dark:hover:text-gray-300'
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300'
                 }`}
               >
                 Day {day.dayNumber}
@@ -296,7 +296,7 @@ export default function TripHeader({
             className={`flex items-center gap-1.5 text-xs font-medium transition-colors flex-shrink-0 ${
               isEditMode
                 ? 'text-blue-600 dark:text-blue-400'
-                : 'text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white'
+                : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             {isEditMode ? (

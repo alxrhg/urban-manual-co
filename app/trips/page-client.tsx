@@ -125,12 +125,12 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
   };
 
   return (
-    <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-gray-50 dark:bg-gray-950">
-      <div className="max-w-4xl mx-auto">
+    <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <h1 className="text-xl sm:text-2xl font-light text-gray-900 dark:text-white">
+            <h1 className="text-xl sm:text-2xl font-medium text-gray-900 dark:text-white">
               Trips
             </h1>
 
@@ -326,7 +326,8 @@ function TripCard({ trip, state }: TripCardProps) {
         group flex gap-4 p-4 rounded-2xl bg-white dark:bg-gray-900
         border border-gray-200 dark:border-gray-800
         hover:border-gray-300 dark:hover:border-gray-700
-        transition-colors cursor-pointer
+        hover:shadow-sm hover:scale-[1.01]
+        transition-all duration-200 ease-out cursor-pointer
         ${isPast ? 'opacity-90' : ''}
       `}
     >
