@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { DrawerProvider } from "@/contexts/DrawerContext";
+import { TripProvider } from "@/contexts/TripContext";
+import { TripPlanningMode } from "@/components/discovery/TripPlanningMode";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { Toaster } from "@/components/ui/sonner";
@@ -233,9 +235,11 @@ export default function RootLayout({
                 <AuthProvider>
                   <DrawerProvider>
                     <Suspense fallback={null}>
-                      <AdminEditModeProvider>
-                        <ItineraryProvider>
-                          <Header />
+                      <TripProvider>
+                        <AdminEditModeProvider>
+                          <ItineraryProvider>
+                            <Header />
+                            <TripPlanningMode />
                           <PanelLayout>
                             <main id="main-content" className="min-h-screen page-transition" role="main">
                               {children}
@@ -245,8 +249,9 @@ export default function RootLayout({
                           <CookieConsent />
                           <NotificationPrompt />
                           <DrawerMount />
-                        </ItineraryProvider>
-                      </AdminEditModeProvider>
+                          </ItineraryProvider>
+                        </AdminEditModeProvider>
+                      </TripProvider>
                     </Suspense>
                   </DrawerProvider>
                 </AuthProvider>
