@@ -15,7 +15,7 @@ import { genAI, GEMINI_MODEL_PRO } from '@/lib/gemini';
 import { withErrorHandling, createValidationError, createUnauthorizedError } from '@/lib/errors';
 import { tasteProfileEvolutionService } from '@/services/intelligence/taste-profile-evolution';
 import type { Trip, ItineraryItem, InsertItineraryItem } from '@/types/trip';
-import type { FunctionDeclaration, FunctionCallingMode, Content, Part } from '@google/generative-ai';
+import { SchemaType, type FunctionDeclaration, type FunctionCallingMode, type Content, type Part } from '@google/generative-ai';
 
 // ============================================================================
 // Types
@@ -62,24 +62,24 @@ const toolDefinitions: FunctionDeclaration[] = [
     description:
       'Search for destinations (restaurants, hotels, attractions, bars, cafes) in a city. Use this to find places that match user preferences.',
     parameters: {
-      type: 'object',
+      type: SchemaType.OBJECT,
       properties: {
         city: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'The city to search in (e.g., "Tokyo", "Paris", "London")',
         },
         category: {
-          type: 'string',
+          type: SchemaType.STRING,
           description:
             'Optional category filter: restaurant, hotel, bar, cafe, attraction, museum, shop, etc.',
         },
         query: {
-          type: 'string',
+          type: SchemaType.STRING,
           description:
             'Optional search query for specific types (e.g., "ramen", "boutique hotel", "modern architecture")',
         },
         limit: {
-          type: 'number',
+          type: SchemaType.NUMBER,
           description: 'Maximum number of results (default: 10, max: 25)',
         },
       },
@@ -91,26 +91,26 @@ const toolDefinitions: FunctionDeclaration[] = [
     description:
       'Create a new trip for the user. Call this when the user wants to start planning a new trip.',
     parameters: {
-      type: 'object',
+      type: SchemaType.OBJECT,
       properties: {
         title: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Title for the trip (e.g., "Tokyo Food Adventure", "3 Days in Paris")',
         },
         destination: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Primary destination city or cities (can be JSON array for multi-city)',
         },
         start_date: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Start date in YYYY-MM-DD format (optional)',
         },
         end_date: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'End date in YYYY-MM-DD format (optional)',
         },
         description: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Brief description of the trip theme or purpose',
         },
       },
@@ -122,30 +122,30 @@ const toolDefinitions: FunctionDeclaration[] = [
     description:
       'Add a destination to the trip itinerary. Use this after searching for destinations to add them to specific days.',
     parameters: {
-      type: 'object',
+      type: SchemaType.OBJECT,
       properties: {
         trip_id: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'The trip ID to add the item to',
         },
         destination_slug: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'The destination slug from search results',
         },
         day: {
-          type: 'number',
+          type: SchemaType.NUMBER,
           description: 'Day number (1, 2, 3, etc.)',
         },
         time: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Time for the activity (e.g., "09:00", "14:30", "19:00")',
         },
         duration: {
-          type: 'number',
+          type: SchemaType.NUMBER,
           description: 'Duration in minutes (e.g., 60, 90, 120)',
         },
         notes: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Optional notes about this stop (e.g., "Book in advance", "Try the omakase")',
         },
       },
@@ -157,18 +157,18 @@ const toolDefinitions: FunctionDeclaration[] = [
     description:
       'Get travel time between two locations. Use this to optimize itineraries and check if schedules are realistic.',
     parameters: {
-      type: 'object',
+      type: SchemaType.OBJECT,
       properties: {
         from_slug: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Origin destination slug',
         },
         to_slug: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Destination slug',
         },
         mode: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Travel mode: walking, transit, or driving (default: walking)',
         },
       },
@@ -180,18 +180,18 @@ const toolDefinitions: FunctionDeclaration[] = [
     description:
       'Check if a destination is open at a specific time or get its opening hours. Use this before adding items to ensure places will be open.',
     parameters: {
-      type: 'object',
+      type: SchemaType.OBJECT,
       properties: {
         destination_slug: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'The destination slug to check',
         },
         date: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Date to check in YYYY-MM-DD format (optional, defaults to today)',
         },
         time: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Time to check in HH:MM format (optional)',
         },
       },
@@ -203,10 +203,10 @@ const toolDefinitions: FunctionDeclaration[] = [
     description:
       'Get details of an existing trip including all itinerary items. Use this to understand the current plan before making modifications.',
     parameters: {
-      type: 'object',
+      type: SchemaType.OBJECT,
       properties: {
         trip_id: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'The trip ID to retrieve',
         },
       },
@@ -218,23 +218,23 @@ const toolDefinitions: FunctionDeclaration[] = [
     description:
       'Modify an existing itinerary item (change time, day, or remove it). Use for rearranging schedules.',
     parameters: {
-      type: 'object',
+      type: SchemaType.OBJECT,
       properties: {
         item_id: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'The itinerary item ID to modify',
         },
         updates: {
-          type: 'object',
+          type: SchemaType.OBJECT,
           properties: {
-            day: { type: 'number', description: 'New day number' },
-            time: { type: 'string', description: 'New time (HH:MM format)' },
-            order_index: { type: 'number', description: 'New order within the day' },
-            notes: { type: 'string', description: 'Updated notes' },
+            day: { type: SchemaType.NUMBER, description: 'New day number' },
+            time: { type: SchemaType.STRING, description: 'New time (HH:MM format)' },
+            order_index: { type: SchemaType.NUMBER, description: 'New order within the day' },
+            notes: { type: SchemaType.STRING, description: 'Updated notes' },
           },
         },
         action: {
-          type: 'string',
+          type: SchemaType.STRING,
           description: 'Action to perform: update or delete',
         },
       },
