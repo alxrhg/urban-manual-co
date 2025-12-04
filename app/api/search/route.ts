@@ -377,10 +377,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       } else {
         // Extract keywords from query as fallback
         const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'best', 'good', 'great', 'top', 'find', 'show', 'me', 'my', 'looking', 'want', 'like']);
-        const words = query.toLowerCase().split(/\s+/).filter(w => w.length > 2 && !stopWords.has(w));
+        const words = query.toLowerCase().split(/\s+/).filter((w: string) => w.length > 2 && !stopWords.has(w));
 
         if (words.length > 0) {
-          const conditions = words.flatMap(w => [
+          const conditions = words.flatMap((w: string) => [
             `name.ilike.%${w}%`,
             `description.ilike.%${w}%`,
             `content.ilike.%${w}%`,
