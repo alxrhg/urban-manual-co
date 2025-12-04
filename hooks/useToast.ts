@@ -5,7 +5,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { ToastType } from '@/components/Toast';
+import { ToastType } from '@/components/feedback/Toast';
 
 export function useToast() {
   const showToast = useCallback((message: string, type: ToastType = 'info', duration = 3000) => {

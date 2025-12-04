@@ -25,36 +25,61 @@
 ```
 /
 ├── app/                    # Next.js App Router pages and API routes
-│   ├── api/               # API route handlers (~100+ endpoints)
+│   ├── api/               # API route handlers (~160+ endpoints)
 │   ├── (routes)/          # Page routes (about, account, chat, cities, etc.)
 │   ├── layout.tsx         # Root layout with providers
 │   ├── page.tsx           # Homepage (large file, ~130KB)
 │   └── globals.css        # Global styles
-├── components/            # React components (~120+ components)
-│   ├── ui/               # Base UI components (buttons, inputs, etc.)
-│   ├── drawers/          # Slide-over drawer components
-│   ├── maps/             # Map-related components
+├── components/            # React components (organized by feature)
+│   ├── account/          # Account, profile, preferences
+│   ├── architecture/     # Architect-related components
+│   ├── chat/             # AI chat components
+│   ├── collections/      # Collection management
+│   ├── destination/      # Destination cards and related
+│   ├── discovery/        # Discovery, recommendations, intelligence
+│   ├── drawers/          # All drawer components
+│   ├── feedback/         # Loading, toasts, errors
+│   ├── gamification/     # Achievements, activity feed
+│   ├── homepage/         # Homepage-specific components
+│   ├── maps/             # All map components
+│   ├── modals/           # Dialog and modal components
+│   ├── navigation/       # Header, footer, nav, breadcrumbs
+│   ├── onboarding/       # Onboarding and session
+│   ├── planner/          # Trip planner components
+│   ├── realtime/         # Realtime status components
+│   ├── search/           # Search inputs and filters
+│   ├── shared/           # Shared utilities (analytics, etc.)
 │   ├── trip/             # Trip planning components
-│   └── admin/            # Admin dashboard components
+│   └── ui/               # Base UI primitives only
 ├── contexts/              # React contexts
 │   ├── AuthContext.tsx   # Authentication state
 │   ├── DrawerContext.tsx # Drawer/modal state
 │   ├── TripContext.tsx   # Trip planning state
 │   └── ItineraryContext.tsx
-├── hooks/                 # Custom React hooks
+├── hooks/                 # Custom React hooks (~27 hooks)
 │   ├── useML*.ts         # ML-related hooks
 │   ├── useTrip.ts        # Trip management
 │   └── useGeolocation.ts # Location services
-├── lib/                   # Utility libraries and services
+├── lib/                   # Pure utilities only
 │   ├── supabase/         # Supabase client/server utilities
-│   ├── ai/               # AI service integrations
-│   ├── ml/               # ML utilities
-│   ├── intelligence/     # Travel intelligence features
-│   └── utils.ts          # General utilities
-├── services/              # External service integrations
-│   ├── intelligence/     # Travel intelligence APIs
-│   ├── search/           # Search services
-│   └── gemini.ts         # Gemini AI service
+│   ├── errors/           # Error handling utilities
+│   ├── security/         # Security utilities
+│   ├── utils/            # General utilities
+│   ├── logging/          # Logging utilities
+│   └── stores/           # State stores
+├── services/              # Business logic services
+│   ├── ai/               # AI services (Gemini, OpenAI, ML)
+│   ├── intelligence/     # Trip planning & intelligence
+│   ├── search/           # Search & discovery services
+│   ├── recommendations/  # Recommendation engine
+│   ├── embeddings/       # Vector embeddings
+│   ├── trends/           # Trend analysis services
+│   ├── analytics/        # Analytics services
+│   ├── chat/             # Chat services
+│   ├── discovery/        # Discovery services
+│   ├── enrichment/       # Data enrichment
+│   ├── gamification/     # Achievements & gamification
+│   └── greetings/        # Greeting services
 ├── types/                 # TypeScript type definitions
 │   ├── destination.ts    # Destination interface (core type)
 │   └── trip.ts           # Trip-related types
@@ -63,6 +88,22 @@
 ├── supabase/             # Supabase migrations and config
 └── public/               # Static assets
 ```
+
+### Architecture Principles
+
+1. **Components**: Organized by feature, not file type
+   - Each feature folder contains related components
+   - `ui/` contains only base primitives (button, input, etc.)
+   - `shared/` contains truly cross-cutting utilities
+
+2. **lib/ vs services/ Separation**:
+   - `lib/` = Pure utilities, clients, helpers (no business logic)
+   - `services/` = Business logic, domain services, external integrations
+
+3. **Import Paths**: Always use `@/` aliases
+   - `@/components/destination/DestinationCard`
+   - `@/services/intelligence/engine`
+   - `@/lib/supabase/server`
 
 ## Quick Commands
 
@@ -219,10 +260,15 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 ### Adding a New Component
 
-1. Create file in `components/` directory
-2. Use TypeScript with proper prop types
-3. Add `'use client'` if using hooks/browser APIs
-4. Import with `@/components/ComponentName`
+1. Identify the appropriate feature folder in `components/`
+   - `destination/` for destination-related components
+   - `search/` for search-related components
+   - `ui/` for base UI primitives only
+   - `shared/` for cross-cutting utilities
+2. Create file in the appropriate folder
+3. Use TypeScript with proper prop types
+4. Add `'use client'` if using hooks/browser APIs
+5. Import with `@/components/[folder]/ComponentName`
 
 ### Database Queries
 

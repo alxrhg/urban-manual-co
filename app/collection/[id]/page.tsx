@@ -5,9 +5,9 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Plus, Trash2, Edit2, Globe, Lock, MoreHorizontal } from 'lucide-react';
 import Image from 'next/image';
-import { PageLoader } from '@/components/LoadingStates';
-import { EmptyState } from '@/components/EmptyStates';
-import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
+import { PageLoader } from '@/components/feedback/LoadingStates';
+import { EmptyState } from '@/components/feedback/EmptyStates';
+import { HorizontalDestinationCard } from '@/components/destination/HorizontalDestinationCard';
 import type { Destination } from '@/types/destination';
 
 // Helper function to capitalize city names

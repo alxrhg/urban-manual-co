@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
-import { getSeasonalContext, getAllSeasonalEvents } from '@/services/seasonality';
+import { getSeasonalContext, getAllSeasonalEvents } from '@/services/intelligence/seasonality';
 
 /**
  * GET /api/account/insights

@@ -7,7 +7,7 @@ import { Settings, Trash2, Loader2, X, ImagePlus, Smile } from 'lucide-react';
 import Image from 'next/image';
 import type { Trip } from '@/types/trip';
 import { parseDestinations, stringifyDestinations } from '@/types/trip';
-import { MultiCityAutocompleteInput } from '@/components/MultiCityAutocompleteInput';
+import { MultiCityAutocompleteInput } from '@/components/search/MultiCityAutocompleteInput';
 import {
   TripCard,
   TripCardHeader,

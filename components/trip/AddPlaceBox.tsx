@@ -7,7 +7,7 @@ import {
   Search, MapPin, Loader2, Globe, Plus, X, Plane, Train, Clock,
   BedDouble, Waves, Sparkles, Dumbbell, Coffee, Shirt, Package, Sun, Briefcase, Phone, Camera, ShoppingBag
 } from 'lucide-react';
-import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
+import GooglePlacesAutocomplete from '@/components/search/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
 import type { FlightData, TrainData, ActivityData, ActivityType } from '@/types/trip';
 import {

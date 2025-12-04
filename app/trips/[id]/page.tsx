@@ -23,7 +23,7 @@ import {
   Pencil,
   Check,
 } from 'lucide-react';
-import { PageLoader } from '@/components/LoadingStates';
+import { PageLoader } from '@/components/feedback/LoadingStates';
 import DayTimeline from '@/components/trip/DayTimeline';
 import { TransitMode } from '@/components/trip/TransitConnector';
 import DayTabNav from '@/components/trip/DayTabNav';
@@ -42,11 +42,11 @@ import {
   analyzeScheduleForWarnings,
   detectConflicts,
   checkClosureDays,
-} from '@/lib/intelligence/schedule-analyzer';
+} from '@/services/intelligence/planner/schedule-analyzer';
 import type { FlightData, ActivityData } from '@/types/trip';
 import { parseDestinations, formatDestinationsFromField } from '@/types/trip';
 import type { Destination } from '@/types/destination';
-import type { PlannerWarning } from '@/lib/intelligence/types';
+import type { PlannerWarning } from '@/services/intelligence/planner/types';
 
 /**
  * TripPage - Clean, minimal design with stone palette

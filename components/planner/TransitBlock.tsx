@@ -1,5 +1,5 @@
 import { Footprints, Car, Train } from 'lucide-react';
-import type { TransitMode } from '@/lib/intelligence/types';
+import type { TransitMode } from '@/services/intelligence/planner/types';
 
 interface TransitBlockProps {
   mode: TransitMode;

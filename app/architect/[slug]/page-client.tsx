@@ -10,8 +10,8 @@ import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
-import { DestinationCard } from '@/components/DestinationCard';
-import { UniversalGrid } from '@/components/UniversalGrid';
+import { DestinationCard } from '@/components/destination/DestinationCard';
+import { UniversalGrid } from '@/components/shared/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { slugToArchitectName } from '@/lib/architect-utils';
 

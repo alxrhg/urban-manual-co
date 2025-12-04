@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { embedText } from '@/lib/llm';
+import { embedText } from '@/services/ai/llm';
 import {
   searchRatelimit,
   memorySearchRatelimit,

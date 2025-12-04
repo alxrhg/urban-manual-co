@@ -7,8 +7,8 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Building2, Calendar, MapPin } from 'lucide-react';
-import { DestinationCard } from '@/components/DestinationCard';
-import { UniversalGrid } from '@/components/UniversalGrid';
+import { DestinationCard } from '@/components/destination/DestinationCard';
+import { UniversalGrid } from '@/components/shared/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import type { DesignMovement } from '@/types/architecture';
 import type { Destination } from '@/types/destination';

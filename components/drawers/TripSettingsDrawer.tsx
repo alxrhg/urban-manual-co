@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Trash2, Loader2 } from 'lucide-react';
 import type { Trip } from '@/types/trip';
-import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
+import { CityAutocompleteInput } from '@/components/search/CityAutocompleteInput';
 
 interface TripSettingsDrawerProps {
   trip: Trip;

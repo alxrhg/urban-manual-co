@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateCrossCityCorrelations } from '@/lib/discovery-prompts-generative';
+import { generateCrossCityCorrelations } from '@/services/discovery/discovery-prompts-generative';
 
 /**
  * GET /api/discovery-prompts/cross-city

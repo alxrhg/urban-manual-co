@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchNearbyEvents } from '@/lib/enrichment/events';
+import { fetchNearbyEvents } from '@/services/enrichment/events';
 
 export async function GET(request: NextRequest) {
   try {

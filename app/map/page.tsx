@@ -7,7 +7,7 @@ import { useDrawer } from '@/contexts/DrawerContext';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import dynamic from 'next/dynamic';
-import MapView from '@/components/MapView';
+import MapView from '@/components/maps/MapView';
 import { Search, X, List, ChevronRight, SlidersHorizontal, Globe2, LayoutGrid, Map, Plus, Filter } from 'lucide-react';
 import Image from 'next/image';
 

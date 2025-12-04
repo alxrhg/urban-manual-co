@@ -12,7 +12,7 @@ import {
 import TimelineCanvas from './TimelineCanvas';
 import PlannerMap from './PlannerMap';
 import IntelligenceWarnings from './IntelligenceWarnings';
-import type { DayPlan, TimeBlock, PlannerWarning, Place } from '@/lib/intelligence/types';
+import type { DayPlan, TimeBlock, PlannerWarning, Place } from '@/services/intelligence/planner/types';
 
 interface PlannerLayoutProps {
   /** All day plans for the trip */

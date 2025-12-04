@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
+import SearchGridSkeleton from '@/components/search/SearchGridSkeleton';
 import { Metadata } from 'next';
 import ArchitectPageClient from './page-client';
 import { slugToArchitectName } from '@/lib/architect-utils';

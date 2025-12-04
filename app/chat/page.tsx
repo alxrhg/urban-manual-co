@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { ConversationBubble } from '@/app/components/chat/ConversationBubble';
 import { useAuth } from '@/contexts/AuthContext';
-import { ensureConversationSessionToken, persistConversationSessionToken } from '@/lib/chat/sessionToken';
+import { ensureConversationSessionToken, persistConversationSessionToken } from '@/services/chat/sessionToken';
 // Analytics tracking via API
 async function trackPageView(page: string, userId?: string) {
   fetch('/api/analytics/feature-usage', {

@@ -6,7 +6,7 @@
 'use client';
 
 import { useState } from 'react';
-import { IntelligenceDashboard } from '@/components/IntelligenceDashboard';
+import { IntelligenceDashboard } from '@/components/discovery/IntelligenceDashboard';
 
 export default function IntelligencePage() {
   const [intelligence, setIntelligence] = useState<any>(null);

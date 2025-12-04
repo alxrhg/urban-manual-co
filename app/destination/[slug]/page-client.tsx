@@ -15,22 +15,22 @@ import {
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
-import { CARD_MEDIA, CARD_TITLE, CARD_WRAPPER } from '@/components/CardStyles';
-import { trackEvent } from '@/lib/analytics/track';
-import { SaveDestinationModal } from '@/components/SaveDestinationModal';
-import { VisitedModal } from '@/components/VisitedModal';
+import { CARD_MEDIA, CARD_TITLE, CARD_WRAPPER } from '@/components/ui/CardStyles';
+import { trackEvent } from '@/services/analytics/track';
+import { SaveDestinationModal } from '@/components/modals/SaveDestinationModal';
+import { VisitedModal } from '@/components/modals/VisitedModal';
 import { useAuth } from '@/contexts/AuthContext';
-import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
-import { ForecastInfo } from '@/components/ForecastInfo';
-import { SentimentDisplay } from '@/components/SentimentDisplay';
-import { TopicsDisplay } from '@/components/TopicsDisplay';
-import { AnomalyAlert } from '@/components/AnomalyAlert';
-import { ExplanationPanel } from '@/components/ExplanationPanel';
+import { LocatedInBadge, NestedDestinations } from '@/components/destination/NestedDestinations';
+import { ForecastInfo } from '@/components/discovery/ForecastInfo';
+import { SentimentDisplay } from '@/components/discovery/SentimentDisplay';
+import { TopicsDisplay } from '@/components/discovery/TopicsDisplay';
+import { AnomalyAlert } from '@/components/discovery/AnomalyAlert';
+import { ExplanationPanel } from '@/components/discovery/ExplanationPanel';
 import { useSequenceTracker } from '@/hooks/useSequenceTracker';
-import { SequencePredictionsInline } from '@/components/SequencePredictionsInline';
-import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
+import { SequencePredictionsInline } from '@/components/discovery/SequencePredictionsInline';
+import { ArchitectDesignInfo } from '@/components/architecture/ArchitectDesignInfo';
 import { PRICE_LEVEL } from '@/lib/constants';
-import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
+import { HorizontalDestinationCard } from '@/components/destination/HorizontalDestinationCard';
 
 interface Recommendation {
   slug: string;

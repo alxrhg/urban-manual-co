@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateDiscoveryPrompt } from '@/services/gemini';
-import { getSeasonalContext } from '@/services/seasonality';
+import { generateDiscoveryPrompt } from '@/services/ai/gemini-service';
+import { getSeasonalContext } from '@/services/intelligence/seasonality';
 
 /**
  * GET /api/discovery-prompt

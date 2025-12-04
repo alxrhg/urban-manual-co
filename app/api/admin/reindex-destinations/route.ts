@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateDestinationEmbedding } from '@/lib/ml/embeddings';
+import { generateDestinationEmbedding } from '@/services/ai/ml/embeddings';
 import { batchUpsertDestinationEmbeddings } from '@/lib/upstash-vector';
 import { requireAdmin, AuthError } from '@/lib/adminAuth';
 import {

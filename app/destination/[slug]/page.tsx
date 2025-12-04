@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
-import DetailSkeleton from '@/src/features/detail/DetailSkeleton';
+import DetailSkeleton from '@/components/destination/DetailSkeleton';
 import {
   generateDestinationMetadata,
   generateDestinationSchema,

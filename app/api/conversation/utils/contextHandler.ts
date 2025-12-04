@@ -6,8 +6,8 @@
 import { randomUUID } from 'crypto';
 
 import { createServiceRoleClient } from '@/lib/supabase-server';
-import { generateJSON } from '@/lib/llm';
-import { SUMMARISER_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';
+import { generateJSON } from '@/services/ai/llm';
+import { SUMMARISER_SYSTEM_PROMPT } from '@/services/ai/systemPrompts';
 
 export interface ConversationContext {
   city?: string | null;

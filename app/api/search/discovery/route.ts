@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase-server';
-import { getFeatureFlags, getABTestVariant } from '@/lib/discovery-engine/feature-flags';
-import { withCache, getDiscoveryEngineCache } from '@/lib/discovery-engine/cache';
-import { withPerformanceMonitoring } from '@/lib/discovery-engine/performance';
+import { getFeatureFlags, getABTestVariant } from '@/services/discovery/feature-flags';
+import { withCache, getDiscoveryEngineCache } from '@/services/discovery/cache';
+import { withPerformanceMonitoring } from '@/services/discovery/performance';
 import { withErrorHandling } from '@/lib/errors';
 import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 

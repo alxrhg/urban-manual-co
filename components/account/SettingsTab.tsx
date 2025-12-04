@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import { ProfileEditor } from '@/components/ProfileEditor';
-import { AccountPrivacyManager } from '@/components/AccountPrivacyManager';
+import { ProfileEditor } from '@/components/account/ProfileEditor';
+import { AccountPrivacyManager } from '@/components/account/AccountPrivacyManager';
 
 interface SettingsTabProps {
   userId: string;

@@ -57,7 +57,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useSequenceTracker } from "@/hooks/useSequenceTracker";
 import Image from "next/image";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorBoundary } from "@/components/feedback/ErrorBoundary";
 import {
   initializeSession,
   trackPageView,
@@ -65,24 +65,24 @@ import {
   trackSearch,
   trackFilterChange,
   getSessionId,
-} from '@/lib/tracking';
-import GreetingHero from '@/src/features/search/GreetingHero';
-import { SearchFiltersComponent } from '@/src/features/search/SearchFilters';
-import { DistanceBadge } from '@/components/DistanceBadge';
+} from '@/services/analytics/tracking';
+import GreetingHero from '@/components/onboarding/GreetingHeroAlt';
+import { SearchFiltersComponent } from '@/components/search/SearchFiltersAlt';
+import { DistanceBadge } from '@/components/destination/DistanceBadge';
 import { type ExtractedIntent } from '@/app/api/intent/schema';
-import { type RefinementTag } from '@/components/RefinementChips';
+import { type RefinementTag } from '@/components/search/RefinementChips';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { isOpenNow } from '@/lib/utils/opening-hours';
-import { DestinationCard } from '@/components/DestinationCard';
-import HomeMapSplitView from '@/components/HomeMapSplitView';
-import { EditModeToggle } from '@/components/EditModeToggle';
-import { UniversalGrid } from '@/components/UniversalGrid';
+import { DestinationCard } from '@/components/destination/DestinationCard';
+import HomeMapSplitView from '@/components/maps/HomeMapSplitView';
+import { EditModeToggle } from '@/components/admin/EditModeToggle';
+import { UniversalGrid } from '@/components/shared/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useDestinationLoading } from '@/hooks/useDestinationLoading';
-import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
+import { getContextAwareLoadingMessage } from '@/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
-import { AIAssistant } from '@/components/AIAssistant';
-import { ScrollToTop } from '@/components/ScrollToTop';
+import { AIAssistant } from '@/components/chat/AIAssistant';
+import { ScrollToTop } from '@/components/navigation/ScrollToTop';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time

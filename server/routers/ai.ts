@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import { router, protectedProcedure } from '../trpc';
-import { generateDestinationEmbedding } from '@/lib/embeddings/generate';
-import { findSimilarPlace, inferPriceFromBudgetPhrase, inferGroupSize } from '@/lib/ai/fuzzy-matching';
-import { analyzeIntent, type UserContext } from '@/lib/ai/intent-analysis';
+import { generateDestinationEmbedding } from '@/services/embeddings/generate';
+import { findSimilarPlace, inferPriceFromBudgetPhrase, inferGroupSize } from '@/services/ai/fuzzy-matching';
+import { analyzeIntent, type UserContext } from '@/services/ai/intent-analysis';
 
 export const aiRouter = router({
   chat: protectedProcedure

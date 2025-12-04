@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase/server';
-import { PageLoader } from '@/components/LoadingStates';
+import { PageLoader } from '@/components/feedback/LoadingStates';
 import TripsPageClient, { type TripWithHealth } from './page-client';
 import TripsUnauthenticated from './unauthenticated';
 

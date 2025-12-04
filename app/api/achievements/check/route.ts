@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
-import { checkAndAwardAchievements } from '@/lib/achievements';
+import { checkAndAwardAchievements } from '@/services/gamification/achievements';
 import {
   apiRatelimit,
   memoryApiRatelimit,

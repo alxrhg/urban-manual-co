@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Loader2, MapPin, Calendar, Plane, Search, X, Sparkles } from 'lucide-react';
 import { formatTripDateRange, calculateTripDays } from '@/lib/utils';
-import { TripHealthDots } from '@/components/trips/TripHealthIndicator';
+import { TripHealthDots } from '@/components/trip/cards/TripHealthIndicator';
 import { formatDestinationsFromField } from '@/types/trip';
 import type { Trip } from '@/types/trip';
 

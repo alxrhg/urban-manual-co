@@ -1,25 +1,25 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
+import { Header } from "@/components/navigation/Header";
+import { Footer } from "@/components/navigation/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { DrawerProvider } from "@/contexts/DrawerContext";
 import { TRPCProvider } from "@/lib/trpc/provider";
-import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { GoogleAnalytics } from "@/components/shared/GoogleAnalytics";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "@/components/theme-provider";
-import { SkipNavigation } from "@/components/SkipNavigation";
-import DrawerMount from "@/components/DrawerMount";
-import { PanelLayout } from "@/components/PanelMount";
+import { ThemeProvider } from "@/components/shared/theme-provider";
+import { SkipNavigation } from "@/components/navigation/SkipNavigation";
+import DrawerMount from "@/components/drawers/DrawerMount";
+import { PanelLayout } from "@/components/shared/PanelMount";
 import MyStatsig from "./my-statsig";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
-import { SplashScreen } from "@/components/SplashScreen";
-import { CookieConsent } from "@/components/CookieConsent";
+import { SplashScreen } from "@/components/feedback/SplashScreen";
+import { CookieConsent } from "@/components/shared/CookieConsent";
 
 export const viewport: Viewport = {
   width: 'device-width',

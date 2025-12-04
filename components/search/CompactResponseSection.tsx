@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 
 export interface Message {
   role: 'assistant' | 'user';
@@ -99,15 +100,20 @@ export function CompactResponseSection({
 
       {/* Clickable refinement chips */}
       {suggestions.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div
+          className="flex gap-2 mb-4 overflow-x-auto flex-nowrap sm:flex-wrap sm:overflow-visible scrollbar-thin scrollbar-thumb-neutral-200 scrollbar-track-transparent -mx-1 px-1"
+        >
           {suggestions.map((suggestion, i) => (
-            <button
+            <Button
               key={i}
+              type="button"
+              variant="pill"
+              size="xs"
               onClick={() => onChipClick(suggestion.refinement)}
-              className="px-3 py-1.5 text-xs font-medium border border-gray-300 rounded-full hover:border-gray-900 hover:bg-gray-900 hover:text-white transition-all duration-200 active:scale-95"
+              className="shrink-0 border-gray-300 text-gray-600 hover:text-gray-900 dark:border-gray-700 dark:text-gray-200"
             >
               {suggestion.label}
-            </button>
+            </Button>
           ))}
         </div>
       )}

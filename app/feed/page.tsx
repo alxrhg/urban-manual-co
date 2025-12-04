@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { ActivityFeed } from "@/components/ActivityFeed";
+import { ActivityFeed } from "@/components/gamification/ActivityFeed";
 import { Loader2 } from "lucide-react";
 
 export default function FeedPage() {

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { EnhancedVisitedTab } from '@/components/EnhancedVisitedTab';
+import { EnhancedVisitedTab } from '@/components/account/EnhancedVisitedTab';
 import type { VisitedPlace } from '@/types/common';
 
 interface VisitedTabProps {

@@ -6,9 +6,9 @@
  */
 
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
-import { unifiedSearch } from '@/lib/discovery-engine/integration';
-import { embedText } from '@/lib/llm';
-import { getOpenAI } from '@/lib/openai';
+import { unifiedSearch } from '@/services/discovery/integration';
+import { embedText } from '@/services/ai/llm';
+import { getOpenAI } from '@/services/ai/openai';
 
 async function testDiscoveryEngine() {
   console.log('\n🔍 Testing Discovery Engine...\n');

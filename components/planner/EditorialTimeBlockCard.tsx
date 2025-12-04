@@ -3,7 +3,7 @@
 import { memo } from 'react';
 import Image from 'next/image';
 import { MoreVertical, Users } from 'lucide-react';
-import type { TimeBlock } from '@/lib/intelligence/types';
+import type { TimeBlock } from '@/services/intelligence/planner/types';
 
 interface EditorialTimeBlockCardProps {
   block: TimeBlock;

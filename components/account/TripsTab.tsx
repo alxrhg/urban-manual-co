@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import type { Trip } from '@/types/trip';
 import { Plane, Plus } from 'lucide-react';
-import TripCard from '@/components/trips/TripCard';
+import TripCard from '@/components/trip/cards/TripCard';
 import { Button } from '@/components/ui/button';
 
 interface TripsTabProps {

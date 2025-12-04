@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { parseArchitectureQuery, isArchitectureQuery } from '@/lib/search/architecture-parser';
+import { parseArchitectureQuery, isArchitectureQuery } from '@/services/search/architecture-parser';
 import { createServerClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {

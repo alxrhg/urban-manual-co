@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getVectorIndex } from '@/lib/upstash-vector';
-import { generateTextEmbedding } from '@/lib/ml/embeddings';
+import { generateTextEmbedding } from '@/services/ai/ml/embeddings';
 import { withErrorHandling } from '@/lib/errors';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

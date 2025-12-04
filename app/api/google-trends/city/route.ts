@@ -3,7 +3,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchCityTrends } from '@/lib/google-trends';
+import { fetchCityTrends } from '@/services/trends/google-trends';
 
 export async function GET(request: NextRequest) {
   try {

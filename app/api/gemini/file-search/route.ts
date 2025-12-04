@@ -11,7 +11,7 @@ import {
   searchFiles,
   uploadDestinationGuide,
   queryDestinationInfo,
-} from '@/lib/gemini-file-search';
+} from '@/services/ai/gemini-file-search';
 
 /**
  * POST /api/gemini/file-search/store

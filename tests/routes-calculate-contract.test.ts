@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { NextRequest } from 'next/server';
 
 import { createCalculateRouteHandler } from '@/app/api/routes/calculate/route';
-import type { Route } from '@/lib/enrichment/routes';
+import type { Route } from '@/services/enrichment/routes';
 
 const buildRequest = (body: Record<string, unknown>) =>
   new NextRequest(

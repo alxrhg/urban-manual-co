@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Bell, X, AlertTriangle, Clock, Route, Info } from 'lucide-react';
-import type { PlannerWarning } from '@/lib/intelligence/types';
+import type { PlannerWarning } from '@/services/intelligence/planner/types';
 
 interface AlertsDropdownProps {
   warnings: PlannerWarning[];

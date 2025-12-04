@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchWeather } from '@/lib/enrichment/weather';
+import { fetchWeather } from '@/services/enrichment/weather';
 import { withErrorHandling } from '@/lib/errors';
 
 export const GET = withErrorHandling(async (request: NextRequest) => {

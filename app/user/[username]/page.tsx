@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import { MapPin, Users, Heart, Calendar } from 'lucide-react';
-import { PageLoader } from '@/components/LoadingStates';
+import { PageLoader } from '@/components/feedback/LoadingStates';
 import { Button } from '@/components/ui/button';
 
 export default function UserProfilePage() {

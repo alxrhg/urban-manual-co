@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { openai, OPENAI_EMBEDDING_MODEL, getModelForQuery } from '@/lib/openai';
-import { embedText } from '@/lib/llm';
-import { rerankDestinations } from '@/lib/search/reranker';
-import { unifiedSearch } from '@/lib/discovery-engine/integration';
+import { openai, OPENAI_EMBEDDING_MODEL, getModelForQuery } from '@/services/ai/openai';
+import { embedText } from '@/services/ai/llm';
+import { rerankDestinations } from '@/services/search/reranker';
+import { unifiedSearch } from '@/services/discovery/integration';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase/server';
 import { FUNCTION_DEFINITIONS, handleFunctionCall } from './function-calling';
@@ -11,7 +11,7 @@ import {
   GEMINI_MODEL,
   getGeminiModel,
   isGeminiAvailable,
-} from '@/lib/gemini';
+} from '@/services/ai/gemini';
 import {
   conversationRatelimit,
   memoryConversationRatelimit,
@@ -24,7 +24,7 @@ import {
   trackEmbeddingUsage,
   trackUsage,
   estimateTokens,
-} from '@/lib/ai/cost-tracking';
+} from '@/services/ai/cost-tracking';
 import { withErrorHandling } from '@/lib/errors';
 
 // LRU Cache implementation with TTL support

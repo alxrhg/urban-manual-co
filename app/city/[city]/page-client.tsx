@@ -11,11 +11,11 @@ import { Destination } from '@/types/destination';
 import { cityCountryMap } from '@/data/cityCountryMap';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
-import { DestinationCard } from '@/components/DestinationCard';
-import { EditModeToggle } from '@/components/EditModeToggle';
-import { UniversalGrid } from '@/components/UniversalGrid';
-import { MultiplexAd } from '@/components/GoogleAd';
-import { CityClock } from '@/components/CityClock';
+import { DestinationCard } from '@/components/destination/DestinationCard';
+import { EditModeToggle } from '@/components/admin/EditModeToggle';
+import { UniversalGrid } from '@/components/shared/UniversalGrid';
+import { MultiplexAd } from '@/components/shared/GoogleAd';
+import { CityClock } from '@/components/destination/CityClock';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 

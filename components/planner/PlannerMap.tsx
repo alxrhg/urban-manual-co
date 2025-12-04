@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { MapPin, Navigation } from 'lucide-react';
-import type { Place } from '@/lib/intelligence/types';
+import type { Place } from '@/services/intelligence/planner/types';
 
 interface MapPlace extends Place {
   order?: number;

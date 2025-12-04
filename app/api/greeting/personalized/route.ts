@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateText } from '@/lib/llm';
+import { generateText } from '@/services/ai/llm';
 import { createServiceRoleClient } from '@/lib/supabase-server';
 
 export const runtime = 'edge';

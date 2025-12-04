@@ -5,12 +5,12 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, X } from 'lucide-react';
 import { formatTimeDisplay } from '@/lib/utils/time-calculations';
-import FlightStatusCard from '@/components/trips/FlightStatusCard';
-import LodgingCard from '@/components/trips/LodgingCard';
-import PlaceCard from '@/components/trips/PlaceCard';
-import TransportCard from '@/components/trips/TransportCard';
-import MealCard from '@/components/trips/MealCard';
-import EventCard from '@/components/trips/EventCard';
+import FlightStatusCard from '@/components/trip/cards/FlightStatusCard';
+import LodgingCard from '@/components/trip/cards/LodgingCard';
+import PlaceCard from '@/components/trip/cards/PlaceCard';
+import TransportCard from '@/components/trip/cards/TransportCard';
+import MealCard from '@/components/trip/cards/MealCard';
+import EventCard from '@/components/trip/cards/EventCard';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 
 interface TripItemCardProps {

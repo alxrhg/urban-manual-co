@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { DiscoveryPromptService } from '@/lib/discovery-prompts';
+import { DiscoveryPromptService } from '@/services/discovery/discovery-prompts';
 import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
 /**

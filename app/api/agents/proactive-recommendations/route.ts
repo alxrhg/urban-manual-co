@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ProactiveRecommendationAgent } from '@/lib/agents/proactive-recommendation-agent';
+import { ProactiveRecommendationAgent } from '@/services/agents/proactive-recommendation-agent';
 import { createServerClient } from '@/lib/supabase-server';
 import { withErrorHandling } from '@/lib/errors';
 

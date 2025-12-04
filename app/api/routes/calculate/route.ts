@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 
-import { calculateRoute } from '@/lib/enrichment/routes';
+import { calculateRoute } from '@/services/enrichment/routes';
 import {
   createNotFoundError,
   createSuccessResponse,

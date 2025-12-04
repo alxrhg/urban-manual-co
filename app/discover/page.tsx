@@ -8,14 +8,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 
 // ML Components
-import { ForYouSectionML } from '@/components/ForYouSectionML';
-import { TrendingSectionML } from '@/components/TrendingSectionML';
-import { SentimentDisplay } from '@/components/SentimentDisplay';
-import { CitySentimentDisplay } from '@/components/CitySentimentDisplay';
-import { TopicsDisplay } from '@/components/TopicsDisplay';
-import { AnomalyAlert } from '@/components/AnomalyAlert';
-import { ExplanationPanel } from '@/components/ExplanationPanel';
-import { SequencePredictions } from '@/components/SequencePredictions';
+import { ForYouSectionML } from '@/components/discovery/ForYouSectionML';
+import { TrendingSectionML } from '@/components/discovery/TrendingSectionML';
+import { SentimentDisplay } from '@/components/discovery/SentimentDisplay';
+import { CitySentimentDisplay } from '@/components/discovery/CitySentimentDisplay';
+import { TopicsDisplay } from '@/components/discovery/TopicsDisplay';
+import { AnomalyAlert } from '@/components/discovery/AnomalyAlert';
+import { ExplanationPanel } from '@/components/discovery/ExplanationPanel';
+import { SequencePredictions } from '@/components/discovery/SequencePredictions';
 
 // Hooks
 import { useMLTopics } from '@/hooks/useMLTopics';

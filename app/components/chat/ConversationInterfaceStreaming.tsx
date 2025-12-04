@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ConversationBubble } from './ConversationBubble';
 import { useAuth } from '@/contexts/AuthContext';
 import { trackSuggestionAcceptance } from '@/lib/metrics/conversationMetrics';
-import { ensureConversationSessionToken, persistConversationSessionToken } from '@/lib/chat/sessionToken';
+import { ensureConversationSessionToken, persistConversationSessionToken } from '@/services/chat/sessionToken';
 
 interface Message {
   role: 'user' | 'assistant';

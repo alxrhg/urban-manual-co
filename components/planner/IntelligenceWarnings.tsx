@@ -12,7 +12,7 @@ import {
   ChevronRight,
   Sparkles,
 } from 'lucide-react';
-import type { PlannerWarning } from '@/lib/intelligence/types';
+import type { PlannerWarning } from '@/services/intelligence/planner/types';
 
 interface IntelligenceWarningsProps {
   warnings: PlannerWarning[];

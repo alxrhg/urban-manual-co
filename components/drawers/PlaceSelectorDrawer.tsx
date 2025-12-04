@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { Search, MapPin, Loader2, Globe } from 'lucide-react';
-import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
+import GooglePlacesAutocomplete from '@/components/search/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
 
 const CATEGORIES = ['All', 'Dining', 'Cafe', 'Bar', 'Culture', 'Shopping', 'Hotel'];

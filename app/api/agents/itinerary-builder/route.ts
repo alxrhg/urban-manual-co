@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { ItineraryBuilderAgent } from '@/lib/agents/itinerary-builder-agent';
+import { ItineraryBuilderAgent } from '@/services/agents/itinerary-builder-agent';
 import { createServerClient } from '@/lib/supabase-server';
 import { withErrorHandling } from '@/lib/errors';
 

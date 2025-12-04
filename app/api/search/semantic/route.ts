@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateTextEmbedding } from '@/lib/ml/embeddings';
+import { generateTextEmbedding } from '@/services/ai/ml/embeddings';
 import { queryVectorIndex } from '@/lib/upstash-vector';
 import { createClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/errors';

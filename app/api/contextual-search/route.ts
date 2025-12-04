@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { generateContext } from '@/services/gemini';
-import { getSeasonalContext } from '@/services/seasonality';
-import type { Listing } from '@/services/gemini';
+import { generateContext } from '@/services/ai/gemini-service';
+import { getSeasonalContext } from '@/services/intelligence/seasonality';
+import type { Listing } from '@/services/ai/gemini-service';
 
 function getSupabaseClient() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';

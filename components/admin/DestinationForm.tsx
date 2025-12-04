@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2, X } from 'lucide-react';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
-import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
+import GooglePlacesAutocomplete from '@/components/search/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
 
 interface Toast {

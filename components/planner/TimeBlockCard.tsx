@@ -24,7 +24,7 @@ import {
   AlertTriangle,
   Sparkles,
 } from 'lucide-react';
-import type { TimeBlock, CrowdLevel } from '@/lib/intelligence/types';
+import type { TimeBlock, CrowdLevel } from '@/services/intelligence/planner/types';
 
 interface TimeBlockCardProps {
   block: TimeBlock;

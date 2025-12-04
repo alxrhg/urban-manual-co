@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react';
 import TimelineItem from './TimelineItem';
-import type { TimeBlock, DayPlan } from '@/lib/intelligence/types';
+import type { TimeBlock, DayPlan } from '@/services/intelligence/planner/types';
 
 interface TimelineFeedProps {
   dayPlan: DayPlan;

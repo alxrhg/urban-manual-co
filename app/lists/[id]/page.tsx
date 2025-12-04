@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE } from '@/components/CardStyles';
+import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE } from '@/components/ui/CardStyles';
 
 interface List {
   id: string;

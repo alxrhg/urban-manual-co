@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { generateDestinationEmbedding } from '@/lib/ml/embeddings';
+import { generateDestinationEmbedding } from '@/services/ai/ml/embeddings';
 import { upsertDestinationEmbedding } from '@/lib/upstash-vector';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

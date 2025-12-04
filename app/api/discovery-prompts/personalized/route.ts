@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generatePersonalizedPrompt, GenerativePromptContext } from '@/lib/discovery-prompts-generative';
-import { DiscoveryPromptService } from '@/lib/discovery-prompts';
+import { generatePersonalizedPrompt, GenerativePromptContext } from '@/services/discovery/discovery-prompts-generative';
+import { DiscoveryPromptService } from '@/services/discovery/discovery-prompts';
 
 /**
  * GET /api/discovery-prompts/personalized

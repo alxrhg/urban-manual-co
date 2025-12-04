@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { generateJSON } from '@/lib/llm';
+import { generateJSON } from '@/services/ai/llm';
 import { withErrorHandling } from '@/lib/errors';
 import { conversationRatelimit, memoryConversationRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 

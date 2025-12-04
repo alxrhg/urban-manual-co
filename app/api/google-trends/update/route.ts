@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase-server';
-import { fetchBatchGoogleTrends } from '@/lib/google-trends';
+import { fetchBatchGoogleTrends } from '@/services/trends/google-trends';
 
 export const maxDuration = 300; // 5 minutes for batch processing
 

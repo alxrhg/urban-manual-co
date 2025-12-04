@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import CitiesPageClient from './page-client';
 import { fetchCityStats } from '@/lib/data/fetch-destinations';
-import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
+import SearchGridSkeleton from '@/components/search/SearchGridSkeleton';
 
 /**
  * Cities Page - Highest Performance Architecture

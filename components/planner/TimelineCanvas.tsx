@@ -22,10 +22,10 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Plus, Plane, Sparkles, Clock, MapPin, Zap } from 'lucide-react';
 import TimeBlockCard from './TimeBlockCard';
-import type { TimeBlock, DayPlan, DayPlanStats } from '@/lib/intelligence/types';
-import { estimateTransit } from '@/lib/intelligence/transit';
-import { calculateDayStats, formatTimeFromMinutes, parseTimeToMinutes } from '@/lib/intelligence/types';
-import { fillGapsInTimeline, applyFillSuggestions } from '@/lib/intelligence/autoFill';
+import type { TimeBlock, DayPlan, DayPlanStats } from '@/services/intelligence/planner/types';
+import { estimateTransit } from '@/services/intelligence/planner/transit';
+import { calculateDayStats, formatTimeFromMinutes, parseTimeToMinutes } from '@/services/intelligence/planner/types';
+import { fillGapsInTimeline, applyFillSuggestions } from '@/services/intelligence/planner/autoFill';
 
 interface TimelineCanvasProps {
   dayPlan: DayPlan;

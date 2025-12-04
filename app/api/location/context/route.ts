@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLocationContext } from '@/lib/search/expandLocations';
+import { getLocationContext } from '@/services/search/expandLocations';
 
 /**
  * GET /api/location/context

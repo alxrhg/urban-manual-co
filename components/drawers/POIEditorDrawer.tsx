@@ -5,11 +5,11 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { DrawerSection } from '@/components/ui/DrawerSection';
 import { Loader2, X, Trash2 } from 'lucide-react';
-import GooglePlacesAutocompleteNative from '@/components/GooglePlacesAutocompleteNative';
+import GooglePlacesAutocompleteNative from '@/components/search/GooglePlacesAutocompleteNative';
 import { useToast } from '@/hooks/useToast';
-import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
-import { CategoryAutocompleteInput } from '@/components/CategoryAutocompleteInput';
-import { ParentDestinationAutocompleteInput } from '@/components/ParentDestinationAutocompleteInput';
+import { CityAutocompleteInput } from '@/components/search/CityAutocompleteInput';
+import { CategoryAutocompleteInput } from '@/components/search/CategoryAutocompleteInput';
+import { ParentDestinationAutocompleteInput } from '@/components/search/ParentDestinationAutocompleteInput';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 import type { Destination } from '@/types/destination';
 

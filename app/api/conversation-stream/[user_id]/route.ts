@@ -5,15 +5,15 @@
 
 import { NextRequest } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
-import { openai, OPENAI_MODEL } from '@/lib/openai';
+import { openai, OPENAI_MODEL } from '@/services/ai/openai';
 import {
   genAI,
   GEMINI_MODEL,
   getGeminiModel,
   isGeminiAvailable,
-} from '@/lib/gemini';
-import { URBAN_MANUAL_EDITOR_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';
-import { formatFewShots } from '@/lib/ai/fewShots';
+} from '@/services/ai/gemini';
+import { URBAN_MANUAL_EDITOR_SYSTEM_PROMPT } from '@/services/ai/systemPrompts';
+import { formatFewShots } from '@/services/ai/fewShots';
 import {
   getOrCreateSession,
   getConversationMessages,
@@ -31,7 +31,7 @@ import {
   isUpstashConfigured,
 } from '@/lib/rate-limit';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
-import { unifiedSearch } from '@/lib/discovery-engine/integration';
+import { unifiedSearch } from '@/services/discovery/integration';
 
 const CONVERSATION_MODEL = process.env.OPENAI_CONVERSATION_MODEL || OPENAI_MODEL;
 

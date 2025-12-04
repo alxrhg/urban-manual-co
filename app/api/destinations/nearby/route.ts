@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { findNearbyDestinations } from '@/lib/enrichment/distance-matrix';
+import { findNearbyDestinations } from '@/services/enrichment/distance-matrix';
 import { withErrorHandling, createValidationError, handleSupabaseError, CustomError, ErrorCode } from '@/lib/errors';
 
 function getSupabaseClient() {

@@ -11,9 +11,9 @@
 "use client";
 
 import { PLASMIC } from "../../plasmic-init";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { DestinationCard } from "@/components/DestinationCard";
+import { Header } from "@/components/navigation/Header";
+import { Footer } from "@/components/navigation/Footer";
+import { DestinationCard } from "@/components/destination/DestinationCard";
 
 // Register components with Plasmic (client-side only)
 if (typeof window !== "undefined" && PLASMIC) {

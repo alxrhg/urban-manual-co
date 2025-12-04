@@ -2,7 +2,7 @@
 
 import { Plane, MapPin, Clock } from 'lucide-react';
 import Image from 'next/image';
-import type { TimeBlock } from '@/lib/intelligence/types';
+import type { TimeBlock } from '@/services/intelligence/planner/types';
 import {
   Sheet,
   SheetContent,

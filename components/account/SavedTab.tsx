@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { EnhancedSavedTab } from '@/components/EnhancedSavedTab';
+import { EnhancedSavedTab } from '@/components/account/EnhancedSavedTab';
 import type { SavedPlace } from '@/types/common';
 
 interface SavedTabProps {

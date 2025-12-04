@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSeasonalContext, getAllSeasonalEvents } from '@/services/seasonality';
+import { getSeasonalContext, getAllSeasonalEvents } from '@/services/intelligence/seasonality';
 
 /**
  * GET /api/seasonality

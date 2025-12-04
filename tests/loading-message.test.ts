@@ -5,7 +5,7 @@ import {
   getContextAwareLoadingMessage,
   type LoadingIntent,
   type SeasonalContext,
-} from '@/src/lib/context/loading-message';
+} from '@/lib/context/loading-message';
 
 const baseQuery = 'weekend plans';
 const deterministicRandom = () => 0;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase-server';
-import { embedText } from '@/lib/llm';
+import { embedText } from '@/services/ai/llm';
 import { withErrorHandling } from '@/lib/errors';
 
 function buildEmbeddingText(d: any): string {

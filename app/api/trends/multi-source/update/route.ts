@@ -5,9 +5,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase-server';
-import { fetchRedditTrends } from '@/lib/reddit-trends';
-import { fetchNewsTrends, fetchGNewsTrends } from '@/lib/news-trends';
-import { fetchEventbriteTrends } from '@/lib/eventbrite-trends';
+import { fetchRedditTrends } from '@/services/trends/reddit-trends';
+import { fetchNewsTrends, fetchGNewsTrends } from '@/services/trends/news-trends';
+import { fetchEventbriteTrends } from '@/services/trends/eventbrite-trends';
 
 export const maxDuration = 300; // 5 minutes
 

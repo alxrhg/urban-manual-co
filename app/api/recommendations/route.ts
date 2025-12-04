@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
-import { AIRecommendationEngine } from '@/lib/ai-recommendations/engine';
+import { AIRecommendationEngine } from '@/services/ai/recommendations/engine';
 import { withErrorHandling } from '@/lib/errors';
 
 // Rate limiting (simple in-memory, use Redis in production)

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPerformanceMonitor } from '@/lib/discovery-engine/performance';
-import { getDiscoveryEngineCache } from '@/lib/discovery-engine/cache';
+import { getPerformanceMonitor } from '@/services/discovery/performance';
+import { getDiscoveryEngineCache } from '@/services/discovery/cache';
 import { withErrorHandling } from '@/lib/errors';
 
 /**

@@ -5,12 +5,12 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { processPlacePhotos } from '@/lib/enrichment/photos';
-import { fetchWeather } from '@/lib/enrichment/weather';
-import { fetchNearbyEvents } from '@/lib/enrichment/events';
-import { calculateRouteFromCityCenter } from '@/lib/enrichment/routes';
-import { generateDestinationMap } from '@/lib/enrichment/static-maps';
-import { getCurrencyCodeForCity, getExchangeRate } from '@/lib/enrichment/currency';
+import { processPlacePhotos } from '@/services/enrichment/photos';
+import { fetchWeather } from '@/services/enrichment/weather';
+import { fetchNearbyEvents } from '@/services/enrichment/events';
+import { calculateRouteFromCityCenter } from '@/services/enrichment/routes';
+import { generateDestinationMap } from '@/services/enrichment/static-maps';
+import { getCurrencyCodeForCity, getExchangeRate } from '@/services/enrichment/currency';
 
 function getSupabaseClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;

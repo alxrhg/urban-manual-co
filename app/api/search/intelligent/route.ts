@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
-import { embedText } from '@/lib/llm';
-import { rerankDestinations } from '@/lib/search/reranker';
-import { generateSearchResponseContext } from '@/lib/search/generateSearchContext';
-import { generateSuggestions } from '@/lib/search/generateSuggestions';
+import { embedText } from '@/services/ai/llm';
+import { rerankDestinations } from '@/services/search/reranker';
+import { generateSearchResponseContext } from '@/services/search/generateSearchContext';
+import { generateSuggestions } from '@/services/search/generateSuggestions';
 import { getUserLocation } from '@/lib/location/getUserLocation';
-import { expandNearbyLocations, getLocationContext, findLocationByName } from '@/lib/search/expandLocations';
+import { expandNearbyLocations, getLocationContext, findLocationByName } from '@/services/search/expandLocations';
 import { withErrorHandling } from '@/lib/errors';
 import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 

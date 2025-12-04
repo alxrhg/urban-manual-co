@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { X } from "lucide-react";
-import { useConfirmDialog } from "@/components/ConfirmDialog";
+import { useConfirmDialog } from "@/components/modals/ConfirmDialog";
 import { useToast } from "@/hooks/useToast";
 import { ContentManager } from '@/components/admin/cms';
 import { DestinationForm } from '@/components/admin/DestinationForm';

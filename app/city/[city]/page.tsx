@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
+import SearchGridSkeleton from '@/components/search/SearchGridSkeleton';
 import { Metadata } from 'next';
 import { generateCityMetadata, generateCityBreadcrumb } from '@/lib/metadata';
 import CityPageClient from './page-client';

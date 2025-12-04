@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { Building2, ArrowLeft } from 'lucide-react';
-import { UniversalGrid } from '@/components/UniversalGrid';
+import { UniversalGrid } from '@/components/shared/UniversalGrid';
 import Image from 'next/image';
 import { architectNameToSlug } from '@/lib/architect-utils';
 import { useItemsPerPage } from '@/hooks/useGridColumns';

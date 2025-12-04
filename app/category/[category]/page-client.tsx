@@ -6,9 +6,9 @@ import { supabase } from '@/lib/supabase';
 import { createClient } from '@/lib/supabase/client';
 import { Destination } from '@/types/destination';
 import { MapPin, SlidersHorizontal } from 'lucide-react';
-import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
+import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/ui/CardStyles';
 import Image from 'next/image';
-import { SearchFiltersComponent, SearchFilters } from '@/src/features/search/SearchFilters';
+import { SearchFiltersComponent, SearchFilters } from '@/components/search/SearchFiltersAlt';
 import dynamic from 'next/dynamic';
 import { useDrawer } from '@/contexts/DrawerContext';
 

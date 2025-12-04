@@ -2,7 +2,7 @@
 
 import React from 'react';
 import type { VisitedPlace } from '@/types/common';
-import { WorldMapVisualization } from '@/components/WorldMapVisualization';
+import { WorldMapVisualization } from '@/components/maps/WorldMapVisualization';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { getDestinationImageUrl } from '@/lib/destination-images';

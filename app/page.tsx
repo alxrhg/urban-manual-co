@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { Metadata } from 'next';
 import HomePageClient from './page-client';
 import { prefetchHomepageData } from '@/lib/data/fetch-destinations';
-import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
+import SearchGridSkeleton from '@/components/search/SearchGridSkeleton';
 
 /**
  * Homepage - Highest Performance Architecture

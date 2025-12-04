@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getHybridRecommendations, getColdStartRecommendations } from '@/lib/recommendations';
+import { getHybridRecommendations, getColdStartRecommendations } from '@/services/recommendations/core';
 
 /**
  * POST /api/personalized-recommendations

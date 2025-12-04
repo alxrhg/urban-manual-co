@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Collection } from '@/types/common';
-import { NoCollectionsEmptyState } from '@/components/EmptyStates';
+import { NoCollectionsEmptyState } from '@/components/feedback/EmptyStates';
 
 interface CollectionsTabProps {
   collections: Collection[];

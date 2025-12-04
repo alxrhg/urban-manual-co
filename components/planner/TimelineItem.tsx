@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { MapPin } from 'lucide-react';
-import type { TimeBlock } from '@/lib/intelligence/types';
+import type { TimeBlock } from '@/services/intelligence/planner/types';
 
 interface TimelineItemProps {
   block: TimeBlock;

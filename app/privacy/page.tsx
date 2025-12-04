@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { ChevronUp } from 'lucide-react';
-import { openCookieSettings } from '@/components/CookieConsent';
+import { openCookieSettings } from '@/components/shared/CookieConsent';
 
 const sections = [
   { id: 'introduction', title: 'Introduction' },

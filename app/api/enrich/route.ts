@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { enrichDestination } from '@/lib/enrichment';
+import { enrichDestination } from '@/services/enrichment/main';
 import { requireAdmin, AuthError } from '@/lib/adminAuth';
 
 /**

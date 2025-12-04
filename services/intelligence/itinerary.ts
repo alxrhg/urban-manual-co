@@ -13,8 +13,8 @@ import { createServiceRoleClient } from '@/lib/supabase-server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { knowledgeGraphService } from './knowledge-graph';
 import { forecastingService } from './forecasting';
-import { haversineDistance } from '@/lib/intelligence/utils';
-import { estimateTransit, type TransitEstimate } from '@/lib/intelligence/transit';
+import { haversineDistance } from '@/services/intelligence/planner/utils';
+import { estimateTransit, type TransitEstimate } from '@/services/intelligence/planner/transit';
 
 export interface ItineraryItem {
   destination_id: string;

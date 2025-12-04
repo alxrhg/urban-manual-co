@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { AchievementsDisplay } from '@/components/AchievementsDisplay';
+import { AchievementsDisplay } from '@/components/gamification/AchievementsDisplay';
 import type { VisitedPlace, SavedPlace } from '@/types/common';
 
 interface AchievementsTabProps {
