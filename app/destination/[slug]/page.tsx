@@ -15,6 +15,19 @@ import { createServerClient } from '@/lib/supabase-server';
 import { Destination } from '@/types/destination';
 import DestinationPageClient from './page-client';
 
+export interface SimilarDestination {
+  id: number;
+  slug: string;
+  name: string;
+  city: string;
+  category: string;
+  image?: string | null;
+  rating?: number | null;
+  michelin_stars?: number | null;
+  crown?: boolean;
+  match_score?: number;
+}
+
 // Validate and sanitize slug - more permissive to handle various slug formats
 function validateSlug(slug: string): boolean {
   // Allow lowercase letters, numbers, hyphens, and underscores
@@ -155,6 +168,52 @@ export default async function DestinationPage({
     if (nested) nestedDestinations = nested as Destination[];
   }
 
+  // Load similar destinations (server-side for SEO)
+  let similarDestinations: SimilarDestination[] = [];
+  if (destination?.id) {
+    // Try to get similar places from relationships table
+    const { data: similar } = await supabase
+      .from('destination_relationships')
+      .select(`
+        destination_b,
+        similarity_score,
+        destinations!destination_relationships_destination_b_fkey (
+          id, slug, name, city, category, image, rating, michelin_stars, crown
+        )
+      `)
+      .eq('destination_a', destination.id)
+      .eq('relation_type', 'similar')
+      .gte('similarity_score', 0.7)
+      .order('similarity_score', { ascending: false })
+      .limit(8);
+
+    if (similar && similar.length > 0) {
+      similarDestinations = similar
+        .filter((s: any) => s.destinations)
+        .map((s: any) => ({
+          ...s.destinations,
+          match_score: s.similarity_score,
+        }));
+    } else {
+      // Fallback: Get destinations in same city and category
+      const { data: fallback } = await supabase
+        .from('destinations')
+        .select('id, slug, name, city, category, image, rating, michelin_stars, crown')
+        .eq('city', destination.city)
+        .eq('category', destination.category)
+        .neq('id', destination.id)
+        .order('rating', { ascending: false, nullsFirst: false })
+        .limit(8);
+
+      if (fallback) {
+        similarDestinations = fallback.map((d: any) => ({
+          ...d,
+          match_score: 0.8, // Fallback score
+        }));
+      }
+    }
+  }
+
   // If destination not found after all attempts, show 404
   if (error) {
     console.error('[Destination Page] Error fetching destination:', error);
@@ -201,12 +260,13 @@ export default async function DestinationPage({
 
       {/* Render client component with server-fetched data */}
       <Suspense fallback={<DetailSkeleton />}>
-        <DestinationPageClient 
+        <DestinationPageClient
           initialDestination={{
             ...(destination as Destination),
             nested_destinations: nestedDestinations,
           }}
           parentDestination={parentDestination}
+          initialSimilarDestinations={similarDestinations}
         />
       </Suspense>
     </>
