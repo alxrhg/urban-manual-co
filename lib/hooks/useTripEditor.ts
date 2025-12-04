@@ -5,7 +5,21 @@ import { createClient } from '@/lib/supabase/client';
 import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, TrainData, ActivityData, HotelData } from '@/types/trip';
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
 import type { Destination } from '@/types/destination';
-import { recalculateDayTimes, calculateTripDays, addDaysToDate } from '@/lib/utils/time-calculations';
+import { calculateTripDays, addDaysToDate } from '@/lib/utils/time-calculations';
+
+/** Google Place data for adding from Google search */
+export interface GooglePlaceData {
+  place_id: string;
+  name: string;
+  category?: string;
+  address?: string;
+  city?: string;
+  neighborhood?: string;
+  rating?: number;
+  price_level?: number;
+  latitude?: number;
+  longitude?: number;
+}
 
 export interface TripDay {
   dayNumber: number;
@@ -243,6 +257,8 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
     const notesData: ItineraryItemNotes = {
       type: itemType,
+      source: 'curated', // Track source for visual hierarchy
+      slug: destination.slug,
       latitude: destination.latitude ?? undefined,
       longitude: destination.longitude ?? undefined,
       category: destination.category ?? undefined,
@@ -262,6 +278,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       description: destination.city,
       notes: stringifyItineraryNotes(notesData),
       created_at: new Date().toISOString(),
+      source: 'curated', // Track source on item
       destination: destination,
       parsedNotes: notesData,
     };
@@ -288,6 +305,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
         title: destination.name,
         description: destination.city,
         notes: stringifyItineraryNotes(notesData),
+        source: 'curated', // Persist source to database
       }).select().single();
 
       if (error) throw error;
@@ -709,6 +727,103 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     }
   }, [trip, userId, days, onError]);
 
+  // Add a place from Google search
+  const addGooglePlace = useCallback(async (placeData: GooglePlaceData, dayNumber: number, time?: string) => {
+    if (!trip || !userId) return;
+
+    const currentDay = days.find((d) => d.dayNumber === dayNumber);
+    const orderIndex = currentDay?.items.length || 0;
+
+    const notesData: ItineraryItemNotes = {
+      type: 'place',
+      source: 'google', // Track source for visual hierarchy
+      googlePlaceId: placeData.place_id,
+      latitude: placeData.latitude ?? undefined,
+      longitude: placeData.longitude ?? undefined,
+      category: placeData.category ?? undefined,
+      city: placeData.city ?? undefined,
+      address: placeData.address ?? undefined,
+      // Note: No image stored for Google items due to licensing
+    };
+
+    // Optimistic update - add item immediately with temp ID
+    const tempId = `temp-${Date.now()}`;
+    const newItem: EnrichedItineraryItem = {
+      id: tempId,
+      trip_id: trip.id,
+      destination_slug: null,
+      day: dayNumber,
+      order_index: orderIndex,
+      time: time || null,
+      title: placeData.name,
+      description: placeData.city || placeData.neighborhood || null,
+      notes: stringifyItineraryNotes(notesData),
+      created_at: new Date().toISOString(),
+      source: 'google', // Track source on item
+      google_place_id: placeData.place_id,
+      destination: undefined,
+      parsedNotes: notesData,
+    };
+
+    setDays((prev) =>
+      prev.map((d) =>
+        d.dayNumber === dayNumber
+          ? { ...d, items: [...d.items, newItem] }
+          : d
+      )
+    );
+
+    try {
+      setSaving(true);
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { data, error } = await supabase.from('itinerary_items').insert({
+        trip_id: trip.id,
+        destination_slug: null,
+        day: dayNumber,
+        order_index: orderIndex,
+        time: time,
+        title: placeData.name,
+        description: placeData.city || placeData.neighborhood,
+        notes: stringifyItineraryNotes(notesData),
+        source: 'google', // Persist source to database
+        google_place_id: placeData.place_id,
+      }).select().single();
+
+      if (error) throw error;
+
+      // Update with real ID
+      if (data) {
+        setDays((prev) =>
+          prev.map((d) =>
+            d.dayNumber === dayNumber
+              ? {
+                  ...d,
+                  items: d.items.map((item) =>
+                    item.id === tempId ? { ...item, id: data.id } : item
+                  ),
+                }
+              : d
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error adding Google place:', err);
+      // Revert optimistic update
+      setDays((prev) =>
+        prev.map((d) =>
+          d.dayNumber === dayNumber
+            ? { ...d, items: d.items.filter((item) => item.id !== tempId) }
+            : d
+        )
+      );
+      onError?.(err instanceof Error ? err : new Error('Failed to add place'));
+    } finally {
+      setSaving(false);
+    }
+  }, [trip, userId, days, onError]);
+
   // Remove an item
   const removeItem = useCallback(async (itemId: string) => {
     // Store for potential revert
@@ -962,6 +1077,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     updateTrip,
     reorderItems,
     addPlace,
+    addGooglePlace, // Add Google Places with source tracking
     addFlight,
     addTrain,
     addHotel,

@@ -9,7 +9,27 @@ import {
   CheckCircle2, Circle, XCircle, CalendarCheck, Sparkles
 } from 'lucide-react';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
-import type { ItineraryItemNotes } from '@/types/trip';
+import type { ItineraryItemNotes, ItemSource } from '@/types/trip';
+
+/**
+ * Determine the source of an item for visual hierarchy
+ */
+function getItemSource(item: EnrichedItineraryItem): ItemSource {
+  // Explicit source in notes takes precedence
+  if (item.parsedNotes?.source) {
+    return item.parsedNotes.source;
+  }
+  // Has Urban Manual destination slug = curated
+  if (item.destination_slug) {
+    return 'curated';
+  }
+  // Has Google Place ID = google
+  if (item.parsedNotes?.googlePlaceId) {
+    return 'google';
+  }
+  // Default to manual
+  return 'manual';
+}
 
 interface DestinationBoxProps {
   item: EnrichedItineraryItem;
@@ -110,9 +130,13 @@ export default function DestinationBox({
   const destination = item.destination;
   const parsedNotes = item.parsedNotes;
   const itemType = parsedNotes?.type || 'place';
+  const itemSource = getItemSource(item);
 
   const name = item.title || destination?.name || 'Place';
-  const image = destination?.image || destination?.image_thumbnail || parsedNotes?.image;
+  // Only show image for curated items (not for Google items due to licensing)
+  const image = itemSource === 'curated'
+    ? (destination?.image || destination?.image_thumbnail || parsedNotes?.image)
+    : null;
   const category = destination?.category || parsedNotes?.category;
   const neighborhood = destination?.neighborhood;
   const description = destination?.description;
@@ -122,6 +146,16 @@ export default function DestinationBox({
   const reviewCount = destination?.user_ratings_total;
   const priceLevel = destination?.price_level;
   const michelinStars = destination?.michelin_stars;
+
+  // Generate Google Maps URL for Google-sourced items
+  const googleMapsUrl = itemSource === 'google' && name
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + (address ? ', ' + address : ''))}`
+    : null;
+
+  // Generate Urban Manual URL for curated items
+  const urbanManualUrl = itemSource === 'curated' && item.destination_slug
+    ? `/destinations/${item.destination_slug}`
+    : null;
 
   // Reset edit state when item changes
   useEffect(() => {
@@ -394,22 +428,50 @@ export default function DestinationBox({
           </div>
         )}
 
-        {/* Image (for places/hotels) */}
-        {image && itemType !== 'flight' && itemType !== 'train' && (
-          <div className="aspect-[16/9] relative rounded-xl overflow-hidden">
-            <Image
-              src={image}
-              alt={name}
-              fill
-              className="object-cover"
-            />
-            {michelinStars && michelinStars > 0 && (
-              <div className="absolute top-2 left-2 px-2 py-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center gap-1">
-                <Star className="w-3 h-3 fill-current" />
-                {michelinStars} Michelin
+        {/* Image/Header (for places/hotels) - Adapts based on source */}
+        {itemType !== 'flight' && itemType !== 'train' && (
+          <>
+            {/* Curated items: Show full image */}
+            {image && itemSource === 'curated' && (
+              <div className="aspect-[16/9] relative rounded-xl overflow-hidden">
+                <Image
+                  src={image}
+                  alt={name}
+                  fill
+                  className="object-cover"
+                />
+                {michelinStars && michelinStars > 0 && (
+                  <div className="absolute top-2 left-2 px-2 py-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-current" />
+                    {michelinStars} Michelin
+                  </div>
+                )}
+                {/* Urban Manual badge */}
+                <div className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 text-white text-[10px] font-medium rounded-full flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" />
+                  Curated
+                </div>
               </div>
             )}
-          </div>
+
+            {/* Google items: Show minimal gradient placeholder */}
+            {itemSource === 'google' && (
+              <div className="h-20 relative rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
+                <Globe className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                <div className="absolute bottom-2 left-2 px-2 py-1 bg-gray-500/60 text-white text-[10px] font-medium rounded-full flex items-center gap-1">
+                  <Globe className="w-3 h-3" />
+                  Google
+                </div>
+              </div>
+            )}
+
+            {/* Manual items without image: Show minimal placeholder */}
+            {itemSource === 'manual' && !image && (
+              <div className="h-16 relative rounded-xl overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
+                <MapPin className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+              </div>
+            )}
+          </>
         )}
 
         {/* === FLIGHT EDIT FIELDS === */}
@@ -1014,19 +1076,48 @@ export default function DestinationBox({
           )}
         </div>
 
-        {/* Links */}
-        {!isEditing && website && (
-          <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
-            <a
-              href={website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              <Globe className="w-3.5 h-3.5" />
-              <span className="truncate">{website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}</span>
-              <ExternalLink className="w-3 h-3 flex-shrink-0" />
-            </a>
+        {/* Links - Source-specific */}
+        {!isEditing && (
+          <div className="pt-3 border-t border-gray-100 dark:border-gray-800 space-y-2">
+            {/* Website link */}
+            {website && (
+              <a
+                href={website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span className="truncate">{website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}</span>
+                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              </a>
+            )}
+
+            {/* Urban Manual link for curated items */}
+            {urbanManualUrl && (
+              <a
+                href={urbanManualUrl}
+                className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>View on Urban Manual</span>
+                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              </a>
+            )}
+
+            {/* Google Maps link for Google items */}
+            {googleMapsUrl && (
+              <a
+                href={googleMapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+                <span>View on Google Maps</span>
+                <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              </a>
+            )}
           </div>
         )}
 

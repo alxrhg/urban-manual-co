@@ -1,17 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import {
   Search, MapPin, Loader2, Globe, Plus, X, Plane, Train, Clock, Building2,
-  BedDouble, Waves, Sparkles, Dumbbell, Coffee, Shirt, Package, Sun, Briefcase, Phone, Camera, ShoppingBag
+  BedDouble, Waves, Sparkles, Dumbbell, Coffee, Shirt, Package, Sun, Briefcase, Phone, Camera, ShoppingBag,
+  ChevronRight, ChevronDown
 } from 'lucide-react';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
-import type { FlightData, TrainData, ActivityData, ActivityType, HotelData, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
-import { parseItineraryNotes } from '@/types/trip';
-import { ChevronDown } from 'lucide-react';
+import type { FlightData, TrainData, ActivityData, ActivityType, HotelData, ItineraryItemNotes } from '@/types/trip';
+import { CuratedResultCard, GoogleResultRow } from './panels/add';
 import {
   TripCard,
   TripCardHeader,
@@ -49,13 +48,15 @@ const ACTIVITY_OPTIONS: { type: ActivityType; icon: typeof BedDouble; label: str
 ];
 
 /**
- * Enriched itinerary item for time slot suggestions
+ * Enriched itinerary item for time slot suggestions and trip tracking
  */
 interface EnrichedItem {
   id: string;
   title: string;
   time: string | null;
+  day?: number;
   parsedNotes?: ItineraryItemNotes | null;
+  destination_slug?: string | null;
 }
 
 /**
@@ -67,16 +68,36 @@ interface TimeSlot {
   description?: string;
 }
 
+/** Google Place data from search results */
+interface GooglePlaceData {
+  place_id: string;
+  name: string;
+  category?: string;
+  address?: string;
+  city?: string;
+  neighborhood?: string;
+  rating?: number;
+  price_level?: number;
+  latitude?: number;
+  longitude?: number;
+  image?: string;
+}
+
 interface AddPlaceBoxProps {
   city?: string | null;
   dayNumber?: number;
   /** Items for the current day - used for smart time slot suggestions */
   dayItems?: EnrichedItem[];
+  /** All trip items - used to check if a place is already in the trip */
+  tripItems?: EnrichedItem[];
   /** Pre-filled time when opened from a specific gap/position */
   suggestedTime?: string;
   /** Insert after this item ID */
   afterItemId?: string;
-  onSelect?: (destination: Destination, time?: string) => void;
+  /** Called when adding a curated place from Urban Manual */
+  onSelect?: (destination: Destination, time?: string, source?: 'curated') => void;
+  /** Called when adding a place from Google */
+  onSelectGooglePlace?: (place: GooglePlaceData, time?: string) => void;
   onAddFlight?: (flightData: FlightData) => void;
   onAddTrain?: (trainData: TrainData) => void;
   onAddHotel?: (hotelData: HotelData) => void;
@@ -202,9 +223,11 @@ export default function AddPlaceBox({
   city,
   dayNumber = 1,
   dayItems = [],
+  tripItems = [],
   suggestedTime,
   afterItemId,
   onSelect,
+  onSelectGooglePlace,
   onAddFlight,
   onAddTrain,
   onAddHotel,
@@ -212,6 +235,27 @@ export default function AddPlaceBox({
   onClose,
   className = '',
 }: AddPlaceBoxProps) {
+  // Helper to check if a destination is already in the trip
+  const getPlaceInTrip = (slug: string) => {
+    const item = tripItems.find(item =>
+      item.parsedNotes?.slug === slug || item.destination_slug === slug
+    );
+    if (!item) return null;
+    return {
+      day: item.day || 1,
+      time: item.time || '',
+    };
+  };
+
+  // Helper to check if a Google place is already in the trip
+  const getGooglePlaceInTrip = (placeId: string) => {
+    const item = tripItems.find(item => item.parsedNotes?.googlePlaceId === placeId);
+    if (!item) return null;
+    return {
+      day: item.day || 1,
+      time: item.time || '',
+    };
+  };
   const [tab, setTab] = useState<Tab>('curated');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('All');
@@ -333,7 +377,7 @@ export default function AddPlaceBox({
 
   const handleSelect = (place: Destination) => {
     if (onSelect) {
-      onSelect(place, selectedTime || undefined);
+      onSelect(place, selectedTime || undefined, 'curated');
     }
   };
 
@@ -366,24 +410,43 @@ export default function AddPlaceBox({
   };
 
   const handleAddGooglePlace = () => {
-    if (!googlePlace || !onSelect) return;
+    if (!googlePlace) return;
 
-    const destination: Destination = {
-      slug: googlePlace.slug || `google-${googlePlace.place_id || Date.now()}`,
-      name: googlePlace.name,
-      city: googlePlace.city || city || '',
-      category: googlePlace.category || 'Other',
-      image: googlePlace.image || googlePlace.photo_url,
-      image_thumbnail: googlePlace.image || googlePlace.photo_url,
-      formatted_address: googlePlace.address,
-      latitude: googlePlace.latitude,
-      longitude: googlePlace.longitude,
-      rating: googlePlace.rating,
-      website: googlePlace.website,
-      phone_number: googlePlace.phone,
-    };
+    // If onSelectGooglePlace is available, use it for proper source tracking
+    if (onSelectGooglePlace) {
+      const placeData: GooglePlaceData = {
+        place_id: googlePlace.place_id || `google-${Date.now()}`,
+        name: googlePlace.name,
+        city: googlePlace.city || city || '',
+        category: googlePlace.category || 'Other',
+        address: googlePlace.address,
+        neighborhood: googlePlace.neighborhood,
+        rating: googlePlace.rating,
+        price_level: googlePlace.price_level,
+        latitude: googlePlace.latitude,
+        longitude: googlePlace.longitude,
+        // Note: We don't store Google images due to licensing
+      };
+      onSelectGooglePlace(placeData, selectedTime || undefined);
+    } else if (onSelect) {
+      // Fallback to onSelect if onSelectGooglePlace not provided
+      const destination: Destination = {
+        slug: googlePlace.slug || `google-${googlePlace.place_id || Date.now()}`,
+        name: googlePlace.name,
+        city: googlePlace.city || city || '',
+        category: googlePlace.category || 'Other',
+        image: googlePlace.image || googlePlace.photo_url,
+        image_thumbnail: googlePlace.image || googlePlace.photo_url,
+        formatted_address: googlePlace.address,
+        latitude: googlePlace.latitude,
+        longitude: googlePlace.longitude,
+        rating: googlePlace.rating,
+        website: googlePlace.website,
+        phone_number: googlePlace.phone,
+      };
+      onSelect(destination, selectedTime || undefined);
+    }
 
-    onSelect(destination, selectedTime || undefined);
     setGooglePlace(null);
     setGoogleQuery('');
   };
@@ -642,8 +705,8 @@ export default function AddPlaceBox({
               ))}
             </div>
 
-            {/* Results */}
-            <div className="max-h-64 overflow-y-auto -mx-1">
+            {/* Results - Urban Manual Curated */}
+            <div className="max-h-80 overflow-y-auto -mx-1">
               {loading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
@@ -652,42 +715,43 @@ export default function AddPlaceBox({
                 <div className="text-center py-6">
                   <MapPin className="w-5 h-5 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
                   <p className="text-xs text-gray-400 dark:text-gray-500">No places found</p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Try Google tab</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Try Google tab for more options</p>
                 </div>
               ) : (
-                <div className="space-y-0.5">
-                  {places.map((place) => (
+                <div className="space-y-2 px-1">
+                  {/* Section header */}
+                  <h3 className="text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide">
+                    From Urban Manual
+                  </h3>
+
+                  {/* Curated results with premium cards */}
+                  <div className="space-y-2">
+                    {places.map((place) => {
+                      const tripOccurrence = getPlaceInTrip(place.slug);
+                      return (
+                        <CuratedResultCard
+                          key={place.slug}
+                          destination={place}
+                          isInTrip={!!tripOccurrence}
+                          tripOccurrence={tripOccurrence || undefined}
+                          onQuickAdd={() => handleSelect(place)}
+                          onSelect={() => handleSelect(place)}
+                        />
+                      );
+                    })}
+                  </div>
+
+                  {/* Prompt to try Google */}
+                  {places.length > 0 && places.length < 5 && (
                     <button
-                      key={place.slug}
-                      onClick={() => handleSelect(place)}
-                      className="w-full flex items-center gap-3 p-2 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-xl transition-colors group"
+                      onClick={() => setTab('google')}
+                      className="w-full py-3 mt-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors flex items-center justify-center gap-1"
                     >
-                      <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
-                        {place.image_thumbnail || place.image ? (
-                          <Image
-                            src={place.image_thumbnail || place.image || ''}
-                            alt={place.name}
-                            width={40}
-                            height={40}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <MapPin className="w-4 h-4 text-gray-400" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                          {place.name}
-                        </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
-                          {place.category}
-                        </p>
-                      </div>
-                      <Plus className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors flex-shrink-0" />
+                      <Globe className="w-4 h-4" />
+                      Search more on Google
+                      <ChevronRight className="w-3 h-3" />
                     </button>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
@@ -697,6 +761,11 @@ export default function AddPlaceBox({
         {/* Google Tab */}
         <TripTabsContent value="google">
           <TripCardContent>
+            {/* Section header */}
+            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+              More from Google
+            </h3>
+
             {/* Google Search */}
             <GooglePlacesAutocomplete
               value={googleQuery}
@@ -710,7 +779,7 @@ export default function AddPlaceBox({
               Search restaurants, cafes, museums, hotels...
             </p>
 
-            {/* Google Place Preview */}
+            {/* Google Place Preview - Minimal Style */}
             <div className="max-h-64 overflow-y-auto">
               {googleLoading ? (
                 <div className="flex items-center justify-center py-8">
@@ -718,46 +787,35 @@ export default function AddPlaceBox({
                 </div>
               ) : googlePlace ? (
                 <div className="space-y-3">
-                  <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800">
-                    {googlePlace.image && (
-                      <div className="aspect-[16/9] relative">
-                        <Image
-                          src={googlePlace.image}
-                          alt={googlePlace.name}
-                          fill
-                          className="object-cover"
-                          unoptimized={googlePlace.image.startsWith('/api/')}
-                        />
-                      </div>
-                    )}
-                    <div className="p-3 space-y-1.5">
-                      <h4 className="text-sm font-medium text-gray-900 dark:text-white">
-                        {googlePlace.name}
-                      </h4>
-                      {googlePlace.address && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                          {googlePlace.address}
-                        </p>
-                      )}
-                      <div className="flex flex-wrap gap-1.5 text-xs">
-                        {googlePlace.category && (
-                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-full">
-                            {googlePlace.category}
-                          </span>
-                        )}
-                        {googlePlace.rating && (
-                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-full">
-                            ★ {googlePlace.rating}
-                          </span>
-                        )}
-                        {googlePlace.price_level && (
-                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-full">
-                            {'$'.repeat(googlePlace.price_level)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                  {/* Minimal row preview - no image */}
+                  <div className="rounded-lg border border-gray-100 dark:border-gray-800 overflow-hidden">
+                    <GoogleResultRow
+                      place={{
+                        place_id: googlePlace.place_id,
+                        name: googlePlace.name,
+                        category: googlePlace.category,
+                        address: googlePlace.address,
+                        city: googlePlace.city || city || '',
+                        neighborhood: googlePlace.neighborhood,
+                        rating: googlePlace.rating,
+                        price_level: googlePlace.price_level,
+                        latitude: googlePlace.latitude,
+                        longitude: googlePlace.longitude,
+                      }}
+                      isInTrip={!!getGooglePlaceInTrip(googlePlace.place_id)}
+                      tripOccurrence={getGooglePlaceInTrip(googlePlace.place_id) || undefined}
+                      onQuickAdd={handleAddGooglePlace}
+                      onSelect={handleAddGooglePlace}
+                    />
                   </div>
+
+                  {/* Address details below */}
+                  {googlePlace.address && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 px-3 line-clamp-2">
+                      {googlePlace.address}
+                    </p>
+                  )}
+
                   <TripButton onClick={handleAddGooglePlace} className="w-full">
                     <Plus className="w-4 h-4" />
                     Add to Day {dayNumber}

@@ -9,6 +9,10 @@ export { default as TransportCard } from './TransportCard';
 export { default as FreeTimeGap } from './FreeTimeGap';
 export { default as CustomCard } from './CustomCard';
 
+// Source-based cards for visual hierarchy
+export { default as CuratedPlaceCard } from './CuratedPlaceCard';
+export { default as GooglePlaceCard } from './GooglePlaceCard';
+
 // Types
 export type {
   ItineraryItem,

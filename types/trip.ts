@@ -530,6 +530,9 @@ export type ActivityType =
   | 'photo-walk'
   | 'other';
 
+// Source of the itinerary item - used for visual hierarchy
+export type ItemSource = 'curated' | 'google' | 'manual';
+
 export interface ItineraryItem {
   id: string; // UUID
   trip_id: string; // UUID
@@ -541,6 +544,9 @@ export interface ItineraryItem {
   description: string | null; // TEXT
   notes: string | null; // TEXT (can contain JSON)
   created_at: string; // TIMESTAMP WITH TIME ZONE
+  // Source tracking for visual hierarchy
+  source?: ItemSource; // 'curated' | 'google' | 'manual'
+  google_place_id?: string | null; // Google Places ID if from Google
 }
 
 export interface InsertItineraryItem {
@@ -552,6 +558,8 @@ export interface InsertItineraryItem {
   title: string;
   description?: string | null;
   notes?: string | null;
+  source?: ItemSource;
+  google_place_id?: string | null;
 }
 
 export interface UpdateItineraryItem {
@@ -589,6 +597,9 @@ export interface ItineraryItemNotes {
   city?: string;
   category?: string;
   slug?: string;
+  // Source tracking for visual hierarchy
+  source?: ItemSource; // 'curated' | 'google' | 'manual'
+  googlePlaceId?: string; // Google Places ID if from Google
   // Location data
   latitude?: number;
   longitude?: number;

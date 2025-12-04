@@ -1,6 +1,7 @@
 'use client';
 
-import type { ItineraryItem as BaseItineraryItem, ItineraryItemNotes } from '@/types/trip';
+import type { ItineraryItem as BaseItineraryItem, ItineraryItemNotes, ItemSource } from '@/types/trip';
+import type { Destination } from '@/types/destination';
 
 // Extended ItineraryItem with category for card rendering
 export interface ItineraryItem extends BaseItineraryItem {
@@ -8,6 +9,10 @@ export interface ItineraryItem extends BaseItineraryItem {
     | 'flight'
     | 'restaurant'
     | 'attraction'
+    | 'cafe'
+    | 'bar'
+    | 'shopping'
+    | 'culture'
     | 'hotel_activity'
     | 'airport_activity'
     | 'hotel_overnight'
@@ -17,6 +22,8 @@ export interface ItineraryItem extends BaseItineraryItem {
   flightId?: string;
   hotelBookingId?: string;
   parsedNotes?: ItineraryItemNotes | null;
+  // For enriched items with destination data
+  destination?: Destination;
 }
 
 // Flight booking data
@@ -63,7 +70,7 @@ export interface TripSettings {
   is24HourTime?: boolean;
 }
 
-// Import card components (to be created)
+// Import card components
 import FlightCard from './FlightCard';
 import RestaurantCard from './RestaurantCard';
 import AttractionCard from './AttractionCard';
@@ -72,6 +79,37 @@ import OvernightCard from './OvernightCard';
 import TransportCard from './TransportCard';
 import FreeTimeGap from './FreeTimeGap';
 import CustomCard from './CustomCard';
+
+// Source-based cards for visual hierarchy
+import CuratedPlaceCard from './CuratedPlaceCard';
+import GooglePlaceCard from './GooglePlaceCard';
+
+/**
+ * Determine the source of an item for visual hierarchy
+ * - curated: Has destination_slug pointing to Urban Manual catalog
+ * - google: Has parsedNotes.googlePlaceId from Google Places
+ * - manual: Default for custom/manual entries
+ */
+function getItemSource(item: ItineraryItem): ItemSource {
+  // Explicit source in notes takes precedence
+  if (item.parsedNotes?.source) {
+    return item.parsedNotes.source;
+  }
+  // Explicit source on item
+  if (item.source) {
+    return item.source;
+  }
+  // Has Urban Manual destination slug = curated
+  if (item.destination_slug) {
+    return 'curated';
+  }
+  // Has Google Place ID = google
+  if (item.parsedNotes?.googlePlaceId || item.google_place_id) {
+    return 'google';
+  }
+  // Default to manual
+  return 'manual';
+}
 
 export interface ItineraryCardProps {
   item: ItineraryItem;
@@ -116,14 +154,30 @@ export default function ItineraryCard({
     tripSettings,
   };
 
+  // Determine item source for visual hierarchy
+  const source = getItemSource(item);
+
   switch (item.category) {
     case 'flight':
       return <FlightCard {...baseProps} flight={flight} />;
 
     case 'restaurant':
-      return <RestaurantCard {...baseProps} />;
-
     case 'attraction':
+    case 'cafe':
+    case 'bar':
+    case 'shopping':
+    case 'culture':
+      // Use source-based visual hierarchy for place categories
+      if (source === 'curated' && item.destination) {
+        return <CuratedPlaceCard {...baseProps} destination={item.destination} />;
+      } else if (source === 'google') {
+        return <GooglePlaceCard {...baseProps} />;
+      }
+      // Fallback to existing cards for legacy items without source
+      // (they likely came from curated catalog)
+      if (item.category === 'restaurant') {
+        return <RestaurantCard {...baseProps} />;
+      }
       return <AttractionCard {...baseProps} />;
 
     case 'hotel_activity':
