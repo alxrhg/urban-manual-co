@@ -2,71 +2,102 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Plus, Loader2, MapPin, Calendar, Plane, Search, X, Sparkles } from 'lucide-react';
+import { Plus, Loader2, Plane, Search, X } from 'lucide-react';
 import { formatTripDateRange, calculateTripDays } from '@/lib/utils';
-import { TripHealthDots } from '@/components/trips/TripHealthIndicator';
 import { formatDestinationsFromField } from '@/types/trip';
+import { TripCoverImage } from '@/components/trips/TripCoverImage';
+import { TripStats } from '@/components/trips/TripStats';
+import {
+  getTripState,
+  getTimeLabel,
+  getActionCTA,
+  getTotalItems,
+  type TripStats as TripStatsType,
+  type TripState,
+} from '@/lib/trip';
 import type { Trip } from '@/types/trip';
 
-export interface TripWithHealth extends Trip {
-  item_count?: number;
-  has_hotel?: boolean;
-  has_flight?: boolean;
+export interface TripWithStats extends Trip {
+  stats: TripStatsType;
 }
 
-type TripStatus = 'all' | 'planning' | 'upcoming' | 'ongoing' | 'completed';
-
-// Status badge config
-function getStatusConfig(status?: string) {
-  switch (status) {
-    case 'planning':
-      return { label: 'Planning', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' };
-    case 'upcoming':
-      return { label: 'Upcoming', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' };
-    case 'ongoing':
-      return { label: 'Now', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', pulse: true };
-    case 'completed':
-      return { label: 'Done', color: 'bg-stone-100 text-stone-600 dark:bg-gray-800 dark:text-gray-400' };
-    default:
-      return null;
-  }
-}
+type FilterTab = 'all' | 'upcoming' | 'past';
 
 interface TripsPageClientProps {
-  initialTrips: TripWithHealth[];
+  initialTrips: TripWithStats[];
   userId: string;
 }
 
 export default function TripsPageClient({ initialTrips, userId }: TripsPageClientProps) {
   const router = useRouter();
-  const [trips, setTrips] = useState<TripWithHealth[]>(initialTrips);
+  const [trips, setTrips] = useState<TripWithStats[]>(initialTrips);
   const [creating, setCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<TripStatus>('all');
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
 
-  // Filter trips based on search and status
-  const filteredTrips = useMemo(() => {
-    return trips.filter((trip) => {
-      const destinationsDisplay = formatDestinationsFromField(trip.destination);
-      const matchesSearch = searchQuery === '' ||
-        trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        destinationsDisplay.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || trip.status === statusFilter;
-      return matchesSearch && matchesStatus;
+  // Categorize trips by state and filter
+  const { filteredTrips, tabCounts } = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Categorize all trips
+    const categorized = trips.map(trip => {
+      const state = getTripState(trip.end_date, trip.start_date, trip.stats);
+      return { trip, state };
     });
-  }, [trips, searchQuery, statusFilter]);
 
-  // Stats
-  const stats = useMemo(() => ({
-    total: trips.length,
-    planning: trips.filter(t => t.status === 'planning').length,
-    upcoming: trips.filter(t => t.status === 'upcoming').length,
-    ongoing: trips.filter(t => t.status === 'ongoing').length,
-    completed: trips.filter(t => t.status === 'completed').length,
-  }), [trips]);
+    // Count for tabs
+    const counts = {
+      all: trips.length,
+      upcoming: categorized.filter(t => t.state === 'upcoming' || t.state === 'planning').length,
+      past: categorized.filter(t => t.state === 'past').length,
+    };
+
+    // Filter by tab
+    let filtered = categorized;
+    if (activeTab === 'upcoming') {
+      filtered = categorized.filter(t => t.state === 'upcoming' || t.state === 'planning');
+    } else if (activeTab === 'past') {
+      filtered = categorized.filter(t => t.state === 'past');
+    }
+
+    // Filter by search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(({ trip }) => {
+        const destinationsDisplay = formatDestinationsFromField(trip.destination);
+        return (
+          trip.title.toLowerCase().includes(query) ||
+          destinationsDisplay.toLowerCase().includes(query)
+        );
+      });
+    }
+
+    // Sort: Upcoming by startDate ascending, Past by endDate descending
+    filtered.sort((a, b) => {
+      if (a.state === 'past' && b.state === 'past') {
+        // Past: most recent first
+        const dateA = a.trip.end_date ? new Date(a.trip.end_date).getTime() : 0;
+        const dateB = b.trip.end_date ? new Date(b.trip.end_date).getTime() : 0;
+        return dateB - dateA;
+      } else if (a.state !== 'past' && b.state !== 'past') {
+        // Upcoming/Planning: soonest first
+        const dateA = a.trip.start_date ? new Date(a.trip.start_date).getTime() : Infinity;
+        const dateB = b.trip.start_date ? new Date(b.trip.start_date).getTime() : Infinity;
+        return dateA - dateB;
+      } else {
+        // Put upcoming before past
+        return a.state === 'past' ? 1 : -1;
+      }
+    });
+
+    return {
+      filteredTrips: filtered,
+      tabCounts: counts,
+    };
+  }, [trips, searchQuery, activeTab]);
 
   const createTrip = async () => {
     try {
@@ -96,25 +127,21 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
   return (
     <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950">
       <div className="max-w-4xl mx-auto">
-        {/* Header - Matching itinerary design */}
+        {/* Header */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-            {/* Title */}
             <h1 className="text-xl sm:text-2xl font-light text-stone-900 dark:text-white">
               Trips
             </h1>
 
-            {/* Spacer */}
             <div className="hidden sm:block flex-1" />
 
-            {/* Trip Count */}
             {trips.length > 0 && (
               <p className="text-xs text-stone-400 dark:text-gray-500 hidden sm:block">
                 {trips.length} trip{trips.length !== 1 ? 's' : ''}
               </p>
             )}
 
-            {/* New Trip Button */}
             <button
               onClick={createTrip}
               disabled={creating}
@@ -130,26 +157,24 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
           </div>
         </div>
 
-        {/* Tab Navigation - Matching itinerary tabs */}
+        {/* Tab Navigation */}
         {trips.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center justify-between gap-4">
               <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
                 {[
-                  { key: 'all', label: 'All', count: stats.total },
-                  { key: 'planning', label: 'Planning', count: stats.planning },
-                  { key: 'upcoming', label: 'Upcoming', count: stats.upcoming },
-                  ...(stats.ongoing > 0 ? [{ key: 'ongoing', label: 'Active', count: stats.ongoing }] : []),
-                  { key: 'completed', label: 'Past', count: stats.completed },
+                  { key: 'all' as FilterTab, label: 'All', count: tabCounts.all },
+                  { key: 'upcoming' as FilterTab, label: 'Upcoming', count: tabCounts.upcoming },
+                  { key: 'past' as FilterTab, label: 'Past', count: tabCounts.past },
                 ].map(({ key, label, count }) => (
                   <button
                     key={key}
-                    onClick={() => setStatusFilter(key as TripStatus)}
+                    onClick={() => setActiveTab(key)}
                     className={`
                       transition-all flex items-center gap-1.5 whitespace-nowrap
                       px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
                       min-h-[40px] sm:min-h-0
-                      ${statusFilter === key
+                      ${activeTab === key
                         ? 'font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
                         : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
                       }
@@ -158,7 +183,7 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
                     {count > 0 && (
                       <span className={`
                         w-4 h-4 rounded-full text-[10px] flex items-center justify-center
-                        ${statusFilter === key
+                        ${activeTab === key
                           ? 'bg-stone-200 dark:bg-gray-700'
                           : 'bg-stone-100 dark:bg-gray-800'
                         }
@@ -186,7 +211,7 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
               </button>
             </div>
 
-            {/* Search Input - Expandable */}
+            {/* Search Input */}
             {searchQuery !== '' && (
               <div className="mt-4 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
@@ -234,21 +259,6 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
               )}
               Create Your First Trip
             </button>
-
-            {/* Features */}
-            <div className="mt-10 pt-8 border-t border-stone-100 dark:border-gray-800">
-              <div className="flex flex-wrap justify-center gap-3 text-xs text-stone-500 dark:text-gray-400">
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-50 dark:bg-gray-800/50 rounded-full">
-                  <MapPin className="w-3.5 h-3.5" /> Save places
-                </span>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-50 dark:bg-gray-800/50 rounded-full">
-                  <Plane className="w-3.5 h-3.5" /> Track flights
-                </span>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-50 dark:bg-gray-800/50 rounded-full">
-                  <Calendar className="w-3.5 h-3.5" /> Day-by-day itinerary
-                </span>
-              </div>
-            </div>
           </div>
         ) : filteredTrips.length === 0 ? (
           /* No Results */
@@ -260,106 +270,115 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
               No matching trips
             </h3>
             <p className="text-sm text-stone-500 dark:text-gray-400 mb-6">
-              {searchQuery.trim() ? `No trips found for "${searchQuery.trim()}"` : `No ${statusFilter} trips found`}
+              {searchQuery.trim() ? `No trips found for "${searchQuery.trim()}"` : `No ${activeTab} trips found`}
             </p>
             <button
-              onClick={() => { setSearchQuery(''); setStatusFilter('all'); }}
+              onClick={() => { setSearchQuery(''); setActiveTab('all'); }}
               className="text-sm font-medium text-stone-900 dark:text-white underline underline-offset-4 hover:opacity-70 transition-opacity"
             >
               Clear filters
             </button>
           </div>
         ) : (
-          /* Trip List - Clean card design */
+          /* Trip List - New Card Design */
           <div className="space-y-3">
-            {filteredTrips.map((trip) => {
-              const statusConfig = getStatusConfig(trip.status);
-              const daysCount = calculateTripDays(trip.start_date, trip.end_date);
-              const dateDisplay = formatTripDateRange(trip.start_date, trip.end_date);
-              const destinationsDisplay = formatDestinationsFromField(trip.destination);
-
-              return (
-                <Link
-                  key={trip.id}
-                  href={`/trips/${trip.id}`}
-                  className="group flex items-center gap-4 p-4 rounded-2xl bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700 transition-all"
-                >
-                  {/* Cover Image */}
-                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden bg-stone-100 dark:bg-gray-800 flex-shrink-0">
-                    {trip.cover_image ? (
-                      <Image
-                        src={trip.cover_image}
-                        alt={trip.title}
-                        fill
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        sizes="80px"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <MapPin className="w-6 h-6 text-stone-300 dark:text-gray-600" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <h3 className="text-sm font-medium text-stone-900 dark:text-white truncate">
-                        {trip.title}
-                      </h3>
-                      {statusConfig && (
-                        <span className={`flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium uppercase tracking-wide ${statusConfig.color}`}>
-                          {statusConfig.pulse && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                          )}
-                          {statusConfig.label}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Meta Info */}
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-500 dark:text-gray-400">
-                      {destinationsDisplay && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {destinationsDisplay}
-                        </span>
-                      )}
-                      {daysCount && daysCount > 0 && (
-                        <span>{daysCount} day{daysCount !== 1 ? 's' : ''}</span>
-                      )}
-                      {dateDisplay && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {dateDisplay}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Health Indicator & CTA */}
-                    {trip.status === 'planning' && (
-                      <div className="flex items-center gap-3 mt-2">
-                        <TripHealthDots
-                          itemCount={trip.item_count || 0}
-                          dayCount={daysCount || 1}
-                          hasHotel={trip.has_hotel || false}
-                          hasFlight={trip.has_flight || false}
-                        />
-                        {(trip.item_count || 0) < 3 && (
-                          <span className="text-[10px] text-stone-400 dark:text-gray-500 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" />
-                            Continue planning
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              );
-            })}
+            {filteredTrips.map(({ trip, state }) => (
+              <TripCard key={trip.id} trip={trip} state={state} />
+            ))}
           </div>
         )}
       </div>
     </main>
+  );
+}
+
+/**
+ * Individual Trip Card Component
+ */
+interface TripCardProps {
+  trip: TripWithStats;
+  state: TripState;
+}
+
+function TripCard({ trip, state }: TripCardProps) {
+  const daysCount = calculateTripDays(trip.start_date, trip.end_date);
+  const dateDisplay = formatTripDateRange(trip.start_date, trip.end_date);
+  const destinationsDisplay = formatDestinationsFromField(trip.destination);
+
+  const isPast = state === 'past';
+  const isPlanning = state === 'planning';
+  const totalItems = getTotalItems(trip.stats);
+
+  // Time label (countdown or relative time)
+  const timeLabel = getTimeLabel(trip.start_date, trip.end_date, state);
+
+  // Action CTA for planning state
+  const actionCTA = isPlanning ? getActionCTA(trip.stats) : null;
+
+  // Build meta line: "Dec 14 – 16 · 3 days · 2 travelers"
+  const metaParts: string[] = [];
+  if (dateDisplay) metaParts.push(dateDisplay);
+  if (daysCount && daysCount > 0) metaParts.push(`${daysCount} day${daysCount !== 1 ? 's' : ''}`);
+
+  return (
+    <Link
+      href={`/trips/${trip.id}`}
+      className={`
+        group flex gap-4 p-4 rounded-xl bg-white dark:bg-gray-900
+        border border-gray-200 dark:border-gray-800
+        hover:border-gray-300 dark:hover:border-gray-700
+        hover:shadow-sm transition-all cursor-pointer
+        ${isPast ? 'opacity-90' : ''}
+      `}
+    >
+      {/* Cover Image */}
+      <TripCoverImage
+        coverImageUrl={trip.cover_image}
+        destination={destinationsDisplay || trip.destination}
+        title={trip.title}
+        isPast={isPast}
+        className="w-16 h-16 sm:w-20 sm:h-20"
+      />
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Title */}
+        <h3 className="text-base font-medium text-gray-900 dark:text-white truncate flex items-center gap-2">
+          {trip.title}
+        </h3>
+
+        {/* Meta: dates, duration */}
+        {metaParts.length > 0 && (
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 truncate">
+            {metaParts.join(' · ')}
+          </p>
+        )}
+
+        {/* Stats or CTA */}
+        <div className="mt-1">
+          {totalItems > 0 ? (
+            <TripStats stats={trip.stats} />
+          ) : (
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              No plans yet
+            </span>
+          )}
+        </div>
+
+        {/* Time Label or Action CTA */}
+        <div className="mt-auto pt-1 flex items-center justify-end">
+          {actionCTA && !isPast && (
+            <span className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+              {actionCTA}
+            </span>
+          )}
+          {timeLabel && !actionCTA && (
+            <span className="text-sm text-gray-400 dark:text-gray-500">
+              {timeLabel}
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
   );
 }
