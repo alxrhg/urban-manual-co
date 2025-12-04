@@ -205,7 +205,11 @@ const nextConfig: NextConfig = {
         { protocol: 'https', hostname: '*.webflow.com' },
         // Supabase Storage (primary image hosting)
         { protocol: 'https', hostname: '*.supabase.co' },
-        { protocol: 'https', hostname: '*.supabase.in' }
+        { protocol: 'https', hostname: '*.supabase.in' },
+        // Vercel Blob storage
+        { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
+        // Common travel image sources
+        { protocol: 'https', hostname: 'images.unsplash.com' }
       )
       return patterns
     })(),
