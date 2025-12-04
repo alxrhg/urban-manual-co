@@ -9,7 +9,9 @@ import {
 } from 'lucide-react';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
-import type { FlightData, TrainData, ActivityData, ActivityType, HotelData } from '@/types/trip';
+import type { FlightData, TrainData, ActivityData, ActivityType, HotelData, ItineraryItem, ItineraryItemNotes } from '@/types/trip';
+import { parseItineraryNotes } from '@/types/trip';
+import { ChevronDown } from 'lucide-react';
 import {
   TripCard,
   TripCardHeader,
@@ -46,14 +48,39 @@ const ACTIVITY_OPTIONS: { type: ActivityType; icon: typeof BedDouble; label: str
   { type: 'photo-walk', icon: Camera, label: 'Photo Walk', defaultDuration: 60 },
 ];
 
+/**
+ * Enriched itinerary item for time slot suggestions
+ */
+interface EnrichedItem {
+  id: string;
+  title: string;
+  time: string | null;
+  parsedNotes?: ItineraryItemNotes | null;
+}
+
+/**
+ * Time slot suggestion for the dropdown
+ */
+interface TimeSlot {
+  label: string;
+  time: string;
+  description?: string;
+}
+
 interface AddPlaceBoxProps {
   city?: string | null;
   dayNumber?: number;
-  onSelect?: (destination: Destination) => void;
+  /** Items for the current day - used for smart time slot suggestions */
+  dayItems?: EnrichedItem[];
+  /** Pre-filled time when opened from a specific gap/position */
+  suggestedTime?: string;
+  /** Insert after this item ID */
+  afterItemId?: string;
+  onSelect?: (destination: Destination, time?: string) => void;
   onAddFlight?: (flightData: FlightData) => void;
   onAddTrain?: (trainData: TrainData) => void;
   onAddHotel?: (hotelData: HotelData) => void;
-  onAddActivity?: (activityData: ActivityData) => void;
+  onAddActivity?: (activityData: ActivityData, time?: string) => void;
   onClose?: () => void;
   className?: string;
 }
@@ -62,9 +89,121 @@ interface AddPlaceBoxProps {
  * AddPlaceBox - Inline place, flight, and train search/add component
  * Unified interface for adding any type of item to the itinerary
  */
+/**
+ * Generate smart time slot suggestions based on existing day items
+ */
+function generateTimeSlots(dayItems: EnrichedItem[], afterItemId?: string): TimeSlot[] {
+  const slots: TimeSlot[] = [];
+
+  // Sort items by time
+  const sortedItems = [...dayItems].filter(item => item.time).sort((a, b) => {
+    if (!a.time || !b.time) return 0;
+    return timeToMinutes(a.time) - timeToMinutes(b.time);
+  });
+
+  // Helper to format time for display
+  const formatTimeDisplay = (time: string): string => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const period = hours >= 12 ? 'PM' : 'AM';
+    const displayHours = hours % 12 || 12;
+    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+  };
+
+  // Find the item we're inserting after (if specified)
+  const afterIndex = afterItemId ? sortedItems.findIndex(item => item.id === afterItemId) : -1;
+  const afterItem = afterIndex >= 0 ? sortedItems[afterIndex] : null;
+  const beforeItem = afterIndex >= 0 && afterIndex < sortedItems.length - 1 ? sortedItems[afterIndex + 1] : null;
+
+  // If we have a preceding item, suggest time after it
+  if (afterItem && afterItem.time) {
+    const afterMinutes = timeToMinutes(afterItem.time);
+    const duration = afterItem.parsedNotes?.duration || 60;
+    const suggestedMinutes = afterMinutes + duration + 30; // Add 30 min buffer
+    const suggestedTime = minutesToTime(suggestedMinutes);
+
+    // Determine label based on item type
+    const itemType = afterItem.parsedNotes?.type;
+    let label = `After ${afterItem.title}`;
+    if (itemType === 'flight') {
+      label = `After Flight`;
+    } else if (itemType === 'hotel') {
+      label = `After check-in`;
+    }
+
+    slots.push({
+      label,
+      time: suggestedTime,
+      description: formatTimeDisplay(suggestedTime),
+    });
+  }
+
+  // If we have a following item, suggest time before it
+  if (beforeItem && beforeItem.time) {
+    const beforeMinutes = timeToMinutes(beforeItem.time);
+    const suggestedMinutes = beforeMinutes - 90; // 90 min before
+    if (suggestedMinutes > 0) {
+      const suggestedTime = minutesToTime(suggestedMinutes);
+      slots.push({
+        label: `Before ${beforeItem.title}`,
+        time: suggestedTime,
+        description: formatTimeDisplay(suggestedTime),
+      });
+    }
+  }
+
+  // Add standard meal time slots
+  const mealSlots: TimeSlot[] = [
+    { label: 'Breakfast', time: '08:30', description: '8:30 AM' },
+    { label: 'Lunch', time: '12:30', description: '12:30 PM' },
+    { label: 'Afternoon', time: '15:00', description: '3:00 PM' },
+    { label: 'Dinner', time: '19:00', description: '7:00 PM' },
+  ];
+
+  // Only add meal slots that don't conflict with existing items
+  for (const mealSlot of mealSlots) {
+    const mealMinutes = timeToMinutes(mealSlot.time);
+    const hasConflict = sortedItems.some(item => {
+      if (!item.time) return false;
+      const itemMinutes = timeToMinutes(item.time);
+      const duration = item.parsedNotes?.duration || 60;
+      return mealMinutes >= itemMinutes && mealMinutes <= itemMinutes + duration;
+    });
+
+    if (!hasConflict && !slots.some(s => s.time === mealSlot.time)) {
+      slots.push(mealSlot);
+    }
+  }
+
+  // Sort slots by time
+  slots.sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+
+  return slots;
+}
+
+/**
+ * Convert time string (HH:MM) to minutes since midnight
+ */
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + (minutes || 0);
+}
+
+/**
+ * Convert minutes since midnight to time string (HH:MM)
+ */
+function minutesToTime(minutes: number): string {
+  const clampedMinutes = Math.max(0, Math.min(1439, minutes)); // Clamp to valid day range
+  const hours = Math.floor(clampedMinutes / 60);
+  const mins = clampedMinutes % 60;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+}
+
 export default function AddPlaceBox({
   city,
   dayNumber = 1,
+  dayItems = [],
+  suggestedTime,
+  afterItemId,
   onSelect,
   onAddFlight,
   onAddTrain,
@@ -78,6 +217,13 @@ export default function AddPlaceBox({
   const [category, setCategory] = useState('All');
   const [places, setPlaces] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Time selection state
+  const [selectedTime, setSelectedTime] = useState<string | null>(suggestedTime || null);
+  const [showTimeDropdown, setShowTimeDropdown] = useState(false);
+
+  // Generate smart time slots
+  const timeSlots = generateTimeSlots(dayItems, afterItemId);
 
   // Google search state
   const [googleQuery, setGoogleQuery] = useState('');
@@ -138,7 +284,7 @@ export default function AddPlaceBox({
       notes: activityNotes || undefined,
     };
 
-    onAddActivity(activityData);
+    onAddActivity(activityData, selectedTime || undefined);
     setSelectedActivity(null);
     setActivityDuration(60);
     setActivityNotes('');
@@ -187,7 +333,7 @@ export default function AddPlaceBox({
 
   const handleSelect = (place: Destination) => {
     if (onSelect) {
-      onSelect(place);
+      onSelect(place, selectedTime || undefined);
     }
   };
 
@@ -237,7 +383,7 @@ export default function AddPlaceBox({
       phone_number: googlePlace.phone,
     };
 
-    onSelect(destination);
+    onSelect(destination, selectedTime || undefined);
     setGooglePlace(null);
     setGoogleQuery('');
   };
@@ -347,12 +493,90 @@ export default function AddPlaceBox({
     <TripCard className={className}>
       {/* Header */}
       <TripCardHeader>
-        <div className="flex items-center gap-2">
-          <Plus className="w-4 h-4 text-gray-400" />
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <Plus className="w-4 h-4 text-gray-400 flex-shrink-0" />
           <TripCardTitle>Add to Trip</TripCardTitle>
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-400 flex-shrink-0">
             · Day {dayNumber}
           </span>
+          {/* Time Selector */}
+          <div className="relative">
+            <button
+              onClick={() => setShowTimeDropdown(!showTimeDropdown)}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              <span>·</span>
+              <span className="truncate max-w-[120px]">
+                {selectedTime ? (
+                  (() => {
+                    const [hours, minutes] = selectedTime.split(':').map(Number);
+                    const period = hours >= 12 ? 'PM' : 'AM';
+                    const displayHours = hours % 12 || 12;
+                    return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
+                  })()
+                ) : (
+                  'auto'
+                )}
+              </span>
+              <ChevronDown className="w-3 h-3 flex-shrink-0" />
+            </button>
+
+            {/* Time Dropdown */}
+            {showTimeDropdown && (
+              <div className="absolute left-0 top-full mt-1 w-56 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg z-50 overflow-hidden">
+                {/* Auto option */}
+                <button
+                  onClick={() => {
+                    setSelectedTime(null);
+                    setShowTimeDropdown(false);
+                  }}
+                  className={`w-full px-3 py-2 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-between ${
+                    !selectedTime ? 'bg-gray-50 dark:bg-gray-800' : ''
+                  }`}
+                >
+                  <span className="text-gray-900 dark:text-white">Auto</span>
+                  <span className="text-gray-400">System finds best slot</span>
+                </button>
+
+                {/* Smart time slots */}
+                {timeSlots.length > 0 && (
+                  <>
+                    <div className="border-t border-gray-100 dark:border-gray-800" />
+                    {timeSlots.map((slot, index) => (
+                      <button
+                        key={`${slot.time}-${index}`}
+                        onClick={() => {
+                          setSelectedTime(slot.time);
+                          setShowTimeDropdown(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-xs hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center justify-between ${
+                          selectedTime === slot.time ? 'bg-gray-50 dark:bg-gray-800' : ''
+                        }`}
+                      >
+                        <span className="text-gray-900 dark:text-white">{slot.label}</span>
+                        <span className="text-gray-400">{slot.description}</span>
+                      </button>
+                    ))}
+                  </>
+                )}
+
+                {/* Custom time option */}
+                <div className="border-t border-gray-100 dark:border-gray-800" />
+                <div className="px-3 py-2">
+                  <label className="text-xs text-gray-400 mb-1 block">Custom time</label>
+                  <input
+                    type="time"
+                    value={selectedTime || ''}
+                    onChange={(e) => {
+                      setSelectedTime(e.target.value || null);
+                    }}
+                    onBlur={() => setShowTimeDropdown(false)}
+                    className="w-full px-2 py-1 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-300 dark:focus:ring-gray-600"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         {onClose && (
           <TripButton variant="icon" onClick={onClose} className="-mr-1">
