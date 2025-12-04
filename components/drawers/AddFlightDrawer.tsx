@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
-import { Plane } from 'lucide-react';
+import { Plane, Search, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -37,6 +37,15 @@ export default function AddFlightDrawer({
   const { closeDrawer } = useDrawerStore();
   const [saving, setSaving] = useState(false);
 
+  // Autofill state
+  const [showAutofill, setShowAutofill] = useState(true);
+  const [lookupFlight, setLookupFlight] = useState('');
+  const [lookupDate, setLookupDate] = useState('');
+  const [lookingUp, setLookingUp] = useState(false);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const [autofilled, setAutofilled] = useState(false);
+
+  // Form state
   const [airline, setAirline] = useState('');
   const [flightNumber, setFlightNumber] = useState('');
   const [from, setFrom] = useState('');
@@ -47,6 +56,53 @@ export default function AddFlightDrawer({
   const [arrivalTime, setArrivalTime] = useState('');
   const [confirmationNumber, setConfirmationNumber] = useState('');
   const [notes, setNotes] = useState('');
+
+  // Look up flight details
+  const handleLookup = async () => {
+    if (!lookupFlight.trim() || !lookupDate) {
+      setLookupError('Enter flight number and date');
+      return;
+    }
+
+    setLookingUp(true);
+    setLookupError(null);
+
+    try {
+      const response = await fetch('/api/flight-lookup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          flightNumber: lookupFlight.trim(),
+          date: lookupDate,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        setLookupError(result.error || 'Flight not found');
+        return;
+      }
+
+      // Autofill the form
+      const data = result.data;
+      setAirline(data.airline || '');
+      setFlightNumber(data.flightNumber || '');
+      setFrom(data.from || '');
+      setTo(data.to || '');
+      setDepartureDate(data.departureDate || '');
+      setDepartureTime(data.departureTime || '');
+      setArrivalDate(data.arrivalDate || '');
+      setArrivalTime(data.arrivalTime || '');
+      setAutofilled(true);
+      setShowAutofill(false);
+    } catch (err) {
+      console.error('Flight lookup error:', err);
+      setLookupError('Failed to look up flight');
+    } finally {
+      setLookingUp(false);
+    }
+  };
 
   const handleSubmit = async () => {
     if (!airline.trim() || !from.trim() || !to.trim()) return;
@@ -87,6 +143,93 @@ export default function AddFlightDrawer({
         <div className="w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
           <Plane className="w-8 h-8 text-blue-500" />
         </div>
+      </div>
+
+      {/* Autofill Section */}
+      <div className="rounded-xl border border-stone-200 dark:border-gray-700 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowAutofill(!showAutofill)}
+          className="w-full px-4 py-3 flex items-center justify-between bg-stone-50 dark:bg-gray-800/50 hover:bg-stone-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-blue-500" />
+            <span className="text-sm font-medium text-stone-700 dark:text-gray-300">
+              {autofilled ? 'Flight details loaded' : 'Look up flight details'}
+            </span>
+          </div>
+          {showAutofill ? (
+            <ChevronUp className="w-4 h-4 text-stone-400" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-stone-400" />
+          )}
+        </button>
+
+        {showAutofill && (
+          <div className="p-4 space-y-3 bg-white dark:bg-gray-900">
+            <p className="text-xs text-stone-500 dark:text-gray-400">
+              Enter your flight number and date to auto-fill the details
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="lookupFlight" className="text-xs">
+                  Flight #
+                </Label>
+                <Input
+                  id="lookupFlight"
+                  type="text"
+                  value={lookupFlight}
+                  onChange={(e) => {
+                    setLookupFlight(e.target.value.toUpperCase());
+                    setLookupError(null);
+                  }}
+                  placeholder="e.g. UA123"
+                  className="h-9"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="lookupDate" className="text-xs">
+                  Date
+                </Label>
+                <Input
+                  id="lookupDate"
+                  type="date"
+                  value={lookupDate}
+                  onChange={(e) => {
+                    setLookupDate(e.target.value);
+                    setLookupError(null);
+                  }}
+                  className="h-9"
+                />
+              </div>
+            </div>
+            {lookupError && (
+              <p className="text-xs text-red-500 dark:text-red-400">
+                {lookupError}
+              </p>
+            )}
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleLookup}
+              disabled={lookingUp || !lookupFlight.trim() || !lookupDate}
+              className="w-full"
+            >
+              {lookingUp ? (
+                <>
+                  <Spinner className="w-3 h-3 mr-2" />
+                  Looking up...
+                </>
+              ) : (
+                <>
+                  <Search className="w-3 h-3 mr-2" />
+                  Look Up Flight
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Airline & Flight Number */}
