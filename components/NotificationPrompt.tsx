@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Bell, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,24 +8,58 @@ import {
   shouldShowNotificationPrompt,
   dismissNotificationPrompt,
 } from '@/hooks/useNotifications';
+import {
+  POPUP_EVENTS,
+  POPUP_DELAY_AFTER_PREVIOUS,
+  isCookieConsentResolved,
+} from '@/lib/popup-queue';
 
 interface NotificationPromptProps {
-  /** Delay before showing the prompt (in ms) */
+  /** Delay before showing the prompt after cookie consent is resolved (in ms) */
   delay?: number;
 }
 
 /**
  * A non-intrusive prompt to request notification permissions
- * Shows after a delay and can be dismissed temporarily or permanently
+ * Shows after cookie consent is resolved (progressive disclosure pattern)
+ * to prevent multiple popups appearing simultaneously
  */
-export function NotificationPrompt({ delay = 10000 }: NotificationPromptProps) {
+export function NotificationPrompt({ delay = POPUP_DELAY_AFTER_PREVIOUS }: NotificationPromptProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [cookieConsentResolved, setCookieConsentResolved] = useState(false);
   const { isSupported, permission, isRequesting, requestPermission } = useNotifications();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Listen for cookie consent resolution
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Check if already resolved
+    if (isCookieConsentResolved()) {
+      setCookieConsentResolved(true);
+      return;
+    }
+
+    // Listen for the event
+    const handleCookieConsentResolved = () => {
+      setCookieConsentResolved(true);
+    };
+
+    window.addEventListener(POPUP_EVENTS.COOKIE_CONSENT_RESOLVED, handleCookieConsentResolved);
+
+    return () => {
+      window.removeEventListener(POPUP_EVENTS.COOKIE_CONSENT_RESOLVED, handleCookieConsentResolved);
+    };
+  }, []);
+
+  // Show notification prompt only after cookie consent is resolved
   useEffect(() => {
     // Only show on client side
     if (typeof window === 'undefined') return;
+
+    // Wait for cookie consent to be resolved first (progressive disclosure)
+    if (!cookieConsentResolved) return;
 
     // Don't show if not supported or already decided
     if (!isSupported || permission !== 'default') return;
@@ -33,14 +67,18 @@ export function NotificationPrompt({ delay = 10000 }: NotificationPromptProps) {
     // Check if should show based on dismiss state
     if (!shouldShowNotificationPrompt()) return;
 
-    // Show after delay
-    const timer = setTimeout(() => {
+    // Show after delay (gives user time to process after cookie consent)
+    timerRef.current = setTimeout(() => {
       setIsAnimating(true);
       setTimeout(() => setIsVisible(true), 50);
     }, delay);
 
-    return () => clearTimeout(timer);
-  }, [isSupported, permission, delay]);
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, [isSupported, permission, delay, cookieConsentResolved]);
 
   const handleEnable = async () => {
     const result = await requestPermission();
