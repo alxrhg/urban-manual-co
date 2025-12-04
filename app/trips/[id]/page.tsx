@@ -305,8 +305,8 @@ export default function TripPage() {
                       .map((item, index) => ({
                         id: item.id,
                         name: item.title || 'Place',
-                        latitude: item.parsedNotes?.latitude || item.destination?.latitude,
-                        longitude: item.parsedNotes?.longitude || item.destination?.longitude,
+                        latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
+                        longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
                         category: item.destination?.category || item.parsedNotes?.category,
                         order: index + 1,
                       }))}
