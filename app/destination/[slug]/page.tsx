@@ -2,6 +2,9 @@ import { Metadata } from 'next';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import DetailSkeleton from '@/src/features/detail/DetailSkeleton';
+
+// Revalidate destination pages every hour for ISR
+export const revalidate = 3600;
 import {
   generateDestinationMetadata,
   generateDestinationSchema,
