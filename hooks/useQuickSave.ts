@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/lib/toast';
 
 interface UseQuickSaveOptions {
   destinationId?: number;
@@ -105,6 +106,8 @@ export function useQuickSave({
             .eq('user_id', user.id)
             .eq('destination_id', destinationId);
         }
+
+        toast.success('Removed from saved');
       } else {
         // Quick save (no collection required)
         const { error } = await supabaseClient
@@ -115,6 +118,8 @@ export function useQuickSave({
           });
 
         if (error) throw error;
+
+        toast.success('Saved');
 
         // Track save event for recommendations (fire and forget)
         fetch('/api/discovery/track-event', {
@@ -132,6 +137,7 @@ export function useQuickSave({
       console.error('Error toggling save:', error);
       setIsSaved(previousState);
       onSaveChange?.(previousState);
+      toast.error('Failed to save. Please try again.');
     } finally {
       setIsSaving(false);
       pendingSaveRef.current = false;
@@ -162,6 +168,8 @@ export function useQuickSave({
           .eq('destination_slug', destinationSlug);
 
         if (error) throw error;
+
+        toast.success('Removed from visited');
       } else {
         // Mark as visited
         const { error } = await supabaseClient
@@ -173,6 +181,8 @@ export function useQuickSave({
           });
 
         if (error) throw error;
+
+        toast.success('Marked as visited');
 
         // Track visit event (fire and forget)
         fetch('/api/discovery/track-event', {
@@ -190,6 +200,7 @@ export function useQuickSave({
       console.error('Error toggling visited:', error);
       setIsVisited(previousState);
       onVisitChange?.(previousState);
+      toast.error('Failed to update. Please try again.');
     } finally {
       setIsMarkingVisited(false);
       pendingVisitRef.current = false;
