@@ -13,6 +13,14 @@ interface Trip {
   locations: TripLocation[];
 }
 
+// Browsing context for return path memory
+interface BrowsingContext {
+  path: string;
+  label: string;
+  filters?: Record<string, string>;
+  scrollPosition?: number;
+}
+
 interface TripContextType {
   trips: Trip[];
   activeTrip: Trip | null;
@@ -20,7 +28,15 @@ interface TripContextType {
   createTrip: (name: string, destination: string) => Promise<void>;
   deleteTrip: (tripId: string) => Promise<void>;
   refreshTrips: () => Promise<void>;
+  // Browsing context for return path
+  browsingContext: BrowsingContext | null;
+  saveBrowsingContext: (context: BrowsingContext) => void;
+  clearBrowsingContext: () => void;
 }
+
+// Storage keys
+const ACTIVE_TRIP_STORAGE_KEY = 'urban-manual-active-trip';
+const BROWSING_CONTEXT_STORAGE_KEY = 'urban-manual-browsing-context';
 
 const TripContext = createContext<TripContextType | undefined>(undefined);
 
@@ -28,6 +44,41 @@ export function TripProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [activeTrip, setActiveTripState] = useState<Trip | null>(null);
+  const [browsingContext, setBrowsingContext] = useState<BrowsingContext | null>(null);
+  const [activeTripIdFromStorage, setActiveTripIdFromStorage] = useState<string | null>(null);
+
+  // Load active trip ID and browsing context from localStorage on mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const storedTripId = localStorage.getItem(ACTIVE_TRIP_STORAGE_KEY);
+      if (storedTripId) {
+        setActiveTripIdFromStorage(storedTripId);
+      }
+
+      const storedContext = localStorage.getItem(BROWSING_CONTEXT_STORAGE_KEY);
+      if (storedContext) {
+        setBrowsingContext(JSON.parse(storedContext));
+      }
+    } catch (e) {
+      console.error('Error loading from localStorage:', e);
+    }
+  }, []);
+
+  // Restore active trip from storage once trips are loaded
+  useEffect(() => {
+    if (activeTripIdFromStorage && trips.length > 0 && !activeTrip) {
+      const trip = trips.find(t => t.id === activeTripIdFromStorage);
+      if (trip) {
+        setActiveTripState(trip);
+      } else {
+        // Trip no longer exists, clear storage
+        localStorage.removeItem(ACTIVE_TRIP_STORAGE_KEY);
+        setActiveTripIdFromStorage(null);
+      }
+    }
+  }, [activeTripIdFromStorage, trips, activeTrip]);
 
   // Helper to parse notes from itinerary item
   const parseItemNotes = useCallback((notes: string | null): ItineraryItemNotes => {
@@ -120,13 +171,36 @@ export function TripProvider({ children }: { children: ReactNode }) {
   const setActiveTrip = useCallback((tripId: string | null) => {
     if (!tripId) {
       setActiveTripState(null);
+      // Clear from localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(ACTIVE_TRIP_STORAGE_KEY);
+      }
       return;
     }
-    setActiveTripState(currentTrips => {
-      const trip = trips.find((t) => t.id === tripId);
-      return trip || null;
-    });
+    const trip = trips.find((t) => t.id === tripId);
+    if (trip) {
+      setActiveTripState(trip);
+      // Persist to localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(ACTIVE_TRIP_STORAGE_KEY, tripId);
+      }
+    }
   }, [trips]);
+
+  // Browsing context functions for return path memory
+  const saveBrowsingContext = useCallback((context: BrowsingContext) => {
+    setBrowsingContext(context);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(BROWSING_CONTEXT_STORAGE_KEY, JSON.stringify(context));
+    }
+  }, []);
+
+  const clearBrowsingContext = useCallback(() => {
+    setBrowsingContext(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(BROWSING_CONTEXT_STORAGE_KEY);
+    }
+  }, []);
 
   const createTrip = useCallback(async (name: string, destination: string) => {
     if (!user) return;
@@ -203,7 +277,10 @@ export function TripProvider({ children }: { children: ReactNode }) {
     createTrip,
     deleteTrip,
     refreshTrips: fetchTrips,
-  }), [trips, activeTrip, setActiveTrip, createTrip, deleteTrip, fetchTrips]);
+    browsingContext,
+    saveBrowsingContext,
+    clearBrowsingContext,
+  }), [trips, activeTrip, setActiveTrip, createTrip, deleteTrip, fetchTrips, browsingContext, saveBrowsingContext, clearBrowsingContext]);
 
   return (
     <TripContext.Provider value={contextValue}>

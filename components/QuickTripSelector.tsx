@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, memo } from 'react';
-import { X, Plus, MapPin, Loader2, Check } from 'lucide-react';
+import { X, Plus, MapPin, Loader2, Check, ChevronRight, ArrowLeft, Eye } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { formatDestinationsFromField } from '@/types/trip';
+import { useTrip } from '@/contexts/TripContext';
 
 interface Trip {
   id: string;
@@ -23,6 +24,9 @@ interface QuickTripSelectorProps {
   destinationCity?: string;
 }
 
+// Post-action states
+type ActionState = 'selecting' | 'success';
+
 /**
  * Quick trip selector modal for adding destinations to trips
  * Reduces friction by showing a simple list of trips to choose from
@@ -36,10 +40,12 @@ export const QuickTripSelector = memo(function QuickTripSelector({
 }: QuickTripSelectorProps) {
   const { user } = useAuth();
   const router = useRouter();
+  const { setActiveTrip, browsingContext } = useTrip();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [actionState, setActionState] = useState<ActionState>('selecting');
+  const [successTrip, setSuccessTrip] = useState<Trip | null>(null);
 
   useEffect(() => {
     if (!isOpen || !user) return;
@@ -102,11 +108,15 @@ export const QuickTripSelector = memo(function QuickTripSelector({
 
       if (error) throw error;
 
-      setSuccess(tripId);
-      setTimeout(() => {
-        onClose();
-        setSuccess(null);
-      }, 1000);
+      // Find the trip we added to and set it as active
+      const addedTrip = trips.find(t => t.id === tripId);
+      if (addedTrip) {
+        setSuccessTrip(addedTrip);
+        setActiveTrip(tripId);
+      }
+
+      // Show success state with options instead of auto-closing
+      setActionState('success');
     } catch (error) {
       console.error('Error adding to trip:', error);
       alert('Failed to add to trip. Please try again.');
@@ -149,11 +159,17 @@ export const QuickTripSelector = memo(function QuickTripSelector({
 
       if (itemError) throw itemError;
 
-      setSuccess('new');
-      setTimeout(() => {
-        onClose();
-        router.push(`/trips/${newTrip.id}`);
-      }, 800);
+      // Set as success trip and active trip
+      const createdTrip: Trip = {
+        id: newTrip.id,
+        name: newTrip.name,
+        destination: newTrip.destination,
+        start_date: null,
+        cover_image: null,
+      };
+      setSuccessTrip(createdTrip);
+      setActiveTrip(newTrip.id);
+      setActionState('success');
     } catch (error) {
       console.error('Error creating trip:', error);
       alert('Failed to create trip. Please try again.');
@@ -162,12 +178,112 @@ export const QuickTripSelector = memo(function QuickTripSelector({
     }
   };
 
+  // Post-action handlers
+  const handleViewTrip = () => {
+    if (successTrip) {
+      onClose();
+      router.push(`/trips/${successTrip.id}`);
+    }
+  };
+
+  const handleAddMore = () => {
+    // Reset to selection state for adding more
+    setActionState('selecting');
+    setSuccessTrip(null);
+  };
+
+  const handleKeepBrowsing = () => {
+    onClose();
+    // Reset state for next time
+    setActionState('selecting');
+    setSuccessTrip(null);
+  };
+
+  const handleClose = () => {
+    onClose();
+    // Reset state for next time
+    setActionState('selecting');
+    setSuccessTrip(null);
+  };
+
   if (!isOpen) return null;
 
+  // Success screen with next step options
+  if (actionState === 'success' && successTrip) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+        onClick={handleClose}
+      >
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+        {/* Success Modal */}
+        <div
+          className="relative w-full sm:max-w-md bg-white dark:bg-stone-900 sm:rounded-2xl rounded-t-2xl shadow-2xl overflow-hidden animate-slide-up"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Success Header */}
+          <div className="p-6 text-center border-b border-stone-200 dark:border-stone-800">
+            <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-4">
+              <Check className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <h2 className="text-lg font-medium text-stone-900 dark:text-white">
+              Added to {successTrip.name}
+            </h2>
+            <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">
+              {destinationName} is now in your trip
+            </p>
+          </div>
+
+          {/* Next Step Options */}
+          <div className="p-4 space-y-2">
+            <button
+              onClick={handleViewTrip}
+              className="w-full flex items-center justify-between gap-3 p-4 rounded-xl bg-stone-900 dark:bg-white text-white dark:text-stone-900 hover:opacity-90 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <Eye className="w-5 h-5" />
+                <span className="font-medium">View Trip</span>
+              </div>
+              <ChevronRight className="w-5 h-5" />
+            </button>
+
+            <button
+              onClick={handleAddMore}
+              className="w-full flex items-center justify-between gap-3 p-4 rounded-xl border border-stone-200 dark:border-stone-700 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <Plus className="w-5 h-5 text-stone-600 dark:text-stone-400" />
+                <span className="font-medium text-stone-900 dark:text-white">Add More Places</span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-stone-400" />
+            </button>
+
+            <button
+              onClick={handleKeepBrowsing}
+              className="w-full flex items-center justify-center gap-2 p-4 text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors"
+            >
+              {browsingContext ? (
+                <>
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back to {browsingContext.label}</span>
+                </>
+              ) : (
+                <span>Keep Browsing</span>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Selection screen (default)
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      onClick={onClose}
+      onClick={handleClose}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
@@ -186,7 +302,7 @@ export const QuickTripSelector = memo(function QuickTripSelector({
             </p>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors"
             aria-label="Close"
           >
@@ -209,15 +325,9 @@ export const QuickTripSelector = memo(function QuickTripSelector({
                 className="w-full flex items-center gap-3 p-4 rounded-xl border-2 border-dashed border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600 hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-all disabled:opacity-50"
               >
                 {adding === 'new' ? (
-                  success === 'new' ? (
-                    <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                      <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
-                      <Loader2 className="w-5 h-5 animate-spin text-stone-500" />
-                    </div>
-                  )
+                  <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 animate-spin text-stone-500" />
+                  </div>
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-stone-900 dark:bg-white flex items-center justify-center">
                     <Plus className="w-5 h-5 text-white dark:text-stone-900" />
@@ -245,15 +355,9 @@ export const QuickTripSelector = memo(function QuickTripSelector({
                       className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-800/50 transition-all disabled:opacity-50"
                     >
                       {adding === trip.id ? (
-                        success === trip.id ? (
-                          <div className="w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
-                            <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                          </div>
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
-                            <Loader2 className="w-5 h-5 animate-spin text-stone-500" />
-                          </div>
-                        )
+                        <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                          <Loader2 className="w-5 h-5 animate-spin text-stone-500" />
+                        </div>
                       ) : trip.cover_image ? (
                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-stone-100 dark:bg-stone-800">
                           <img

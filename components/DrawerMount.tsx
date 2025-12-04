@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 import { AccountDrawer } from '@/components/AccountDrawer';
@@ -26,8 +26,11 @@ import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 const INLINE_TYPES = ['destination', 'account-new', 'trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai'];
 
 export default function DrawerMount() {
-  const { open, type, props, closeDrawer, displayMode } = useDrawerStore();
+  const { open, type, props, closeDrawer, displayMode, drawerStack, popDrawer, hasParentDrawer } = useDrawerStore();
   const drawerStyle = useDrawerStyle();
+
+  // Check if there's a parent drawer for back navigation
+  const showBackButton = useMemo(() => hasParentDrawer(), [drawerStack]);
 
   // Track desktop state for conditional rendering
   const [isDesktop, setIsDesktop] = useState(false);

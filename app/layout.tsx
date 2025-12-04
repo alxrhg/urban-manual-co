@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
+import { TripProvider } from "@/contexts/TripContext";
 import { DrawerProvider } from "@/contexts/DrawerContext";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
@@ -15,6 +16,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { SkipNavigation } from "@/components/SkipNavigation";
 import DrawerMount from "@/components/DrawerMount";
 import { PanelLayout } from "@/components/PanelMount";
+import { FloatingTripWidget } from "@/components/FloatingTripWidget";
 import MyStatsig from "./my-statsig";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
@@ -231,24 +233,27 @@ export default function RootLayout({
             <TooltipProvider>
               <TRPCProvider>
                 <AuthProvider>
-                  <DrawerProvider>
-                    <Suspense fallback={null}>
-                      <AdminEditModeProvider>
-                        <ItineraryProvider>
-                          <Header />
-                          <PanelLayout>
-                            <main id="main-content" className="min-h-screen page-transition" role="main">
-                              {children}
-                            </main>
-                            <Footer />
-                          </PanelLayout>
-                          <CookieConsent />
-                          <NotificationPrompt />
-                          <DrawerMount />
-                        </ItineraryProvider>
-                      </AdminEditModeProvider>
-                    </Suspense>
-                  </DrawerProvider>
+                  <TripProvider>
+                    <DrawerProvider>
+                      <Suspense fallback={null}>
+                        <AdminEditModeProvider>
+                          <ItineraryProvider>
+                            <Header />
+                            <PanelLayout>
+                              <main id="main-content" className="min-h-screen page-transition" role="main">
+                                {children}
+                              </main>
+                              <Footer />
+                            </PanelLayout>
+                            <CookieConsent />
+                            <NotificationPrompt />
+                            <DrawerMount />
+                            <FloatingTripWidget />
+                          </ItineraryProvider>
+                        </AdminEditModeProvider>
+                      </Suspense>
+                    </DrawerProvider>
+                  </TripProvider>
                 </AuthProvider>
               </TRPCProvider>
             </TooltipProvider>

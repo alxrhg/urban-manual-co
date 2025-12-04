@@ -2,10 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
-import { User, Map } from "lucide-react";
+import { User, Map, MapPin } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
+import { useTrip } from "@/contexts/TripContext";
 import { ChatDrawer } from "@/components/ChatDrawer";
 import { LoginDrawer } from "@/components/LoginDrawer";
 import { CommandPalette } from "@/components/CommandPalette";
@@ -19,6 +20,7 @@ export function Header() {
   const router = useRouter();
   const { user } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const { activeTrip } = useTrip();
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -111,22 +113,44 @@ export function Header() {
         </span>
       )}
 
-      {/* Trips button - always visible */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            onClick={() => navigate('/trips')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
-            aria-label="View trips"
-          >
-            <Map className="w-4 h-4" />
-            <span>Trips</span>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{user ? 'View your trips' : 'Plan a trip'}</p>
-        </TooltipContent>
-      </Tooltip>
+      {/* Trips button - shows active trip context when available */}
+      {activeTrip ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => navigate(`/trips/${activeTrip.id}`)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-200 rounded-full text-sm font-medium hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              aria-label={`Continue planning ${activeTrip.name}`}
+            >
+              <span className="relative">
+                <MapPin className="w-4 h-4" />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+              </span>
+              <span className="hidden sm:inline max-w-[120px] truncate">{activeTrip.name}</span>
+              <span className="sm:hidden">Trip</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Continue planning: {activeTrip.name}</p>
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => navigate('/trips')}
+              className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+              aria-label="View trips"
+            >
+              <Map className="w-4 h-4" />
+              <span>Trips</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{user ? 'View your trips' : 'Plan a trip'}</p>
+          </TooltipContent>
+        </Tooltip>
+      )}
 
       {user ? (
         <Tooltip>
