@@ -20,6 +20,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { CookieConsent } from "@/components/CookieConsent";
+import { NotificationPrompt } from "@/components/NotificationPrompt";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -33,6 +34,12 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://www.urbanmanual.co'),
   title: "The Urban Manual - Curated Guide to World's Best Hotels, Restaurants & Travel Destinations",
   description: "Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide. Your curated guide to exceptional travel experiences.",
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Urban Manual',
+  },
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
@@ -236,6 +243,7 @@ export default function RootLayout({
                             <Footer />
                           </PanelLayout>
                           <CookieConsent />
+                          <NotificationPrompt />
                           <DrawerMount />
                         </ItineraryProvider>
                       </AdminEditModeProvider>

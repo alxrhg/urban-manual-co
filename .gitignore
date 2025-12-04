@@ -36,6 +36,13 @@ CLEANUP_TEMPORARY_FILES.sh
 !next.config.ts
 !vercel.json
 !capacitor.config.ts
+!public/manifest.json
+
+# PWA generated files (next-pwa)
+public/sw.js
+public/sw.js.map
+public/workbox-*.js
+public/workbox-*.js.map
 
 # IDE and editor files
 .vscode/
