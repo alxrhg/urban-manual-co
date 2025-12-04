@@ -9,8 +9,6 @@ import {
   Plane,
   Building2,
   MapPin,
-  Navigation,
-  ExternalLink,
   Plus,
 } from 'lucide-react';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -577,57 +575,30 @@ function HotelCard({
   onClick?: () => void;
 }) {
   const notes = item.parsedNotes;
-
-  // Use checkInTime from notes, or fall back to item.time, or show placeholder
   const checkInTime = notes?.checkInTime || item.time || null;
+
   const formatTime = (timeStr: string) => {
     const [hours, minutes] = timeStr.split(':').map(Number);
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes?.toString().padStart(2, '0')} ${period}`;
+    return `${hours.toString().padStart(2, '0')}:${minutes?.toString().padStart(2, '0') || '00'}`;
   };
 
   return (
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-white dark:bg-gray-900/80 border p-4 cursor-pointer transition-all
+        rounded-2xl bg-stone-50 dark:bg-gray-900 border p-4 cursor-pointer transition-all
         ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
       `}
     >
-      <div className="flex gap-4">
-        {/* Hotel Icon */}
-        <div className="w-16 h-16 rounded-xl bg-stone-100 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
-          <Building2 className="w-7 h-7 text-stone-500 dark:text-gray-400" />
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+          <Building2 className="w-5 h-5 text-stone-500 dark:text-gray-400" />
         </div>
-
-        {/* Hotel Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <h4 className="font-semibold text-stone-900 dark:text-white">
-                Check-in at {item.title || 'Hotel'}
-              </h4>
-              <p className="text-sm text-stone-500 dark:text-gray-400 mt-0.5">
-                {notes?.roomType ? `${notes.roomType} · ` : ''}{notes?.address || 'Address not set'}
-              </p>
-            </div>
-            <div className="text-sm text-stone-500 flex-shrink-0">
-              {checkInTime ? formatTime(checkInTime) : <span className="text-stone-400">Time not set</span>}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-2 mt-3">
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 dark:bg-gray-800 rounded-lg text-xs text-stone-600 dark:text-gray-300 hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors">
-              <Navigation className="w-3 h-3" />
-              Get Directions
-            </button>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 dark:bg-gray-800 rounded-lg text-xs text-stone-600 dark:text-gray-300 hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors">
-              <ExternalLink className="w-3 h-3" />
-              View Booking
-            </button>
-          </div>
+        <div className="flex-1">
+          <h4 className="text-sm font-medium text-stone-900 dark:text-white">Check-in at {item.title || 'Hotel'}</h4>
+          <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
+            {checkInTime ? `At ${formatTime(checkInTime)}` : 'Time not set'}
+          </p>
         </div>
       </div>
     </div>
@@ -643,58 +614,22 @@ function NightStayCard({
   onClick?: () => void;
 }) {
   const notes = hotel.parsedNotes;
-
-  // Format time for display
-  const formatTime = (timeStr?: string) => {
-    if (!timeStr) return null;
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    return `${hours.toString().padStart(2, '0')}:${minutes?.toString().padStart(2, '0') || '00'}`;
-  };
-
-  const checkInTime = formatTime(notes?.checkInTime);
-  const checkOutTime = formatTime(notes?.checkOutTime);
   const breakfastIncluded = notes?.breakfastIncluded;
 
   return (
-    <div className="space-y-3">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <span className="text-stone-400 dark:text-gray-500">☽</span>
-        <span className="text-sm font-medium text-stone-600 dark:text-gray-300">Overnight</span>
-        <span className="px-2 py-0.5 bg-stone-100 dark:bg-gray-800 rounded-full text-xs text-stone-500 dark:text-gray-400">
-          1 night
-        </span>
-        {breakfastIncluded && (
-          <span className="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 rounded-full text-xs text-amber-600 dark:text-amber-400">
-            Breakfast included
-          </span>
-        )}
-      </div>
-
-      {/* Hotel Card */}
-      <div
-        onClick={onClick}
-        className="rounded-2xl bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-5 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
-      >
-        <h4 className="text-base font-semibold text-stone-900 dark:text-white mb-1">
-          {hotel.title || 'Hotel'}
-        </h4>
-        <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">
-          {notes?.address || 'Address not set'}
-        </p>
-
-        {/* Divider */}
-        <div className="border-t border-stone-100 dark:border-gray-800 pt-4">
-          <div className="flex items-center gap-6 text-sm">
-            <div>
-              <span className="text-stone-400 dark:text-gray-500 mr-2">Check-in</span>
-              <span className="font-medium text-stone-900 dark:text-white">{checkInTime || '—'}</span>
-            </div>
-            <div>
-              <span className="text-stone-400 dark:text-gray-500 mr-2">Check-out</span>
-              <span className="font-medium text-stone-900 dark:text-white">{checkOutTime || '—'}</span>
-            </div>
-          </div>
+    <div
+      onClick={onClick}
+      className="rounded-2xl bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+          <span className="text-lg">☽</span>
+        </div>
+        <div className="flex-1">
+          <h4 className="text-sm font-medium text-stone-900 dark:text-white">Overnight at {hotel.title || 'Hotel'}</h4>
+          <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
+            {breakfastIncluded ? '1 night · Breakfast included' : '1 night'}
+          </p>
         </div>
       </div>
     </div>
@@ -715,13 +650,15 @@ function BreakfastCard({
   return (
     <div
       onClick={onClick}
-      className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 p-4 cursor-pointer transition-all hover:border-amber-200 dark:hover:border-amber-800"
+      className="rounded-2xl bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
     >
       <div className="flex items-center gap-3">
-        <span className="text-xl">🍳</span>
+        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+          <span className="text-lg">🍳</span>
+        </div>
         <div className="flex-1">
-          <h4 className="text-sm font-medium text-amber-900 dark:text-amber-100">Breakfast at {hotel.title || 'Hotel'}</h4>
-          <p className="text-xs text-amber-600/70 dark:text-amber-300/70 mt-0.5">{breakfastTime}</p>
+          <h4 className="text-sm font-medium text-stone-900 dark:text-white">Breakfast at {hotel.title || 'Hotel'}</h4>
+          <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">{breakfastTime}</p>
         </div>
       </div>
     </div>
