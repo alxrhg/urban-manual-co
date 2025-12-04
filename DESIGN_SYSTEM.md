@@ -59,15 +59,35 @@
 --purple: NEVER USE PURPLE - Use gray/neutral instead
 ```
 
-### Spacing
+### Spacing Scale (4px Base Unit)
 ```css
-/* Based on Tailwind's spacing scale */
---space-xs: 0.25rem  /* 4px */
---space-sm: 0.5rem   /* 8px */
---space-md: 1rem     /* 16px */
---space-lg: 1.5rem   /* 24px */
---space-xl: 2rem     /* 32px */
---space-2xl: 3rem    /* 48px */
+/* ALWAYS use Tailwind spacing classes, never arbitrary like p-[50px] */
+/* Core spacing scale */
+0.5:  2px    /* Micro spacing, borders */
+1:    4px    /* Tight spacing */
+1.5:  6px    /* Compact elements */
+2:    8px    /* Small gaps */
+3:    12px   /* Medium gaps */
+4:    16px   /* Standard padding */
+5:    20px   /* Comfortable padding */
+6:    24px   /* Section gaps */
+8:    32px   /* Large gaps */
+10:   40px   /* Component separation */
+12:   48px   /* Section spacing */
+16:   64px   /* Page sections */
+20:   80px   /* Major sections */
+24:   96px   /* Hero spacing */
+
+/* Common usage patterns */
+gap-1.5     /* Icon + text */
+gap-2       /* Related items */
+gap-3       /* List items */
+gap-4       /* Card content */
+gap-6       /* Grid gutters */
+p-4         /* Card padding */
+p-6         /* Section padding */
+py-12       /* Page section vertical */
+mb-12       /* Section spacing (use instead of mb-[50px]) */
 ```
 
 ### Border Radius
@@ -78,23 +98,48 @@
 --radius-full: 9999px  /* rounded-full - buttons */
 ```
 
-### Typography
+### Typography Scale
 ```css
-/* Font Sizes */
---text-xs: 0.75rem   /* 12px */
---text-sm: 0.875rem  /* 14px */
---text-base: 1rem    /* 16px */
---text-lg: 1.125rem  /* 18px */
---text-xl: 1.25rem   /* 20px */
---text-2xl: 1.5rem   /* 24px */
---text-3xl: 1.875rem /* 30px */
---text-4xl: 2.25rem  /* 36px */
+/* Font Sizes - ALWAYS use these, never arbitrary values like text-[10px] */
+text-2xs:  0.625rem  /* 10px - badges, counters, micro labels */
+text-xs:   0.75rem   /* 12px - small labels, metadata */
+text-sm:   0.875rem  /* 14px - body text, buttons */
+text-base: 1rem      /* 16px - primary body text */
+text-lg:   1.125rem  /* 18px - subheadings */
+text-xl:   1.25rem   /* 20px - section headings */
+text-2xl:  1.5rem    /* 24px - page titles */
+text-3xl:  1.875rem  /* 30px - hero text */
+text-4xl:  2.25rem   /* 36px - display text */
 
 /* Font Weights */
---font-normal: 400
---font-medium: 500
---font-semibold: 600
---font-bold: 700
+font-light:    300  /* Page headings */
+font-normal:   400  /* Body text */
+font-medium:   500  /* Emphasis, buttons */
+font-semibold: 600  /* Strong emphasis */
+font-bold:     700  /* Rare, high impact */
+
+/* Line Heights (included in fontSize config) */
+leading-tight:   1.25  /* Headings */
+leading-snug:    1.375 /* Subheadings */
+leading-normal:  1.5   /* Default */
+leading-relaxed: 1.625 /* Body text */
+```
+
+### Typography Presets (CSS Classes)
+Use these semantic classes from `styles/tokens.css`:
+```css
+.um-display   /* Hero text: text-4xl font-light tracking-tight */
+.um-h1        /* Page title: text-2xl font-light */
+.um-h2        /* Section heading: text-xl font-medium */
+.um-h3        /* Subsection: text-lg font-medium */
+.um-h4        /* Card title: text-sm font-medium */
+.um-body      /* Body text: text-sm leading-relaxed */
+.um-body-lg   /* Large body: text-base leading-relaxed */
+.um-caption   /* Metadata: text-xs text-gray-500 */
+.um-label     /* Overline: text-2xs uppercase tracking-widest */
+.um-micro     /* Badges: text-2xs font-medium */
+.um-muted     /* Secondary: text-sm text-gray-500 */
+.um-link      /* Links: text-sm font-medium hover:underline */
 ```
 
 ---
@@ -458,10 +503,44 @@ Before creating a new component, ensure:
 
 ---
 
+## 🔄 Migration Guide: Arbitrary Values → Systematic
+
+When you encounter arbitrary values, replace them with systematic alternatives:
+
+### Typography Replacements
+```tsx
+// ❌ Before: Arbitrary font sizes
+text-[9px]   → text-2xs
+text-[10px]  → text-2xs
+text-[11px]  → text-xs (or text-2xs if micro)
+text-[15px]  → text-sm (or text-base)
+text-[0.7rem] → text-2xs
+
+// ✅ After: Systematic scale
+<span className="text-2xs font-medium">Badge</span>
+<p className="text-xs text-gray-500">Caption</p>
+```
+
+### Spacing Replacements
+```tsx
+// ❌ Before: Arbitrary spacing
+mb-[50px]  → mb-12 (48px, close enough)
+px-[24px]  → px-6
+mt-[18px]  → mt-4 or mt-5
+pl-[88px]  → pl-20 or pl-24
+gap-[50px] → gap-12
+
+// ✅ After: Systematic scale
+<div className="mb-12 px-6">Section</div>
+```
+
+---
+
 ## 🚫 Anti-Patterns (Avoid)
 
 ### Don't:
 - ❌ **NEVER use purple theme** - Purple is explicitly forbidden in the design system
+- ❌ **NEVER use arbitrary values** like `text-[10px]` or `mb-[50px]` - use the scale
 - ❌ Use colors outside the palette (no random blues, greens, etc.)
 - ❌ Use inconsistent border radius (stick to rounded-2xl, rounded-full)
 - ❌ Use inconsistent spacing (use Tailwind scale)
