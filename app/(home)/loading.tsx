@@ -6,6 +6,12 @@
  */
 
 import { DestinationGridSkeleton } from "@/components/skeletons/DestinationCardSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Fixed widths for city filter skeletons to avoid hydration mismatch
+const CITY_WIDTHS = [72, 56, 80, 64, 68];
+// Fixed widths for category filter skeletons
+const CATEGORY_WIDTHS = [88, 64, 72, 96, 56, 80, 68, 76];
 
 export default function HomeLoading() {
   return (
@@ -19,11 +25,11 @@ export default function HomeLoading() {
               <div className="w-full">
                 {/* Greeting text skeleton */}
                 <div className="mb-[50px]">
-                  <div className="h-3 w-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                  <Skeleton className="h-3 w-48" />
                 </div>
                 {/* Search input skeleton */}
                 <div className="mb-[50px]">
-                  <div className="h-3 w-64 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                  <Skeleton className="h-3 w-64" />
                 </div>
               </div>
             </div>
@@ -34,22 +40,22 @@ export default function HomeLoading() {
                 {/* City buttons skeleton */}
                 <div className="mb-[50px]">
                   <div className="flex flex-wrap gap-x-5 gap-y-3">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div
+                    {CITY_WIDTHS.map((width, i) => (
+                      <Skeleton
                         key={`city-${i}`}
-                        className="h-3 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"
-                        style={{ width: `${60 + Math.random() * 40}px` }}
+                        className="h-3"
+                        style={{ width: `${width}px` }}
                       />
                     ))}
                   </div>
                 </div>
                 {/* Category buttons skeleton */}
                 <div className="flex flex-wrap gap-x-5 gap-y-3">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div
+                  {CATEGORY_WIDTHS.map((width, i) => (
+                    <Skeleton
                       key={`cat-${i}`}
-                      className="h-3 bg-gray-200 dark:bg-gray-800 rounded animate-pulse"
-                      style={{ width: `${50 + Math.random() * 50}px` }}
+                      className="h-3"
+                      style={{ width: `${width}px` }}
                     />
                   ))}
                 </div>
@@ -63,20 +69,37 @@ export default function HomeLoading() {
       <div className="w-full px-6 md:px-10 mt-8">
         <div className="max-w-[1800px] mx-auto">
           <div className="mb-6">
-            <div className="flex justify-end">
-              <div className="flex items-center gap-3">
-                {/* View toggle skeleton */}
-                <div className="h-[44px] w-24 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse" />
+            <div className="flex justify-start sm:justify-end">
+              <div className="flex w-full items-center gap-3 overflow-x-auto pb-2 no-scrollbar sm:justify-end sm:overflow-visible">
+                {/* View toggle skeleton (Map/Grid) */}
+                <Skeleton className="h-[44px] w-[72px] sm:w-[88px] rounded-full flex-shrink-0" />
                 {/* Create trip skeleton */}
-                <div className="h-[44px] w-32 bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse" />
+                <Skeleton className="h-[44px] w-[72px] sm:w-[120px] rounded-full flex-shrink-0" />
                 {/* Filter button skeleton */}
-                <div className="h-[44px] w-[44px] bg-gray-200 dark:bg-gray-800 rounded-full animate-pulse" />
+                <Skeleton className="h-[44px] w-[44px] rounded-full flex-shrink-0" />
+                {/* Discover by Cities skeleton */}
+                <Skeleton className="h-[44px] w-[72px] sm:w-[160px] rounded-full flex-shrink-0" />
               </div>
             </div>
           </div>
 
+          {/* Trending Section Skeleton */}
+          <div className="mb-12 md:mb-16">
+            <div className="mb-4">
+              <Skeleton className="h-5 w-32" />
+            </div>
+            <div className="flex gap-4 overflow-hidden">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton
+                  key={`trending-${i}`}
+                  className="h-[180px] w-[280px] rounded-xl flex-shrink-0"
+                />
+              ))}
+            </div>
+          </div>
+
           {/* Grid Skeleton */}
-          <DestinationGridSkeleton count={28} />
+          <DestinationGridSkeleton count={20} />
         </div>
       </div>
     </main>
