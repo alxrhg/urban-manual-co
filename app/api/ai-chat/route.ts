@@ -1364,8 +1364,24 @@ async function processAIChatRequest(
           keywordQuery = keywordQuery.gte('michelin_stars', intent.filters.michelinStar);
         }
 
-        const keywords = query.split(/\s+/).filter((w: string) => w.length > 2);
+        // Extract meaningful keywords (excluding common words)
+        const stopWords = new Set(['the', 'a', 'an', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'dare', 'ought', 'used', 'best', 'good', 'great', 'nice', 'top', 'find', 'show', 'me', 'my', 'i', 'we', 'you', 'some', 'any', 'looking', 'want', 'like', 'where', 'what']);
+        const keywords = query
+          .toLowerCase()
+          .split(/\s+/)
+          .filter((w: string) => w.length > 2 && !stopWords.has(w));
+
         if (keywords.length > 0) {
+          // Build OR conditions for each keyword across multiple fields
+          const conditions = keywords.flatMap((kw: string) => [
+            `name.ilike.%${kw}%`,
+            `description.ilike.%${kw}%`,
+            `search_text.ilike.%${kw}%`,
+            `category.ilike.%${kw}%`,
+          ]);
+          keywordQuery = keywordQuery.or(conditions.join(','));
+        } else {
+          // If no meaningful keywords extracted, use the original query
           keywordQuery = keywordQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,search_text.ilike.%${query}%`);
         }
 
