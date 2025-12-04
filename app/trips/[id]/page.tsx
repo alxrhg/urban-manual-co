@@ -67,7 +67,7 @@ export default function TripPage() {
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [showMapView, setShowMapView] = useState(false);
 
   // Auto-fix items on wrong days based on their dates
   const hasAutoFixed = useRef(false);
@@ -287,8 +287,7 @@ export default function TripPage() {
           onAddClick={() => setShowAddPlaceBox(true)}
           onEditClick={() => setIsEditMode(!isEditMode)}
           isEditMode={isEditMode}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
+          onMapClick={() => setShowMapView(true)}
         />
 
         {/* Main Content */}
@@ -297,24 +296,35 @@ export default function TripPage() {
           <div className="flex-1 min-w-0">
             {activeContentTab === 'itinerary' && (
               <>
-                {/* Map View */}
-                {viewMode === 'map' && (
-                  <TripMapView
-                    places={(days.find(d => d.dayNumber === selectedDayNumber)?.items || [])
-                      .filter((item) => item.parsedNotes?.type !== 'flight')
-                      .map((item, index) => ({
-                        id: item.id,
-                        name: item.title || 'Place',
-                        latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
-                        longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
-                        category: item.destination?.category || item.parsedNotes?.category,
-                        order: index + 1,
-                      }))}
-                    className="h-[400px] mb-6"
-                  />
+                {/* Map View (shown when map button clicked) */}
+                {showMapView && (
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-medium text-stone-900 dark:text-white">Day {selectedDayNumber} Map</h3>
+                      <button
+                        onClick={() => setShowMapView(false)}
+                        className="text-xs text-stone-400 hover:text-stone-900 dark:hover:text-white transition-colors"
+                      >
+                        Hide map
+                      </button>
+                    </div>
+                    <TripMapView
+                      places={(days.find(d => d.dayNumber === selectedDayNumber)?.items || [])
+                        .filter((item) => item.parsedNotes?.type !== 'flight')
+                        .map((item, index) => ({
+                          id: item.id,
+                          name: item.title || 'Place',
+                          latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
+                          longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
+                          category: item.destination?.category || item.parsedNotes?.category,
+                          order: index + 1,
+                        }))}
+                      className="h-[300px] rounded-2xl"
+                    />
+                  </div>
                 )}
 
-                {/* List View */}
+                {/* Itinerary List */}
                 <ItineraryView
                   days={days}
                   selectedDayNumber={selectedDayNumber}

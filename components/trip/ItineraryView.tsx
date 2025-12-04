@@ -594,40 +594,52 @@ function NightStayCard({
 }) {
   const notes = hotel.parsedNotes;
 
+  // Format time for display
+  const formatTime = (timeStr?: string) => {
+    if (!timeStr) return null;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return `${hours.toString().padStart(2, '0')}:${minutes?.toString().padStart(2, '0') || '00'}`;
+  };
+
+  const checkInTime = formatTime(notes?.checkInTime);
+  const checkOutTime = formatTime(notes?.checkOutTime);
+
   return (
-    <div
-      onClick={onClick}
-      className="rounded-2xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-100 dark:border-indigo-900/50 p-4 cursor-pointer transition-all hover:border-indigo-200 dark:hover:border-indigo-800"
-    >
-      <div className="flex items-center gap-4">
-        {/* Moon Icon */}
-        <div className="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center flex-shrink-0">
-          <span className="text-2xl">🌙</span>
-        </div>
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex items-center gap-2">
+        <span className="text-stone-400 dark:text-gray-500">☽</span>
+        <span className="text-sm font-medium text-stone-600 dark:text-gray-300">Overnight</span>
+        <span className="px-2 py-0.5 bg-stone-100 dark:bg-gray-800 rounded-full text-xs text-stone-500 dark:text-gray-400">
+          1 night
+        </span>
+      </div>
 
-        {/* Night Stay Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h4 className="font-medium text-indigo-900 dark:text-indigo-100">
-              Staying at {hotel.title || 'Hotel'}
-            </h4>
+      {/* Hotel Card */}
+      <div
+        onClick={onClick}
+        className="rounded-2xl bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-5 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
+      >
+        <h4 className="text-base font-semibold text-stone-900 dark:text-white mb-1">
+          {hotel.title || 'Hotel'}
+        </h4>
+        <p className="text-sm text-stone-500 dark:text-gray-400 mb-4">
+          {notes?.address || 'Address not set'}
+        </p>
+
+        {/* Divider */}
+        <div className="border-t border-stone-100 dark:border-gray-800 pt-4">
+          <div className="flex items-center gap-6 text-sm">
+            <div>
+              <span className="text-stone-400 dark:text-gray-500 mr-2">Check-in</span>
+              <span className="font-medium text-stone-900 dark:text-white">{checkInTime || '—'}</span>
+            </div>
+            <div>
+              <span className="text-stone-400 dark:text-gray-500 mr-2">Check-out</span>
+              <span className="font-medium text-stone-900 dark:text-white">{checkOutTime || '—'}</span>
+            </div>
           </div>
-          <p className="text-sm text-indigo-600/70 dark:text-indigo-300/70 mt-0.5">
-            {notes?.roomType && `${notes.roomType} · `}
-            {notes?.address || 'Tonight\'s accommodation'}
-          </p>
         </div>
-
-        {/* Navigation */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg text-xs text-indigo-700 dark:text-indigo-300 hover:bg-indigo-200 dark:hover:bg-indigo-800 transition-colors"
-        >
-          <Navigation className="w-3 h-3" />
-          Navigate
-        </button>
       </div>
     </div>
   );
