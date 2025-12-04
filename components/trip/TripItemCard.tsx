@@ -45,9 +45,9 @@ function SortableTripItemCard({
     isDragging,
   } = useSortable({ id: item.id });
 
-  const style = {
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? 'none' : transition,
   };
 
   const showControls = isHovered || isTouched || isActive;
@@ -64,7 +64,14 @@ function SortableTripItemCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative mb-2 sm:mb-2 ${isDragging ? 'z-50 opacity-50' : ''}`}
+      className={`
+        group relative mb-2 sm:mb-2
+        transition-all duration-200 ease-out
+        ${isDragging
+          ? 'z-50 scale-[1.02] shadow-xl shadow-black/10 dark:shadow-black/30 opacity-95 ring-2 ring-gray-300 dark:ring-gray-600 rounded-2xl'
+          : ''
+        }
+      `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={handleTouchStart}

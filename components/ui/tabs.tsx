@@ -57,7 +57,14 @@ function TabsContent({
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn("mt-2 focus-visible:outline-none", className)}
+      className={cn(
+        "mt-2 focus-visible:outline-none",
+        // Fade-in animation when tab becomes active
+        "data-[state=active]:animate-in data-[state=active]:fade-in-0 data-[state=active]:duration-200",
+        // Subtle slide from bottom
+        "data-[state=active]:slide-in-from-bottom-1",
+        className
+      )}
       {...props}
     />
   );

@@ -6,15 +6,34 @@ type CardProps = {
   className?: string;
   children?: React.ReactNode;
   onClick?: () => void;
+  /** Enable hover lift effect (subtle shadow + translate) */
+  hoverable?: boolean;
+  /** Disable all transitions (for performance in lists) */
+  noTransition?: boolean;
 };
 
-function Card({ className, children, onClick }: CardProps) {
+function Card({ className, children, onClick, hoverable, noTransition }: CardProps) {
+  // Auto-enable hoverable when onClick is provided
+  const shouldHover = hoverable ?? !!onClick;
+
   const baseClasses = cn(
     "rounded-2xl border border-gray-200 dark:border-gray-800",
     "bg-white dark:bg-gray-900",
     "text-gray-900 dark:text-white",
     "overflow-hidden",
-    onClick && "cursor-pointer text-left w-full",
+    // Transitions
+    !noTransition && "transition-all duration-200 ease-out",
+    // Hover effects
+    shouldHover && [
+      "hover:-translate-y-0.5",
+      "hover:shadow-lg hover:shadow-black/5 dark:hover:shadow-black/20",
+      "hover:border-gray-300 dark:hover:border-gray-700",
+    ],
+    // Active/press state
+    onClick && [
+      "cursor-pointer text-left w-full",
+      "active:scale-[0.99] active:shadow-md",
+    ],
     className
   );
 
