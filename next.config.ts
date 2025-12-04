@@ -222,6 +222,10 @@ const withPWA = withPWAInit({
   dest: "public",
   register: true,
   disable: process.env.NODE_ENV === "development",
+  // Fallback to offline page when network fails
+  fallbacks: {
+    document: "/~offline",
+  },
   workboxOptions: {
     skipWaiting: true,
     clientsClaim: true,

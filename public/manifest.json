@@ -31,5 +31,68 @@
   ],
   "categories": ["travel", "lifestyle", "food"],
   "lang": "en",
-  "dir": "ltr"
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "Search",
+      "short_name": "Search",
+      "description": "Search for destinations",
+      "url": "/search",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "My Trips",
+      "short_name": "Trips",
+      "description": "View your planned trips",
+      "url": "/trips",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Saved Places",
+      "short_name": "Saved",
+      "description": "View your saved destinations",
+      "url": "/account?tab=saved",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Explore Map",
+      "short_name": "Map",
+      "description": "Explore destinations on the map",
+      "url": "/map",
+      "icons": [
+        {
+          "src": "/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

@@ -101,7 +101,8 @@ export async function subscribeToPush(
 
     // Add VAPID key if provided
     if (vapidPublicKey) {
-      subscribeOptions.applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+      const key = urlBase64ToUint8Array(vapidPublicKey);
+      subscribeOptions.applicationServerKey = key.buffer as ArrayBuffer;
     }
 
     const subscription = await registration.pushManager.subscribe(subscribeOptions);
@@ -156,7 +157,6 @@ export async function showNotification(
   const defaultOptions: NotificationOptions = {
     icon: '/icon-192.png',
     badge: '/icon-192.png',
-    vibrate: [100, 50, 100],
     ...options,
   };
 

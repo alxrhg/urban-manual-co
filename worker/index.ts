@@ -7,6 +7,19 @@ declare const self: ServiceWorkerGlobalScope;
  * Handles push notifications and notification click events
  */
 
+// Extended notification options for service worker
+interface ExtendedNotificationOptions {
+  body?: string;
+  icon?: string;
+  badge?: string;
+  image?: string;
+  tag?: string;
+  renotify?: boolean;
+  requireInteraction?: boolean;
+  data?: Record<string, unknown>;
+  actions?: Array<{ action: string; title: string; icon?: string }>;
+}
+
 // Handle push notifications
 self.addEventListener('push', (event: PushEvent) => {
   if (!event.data) {
@@ -17,19 +30,17 @@ self.addEventListener('push', (event: PushEvent) => {
   try {
     const data = event.data.json();
 
-    const options: NotificationOptions = {
+    const options: ExtendedNotificationOptions = {
       body: data.body || 'New update from Urban Manual',
       icon: data.icon || '/icon-192.png',
       badge: '/icon-192.png',
-      vibrate: [100, 50, 100],
+      tag: data.tag || 'urban-manual-notification',
+      renotify: data.renotify || false,
+      requireInteraction: data.requireInteraction || false,
       data: {
         url: data.url || '/',
         ...data.data,
       },
-      actions: data.actions || [],
-      tag: data.tag || 'urban-manual-notification',
-      renotify: data.renotify || false,
-      requireInteraction: data.requireInteraction || false,
     };
 
     // Add image if provided
@@ -37,8 +48,16 @@ self.addEventListener('push', (event: PushEvent) => {
       options.image = data.image;
     }
 
+    // Add actions if provided
+    if (data.actions) {
+      options.actions = data.actions;
+    }
+
     event.waitUntil(
-      self.registration.showNotification(data.title || 'Urban Manual', options)
+      self.registration.showNotification(
+        data.title || 'Urban Manual',
+        options as NotificationOptions
+      )
     );
   } catch (error) {
     console.error('Error handling push event:', error);
@@ -59,7 +78,8 @@ self.addEventListener('push', (event: PushEvent) => {
 self.addEventListener('notificationclick', (event: NotificationEvent) => {
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || '/';
+  const notificationData = event.notification.data as { url?: string } | undefined;
+  const urlToOpen = notificationData?.url || '/';
 
   // Handle action button clicks
   if (event.action) {
@@ -103,7 +123,6 @@ self.addEventListener('notificationclose', (event: NotificationEvent) => {
 self.addEventListener('pushsubscriptionchange', (event) => {
   console.log('Push subscription changed');
 
-  // Re-subscribe if subscription expires
   event.waitUntil(
     self.registration.pushManager
       .subscribe({
@@ -111,7 +130,6 @@ self.addEventListener('pushsubscriptionchange', (event) => {
       })
       .then((subscription) => {
         console.log('Re-subscribed to push notifications');
-        // You could send the new subscription to your server here
         return subscription;
       })
       .catch((error) => {
