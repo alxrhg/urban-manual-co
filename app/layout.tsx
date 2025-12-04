@@ -86,7 +86,7 @@ export default function RootLayout({
       <head>
         <meta name="color-scheme" content="dark light" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#030712" media="(prefers-color-scheme: dark)" />
         <meta name="google-adsense-account" content="ca-pub-3052286230434362" />
         {/* Revert iOS-specific app meta to default web behavior */}
 
@@ -218,7 +218,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+      <body className="antialiased bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
         <MyStatsig>
           <ThemeProvider
             attribute="class"

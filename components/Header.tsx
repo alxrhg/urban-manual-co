@@ -176,7 +176,7 @@ export function Header() {
 
   return (
     <header
-      className="mt-6 md:mt-8 relative z-30 bg-white dark:bg-gray-900 w-full"
+      className="mt-6 md:mt-8 relative z-30 bg-white dark:bg-gray-950 w-full"
       role="banner"
     >
       {/* Primary Nav */}
