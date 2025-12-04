@@ -324,9 +324,10 @@ export function DestinationForm({
         <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1.5">Name *</label>
+            <label htmlFor="destination-name" className="block text-sm font-medium mb-1.5">Name <span aria-hidden="true">*</span></label>
             <div className="flex gap-2">
               <GooglePlacesAutocomplete
+                id="destination-name"
                 value={formData.name}
                 onChange={(value) => setFormData({ ...formData, name: value })}
                 onPlaceSelect={async (placeDetails: any) => {
@@ -405,10 +406,12 @@ export function DestinationForm({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1.5">Slug *</label>
+              <label htmlFor="destination-slug" className="block text-sm font-medium mb-1.5">Slug <span aria-hidden="true">*</span></label>
               <input
+                id="destination-slug"
                 type="text"
                 required
+                aria-required="true"
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                 placeholder="auto-generated if empty"
@@ -416,10 +419,12 @@ export function DestinationForm({
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1.5">City *</label>
+              <label htmlFor="destination-city" className="block text-sm font-medium mb-1.5">City <span aria-hidden="true">*</span></label>
               <input
+                id="destination-city"
                 type="text"
                 required
+                aria-required="true"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                 className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
@@ -428,10 +433,12 @@ export function DestinationForm({
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1.5">Category *</label>
+            <label htmlFor="destination-category" className="block text-sm font-medium mb-1.5">Category <span aria-hidden="true">*</span></label>
             <input
+              id="destination-category"
               type="text"
               required
+              aria-required="true"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
@@ -441,7 +448,7 @@ export function DestinationForm({
           
           {/* Parent Destination Selector */}
           <div>
-            <label className="block text-sm font-medium mb-1.5">Parent Destination (Optional)</label>
+            <label htmlFor="destination-parent" className="block text-sm font-medium mb-1.5">Parent Destination (Optional)</label>
             <div className="relative">
               {selectedParent ? (
                 <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800">
@@ -456,18 +463,21 @@ export function DestinationForm({
                       setFormData({ ...formData, parent_destination_id: null });
                     }}
                     className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                    aria-label="Remove parent destination"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
               ) : (
                 <>
                   <input
+                    id="destination-parent"
                     type="text"
                     value={parentSearchQuery}
                     onChange={(e) => setParentSearchQuery(e.target.value)}
                     placeholder="Search for parent destination (e.g., hotel name)..."
                     className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-800 outline-none focus:ring-2 focus:ring-blue-500"
+                    aria-autocomplete="list"
                   />
                   {isSearchingParent && (
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -593,7 +603,9 @@ export function DestinationForm({
             )}
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">or</div>
+          <label htmlFor="destination-image-url" className="sr-only">Image URL</label>
           <input
+            id="destination-image-url"
             type="url"
             value={formData.image}
             onChange={(e) => {
@@ -629,8 +641,9 @@ export function DestinationForm({
         <h3 className="text-lg font-semibold mb-4">Content</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1.5">Short Description</label>
+            <label htmlFor="destination-description" className="block text-sm font-medium mb-1.5">Short Description</label>
             <textarea
+              id="destination-description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
@@ -639,8 +652,9 @@ export function DestinationForm({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1.5">Full Content</label>
+            <label htmlFor="destination-content" className="block text-sm font-medium mb-1.5">Full Content</label>
             <textarea
+              id="destination-content"
               value={formData.content}
               onChange={(e) => setFormData({ ...formData, content: e.target.value })}
               rows={8}
@@ -656,8 +670,9 @@ export function DestinationForm({
         <h3 className="text-lg font-semibold mb-4">Additional Details</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium mb-1.5">Michelin Stars</label>
+            <label htmlFor="destination-michelin" className="block text-sm font-medium mb-1.5">Michelin Stars</label>
             <input
+              id="destination-michelin"
               type="number"
               min="0"
               max="3"

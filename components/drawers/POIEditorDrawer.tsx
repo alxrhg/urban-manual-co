@@ -248,8 +248,9 @@ export default function POIEditorDrawer({ destination, initialCity, onSave }: PO
       <div className="flex-1 overflow-y-auto pb-24">
         <form id="poi-editor-form" onSubmit={handleSubmit}>
           <DrawerSection bordered>
-            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Search Google Places</label>
+            <label htmlFor="poi-google-search" className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Search Google Places</label>
             <GooglePlacesAutocompleteNative
+              id="poi-google-search"
               value={googlePlaceQuery}
               onChange={setGooglePlaceQuery}
               onPlaceSelect={handleGooglePlaceSelect}
@@ -260,40 +261,47 @@ export default function POIEditorDrawer({ destination, initialCity, onSave }: PO
           </DrawerSection>
 
           <DrawerSection bordered>
-            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Name *</label>
+            <label htmlFor="poi-name" className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Name <span aria-hidden="true">*</span></label>
             <input
+              id="poi-name"
               type="text"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               required
+              aria-required="true"
               className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
               placeholder="Place name"
             />
           </DrawerSection>
 
           <DrawerSection bordered>
-            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">City *</label>
+            <label htmlFor="poi-city" className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">City <span aria-hidden="true">*</span></label>
             <CityAutocompleteInput
+              id="poi-city"
               value={formData.city}
               onChange={(value) => setFormData(prev => ({ ...prev, city: value }))}
               placeholder="City"
               required
+              aria-required="true"
             />
           </DrawerSection>
 
           <DrawerSection bordered>
-            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Category *</label>
+            <label htmlFor="poi-category" className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Category <span aria-hidden="true">*</span></label>
             <CategoryAutocompleteInput
+              id="poi-category"
               value={formData.category}
               onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
               placeholder="Category"
               required
+              aria-required="true"
             />
           </DrawerSection>
 
           <DrawerSection bordered>
-            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Description</label>
+            <label htmlFor="poi-description" className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Description</label>
             <textarea
+              id="poi-description"
               value={formData.description}
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               rows={3}
@@ -303,7 +311,7 @@ export default function POIEditorDrawer({ destination, initialCity, onSave }: PO
           </DrawerSection>
 
           <DrawerSection bordered>
-            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Image</label>
+            <label id="poi-image-label" className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Image</label>
             <div
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -311,38 +319,42 @@ export default function POIEditorDrawer({ destination, initialCity, onSave }: PO
               className={`relative border-2 border-dashed rounded-xl p-6 transition-all ${
                 isDragging ? 'border-black dark:border-white bg-gray-100 dark:bg-gray-800' : 'border-gray-300 dark:border-gray-700'
               }`}
+              role="region"
+              aria-labelledby="poi-image-label"
             >
-              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="poi-image-upload" />
+              <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" id="poi-image-upload" aria-describedby="poi-image-label" />
               <label htmlFor="poi-image-upload" className="flex flex-col items-center cursor-pointer">
                 {imagePreview ? (
                   <div className="relative w-full">
-                    <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
+                    <img src={imagePreview} alt="Image preview" className="w-full h-32 object-cover rounded-lg" />
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); setImageFile(null); setImagePreview(null); setFormData(prev => ({ ...prev, image: '' })); }}
                       className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5"
+                      aria-label="Remove image"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3 w-3" aria-hidden="true" />
                     </button>
                   </div>
                 ) : (
                   <>
-                    <span className="text-2xl mb-2">📷</span>
+                    <span className="text-2xl mb-2" aria-hidden="true">📷</span>
                     <span className="text-xs text-gray-500">Drop image or click to upload</span>
                   </>
                 )}
               </label>
             </div>
             {uploadingImage && (
-              <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-                <Loader2 className="h-3 w-3 animate-spin" /> Uploading...
+              <div className="flex items-center gap-2 mt-2 text-xs text-gray-500" role="status" aria-live="polite">
+                <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> Uploading...
               </div>
             )}
           </DrawerSection>
 
           <DrawerSection bordered>
-            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Michelin Stars</label>
+            <label htmlFor="poi-michelin" className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Michelin Stars</label>
             <select
+              id="poi-michelin"
               value={formData.michelin_stars || ''}
               onChange={(e) => setFormData(prev => ({ ...prev, michelin_stars: e.target.value ? parseInt(e.target.value) : null }))}
               className="w-full px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-xl bg-white dark:bg-gray-900 text-sm"
@@ -355,8 +367,9 @@ export default function POIEditorDrawer({ destination, initialCity, onSave }: PO
           </DrawerSection>
 
           <DrawerSection>
-            <label className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Located In (Parent)</label>
+            <label htmlFor="poi-parent" className="block text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Located In (Parent)</label>
             <ParentDestinationAutocompleteInput
+              id="poi-parent"
               value={formData.parent_destination_id}
               onChange={(id) => setFormData(prev => ({ ...prev, parent_destination_id: id }))}
               currentDestinationId={destination?.id}

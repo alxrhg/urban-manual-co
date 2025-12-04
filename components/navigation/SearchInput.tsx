@@ -70,6 +70,7 @@ export function SearchInput({
           iconSizes[size],
           iconPositions[size]
         )}
+        aria-hidden="true"
       />
       <input
         ref={inputRef}
@@ -79,6 +80,7 @@ export function SearchInput({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoFocus={autoFocus}
+        aria-label="Search destinations"
         className={cn(
           'w-full border border-gray-200 dark:border-gray-800 rounded-2xl',
           'bg-white dark:bg-gray-950 text-gray-900 dark:text-white',
@@ -99,7 +101,7 @@ export function SearchInput({
           aria-label="Clear search"
           type="button"
         >
-          <X className={iconSizes[size]} />
+          <X className={iconSizes[size]} aria-hidden="true" />
         </button>
       )}
     </div>

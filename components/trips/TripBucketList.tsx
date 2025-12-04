@@ -109,17 +109,18 @@ function SortableBucketItem({
           {...attributes}
           {...listeners}
           className="cursor-grab active:cursor-grabbing text-stone-300 hover:text-stone-500 dark:text-gray-600 dark:hover:text-gray-400 mt-0.5"
+          aria-label={`Drag to reorder ${item.title}`}
         >
-          <GripVertical className="w-4 h-4" />
+          <GripVertical className="w-4 h-4" aria-hidden="true" />
         </div>
 
         {/* Thumbnail or Icon */}
         {item.thumbnail ? (
           <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-stone-100 dark:bg-gray-800">
-            <img src={item.thumbnail} alt="" className="w-full h-full object-cover" />
+            <img src={item.thumbnail} alt={`Thumbnail for ${item.title}`} className="w-full h-full object-cover" />
           </div>
         ) : (
-          <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0" aria-hidden="true">
             {getIcon()}
           </div>
         )}
@@ -146,20 +147,23 @@ function SortableBucketItem({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">
           <button
+            type="button"
             onClick={() => setShowDayPicker(!showDayPicker)}
             className="p-1.5 text-stone-400 hover:text-green-500 rounded-lg hover:bg-stone-100 dark:hover:bg-gray-800 transition-colors"
-            title="Add to day"
+            aria-label={`Add ${item.title} to a day`}
+            aria-expanded={showDayPicker}
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-4 h-4" aria-hidden="true" />
           </button>
           <button
+            type="button"
             onClick={onRemove}
             className="p-1.5 text-stone-400 hover:text-red-500 rounded-lg hover:bg-stone-100 dark:hover:bg-gray-800 transition-colors"
-            title="Remove"
+            aria-label={`Remove ${item.title}`}
           >
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>

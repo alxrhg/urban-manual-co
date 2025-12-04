@@ -184,8 +184,12 @@ export const TimeBlockCard = memo(function TimeBlockCard({
           {/* Time Input */}
           <div className="flex-shrink-0">
             <div className="relative">
-              <Clock className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+              <Clock className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" aria-hidden="true" />
+              <label htmlFor={`time-input-${block.id}`} className="sr-only">
+                Start time for {block.title}
+              </label>
               <input
+                id={`time-input-${block.id}`}
                 type="time"
                 value={block.startTime || ''}
                 onChange={(e) => onTimeChange?.(e.target.value)}
@@ -194,7 +198,7 @@ export const TimeBlockCard = memo(function TimeBlockCard({
               />
             </div>
             {block.endTime && (
-              <div className="text-[10px] text-gray-400 mt-0.5 text-center">
+              <div className="text-[10px] text-gray-400 mt-0.5 text-center" aria-label={`Ends at ${block.endTime}`}>
                 → {block.endTime}
               </div>
             )}
@@ -222,7 +226,12 @@ export const TimeBlockCard = memo(function TimeBlockCard({
           </div>
 
           {/* Content */}
-          <div className="flex-1 min-w-0" onClick={onEdit}>
+          <button
+            type="button"
+            className="flex-1 min-w-0 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-lg"
+            onClick={onEdit}
+            aria-label={`Edit ${block.title}`}
+          >
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <h4 className={`font-medium text-gray-900 dark:text-white truncate ${compact ? 'text-sm' : 'text-sm'}`}>
@@ -242,7 +251,7 @@ export const TimeBlockCard = memo(function TimeBlockCard({
 
               {/* Lock indicator */}
               {block.isLocked && (
-                <Lock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                <Lock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" aria-label="Locked" />
               )}
             </div>
 
@@ -257,56 +266,73 @@ export const TimeBlockCard = memo(function TimeBlockCard({
                 )}
                 {crowdStyle && crowdLevel !== 'low' && (
                   <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${crowdStyle.bg} ${crowdStyle.text}`}>
-                    <Users className="w-3 h-3" />
+                    <Users className="w-3 h-3" aria-hidden="true" />
                     {crowdLevel === 'high' ? 'Busy' : crowdLevel === 'very_high' ? 'Very Busy' : 'Moderate'}
                   </span>
                 )}
               </div>
             )}
-          </div>
+          </button>
 
           {/* Actions */}
           <div className="flex items-center gap-1">
             {onToggleExpand && (
               <button
+                type="button"
                 onClick={onToggleExpand}
                 className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label={isExpanded ? `Collapse ${block.title}` : `Expand ${block.title}`}
+                aria-expanded={isExpanded}
               >
-                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                {isExpanded ? <ChevronUp className="w-4 h-4" aria-hidden="true" /> : <ChevronDown className="w-4 h-4" aria-hidden="true" />}
               </button>
             )}
 
             <div className="relative">
               <button
+                type="button"
                 onClick={() => setShowActions(!showActions)}
                 className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label={`More actions for ${block.title}`}
+                aria-expanded={showActions}
+                aria-haspopup="menu"
               >
-                <MoreHorizontal className="w-4 h-4" />
+                <MoreHorizontal className="w-4 h-4" aria-hidden="true" />
               </button>
 
               {/* Action Menu */}
               {showActions && (
-                <div className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                <div
+                  role="menu"
+                  aria-label={`Actions for ${block.title}`}
+                  className="absolute right-0 top-full mt-1 w-36 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+                >
                   {onToggleLock && (
                     <button
+                      type="button"
+                      role="menuitem"
                       onClick={() => { onToggleLock(); setShowActions(false); }}
                       className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
-                      {block.isLocked ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                      {block.isLocked ? <Unlock className="w-3.5 h-3.5" aria-hidden="true" /> : <Lock className="w-3.5 h-3.5" aria-hidden="true" />}
                       {block.isLocked ? 'Unlock' : 'Lock Position'}
                     </button>
                   )}
                   {onSwap && (
                     <button
+                      type="button"
+                      role="menuitem"
                       onClick={() => { onSwap(); setShowActions(false); }}
                       className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-700"
                     >
-                      <RefreshCw className="w-3.5 h-3.5" />
+                      <RefreshCw className="w-3.5 h-3.5" aria-hidden="true" />
                       Swap Place
                     </button>
                   )}
                   {onRemove && (
                     <button
+                      type="button"
+                      role="menuitem"
                       onClick={() => {
                         if (window.confirm(`Remove "${block.title}" from itinerary?`)) {
                           onRemove();
@@ -315,7 +341,7 @@ export const TimeBlockCard = memo(function TimeBlockCard({
                       }}
                       className="w-full px-3 py-2 text-left text-xs flex items-center gap-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      <Trash2 className="w-3.5 h-3.5" aria-hidden="true" />
                       Remove
                     </button>
                   )}

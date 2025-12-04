@@ -2,7 +2,7 @@
 
 **Date**: December 4, 2025
 **Scope**: Full codebase accessibility audit
-**Status**: Complete
+**Status**: Complete - Critical Issues Fixed
 
 ---
 
@@ -20,120 +20,68 @@ Urban Manual has **strong accessibility foundations** with comprehensive infrast
 
 ---
 
-## Critical Issues (P0 - Fix Immediately)
+## Critical Issues (P0) - FIXED
 
-### 1. Interactive Divs Without Keyboard Access
+### 1. Interactive Divs Without Keyboard Access ✅ FIXED
 
-**Impact**: Users cannot interact with these elements using keyboard or screen readers.
+**Status**: Resolved
 
-| File | Line | Issue |
-|------|------|-------|
-| `components/ProfileAvatar.tsx` | 25-26 | Clickable div with no `role`, `tabindex`, or `aria-label` |
-| `components/ProfileAvatar.tsx` | 49 | Overlay click handler with no accessibility attributes |
-| `components/planner/TimeBlockCard.tsx` | 225 | `onClick` on div without button semantics |
-
-**Fix**: Convert to `<button>` or add `role="button" tabIndex={0} aria-label="..."` with keyboard handlers.
-
-```tsx
-// Before (inaccessible)
-<div onClick={handleClick}>...</div>
-
-// After (accessible)
-<button type="button" onClick={handleClick} aria-label="Edit item">
-  ...
-</button>
-```
+| File | Fix Applied |
+|------|-------------|
+| `components/ProfileAvatar.tsx` | Converted to `<button>` with `aria-label`, added dialog semantics with `role="dialog"`, focus management, and escape key handler |
+| `components/planner/TimeBlockCard.tsx` | Converted to `<button>` with `aria-label`, added `aria-expanded`, `aria-haspopup`, menu roles |
 
 ---
 
-### 2. Form Labels Not Associated with Inputs
+### 2. Form Labels Not Associated with Inputs ✅ FIXED
 
-**Impact**: Screen reader users cannot identify form fields.
+**Status**: Resolved
 
-| File | Lines | Issue |
-|------|-------|-------|
-| `components/admin/DestinationForm.tsx` | 327-675 | All labels missing `htmlFor`; inputs missing `id` |
-| `components/drawers/POIEditorDrawer.tsx` | 251-358 | Same pattern throughout |
-| `components/navigation/SearchInput.tsx` | 74-90 | Search input lacks `aria-label` |
-
-**Fix**: Add `htmlFor` to labels and matching `id` to inputs:
-
-```tsx
-// Before
-<label>Name *</label>
-<input type="text" required />
-
-// After
-<label htmlFor="destination-name">Name *</label>
-<input id="destination-name" type="text" required aria-required="true" />
-```
+| File | Fix Applied |
+|------|-------------|
+| `components/admin/DestinationForm.tsx` | Added `htmlFor`/`id` to all 10+ form fields, `aria-required="true"` on required fields |
+| `components/drawers/POIEditorDrawer.tsx` | Added `htmlFor`/`id` to all form fields, `aria-required="true"` on required fields |
+| `components/navigation/SearchInput.tsx` | Added `aria-label="Search destinations"` |
 
 ---
 
-### 3. Content Images with Empty Alt Text
+### 3. Content Images with Empty Alt Text ✅ FIXED
 
-**Impact**: Screen reader users miss important visual information.
+**Status**: Resolved
 
-| File | Line | Issue |
-|------|------|-------|
-| `components/ProfileAvatar.tsx` | 31 | Profile image has `alt=""` |
-| `components/trips/TripBucketList.tsx` | 119 | Item thumbnail has `alt=""` |
-
-**Fix**:
-```tsx
-// ProfileAvatar.tsx
-<Image src={avatarUrl} alt="User profile avatar" fill />
-
-// TripBucketList.tsx
-<img src={item.thumbnail} alt={item.title} />
-```
+| File | Fix Applied |
+|------|-------------|
+| `components/ProfileAvatar.tsx` | Changed to `alt="Profile avatar"` |
+| `components/trips/TripBucketList.tsx` | Changed to `alt={item.title}` |
 
 ---
 
 ## High Priority Issues (P1)
 
-### 4. Modal Without Dialog Semantics
+### 4. Modal Without Dialog Semantics ✅ FIXED
 
-**File**: `components/ProfileAvatar.tsx` (lines 47-59)
+**File**: `components/ProfileAvatar.tsx`
 
-The profile photo modal overlay lacks:
-- `role="dialog"`
-- `aria-modal="true"`
-- Focus trap
-- `aria-labelledby`
-
-**Fix**: Wrap in proper dialog or use the existing `Dialog` component from `components/ui/dialog.tsx`.
+**Fix Applied**: Added `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, focus management with `useRef`, and escape key handler.
 
 ---
 
-### 5. Missing `aria-required` on Required Fields
+### 5. Missing `aria-required` on Required Fields ✅ PARTIALLY FIXED
 
-**Affected Files**:
+**Fixed Files**:
+- `components/admin/DestinationForm.tsx` ✅
+- `components/drawers/POIEditorDrawer.tsx` ✅
+
+**Remaining Files** (lower priority - use existing FormField component):
 - `components/LoginDrawer.tsx`
 - `components/drawers/AddFlightDrawer.tsx`
 - `components/ProfileEditor.tsx`
-
-**Fix**: Add `aria-required="true"` alongside `required` attribute:
-```tsx
-<input required aria-required="true" />
-```
 
 ---
 
 ### 6. Error Messages Not Announced
 
-**Affected Files**:
-- `components/admin/DestinationForm.tsx`
-- `components/drawers/POIEditorDrawer.tsx`
-
-**Fix**: Add `role="alert"` and `aria-live="assertive"` to error containers:
-```tsx
-{error && (
-  <div role="alert" aria-live="assertive">
-    {error}
-  </div>
-)}
-```
+**Note**: These forms use toast notifications which already have `aria-live` regions. Form-level error announcements would be a future enhancement.
 
 ---
 
@@ -235,16 +183,21 @@ Some pages may skip heading levels (h1 → h4). Verify each page has:
 
 ---
 
-## Files Requiring Changes
+## Files Changed
+
+| Priority | File | Status |
+|----------|------|--------|
+| P0 | `components/ProfileAvatar.tsx` | ✅ FIXED - Button semantics, alt text, dialog role, focus management |
+| P0 | `components/admin/DestinationForm.tsx` | ✅ FIXED - htmlFor/id on all form fields |
+| P0 | `components/drawers/POIEditorDrawer.tsx` | ✅ FIXED - htmlFor/id on all form fields |
+| P0 | `components/planner/TimeBlockCard.tsx` | ✅ FIXED - Button semantics, aria-labels, menu roles |
+| P0 | `components/trips/TripBucketList.tsx` | ✅ FIXED - Alt text, aria-labels on buttons |
+| P1 | `components/navigation/SearchInput.tsx` | ✅ FIXED - aria-label on search input |
+
+## Remaining Work (Lower Priority)
 
 | Priority | File | Changes Needed |
 |----------|------|----------------|
-| P0 | `components/ProfileAvatar.tsx` | Add button semantics, alt text, dialog role |
-| P0 | `components/admin/DestinationForm.tsx` | Add htmlFor/id to all 15+ form fields |
-| P0 | `components/drawers/POIEditorDrawer.tsx` | Add htmlFor/id to all 10+ form fields |
-| P0 | `components/planner/TimeBlockCard.tsx` | Add button semantics to clickable div |
-| P0 | `components/trips/TripBucketList.tsx` | Add alt text to thumbnail |
-| P1 | `components/navigation/SearchInput.tsx` | Add aria-label to search input |
 | P1 | `components/LoginDrawer.tsx` | Add aria-required to inputs |
 | P1 | `components/drawers/AddFlightDrawer.tsx` | Add aria-required to inputs |
 | P2 | `components/SharingCard.tsx` | Add aria-hidden to decorative image |
