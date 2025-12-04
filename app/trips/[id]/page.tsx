@@ -423,8 +423,14 @@ export default function TripPage() {
               <AddPlaceBox
                 city={primaryCity}
                 dayNumber={selectedDayNumber}
-                onSelect={(destination) => {
-                  addPlace(destination, selectedDayNumber);
+                dayItems={days.find(d => d.dayNumber === selectedDayNumber)?.items.map(item => ({
+                  id: item.id,
+                  title: item.title,
+                  time: item.time,
+                  parsedNotes: item.parsedNotes,
+                }))}
+                onSelect={(destination, time) => {
+                  addPlace(destination, selectedDayNumber, time);
                   setShowAddPlaceBox(false);
                 }}
                 onAddFlight={(flightData) => {
@@ -451,8 +457,8 @@ export default function TripPage() {
                   addHotel(hotelData, targetDay);
                   setShowAddPlaceBox(false);
                 }}
-                onAddActivity={(activityData) => {
-                  addActivity(activityData, selectedDayNumber);
+                onAddActivity={(activityData, time) => {
+                  addActivity(activityData, selectedDayNumber, time);
                   setShowAddPlaceBox(false);
                 }}
                 onClose={() => setShowAddPlaceBox(false)}
@@ -499,8 +505,14 @@ export default function TripPage() {
             <AddPlaceBox
               city={primaryCity}
               dayNumber={selectedDayNumber}
-              onSelect={(destination) => {
-                addPlace(destination, selectedDayNumber);
+              dayItems={days.find(d => d.dayNumber === selectedDayNumber)?.items.map(item => ({
+                id: item.id,
+                title: item.title,
+                time: item.time,
+                parsedNotes: item.parsedNotes,
+              }))}
+              onSelect={(destination, time) => {
+                addPlace(destination, selectedDayNumber, time);
                 setShowAddPlaceBox(false);
               }}
               onAddFlight={(flightData) => {
@@ -527,8 +539,8 @@ export default function TripPage() {
                 addHotel(hotelData, targetDay);
                 setShowAddPlaceBox(false);
               }}
-              onAddActivity={(activityData) => {
-                addActivity(activityData, selectedDayNumber);
+              onAddActivity={(activityData, time) => {
+                addActivity(activityData, selectedDayNumber, time);
                 setShowAddPlaceBox(false);
               }}
               onClose={() => setShowAddPlaceBox(false)}
