@@ -12,6 +12,8 @@ import {
   Plus,
 } from 'lucide-react';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
+import TransitConnector from './TransitConnector';
+import { getAirportCoordinates } from '@/lib/utils/airports';
 
 interface ItineraryViewProps {
   days: TripDay[];
@@ -120,6 +122,50 @@ export default function ItineraryView({
   // Find hotel for night stay card (hotel with check-in on this day)
   const nightStayHotel = selectedDay.items.find(item => item.parsedNotes?.type === 'hotel');
 
+  // Helper to get "from" location (where you'd travel FROM this item to the next)
+  // For flights: this is the ARRIVAL airport (you arrive, then travel to next place)
+  // For regular places: this is the place's location
+  const getFromLocation = (item: EnrichedItineraryItem) => {
+    const itemType = item.parsedNotes?.type;
+
+    // For flights, the "from" for outgoing travel is the arrival airport
+    if (itemType === 'flight') {
+      const arrivalAirport = item.parsedNotes?.to;
+      if (arrivalAirport) {
+        const coords = getAirportCoordinates(arrivalAirport);
+        if (coords) return coords;
+      }
+    }
+
+    // For regular places, use destination coords or parsedNotes coords
+    const lat = item.destination?.latitude ?? item.parsedNotes?.latitude;
+    const lng = item.destination?.longitude ?? item.parsedNotes?.longitude;
+    if (lat && lng) return { latitude: lat, longitude: lng };
+    return undefined;
+  };
+
+  // Helper to get "to" location (where you'd travel TO this item from the previous)
+  // For flights: this is the DEPARTURE airport (you travel to airport before departing)
+  // For regular places: this is the place's location
+  const getToLocation = (item: EnrichedItineraryItem) => {
+    const itemType = item.parsedNotes?.type;
+
+    // For flights, the "to" for incoming travel is the departure airport
+    if (itemType === 'flight') {
+      const departureAirport = item.parsedNotes?.from;
+      if (departureAirport) {
+        const coords = getAirportCoordinates(departureAirport);
+        if (coords) return coords;
+      }
+    }
+
+    // For regular places, use destination coords or parsedNotes coords
+    const lat = item.destination?.latitude ?? item.parsedNotes?.latitude;
+    const lng = item.destination?.longitude ?? item.parsedNotes?.longitude;
+    if (lat && lng) return { latitude: lat, longitude: lng };
+    return undefined;
+  };
+
   return (
     <div className="space-y-6">
       {/* Day Header with Date Badge */}
@@ -159,19 +205,36 @@ export default function ItineraryView({
 
           {/* Items */}
           <div className="space-y-4">
-            {sortedItems.map((item, index) => (
-              <ItineraryItemRow
-                key={item.id}
-                item={item}
-                isFirst={index === 0}
-                isLast={index === sortedItems.length - 1}
-                isActive={item.id === activeItemId}
-                isEditMode={isEditMode}
-                onClick={() => onEditItem?.(item)}
-                onUpdateNotes={onUpdateItemNotes}
-                onRemove={onRemoveItem ? () => onRemoveItem(item.id) : undefined}
-              />
-            ))}
+            {sortedItems.map((item, index) => {
+              const nextItem = sortedItems[index + 1];
+              const fromLocation = getFromLocation(item);
+              const toLocation = nextItem ? getToLocation(nextItem) : undefined;
+
+              return (
+                <React.Fragment key={item.id}>
+                  <ItineraryItemRow
+                    item={item}
+                    isFirst={index === 0}
+                    isLast={index === sortedItems.length - 1}
+                    isActive={item.id === activeItemId}
+                    isEditMode={isEditMode}
+                    onClick={() => onEditItem?.(item)}
+                    onUpdateNotes={onUpdateItemNotes}
+                    onRemove={onRemoveItem ? () => onRemoveItem(item.id) : undefined}
+                  />
+                  {/* Transit Connector between items */}
+                  {nextItem && (
+                    <div className="relative pl-10 py-1">
+                      <TransitConnector
+                        from={fromLocation}
+                        to={toLocation}
+                        mode="walking"
+                      />
+                    </div>
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
 
           {/* Add Stop Button */}
