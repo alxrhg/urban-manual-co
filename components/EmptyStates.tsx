@@ -1,9 +1,36 @@
+/**
+ * Legacy Empty States
+ *
+ * This file provides backwards compatibility with the emoji-based empty states.
+ * For new code, prefer using the unified system in @/components/ui/empty-state.tsx
+ *
+ * @deprecated Import from '@/components/ui/empty-state' instead
+ */
+
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LucideIcon, AlertCircle } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
+
+// Re-export unified components for convenience
+export {
+  EmptyState as UnifiedEmptyState,
+  NoSearchResults,
+  NoDestinations,
+  NoSavedPlaces,
+  NoVisitedPlaces,
+  NoCollections,
+  NoTrips,
+  NoItineraryItems,
+  NoActivity,
+  ErrorState,
+  NetworkError,
+  AuthRequiredState,
+  LoadFailedState,
+  SuccessState,
+} from '@/components/ui/empty-state';
 
 interface EmptyStateProps {
   icon?: string; // Emoji
@@ -14,6 +41,9 @@ interface EmptyStateProps {
   onAction?: () => void;
 }
 
+/**
+ * @deprecated Use EmptyState from '@/components/ui/empty-state' instead
+ */
 export function EmptyState({
   icon = '🏞️',
   title,
@@ -51,63 +81,82 @@ export function EmptyState({
   );
 }
 
-// Pre-built empty states for common scenarios
+// Pre-built empty states for common scenarios (updated copy)
+
+/**
+ * @deprecated Use NoSearchResults from '@/components/ui/empty-state' instead
+ */
 export function NoResultsEmptyState({ searchTerm }: { searchTerm?: string }) {
   return (
     <EmptyState
       icon="🔍"
-      title="No results found"
-      description={searchTerm ? `No places match "${searchTerm}"` : "Try adjusting your filters"}
+      title="Nothing matches your search"
+      description={searchTerm ? `We couldn't find anything for "${searchTerm}". Try different keywords.` : "Try adjusting your filters or search terms."}
     />
   );
 }
 
+/**
+ * @deprecated Use NoSavedPlaces from '@/components/ui/empty-state' instead
+ */
 export function NoSavedPlacesEmptyState() {
   return (
     <EmptyState
       icon="💝"
-      title="No saved places yet"
-      description="Save places to create your wishlist"
-      actionLabel="Browse Destinations"
+      title="Build your wishlist"
+      description="Tap the bookmark icon on any place to save it here"
+      actionLabel="Discover Places"
       actionHref="/"
     />
   );
 }
 
+/**
+ * @deprecated Use NoVisitedPlaces from '@/components/ui/empty-state' instead
+ */
 export function NoVisitedPlacesEmptyState() {
   return (
     <EmptyState
       icon="✈️"
-      title="No visits yet"
+      title="Start your travel log"
       description="Mark places as visited to track your journey"
-      actionLabel="Browse Destinations"
+      actionLabel="Find Places"
       actionHref="/"
     />
   );
 }
 
+/**
+ * @deprecated Use NoCollections from '@/components/ui/empty-state' instead
+ */
 export function NoCollectionsEmptyState({ onCreateCollection }: { onCreateCollection: () => void }) {
   return (
     <EmptyState
       icon="📚"
-      title="No collections yet"
-      description="Create lists to organize your places"
+      title="Organize your discoveries"
+      description="Create collections to group places by theme or mood"
       actionLabel="Create Collection"
       onAction={onCreateCollection}
     />
   );
 }
 
+/**
+ * @deprecated Use unified empty state system instead
+ */
 export function NoAchievementsEmptyState() {
   return (
     <EmptyState
       icon="🏆"
-      title="No achievements yet"
-      description="Start visiting places to unlock achievements!"
+      title="Achievements await"
+      description="Visit places to unlock achievements and badges"
     />
   );
 }
 
+/**
+ * @deprecated Use ErrorState from '@/components/ui/empty-state' instead
+ */
 export function ErrorEmptyState({ message = "Something went wrong" }: { message?: string }) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
@@ -121,7 +170,9 @@ export function ErrorEmptyState({ message = "Something went wrong" }: { message?
           <Button
             onClick={() => window.location.reload()}
             variant="outline"
+            className="gap-2"
           >
+            <RefreshCw className="h-4 w-4" />
             Try Again
           </Button>
         </div>
@@ -130,12 +181,15 @@ export function ErrorEmptyState({ message = "Something went wrong" }: { message?
   );
 }
 
+/**
+ * @deprecated Use AuthRequiredState from '@/components/ui/empty-state' instead
+ */
 export function SignInEmptyState({ action = "to continue" }: { action?: string }) {
   return (
     <EmptyState
       icon="🔐"
       title={`Sign in ${action}`}
-      description="Create an account to save places and track your visits"
+      description="Create a free account to save places, plan trips, and more"
       actionLabel="Sign In"
       actionHref="/auth/login"
     />

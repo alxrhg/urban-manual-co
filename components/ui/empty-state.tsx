@@ -1,7 +1,14 @@
 /**
- * Empty State Component
+ * Empty State Component System
  *
- * Displays helpful messages and actions when content is not available.
+ * A unified system for empty states, error states, and edge cases.
+ * All empty states should guide users toward action, not just inform.
+ *
+ * Design Principles:
+ * - Be helpful, not just informative ("Your adventure awaits" vs "No trips")
+ * - Always provide a clear next action
+ * - Maintain brand voice even in error states
+ * - Use consistent visual language
  */
 
 'use client';
@@ -19,6 +26,14 @@ import {
   AlertCircle,
   Plus,
   LucideIcon,
+  WifiOff,
+  RefreshCw,
+  Compass,
+  Calendar,
+  Sparkles,
+  Clock,
+  Lock,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface EmptyStateProps {
@@ -43,6 +58,8 @@ interface EmptyStateProps {
   className?: string;
   /** Size variant */
   size?: 'sm' | 'default' | 'lg';
+  /** Visual variant */
+  variant?: 'default' | 'minimal' | 'card';
 }
 
 export function EmptyState({
@@ -53,6 +70,7 @@ export function EmptyState({
   secondaryAction,
   className,
   size = 'default',
+  variant = 'default',
 }: EmptyStateProps) {
   const sizeClasses = {
     sm: {
@@ -75,6 +93,12 @@ export function EmptyState({
     },
   };
 
+  const variantClasses = {
+    default: '',
+    minimal: '',
+    card: 'bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800',
+  };
+
   const classes = sizeClasses[size];
 
   return (
@@ -82,6 +106,7 @@ export function EmptyState({
       className={cn(
         'flex flex-col items-center justify-center text-center',
         classes.container,
+        variantClasses[variant],
         className
       )}
     >
@@ -143,27 +168,35 @@ export function EmptyState({
 
 /**
  * Pre-configured empty states for common use cases
+ *
+ * Copy Guidelines:
+ * - Titles should be encouraging, not just stating the obvious
+ * - Descriptions should explain the benefit of taking action
+ * - Action labels should be specific and action-oriented
  */
 
 export function NoSearchResults({
   searchQuery,
   onClear,
+  onBrowse,
   className,
 }: {
   searchQuery?: string;
   onClear?: () => void;
+  onBrowse?: () => void;
   className?: string;
 }) {
   return (
     <EmptyState
       icon={Search}
-      title="No results found"
+      title="Nothing matches your search"
       description={
         searchQuery
-          ? `No results for "${searchQuery}". Try a different search term.`
-          : 'No results match your search criteria.'
+          ? `We couldn't find anything for "${searchQuery}". Try different keywords or browse our curated picks.`
+          : 'Try adjusting your filters or search terms.'
       }
       action={onClear ? { label: 'Clear search', onClick: onClear } : undefined}
+      secondaryAction={onBrowse ? { label: 'Browse all', onClick: onBrowse } : undefined}
       className={className}
     />
   );
@@ -178,10 +211,10 @@ export function NoDestinations({
 }) {
   return (
     <EmptyState
-      icon={MapPin}
-      title="No destinations yet"
-      description="Discover amazing places around the world to add to your journey."
-      action={onExplore ? { label: 'Explore destinations', onClick: onExplore } : undefined}
+      icon={Compass}
+      title="Ready to explore?"
+      description="Discover carefully curated places from around the world, handpicked for discerning travelers."
+      action={onExplore ? { label: 'Start exploring', onClick: onExplore, icon: Sparkles } : undefined}
       className={className}
     />
   );
@@ -197,9 +230,9 @@ export function NoSavedPlaces({
   return (
     <EmptyState
       icon={Bookmark}
-      title="No saved places"
-      description="Save places you want to visit later by tapping the bookmark icon."
-      action={onExplore ? { label: 'Explore destinations', onClick: onExplore } : undefined}
+      title="Build your wishlist"
+      description="Tap the bookmark icon on any place to save it here. Perfect for planning future adventures."
+      action={onExplore ? { label: 'Discover places', onClick: onExplore } : undefined}
       className={className}
     />
   );
@@ -214,10 +247,10 @@ export function NoVisitedPlaces({
 }) {
   return (
     <EmptyState
-      icon={Heart}
-      title="No visited places"
-      description="Mark places as visited to build your travel history."
-      action={onExplore ? { label: 'Explore destinations', onClick: onExplore } : undefined}
+      icon={MapPin}
+      title="Start your travel log"
+      description="Mark places as visited to track your journey and unlock personalized recommendations."
+      action={onExplore ? { label: 'Find places to visit', onClick: onExplore } : undefined}
       className={className}
     />
   );
@@ -233,11 +266,11 @@ export function NoCollections({
   return (
     <EmptyState
       icon={FolderOpen}
-      title="No collections"
-      description="Create collections to organize your favorite places."
+      title="Organize your discoveries"
+      description="Create collections to group places by theme, city, or mood. Share them with friends or keep them private."
       action={
         onCreate
-          ? { label: 'Create collection', onClick: onCreate, icon: Plus }
+          ? { label: 'Create your first collection', onClick: onCreate, icon: Plus }
           : undefined
       }
       className={className}
@@ -255,11 +288,11 @@ export function NoTrips({
   return (
     <EmptyState
       icon={Plane}
-      title="No trips planned"
-      description="Start planning your next adventure by creating a trip."
+      title="Your next adventure awaits"
+      description="Plan your trip day-by-day with our curated recommendations. Add places, sync flights, and share with travel companions."
       action={
         onCreate
-          ? { label: 'Create trip', onClick: onCreate, icon: Plus }
+          ? { label: 'Plan a trip', onClick: onCreate, icon: Plus }
           : undefined
       }
       className={className}
@@ -267,15 +300,61 @@ export function NoTrips({
   );
 }
 
+export function NoItineraryItems({
+  dayNumber,
+  onAddPlace,
+  className,
+}: {
+  dayNumber?: number;
+  onAddPlace?: () => void;
+  className?: string;
+}) {
+  return (
+    <EmptyState
+      icon={Calendar}
+      title={dayNumber ? `Plan Day ${dayNumber}` : 'Plan your day'}
+      description="Add places to create your perfect itinerary. We'll help you optimize timing and routes."
+      action={onAddPlace ? { label: 'Add a place', onClick: onAddPlace, icon: Plus } : undefined}
+      size="sm"
+      className={className}
+    />
+  );
+}
+
+export function NoActivity({
+  onExplore,
+  className,
+}: {
+  onExplore?: () => void;
+  className?: string;
+}) {
+  return (
+    <EmptyState
+      icon={Clock}
+      title="Your activity will appear here"
+      description="Save places, mark visits, and create collections to see your travel history."
+      action={onExplore ? { label: 'Start exploring', onClick: onExplore } : undefined}
+      size="sm"
+      className={className}
+    />
+  );
+}
+
+/**
+ * Error States
+ */
+
 export function ErrorState({
   title = 'Something went wrong',
-  description = 'An error occurred. Please try again.',
+  description = "We couldn't load this content. Please try again.",
   onRetry,
+  onGoHome,
   className,
 }: {
   title?: string;
   description?: string;
   onRetry?: () => void;
+  onGoHome?: () => void;
   className?: string;
 }) {
   return (
@@ -283,7 +362,90 @@ export function ErrorState({
       icon={AlertCircle}
       title={title}
       description={description}
-      action={onRetry ? { label: 'Try again', onClick: onRetry } : undefined}
+      action={onRetry ? { label: 'Try again', onClick: onRetry, icon: RefreshCw } : undefined}
+      secondaryAction={onGoHome ? { label: 'Go home', onClick: onGoHome } : undefined}
+      className={className}
+    />
+  );
+}
+
+export function NetworkError({
+  onRetry,
+  className,
+}: {
+  onRetry?: () => void;
+  className?: string;
+}) {
+  return (
+    <EmptyState
+      icon={WifiOff}
+      title="You're offline"
+      description="Check your internet connection and try again. Your saved content may still be available."
+      action={onRetry ? { label: 'Retry', onClick: onRetry, icon: RefreshCw } : undefined}
+      className={className}
+    />
+  );
+}
+
+export function AuthRequiredState({
+  action = 'continue',
+  onSignIn,
+  className,
+}: {
+  action?: string;
+  onSignIn?: () => void;
+  className?: string;
+}) {
+  return (
+    <EmptyState
+      icon={Lock}
+      title={`Sign in to ${action}`}
+      description="Create a free account to save places, plan trips, and get personalized recommendations."
+      action={onSignIn ? { label: 'Sign in', onClick: onSignIn } : undefined}
+      className={className}
+    />
+  );
+}
+
+export function LoadFailedState({
+  resourceName = 'content',
+  onRetry,
+  className,
+}: {
+  resourceName?: string;
+  onRetry?: () => void;
+  className?: string;
+}) {
+  return (
+    <EmptyState
+      icon={AlertCircle}
+      title={`Couldn't load ${resourceName}`}
+      description="This might be a temporary issue. Please try again in a moment."
+      action={onRetry ? { label: 'Try again', onClick: onRetry, icon: RefreshCw } : undefined}
+      className={className}
+    />
+  );
+}
+
+export function SuccessState({
+  title = 'All done!',
+  description,
+  onContinue,
+  continueLabel = 'Continue',
+  className,
+}: {
+  title?: string;
+  description?: string;
+  onContinue?: () => void;
+  continueLabel?: string;
+  className?: string;
+}) {
+  return (
+    <EmptyState
+      icon={CheckCircle2}
+      title={title}
+      description={description}
+      action={onContinue ? { label: continueLabel, onClick: onContinue } : undefined}
       className={className}
     />
   );
