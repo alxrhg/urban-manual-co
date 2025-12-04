@@ -11,6 +11,8 @@ interface Trip {
   name: string;
   destination: string;
   locations: TripLocation[];
+  start_date: string | null;
+  end_date: string | null;
 }
 
 interface TripContextType {
@@ -98,6 +100,8 @@ export function TripProvider({ children }: { children: ReactNode }) {
           name: trip.title,
           destination: trip.destination || '',
           locations,
+          start_date: trip.start_date || null,
+          end_date: trip.end_date || null,
         };
       });
 

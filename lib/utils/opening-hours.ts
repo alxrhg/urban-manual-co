@@ -95,6 +95,141 @@ function parseTime(timeStr: string): number {
 }
 
 /**
+ * Parse opening hours data (handles both string JSON and object formats)
+ */
+function parseOpeningHours(openingHours: any): any {
+  if (!openingHours) return null;
+
+  if (typeof openingHours === 'string') {
+    try {
+      return JSON.parse(openingHours);
+    } catch {
+      return null;
+    }
+  }
+
+  return openingHours;
+}
+
+/**
+ * Get opening hours text for a specific day of the week
+ * @param openingHours - Opening hours data from Google Places API
+ * @param dayOfWeek - Day of week (0 = Sunday, 1 = Monday, etc.)
+ * @returns Opening hours text for that day, or null if not available
+ */
+export function getHoursForDayOfWeek(
+  openingHours: any,
+  dayOfWeek: number
+): string | null {
+  const hours = parseOpeningHours(openingHours);
+
+  if (!hours?.weekday_text || !Array.isArray(hours.weekday_text)) {
+    return null;
+  }
+
+  // Google Places API weekday_text starts with Monday (index 0)
+  // Convert: Sun=0 -> 6, Mon=1 -> 0, Tue=2 -> 1, etc.
+  const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const todayText = hours.weekday_text[googleDayIndex];
+
+  if (!todayText) return null;
+
+  // Extract just the hours part (after the day name and colon)
+  const colonIndex = todayText.indexOf(':');
+  if (colonIndex === -1) return todayText;
+
+  return todayText.substring(colonIndex + 1).trim();
+}
+
+/**
+ * Check if a destination is open on a specific date
+ * @param openingHours - Opening hours data from Google Places API
+ * @param date - Date to check
+ * @returns Object with isOpen status and hours text
+ */
+export function isOpenOnDate(
+  openingHours: any,
+  date: Date
+): { isOpen: boolean; hours: string | null } {
+  const hoursText = getHoursForDayOfWeek(openingHours, date.getDay());
+
+  if (!hoursText) {
+    return { isOpen: false, hours: null };
+  }
+
+  const lowerHours = hoursText.toLowerCase();
+
+  if (lowerHours.includes('closed')) {
+    return { isOpen: false, hours: 'Closed' };
+  }
+
+  if (lowerHours.includes('24 hours') || lowerHours.includes('open 24 hours')) {
+    return { isOpen: true, hours: '24 hours' };
+  }
+
+  // Has valid hours, consider it open
+  return { isOpen: true, hours: hoursText };
+}
+
+/**
+ * Get all dates in a range (inclusive)
+ */
+export function getDateRange(startDate: Date, endDate: Date): Date[] {
+  const dates: Date[] = [];
+  const current = new Date(startDate);
+
+  while (current <= endDate) {
+    dates.push(new Date(current));
+    current.setDate(current.getDate() + 1);
+  }
+
+  return dates;
+}
+
+/**
+ * Get trip date range from start and end date strings
+ */
+export function getTripDateRange(
+  startDateStr: string | null,
+  endDateStr: string | null
+): Date[] {
+  if (!startDateStr || !endDateStr) return [];
+
+  // Parse YYYY-MM-DD format to avoid UTC interpretation
+  const parseDateString = (dateStr: string): Date | null => {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+        return new Date(year, month, day);
+      }
+    }
+    return null;
+  };
+
+  const startDate = parseDateString(startDateStr);
+  const endDate = parseDateString(endDateStr);
+
+  if (!startDate || !endDate) return [];
+
+  return getDateRange(startDate, endDate);
+}
+
+/**
+ * Format date for display (short weekday and date)
+ * @example formatDateShort(date) → "Mon, Jan 15"
+ */
+export function formatDateShort(date: Date): string {
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+/**
  * Check if destination is open now based on opening hours and timezone
  */
 export function isOpenNow(

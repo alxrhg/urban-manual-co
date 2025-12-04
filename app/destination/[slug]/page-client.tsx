@@ -31,6 +31,7 @@ import { SequencePredictionsInline } from '@/components/SequencePredictionsInlin
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { PRICE_LEVEL } from '@/lib/constants';
 import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
+import { DestinationAvailability } from '@/components/DestinationAvailability';
 
 interface Recommendation {
   slug: string;
@@ -721,6 +722,14 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   </div>
                 );
               })}
+            </div>
+
+            {/* Trip Availability - shows hours during user's active trip */}
+            <div className="mt-6">
+              <DestinationAvailability
+                openingHours={enrichedData.opening_hours}
+                destinationName={destination.name}
+              />
             </div>
           </div>
         )}
