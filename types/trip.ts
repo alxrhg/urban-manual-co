@@ -1,4 +1,367 @@
 /**
+ * Trip types for the Urban Manual trip planner system
+ *
+ * This file contains:
+ * 1. New comprehensive types for the enhanced trip planner (v2)
+ * 2. Legacy types matching the original Supabase schema (for backwards compatibility)
+ */
+
+// ============================================
+// ENUMS & CONSTANTS
+// ============================================
+
+export type BookingStatus = 'not_booked' | 'pending' | 'confirmed' | 'cancelled';
+
+export type TravelMode = 'walk' | 'transit' | 'car' | 'taxi' | 'bike';
+
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'brunch' | 'coffee' | 'drinks';
+
+export type CardType =
+  | 'flight'
+  | 'hotel_overnight'
+  | 'restaurant'
+  | 'attraction'
+  | 'transport'
+  | 'hotel_activity' // minimal inline
+  | 'airport_activity' // minimal inline (lounge, etc)
+  | 'free_time'
+  | 'custom';
+
+export type HotelActivityType =
+  | 'check_in'
+  | 'checkout'
+  | 'breakfast'
+  | 'pool'
+  | 'spa'
+  | 'gym'
+  | 'lounge'
+  | 'get_ready'
+  | 'rest';
+
+export type AirportActivityType =
+  | 'lounge'
+  | 'security'
+  | 'checkin_counter'
+  | 'boarding';
+
+export type TripVisibility = 'private' | 'shared' | 'public';
+
+export type CollaboratorRole = 'owner' | 'editor' | 'viewer';
+
+// ============================================
+// TRIP (v2)
+// ============================================
+
+export interface TripV2 {
+  id: string;
+  userId: string;
+  title: string;
+  emoji?: string;
+  destinations: string[]; // city names
+  startDate: string; // ISO date
+  endDate: string;
+  travelerCount: number;
+
+  // Settings
+  timeFormat: '12h' | '24h';
+  tempUnit: 'F' | 'C';
+  distanceUnit: 'mi' | 'km';
+  currency: string;
+
+  // Sharing
+  visibility: TripVisibility;
+  shareSlug?: string;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================
+// FLIGHTS
+// ============================================
+
+export interface Flight {
+  id: string;
+  tripId: string;
+
+  // Flight info
+  airline: string;
+  airlineCode: string; // UA, AA, DL
+  flightNumber: string; // "1610"
+  aircraftType?: string;
+
+  // Route
+  departureAirport: string; // IATA code
+  departureCity: string;
+  departureTime: string; // ISO datetime
+  departureTerminal?: string;
+  departureGate?: string;
+
+  arrivalAirport: string;
+  arrivalCity: string;
+  arrivalTime: string;
+  arrivalTerminal?: string;
+  arrivalGate?: string;
+
+  // Duration
+  durationMinutes: number;
+  isDirectFlight: boolean;
+  stops?: FlightStop[];
+
+  // Booking
+  bookingStatus: BookingStatus;
+  confirmationNumber?: string;
+  bookingUrl?: string;
+
+  // Passenger details
+  seatNumber?: string;
+  seatClass: 'economy' | 'premium_economy' | 'business' | 'first';
+  bagsCarryOn: number;
+  bagsChecked: number;
+  frequentFlyerNumber?: string;
+
+  // Lounge
+  loungeAccess: boolean;
+  loungeLocation?: string;
+  loungeName?: string;
+
+  // Trip integration
+  day: number; // which trip day
+  legType: 'outbound' | 'return' | 'multi_city';
+
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FlightStop {
+  airport: string;
+  city: string;
+  arrivalTime: string;
+  departureTime: string;
+  durationMinutes: number; // layover
+  terminal?: string;
+  changeTerminal: boolean;
+}
+
+// ============================================
+// HOTELS
+// ============================================
+
+export interface HotelBooking {
+  id: string;
+  tripId: string;
+  destinationSlug?: string; // link to Urban Manual catalog
+
+  // Hotel info
+  name: string;
+  brand?: string; // Marriott, Hilton, etc.
+  starRating?: number;
+  address: string;
+  city: string;
+  phone?: string;
+  website?: string;
+  imageUrl?: string;
+
+  // Location
+  latitude?: number;
+  longitude?: number;
+
+  // Stay details
+  checkInDate: string; // ISO date
+  checkOutDate: string;
+  checkInTime: string; // "15:00"
+  checkOutTime: string; // "11:00"
+  nights: number;
+
+  // Room
+  roomType?: string;
+  roomNumber?: string;
+  floorPreference?: string;
+  bedType?: string;
+
+  // Booking
+  bookingStatus: BookingStatus;
+  confirmationNumber?: string;
+  bookingUrl?: string;
+
+  // Pricing
+  costPerNight?: number;
+  totalCost?: number;
+  currency: string;
+
+  // Amenities (booleans for quick access)
+  breakfastIncluded: boolean;
+  breakfastTime?: string; // "07:00-10:00"
+  breakfastLocation?: string; // "Lobby restaurant"
+
+  hasPool: boolean;
+  poolHours?: string;
+
+  hasGym: boolean;
+  gymHours?: string;
+
+  hasSpa: boolean;
+
+  hasLounge: boolean; // club lounge
+  loungeHours?: string;
+  loungeLocation?: string;
+
+  parkingIncluded: boolean;
+  parkingCost?: number;
+  parkingType?: 'self' | 'valet';
+
+  wifiIncluded: boolean;
+
+  airportShuttle: boolean;
+
+  // All amenities as array too (for display)
+  amenities: string[];
+
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================
+// ITINERARY ITEMS (v2)
+// ============================================
+
+export interface ItineraryItemV2 {
+  id: string;
+  tripId: string;
+
+  // Positioning
+  day: number;
+  orderIndex: number;
+  time?: string; // "14:30"
+  endTime?: string;
+  durationMinutes?: number;
+
+  // Type
+  category: CardType;
+  subtype?: HotelActivityType | AirportActivityType | MealType;
+
+  // Content
+  title: string;
+  subtitle?: string;
+  description?: string;
+  imageUrl?: string;
+
+  // Location
+  address?: string;
+  city?: string;
+  latitude?: number;
+  longitude?: number;
+
+  // Destination link
+  destinationSlug?: string; // link to Urban Manual catalog
+
+  // Booking
+  bookingStatus: BookingStatus;
+  confirmationNumber?: string;
+  bookingUrl?: string;
+  partySize?: number;
+
+  // Cost
+  costEstimate?: number;
+  currency: string;
+  priceRange?: '$' | '$$' | '$$$' | '$$$$';
+
+  // Travel to next
+  travelTimeToNext?: number; // minutes
+  travelDistanceToNext?: number; // km
+  travelModeToNext?: TravelMode;
+
+  // References
+  flightId?: string; // links to Flight
+  hotelBookingId?: string; // links to HotelBooking
+  nightNumber?: number; // for overnight cards
+  totalNights?: number;
+
+  // Meta
+  priority: 'must_do' | 'high' | 'medium' | 'low' | 'optional';
+  isWeatherDependent: boolean;
+  isIndoor: boolean;
+
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ============================================
+// COLLABORATORS
+// ============================================
+
+export interface TripCollaborator {
+  id: string;
+  tripId: string;
+  email: string;
+  userId?: string;
+  role: CollaboratorRole;
+  status: 'pending' | 'accepted';
+  invitedAt: string;
+  acceptedAt?: string;
+}
+
+// ============================================
+// NOTES & ATTACHMENTS
+// ============================================
+
+export interface TripNote {
+  id: string;
+  tripId: string;
+  day?: number; // null for general notes
+  content: string;
+  isPinned: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TripAttachment {
+  id: string;
+  tripId: string;
+  type: 'link' | 'file';
+  title: string;
+  url?: string;
+  filePath?: string;
+  createdAt: string;
+}
+
+// ============================================
+// UI STATE TYPES
+// ============================================
+
+export interface ScheduleGap {
+  type: 'morning' | 'lunch' | 'afternoon' | 'dinner' | 'evening';
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  previousItem?: ItineraryItemV2;
+  nextItem?: ItineraryItemV2;
+}
+
+export interface TravelEstimate {
+  durationMinutes: number;
+  distanceKm: number;
+  mode: TravelMode;
+  estimatedCost?: number;
+}
+
+export interface DayWeather {
+  date: string;
+  tempHigh: number;
+  tempLow: number;
+  condition: string;
+  icon: string;
+  precipitation: number;
+}
+
+// ============================================
+// LEGACY TYPES (v1 - Supabase schema)
+// ============================================
+
+/**
  * Trip types matching Supabase schema exactly
  * Based on migrations/trips.sql
  */
@@ -301,7 +664,7 @@ export interface ActivityData {
 }
 
 /**
- * Flight data structure
+ * Flight data structure (legacy)
  */
 export interface FlightData {
   type: 'flight';
@@ -336,7 +699,7 @@ export interface TrainData {
 }
 
 /**
- * Hotel data structure for adding hotels
+ * Hotel data structure for adding hotels (legacy)
  */
 export interface HotelData {
   type: 'hotel';
@@ -369,4 +732,3 @@ export function parseItineraryNotes(notes: string | null): ItineraryItemNotes | 
 export function stringifyItineraryNotes(notes: ItineraryItemNotes): string {
   return JSON.stringify(notes);
 }
-
