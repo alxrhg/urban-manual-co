@@ -1,18 +1,16 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { parseDestinations } from '@/types/trip';
-import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 
-// Trip components
+// Figma-inspired components
 import TripHeader from '@/components/trip/TripHeader';
 import ItineraryView from '@/components/trip/ItineraryView';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
-import TripMapView from '@/components/trips/TripMapView';
 
 // Existing components
 import { PageLoader } from '@/components/LoadingStates';
@@ -21,9 +19,10 @@ import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import DestinationBox from '@/components/trip/DestinationBox';
 
 /**
- * TripPage - Trip detail page with itinerary view
+ * TripPageRedesign - Figma-inspired trip detail page
+ * Features: Centered title header, content tabs with counts, day tabs, Travel AI sidebar
  */
-export default function TripPage() {
+export default function TripPageRedesign() {
   const params = useParams();
   const router = useRouter();
   const tripId = params?.id as string;
@@ -40,14 +39,12 @@ export default function TripPage() {
     addPlace,
     addFlight,
     addTrain,
-    addHotel,
     addActivity,
     removeItem,
     updateItemTime,
     updateItemDuration,
     updateItemNotes,
     updateItem,
-    moveItemToDay,
     refresh,
   } = useTripEditor({
     tripId,
@@ -67,35 +64,6 @@ export default function TripPage() {
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [showMapView, setShowMapView] = useState(false);
-
-  // Auto-fix items on wrong days based on their dates
-  const hasAutoFixed = useRef(false);
-  useEffect(() => {
-    // Wait for data to load and only run once
-    if (loading || !trip?.start_date || days.length === 0 || hasAutoFixed.current) return;
-
-    // Count items to ensure we have data
-    const totalItems = days.reduce((sum, day) => sum + day.items.length, 0);
-    if (totalItems === 0) return;
-
-    // Check all items and move any that are on the wrong day
-    for (const day of days) {
-      for (const item of day.items) {
-        const checkInDate = item.parsedNotes?.checkInDate;
-        const departureDate = item.parsedNotes?.departureDate;
-        const dateToCheck = checkInDate || departureDate;
-
-        if (dateToCheck) {
-          const targetDay = calculateDayNumberFromDate(trip.start_date, trip.end_date, dateToCheck);
-          if (targetDay !== null && targetDay !== day.dayNumber) {
-            moveItemToDay(item.id, targetDay);
-          }
-        }
-      }
-    }
-    hasAutoFixed.current = true;
-  }, [loading, trip?.start_date, trip?.end_date, days, moveItemToDay]);
 
   // Calculate flight and hotel counts
   const { flightCount, hotelCount } = useMemo(() => {
@@ -215,36 +183,11 @@ export default function TripPage() {
     await handleAddSuggestion({ dayNumber: selectedDayNumber });
   }, [handleAddSuggestion, selectedDayNumber]);
 
-  // Handle item updates with automatic day move when dates change
-  const handleItemUpdate = useCallback((itemId: string, updates: Record<string, unknown>) => {
-    // Update the item notes
-    updateItem(itemId, updates);
-
-    // Find the item to get its current/new date
-    let item: EnrichedItineraryItem | undefined;
-    for (const day of days) {
-      item = day.items.find(i => i.id === itemId);
-      if (item) break;
-    }
-
-    // Get the date to check - prefer new value from updates, fall back to existing
-    const checkInDate = (updates.checkInDate as string | undefined) || item?.parsedNotes?.checkInDate;
-    const departureDate = (updates.departureDate as string | undefined) || item?.parsedNotes?.departureDate;
-    const dateToCheck = checkInDate || departureDate;
-
-    if (dateToCheck && trip?.start_date) {
-      const targetDay = calculateDayNumberFromDate(trip.start_date, trip.end_date, dateToCheck);
-      if (targetDay !== null) {
-        moveItemToDay(itemId, targetDay);
-      }
-    }
-  }, [updateItem, moveItemToDay, trip?.start_date, trip?.end_date, days]);
-
   // Loading state
   if (loading) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950">
-        <div className="max-w-4xl mx-auto">
+      <main className="min-h-screen bg-white dark:bg-gray-950">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <PageLoader />
         </div>
       </main>
@@ -254,12 +197,12 @@ export default function TripPage() {
   // Not found
   if (!trip) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950 flex items-center justify-center">
+      <main className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-stone-500 dark:text-gray-400 mb-4">Trip not found</p>
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Trip not found</p>
           <button
             onClick={() => router.push('/trips')}
-            className="text-stone-900 dark:text-white hover:opacity-70 transition-opacity"
+            className="text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300"
           >
             Back to trips
           </button>
@@ -269,8 +212,8 @@ export default function TripPage() {
   }
 
   return (
-    <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950">
-      <div className="max-w-4xl mx-auto">
+    <main className="min-h-screen bg-white dark:bg-gray-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative">
         {/* Header with Tabs */}
         <TripHeader
           title={trip.title}
@@ -287,7 +230,6 @@ export default function TripPage() {
           onAddClick={() => setShowAddPlaceBox(true)}
           onEditClick={() => setIsEditMode(!isEditMode)}
           isEditMode={isEditMode}
-          onMapClick={() => setShowMapView(true)}
         />
 
         {/* Main Content */}
@@ -295,64 +237,32 @@ export default function TripPage() {
           {/* Left Column - Content */}
           <div className="flex-1 min-w-0">
             {activeContentTab === 'itinerary' && (
-              <>
-                {/* Map View (shown when map button clicked) */}
-                {showMapView && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-medium text-stone-900 dark:text-white">Day {selectedDayNumber} Map</h3>
-                      <button
-                        onClick={() => setShowMapView(false)}
-                        className="text-xs text-stone-400 hover:text-stone-900 dark:hover:text-white transition-colors"
-                      >
-                        Hide map
-                      </button>
-                    </div>
-                    <TripMapView
-                      places={(days.find(d => d.dayNumber === selectedDayNumber)?.items || [])
-                        .filter((item) => item.parsedNotes?.type !== 'flight')
-                        .map((item, index) => ({
-                          id: item.id,
-                          name: item.title || 'Place',
-                          latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
-                          longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
-                          category: item.destination?.category || item.parsedNotes?.category,
-                          order: index + 1,
-                        }))}
-                      className="h-[300px] rounded-2xl"
-                    />
-                  </div>
-                )}
-
-                {/* Itinerary List */}
-                <ItineraryView
-                  days={days}
-                  selectedDayNumber={selectedDayNumber}
-                  onSelectDay={setSelectedDayNumber}
-                  onEditItem={handleEditItem}
-                  onAddItem={(dayNumber) => {
-                    setSelectedDayNumber(dayNumber);
-                    setShowAddPlaceBox(true);
-                  }}
-                  onOptimizeDay={handleOptimizeDay}
-                  onUpdateItemNotes={(itemId, notes) => updateItem(itemId, notes)}
-                  onRemoveItem={removeItem}
-                  isOptimizing={optimizingDay !== null}
-                  isEditMode={isEditMode}
-                  activeItemId={selectedItem?.id}
-                  allHotels={allHotels}
-                />
-              </>
+              <ItineraryView
+                days={days}
+                selectedDayNumber={selectedDayNumber}
+                onSelectDay={setSelectedDayNumber}
+                onEditItem={handleEditItem}
+                onAddItem={(dayNumber) => {
+                  setSelectedDayNumber(dayNumber);
+                  setShowAddPlaceBox(true);
+                }}
+                onOptimizeDay={handleOptimizeDay}
+                onUpdateItemNotes={(itemId, notes) => updateItem(itemId, notes)}
+                onRemoveItem={removeItem}
+                isOptimizing={optimizingDay !== null}
+                isEditMode={isEditMode}
+                activeItemId={selectedItem?.id}
+              />
             )}
 
             {activeContentTab === 'flights' && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {allFlights.length === 0 ? (
-                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                    <p className="text-sm text-stone-500 dark:text-gray-400 mb-6">No flights added yet</p>
+                  <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+                    <p className="text-gray-500 mb-4">No flights added yet</p>
                     <button
                       onClick={() => setShowAddPlaceBox(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
+                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
                     >
                       Add a flight
                     </button>
@@ -362,10 +272,10 @@ export default function TripPage() {
                     <div
                       key={flight.id}
                       onClick={() => handleEditItem(flight)}
-                      className="p-4 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-stone-300 dark:hover:border-gray-700 transition-all"
+                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
                     >
-                      <div className="text-sm font-medium text-stone-900 dark:text-white">{flight.title}</div>
-                      <div className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                      <div className="font-medium text-gray-900 dark:text-white">{flight.title}</div>
+                      <div className="text-sm text-gray-500 mt-1">
                         {flight.parsedNotes?.from} → {flight.parsedNotes?.to}
                       </div>
                     </div>
@@ -375,13 +285,13 @@ export default function TripPage() {
             )}
 
             {activeContentTab === 'hotels' && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {allHotels.length === 0 ? (
-                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                    <p className="text-sm text-stone-500 dark:text-gray-400 mb-6">No hotels added yet</p>
+                  <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+                    <p className="text-gray-500 mb-4">No hotels added yet</p>
                     <button
                       onClick={() => setShowAddPlaceBox(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
+                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
                     >
                       Add a hotel
                     </button>
@@ -391,10 +301,10 @@ export default function TripPage() {
                     <div
                       key={hotel.id}
                       onClick={() => handleEditItem(hotel)}
-                      className="p-4 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-stone-300 dark:hover:border-gray-700 transition-all"
+                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
                     >
-                      <div className="text-sm font-medium text-stone-900 dark:text-white">{hotel.title}</div>
-                      <div className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                      <div className="font-medium text-gray-900 dark:text-white">{hotel.title}</div>
+                      <div className="text-sm text-gray-500 mt-1">
                         {hotel.parsedNotes?.checkInTime || 'Check-in time not set'} · {hotel.parsedNotes?.address || 'Address not set'}
                       </div>
                     </div>
@@ -404,8 +314,8 @@ export default function TripPage() {
             )}
 
             {activeContentTab === 'notes' && (
-              <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <p className="text-sm text-stone-500 dark:text-gray-400">Notes feature coming soon</p>
+              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
+                <p className="text-gray-500">Notes feature coming soon</p>
               </div>
             )}
           </div>
@@ -428,27 +338,11 @@ export default function TripPage() {
                   setShowAddPlaceBox(false);
                 }}
                 onAddFlight={(flightData) => {
-                  // Calculate correct day based on departure date
-                  const targetDay = flightData.departureDate
-                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, flightData.departureDate) ?? selectedDayNumber
-                    : selectedDayNumber;
-                  addFlight(flightData, targetDay);
+                  addFlight(flightData, selectedDayNumber);
                   setShowAddPlaceBox(false);
                 }}
                 onAddTrain={(trainData) => {
-                  // Calculate correct day based on departure date
-                  const targetDay = trainData.departureDate
-                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, trainData.departureDate) ?? selectedDayNumber
-                    : selectedDayNumber;
-                  addTrain(trainData, targetDay);
-                  setShowAddPlaceBox(false);
-                }}
-                onAddHotel={(hotelData) => {
-                  // Calculate correct day based on check-in date
-                  const targetDay = hotelData.checkInDate
-                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, hotelData.checkInDate) ?? selectedDayNumber
-                    : selectedDayNumber;
-                  addHotel(hotelData, targetDay);
+                  addTrain(trainData, selectedDayNumber);
                   setShowAddPlaceBox(false);
                 }}
                 onAddActivity={(activityData) => {
@@ -463,7 +357,7 @@ export default function TripPage() {
                 onClose={() => setSelectedItem(null)}
                 onTimeChange={updateItemTime}
                 onNotesChange={updateItemNotes}
-                onItemUpdate={handleItemUpdate}
+                onItemUpdate={updateItem}
                 onRemove={(itemId) => {
                   removeItem(itemId);
                   setSelectedItem(null);
@@ -504,27 +398,11 @@ export default function TripPage() {
                 setShowAddPlaceBox(false);
               }}
               onAddFlight={(flightData) => {
-                // Calculate correct day based on departure date
-                const targetDay = flightData.departureDate
-                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, flightData.departureDate) ?? selectedDayNumber
-                  : selectedDayNumber;
-                addFlight(flightData, targetDay);
+                addFlight(flightData, selectedDayNumber);
                 setShowAddPlaceBox(false);
               }}
               onAddTrain={(trainData) => {
-                // Calculate correct day based on departure date
-                const targetDay = trainData.departureDate
-                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, trainData.departureDate) ?? selectedDayNumber
-                  : selectedDayNumber;
-                addTrain(trainData, targetDay);
-                setShowAddPlaceBox(false);
-              }}
-              onAddHotel={(hotelData) => {
-                // Calculate correct day based on check-in date
-                const targetDay = hotelData.checkInDate
-                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, hotelData.checkInDate) ?? selectedDayNumber
-                  : selectedDayNumber;
-                addHotel(hotelData, targetDay);
+                addTrain(trainData, selectedDayNumber);
                 setShowAddPlaceBox(false);
               }}
               onAddActivity={(activityData) => {
@@ -539,7 +417,7 @@ export default function TripPage() {
               onClose={() => setSelectedItem(null)}
               onTimeChange={updateItemTime}
               onNotesChange={updateItemNotes}
-              onItemUpdate={handleItemUpdate}
+              onItemUpdate={updateItem}
               onRemove={(itemId) => {
                 removeItem(itemId);
                 setSelectedItem(null);

@@ -239,6 +239,9 @@ export interface ItineraryItemNotes {
   arrivalDate?: string;
   arrivalTime?: string;
   confirmationNumber?: string;
+  terminal?: string;
+  gate?: string;
+  seatNumber?: string;
   // Train-specific fields
   trainNumber?: string;
   trainLine?: string;
@@ -250,6 +253,7 @@ export interface ItineraryItemNotes {
   checkInDate?: string;
   checkOutDate?: string;
   hotelConfirmation?: string;
+  roomType?: string;
   // Lodging details
   name?: string;
   address?: string;
@@ -328,6 +332,22 @@ export interface TrainData {
   arrivalTime?: string;
   duration?: number;
   confirmationNumber?: string;
+  notes?: string;
+}
+
+/**
+ * Hotel data structure for adding hotels
+ */
+export interface HotelData {
+  type: 'hotel';
+  name: string;
+  address?: string;
+  checkInDate: string;
+  checkInTime?: string;
+  checkOutDate?: string;
+  checkOutTime?: string;
+  confirmationNumber?: string;
+  roomType?: string;
   notes?: string;
 }
 

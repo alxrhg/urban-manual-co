@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import {
-  Search, MapPin, Loader2, Globe, Plus, X, Plane, Train, Clock,
+  Search, MapPin, Loader2, Globe, Plus, X, Plane, Train, Clock, Building2,
   BedDouble, Waves, Sparkles, Dumbbell, Coffee, Shirt, Package, Sun, Briefcase, Phone, Camera, ShoppingBag
 } from 'lucide-react';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
-import type { FlightData, TrainData, ActivityData, ActivityType } from '@/types/trip';
+import type { FlightData, TrainData, ActivityData, ActivityType, HotelData } from '@/types/trip';
 import {
   TripCard,
   TripCardHeader,
@@ -26,7 +26,7 @@ import {
 
 const CATEGORIES = ['All', 'Dining', 'Cafe', 'Bar', 'Culture', 'Shopping', 'Hotel'];
 
-type Tab = 'curated' | 'google' | 'flight' | 'train' | 'activity';
+type Tab = 'curated' | 'google' | 'flight' | 'train' | 'hotel' | 'activity';
 
 // Activity quick-add options
 const ACTIVITY_OPTIONS: { type: ActivityType; icon: typeof BedDouble; label: string; defaultDuration: number }[] = [
@@ -52,6 +52,7 @@ interface AddPlaceBoxProps {
   onSelect?: (destination: Destination) => void;
   onAddFlight?: (flightData: FlightData) => void;
   onAddTrain?: (trainData: TrainData) => void;
+  onAddHotel?: (hotelData: HotelData) => void;
   onAddActivity?: (activityData: ActivityData) => void;
   onClose?: () => void;
   className?: string;
@@ -67,6 +68,7 @@ export default function AddPlaceBox({
   onSelect,
   onAddFlight,
   onAddTrain,
+  onAddHotel,
   onAddActivity,
   onClose,
   className = '',
@@ -105,6 +107,18 @@ export default function AddPlaceBox({
     departureTime: '',
     arrivalTime: '',
     confirmationNumber: '',
+  });
+
+  // Hotel form state
+  const [hotelForm, setHotelForm] = useState({
+    name: '',
+    address: '',
+    checkInDate: '',
+    checkInTime: '15:00',
+    checkOutDate: '',
+    checkOutTime: '11:00',
+    confirmationNumber: '',
+    roomType: '',
   });
 
   // Activity state
@@ -296,6 +310,39 @@ export default function AddPlaceBox({
     });
   };
 
+  const handleAddHotel = () => {
+    if (!onAddHotel || !hotelForm.name || !hotelForm.checkInDate) return;
+
+    const hotelData: HotelData = {
+      type: 'hotel',
+      name: hotelForm.name,
+      address: hotelForm.address || undefined,
+      checkInDate: hotelForm.checkInDate,
+      checkInTime: hotelForm.checkInTime || undefined,
+      checkOutDate: hotelForm.checkOutDate || undefined,
+      checkOutTime: hotelForm.checkOutTime || undefined,
+      roomType: hotelForm.roomType || undefined,
+    };
+
+    if (hotelForm.confirmationNumber) {
+      hotelData.confirmationNumber = hotelForm.confirmationNumber;
+    }
+
+    onAddHotel(hotelData);
+
+    // Reset form
+    setHotelForm({
+      name: '',
+      address: '',
+      checkInDate: '',
+      checkInTime: '15:00',
+      checkOutDate: '',
+      checkOutTime: '11:00',
+      confirmationNumber: '',
+      roomType: '',
+    });
+  };
+
   return (
     <TripCard className={className}>
       {/* Header */}
@@ -327,6 +374,11 @@ export default function AddPlaceBox({
           {onAddTrain && (
             <TripTabsTrigger value="train" icon={<Train className="w-3 h-3" />}>
               Train
+            </TripTabsTrigger>
+          )}
+          {onAddHotel && (
+            <TripTabsTrigger value="hotel" icon={<Building2 className="w-3 h-3" />}>
+              Hotel
             </TripTabsTrigger>
           )}
           {onAddActivity && (
@@ -692,6 +744,99 @@ export default function AddPlaceBox({
             >
               <Train className="w-4 h-4" />
               Add Train to Day {dayNumber}
+            </TripButton>
+          </TripCardContent>
+        </TripTabsContent>
+
+        {/* Hotel Tab */}
+        <TripTabsContent value="hotel">
+          <TripCardContent className="space-y-3">
+            <div>
+              <TripLabel>Hotel Name *</TripLabel>
+              <TripInput
+                type="text"
+                value={hotelForm.name}
+                onChange={(e) => setHotelForm(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="e.g., Four Seasons Miami"
+              />
+            </div>
+
+            <div>
+              <TripLabel>Address</TripLabel>
+              <TripInput
+                type="text"
+                value={hotelForm.address}
+                onChange={(e) => setHotelForm(prev => ({ ...prev, address: e.target.value }))}
+                placeholder="e.g., 1435 Brickell Ave, Miami"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <TripLabel>Check-in Date *</TripLabel>
+                <TripInput
+                  type="date"
+                  value={hotelForm.checkInDate}
+                  onChange={(e) => setHotelForm(prev => ({ ...prev, checkInDate: e.target.value }))}
+                />
+              </div>
+              <div>
+                <TripLabel>Check-in Time</TripLabel>
+                <TripInput
+                  type="time"
+                  value={hotelForm.checkInTime}
+                  onChange={(e) => setHotelForm(prev => ({ ...prev, checkInTime: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <TripLabel>Check-out Date</TripLabel>
+                <TripInput
+                  type="date"
+                  value={hotelForm.checkOutDate}
+                  onChange={(e) => setHotelForm(prev => ({ ...prev, checkOutDate: e.target.value }))}
+                />
+              </div>
+              <div>
+                <TripLabel>Check-out Time</TripLabel>
+                <TripInput
+                  type="time"
+                  value={hotelForm.checkOutTime}
+                  onChange={(e) => setHotelForm(prev => ({ ...prev, checkOutTime: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <TripLabel>Room Type</TripLabel>
+                <TripInput
+                  type="text"
+                  value={hotelForm.roomType}
+                  onChange={(e) => setHotelForm(prev => ({ ...prev, roomType: e.target.value }))}
+                  placeholder="e.g., Ocean View Suite"
+                />
+              </div>
+              <div>
+                <TripLabel>Confirmation #</TripLabel>
+                <TripInput
+                  type="text"
+                  value={hotelForm.confirmationNumber}
+                  onChange={(e) => setHotelForm(prev => ({ ...prev, confirmationNumber: e.target.value }))}
+                  placeholder="Optional"
+                />
+              </div>
+            </div>
+
+            <TripButton
+              onClick={handleAddHotel}
+              disabled={!hotelForm.name || !hotelForm.checkInDate}
+              className="w-full"
+            >
+              <Building2 className="w-4 h-4" />
+              Add Hotel
             </TripButton>
           </TripCardContent>
         </TripTabsContent>
