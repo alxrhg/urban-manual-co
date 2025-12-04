@@ -241,8 +241,8 @@ export default function TripPage() {
   // Loading state
   if (loading) {
     return (
-      <main className="min-h-screen bg-white dark:bg-gray-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950">
+        <div className="max-w-4xl mx-auto">
           <PageLoader />
         </div>
       </main>
@@ -252,12 +252,12 @@ export default function TripPage() {
   // Not found
   if (!trip) {
     return (
-      <main className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+      <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-500 dark:text-gray-400 mb-4">Trip not found</p>
+          <p className="text-stone-500 dark:text-gray-400 mb-4">Trip not found</p>
           <button
             onClick={() => router.push('/trips')}
-            className="text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300"
+            className="text-stone-900 dark:text-white hover:opacity-70 transition-opacity"
           >
             Back to trips
           </button>
@@ -267,12 +267,11 @@ export default function TripPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white dark:bg-gray-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative">
+    <main className="w-full px-4 sm:px-6 md:px-10 pt-16 pb-32 min-h-screen bg-stone-50 dark:bg-gray-950">
+      <div className="max-w-4xl mx-auto">
         {/* Header with Tabs */}
         <TripHeader
           title={trip.title}
-          emoji="🎉"
           heroImage={trip.cover_image || undefined}
           activeContentTab={activeContentTab}
           onContentTabChange={setActiveContentTab}
@@ -286,11 +285,6 @@ export default function TripPage() {
           onAddClick={() => setShowAddPlaceBox(true)}
           onEditClick={() => setIsEditMode(!isEditMode)}
           isEditMode={isEditMode}
-          collaborators={[
-            { name: 'John Doe', initials: 'JD', color: '#374151' },
-            { name: 'Anna Miller', initials: 'AM', color: '#6B7280' },
-          ]}
-          notificationCount={1}
         />
 
         {/* Main Content */}
@@ -317,13 +311,13 @@ export default function TripPage() {
             )}
 
             {activeContentTab === 'flights' && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {allFlights.length === 0 ? (
-                  <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-                    <p className="text-gray-500 mb-4">No flights added yet</p>
+                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <p className="text-sm text-stone-500 dark:text-gray-400 mb-6">No flights added yet</p>
                     <button
                       onClick={() => setShowAddPlaceBox(true)}
-                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
                     >
                       Add a flight
                     </button>
@@ -333,10 +327,10 @@ export default function TripPage() {
                     <div
                       key={flight.id}
                       onClick={() => handleEditItem(flight)}
-                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                      className="p-4 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-stone-300 dark:hover:border-gray-700 transition-all"
                     >
-                      <div className="font-medium text-gray-900 dark:text-white">{flight.title}</div>
-                      <div className="text-sm text-gray-500 mt-1">
+                      <div className="text-sm font-medium text-stone-900 dark:text-white">{flight.title}</div>
+                      <div className="text-xs text-stone-500 dark:text-gray-400 mt-1">
                         {flight.parsedNotes?.from} → {flight.parsedNotes?.to}
                       </div>
                     </div>
@@ -346,13 +340,13 @@ export default function TripPage() {
             )}
 
             {activeContentTab === 'hotels' && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {allHotels.length === 0 ? (
-                  <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-                    <p className="text-gray-500 mb-4">No hotels added yet</p>
+                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <p className="text-sm text-stone-500 dark:text-gray-400 mb-6">No hotels added yet</p>
                     <button
                       onClick={() => setShowAddPlaceBox(true)}
-                      className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
                     >
                       Add a hotel
                     </button>
@@ -362,10 +356,10 @@ export default function TripPage() {
                     <div
                       key={hotel.id}
                       onClick={() => handleEditItem(hotel)}
-                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-colors"
+                      className="p-4 bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-stone-300 dark:hover:border-gray-700 transition-all"
                     >
-                      <div className="font-medium text-gray-900 dark:text-white">{hotel.title}</div>
-                      <div className="text-sm text-gray-500 mt-1">
+                      <div className="text-sm font-medium text-stone-900 dark:text-white">{hotel.title}</div>
+                      <div className="text-xs text-stone-500 dark:text-gray-400 mt-1">
                         {hotel.parsedNotes?.checkInTime || 'Check-in time not set'} · {hotel.parsedNotes?.address || 'Address not set'}
                       </div>
                     </div>
@@ -375,8 +369,8 @@ export default function TripPage() {
             )}
 
             {activeContentTab === 'notes' && (
-              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-                <p className="text-gray-500">Notes feature coming soon</p>
+              <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <p className="text-sm text-stone-500 dark:text-gray-400">Notes feature coming soon</p>
               </div>
             )}
           </div>

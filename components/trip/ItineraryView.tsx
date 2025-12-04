@@ -303,7 +303,7 @@ function InlineEditField({
   if (isEditing) {
     return (
       <span className="inline-flex items-center" onClick={(e) => e.stopPropagation()}>
-        <span className="text-gray-400 mr-1">{label}</span>
+        <span className="text-stone-400 mr-1">{label}</span>
         <input
           ref={inputRef}
           type="text"
@@ -311,7 +311,7 @@ function InlineEditField({
           onChange={(e) => setEditValue(e.target.value.toUpperCase())}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
-          className="w-12 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 text-xs font-mono text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
+          className="w-12 bg-white dark:bg-gray-800 border border-stone-300 dark:border-gray-600 rounded px-1 py-0.5 text-xs font-mono text-stone-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-stone-400"
           placeholder={placeholder}
         />
       </span>
@@ -324,10 +324,10 @@ function InlineEditField({
         e.stopPropagation();
         setIsEditing(true);
       }}
-      className="cursor-text hover:bg-gray-200 dark:hover:bg-gray-700 px-1 py-0.5 rounded transition-colors"
+      className="cursor-text hover:bg-stone-200 dark:hover:bg-gray-700 px-1 py-0.5 rounded transition-colors"
       title="Click to edit"
     >
-      {label} {value || <span className="text-gray-400">---</span>}
+      {label} {value || <span className="text-stone-400">---</span>}
     </span>
   );
 }
@@ -373,12 +373,12 @@ function FlightCard({
       onClick={onClick}
       className={`
         rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
-        ${isActive ? 'border-gray-900 dark:border-white ring-1 ring-gray-900/10 dark:ring-white/10' : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'}
+        ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
       `}
     >
       {/* Flight Header */}
       <div className="px-4 pt-4 pb-3">
-        <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-sm mb-4">
+        <div className="flex items-center gap-2 text-stone-500 dark:text-gray-400 text-sm mb-4">
           <Plane className="w-4 h-4" />
           <span>Flight to {destination.name || destination.code}</span>
         </div>
@@ -387,41 +387,41 @@ function FlightCard({
         <div className="flex items-center justify-between">
           {/* Origin */}
           <div>
-            <div className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+            <div className="text-3xl font-bold text-stone-900 dark:text-white tracking-tight">
               {origin.code}
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-stone-500 mt-1">
               {origin.name || 'Departure'}
             </div>
-            <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+            <div className="text-sm font-medium text-stone-900 dark:text-white mt-1">
               {notes?.departureTime || '--:--'}
             </div>
           </div>
 
           {/* Flight Path */}
           <div className="flex-1 flex flex-col items-center px-4">
-            <div className="text-xs text-gray-500 mb-1">{duration}</div>
+            <div className="text-xs text-stone-500 mb-1">{duration}</div>
             <div className="w-full flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600" />
-              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700 relative">
-                <Plane className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600" />
+              <div className="flex-1 h-px bg-stone-200 dark:bg-gray-700 relative">
+                <Plane className="w-4 h-4 text-stone-400 dark:text-gray-500 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
               </div>
-              <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600" />
+              <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600" />
             </div>
-            <div className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <div className="px-2 py-0.5 bg-stone-100 dark:bg-gray-800 rounded text-xs text-stone-500 dark:text-gray-400 mt-2">
               {flightNumber}
             </div>
           </div>
 
           {/* Destination */}
           <div className="text-right">
-            <div className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
+            <div className="text-3xl font-bold text-stone-900 dark:text-white tracking-tight">
               {destination.code}
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-stone-500 mt-1">
               {destination.name || 'Arrival'}
             </div>
-            <div className="text-sm font-medium text-gray-900 dark:text-white mt-1">
+            <div className="text-sm font-medium text-stone-900 dark:text-white mt-1">
               {notes?.arrivalTime || '--:--'}
             </div>
           </div>
@@ -429,8 +429,8 @@ function FlightCard({
       </div>
 
       {/* Footer with editable details */}
-      <div className="px-4 py-3 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between">
-        <div className="flex items-center gap-4 text-xs text-gray-500 font-mono">
+      <div className="px-4 py-3 bg-stone-50 dark:bg-gray-900/50 border-t border-stone-100 dark:border-gray-800 flex items-center justify-between">
+        <div className="flex items-center gap-4 text-xs text-stone-500 font-mono">
           <InlineEditField
             label="TERMINAL"
             value={notes?.terminal || ''}
@@ -450,7 +450,7 @@ function FlightCard({
             onSave={(v) => handleUpdateField('seatNumber', v)}
           />
         </div>
-        <button className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+        <button className="text-xs text-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors">
           Details
         </button>
       </div>
@@ -484,38 +484,38 @@ function HotelCard({
       onClick={onClick}
       className={`
         rounded-2xl bg-white dark:bg-gray-900/80 border p-4 cursor-pointer transition-all
-        ${isActive ? 'border-gray-900 dark:border-white ring-1 ring-gray-900/10 dark:ring-white/10' : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'}
+        ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
       `}
     >
       <div className="flex gap-4">
         {/* Hotel Icon */}
-        <div className="w-16 h-16 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
-          <Building2 className="w-7 h-7 text-gray-500 dark:text-gray-400" />
+        <div className="w-16 h-16 rounded-xl bg-stone-100 dark:bg-gray-800 border border-stone-200 dark:border-gray-700 flex items-center justify-center flex-shrink-0">
+          <Building2 className="w-7 h-7 text-stone-500 dark:text-gray-400" />
         </div>
 
         {/* Hotel Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white">
+              <h4 className="font-semibold text-stone-900 dark:text-white">
                 Check-in at {item.title || 'Hotel'}
               </h4>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+              <p className="text-sm text-stone-500 dark:text-gray-400 mt-0.5">
                 {notes?.roomType ? `${notes.roomType} · ` : ''}{notes?.address || 'Address not set'}
               </p>
             </div>
-            <div className="text-sm text-gray-500 flex-shrink-0">
-              {checkInTime ? formatTime(checkInTime) : <span className="text-gray-400">Time not set</span>}
+            <div className="text-sm text-stone-500 flex-shrink-0">
+              {checkInTime ? formatTime(checkInTime) : <span className="text-stone-400">Time not set</span>}
             </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-2 mt-3">
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 dark:bg-gray-800 rounded-lg text-xs text-stone-600 dark:text-gray-300 hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors">
               <Navigation className="w-3 h-3" />
               Get Directions
             </button>
-            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+            <button className="flex items-center gap-1.5 px-3 py-1.5 bg-stone-100 dark:bg-gray-800 rounded-lg text-xs text-stone-600 dark:text-gray-300 hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors">
               <ExternalLink className="w-3 h-3" />
               View Booking
             </button>
@@ -556,7 +556,7 @@ function PlaceCard({
       onClick={onClick}
       className={`
         rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
-        ${isActive ? 'border-gray-900 dark:border-white ring-1 ring-gray-900/10 dark:ring-white/10' : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'}
+        ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
       `}
     >
       {image && (
@@ -576,19 +576,19 @@ function PlaceCard({
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
-              <h4 className="font-semibold text-gray-900 dark:text-white truncate">
+              <MapPin className="w-4 h-4 text-stone-500 flex-shrink-0" />
+              <h4 className="font-semibold text-stone-900 dark:text-white truncate">
                 {item.title || 'Place'}
               </h4>
             </div>
             {category && (
-              <p className="text-xs text-gray-500 capitalize mt-1 ml-6">
+              <p className="text-xs text-stone-500 capitalize mt-1 ml-6">
                 {category.replace(/_/g, ' ')}
               </p>
             )}
           </div>
           {formattedTime && (
-            <div className="text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
+            <div className="text-sm text-stone-600 dark:text-gray-400 flex-shrink-0">
               {formattedTime.time} {formattedTime.period}
             </div>
           )}

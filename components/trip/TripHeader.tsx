@@ -2,11 +2,10 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Bell, Map, Settings, UserPlus, Sparkles, Plus, Pencil } from 'lucide-react';
+import { ArrowLeft, Settings, Sparkles, Plus, Pencil, Loader2 } from 'lucide-react';
 
 interface TripHeaderProps {
   title: string;
-  emoji?: string;
   heroImage?: string;
   activeContentTab: 'itinerary' | 'flights' | 'hotels' | 'notes';
   onContentTabChange: (tab: 'itinerary' | 'flights' | 'hotels' | 'notes') => void;
@@ -19,20 +18,15 @@ interface TripHeaderProps {
   onAutoplanClick?: () => void;
   onAddClick?: () => void;
   onEditClick?: () => void;
-  onMapClick?: () => void;
   isEditMode?: boolean;
   isPlanning?: boolean;
-  collaborators?: Array<{ name: string; initials: string; color: string }>;
-  notificationCount?: number;
 }
 
 /**
- * TripHeader - Header for trip pages
- * Features: Back button, title, hero image, content tabs, day tabs
+ * TripHeader - Clean header matching /trips design
  */
 export default function TripHeader({
   title,
-  emoji = '🎉',
   heroImage,
   activeContentTab,
   onContentTabChange,
@@ -45,177 +39,124 @@ export default function TripHeader({
   onAutoplanClick,
   onAddClick,
   onEditClick,
-  onMapClick,
   isEditMode = false,
   isPlanning = false,
-  collaborators = [],
-  notificationCount = 0,
 }: TripHeaderProps) {
   return (
-    <header className="w-full">
-      {/* Top Bar: Back + Title + Icons */}
-      <div className="flex items-center justify-between py-4">
-        {/* Back Button */}
+    <header className="w-full mb-6">
+      {/* Top Bar - Matching /trips header */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-6">
+        {/* Back Link */}
         <Link
           href="/trips"
-          className="flex items-center gap-2 text-sm text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-1.5 text-xs text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="hidden sm:inline">Trips</span>
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Trips</span>
         </Link>
 
-        {/* Centered Title with Emoji */}
-        <h1 className="flex-1 text-center text-lg font-semibold text-stone-900 dark:text-white truncate px-4">
-          {emoji} {title}
+        {/* Title */}
+        <h1 className="text-xl sm:text-2xl font-light text-stone-900 dark:text-white truncate">
+          {title}
         </h1>
 
-        {/* Right Icons */}
-        <div className="flex items-center gap-1">
-          {/* Collaborators - hidden on mobile */}
-          {collaborators.length > 0 && (
-            <div className="hidden sm:flex items-center -space-x-2 mr-2">
-              {collaborators.slice(0, 2).map((collab, i) => (
-                <div
-                  key={i}
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium text-white border-2 border-white dark:border-gray-950"
-                  style={{ backgroundColor: collab.color }}
-                >
-                  {collab.initials}
-                </div>
-              ))}
-              <button className="w-7 h-7 rounded-full bg-stone-100 dark:bg-gray-800 flex items-center justify-center text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-200 dark:hover:bg-gray-700 transition-colors border-2 border-white dark:border-gray-950">
-                <UserPlus className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+        {/* Spacer */}
+        <div className="hidden sm:block flex-1" />
 
-          {/* Notification Bell */}
-          <button className="relative p-2 text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors">
-            <Bell className="w-5 h-5" />
-            {notificationCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                {notificationCount > 9 ? '9+' : notificationCount}
-              </span>
-            )}
-          </button>
-
-          {/* Map Icon */}
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
           <button
-            onClick={onMapClick}
-            className="p-2 text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
+            onClick={onAutoplanClick}
+            disabled={isPlanning}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity disabled:opacity-50 min-h-[40px]"
           >
-            <Map className="w-5 h-5" />
+            {isPlanning ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+            {isPlanning ? 'Planning...' : 'Auto-plan'}
           </button>
-
-          {/* Settings */}
+          <button
+            onClick={onAddClick}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 text-stone-700 dark:text-gray-300 text-xs font-medium hover:border-stone-300 dark:hover:border-gray-700 transition-colors min-h-[40px]"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Add
+          </button>
           <button
             onClick={onSettingsClick}
-            className="p-2 text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white transition-colors"
+            className="p-2.5 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center"
           >
-            <Settings className="w-5 h-5" />
+            <Settings className="w-4 h-4" />
           </button>
         </div>
       </div>
 
       {/* Hero Image */}
       {heroImage && (
-        <div className="relative w-full h-40 sm:h-48 md:h-56 rounded-2xl overflow-hidden mb-6">
+        <div className="relative w-full h-40 sm:h-48 rounded-2xl overflow-hidden mb-6">
           <Image
             src={heroImage}
             alt={title}
             fill
             className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+            sizes="(max-width: 768px) 100vw, 800px"
           />
         </div>
       )}
 
-      {/* Content Tabs Row */}
-      <div className="flex items-center justify-between border-b border-stone-200 dark:border-gray-800 mb-4">
-        {/* Tabs */}
-        <div className="flex items-center gap-4 sm:gap-6 overflow-x-auto">
-          <button
-            onClick={() => onContentTabChange('itinerary')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-              activeContentTab === 'itinerary'
-                ? 'border-stone-900 dark:border-white text-stone-900 dark:text-white'
-                : 'border-transparent text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
-            }`}
-          >
-            Itinerary
-          </button>
-          <button
-            onClick={() => onContentTabChange('flights')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-              activeContentTab === 'flights'
-                ? 'border-stone-900 dark:border-white text-stone-900 dark:text-white'
-                : 'border-transparent text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
-            }`}
-          >
-            {flightCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-stone-200 dark:bg-gray-700 text-xs flex items-center justify-center">
-                {flightCount}
-              </span>
-            )}
-            Flights
-          </button>
-          <button
-            onClick={() => onContentTabChange('hotels')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-              activeContentTab === 'hotels'
-                ? 'border-stone-900 dark:border-white text-stone-900 dark:text-white'
-                : 'border-transparent text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
-            }`}
-          >
-            {hotelCount > 0 && (
-              <span className="w-5 h-5 rounded-full bg-stone-200 dark:bg-gray-700 text-xs flex items-center justify-center">
-                {hotelCount}
-              </span>
-            )}
-            Hotels
-          </button>
-          <button
-            onClick={() => onContentTabChange('notes')}
-            className={`pb-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-              activeContentTab === 'notes'
-                ? 'border-stone-900 dark:border-white text-stone-900 dark:text-white'
-                : 'border-transparent text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
-            }`}
-          >
-            Notes
-          </button>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            onClick={onAutoplanClick}
-            disabled={isPlanning}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
-          >
-            <Sparkles className="w-4 h-4" />
-            {isPlanning ? 'Planning...' : 'Auto-plan'}
-          </button>
-          <button
-            onClick={onAddClick}
-            className="flex items-center justify-center w-8 h-8 sm:w-auto sm:h-auto sm:gap-1.5 sm:px-3 sm:py-1.5 bg-white dark:bg-gray-800 border border-stone-200 dark:border-gray-700 text-stone-700 dark:text-gray-200 text-sm font-medium rounded-full hover:bg-stone-50 dark:hover:bg-gray-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="hidden sm:inline">Add</span>
-          </button>
+      {/* Content Tabs - Matching /trips tab style */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
+            {[
+              { key: 'itinerary', label: 'Itinerary', count: 0 },
+              { key: 'flights', label: 'Flights', count: flightCount },
+              { key: 'hotels', label: 'Hotels', count: hotelCount },
+              { key: 'notes', label: 'Notes', count: 0 },
+            ].map(({ key, label, count }) => (
+              <button
+                key={key}
+                onClick={() => onContentTabChange(key as typeof activeContentTab)}
+                className={`
+                  transition-all flex items-center gap-1.5 whitespace-nowrap
+                  px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
+                  min-h-[40px] sm:min-h-0
+                  ${activeContentTab === key
+                    ? 'font-medium text-stone-900 dark:text-white bg-stone-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
+                    : 'font-medium text-stone-400 dark:text-gray-500 hover:text-stone-600 dark:hover:text-gray-300'
+                  }
+                `}
+              >
+                {count > 0 && (
+                  <span className={`
+                    w-4 h-4 rounded-full text-[10px] flex items-center justify-center
+                    ${activeContentTab === key
+                      ? 'bg-stone-200 dark:bg-gray-700'
+                      : 'bg-stone-100 dark:bg-gray-800'
+                    }
+                  `}>
+                    {count}
+                  </span>
+                )}
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Day Tabs Row */}
+      {/* Day Tabs Row (only for itinerary tab) */}
       {days.length > 0 && activeContentTab === 'itinerary' && (
-        <div className="flex items-center justify-between mb-4">
-          {/* Day Tabs */}
-          <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto">
+        <div className="flex items-center justify-between">
+          {/* Day Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
             {days.map((day) => (
               <button
                 key={day.dayNumber}
                 onClick={() => onSelectDay?.(day.dayNumber)}
-                className={`px-3 py-1.5 text-sm font-medium rounded-full transition-colors whitespace-nowrap ${
+                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap min-h-[32px] ${
                   day.dayNumber === selectedDayNumber
                     ? 'bg-stone-900 dark:bg-white text-white dark:text-gray-900'
                     : 'text-stone-400 dark:text-gray-500 hover:bg-stone-100 dark:hover:bg-gray-800 hover:text-stone-600 dark:hover:text-gray-300'
@@ -229,17 +170,17 @@ export default function TripHeader({
           {/* Edit Button */}
           <button
             onClick={onEditClick}
-            className={`flex items-center gap-1.5 text-sm font-medium transition-colors flex-shrink-0 ${
+            className={`flex items-center gap-1.5 text-xs font-medium transition-colors flex-shrink-0 ${
               isEditMode
-                ? 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'
-                : 'text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white'
+                ? 'text-blue-600 dark:text-blue-400'
+                : 'text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white'
             }`}
           >
             {isEditMode ? (
               'Done'
             ) : (
               <>
-                <Pencil className="w-4 h-4" />
+                <Pencil className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Edit</span>
               </>
             )}
