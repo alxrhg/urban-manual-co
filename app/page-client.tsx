@@ -83,6 +83,7 @@ import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 import { AIAssistant } from '@/components/AIAssistant';
 import { ScrollToTop } from '@/components/ScrollToTop';
+import { classifyQuery, type QueryClassification } from '@/lib/search/query-classifier';
 
 // Lazy load components that are conditionally rendered or not immediately visible
 // This reduces the initial bundle size and improves initial page load time
@@ -418,6 +419,8 @@ export default function HomePageClient({
   const [sortBy, setSortBy] = useState<"default" | "recent">("default");
   // Removed loading state - page renders immediately, data loads in background
   const [searching, setSearching] = useState(false);
+  const [isAISearching, setIsAISearching] = useState(false); // Tracks if we're doing AI-enhanced search
+  const [instantResults, setInstantResults] = useState<Destination[]>([]); // Instant search results
   const [discoveryEngineLoading, setDiscoveryEngineLoading] = useState(false);
   const [creatingTrip, setCreatingTrip] = useState(false);
   
@@ -1186,8 +1189,9 @@ export default function HomePageClient({
     // Just scroll to the chat area or show a confirmation
   }
 
-  // CHAT MODE with auto-trigger: Auto-trigger on typing (debounced) + explicit Enter submit
-  // Works like chat but with convenience of auto-trigger
+  // HYBRID SEARCH: Instant Supabase search + debounced AI search for complex queries
+  // 1. Instant search: Fast Supabase full-text search for immediate results (150ms debounce)
+  // 2. AI search: Semantic search for complex queries (500ms debounce)
   useEffect(() => {
     if (searchTerm.trim().length > 0) {
       const trimmedSearchTerm = searchTerm.trim();
@@ -1197,28 +1201,76 @@ export default function HomePageClient({
         return;
       }
 
-      // Prevent duplicate searches - only trigger if not already searching
-      if (searching) {
-        return;
-      }
+      // Classify the query to determine search strategy
+      const classification = classifyQuery(trimmedSearchTerm);
+      const isComplexQuery = classification.complexity === 'complex';
 
-      const timer = setTimeout(() => {
+      // Clear previous instant results when query changes
+      setInstantResults([]);
+
+      // INSTANT SEARCH: Quick Supabase search with short debounce
+      const instantTimer = setTimeout(async () => {
+        if (searchTerm.trim() !== trimmedSearchTerm) return;
+
+        try {
+          const response = await fetch('/api/search/instant', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              query: trimmedSearchTerm,
+              filters: {
+                city: advancedFilters.city,
+                category: advancedFilters.category,
+              },
+            }),
+          });
+
+          if (response.ok && searchTerm.trim() === trimmedSearchTerm) {
+            const data = await response.json();
+            if (data.results && data.results.length > 0) {
+              setInstantResults(data.results);
+              // Show instant results immediately if not already searching with AI
+              if (!searching) {
+                setFilteredDestinations(data.results);
+                setSearchTier('instant');
+              }
+            }
+          }
+        } catch (error) {
+          // Silently fail - AI search will handle it
+          console.log('[Hybrid Search] Instant search failed, falling back to AI');
+        }
+      }, 150); // Fast 150ms debounce for instant results
+
+      // AI SEARCH: Semantic search with longer debounce for complex queries
+      const aiTimer = setTimeout(() => {
         // Double-check we're not already searching and query hasn't changed
         if (
           !searching &&
           searchTerm.trim() === trimmedSearchTerm &&
           searchTerm.trim() !== lastSearchedQueryRef.current
         ) {
+          // Set AI searching indicator for complex queries
+          if (isComplexQuery) {
+            setIsAISearching(true);
+            setCurrentLoadingText('Searching with AI...');
+          }
           performAISearch(searchTerm);
         }
-      }, 500); // 500ms debounce for auto-trigger
-      return () => clearTimeout(timer);
+      }, isComplexQuery ? 500 : 300); // Longer debounce for complex queries
+
+      return () => {
+        clearTimeout(instantTimer);
+        clearTimeout(aiTimer);
+      };
     } else {
       // Clear everything when search is empty
       setFilteredDestinations([]);
+      setInstantResults([]);
       setChatResponse("");
       setConversationHistory([]);
       setSearching(false);
+      setIsAISearching(false);
       setSubmittedQuery("");
       setChatMessages([]);
       setFollowUpSuggestions([]);
@@ -1227,7 +1279,7 @@ export default function HomePageClient({
       filterDestinations();
       setCurrentPage(1);
     }
-  }, [searchTerm]); // Only depend on searchTerm - checking searching inside effect
+  }, [searchTerm, advancedFilters.city, advancedFilters.category]); // Include filters for instant search
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -2171,6 +2223,7 @@ export default function HomePageClient({
         ]);
       } finally {
         setSearching(false);
+        setIsAISearching(false);
       }
     },
     [user, searching, conversationHistory, trackAction, submittedQuery]
@@ -2655,14 +2708,21 @@ export default function HomePageClient({
                           (submittedQuery && chatMessages.length === 0)) && (
                           <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
                             <div className="flex items-center gap-2">
-                              {discoveryEngineLoading && (
+                              {(discoveryEngineLoading || isAISearching) && (
                                 <div className="flex gap-1">
                                   <span className="animate-bounce" style={{ animationDelay: "0ms", animationDuration: "1.4s" }}>.</span>
                                   <span className="animate-bounce" style={{ animationDelay: "200ms", animationDuration: "1.4s" }}>.</span>
                                   <span className="animate-bounce" style={{ animationDelay: "400ms", animationDuration: "1.4s" }}>.</span>
                                 </div>
                               )}
-                              <span>{currentLoadingText}</span>
+                              <span>
+                                {isAISearching ? (
+                                  <span className="flex items-center gap-1.5">
+                                    <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                                    Searching with AI...
+                                  </span>
+                                ) : currentLoadingText}
+                              </span>
                             </div>
                           </div>
                         )}
