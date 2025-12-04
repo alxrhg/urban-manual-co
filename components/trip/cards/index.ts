@@ -8,6 +8,7 @@ export { default as OvernightCard } from './OvernightCard';
 export { default as TransportCard } from './TransportCard';
 export { default as FreeTimeGap } from './FreeTimeGap';
 export { default as CustomCard } from './CustomCard';
+export { default as InsertionPoint } from './InsertionPoint';
 
 // Types
 export type {

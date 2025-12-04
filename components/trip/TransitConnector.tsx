@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Car, Footprints, Train } from 'lucide-react';
+import { Car, Footprints, Train, Plus } from 'lucide-react';
 import { formatDuration } from '@/lib/utils/time-calculations';
 
 export type TransitMode = 'walking' | 'driving' | 'transit';
@@ -19,6 +19,7 @@ interface TransitConnectorProps {
   mode?: TransitMode;
   itemId?: string; // ID of the "from" item for saving travel mode
   onModeChange?: (itemId: string, mode: TransitMode) => void;
+  onAddClick?: () => void; // Callback when "+ Add" button is clicked
   className?: string;
 }
 
@@ -63,6 +64,7 @@ function estimateTravelTime(distanceKm: number, mode: TransitMode): number {
 /**
  * TransitConnector - Travel time connector between timeline items
  * Shows travel time estimates between locations using local calculation + API
+ * Includes a "+ Add" button on hover for inline item insertion
  */
 export default function TransitConnector({
   from,
@@ -71,8 +73,10 @@ export default function TransitConnector({
   mode = 'walking',
   itemId,
   onModeChange,
+  onAddClick,
   className = '',
 }: TransitConnectorProps) {
+  const [isHovered, setIsHovered] = useState(false);
   const [selectedMode, setSelectedMode] = useState<TransitMode>(mode);
 
   // Update selectedMode when mode prop changes
@@ -182,7 +186,11 @@ export default function TransitConnector({
   const distance = localEstimates?.distance;
 
   return (
-    <div className={`relative flex items-center justify-end py-1 gap-2 ${className}`}>
+    <div
+      className={`relative flex items-center justify-end py-1 gap-2 ${className}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Mode Selector Pills */}
       <div className="flex items-center gap-0.5 p-0.5 bg-gray-100/80 dark:bg-gray-800/80 rounded-full backdrop-blur-sm">
         {(['walking', 'transit', 'driving'] as TransitMode[]).map((m) => {
@@ -219,6 +227,26 @@ export default function TransitConnector({
         <span className="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">
           {formatDistance(distance)}
         </span>
+      )}
+      {/* Add button - visible on hover */}
+      {onAddClick && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddClick();
+          }}
+          className={`
+            flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium
+            bg-gray-100 dark:bg-gray-800
+            text-gray-600 dark:text-gray-400
+            hover:bg-gray-200 dark:hover:bg-gray-700
+            transition-opacity duration-150
+            ${isHovered ? 'opacity-100' : 'opacity-0'}
+          `}
+        >
+          <Plus className="w-3 h-3" />
+          Add
+        </button>
       )}
     </div>
   );

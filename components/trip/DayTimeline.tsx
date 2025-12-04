@@ -24,6 +24,11 @@ import {
   TIMELINE_CONFIG,
 } from './timeline';
 
+// Import inline add components
+import InsertionPoint from './cards/InsertionPoint';
+import FreeTimeGap from './cards/FreeTimeGap';
+import { buildTimeline, type TimelineElement } from '@/lib/trip/timeline-builder';
+
 interface DayTimelineProps {
   day: TripDay;
   nightlyHotel?: EnrichedItineraryItem | null;
@@ -34,6 +39,10 @@ interface DayTimelineProps {
   onDurationChange?: (itemId: string, duration: number) => void;
   onTravelModeChange?: (itemId: string, mode: TransitMode) => void;
   onAddItem?: (dayNumber: number, category?: string) => void;
+  /** Callback for adding an item between existing items */
+  onAddBetween?: (dayNumber: number, afterItemId: string | null, suggestedTime: string) => void;
+  /** Callback for AI suggestions in free time gaps */
+  onAISuggest?: (dayNumber: number, startTime: string, endTime: string) => void;
   onOptimizeDay?: (dayNumber: number) => void;
   onAutoFillDay?: (dayNumber: number) => void;
   activeItemId?: string | null;
@@ -57,6 +66,8 @@ export default function DayTimeline({
   onDurationChange,
   onTravelModeChange,
   onAddItem,
+  onAddBetween,
+  onAISuggest,
   onOptimizeDay,
   onAutoFillDay,
   activeItemId,
@@ -254,52 +265,93 @@ export default function DayTimeline({
     );
   };
 
-  // Render timeline blocks
+  // Build timeline with connectors and gaps
+  const timeline = useMemo(() => {
+    return buildTimeline(regularItems, day.dayNumber);
+  }, [regularItems, day.dayNumber]);
+
+  // Helper to handle add between items
+  const handleAddBetween = useCallback((afterItemId: string | null, suggestedTime: string) => {
+    if (onAddBetween) {
+      onAddBetween(day.dayNumber, afterItemId, suggestedTime);
+    } else if (onAddItem) {
+      // Fallback to onAddItem if onAddBetween is not provided
+      onAddItem(day.dayNumber);
+    }
+  }, [day.dayNumber, onAddBetween, onAddItem]);
+
+  // Helper to handle AI suggestions
+  const handleAISuggest = useCallback((startTime: string, endTime: string) => {
+    if (onAISuggest) {
+      onAISuggest(day.dayNumber, startTime, endTime);
+    }
+  }, [day.dayNumber, onAISuggest]);
+
+  // Render timeline blocks with connectors
   const renderBlocks = () => {
-    return positionedItems.map(({ item, start, duration, laneIndex }, index) => {
-      const top = minutesToPixels(start);
-      const height = Math.max(duration * TIMELINE_CONFIG.pixelsPerMinute, TIMELINE_CONFIG.minCardHeight);
-      const laneOffset = laneIndex * TIMELINE_CONFIG.laneOffset;
-      const widthStyle = `calc(100% - ${laneOffset}px)`;
+    // Create a map of positioned items for quick lookup
+    const positionedItemsMap = new Map(
+      positionedItems.map(pi => [pi.item.id, pi])
+    );
 
-      // Get live position if dragging
-      const livePos = livePositions[item.id];
-      const actualStart = livePos?.start ?? start;
-      const actualDuration = livePos?.duration ?? duration;
-      const actualTop = minutesToPixels(actualStart);
-      const actualHeight = Math.max(actualDuration * TIMELINE_CONFIG.pixelsPerMinute, TIMELINE_CONFIG.minCardHeight);
+    return timeline.map((element, index) => {
+      switch (element.type) {
+        case 'item': {
+          const positioned = positionedItemsMap.get(element.item.id);
+          if (!positioned) return null;
 
-      const travelMode = (item.parsedNotes?.travelModeToNext as TransitMode) || 'walking';
-      const nextItem = positionedItems[index + 1];
-      const connectorTop = minutesToPixels(actualStart + actualDuration) + 4;
-      const connectorHeight = nextItem
-        ? Math.max(minutesToPixels(nextItem.start) - connectorTop - 4, 24)
-        : 0;
-      const fromLocation = getFromLocation(item);
-      const toLocation = nextItem ? getToLocation(nextItem.item) : undefined;
+          const { item, start, duration, laneIndex } = positioned;
+          const height = Math.max(duration * TIMELINE_CONFIG.pixelsPerMinute, TIMELINE_CONFIG.minCardHeight);
+          const laneOffset = laneIndex * TIMELINE_CONFIG.laneOffset;
+          const widthStyle = `calc(100% - ${laneOffset}px)`;
 
-      return (
-        <div key={item.id} className="relative">
-          <div
-            className={`absolute left-0 right-0 ${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
-            style={{ top: actualTop, height: actualHeight, marginLeft: laneOffset, width: widthStyle }}
-            onPointerDown={(event) => handleDragStart(item.id, 'move', actualStart, actualDuration, event.clientY)}
-          >
-            <TimelineCard
-              item={item}
-              start={actualStart}
-              duration={actualDuration}
-              height={actualHeight}
-              laneOffset={laneOffset}
-              isActive={item.id === activeItemId}
-              isEditMode={isEditMode}
-              onEdit={onEditItem}
-              onDragStart={handleDragStart}
-            />
-          </div>
+          // Get live position if dragging
+          const livePos = livePositions[item.id];
+          const actualStart = livePos?.start ?? start;
+          const actualDuration = livePos?.duration ?? duration;
+          const actualTop = minutesToPixels(actualStart);
+          const actualHeight = Math.max(actualDuration * TIMELINE_CONFIG.pixelsPerMinute, TIMELINE_CONFIG.minCardHeight);
 
-          {nextItem && (
+          return (
             <div
+              key={`item-${item.id}`}
+              className={`absolute left-0 right-0 ${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+              style={{ top: actualTop, height: actualHeight, marginLeft: laneOffset, width: widthStyle }}
+              onPointerDown={(event) => handleDragStart(item.id, 'move', actualStart, actualDuration, event.clientY)}
+            >
+              <TimelineCard
+                item={item}
+                start={actualStart}
+                duration={actualDuration}
+                height={actualHeight}
+                laneOffset={laneOffset}
+                isActive={item.id === activeItemId}
+                isEditMode={isEditMode}
+                onEdit={onEditItem}
+                onDragStart={handleDragStart}
+              />
+            </div>
+          );
+        }
+
+        case 'travel': {
+          const fromPositioned = positionedItemsMap.get(element.fromItem.id);
+          const toPositioned = positionedItemsMap.get(element.toItem.id);
+          if (!fromPositioned || !toPositioned) return null;
+
+          const fromLivePos = livePositions[element.fromItem.id];
+          const fromActualStart = fromLivePos?.start ?? fromPositioned.start;
+          const fromActualDuration = fromLivePos?.duration ?? fromPositioned.duration;
+          const connectorTop = minutesToPixels(fromActualStart + fromActualDuration) + 4;
+          const connectorHeight = Math.max(minutesToPixels(toPositioned.start) - connectorTop - 4, 24);
+
+          const travelMode = (element.fromItem.parsedNotes?.travelModeToNext as TransitMode) || 'walking';
+          const fromLocation = getFromLocation(element.fromItem);
+          const toLocation = getToLocation(element.toItem);
+
+          return (
+            <div
+              key={`travel-${index}`}
               className="absolute left-0 right-0 flex justify-end pr-2"
               style={{ top: connectorTop, height: connectorHeight }}
             >
@@ -307,14 +359,81 @@ export default function DayTimeline({
                 from={fromLocation}
                 to={toLocation}
                 mode={travelMode}
-                itemId={item.id}
+                itemId={element.fromItem.id}
                 onModeChange={onTravelModeChange}
+                onAddClick={() => handleAddBetween(element.fromItem.id, element.suggestedTime)}
                 className="h-full"
               />
             </div>
-          )}
-        </div>
-      );
+          );
+        }
+
+        case 'gap': {
+          // Find the item this gap follows
+          const afterItemPositioned = positionedItems.find(pi => pi.item.id === element.afterItemId);
+          if (!afterItemPositioned) return null;
+
+          const afterLivePos = livePositions[element.afterItemId];
+          const afterActualStart = afterLivePos?.start ?? afterItemPositioned.start;
+          const afterActualDuration = afterLivePos?.duration ?? afterItemPositioned.duration;
+          const gapTop = minutesToPixels(afterActualStart + afterActualDuration) + 8;
+
+          return (
+            <div
+              key={`gap-${index}`}
+              className="absolute left-0 right-0 px-2"
+              style={{ top: gapTop }}
+            >
+              <FreeTimeGap
+                startTime={element.startTime}
+                endTime={element.endTime}
+                durationMinutes={element.durationMinutes}
+                day={element.day}
+                afterItemId={element.afterItemId}
+                onAddClick={() => handleAddBetween(element.afterItemId, element.suggestedTime)}
+                onAISuggestClick={onAISuggest ? () => handleAISuggest(element.startTime, element.endTime) : undefined}
+              />
+            </div>
+          );
+        }
+
+        case 'insertion': {
+          // Initial insertion point (before first item) or between items without travel info
+          let insertionTop = 0;
+
+          if (element.afterItem) {
+            const afterPositioned = positionedItemsMap.get(element.afterItem.id);
+            if (afterPositioned) {
+              const afterLivePos = livePositions[element.afterItem.id];
+              const afterActualStart = afterLivePos?.start ?? afterPositioned.start;
+              const afterActualDuration = afterLivePos?.duration ?? afterPositioned.duration;
+              insertionTop = minutesToPixels(afterActualStart + afterActualDuration) + 4;
+            }
+          } else if (element.beforeItem) {
+            const beforePositioned = positionedItemsMap.get(element.beforeItem.id);
+            if (beforePositioned) {
+              insertionTop = Math.max(0, minutesToPixels(beforePositioned.start) - 24);
+            }
+          }
+
+          return (
+            <div
+              key={`insertion-${index}`}
+              className="absolute left-0 right-0 px-2"
+              style={{ top: insertionTop }}
+            >
+              <InsertionPoint
+                beforeItem={element.beforeItem}
+                afterItem={element.afterItem}
+                onAddClick={() => handleAddBetween(element.afterItem?.id ?? null, element.suggestedTime)}
+              />
+            </div>
+          );
+        }
+
+        default:
+          return null;
+      }
     });
   };
 
