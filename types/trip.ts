@@ -370,3 +370,14 @@ export function stringifyItineraryNotes(notes: ItineraryItemNotes): string {
   return JSON.stringify(notes);
 }
 
+/**
+ * ScheduleGap - Represents unscheduled free time between itinerary items
+ */
+export interface ScheduleGap {
+  id: string;
+  day: number;
+  startTime: string; // HH:MM format
+  endTime: string;   // HH:MM format
+  durationMinutes: number;
+}
+
