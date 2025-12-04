@@ -229,16 +229,21 @@ export default function GreetingHero({
             </div>
           )}
           <div className="relative w-full">
-            {/* Shimmering placeholder text overlay */}
+            {/* Shimmering placeholder text overlay with blinking cursor */}
             {!searchQuery && !isInputFocused && (
               <div
-                className="absolute left-0 top-0 pointer-events-none text-xs uppercase tracking-[2px] font-medium z-0 shimmer-text"
+                className="absolute left-0 top-0 text-xs uppercase tracking-[2px] font-medium z-0 shimmer-text cursor-text group/placeholder hover:opacity-80 transition-opacity duration-200"
                 style={{
                   paddingLeft: isSearching ? '32px' : '0'
                 }}
                 aria-hidden="true"
+                onClick={() => inputRef.current?.focus()}
               >
+                {/* Blinking cursor to signal "type here" */}
+                <span className="inline-block w-[2px] h-[12px] bg-gray-400 dark:bg-gray-500 mr-1 align-middle animate-blink" />
                 {isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything"}
+                {/* Subtle underline on hover */}
+                <span className="absolute left-0 bottom-0 w-0 h-[1px] bg-gray-300 dark:bg-gray-600 group-hover/placeholder:w-full transition-all duration-300" />
               </div>
             )}
             <input
