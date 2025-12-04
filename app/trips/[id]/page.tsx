@@ -340,6 +340,7 @@ export default function TripPage() {
                   isOptimizing={optimizingDay !== null}
                   isEditMode={isEditMode}
                   activeItemId={selectedItem?.id}
+                  allHotels={allHotels}
                 />
               </>
             )}

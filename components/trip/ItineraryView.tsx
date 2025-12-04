@@ -27,6 +27,7 @@ interface ItineraryViewProps {
   isOptimizing?: boolean;
   isEditMode?: boolean;
   activeItemId?: string | null;
+  allHotels?: EnrichedItineraryItem[];
 }
 
 /**
@@ -45,10 +46,35 @@ export default function ItineraryView({
   isOptimizing = false,
   isEditMode = false,
   activeItemId,
+  allHotels = [],
 }: ItineraryViewProps) {
   const selectedDay = days.find(d => d.dayNumber === selectedDayNumber);
 
   if (!selectedDay) return null;
+
+  // Find hotel for checkout on this day (check if any hotel's checkOutDate matches today)
+  const checkoutHotel = allHotels.find(hotel => {
+    const checkOutDate = hotel.parsedNotes?.checkOutDate;
+    return checkOutDate && selectedDay.date && checkOutDate === selectedDay.date;
+  });
+
+  // Find hotel for breakfast (hotel from previous day that has breakfast included)
+  const breakfastHotel = allHotels.find(hotel => {
+    const checkInDate = hotel.parsedNotes?.checkInDate;
+    const checkOutDate = hotel.parsedNotes?.checkOutDate;
+    const hasBreakfast = hotel.parsedNotes?.breakfastIncluded;
+    if (!hasBreakfast || !selectedDay.date) return false;
+    // Show breakfast if we're staying at this hotel (between check-in and check-out)
+    if (checkInDate && checkOutDate) {
+      return selectedDay.date > checkInDate && selectedDay.date <= checkOutDate;
+    }
+    // If no checkout date, show breakfast the day after check-in
+    if (checkInDate) {
+      const prevDay = days.find(d => d.dayNumber === selectedDayNumber - 1);
+      return prevDay?.date === checkInDate;
+    }
+    return false;
+  });
 
   // Helper to get effective time for sorting (handles hotel checkInTime)
   const getEffectiveTime = (item: EnrichedItineraryItem): string | null => {
@@ -105,6 +131,28 @@ export default function ItineraryView({
         isOptimizing={isOptimizing}
       />
 
+      {/* Morning Cards - Checkout and Breakfast */}
+      {(checkoutHotel || breakfastHotel) && (
+        <div className="space-y-3 mb-6">
+          {checkoutHotel && (
+            <div className="relative pl-10">
+              <CheckoutCard
+                hotel={checkoutHotel}
+                onClick={() => onEditItem?.(checkoutHotel)}
+              />
+            </div>
+          )}
+          {breakfastHotel && (
+            <div className="relative pl-10">
+              <BreakfastCard
+                hotel={breakfastHotel}
+                onClick={() => onEditItem?.(breakfastHotel)}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Itinerary Items with Timeline */}
       {sortedItems.length > 0 ? (
         <div className="relative">
@@ -144,7 +192,7 @@ export default function ItineraryView({
 
           {/* Night Stay Card */}
           {nightStayHotel && (
-            <div className="mt-6">
+            <div className="relative pl-10 mt-6">
               <NightStayCard
                 hotel={nightStayHotel}
                 onClick={() => onEditItem?.(nightStayHotel)}
@@ -170,10 +218,12 @@ export default function ItineraryView({
 
           {/* Night Stay Card (even for empty days) */}
           {nightStayHotel && (
-            <NightStayCard
-              hotel={nightStayHotel}
-              onClick={() => onEditItem?.(nightStayHotel)}
-            />
+            <div className="relative pl-10">
+              <NightStayCard
+                hotel={nightStayHotel}
+                onClick={() => onEditItem?.(nightStayHotel)}
+              />
+            </div>
           )}
         </div>
       )}
@@ -603,6 +653,7 @@ function NightStayCard({
 
   const checkInTime = formatTime(notes?.checkInTime);
   const checkOutTime = formatTime(notes?.checkOutTime);
+  const breakfastIncluded = notes?.breakfastIncluded;
 
   return (
     <div className="space-y-3">
@@ -613,6 +664,11 @@ function NightStayCard({
         <span className="px-2 py-0.5 bg-stone-100 dark:bg-gray-800 rounded-full text-xs text-stone-500 dark:text-gray-400">
           1 night
         </span>
+        {breakfastIncluded && (
+          <span className="px-2 py-0.5 bg-amber-50 dark:bg-amber-900/30 rounded-full text-xs text-amber-600 dark:text-amber-400">
+            Breakfast included
+          </span>
+        )}
       </div>
 
       {/* Hotel Card */}
@@ -639,6 +695,69 @@ function NightStayCard({
               <span className="font-medium text-stone-900 dark:text-white">{checkOutTime || '—'}</span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Breakfast Card Component - Shows in the morning if hotel has breakfast
+function BreakfastCard({
+  hotel,
+  onClick,
+}: {
+  hotel: EnrichedItineraryItem;
+  onClick?: () => void;
+}) {
+  const notes = hotel.parsedNotes;
+  const breakfastTime = notes?.breakfastTime || '07:00 - 10:00';
+
+  return (
+    <div
+      onClick={onClick}
+      className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 p-4 cursor-pointer transition-all hover:border-amber-200 dark:hover:border-amber-800"
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-xl">🍳</span>
+        <div className="flex-1">
+          <h4 className="text-sm font-medium text-amber-900 dark:text-amber-100">Breakfast at {hotel.title || 'Hotel'}</h4>
+          <p className="text-xs text-amber-600/70 dark:text-amber-300/70 mt-0.5">{breakfastTime}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Checkout Card Component - Shows at the start of checkout day
+function CheckoutCard({
+  hotel,
+  onClick,
+}: {
+  hotel: EnrichedItineraryItem;
+  onClick?: () => void;
+}) {
+  const notes = hotel.parsedNotes;
+
+  const formatTime = (timeStr?: string) => {
+    if (!timeStr) return '11:00';
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return `${hours.toString().padStart(2, '0')}:${minutes?.toString().padStart(2, '0') || '00'}`;
+  };
+
+  const checkOutTime = formatTime(notes?.checkOutTime);
+
+  return (
+    <div
+      onClick={onClick}
+      className="rounded-2xl bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
+    >
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+          <Building2 className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+        </div>
+        <div className="flex-1">
+          <h4 className="text-sm font-medium text-stone-900 dark:text-white">Check-out from {hotel.title || 'Hotel'}</h4>
+          <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">Before {checkOutTime}</p>
         </div>
       </div>
     </div>
