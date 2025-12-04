@@ -2067,9 +2067,26 @@ export default function HomePageClient({
         // ONLY show the latest AI response (simple text)
         setChatResponse(data.content || "");
 
-        // ALWAYS set destinations array
-        const destinations = data.destinations || [];
-        setFilteredDestinations(destinations);
+        // Set destinations - merge with instant results if AI returns fewer
+        const aiDestinations = data.destinations || [];
+
+        // If AI returned fewer results than instant search, merge them
+        // This ensures we don't lose good instant results
+        if (aiDestinations.length > 0) {
+          if (instantResults.length > aiDestinations.length) {
+            // Merge: AI results first, then add unique instant results
+            const aiSlugs = new Set(aiDestinations.map((d: Destination) => d.slug));
+            const uniqueInstant = instantResults.filter(d => !aiSlugs.has(d.slug));
+            setFilteredDestinations([...aiDestinations, ...uniqueInstant]);
+          } else {
+            setFilteredDestinations(aiDestinations);
+          }
+        } else if (instantResults.length > 0) {
+          // AI returned nothing, keep instant results
+          setFilteredDestinations(instantResults);
+        } else {
+          setFilteredDestinations([]);
+        }
 
         // Store follow-up suggestions from API response
         if (data.suggestions && Array.isArray(data.suggestions)) {

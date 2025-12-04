@@ -104,7 +104,7 @@ function parseSimpleQuery(query: string): {
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const supabase = await createServerClient();
-  const PAGE_SIZE = 12;
+  const PAGE_SIZE = 24; // Increased for better results
 
   try {
     const body = await request.json();
@@ -139,8 +139,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       dbQuery = dbQuery.ilike('category', `%${categoryFilter}%`);
     }
 
-    // Apply text search
-    if (parsed.searchTerms.length > 0 || (!parsed.city && !parsed.category)) {
+    // Only apply text search if we have search terms OR if neither city nor category was detected
+    // When we have both city and category (e.g., "hotel in tokyo"), just use those filters
+    const hasFilters = cityFilter || categoryFilter;
+    const needsTextSearch = parsed.searchTerms.length > 0 || !hasFilters;
+
+    if (needsTextSearch) {
       const searchText = parsed.searchTerms.length > 0
         ? parsed.searchTerms.join(' ')
         : trimmedQuery;
@@ -248,7 +252,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   // Create a new request with the query
   const body = { query };
   const supabase = await createServerClient();
-  const PAGE_SIZE = 12;
+  const PAGE_SIZE = 24;
 
   const trimmedQuery = query.trim();
   const parsed = parseSimpleQuery(trimmedQuery);
