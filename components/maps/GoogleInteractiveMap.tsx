@@ -22,8 +22,8 @@ declare global {
 export default function GoogleInteractiveMap({
   destinations,
   onMarkerClick,
-  center = { lat: 23.5, lng: 121.0 },
-  zoom = 8,
+  center = { lat: 20, lng: 0 }, // World view fallback - parent handles smart defaults
+  zoom = 2,
   isDark = true,
   selectedDestination,
 }: GoogleInteractiveMapProps) {
@@ -178,11 +178,12 @@ export default function GoogleInteractiveMap({
         });
       }
     } else {
-      // Center on Taiwan if no markers
-      mapInstanceRef.current.setCenter({ lat: 23.5, lng: 121.0 });
-      mapInstanceRef.current.setZoom(8);
+      // No markers - use the center and zoom props passed from parent
+      // The parent component (HomeMapSplitView) handles intelligent fallback
+      mapInstanceRef.current.setCenter(center);
+      mapInstanceRef.current.setZoom(zoom);
     }
-  }, [destinations, onMarkerClick]);
+  }, [destinations, onMarkerClick, center, zoom]);
 
   // Initialize map
   const initializeMap = useCallback(() => {
@@ -313,11 +314,11 @@ export default function GoogleInteractiveMap({
       lastCenterRef.current = { lat: center.lat, lng: center.lng };
       lastZoomRef.current = zoom;
 
-      // Ensure map is centered on Taiwan on first load
-      // This ensures Taiwan is shown even before destinations load
+      // Ensure map is centered on the provided center on first load
+      // The parent component handles intelligent fallback for center/zoom
       if (!lastCenterRef.current || (lastCenterRef.current.lat === 0 && lastCenterRef.current.lng === 0)) {
-        mapInstanceRef.current.setCenter({ lat: 23.5, lng: 121.0 });
-        mapInstanceRef.current.setZoom(8);
+        mapInstanceRef.current.setCenter({ lat: center.lat, lng: center.lng });
+        mapInstanceRef.current.setZoom(zoom);
       }
 
       // Add zoom change listener to prevent zooming out too much

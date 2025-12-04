@@ -16,8 +16,8 @@ interface MapViewProps {
 export default function MapView({
   destinations,
   onMarkerClick,
-  center = { lat: 23.5, lng: 121.0 },
-  zoom = 8,
+  center = { lat: 20, lng: 0 }, // World view fallback - parent handles smart defaults
+  zoom = 2,
   isDark = true,
   selectedDestination,
 }: MapViewProps) {

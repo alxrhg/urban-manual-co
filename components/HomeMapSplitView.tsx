@@ -29,10 +29,82 @@ interface HomeMapSplitViewProps {
   isLoading?: boolean;
 }
 
-const DEFAULT_CENTER = { lat: 23.5, lng: 121.0 };
+// City center coordinates lookup for common destinations
+const CITY_CENTERS: Record<string, { lat: number; lng: number }> = {
+  'tokyo': { lat: 35.6762, lng: 139.6503 },
+  'bangkok': { lat: 13.7563, lng: 100.5018 },
+  'taipei': { lat: 25.0330, lng: 121.5654 },
+  'london': { lat: 51.5074, lng: -0.1278 },
+  'paris': { lat: 48.8566, lng: 2.3522 },
+  'new york': { lat: 40.7128, lng: -74.0060 },
+  'los angeles': { lat: 34.0522, lng: -118.2437 },
+  'singapore': { lat: 1.3521, lng: 103.8198 },
+  'hong kong': { lat: 22.3193, lng: 114.1694 },
+  'sydney': { lat: -33.8688, lng: 151.2093 },
+  'dubai': { lat: 25.2048, lng: 55.2708 },
+  'berlin': { lat: 52.5200, lng: 13.4050 },
+  'amsterdam': { lat: 52.3676, lng: 4.9041 },
+  'rome': { lat: 41.9028, lng: 12.4964 },
+  'barcelona': { lat: 41.3851, lng: 2.1734 },
+  'lisbon': { lat: 38.7223, lng: -9.1393 },
+  'madrid': { lat: 40.4168, lng: -3.7038 },
+  'vienna': { lat: 48.2082, lng: 16.3738 },
+  'prague': { lat: 50.0755, lng: 14.4378 },
+  'stockholm': { lat: 59.3293, lng: 18.0686 },
+  'copenhagen': { lat: 55.6761, lng: 12.5683 },
+  'milan': { lat: 45.4642, lng: 9.1900 },
+  'seoul': { lat: 37.5665, lng: 126.9780 },
+  'osaka': { lat: 34.6937, lng: 135.5023 },
+  'kyoto': { lat: 35.0116, lng: 135.7681 },
+  'shanghai': { lat: 31.2304, lng: 121.4737 },
+  'beijing': { lat: 39.9042, lng: 116.4074 },
+  'mumbai': { lat: 19.0760, lng: 72.8777 },
+  'istanbul': { lat: 41.0082, lng: 28.9784 },
+  'san francisco': { lat: 37.7749, lng: -122.4194 },
+  'chicago': { lat: 41.8781, lng: -87.6298 },
+  'miami': { lat: 25.7617, lng: -80.1918 },
+  'toronto': { lat: 43.6532, lng: -79.3832 },
+  'melbourne': { lat: -37.8136, lng: 144.9631 },
+  'mexico city': { lat: 19.4326, lng: -99.1332 },
+  'buenos aires': { lat: -34.6037, lng: -58.3816 },
+};
+
+// Default fallback center (world view)
+const DEFAULT_CENTER = { lat: 20, lng: 0 };
+const DEFAULT_ZOOM_WORLD = 2;
+const DEFAULT_ZOOM_CITY = 12;
+
 const LIST_ITEM_HEIGHT = 88; // Approximate height of each list item (76px + gap)
 const MIN_ITEMS_PER_PAGE = 4; // Minimum items to show
 const MAX_ITEMS_PER_PAGE = 6; // Maximum items to show
+
+// Helper to get city center from destination city name
+function getCityCenter(cityName: string): { lat: number; lng: number } | null {
+  const normalized = cityName.toLowerCase().trim();
+  return CITY_CENTERS[normalized] || null;
+}
+
+// Helper to find the most common city in destinations
+function getMostCommonCity(destinations: Destination[]): string | null {
+  const cityCounts = new Map<string, number>();
+  destinations.forEach(dest => {
+    if (dest.city) {
+      const city = dest.city.toLowerCase().trim();
+      cityCounts.set(city, (cityCounts.get(city) || 0) + 1);
+    }
+  });
+
+  let maxCount = 0;
+  let mostCommonCity: string | null = null;
+  cityCounts.forEach((count, city) => {
+    if (count > maxCount) {
+      maxCount = count;
+      mostCommonCity = city;
+    }
+  });
+
+  return mostCommonCity;
+}
 
 const formatCountLabel = (count: number) =>
   `${count} ${count === 1 ? 'place' : 'places'}`;
@@ -111,48 +183,67 @@ export default function HomeMapSplitView({
   );
 
   // Calculate map center and zoom to show all pins
-  const mapCenter = useMemo(() => {
-    if (!destinationsWithCoords.length) {
-      return DEFAULT_CENTER;
+  // Falls back to city center lookup if no coordinates available
+  const { mapCenter, mapZoom } = useMemo(() => {
+    // Case 1: We have destinations with coordinates - use them
+    if (destinationsWithCoords.length > 0) {
+      const totals = destinationsWithCoords.reduce(
+        (acc, destination) => {
+          acc.lat += destination.latitude ?? 0;
+          acc.lng += destination.longitude ?? 0;
+          return acc;
+        },
+        { lat: 0, lng: 0 }
+      );
+
+      const center = {
+        lat: totals.lat / destinationsWithCoords.length,
+        lng: totals.lng / destinationsWithCoords.length,
+      };
+
+      // Calculate zoom based on spread
+      let zoom = 13;
+      if (destinationsWithCoords.length > 1) {
+        const lats = destinationsWithCoords.map(d => d.latitude ?? 0);
+        const lngs = destinationsWithCoords.map(d => d.longitude ?? 0);
+        const latRange = Math.max(...lats) - Math.min(...lats);
+        const lngRange = Math.max(...lngs) - Math.min(...lngs);
+        const maxRange = Math.max(latRange, lngRange);
+
+        if (maxRange < 0.02) zoom = 14;
+        else if (maxRange < 0.05) zoom = 13;
+        else if (maxRange < 0.1) zoom = 12;
+        else if (maxRange < 0.5) zoom = 11;
+        else if (maxRange < 1.5) zoom = 10;
+        else zoom = 8;
+      }
+
+      return { mapCenter: center, mapZoom: zoom };
     }
 
-    const totals = destinationsWithCoords.reduce(
-      (acc, destination) => {
-        acc.lat += destination.latitude ?? 0;
-        acc.lng += destination.longitude ?? 0;
-        return acc;
-      },
-      { lat: 0, lng: 0 }
-    );
+    // Case 2: No coordinates but we have destinations - try city lookup
+    if (destinations.length > 0) {
+      const mostCommonCity = getMostCommonCity(destinations);
+      if (mostCommonCity) {
+        const cityCenter = getCityCenter(mostCommonCity);
+        if (cityCenter) {
+          return { mapCenter: cityCenter, mapZoom: DEFAULT_ZOOM_CITY };
+        }
+      }
 
-    return {
-      lat: totals.lat / destinationsWithCoords.length,
-      lng: totals.lng / destinationsWithCoords.length,
-    };
-  }, [destinationsWithCoords]);
-
-  const mapZoom = useMemo(() => {
-    if (destinationsWithCoords.length <= 1) {
-      return 13;
+      // Try first destination's city as fallback
+      const firstCity = destinations[0]?.city;
+      if (firstCity) {
+        const cityCenter = getCityCenter(firstCity);
+        if (cityCenter) {
+          return { mapCenter: cityCenter, mapZoom: DEFAULT_ZOOM_CITY };
+        }
+      }
     }
 
-    const lats = destinationsWithCoords.map(
-      destination => destination.latitude ?? 0
-    );
-    const lngs = destinationsWithCoords.map(
-      destination => destination.longitude ?? 0
-    );
-    const latRange = Math.max(...lats) - Math.min(...lats);
-    const lngRange = Math.max(...lngs) - Math.min(...lngs);
-    const maxRange = Math.max(latRange, lngRange);
-
-    if (maxRange < 0.02) return 14;
-    if (maxRange < 0.05) return 13;
-    if (maxRange < 0.1) return 12;
-    if (maxRange < 0.5) return 11;
-    if (maxRange < 1.5) return 10;
-    return 8;
-  }, [destinationsWithCoords]);
+    // Case 3: No destinations or no recognizable city - world view
+    return { mapCenter: DEFAULT_CENTER, mapZoom: DEFAULT_ZOOM_WORLD };
+  }, [destinationsWithCoords, destinations]);
 
   // Pagination for list - using dynamic items per page
   const totalListPages = Math.ceil(destinations.length / itemsPerPage);
