@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLocationContext } from '@/lib/search/expandLocations';
 
+// Edge runtime for faster cold starts and lower latency
+export const runtime = 'edge';
+// Deploy to multiple regions: US East, US West, Tokyo
+export const preferredRegion = ['iad1', 'sfo1', 'hnd1'];
+
 /**
  * GET /api/location/context
  * Get location context (nearby locations, walking times, cultural notes)

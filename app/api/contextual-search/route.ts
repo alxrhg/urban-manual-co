@@ -5,6 +5,11 @@ import { generateContext } from '@/services/gemini';
 import { getSeasonalContext } from '@/services/seasonality';
 import type { Listing } from '@/services/gemini';
 
+// Edge runtime for faster cold starts and lower latency
+export const runtime = 'edge';
+// Deploy to multiple regions: US East, US West, Tokyo
+export const preferredRegion = ['iad1', 'sfo1', 'hnd1'];
+
 function getSupabaseClient() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
   const key = 

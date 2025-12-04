@@ -3,6 +3,11 @@ import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
 import { createServerClient } from '@/lib/supabase-server';
 import { withErrorHandling } from '@/lib/errors';
 
+// Edge runtime for faster cold starts and lower latency
+export const runtime = 'edge';
+// Deploy to multiple regions: US East, US West, Tokyo
+export const preferredRegion = ['iad1', 'sfo1', 'hnd1'];
+
 /**
  * POST /api/discovery/search/natural-language
  * Natural language search with advanced filtering

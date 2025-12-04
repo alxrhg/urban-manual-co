@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-// Edge Runtime for faster cold starts (~100ms vs ~1s for Node.js)
+// Edge runtime for faster cold starts (~100ms vs ~1s for Node.js)
 export const runtime = 'edge';
+// Deploy to multiple regions: US East, US West, Tokyo
+export const preferredRegion = ['iad1', 'sfo1', 'hnd1'];
 
 export async function GET() {
   try {

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { withErrorHandling } from '@/lib/errors';
 
+// Edge runtime for faster cold starts and lower latency
+export const runtime = 'edge';
+// Deploy to multiple regions: US East, US West, Tokyo
+export const preferredRegion = ['iad1', 'sfo1', 'hnd1'];
+
 export const GET = withErrorHandling(async (
   _req: NextRequest,
   context: { params: Promise<{ id: string }> }

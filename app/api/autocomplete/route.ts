@@ -3,6 +3,11 @@ import { supabase } from '@/lib/supabase';
 import { withErrorHandling } from '@/lib/errors';
 import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 
+// Edge runtime for faster cold starts and lower latency
+export const runtime = 'edge';
+// Deploy to multiple regions: US East, US West, Tokyo
+export const preferredRegion = ['iad1', 'sfo1', 'hnd1'];
+
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const identifier = getIdentifier(request);
   const limiter = isUpstashConfigured() ? searchRatelimit : memorySearchRatelimit;
