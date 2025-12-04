@@ -104,7 +104,8 @@ export default function AttractionPanelContent({
   };
 
   // Handle ticket status change
-  const handleTicketStatusChange = (status: ItineraryItemNotes['bookingStatus']) => {
+  const handleTicketStatusChange = (value: string) => {
+    const status = value as ItineraryItemNotes['bookingStatus'];
     setTicketStatus(status || 'need-to-book');
     updateNotes({ bookingStatus: status });
   };

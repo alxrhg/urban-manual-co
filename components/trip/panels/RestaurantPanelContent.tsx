@@ -96,7 +96,8 @@ export default function RestaurantPanelContent({
   };
 
   // Handle booking status change
-  const handleBookingStatusChange = (status: ItineraryItemNotes['bookingStatus']) => {
+  const handleBookingStatusChange = (value: string) => {
+    const status = value as ItineraryItemNotes['bookingStatus'];
     setBookingStatus(status || 'need-to-book');
     updateNotes({ bookingStatus: status });
   };
