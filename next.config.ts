@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import withPWAInit from "next-pwa";
 
 const cspDirectives = [
   "default-src 'self'",
@@ -216,8 +217,54 @@ const nextConfig: NextConfig = {
   },
 };
 
-// Wrap the Next.js config with Sentry
-const sentryConfig = withSentryConfig(nextConfig, {
+// Configure PWA
+const withPWA = withPWAInit({
+  dest: "public",
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === "development",
+  // Customize runtime caching for travel app assets
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "google-fonts",
+        expiration: {
+          maxEntries: 20,
+          maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+        },
+      },
+    },
+    {
+      urlPattern: /\.(?:jpg|jpeg|png|gif|webp|avif|svg|ico)$/i,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "static-images",
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+        },
+      },
+    },
+    {
+      urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/.*/i,
+      handler: "CacheFirst",
+      options: {
+        cacheName: "supabase-images",
+        expiration: {
+          maxEntries: 200,
+          maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days
+        },
+      },
+    },
+  ],
+});
+
+// Wrap the Next.js config with PWA and Sentry
+const pwaConfig = withPWA(nextConfig);
+
+const sentryConfig = withSentryConfig(pwaConfig, {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
 
