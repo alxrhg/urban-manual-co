@@ -6,7 +6,10 @@
  * OPTIMIZED:
  * - Receives minimal data from server (50 destinations, essential fields)
  * - Fetches user data client-side (non-blocking SSR)
- * - Lazy loads more destinations on scroll/pagination
+ * - Uses extracted components for better code organization:
+ *   - HeroSection: Layout wrapper for hero area
+ *   - CitySelector: City/category filter buttons
+ *   - DestinationGrid: Virtualized destination display
  */
 
 import React, {
@@ -26,37 +29,33 @@ import {
   Globe,
   Loader2,
 } from "lucide-react";
-import { getCategoryIconComponent } from "@/lib/icons/category-icons";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useSequenceTracker } from "@/hooks/useSequenceTracker";
-import Image from "next/image";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import {
   initializeSession,
   trackPageView,
   trackDestinationClick,
-  trackFilterChange,
 } from "@/lib/tracking";
 import GreetingHero from "@/src/features/search/GreetingHero";
 import { SearchFiltersComponent } from "@/src/features/search/SearchFilters";
 import { type ExtractedIntent } from "@/app/api/intent/schema";
-import { capitalizeCity } from "@/lib/utils";
 import { isOpenNow } from "@/lib/utils/opening-hours";
-import { DestinationCard } from "@/components/DestinationCard";
-import { DestinationGridSkeleton } from "@/components/skeletons/DestinationCardSkeleton";
 import HomeMapSplitView from "@/components/HomeMapSplitView";
 import { EditModeToggle } from "@/components/EditModeToggle";
-import { useItemsPerPage } from "@/hooks/useGridColumns";
 import { getContextAwareLoadingMessage } from "@/src/lib/context/loading-message";
 import { useAdminEditMode } from "@/contexts/AdminEditModeContext";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { useDrawer } from "@/contexts/DrawerContext";
-import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { useAuth } from "@/contexts/AuthContext";
 import type { User } from "@supabase/supabase-js";
+
+// Import extracted components
+import { HeroSection } from "@/components/home/HeroSection";
+import { DestinationGrid, type MinimalDestination } from "@/components/home/DestinationGrid";
 
 // Lazy load heavy components
 const DestinationDrawer = dynamic(
@@ -131,46 +130,12 @@ const FollowUpSuggestions = dynamic(
   { ssr: false }
 );
 
-// Featured cities to show first
-const FEATURED_CITIES = ["Taipei", "Tokyo", "New York", "London"];
-
-// Minimal destination type (matches server)
-type MinimalDestination = Pick<
-  Destination,
-  | "id"
-  | "slug"
-  | "name"
-  | "city"
-  | "country"
-  | "category"
-  | "image"
-  | "image_thumbnail"
-  | "michelin_stars"
-  | "crown"
-  | "rating"
-  | "price_level"
-  | "micro_description"
->;
-
 // Props interface - simplified, user data fetched client-side
 export interface HomepageClientProps {
   initialDestinations: MinimalDestination[];
   initialCities: string[];
   initialCategories: string[];
   totalCount: number;
-}
-
-function getCategoryIcon(
-  category: string
-): React.ComponentType<{ className?: string; size?: number | string }> | null {
-  return getCategoryIconComponent(category);
-}
-
-function capitalizeCategory(category: string): string {
-  return category
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(" ");
 }
 
 export default function HomepageClient({
@@ -180,7 +145,7 @@ export default function HomepageClient({
   totalCount,
 }: HomepageClientProps) {
   const router = useRouter();
-  const { user } = useAuth(); // Fetch user client-side (non-blocking)
+  const { user } = useAuth();
   const {
     isEditMode: adminEditMode,
     toggleEditMode,
@@ -188,7 +153,6 @@ export default function HomepageClient({
     canUseEditMode,
   } = useAdminEditMode();
   const { trackAction, predictions } = useSequenceTracker();
-  const { openDrawer: openGlobalDrawer } = useDrawerStore();
   const { openDrawer, closeDrawer } = useDrawer();
 
   // Initialize state with server-provided data (minimal)
@@ -213,13 +177,11 @@ export default function HomepageClient({
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [showAllCities, setShowAllCities] = useState(false);
   const [sortBy, setSortBy] = useState<"default" | "recent">("default");
   const [searching, setSearching] = useState(false);
   const [creatingTrip, setCreatingTrip] = useState(false);
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
-  const [currentPage, setCurrentPage] = useState(1);
 
   // Chat/Search state
   const [submittedQuery, setSubmittedQuery] = useState("");
@@ -278,21 +240,13 @@ export default function HomepageClient({
   // Refs
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const lastSearchedQueryRef = useRef<string>("");
-  const gridSwipeState = useRef({
-    startX: 0,
-    startY: 0,
-    isActive: false,
-    isHorizontal: false,
-  });
 
   // Hooks
-  const itemsPerPage = useItemsPerPage(4);
   const editModeActive = isAdmin && adminEditMode;
   const isDestinationsLoading = searching || loadingMore || isInitialLoading;
 
   // Loading message
   const currentLoadingText = useMemo(() => {
-    // Adapt ExtractedIntent to LoadingIntent format
     const loadingIntent = searchIntent
       ? {
           city: searchIntent.city ?? undefined,
@@ -317,14 +271,11 @@ export default function HomepageClient({
   // Filter destinations helper
   const filterDestinationsWithData = useCallback(
     (
-      sourceDestinations: Destination[] = destinations,
-      searchQuery: string = "",
+      sourceDestinations: MinimalDestination[] = destinations,
       filters: typeof advancedFilters = advancedFilters,
       city: string = selectedCity,
-      category: string = selectedCategory,
-      currentUser: User | null = user,
-      visited: Set<string> = visitedSlugs
-    ): Destination[] => {
+      category: string = selectedCategory
+    ): MinimalDestination[] => {
       let filtered = [...sourceDestinations];
 
       // Apply city filter
@@ -340,7 +291,6 @@ export default function HomepageClient({
         const filterCategory = (category || filters.category)?.toLowerCase();
         filtered = filtered.filter((d) => {
           if (d.category?.toLowerCase() === filterCategory) return true;
-          if (d.tags?.some((t) => t.toLowerCase() === filterCategory)) return true;
           return false;
         });
       }
@@ -374,19 +324,6 @@ export default function HomepageClient({
         );
       }
 
-      // Apply open now filter
-      if (filters.openNow) {
-        filtered = filtered.filter((d) => {
-          if (!d.opening_hours_json) return false;
-          return isOpenNow(
-            d.opening_hours_json,
-            d.city,
-            d.timezone_id ?? undefined,
-            d.utc_offset ?? undefined
-          );
-        });
-      }
-
       // Sort by sortBy preference
       if (sortBy === "recent") {
         filtered.sort((a, b) => {
@@ -398,7 +335,7 @@ export default function HomepageClient({
 
       return filtered;
     },
-    [destinations, advancedFilters, selectedCity, selectedCategory, user, visitedSlugs, sortBy]
+    [destinations, advancedFilters, selectedCity, selectedCategory, sortBy]
   );
 
   // Filter destinations
@@ -410,7 +347,7 @@ export default function HomepageClient({
   // Track destination click
   const trackDestinationEngagement = useCallback(
     (
-      destination: Destination,
+      destination: Destination | MinimalDestination,
       source: "grid" | "map_marker" | "map_list",
       position?: number
     ) => {
@@ -444,7 +381,6 @@ export default function HomepageClient({
       setSubmittedQuery(query);
       lastSearchedQueryRef.current = query;
 
-      // Add user message to chat
       setChatMessages((prev) => [...prev, { type: "user", content: query }]);
 
       try {
@@ -462,14 +398,12 @@ export default function HomepageClient({
 
         const data = await response.json();
 
-        // Update conversation history
         setConversationHistory((prev) => [
           ...prev,
           { role: "user", content: query },
           { role: "assistant", content: data.response || "" },
         ]);
 
-        // Add assistant response
         setChatMessages((prev) => [
           ...prev,
           {
@@ -480,12 +414,10 @@ export default function HomepageClient({
 
         setChatResponse(data.response || "");
 
-        // Update destinations from search results
         if (data.destinations && Array.isArray(data.destinations)) {
           setFilteredDestinations(data.destinations);
         }
 
-        // Update intent and suggestions
         if (data.intent) {
           setSearchIntent(data.intent);
         }
@@ -576,6 +508,40 @@ export default function HomepageClient({
     toggleEditMode();
   }, [canUseEditMode, isAdmin, toggleEditMode]);
 
+  // City/category filter handlers
+  const handleCityChange = useCallback((city: string) => {
+    setSelectedCity(city);
+  }, []);
+
+  const handleCategoryChange = useCallback((category: string, michelin?: boolean) => {
+    setSelectedCategory(category);
+    setAdvancedFilters((prev) => ({
+      ...prev,
+      category: category || undefined,
+      michelin: michelin ?? undefined,
+    }));
+  }, []);
+
+  const handleMichelinToggle = useCallback(() => {
+    const newValue = !advancedFilters.michelin;
+    setSelectedCategory("");
+    setAdvancedFilters((prev) => ({
+      ...prev,
+      category: undefined,
+      michelin: newValue || undefined,
+    }));
+  }, [advancedFilters.michelin]);
+
+  // Handle destination click from grid
+  const handleDestinationClick = useCallback(
+    (destination: MinimalDestination, index: number) => {
+      setSelectedDestination(destination as Destination);
+      openDrawer("destination");
+      trackDestinationEngagement(destination, "grid", index);
+    },
+    [openDrawer, trackDestinationEngagement]
+  );
+
   // Effects
 
   // Initialize tracking on mount
@@ -586,11 +552,10 @@ export default function HomepageClient({
 
   // Fetch initial data client-side (when page is static)
   useEffect(() => {
-    if (initialDestinations.length > 0) return; // Already have server data
+    if (initialDestinations.length > 0) return;
 
     const fetchInitialData = async () => {
       try {
-        // Fetch destinations and filters in parallel
         const [destRes, filterRes] = await Promise.all([
           fetch("/api/homepage/destinations?limit=20"),
           fetch("/api/homepage/filters"),
@@ -607,7 +572,6 @@ export default function HomepageClient({
         }
 
         if (filterData.rows) {
-          // Extract cities and categories from filter rows
           const citySet = new Set<string>();
           const categorySet = new Set<string>();
           for (const row of filterData.rows) {
@@ -662,7 +626,6 @@ export default function HomepageClient({
       setChatMessages([]);
       setFollowUpSuggestions([]);
       lastSearchedQueryRef.current = "";
-      setCurrentPage(1);
     }
   }, [searchTerm, searching, performAISearch, destinations]);
 
@@ -684,11 +647,9 @@ export default function HomepageClient({
   useEffect(() => {
     if (!user) return;
 
-    // Set admin status
     const role = user.app_metadata?.role;
     setIsAdmin(role === "admin");
 
-    // Fetch user profile
     fetch("/api/homepage/profile", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -703,7 +664,6 @@ export default function HomepageClient({
       })
       .catch(() => {});
 
-    // Fetch visited places
     fetch("/api/homepage/visited", { credentials: "include" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -713,7 +673,6 @@ export default function HomepageClient({
       })
       .catch(() => {});
 
-    // Fetch last session (low priority)
     fetch(`/api/conversation/${user.id}`)
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
@@ -734,23 +693,22 @@ export default function HomepageClient({
   }, [user]);
 
   // Computed values
-  const featuredCities = useMemo(
-    () => FEATURED_CITIES.filter((city) => cities.includes(city)),
-    [cities]
-  );
-  const remainingCities = useMemo(
-    () => cities.filter((city) => !FEATURED_CITIES.includes(city)),
-    [cities]
-  );
-  const displayedCities = showAllCities
-    ? [...featuredCities, ...remainingCities]
-    : featuredCities;
-
   const displayDestinations =
     advancedFilters.nearMe && nearbyDestinations.length > 0
       ? nearbyDestinations
       : filteredDestinations;
-  const totalPages = Math.ceil(displayDestinations.length / itemsPerPage);
+
+  // City selector props
+  const citySelectorProps = {
+    cities,
+    categories,
+    selectedCity,
+    selectedCategory,
+    michelinFilter: !!advancedFilters.michelin,
+    onCityChange: handleCityChange,
+    onCategoryChange: handleCategoryChange,
+    onMichelinToggle: handleMichelinToggle,
+  };
 
   return (
     <ErrorBoundary>
@@ -787,279 +745,128 @@ export default function HomepageClient({
         </h1>
 
         {/* Hero Section */}
-        <section className="min-h-[50vh] flex flex-col px-6 md:px-10 py-10 pb-6 md:pb-10">
-          <div className="w-full flex md:justify-start flex-1 items-center">
-            <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
-              <div className="flex-1 flex items-center">
-                <div className="w-full">
-                  {!submittedQuery && (
-                    <>
-                      {showSessionResume && lastSession && (
-                        <div className="mb-6">
-                          <SessionResume
-                            session={lastSession}
-                            onResume={() => setShowSessionResume(false)}
-                            onDismiss={() => setShowSessionResume(false)}
-                          />
-                        </div>
-                      )}
-
-                      {userContext && user && !searchTerm && (
-                        <div className="mb-6">
-                          <ContextCards context={userContext} />
-                        </div>
-                      )}
-
-                      <GreetingHero
-                        searchQuery={searchTerm}
-                        onSearchChange={(value) => {
-                          setSearchTerm(value);
-                          if (!value.trim()) {
-                            setConversationHistory([]);
-                            setSearchIntent(null);
-                            setSeasonalContext(null);
-                            setChatResponse("");
-                            setFilteredDestinations(destinations);
-                            setSubmittedQuery("");
-                          }
-                        }}
-                        onSubmit={(query) => {
-                          if (query.trim() && !searching) {
-                            performAISearch(query);
-                          }
-                        }}
-                        userName={
-                          user?.user_metadata?.name ||
-                          user?.email?.split("@")[0]
-                        }
-                        userProfile={userProfile}
-                        lastSession={lastSession}
-                        enrichedContext={enrichedGreetingContext}
-                        isAIEnabled={true}
-                        isSearching={searching}
-                        availableCities={cities}
-                        availableCategories={categories}
-                      />
-                    </>
-                  )}
-
-                  {/* Chat display when search is active */}
-                  {submittedQuery && (
-                    <div className="w-full">
-                      <div
-                        ref={chatContainerRef}
-                        className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin"
-                      >
-                        {chatMessages.map((message, index) => (
-                          <div key={index} className="space-y-2">
-                            {message.type === "user" ? (
-                              <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
-                                {message.content}
-                              </div>
-                            ) : (
-                              <div className="space-y-4">
-                                <MarkdownRenderer
-                                  content={message.content}
-                                  className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
-                                />
-                                {index === chatMessages.length - 1 &&
-                                  followUpSuggestions.length > 0 && (
-                                    <FollowUpSuggestions
-                                      suggestions={followUpSuggestions}
-                                      onSuggestionClick={(suggestion) => {
-                                        setSearchTerm(suggestion);
-                                        setFollowUpInput("");
-                                      }}
-                                      isLoading={searching}
-                                    />
-                                  )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-
-                        {(searching || (submittedQuery && chatMessages.length === 0)) && (
-                          <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
-                            <span>{currentLoadingText}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {!searching && chatMessages.length > 0 && (
-                        <input
-                          placeholder="Refine your search or ask a follow-up..."
-                          value={followUpInput}
-                          onChange={(e) => setFollowUpInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey && followUpInput.trim()) {
-                              e.preventDefault();
-                              setSearchTerm(followUpInput.trim());
-                              setFollowUpInput("");
-                              performAISearch(followUpInput.trim());
-                            }
-                          }}
-                          className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white"
-                        />
-                      )}
-
-                      {searchIntent && !searching && (
-                        <div className="mt-4">
-                          <IntentConfirmationChips intent={searchIntent} editable={false} />
-                        </div>
-                      )}
-                    </div>
-                  )}
+        <HeroSection
+          citySelectorProps={!submittedQuery ? citySelectorProps : undefined}
+          showCitySelector={!submittedQuery}
+        >
+          {!submittedQuery && (
+            <>
+              {showSessionResume && lastSession && (
+                <div className="mb-6">
+                  <SessionResume
+                    session={lastSession}
+                    onResume={() => setShowSessionResume(false)}
+                    onDismiss={() => setShowSessionResume(false)}
+                  />
                 </div>
-              </div>
+              )}
 
-              {/* City and Category filters */}
-              {!submittedQuery && (
-                <div className="flex-1 flex items-end">
-                  <div className="w-full pt-6">
-                    <div className="mb-[50px]">
-                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                        <button
-                          onClick={() => {
-                            setSelectedCity("");
-                            setCurrentPage(1);
-                            trackFilterChange({ filterType: "city", value: "all" });
-                          }}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCity
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60"
-                          }`}
-                        >
-                          All Cities
-                        </button>
-                        {displayedCities.map((city) => (
-                          <button
-                            key={city}
-                            onClick={() => {
-                              const newCity = city === selectedCity ? "" : city;
-                              setSelectedCity(newCity);
-                              setCurrentPage(1);
-                              trackFilterChange({ filterType: "city", value: newCity || "all" });
-                            }}
-                            className={`transition-all duration-200 ease-out ${
-                              selectedCity === city
-                                ? "font-medium text-black dark:text-white"
-                                : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60"
-                            }`}
-                          >
-                            {capitalizeCity(city)}
-                          </button>
-                        ))}
+              {userContext && user && !searchTerm && (
+                <div className="mb-6">
+                  <ContextCards context={userContext} />
+                </div>
+              )}
+
+              <GreetingHero
+                searchQuery={searchTerm}
+                onSearchChange={(value) => {
+                  setSearchTerm(value);
+                  if (!value.trim()) {
+                    setConversationHistory([]);
+                    setSearchIntent(null);
+                    setSeasonalContext(null);
+                    setChatResponse("");
+                    setFilteredDestinations(destinations);
+                    setSubmittedQuery("");
+                  }
+                }}
+                onSubmit={(query) => {
+                  if (query.trim() && !searching) {
+                    performAISearch(query);
+                  }
+                }}
+                userName={
+                  user?.user_metadata?.name ||
+                  user?.email?.split("@")[0]
+                }
+                userProfile={userProfile}
+                lastSession={lastSession}
+                enrichedContext={enrichedGreetingContext}
+                isAIEnabled={true}
+                isSearching={searching}
+                availableCities={cities}
+                availableCategories={categories}
+              />
+            </>
+          )}
+
+          {/* Chat display when search is active */}
+          {submittedQuery && (
+            <div className="w-full">
+              <div
+                ref={chatContainerRef}
+                className="max-h-[400px] overflow-y-auto space-y-6 mb-6 scrollbar-thin"
+              >
+                {chatMessages.map((message, index) => (
+                  <div key={index} className="space-y-2">
+                    {message.type === "user" ? (
+                      <div className="text-left text-xs uppercase tracking-[2px] font-medium text-black dark:text-white">
+                        {message.content}
                       </div>
-
-                      {cities.length > displayedCities.length && !showAllCities && (
-                        <button
-                          onClick={() => setShowAllCities(true)}
-                          className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60"
-                        >
-                          + More cities ({cities.length - displayedCities.length})
-                        </button>
-                      )}
-                      {showAllCities && (
-                        <button
-                          onClick={() => setShowAllCities(false)}
-                          className="mt-3 text-xs font-medium text-black/30 dark:text-gray-500 hover:text-black/60"
-                        >
-                          Show less
-                        </button>
-                      )}
-                    </div>
-
-                    {categories.length > 0 && (
-                      <div className="flex flex-wrap gap-x-5 gap-y-3 text-xs">
-                        <button
-                          onClick={() => {
-                            setSelectedCategory("");
-                            setAdvancedFilters((prev) => ({
-                              ...prev,
-                              category: undefined,
-                              michelin: undefined,
-                            }));
-                            setCurrentPage(1);
-                          }}
-                          className={`transition-all duration-200 ease-out ${
-                            !selectedCategory && !advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60"
-                          }`}
-                        >
-                          All Categories
-                        </button>
-                        <button
-                          onClick={() => {
-                            const newValue = !advancedFilters.michelin;
-                            setSelectedCategory("");
-                            setAdvancedFilters((prev) => ({
-                              ...prev,
-                              category: undefined,
-                              michelin: newValue || undefined,
-                            }));
-                            setCurrentPage(1);
-                          }}
-                          className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                            advancedFilters.michelin
-                              ? "font-medium text-black dark:text-white"
-                              : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60"
-                          }`}
-                        >
-                          <Image
-                            src="/michelin-star.svg"
-                            alt="Michelin star"
-                            width={12}
-                            height={12}
-                            className="h-3 w-3"
-                          />
-                          Michelin
-                        </button>
-                        {categories
-                          .slice()
-                          .sort((a, b) => {
-                            if (a.toLowerCase() === "others") return 1;
-                            if (b.toLowerCase() === "others") return -1;
-                            return 0;
-                          })
-                          .map((category) => {
-                            const IconComponent = getCategoryIcon(category);
-                            return (
-                              <button
-                                key={category}
-                                onClick={() => {
-                                  const newCategory =
-                                    category === selectedCategory ? "" : category;
-                                  setSelectedCategory(newCategory);
-                                  setAdvancedFilters((prev) => ({
-                                    ...prev,
-                                    category: newCategory || undefined,
-                                    michelin: undefined,
-                                  }));
-                                  setCurrentPage(1);
-                                }}
-                                className={`flex items-center gap-1.5 transition-all duration-200 ease-out ${
-                                  selectedCategory === category && !advancedFilters.michelin
-                                    ? "font-medium text-black dark:text-white"
-                                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60"
-                                }`}
-                              >
-                                {IconComponent && (
-                                  <IconComponent className="h-3 w-3" size={12} />
-                                )}
-                                {capitalizeCategory(category)}
-                              </button>
-                            );
-                          })}
+                    ) : (
+                      <div className="space-y-4">
+                        <MarkdownRenderer
+                          content={message.content}
+                          className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left"
+                        />
+                        {index === chatMessages.length - 1 &&
+                          followUpSuggestions.length > 0 && (
+                            <FollowUpSuggestions
+                              suggestions={followUpSuggestions}
+                              onSuggestionClick={(suggestion) => {
+                                setSearchTerm(suggestion);
+                                setFollowUpInput("");
+                              }}
+                              isLoading={searching}
+                            />
+                          )}
                       </div>
                     )}
                   </div>
+                ))}
+
+                {(searching || (submittedQuery && chatMessages.length === 0)) && (
+                  <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed text-left">
+                    <span>{currentLoadingText}</span>
+                  </div>
+                )}
+              </div>
+
+              {!searching && chatMessages.length > 0 && (
+                <input
+                  placeholder="Refine your search or ask a follow-up..."
+                  value={followUpInput}
+                  onChange={(e) => setFollowUpInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey && followUpInput.trim()) {
+                      e.preventDefault();
+                      setSearchTerm(followUpInput.trim());
+                      setFollowUpInput("");
+                      performAISearch(followUpInput.trim());
+                    }
+                  }}
+                  className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white"
+                />
+              )}
+
+              {searchIntent && !searching && (
+                <div className="mt-4">
+                  <IntentConfirmationChips intent={searchIntent} editable={false} />
                 </div>
               )}
             </div>
-          </div>
-        </section>
+          )}
+        </HeroSection>
 
         {/* Edit Mode Banner */}
         {editModeActive && (
@@ -1149,7 +956,6 @@ export default function HomepageClient({
                     sortBy={sortBy}
                     onSortChange={(newSort) => {
                       setSortBy(newSort);
-                      setCurrentPage(1);
                     }}
                     isAdmin={isAdmin}
                     fullWidthPanel={true}
@@ -1201,18 +1007,10 @@ export default function HomepageClient({
             )}
 
             {/* Grid / Map View */}
-            {isInitialLoading ? (
-              <DestinationGridSkeleton count={20} />
-            ) : displayDestinations.length === 0 && !advancedFilters.nearMe ? (
-              <div className="text-center py-12 px-4">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {searching ? "Searching..." : "No destinations found."}
-                </p>
-              </div>
-            ) : viewMode === "map" ? (
+            {viewMode === "map" ? (
               <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl border border-gray-200 dark:border-gray-800">
                 <HomeMapSplitView
-                  destinations={displayDestinations}
+                  destinations={displayDestinations as Destination[]}
                   selectedDestination={selectedDestination}
                   onMarkerSelect={(destination) => {
                     setSelectedDestination(destination);
@@ -1227,53 +1025,13 @@ export default function HomepageClient({
                 />
               </div>
             ) : (
-              <>
-                {/* Destination Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
-                  {displayDestinations
-                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-                    .map((destination, index) => (
-                      <DestinationCard
-                        key={destination.slug}
-                        destination={destination}
-                        index={index}
-                        isVisited={visitedSlugs.has(destination.slug)}
-                        onClick={() => {
-                          setSelectedDestination(destination);
-                          openDrawer("destination");
-                          trackDestinationEngagement(
-                            destination,
-                            "grid",
-                            (currentPage - 1) * itemsPerPage + index
-                          );
-                        }}
-                      />
-                    ))}
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-4 mt-8">
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 disabled:opacity-50"
-                    >
-                      Previous
-                    </button>
-                    <span className="text-sm text-gray-500">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <button
-                      onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={currentPage === totalPages}
-                      className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 disabled:opacity-50"
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </>
+              <DestinationGrid
+                destinations={displayDestinations as MinimalDestination[]}
+                visitedSlugs={visitedSlugs}
+                isLoading={isInitialLoading}
+                onDestinationClick={handleDestinationClick}
+                virtualizeThreshold={50}
+              />
             )}
           </div>
         </div>
