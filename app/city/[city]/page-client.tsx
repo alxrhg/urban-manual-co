@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { Grid3X3, Map, Sparkles } from 'lucide-react';
 
 import { supabase } from '@/lib/supabase';
 import { createClient } from '@/lib/supabase/client';
@@ -26,6 +26,9 @@ import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 export interface CityPageClientProps {
   initialDestinations?: Destination[];
   initialCategories?: string[];
+  initialNeighborhoods?: string[];
+  initialTopPicks?: Destination[];
+  initialCategoryCounts?: Record<string, number>;
 }
 
 const DestinationDrawer = dynamic(
@@ -33,6 +36,18 @@ const DestinationDrawer = dynamic(
   {
     ssr: false,
     loading: () => null,
+  }
+);
+
+const GoogleInteractiveMap = dynamic(
+  () => import('@/components/maps/GoogleInteractiveMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-[500px] bg-gray-100 dark:bg-gray-900 rounded-2xl flex items-center justify-center">
+        <span className="text-sm text-gray-500">Loading map...</span>
+      </div>
+    ),
   }
 );
 
@@ -55,6 +70,9 @@ function capitalizeCategory(category: string): string {
 export default function CityPageClient({
   initialDestinations = [],
   initialCategories = [],
+  initialNeighborhoods = [],
+  initialTopPicks = [],
+  initialCategoryCounts = {},
 }: CityPageClientProps) {
   const { user } = useAuth();
   const router = useRouter();
@@ -80,7 +98,12 @@ export default function CityPageClient({
   const [destinations, setDestinations] = useState<Destination[]>(initialDestinations);
   const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>(initialDestinations);
   const [categories, setCategories] = useState<string[]>(initialCategories);
+  const [neighborhoods] = useState<string[]>(initialNeighborhoods);
+  const [topPicks] = useState<Destination[]>(initialTopPicks);
+  const [categoryCounts] = useState<Record<string, number>>(initialCategoryCounts);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState('');
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [advancedFilters, setAdvancedFilters] = useState<{
     michelin?: boolean;
     crown?: boolean;
@@ -134,11 +157,11 @@ export default function CityPageClient({
 
   useEffect(() => {
     if (destinations.length > 0) {
-      applyFilters(destinations, selectedCategory, advancedFilters);
+      applyFilters(destinations, selectedCategory, selectedNeighborhood, advancedFilters);
     } else {
       setFilteredDestinations([]);
     }
-  }, [destinations, selectedCategory, advancedFilters]);
+  }, [destinations, selectedCategory, selectedNeighborhood, advancedFilters]);
 
   const fetchDestinations = async () => {
     try {
@@ -176,7 +199,7 @@ export default function CityPageClient({
 
       setCategories(activeCategories);
 
-      applyFilters(results, selectedCategory, advancedFilters);
+      applyFilters(results, selectedCategory, selectedNeighborhood, advancedFilters);
     } catch (err) {
       console.error('Error fetching destinations:', err);
       setDestinations([]);
@@ -186,20 +209,27 @@ export default function CityPageClient({
     }
   };
 
-  const applyFilters = (dests: Destination[], category: string, filters: typeof advancedFilters) => {
+  const applyFilters = (dests: Destination[], category: string, neighborhood: string, filters: typeof advancedFilters) => {
     let filtered = [...dests];
+
+    // Filter by neighborhood
+    if (neighborhood) {
+      filtered = filtered.filter(d =>
+        d.neighborhood && d.neighborhood.trim().toLowerCase() === neighborhood.toLowerCase()
+      );
+    }
 
     if (category) {
       filtered = filtered.filter(d => {
         const categoryMatch = d.category && d.category.toLowerCase().trim() === category.toLowerCase().trim();
-        
+
         // If category matches, include it
         if (categoryMatch) return true;
-        
+
         // Also check tags for category-related matches
         const tags = d.tags || [];
         const categoryLower = category.toLowerCase().trim();
-        
+
         // Map categories to relevant tag patterns
         const categoryTagMap: Record<string, string[]> = {
           'dining': ['restaurant', 'dining', 'fine-dining', 'italian_restaurant', 'mexican_restaurant', 'japanese_restaurant', 'french_restaurant', 'chinese_restaurant', 'thai_restaurant', 'indian_restaurant', 'seafood_restaurant', 'steak_house', 'pizza', 'food'],
@@ -210,18 +240,18 @@ export default function CityPageClient({
           'attraction': ['tourist_attraction', 'museum', 'park', 'landmark', 'monument'],
           'nightlife': ['nightclub', 'bar', 'pub', 'lounge', 'entertainment'],
         };
-        
+
         // Get relevant tags for this category
         const relevantTags = categoryTagMap[categoryLower] || [];
-        
+
         // Check if any tags match
         const tagMatch = tags.some(tag => {
           const tagLower = tag.toLowerCase();
-          return relevantTags.some(relevantTag => 
+          return relevantTags.some(relevantTag =>
             tagLower.includes(relevantTag) || relevantTag.includes(tagLower)
           );
         });
-        
+
         return tagMatch;
       });
     }
@@ -274,6 +304,22 @@ export default function CityPageClient({
     setAdvancedFilters(prev => ({ ...prev, category: nextCategory || undefined }));
   };
 
+  const handleNeighborhoodSelect = (neighborhood: string) => {
+    const nextNeighborhood = neighborhood === selectedNeighborhood ? '' : neighborhood;
+    setSelectedNeighborhood(nextNeighborhood);
+  };
+
+  // Compute map center from filtered destinations
+  const mapCenter = useMemo(() => {
+    const destinationsWithCoords = filteredDestinations.filter(d => d.latitude && d.longitude);
+    if (destinationsWithCoords.length === 0) {
+      return { lat: 0, lng: 0 };
+    }
+    const avgLat = destinationsWithCoords.reduce((sum, d) => sum + (d.latitude || 0), 0) / destinationsWithCoords.length;
+    const avgLng = destinationsWithCoords.reduce((sum, d) => sum + (d.longitude || 0), 0) / destinationsWithCoords.length;
+    return { lat: avgLat, lng: avgLng };
+  }, [filteredDestinations]);
+
   const paginatedDestinations = (() => {
     const start = (currentPage - 1) * itemsPerPage;
     const end = start + itemsPerPage;
@@ -310,6 +356,31 @@ export default function CityPageClient({
                   </p>
                 </div>
                 <div className="flex items-center gap-3 flex-wrap justify-end">
+                  {/* View Mode Toggle */}
+                  <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full p-1">
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 rounded-full transition-all duration-200 ${
+                        viewMode === 'grid'
+                          ? 'bg-white dark:bg-gray-900 text-black dark:text-white shadow-sm'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                      }`}
+                      title="Grid view"
+                    >
+                      <Grid3X3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('map')}
+                      className={`p-2 rounded-full transition-all duration-200 ${
+                        viewMode === 'map'
+                          ? 'bg-white dark:bg-gray-900 text-black dark:text-white shadow-sm'
+                          : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                      }`}
+                      title="Map view"
+                    >
+                      <Map className="w-4 h-4" />
+                    </button>
+                  </div>
                   {isAdmin && (
                     <button
                       onClick={handleAddNewPOI}
@@ -354,6 +425,60 @@ export default function CityPageClient({
                     Exit Edit Mode
                   </button>
                 </div>
+              </div>
+            )}
+
+            {/* Neighborhood Filter Tabs */}
+            {neighborhoods.length > 0 && (
+              <div className="mb-6">
+                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                  <button
+                    onClick={() => handleNeighborhoodSelect('')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+                      !selectedNeighborhood
+                        ? 'bg-black dark:bg-white text-white dark:text-black'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    All Neighborhoods
+                  </button>
+                  {neighborhoods.map(neighborhood => (
+                    <button
+                      key={neighborhood}
+                      onClick={() => handleNeighborhoodSelect(neighborhood)}
+                      className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-all duration-200 ${
+                        selectedNeighborhood === neighborhood
+                          ? 'bg-black dark:bg-white text-white dark:text-black'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                      }`}
+                    >
+                      {neighborhood}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Category Breakdown */}
+            {Object.keys(categoryCounts).length > 0 && (
+              <div className="mb-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                {Object.entries(categoryCounts)
+                  .sort((a, b) => b[1] - a[1])
+                  .slice(0, 6)
+                  .map(([category, count]) => (
+                    <button
+                      key={category}
+                      onClick={() => handleCategorySelect(category)}
+                      className={`p-4 rounded-xl border transition-all duration-200 text-left ${
+                        selectedCategory === category
+                          ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800/50'
+                          : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700'
+                      }`}
+                    >
+                      <div className="text-2xl font-light text-black dark:text-white">{count}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{capitalizeCategory(category)}</div>
+                    </button>
+                  ))}
               </div>
             )}
 
@@ -434,12 +559,54 @@ export default function CityPageClient({
             </div>
           </div>
 
-          {/* Destinations Grid - Using UniversalGrid */}
+          {/* Top Picks Section */}
+          {topPicks.length > 0 && !selectedCategory && !selectedNeighborhood && !advancedFilters.michelin && !advancedFilters.crown && (
+            <div className="mb-12">
+              <div className="flex items-center gap-2 mb-6">
+                <Sparkles className="w-5 h-5 text-amber-500" />
+                <h2 className="text-lg font-medium text-black dark:text-white">Top Picks</h2>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {topPicks.map((destination, index) => {
+                  const isVisited = !!(user && visitedSlugs.has(destination.slug));
+                  return (
+                    <DestinationCard
+                      key={destination.slug}
+                      destination={destination}
+                      onClick={() => {
+                        setSelectedDestination(destination);
+                        openDrawer('destination');
+                      }}
+                      index={index}
+                      isVisited={isVisited}
+                      showBadges={true}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Destinations Grid / Map View */}
           {filteredDestinations.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 No destinations found in {cityDisplayName}
               </p>
+            </div>
+          ) : viewMode === 'map' ? (
+            /* Map View */
+            <div className="relative w-full h-[600px] rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+              <GoogleInteractiveMap
+                destinations={filteredDestinations}
+                onMarkerClick={(destination) => {
+                  setSelectedDestination(destination);
+                  openDrawer('destination');
+                }}
+                center={mapCenter}
+                zoom={12}
+                selectedDestination={selectedDestination}
+              />
             </div>
           ) : (
             <div className="space-y-8">
