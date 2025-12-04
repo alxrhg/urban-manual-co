@@ -4,8 +4,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 /**
- * TripButton - A styled button component for trip features
- * Follows design system patterns with trip-specific variants
+ * @deprecated Use Button from '@/components/ui/button' instead.
+ *
+ * Migration guide:
+ * - TripButton variant="primary" → <Button variant="default" className="rounded-full">
+ * - TripButton variant="secondary" → <Button variant="outline" className="rounded-full">
+ * - TripButton variant="ghost" → <Button variant="subtle">
+ * - TripButton variant="danger" → <Button variant="danger">
+ * - TripButton variant="dangerOutline" → <Button variant="danger-outline">
+ * - TripButton variant="pill" → <Button variant="pill" size="xs">
+ * - TripButton variant="pillActive" → <Button variant="pill-active" size="xs">
+ * - TripButton variant="icon" → <Button variant="ghost" size="icon">
+ *
+ * This component is kept for backward compatibility.
+ * New code should use the unified Button component.
  */
 
 const tripButtonVariants = cva(

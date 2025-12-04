@@ -2,7 +2,19 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Button } from './button';
 
+/**
+ * @deprecated Use Button component with variant="pill" or variant="pill-primary" instead.
+ *
+ * Migration guide:
+ * - UMPillButton variant="default" → <Button variant="pill" size="pill">
+ * - UMPillButton variant="primary" → <Button variant="pill-primary" size="pill">
+ *
+ * Example:
+ * Before: <UMPillButton variant="primary">Click me</UMPillButton>
+ * After:  <Button variant="pill-primary" size="pill">Click me</Button>
+ */
 interface UMPillButtonProps {
   children: React.ReactNode;
   onClick?: () => void;
@@ -13,6 +25,9 @@ interface UMPillButtonProps {
   type?: 'button' | 'submit' | 'reset';
 }
 
+/**
+ * @deprecated Use Button component instead. See migration guide above.
+ */
 export default function UMPillButton({
   children,
   onClick,
@@ -22,25 +37,21 @@ export default function UMPillButton({
   disabled = false,
   type = 'button',
 }: UMPillButtonProps) {
+  // Map old variants to new Button variants
+  const buttonVariant = variant === 'primary' ? 'pill-primary' : 'pill';
+
   return (
-    <button
+    <Button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={cn(
-        'inline-flex items-center gap-2 px-5 h-[44px] rounded-3xl border transition-all',
-        'font-medium text-sm',
-        variant === 'default' &&
-          'border-neutral-200 bg-white text-neutral-800 hover:bg-neutral-50 dark:border-white/15 dark:bg-[#1A1C1F] dark:text-white/90 dark:hover:bg-white/5',
-        variant === 'primary' &&
-          'border-black bg-black text-white hover:bg-neutral-900 dark:border-white dark:bg-white dark:text-black dark:hover:bg-neutral-200',
-        disabled && 'opacity-50 cursor-not-allowed',
-        className
-      )}
+      variant={buttonVariant}
+      size="pill"
+      className={className}
     >
       {icon && <span className="text-[15px]">{icon}</span>}
       {children}
-    </button>
+    </Button>
   );
 }
 

@@ -1,9 +1,22 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
 
 /**
- * TripInput - A styled input component for trip features
- * Extends the design system Input with trip-specific styling
+ * @deprecated Use Input from '@/components/ui/input' instead.
+ *
+ * Migration guide:
+ * - TripInput → <Input>
+ * - TripInput variant="search" → <Input className="pl-10 bg-gray-50 dark:bg-gray-900">
+ * - TripLabel → <Label from '@/components/ui/label'>
+ * - TripFormField → Use Label + Input directly or FormField from '@/components/ui/form-field'
+ *
+ * The Input component now supports size variants:
+ * - inputSize="sm" for smaller inputs
+ * - inputSize="default" for standard inputs
+ * - inputSize="lg" for larger inputs
+ *
+ * This component is kept for backward compatibility.
  */
 
 export interface TripInputProps extends React.InputHTMLAttributes<HTMLInputElement> {

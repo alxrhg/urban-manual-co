@@ -1,24 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, ReactNode, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, ReactNode, useMemo } from 'react';
+import { useDrawerStore, type DrawerType as StoreDrawerType } from '@/lib/stores/drawer-store';
 
 /**
  * Drawer types that can be opened
+ * @deprecated Use DrawerType from '@/lib/stores/drawer-store' instead
  */
-export type DrawerType =
-  | 'account'
-  | 'login'
-  | 'chat'
-  | 'destination'
-  | 'trips'
-  | 'saved-places'
-  | 'visited-places'
-  | 'settings'
-  | 'poi'
-  | 'trip-view'
-  | 'map'
-  | 'create-trip'
-  | null;
+export type DrawerType = StoreDrawerType;
 
 /**
  * Drawer animation state for coordinating transitions
@@ -65,116 +54,119 @@ const DrawerContext = createContext<DrawerContextType | undefined>(undefined);
 
 /**
  * DrawerProvider manages global drawer state
- * Ensures only one drawer can be open at a time
- * Supports parent drawer for back navigation
- * Includes history stack for complex navigation flows
+ *
+ * This provider now wraps the unified drawer-store for backward compatibility.
+ * New code should use useDrawerStore directly from '@/lib/stores/drawer-store'.
+ *
+ * @deprecated Consider using useDrawerStore directly for new code
  */
 export function DrawerProvider({ children }: { children: ReactNode }) {
-  const [activeDrawer, setActiveDrawer] = useState<DrawerType>(null);
-  const [parentDrawer, setParentDrawer] = useState<DrawerType>(null);
-  const [historyStack, setHistoryStack] = useState<DrawerType[]>([]);
+  // Use the unified drawer store
+  const store = useDrawerStore();
+
+  // Local animation state (not in store yet)
   const [animationState, setAnimationState] = useState<DrawerAnimationState>('exited');
-  const drawerDataRef = useRef<DrawerData>({});
+
+  // Map store state to context interface
+  const activeDrawer = store.drawer;
+  const parentDrawer = store.parentDrawer;
+  const historyStack = store.historyStack;
 
   const openDrawer = useCallback(
     (type: DrawerType, parent?: DrawerType, data?: DrawerData) => {
-      // Add current drawer to history if one is open
-      if (activeDrawer) {
-        setHistoryStack((prev) => [...prev, activeDrawer]);
+      if (parent) {
+        store.openWithParent(type as string, parent as string, data);
+      } else {
+        store.openDrawer(type as string, data);
       }
-
-      // Merge any provided data
-      if (data) {
-        drawerDataRef.current = { ...drawerDataRef.current, ...data };
-      }
-
-      setParentDrawer(parent || null);
-      setActiveDrawer(type);
       setAnimationState('entering');
     },
-    [activeDrawer]
+    [store]
   );
 
   const toggleDrawer = useCallback(
     (type: DrawerType) => {
-      setActiveDrawer((current) => {
-        if (current === type) {
-          setParentDrawer(null);
-          setHistoryStack([]);
-          setAnimationState('exiting');
-          return null;
-        }
+      if (store.drawer === type) {
+        setAnimationState('exiting');
+        setTimeout(() => {
+          store.closeDrawer();
+          setAnimationState('exited');
+        }, 200);
+      } else {
+        store.openDrawer(type as string);
         setAnimationState('entering');
-        return type;
-      });
+      }
     },
-    []
+    [store]
   );
 
   const closeDrawer = useCallback(() => {
     setAnimationState('exiting');
     // Delay actual close to allow animation
     setTimeout(() => {
-      setActiveDrawer(null);
-      setParentDrawer(null);
-      setHistoryStack([]);
+      store.closeDrawer();
       setAnimationState('exited');
     }, 200);
-  }, []);
+  }, [store]);
 
   const goBack = useCallback(() => {
-    if (historyStack.length > 0) {
-      const prev = historyStack[historyStack.length - 1];
-      setHistoryStack((h) => h.slice(0, -1));
-      setActiveDrawer(prev);
-    } else if (parentDrawer) {
-      setActiveDrawer(parentDrawer);
-      setParentDrawer(null);
-    } else {
-      closeDrawer();
-    }
-  }, [historyStack, parentDrawer, closeDrawer]);
+    store.goBack();
+  }, [store]);
 
   const isDrawerOpen = useCallback(
     (type: DrawerType) => {
-      return activeDrawer === type;
+      return store.drawer === type;
     },
-    [activeDrawer]
+    [store.drawer]
   );
 
   const getDrawerData = useCallback(<T = unknown>(key: string): T | undefined => {
-    return drawerDataRef.current[key] as T | undefined;
-  }, []);
+    return store.getDrawerData<T>(key);
+  }, [store]);
 
   const setDrawerData = useCallback((key: string, value: unknown) => {
-    drawerDataRef.current[key] = value;
-  }, []);
+    store.setDrawerData(key, value);
+  }, [store]);
 
   const clearDrawerData = useCallback(() => {
-    drawerDataRef.current = {};
-  }, []);
+    store.clearDrawerData();
+  }, [store]);
 
-  const canGoBack = parentDrawer !== null || historyStack.length > 0;
+  const canGoBack = store.canGoBack();
+
+  const value = useMemo(() => ({
+    activeDrawer,
+    parentDrawer,
+    openDrawer,
+    toggleDrawer,
+    closeDrawer,
+    goBack,
+    isDrawerOpen,
+    canGoBack,
+    getDrawerData,
+    setDrawerData,
+    clearDrawerData,
+    historyStack,
+    animationState,
+    setAnimationState,
+  }), [
+    activeDrawer,
+    parentDrawer,
+    openDrawer,
+    toggleDrawer,
+    closeDrawer,
+    goBack,
+    isDrawerOpen,
+    canGoBack,
+    getDrawerData,
+    setDrawerData,
+    clearDrawerData,
+    historyStack,
+    animationState,
+  ]);
 
   return (
-    <DrawerContext.Provider
-      value={{
-        activeDrawer,
-        parentDrawer,
-        openDrawer,
-        toggleDrawer,
-        closeDrawer,
-        goBack,
-        isDrawerOpen,
-        canGoBack,
-        getDrawerData,
-        setDrawerData,
-        clearDrawerData,
-        historyStack,
-        animationState,
-        setAnimationState,
-      }}
-    >
+    <DrawerContext.Provider value={value}>
       {children}
     </DrawerContext.Provider>
   );
@@ -182,6 +174,10 @@ export function DrawerProvider({ children }: { children: ReactNode }) {
 
 /**
  * Hook to access drawer context
+ *
+ * This hook provides backward compatibility with the old DrawerContext API.
+ * For new code, consider using useDrawerStore directly from '@/lib/stores/drawer-store'.
+ *
  * @throws Error if used outside DrawerProvider
  */
 export function useDrawer() {
