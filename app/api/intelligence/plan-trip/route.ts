@@ -874,6 +874,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         if (!('functionCall' in part)) continue;
 
         const functionCall = part.functionCall;
+        if (!functionCall) continue;
+
         const toolName = functionCall.name;
         const args = functionCall.args as Record<string, any>;
 

@@ -389,9 +389,9 @@ function calculateTravelTime(
   if (distance > 3) mode = 'transit';
   if (distance > 10) mode = 'driving';
 
-  // Use saved mode if available
+  // Use saved mode if available (excluding 'flight' which isn't a travel mode for this calculation)
   const savedMode = from.parsedNotes?.travelModeToNext;
-  if (savedMode) mode = savedMode;
+  if (savedMode && savedMode !== 'flight') mode = savedMode;
 
   // Estimate duration
   const speeds = { walking: 5, transit: 25, driving: 40 };
