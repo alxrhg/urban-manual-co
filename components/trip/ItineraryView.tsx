@@ -645,7 +645,7 @@ function BreakfastCard({
   onClick?: () => void;
 }) {
   const notes = hotel.parsedNotes as Record<string, unknown> | undefined;
-  const breakfastTime = (notes?.breakfastTime as string) || '07:00 - 10:00';
+  const breakfastTime = notes?.breakfastTime as string | undefined;
 
   return (
     <div
@@ -658,7 +658,9 @@ function BreakfastCard({
         </div>
         <div className="flex-1">
           <h4 className="text-sm font-medium text-stone-900 dark:text-white">Breakfast at {hotel.title || 'Hotel'}</h4>
-          <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">{breakfastTime}</p>
+          {breakfastTime && (
+            <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">{breakfastTime}</p>
+          )}
         </div>
       </div>
     </div>
