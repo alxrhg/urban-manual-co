@@ -179,7 +179,7 @@ export default function CityPageClient({
       setDestinations(results);
 
       // Count destinations per category (case-insensitive) and only show categories with at least 2 destinations
-      const categoryCounts = new Map<string, number>();
+      const localCategoryCounts = new Map<string, number>();
       const categoryOriginalCase = new Map<string, string>(); // Track original case
       results.forEach((d: any) => {
         if (d.category) {
@@ -188,12 +188,12 @@ export default function CityPageClient({
           if (!categoryOriginalCase.has(categoryLower)) {
             categoryOriginalCase.set(categoryLower, d.category);
           }
-          categoryCounts.set(categoryLower, (categoryCounts.get(categoryLower) || 0) + 1);
+          localCategoryCounts.set(categoryLower, (localCategoryCounts.get(categoryLower) || 0) + 1);
         }
       });
 
       // Filter out quiet categories (categories with less than 2 destinations)
-      const activeCategories = Array.from(categoryCounts.entries())
+      const activeCategories = Array.from(localCategoryCounts.entries())
         .filter(([_, count]) => count >= 2)
         .map(([categoryLower, _]) => categoryOriginalCase.get(categoryLower) || categoryLower);
 
