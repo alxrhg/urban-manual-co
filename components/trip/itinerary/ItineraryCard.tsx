@@ -19,6 +19,7 @@ interface ItineraryCardProps {
   item: EnrichedItineraryItem;
   isActive?: boolean;
   onClick?: () => void;
+  onUpdateNotes?: (itemId: string, notes: Record<string, unknown>) => void;
   className?: string;
 }
 
@@ -30,6 +31,7 @@ export default function ItineraryCard({
   item,
   isActive = false,
   onClick,
+  onUpdateNotes,
   className = '',
 }: ItineraryCardProps) {
   const itemType = item.parsedNotes?.type || 'place';
@@ -37,7 +39,7 @@ export default function ItineraryCard({
   // Route to specialized card based on type
   switch (itemType) {
     case 'flight':
-      return <FlightCard item={item} isActive={isActive} onClick={onClick} className={className} />;
+      return <FlightCard item={item} isActive={isActive} onClick={onClick} onUpdateNotes={onUpdateNotes} className={className} />;
     case 'hotel':
       return <HotelCard item={item} isActive={isActive} onClick={onClick} className={className} />;
     case 'event':
@@ -48,6 +50,80 @@ export default function ItineraryCard({
 }
 
 // ============================================================================
+// Inline Edit Field for Flight Details
+// ============================================================================
+
+function InlineEditField({
+  label,
+  value,
+  placeholder,
+  onSave,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  onSave: (value: string) => void;
+}) {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editValue, setEditValue] = React.useState(value);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (isEditing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleSave = () => {
+    setIsEditing(false);
+    if (editValue !== value) {
+      onSave(editValue);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      setEditValue(value);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <span className="inline-flex items-center" onClick={(e) => e.stopPropagation()}>
+        <span className="text-stone-400 mr-1">{label}</span>
+        <input
+          ref={inputRef}
+          type="text"
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value.toUpperCase())}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+          className="w-12 bg-white dark:bg-gray-800 border border-stone-300 dark:border-gray-600 rounded px-1 py-0.5 text-xs font-mono text-stone-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-stone-400"
+          placeholder={placeholder}
+        />
+      </span>
+    );
+  }
+
+  return (
+    <span
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsEditing(true);
+      }}
+      className="cursor-text hover:bg-stone-200 dark:hover:bg-gray-700 px-1 py-0.5 rounded transition-colors"
+      title="Click to edit"
+    >
+      {label} {value || <span className="text-stone-400">---</span>}
+    </span>
+  );
+}
+
+// ============================================================================
 // Flight Card
 // ============================================================================
 
@@ -55,82 +131,121 @@ function FlightCard({
   item,
   isActive,
   onClick,
+  onUpdateNotes,
   className,
-}: ItineraryCardProps) {
+}: ItineraryCardProps & { onUpdateNotes?: (itemId: string, notes: Record<string, unknown>) => void }) {
   const notes = item.parsedNotes;
 
+  // Parse airport codes
   const parseAirport = (value?: string) => {
     if (!value) return { code: '---', name: '' };
     const parts = value.split(/[-–—]/);
     const code = parts[0]?.trim().toUpperCase().slice(0, 3) || '---';
-    const name = parts[1]?.trim() || '';
+    const name = parts[1]?.trim() || parts[0]?.trim() || '';
     return { code, name };
   };
 
   const origin = parseAirport(notes?.from);
   const destination = parseAirport(notes?.to);
+  const duration = notes?.duration || '--';
   const flightNumber = notes?.flightNumber
     ? `${notes?.airline || ''} ${notes.flightNumber}`.trim()
-    : notes?.airline || '';
-  const duration = notes?.duration ? `${Math.floor(notes.duration / 60)}h ${notes.duration % 60}m` : '';
+    : notes?.airline || '--';
+
+  const handleUpdateField = (field: string, value: string) => {
+    if (onUpdateNotes) {
+      onUpdateNotes(item.id, { [field]: value });
+    }
+  };
 
   return (
-    <button
+    <div
       onClick={onClick}
       className={`
-        w-full text-left rounded-2xl overflow-hidden transition-all
-        bg-gradient-to-br from-slate-900 to-slate-800
-        ${isActive ? 'ring-2 ring-white/20' : 'hover:from-slate-800 hover:to-slate-700'}
+        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
+        ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
         ${className}
       `}
     >
-      {/* Header */}
-      <div className="px-5 pt-4 pb-3">
-        <div className="flex items-center gap-2 text-slate-400 text-xs mb-4">
-          <Plane className="w-3.5 h-3.5" />
-          <span className="uppercase tracking-wide font-medium">{flightNumber || 'Flight'}</span>
-          {duration && <span className="ml-auto">{duration}</span>}
+      {/* Flight Header */}
+      <div className="px-4 pt-4 pb-3">
+        <div className="flex items-center gap-2 text-stone-500 dark:text-gray-400 text-sm mb-4">
+          <Plane className="w-4 h-4" />
+          <span>Flight to {destination.name || destination.code}</span>
         </div>
 
-        {/* Route */}
-        <div className="flex items-center">
+        {/* Route Display */}
+        <div className="flex items-center justify-between">
           {/* Origin */}
-          <div className="flex-1">
-            <div className="text-3xl font-bold text-white tracking-tight">{origin.code}</div>
-            <div className="text-xs text-slate-400 mt-1">{notes?.departureTime || '--:--'}</div>
+          <div>
+            <div className="text-3xl font-bold text-stone-900 dark:text-white tracking-tight">
+              {origin.code}
+            </div>
+            <div className="text-xs text-stone-500 mt-1">
+              {origin.name || 'Departure'}
+            </div>
+            <div className="text-sm font-medium text-stone-900 dark:text-white mt-1">
+              {notes?.departureTime || '--:--'}
+            </div>
           </div>
 
           {/* Flight Path */}
-          <div className="flex-1 flex items-center justify-center px-4">
+          <div className="flex-1 flex flex-col items-center px-4">
+            <div className="text-xs text-stone-500 mb-1">{duration}</div>
             <div className="w-full flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
-              <div className="flex-1 h-px bg-gradient-to-r from-white/40 via-white/20 to-white/40 relative">
-                <Plane className="w-3 h-3 text-white/60 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rotate-90" />
+              <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600" />
+              <div className="flex-1 h-px bg-stone-200 dark:bg-gray-700 relative">
+                <Plane className="w-4 h-4 text-stone-400 dark:text-gray-500 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
               </div>
-              <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
+              <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600" />
+            </div>
+            <div className="px-2 py-0.5 bg-stone-100 dark:bg-gray-800 rounded text-xs text-stone-500 dark:text-gray-400 mt-2">
+              {flightNumber}
             </div>
           </div>
 
           {/* Destination */}
-          <div className="flex-1 text-right">
-            <div className="text-3xl font-bold text-white tracking-tight">{destination.code}</div>
-            <div className="text-xs text-slate-400 mt-1">{notes?.arrivalTime || '--:--'}</div>
+          <div className="text-right">
+            <div className="text-3xl font-bold text-stone-900 dark:text-white tracking-tight">
+              {destination.code}
+            </div>
+            <div className="text-xs text-stone-500 mt-1">
+              {destination.name || 'Arrival'}
+            </div>
+            <div className="text-sm font-medium text-stone-900 dark:text-white mt-1">
+              {notes?.arrivalTime || '--:--'}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Footer Details */}
-      {(notes?.terminal || notes?.gate || notes?.seatNumber) && (
-        <div className="px-5 py-3 bg-white/5 border-t border-white/10 flex items-center gap-4">
-          <div className="flex items-center gap-4 text-xs text-slate-400 font-mono tracking-wider">
-            {notes?.terminal && <span>T{notes.terminal}</span>}
-            {notes?.gate && <span>Gate {notes.gate}</span>}
-            {notes?.seatNumber && <span>Seat {notes.seatNumber}</span>}
-          </div>
-          <ChevronRight className="w-4 h-4 text-slate-500 ml-auto" />
+      {/* Footer with editable details */}
+      <div className="px-4 py-3 bg-stone-50 dark:bg-gray-900/50 border-t border-stone-100 dark:border-gray-800 flex items-center justify-between">
+        <div className="flex items-center gap-4 text-xs text-stone-500 font-mono">
+          <InlineEditField
+            label="TERMINAL"
+            value={notes?.terminal || ''}
+            placeholder="T1"
+            onSave={(v) => handleUpdateField('terminal', v)}
+          />
+          <InlineEditField
+            label="GATE"
+            value={notes?.gate || ''}
+            placeholder="A1"
+            onSave={(v) => handleUpdateField('gate', v)}
+          />
+          <InlineEditField
+            label="SEAT"
+            value={notes?.seatNumber || ''}
+            placeholder="1A"
+            onSave={(v) => handleUpdateField('seatNumber', v)}
+          />
         </div>
-      )}
-    </button>
+        <button className="text-xs text-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors">
+          Details
+        </button>
+      </div>
+    </div>
   );
 }
 
