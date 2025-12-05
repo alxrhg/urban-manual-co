@@ -17,8 +17,9 @@
 - Minimal use of color (only for status, alerts)
 
 ### 3. **Typography-First**
-- Clear hierarchy
-- Readable font sizes
+- **Clear Hierarchy**: Distinct visual separation between Headings, Subheadings, and Body text
+- **Optimal Readability**: Line height of 1.5 for body text, 60-75 character line length
+- **Premium Fonts**: Inter + Geist (institutional, modern sans-serifs), SF Pro fallback
 - Line clamping for overflow
 
 ### 4. **No Dashboard Cards**
@@ -79,22 +80,129 @@
 ```
 
 ### Typography
-```css
-/* Font Sizes */
---text-xs: 0.75rem   /* 12px */
---text-sm: 0.875rem  /* 14px */
---text-base: 1rem    /* 16px */
---text-lg: 1.125rem  /* 18px */
---text-xl: 1.25rem   /* 20px */
---text-2xl: 1.5rem   /* 24px */
---text-3xl: 1.875rem /* 30px */
---text-4xl: 2.25rem  /* 36px */
 
-/* Font Weights */
---font-normal: 400
---font-medium: 500
---font-semibold: 600
---font-bold: 700
+**Typography is the voice of the brand.** The Urban Manual uses a premium, institutional typographic system that emphasizes clarity, readability, and hierarchy.
+
+#### Font Stack (Premium Sans-Serif)
+```css
+/* Primary - Body & UI */
+--um-font-sans: 'Inter', 'Geist', system-ui, -apple-system, 'SF Pro Text', sans-serif;
+
+/* Editorial - Display headings */
+--um-font-display: 'Instrument Serif', 'Playfair Display', Georgia, serif;
+
+/* Code - Technical content */
+--um-font-mono: 'JetBrains Mono', Menlo, monospace;
+```
+
+#### Type Scale with Hierarchy
+```css
+/* Display Headings - Hero/Feature text */
+--um-text-6xl: 3.75rem  /* 60px - Hero headlines */
+--um-text-5xl: 3rem     /* 48px - Display headings */
+--um-text-4xl: 2.25rem  /* 36px - Large headings */
+
+/* Headings - Section headers */
+--um-text-3xl: 1.875rem /* 30px - H1 */
+--um-text-2xl: 1.5rem   /* 24px - H2 */
+--um-text-xl: 1.25rem   /* 20px - H3 */
+--um-text-lg: 1.125rem  /* 18px - H4 */
+
+/* Body Text */
+--um-text-base: 1rem    /* 16px - Primary body */
+--um-text-sm: 0.875rem  /* 14px - Secondary body */
+--um-text-xs: 0.75rem   /* 12px - Captions/metadata */
+```
+
+#### Line Height (Readability)
+```css
+/* Optimal line height for reading */
+--um-leading-tight: 1.1;    /* Large headings */
+--um-leading-snug: 1.25;    /* Headings */
+--um-leading-normal: 1.5;   /* Body text - OPTIMAL */
+--um-leading-relaxed: 1.625; /* Long-form reading */
+--um-leading-prose: 1.65;   /* Articles */
+```
+
+#### Letter Spacing
+```css
+--um-tracking-heading: -0.02em;  /* Headings - tighter */
+--um-tracking-subhead: -0.01em;  /* Subheadings */
+--um-tracking-normal: 0;         /* Body text */
+--um-tracking-caps: 0.1em;       /* All-caps labels */
+```
+
+#### Max Width (60-75 Character Rule)
+For optimal readability, body text should be constrained to 60-75 characters per line:
+```css
+--um-prose-narrow: 55ch;   /* Compact - ~55 chars */
+--um-prose: 65ch;          /* Optimal - ~65 chars */
+--um-prose-wide: 75ch;     /* Maximum - ~75 chars */
+--um-prose-reading: 70ch;  /* Sweet spot - ~70 chars */
+```
+
+#### Font Weights
+```css
+--font-light: 300     /* Decorative headings */
+--font-normal: 400    /* Body text */
+--font-medium: 500    /* Subheadings, emphasis */
+--font-semibold: 600  /* Headings */
+--font-bold: 700      /* Display headings */
+```
+
+#### Typography Utility Classes
+
+**Display Headings:**
+```tsx
+<h1 className="um-display-2xl">Hero Headline</h1>  /* 60px */
+<h1 className="um-display-xl">Feature Title</h1>   /* 48px */
+<h1 className="um-display-lg">Page Title</h1>      /* 36px */
+```
+
+**Section Headings:**
+```tsx
+<h1 className="um-h1">Section Title</h1>    /* 30px, semibold */
+<h2 className="um-h2">Subsection</h2>       /* 24px, semibold */
+<h3 className="um-h3">Group Header</h3>     /* 20px, medium */
+<h4 className="um-h4">Item Title</h4>       /* 18px, medium */
+```
+
+**Subheadings:**
+```tsx
+<p className="um-subhead-lg">Large supporting text</p>  /* 20px */
+<p className="um-subhead">Standard subhead</p>          /* 18px */
+<p className="um-subhead-sm">Small subhead</p>          /* 16px */
+```
+
+**Body Text:**
+```tsx
+<p className="um-body-lg">Large body text</p>    /* 18px, 1.5 line-height */
+<p className="um-body">Standard body text</p>    /* 16px, 1.5 line-height */
+<p className="um-body-sm">Small body text</p>    /* 14px, 1.5 line-height */
+```
+
+**Captions & Labels:**
+```tsx
+<span className="um-caption">Metadata text</span>       /* 12px */
+<span className="um-label">SECTION LABEL</span>         /* 12px, uppercase */
+<span className="um-overline">OVERLINE TEXT</span>      /* 12px, caps, spaced */
+```
+
+**Prose Containers (Optimal Line Length):**
+```tsx
+<article className="um-prose">
+  <p>Body text constrained to ~65 characters for optimal readability.</p>
+</article>
+
+<article className="um-prose-reading">
+  <p>Long-form article text at ~70 characters with relaxed line height.</p>
+</article>
+```
+
+**Editorial/Display Typography:**
+```tsx
+<h1 className="um-editorial-heading">Italic Serif Display</h1>
+<p className="um-editorial-subhead">Serif subheading text</p>
 ```
 
 ---

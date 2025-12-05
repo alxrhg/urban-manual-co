@@ -1,4 +1,59 @@
 :root {
+  /* ============================================
+     TYPOGRAPHY TOKENS
+     Premium, institutional typography system
+     ============================================ */
+
+  /* Font Family */
+  --um-font-sans: 'Inter', 'Geist', system-ui, -apple-system, 'SF Pro Text', sans-serif;
+  --um-font-serif: 'Playfair Display', Georgia, serif;
+  --um-font-display: 'Instrument Serif', 'Playfair Display', Georgia, serif;
+  --um-font-mono: 'JetBrains Mono', Menlo, monospace;
+
+  /* Font Sizes - Hierarchical Scale */
+  --um-text-xs: 0.75rem;      /* 12px - captions, metadata */
+  --um-text-sm: 0.875rem;     /* 14px - small body, UI labels */
+  --um-text-base: 1rem;       /* 16px - body text */
+  --um-text-lg: 1.125rem;     /* 18px - large body, subheading */
+  --um-text-xl: 1.25rem;      /* 20px - subheading */
+  --um-text-2xl: 1.5rem;      /* 24px - small heading */
+  --um-text-3xl: 1.875rem;    /* 30px - heading */
+  --um-text-4xl: 2.25rem;     /* 36px - large heading */
+  --um-text-5xl: 3rem;        /* 48px - display heading */
+  --um-text-6xl: 3.75rem;     /* 60px - hero heading */
+
+  /* Line Heights - Optimized for readability */
+  --um-leading-none: 1;
+  --um-leading-tight: 1.1;    /* Large headings */
+  --um-leading-snug: 1.25;    /* Headings */
+  --um-leading-normal: 1.5;   /* Body text - optimal */
+  --um-leading-relaxed: 1.625; /* Long-form reading */
+  --um-leading-loose: 1.75;   /* Extra spacing */
+  --um-leading-prose: 1.65;   /* Optimal for articles */
+
+  /* Letter Spacing */
+  --um-tracking-tighter: -0.05em;
+  --um-tracking-tight: -0.025em;
+  --um-tracking-heading: -0.02em;  /* Headings */
+  --um-tracking-subhead: -0.01em;  /* Subheadings */
+  --um-tracking-normal: 0;         /* Body */
+  --um-tracking-wide: 0.025em;
+  --um-tracking-wider: 0.05em;
+  --um-tracking-caps: 0.1em;       /* All caps text */
+
+  /* Font Weights */
+  --um-font-light: 300;
+  --um-font-normal: 400;
+  --um-font-medium: 500;
+  --um-font-semibold: 600;
+  --um-font-bold: 700;
+
+  /* Max Width - Optimal line length (60-75 characters) */
+  --um-prose-narrow: 55ch;    /* ~55 characters - compact */
+  --um-prose: 65ch;           /* ~65 characters - optimal */
+  --um-prose-wide: 75ch;      /* ~75 characters - maximum */
+  --um-prose-reading: 70ch;   /* ~70 characters - sweet spot */
+
   /* Radius tokens */
   --um-radius-sm: 8px;
   --um-radius-md: 12px;
@@ -152,5 +207,232 @@
 */
 .um-icon-box {
   @apply flex h-9 w-9 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400;
+}
+
+/* ============================================
+   TYPOGRAPHY SYSTEM CLASSES
+   Clear hierarchy: Headings > Subheadings > Body
+   ============================================ */
+
+/* DISPLAY HEADINGS
+   Hero-level typography for page titles and key messaging
+*/
+.um-display-2xl {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-6xl);
+  font-weight: var(--um-font-bold);
+  line-height: var(--um-leading-tight);
+  letter-spacing: var(--um-tracking-heading);
+  @apply text-black dark:text-white;
+}
+
+.um-display-xl {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-5xl);
+  font-weight: var(--um-font-bold);
+  line-height: var(--um-leading-tight);
+  letter-spacing: var(--um-tracking-heading);
+  @apply text-black dark:text-white;
+}
+
+.um-display-lg {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-4xl);
+  font-weight: var(--um-font-semibold);
+  line-height: var(--um-leading-snug);
+  letter-spacing: var(--um-tracking-heading);
+  @apply text-black dark:text-white;
+}
+
+/* HEADINGS
+   Section and page headers with clear hierarchy
+*/
+.um-h1 {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-3xl);
+  font-weight: var(--um-font-semibold);
+  line-height: var(--um-leading-snug);
+  letter-spacing: var(--um-tracking-heading);
+  @apply text-black dark:text-white;
+}
+
+.um-h2 {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-2xl);
+  font-weight: var(--um-font-semibold);
+  line-height: var(--um-leading-snug);
+  letter-spacing: var(--um-tracking-heading);
+  @apply text-black dark:text-white;
+}
+
+.um-h3 {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-xl);
+  font-weight: var(--um-font-medium);
+  line-height: var(--um-leading-snug);
+  letter-spacing: var(--um-tracking-subhead);
+  @apply text-black dark:text-white;
+}
+
+.um-h4 {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-lg);
+  font-weight: var(--um-font-medium);
+  line-height: var(--um-leading-snug);
+  letter-spacing: var(--um-tracking-subhead);
+  @apply text-black dark:text-white;
+}
+
+/* SUBHEADINGS
+   Supporting text below headings, section intros
+*/
+.um-subhead-lg {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-xl);
+  font-weight: var(--um-font-normal);
+  line-height: var(--um-leading-normal);
+  letter-spacing: var(--um-tracking-subhead);
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+.um-subhead {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-lg);
+  font-weight: var(--um-font-normal);
+  line-height: var(--um-leading-normal);
+  letter-spacing: var(--um-tracking-subhead);
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+.um-subhead-sm {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-base);
+  font-weight: var(--um-font-normal);
+  line-height: var(--um-leading-normal);
+  @apply text-gray-600 dark:text-gray-400;
+}
+
+/* BODY TEXT
+   Primary content with optimal readability (line-height 1.5)
+*/
+.um-body-lg {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-lg);
+  font-weight: var(--um-font-normal);
+  line-height: var(--um-leading-normal);
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.um-body {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-base);
+  font-weight: var(--um-font-normal);
+  line-height: var(--um-leading-normal);
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.um-body-sm {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-sm);
+  font-weight: var(--um-font-normal);
+  line-height: var(--um-leading-normal);
+  @apply text-gray-700 dark:text-gray-300;
+}
+
+/* CAPTION / METADATA
+   Small supporting text, timestamps, labels
+*/
+.um-caption {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-xs);
+  font-weight: var(--um-font-normal);
+  line-height: var(--um-leading-normal);
+  @apply text-gray-500 dark:text-gray-400;
+}
+
+.um-label {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-xs);
+  font-weight: var(--um-font-medium);
+  line-height: var(--um-leading-normal);
+  letter-spacing: var(--um-tracking-wide);
+  text-transform: uppercase;
+  @apply text-gray-500 dark:text-gray-400;
+}
+
+/* OVERLINE
+   All-caps section labels
+*/
+.um-overline {
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-xs);
+  font-weight: var(--um-font-semibold);
+  line-height: var(--um-leading-normal);
+  letter-spacing: var(--um-tracking-caps);
+  text-transform: uppercase;
+  @apply text-gray-500 dark:text-gray-400;
+}
+
+/* PROSE CONTAINERS
+   Max-width constrained containers for optimal line length (60-75 chars)
+*/
+.um-prose {
+  max-width: var(--um-prose);
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-base);
+  line-height: var(--um-leading-prose);
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.um-prose-narrow {
+  max-width: var(--um-prose-narrow);
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-base);
+  line-height: var(--um-leading-prose);
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.um-prose-wide {
+  max-width: var(--um-prose-wide);
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-base);
+  line-height: var(--um-leading-prose);
+  @apply text-gray-900 dark:text-gray-100;
+}
+
+.um-prose-reading {
+  max-width: var(--um-prose-reading);
+  font-family: var(--um-font-sans);
+  font-size: var(--um-text-lg);
+  line-height: var(--um-leading-relaxed);
+  @apply text-gray-800 dark:text-gray-200;
+}
+
+/* EDITORIAL / DISPLAY FONT VARIANTS
+   For special sections requiring serif typography
+*/
+.um-editorial-heading {
+  font-family: var(--um-font-display);
+  font-size: var(--um-text-4xl);
+  font-weight: var(--um-font-normal);
+  line-height: var(--um-leading-tight);
+  font-style: italic;
+  @apply text-black dark:text-white;
+}
+
+.um-editorial-subhead {
+  font-family: var(--um-font-serif);
+  font-size: var(--um-text-xl);
+  font-weight: var(--um-font-normal);
+  line-height: var(--um-leading-normal);
+  @apply text-gray-700 dark:text-gray-300;
+}
+
+/* CODE / MONOSPACE TEXT */
+.um-code {
+  font-family: var(--um-font-mono);
+  font-size: var(--um-text-sm);
+  line-height: var(--um-leading-relaxed);
+  @apply text-gray-800 dark:text-gray-200;
 }
 

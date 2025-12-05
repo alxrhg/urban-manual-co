@@ -2,11 +2,57 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // Distinctive typography - avoid generic AI aesthetics
-        sans: ['Outfit', 'system-ui', '-apple-system', 'sans-serif'],
+        // Premium, neutral sans-serifs - institutional yet modern
+        // Primary: Inter for body, Geist for UI, SF Pro as system fallback
+        sans: ['Inter', 'Geist', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'sans-serif'],
+        // Display font for large headings - maintains editorial feel
         serif: ['Playfair Display', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'Menlo', 'monospace'],
         display: ['Instrument Serif', 'Playfair Display', 'Georgia', 'serif'],
+        // Alternative body font for specific sections
+        body: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      // Typography scale with clear hierarchy
+      fontSize: {
+        // Body text
+        'body-sm': ['0.875rem', { lineHeight: '1.5' }],    // 14px
+        'body': ['1rem', { lineHeight: '1.5' }],           // 16px
+        'body-lg': ['1.125rem', { lineHeight: '1.5' }],    // 18px
+        // Subheadings
+        'subhead-sm': ['1.125rem', { lineHeight: '1.4', fontWeight: '500' }],  // 18px
+        'subhead': ['1.25rem', { lineHeight: '1.4', fontWeight: '500' }],      // 20px
+        'subhead-lg': ['1.5rem', { lineHeight: '1.3', fontWeight: '500' }],    // 24px
+        // Headings
+        'heading-sm': ['1.5rem', { lineHeight: '1.25', fontWeight: '600' }],   // 24px
+        'heading': ['1.875rem', { lineHeight: '1.25', fontWeight: '600' }],    // 30px
+        'heading-lg': ['2.25rem', { lineHeight: '1.2', fontWeight: '600' }],   // 36px
+        'heading-xl': ['3rem', { lineHeight: '1.1', fontWeight: '700' }],      // 48px
+        'heading-2xl': ['3.75rem', { lineHeight: '1.1', fontWeight: '700' }],  // 60px
+      },
+      // Line height tokens for readability
+      lineHeight: {
+        'tight': '1.1',
+        'snug': '1.25',
+        'normal': '1.5',
+        'relaxed': '1.625',
+        'loose': '1.75',
+        'prose': '1.65',  // Optimal for long-form reading
+      },
+      // Max-width for optimal line length (60-75 characters)
+      maxWidth: {
+        'prose-narrow': '55ch',   // ~55 characters - compact
+        'prose': '65ch',          // ~65 characters - optimal readability
+        'prose-wide': '75ch',     // ~75 characters - maximum
+        'prose-reading': '70ch',  // ~70 characters - sweet spot for body text
+      },
+      // Letter spacing for hierarchy
+      letterSpacing: {
+        'heading': '-0.02em',
+        'subhead': '-0.01em',
+        'body': '0',
+        'wide': '0.025em',
+        'wider': '0.05em',
+        'caps': '0.1em',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out forwards',
