@@ -314,8 +314,8 @@ export default function TimelineBlock({
               p-2 sm:p-1.5 -m-1
               rounded-xl sm:rounded-lg
               bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
-              text-gray-400 hover:text-red-500 active:text-red-600
-              hover:bg-red-50 active:bg-red-100 dark:hover:bg-red-900/20
+              text-gray-400 hover:text-gray-600 active:text-gray-700
+              hover:bg-gray-100 active:bg-gray-200 dark:hover:bg-gray-800 dark:active:bg-gray-700
               transition-all duration-200
               min-w-[40px] min-h-[40px] sm:min-w-0 sm:min-h-0
               flex items-center justify-center

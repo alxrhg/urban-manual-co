@@ -37,8 +37,7 @@ export default function MinimalActivityCard({
       className={`
         cursor-pointer rounded-xl transition-all duration-200
         bg-stone-50 dark:bg-gray-800/30
-        ${isSelected ? 'ring-2 ring-stone-900 dark:ring-white' : ''}
-        hover:ring-1 hover:ring-stone-300 dark:hover:ring-gray-600
+        ${isSelected ? 'bg-stone-100 dark:bg-gray-700/50' : 'hover:bg-stone-100/80 dark:hover:bg-gray-800/60'}
       `}
     >
       <div className="px-4 py-3 flex items-center gap-3">

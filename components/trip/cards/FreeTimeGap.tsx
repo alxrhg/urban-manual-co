@@ -34,9 +34,7 @@ export default function FreeTimeGap({
         cursor-pointer rounded-xl transition-all duration-200
         border border-dashed border-stone-200 dark:border-gray-700
         bg-stone-50/50 dark:bg-gray-800/20
-        ${isSelected ? 'ring-2 ring-stone-900 dark:ring-white border-solid' : ''}
-        hover:border-stone-300 dark:hover:border-gray-600
-        hover:bg-stone-100/50 dark:hover:bg-gray-800/40
+        ${isSelected ? 'border-solid bg-stone-100/80 dark:bg-gray-800/50' : 'hover:bg-stone-100/60 dark:hover:bg-gray-800/40'}
       `}
     >
       <div className="px-4 py-3 flex items-center gap-3">

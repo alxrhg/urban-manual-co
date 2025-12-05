@@ -75,7 +75,7 @@ export default function FloatingActionBar({
               `}
             >
               {/* Add Options - Grid layout on mobile */}
-              <div className="grid grid-cols-3 sm:flex sm:items-center gap-1 sm:gap-2 p-2 sm:p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-2xl shadow-black/20">
+              <div className="grid grid-cols-3 sm:flex sm:items-center gap-1 sm:gap-2 p-2 sm:p-2 rounded-2xl bg-white dark:bg-gray-900 shadow-lg shadow-black/8 border border-gray-200/50 dark:border-gray-700/50">
                 <button
                   onClick={() => { onAddPlace(); setIsExpanded(false); }}
                   className="flex flex-col items-center gap-1.5 p-3 sm:p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 transition-colors min-w-[72px] min-h-[72px] sm:min-w-0 sm:min-h-0"
@@ -119,7 +119,7 @@ export default function FloatingActionBar({
             </div>
 
             {/* Main Bar - Larger touch targets on mobile */}
-            <div className="flex items-center gap-1 p-1.5 sm:p-1.5 rounded-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl shadow-black/20 border border-gray-200/50 dark:border-gray-700/50">
+            <div className="flex items-center gap-1 p-1.5 sm:p-1.5 rounded-full bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-lg shadow-black/8 border border-gray-200/60 dark:border-gray-700/60">
               {/* Add Button (Primary) - 48px on mobile */}
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -155,7 +155,7 @@ export default function FloatingActionBar({
                 className={`
                   w-12 h-12 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-colors
                   ${isAIPlanning
-                    ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400'
+                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
                     : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 active:bg-gray-200 dark:active:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
                   }
                   disabled:opacity-50

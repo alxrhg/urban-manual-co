@@ -30,8 +30,7 @@ export default function TransportCard({
       onKeyDown={(e) => e.key === 'Enter' && onSelect()}
       className={`
         cursor-pointer rounded-2xl transition-all duration-200
-        ${isSelected ? 'ring-2 ring-stone-900 dark:ring-white' : ''}
-        hover:ring-1 hover:ring-stone-300 dark:hover:ring-gray-600
+        ${isSelected ? 'bg-stone-100 dark:bg-gray-800' : 'hover:bg-stone-100/80 dark:hover:bg-gray-800/80'}
       `}
     >
       <TransportCardBase

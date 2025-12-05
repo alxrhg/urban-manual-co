@@ -13,20 +13,20 @@ interface AlertsDropdownProps {
 const severityConfig = {
   high: {
     icon: AlertTriangle,
-    color: 'text-red-500',
-    bg: 'bg-red-50 dark:bg-red-900/20',
-    border: 'border-red-200 dark:border-red-800',
+    color: 'text-gray-700 dark:text-gray-200',
+    bg: 'bg-gray-100 dark:bg-gray-800',
+    border: 'border-gray-200 dark:border-gray-700',
   },
   medium: {
     icon: Clock,
-    color: 'text-amber-500',
-    bg: 'bg-amber-50 dark:bg-amber-900/20',
-    border: 'border-amber-200 dark:border-amber-800',
+    color: 'text-gray-600 dark:text-gray-300',
+    bg: 'bg-gray-50 dark:bg-gray-800/50',
+    border: 'border-gray-200 dark:border-gray-700',
   },
   low: {
     icon: Info,
-    color: 'text-gray-400',
-    bg: 'bg-gray-50 dark:bg-gray-800',
+    color: 'text-gray-500 dark:text-gray-400',
+    bg: 'bg-transparent',
     border: 'border-gray-200 dark:border-gray-700',
   },
 };
@@ -70,15 +70,12 @@ export default function AlertsDropdown({
         `}
         title={hasWarnings ? `${warnings.length} alerts` : 'No alerts'}
       >
-        <Bell className={`w-5 h-5 ${highCount > 0 ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`} />
+        <Bell className={`w-5 h-5 ${highCount > 0 ? 'text-gray-700 dark:text-gray-300' : 'text-gray-500 dark:text-gray-400'}`} />
         {hasWarnings && (
           <span className={`
             absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[10px] font-medium
             flex items-center justify-center
-            ${highCount > 0
-              ? 'bg-red-500 text-white'
-              : 'bg-amber-500 text-white'
-            }
+            bg-gray-900 dark:bg-white text-white dark:text-gray-900
           `}>
             {warnings.length}
           </span>
@@ -87,7 +84,7 @@ export default function AlertsDropdown({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white dark:bg-gray-900 rounded-2xl shadow-lg shadow-black/8 border border-gray-200 dark:border-gray-800 z-50 overflow-hidden">
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
             <h3 className="text-sm font-medium text-gray-900 dark:text-white">
