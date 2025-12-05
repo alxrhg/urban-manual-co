@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
 import { useDrawer } from '@/contexts/DrawerContext';
+import { useTheme } from 'next-themes';
+import { Switch } from '@/components/ui/switch';
+import {
+  getTravelBadge,
+  getMilestoneProgress,
+  getMilestoneMessage,
+} from '@/lib/travel-achievements';
 import {
   Settings,
   MapPin,
@@ -14,12 +21,20 @@ import {
   User,
   X,
   Sparkles,
+  Edit3,
+  Compass,
+  Moon,
+  Sun,
+  HelpCircle,
+  Map,
 } from 'lucide-react';
 import Image from 'next/image';
 
 interface UserStats {
   visited: number;
   saved: number;
+  trips: number;
+  countries: number;
 }
 
 interface AccountDrawerProps {
@@ -27,7 +42,7 @@ interface AccountDrawerProps {
   onClose: () => void;
 }
 
-// Minimal close button
+// Close button component
 function CloseButton({ onClick }: { onClick: () => void }) {
   return (
     <button
@@ -39,79 +54,215 @@ function CloseButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-// Quick stat pill
-function StatPill({ value, label }: { value: number; label: string }) {
+// Avatar with Progress Ring
+function AvatarWithRing({
+  avatarUrl,
+  displayUsername,
+  progress,
+}: {
+  avatarUrl: string | null;
+  displayUsername: string;
+  progress: number;
+}) {
+  const progressDegrees = (progress / 100) * 360;
+
   return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 dark:bg-gray-800">
-      <span className="text-sm sm:text-xs font-semibold text-stone-900 dark:text-white">{value}</span>
-      <span className="text-xs text-stone-500 dark:text-gray-400">{label}</span>
+    <div
+      className="relative w-[72px] h-[72px] rounded-full p-1 flex items-center justify-center"
+      style={{
+        background: `conic-gradient(#3b82f6 ${progressDegrees}deg, #e5e7eb ${progressDegrees}deg)`,
+      }}
+    >
+      <div className="w-16 h-16 rounded-full overflow-hidden bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+        {avatarUrl ? (
+          <Image
+            src={avatarUrl}
+            alt="Profile"
+            fill
+            className="object-cover"
+            sizes="64px"
+          />
+        ) : (
+          <span className="text-2xl font-semibold text-stone-500 dark:text-gray-400">
+            {displayUsername.charAt(0).toUpperCase()}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
-// Quick action card
-function QuickAction({
+// Travel Badge Component
+function TravelBadge({
+  badge,
+}: {
+  badge: { emoji: string; name: string; bgColor: string; darkBgColor: string; color: string };
+}) {
+  return (
+    <div
+      className="mt-2 px-3 py-1 rounded-full text-xs font-semibold"
+      style={{
+        backgroundColor: 'var(--badge-bg)',
+        color: badge.color,
+      }}
+    >
+      <style jsx>{`
+        div {
+          --badge-bg: ${badge.bgColor};
+        }
+        :global(.dark) div {
+          --badge-bg: ${badge.darkBgColor};
+        }
+      `}</style>
+      {badge.emoji} {badge.name}
+    </div>
+  );
+}
+
+// Stats Card Component
+function StatsCard({
+  visited,
+  countries,
+  progress,
+  milestone,
+}: {
+  visited: number;
+  countries: number;
+  progress: { percentage: number; remaining: number; target: number };
+  milestone: string;
+}) {
+  return (
+    <div className="mx-5 mt-5 p-4 rounded-2xl bg-stone-50 dark:bg-gray-900/50 border border-stone-100 dark:border-gray-800">
+      <div className="flex items-center gap-2 mb-2">
+        <Map className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+        <span className="text-sm font-semibold text-stone-700 dark:text-gray-300">
+          Your Journey
+        </span>
+      </div>
+      <p className="text-sm text-stone-600 dark:text-gray-400 mb-3">
+        <span className="font-bold text-stone-900 dark:text-white">{visited}</span> places visited
+        {countries > 0 && (
+          <>
+            {' '}
+            · <span className="font-bold text-stone-900 dark:text-white">{countries}</span> {countries === 1 ? 'country' : 'countries'}
+          </>
+        )}
+      </p>
+      <div className="h-1.5 bg-stone-200 dark:bg-gray-700 rounded-full overflow-hidden mb-2">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
+          style={{ width: `${progress.percentage}%` }}
+        />
+      </div>
+      <p className="text-xs text-stone-500 dark:text-gray-500">
+        {milestone}
+      </p>
+    </div>
+  );
+}
+
+// Library Tile Component
+function LibraryTile({
   icon: Icon,
-  label,
   count,
+  label,
   onClick,
 }: {
   icon: React.ElementType;
+  count: number;
   label: string;
-  count?: number;
   onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className="group flex flex-col items-center justify-center gap-2 p-5 sm:p-4 rounded-2xl border transition-all duration-200 active:scale-[0.98] min-h-[100px] sm:min-h-[88px] bg-white dark:bg-gray-900 border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-stone-700 hover:shadow-sm"
+      className="flex flex-col items-center justify-center gap-1 p-4 rounded-2xl bg-stone-50 dark:bg-gray-900/50 border border-stone-100 dark:border-gray-800 hover:bg-stone-100 dark:hover:bg-gray-800/50 hover:border-stone-200 dark:hover:border-gray-700 active:scale-[0.98] transition-all"
     >
-      <div className="p-2.5 sm:p-2 rounded-xl transition-transform group-hover:scale-110 bg-stone-100 dark:bg-gray-800">
-        <Icon className="w-5 h-5 sm:w-4 sm:h-4 text-stone-600 dark:text-gray-300" />
+      <div className="p-2 rounded-xl bg-white dark:bg-gray-800 shadow-sm mb-1">
+        <Icon className="w-5 h-5 text-stone-600 dark:text-gray-300" />
       </div>
-      <div className="text-center">
-        <p className="text-sm sm:text-xs font-medium text-stone-900 dark:text-white">
-          {label}
-        </p>
-        {count !== undefined && (
-          <p className="text-xs mt-0.5 text-stone-500 dark:text-gray-400">
-            {count} {count === 1 ? 'place' : 'places'}
-          </p>
-        )}
-      </div>
+      <span className="text-xl font-bold text-stone-900 dark:text-white">
+        {count}
+      </span>
+      <span className="text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:text-gray-400">
+        {label}
+      </span>
     </button>
   );
 }
 
-// Settings row item
-function SettingsItem({
+// Settings Row Component
+function SettingsRow({
   icon: Icon,
   label,
   onClick,
+  rightElement,
   danger = false,
 }: {
   icon: React.ElementType;
   label: string;
-  onClick: () => void;
+  onClick?: () => void;
+  rightElement?: React.ReactNode;
   danger?: boolean;
 }) {
+  const Component = onClick ? 'button' : 'div';
   return (
-    <button
+    <Component
       onClick={onClick}
-      className={`group w-full flex items-center justify-between gap-3 px-4 py-3.5 sm:py-3 rounded-xl transition-colors min-h-[52px] sm:min-h-[44px] ${
+      className={`group w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl transition-colors ${
+        onClick ? 'cursor-pointer' : ''
+      } ${
         danger
-          ? 'text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 active:bg-red-100 dark:active:bg-red-900/20'
-          : 'text-stone-600 dark:text-gray-300 hover:bg-stone-100 dark:hover:bg-gray-800 active:bg-stone-200 dark:active:bg-gray-700'
+          ? 'text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10'
+          : 'text-stone-600 dark:text-gray-300 hover:bg-stone-100 dark:hover:bg-gray-800/50'
       }`}
     >
       <div className="flex items-center gap-3">
-        <Icon className="w-5 h-5 sm:w-4 sm:h-4" />
-        <span className="text-base sm:text-sm font-medium">{label}</span>
+        <Icon className="w-5 h-5" />
+        <span className="text-sm font-medium">{label}</span>
       </div>
-      <ChevronRight className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${
-        danger ? 'text-red-400 dark:text-red-500' : 'text-stone-400 dark:text-gray-500'
-      }`} />
-    </button>
+      {rightElement || (
+        <ChevronRight
+          className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${
+            danger ? 'text-red-400' : 'text-stone-400 dark:text-gray-500'
+          }`}
+        />
+      )}
+    </Component>
+  );
+}
+
+// Dark Mode Toggle Component
+function DarkModeToggle() {
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return (
+      <div className="flex items-center gap-2">
+        <Switch checked={false} disabled className="scale-75" />
+      </div>
+    );
+  }
+
+  const currentTheme = resolvedTheme || theme || 'light';
+  const isDark = currentTheme === 'dark';
+
+  return (
+    <div className="flex items-center gap-2">
+      <Sun className={`w-4 h-4 ${isDark ? 'text-stone-400' : 'text-amber-500'}`} />
+      <Switch
+        checked={isDark}
+        onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+        className="scale-75"
+        aria-label="Toggle dark mode"
+      />
+      <Moon className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-stone-400'}`} />
+    </div>
   );
 }
 
@@ -124,6 +275,8 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   const [stats, setStats] = useState<UserStats>({
     visited: 0,
     saved: 0,
+    trips: 0,
+    countries: 0,
   });
 
   useEffect(() => {
@@ -131,7 +284,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       if (!user?.id) {
         setAvatarUrl(null);
         setUsername(null);
-        setStats({ visited: 0, saved: 0 });
+        setStats({ visited: 0, saved: 0, trips: 0, countries: 0 });
         return;
       }
 
@@ -159,7 +312,8 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
           }
         }
 
-        const [visitedResult, savedResult] = await Promise.all([
+        // Fetch all stats including country count
+        const [visitedResult, savedResult, tripsResult, countriesResult] = await Promise.all([
           supabaseClient
             .from('visited_places')
             .select('*', { count: 'exact', head: true })
@@ -168,11 +322,29 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
             .from('saved_places')
             .select('*', { count: 'exact', head: true })
             .eq('user_id', user.id),
+          supabaseClient
+            .from('trips')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id),
+          // Get unique countries from visited places
+          supabaseClient
+            .from('visited_places')
+            .select('destinations!inner(country)')
+            .eq('user_id', user.id),
         ]);
+
+        // Calculate unique countries
+        const uniqueCountries = new Set(
+          (countriesResult.data || [])
+            .map((item: { destinations: { country: string | null } }) => item.destinations?.country)
+            .filter(Boolean)
+        );
 
         setStats({
           visited: visitedResult.count || 0,
           saved: savedResult.count || 0,
+          trips: tripsResult.count || 0,
+          countries: uniqueCountries.size,
         });
       } catch (error) {
         console.error('Error fetching profile and stats:', error);
@@ -197,7 +369,12 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
   const displayUsername = username || user?.email?.split('@')[0] || 'User';
 
-  // Logged out state - welcoming and inviting
+  // Calculate badge and progress
+  const badge = getTravelBadge(stats.visited);
+  const milestoneProgress = getMilestoneProgress(stats.visited);
+  const milestoneMessage = getMilestoneMessage(milestoneProgress);
+
+  // Logged out state
   if (!user) {
     return (
       <div className="h-full flex flex-col bg-white dark:bg-gray-950">
@@ -220,10 +397,10 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
           {/* Text */}
           <h2 className="text-2xl sm:text-xl font-semibold text-stone-900 dark:text-white mb-3">
-            Your travel companion
+            Start Your Journey
           </h2>
           <p className="text-base sm:text-sm text-stone-500 dark:text-gray-400 mb-10 max-w-[280px] leading-relaxed">
-            Sign in to save places, plan trips, and keep track of everywhere you&apos;ve been.
+            Sign in to track your travels, earn badges, and unlock your personal travel achievements.
           </p>
 
           {/* CTA */}
@@ -242,100 +419,114 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     );
   }
 
-  // Logged in state - clean and functional
+  // Logged in state - Redesigned with gamification
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-950">
-      {/* Header with profile */}
-      <div className="px-5 sm:px-6 pt-6 sm:pt-5 pb-5">
-        <div className="flex items-start justify-between gap-4">
-          {/* Profile info */}
-          <button
-            onClick={() => handleNavigate('/account')}
-            className="flex items-center gap-3.5 sm:gap-3 group min-w-0 py-1"
-          >
-            {/* Avatar */}
-            <div className="relative w-14 h-14 sm:w-12 sm:h-12 flex-shrink-0 rounded-full overflow-hidden bg-stone-100 dark:bg-gray-800 ring-2 ring-stone-200 dark:ring-stone-700 group-hover:ring-stone-300 dark:group-hover:ring-stone-600 transition-all">
-              {avatarUrl ? (
-                <Image
-                  src={avatarUrl}
-                  alt="Profile"
-                  fill
-                  className="object-cover"
-                  sizes="56px"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <span className="text-xl sm:text-lg font-medium text-stone-400 dark:text-gray-500">
-                    {displayUsername.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Name and email */}
-            <div className="min-w-0 text-left">
-              <h2 className="text-lg sm:text-base font-semibold text-stone-900 dark:text-white truncate group-hover:text-stone-600 dark:group-hover:text-stone-300 transition-colors">
-                {displayUsername}
-              </h2>
-              <p className="text-sm sm:text-xs text-stone-500 dark:text-gray-400 truncate">
-                View profile
-              </p>
-            </div>
-          </button>
-
-          <CloseButton onClick={onClose} />
-        </div>
-
-        {/* Stats row */}
-        <div className="flex items-center gap-2 mt-5 overflow-x-auto no-scrollbar">
-          <StatPill value={stats.saved} label="saved" />
-          <StatPill value={stats.visited} label="visited" />
-        </div>
+      {/* Close button */}
+      <div className="flex justify-end px-4 pt-4">
+        <CloseButton onClick={onClose} />
       </div>
 
-      {/* Quick actions grid */}
-      <div className="px-5 sm:px-6 py-4">
-        <div className="grid grid-cols-2 gap-3 sm:gap-2">
-          <QuickAction
+      {/* Profile Header with Avatar Ring */}
+      <div className="flex flex-col items-center px-5 pb-4">
+        <AvatarWithRing
+          avatarUrl={avatarUrl}
+          displayUsername={displayUsername}
+          progress={milestoneProgress.percentage}
+        />
+        <TravelBadge badge={badge} />
+
+        <h2 className="text-xl font-semibold text-stone-900 dark:text-white mt-3 text-center">
+          {displayUsername}
+        </h2>
+        <p className="text-sm text-stone-500 dark:text-gray-400 mt-1 text-center truncate max-w-full">
+          {user.email}
+        </p>
+
+        <button
+          onClick={() => handleNavigate('/account')}
+          className="mt-3 flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+        >
+          <Edit3 className="w-3.5 h-3.5" />
+          Edit Profile
+        </button>
+      </div>
+
+      {/* Stats Card */}
+      <StatsCard
+        visited={stats.visited}
+        countries={stats.countries}
+        progress={milestoneProgress}
+        milestone={milestoneMessage}
+      />
+
+      {/* Library Grid */}
+      <div className="px-5 mt-6">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-3">
+          Your Library
+        </h3>
+        <div className="grid grid-cols-3 gap-3">
+          <LibraryTile
             icon={Bookmark}
-            label="Saved"
             count={stats.saved}
+            label="Saved"
             onClick={() => {
               onClose();
               openLegacyDrawer('saved-places');
             }}
           />
-          <QuickAction
+          <LibraryTile
             icon={MapPin}
-            label="Visited"
             count={stats.visited}
+            label="Visited"
             onClick={() => {
               onClose();
               openLegacyDrawer('visited-places');
+            }}
+          />
+          <LibraryTile
+            icon={Compass}
+            count={stats.trips}
+            label="Trips"
+            onClick={() => {
+              onClose();
+              openLegacyDrawer('trips');
             }}
           />
         </div>
       </div>
 
       {/* Spacer */}
-      <div className="flex-1" />
+      <div className="flex-1 min-h-4" />
 
-      {/* Bottom section */}
-      <div className="px-5 sm:px-6 pb-5 pb-safe space-y-1">
-        <SettingsItem
+      {/* Quick Settings */}
+      <div className="px-5 py-4 border-t border-stone-100 dark:border-gray-800">
+        <SettingsRow
           icon={Settings}
           label="Settings"
-          onClick={() => {
-            onClose();
-            openLegacyDrawer('settings');
-          }}
+          onClick={() => handleNavigate('/account?tab=settings')}
         />
-        <SettingsItem
-          icon={LogOut}
-          label="Sign out"
+        <SettingsRow
+          icon={Moon}
+          label="Dark Mode"
+          rightElement={<DarkModeToggle />}
+        />
+        <SettingsRow
+          icon={HelpCircle}
+          label="Help & Support"
+          onClick={() => handleNavigate('/help')}
+        />
+      </div>
+
+      {/* Sign Out Footer */}
+      <div className="px-5 pb-5 pt-2 border-t border-stone-100 dark:border-gray-800">
+        <button
           onClick={handleSignOut}
-          danger
-        />
+          className="flex w-full items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-stone-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </button>
       </div>
     </div>
   );
