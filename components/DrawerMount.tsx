@@ -71,7 +71,7 @@ export default function DrawerMount() {
         <DestinationDrawer
           isOpen={open && type === 'destination'}
           onClose={closeDrawer}
-          destination={props.place || props.destination || null}
+          destination={(props.place || props.destination || null) as import('@/types/destination').Destination | null}
           {...props}
         />
       )}
