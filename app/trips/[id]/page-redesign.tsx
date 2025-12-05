@@ -11,6 +11,7 @@ import TripHeader from '@/components/trip/TripHeader';
 import ItineraryView from '@/components/trip/ItineraryView';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
+import TripSuggestions from '@/components/trip/TripSuggestions';
 
 // Existing components
 import { PageLoader } from '@/components/LoadingStates';
@@ -76,6 +77,19 @@ export default function TripPageRedesign() {
       }
     }
     return { flightCount: flights, hotelCount: hotels };
+  }, [days]);
+
+  // Get all existing slugs for suggestions exclusion
+  const existingSlugs = useMemo(() => {
+    const slugs: string[] = [];
+    for (const day of days) {
+      for (const item of day.items) {
+        if (item.destination?.slug) {
+          slugs.push(item.destination.slug);
+        }
+      }
+    }
+    return slugs;
   }, [days]);
 
   // Get all flights for flights tab
@@ -237,22 +251,33 @@ export default function TripPageRedesign() {
           {/* Left Column - Content */}
           <div className="flex-1 min-w-0">
             {activeContentTab === 'itinerary' && (
-              <ItineraryView
-                days={days}
-                selectedDayNumber={selectedDayNumber}
-                onSelectDay={setSelectedDayNumber}
-                onEditItem={handleEditItem}
-                onAddItem={(dayNumber) => {
-                  setSelectedDayNumber(dayNumber);
-                  setShowAddPlaceBox(true);
-                }}
-                onOptimizeDay={handleOptimizeDay}
-                onUpdateItemNotes={(itemId, notes) => updateItem(itemId, notes)}
-                onRemoveItem={removeItem}
-                isOptimizing={optimizingDay !== null}
-                isEditMode={isEditMode}
-                activeItemId={selectedItem?.id}
-              />
+              <>
+                <ItineraryView
+                  days={days}
+                  selectedDayNumber={selectedDayNumber}
+                  onSelectDay={setSelectedDayNumber}
+                  onEditItem={handleEditItem}
+                  onAddItem={(dayNumber) => {
+                    setSelectedDayNumber(dayNumber);
+                    setShowAddPlaceBox(true);
+                  }}
+                  onOptimizeDay={handleOptimizeDay}
+                  onUpdateItemNotes={(itemId, notes) => updateItem(itemId, notes)}
+                  onRemoveItem={removeItem}
+                  isOptimizing={optimizingDay !== null}
+                  isEditMode={isEditMode}
+                  activeItemId={selectedItem?.id}
+                />
+
+                {/* AI Suggestions */}
+                <TripSuggestions
+                  destinations={destinations}
+                  existingSlugs={existingSlugs}
+                  onAddToTrip={(destination) => addPlace(destination, selectedDayNumber)}
+                  selectedDayNumber={selectedDayNumber}
+                  className="mt-6"
+                />
+              </>
             )}
 
             {activeContentTab === 'flights' && (
