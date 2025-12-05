@@ -49,12 +49,12 @@ export interface GreetingResult {
 }
 
 /**
- * Get time-based greeting
+ * Get time-based greeting (sentence case for subtlety)
  */
 function getTimeGreeting(hour: number = new Date().getHours()): string {
-  if (hour < 12) return 'GOOD MORNING';
-  if (hour < 18) return 'GOOD AFTERNOON';
-  return 'GOOD EVENING';
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 /**

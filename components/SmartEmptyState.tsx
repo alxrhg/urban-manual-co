@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Sparkles } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface SmartEmptyStateProps {
@@ -60,53 +60,44 @@ export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmpt
         suggestions.push('boutique options', 'mid-range alternatives', 'hidden gems');
       } else {
         suggestions.push(
-          'Try removing some filters',
-          'Expand your search area',
-          'Browse all categories'
+          'remove some filters',
+          'expand search area',
+          'browse all categories'
         );
       }
     }
 
-    setAlternatives(suggestions.slice(0, 3));
+    setAlternatives(suggestions.slice(0, 5));
   }, [query, intent]);
 
   return (
     <div className="text-center py-16 px-4">
       <div className="max-w-md mx-auto">
-        {/* Icon */}
-        <div className="mb-6 flex justify-center">
-          <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full">
-            <Search className="h-8 w-8 text-gray-400 dark:text-gray-600" />
-          </div>
+        {/* Minimal icon */}
+        <div className="mb-4 flex justify-center">
+          <Search className="h-6 w-6 text-gray-300 dark:text-gray-600" />
         </div>
 
-        {/* Message */}
-        <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
-          No results found
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-          We couldn't find any {intent?.category || 'places'}
-          {intent?.city && ` in ${intent.city}`} matching "{query}"
+        {/* Simple message */}
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          No {intent?.category || 'results'}
+          {intent?.city && ` in ${intent.city}`}
         </p>
 
-        {/* Alternatives */}
+        {/* Inline alternatives - text links, not buttons */}
         {alternatives.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-center gap-2 text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Try instead:</span>
-            </div>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {alternatives.map((alt, index) => (
+          <div className="flex flex-wrap items-center justify-center gap-1">
+            {alternatives.map((alt, index) => (
+              <span key={index} className="flex items-center">
+                {index > 0 && <span className="text-gray-300 dark:text-gray-600 text-xs mx-1">·</span>}
                 <button
-                  key={index}
                   onClick={() => onAlternativeClick(alt)}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 transition-all"
+                  className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1 rounded transition-all"
                 >
                   {alt}
                 </button>
-              ))}
-            </div>
+              </span>
+            ))}
           </div>
         )}
       </div>

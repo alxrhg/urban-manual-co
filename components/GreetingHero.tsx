@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, SlidersHorizontal, Sparkles, Loader2, X, Clock } from 'lucide-react';
-import { SearchFiltersComponent } from '@/components/SearchFilters';
+import { Loader2 } from 'lucide-react';
 
 interface GreetingHeroProps {
   searchQuery: string;
@@ -16,6 +15,8 @@ interface GreetingHeroProps {
   onFiltersChange?: (filters: any) => void;
   availableCities?: string[];
   availableCategories?: string[];
+  userCity?: string; // User's current city for contextual placeholders
+  upcomingTrip?: { city: string } | null; // User's upcoming trip
 }
 
 export default function GreetingHero({
@@ -30,51 +31,56 @@ export default function GreetingHero({
   onFiltersChange,
   availableCities = [],
   availableCategories = [],
+  userCity,
+  upcomingTrip,
 }: GreetingHeroProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Rotating AI-powered travel intelligence cues
-  const aiPlaceholders = [
-    "Ask me anything about travel",
-    "Where would you like to explore?",
-    "Find romantic hotels in Tokyo",
-    "Best time to visit Kyoto?",
-    "Show me Michelin restaurants",
-    "Vegetarian cafes in Paris",
-    "When do cherry blossoms bloom?",
-    "Hidden gems in Copenhagen",
-    "Compare hotels in Paris",
-    "Luxury stays with city views",
-    "What's trending in Tokyo?",
-    "Find places open late night",
-  ];
-
-  // Get current time for greeting
+  // Get current time for greeting (sentence case, subtle)
   const now = new Date();
   const currentHour = now.getHours();
-  let greeting = 'GOOD EVENING';
+  let greeting = 'Good evening';
   if (currentHour < 12) {
-    greeting = 'GOOD MORNING';
+    greeting = 'Good morning';
   } else if (currentHour < 18) {
-    greeting = 'GOOD AFTERNOON';
+    greeting = 'Good afternoon';
   }
 
-  // Format date and time
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
+  // Extract first name only for subtle personalization
+  const firstName = userName?.split(' ')[0];
+
+  // Contextual placeholder based on time, location, and trips
+  const getContextualPlaceholder = (): string => {
+    // Has upcoming trip - suggest for that destination
+    if (upcomingTrip?.city) {
+      return `things to do in ${upcomingTrip.city.toLowerCase()}`;
+    }
+
+    // Time-based suggestions
+    if (currentHour >= 6 && currentHour < 10) {
+      return userCity
+        ? `breakfast in ${userCity.toLowerCase()}`
+        : 'best coffee shops nearby';
+    }
+
+    if (currentHour >= 11 && currentHour < 14) {
+      return 'lunch spots nearby';
+    }
+
+    if (currentHour >= 17 && currentHour < 21) {
+      return 'dinner tonight';
+    }
+
+    if (currentHour >= 21 || currentHour < 6) {
+      return 'late night eats';
+    }
+
+    return 'restaurants, hotels, or hidden gems';
   };
-  const dateStr = now.toLocaleDateString('en-US', options);
-  const timeStr = now.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
 
   // Fetch AI suggestions as user types (lower threshold for AI chat mode)
   useEffect(() => {
@@ -128,18 +134,6 @@ export default function GreetingHero({
     }
   };
 
-  // Rotate placeholder text every 3 seconds when input is empty
-  useEffect(() => {
-    if (!isAIEnabled || searchQuery.trim().length > 0) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setCurrentPlaceholderIndex((prev) => (prev + 1) % aiPlaceholders.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [searchQuery, isAIEnabled]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Escape') {
@@ -150,70 +144,68 @@ export default function GreetingHero({
   return (
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="w-full relative">
-        {/* Greeting above search - Keep this */}
-        <div className="text-left mb-8">
-          <h1 className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-[2px] font-medium">
-            {greeting}{userName ? `, ${userName}` : ''}
-          </h1>
-        </div>
+        {/* Greeting - subtle, muted, sentence case */}
+        <p className="text-sm font-medium text-gray-400 dark:text-gray-500 tracking-wide mb-2">
+          {greeting}{firstName ? `, ${firstName}` : ''}
+        </p>
 
-        {/* Borderless Text Input - Lovably style (no icon, no border, left-aligned) */}
-        <div className="relative">
+        {/* Search input with subtle underline */}
+        <div className="search-input-container relative group">
           {isSearching && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 z-10">
               <Loader2 className="w-4 h-4 animate-spin" />
             </div>
           )}
-          <div className="relative w-full">
-            <input
-              ref={inputRef}
-              placeholder={isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything"}
-              value={searchQuery}
-              onChange={(e) => {
-                onSearchChange(e.target.value);
-                if (e.target.value.trim().length >= 2) {
-                  setShowSuggestions(true);
-                } else {
-                  setShowSuggestions(false);
+          <input
+            ref={inputRef}
+            placeholder={getContextualPlaceholder()}
+            value={searchQuery}
+            onChange={(e) => {
+              onSearchChange(e.target.value);
+              if (e.target.value.trim().length >= 2) {
+                setShowSuggestions(true);
+              } else {
+                setShowSuggestions(false);
+              }
+            }}
+            onKeyDown={(e) => {
+              handleKeyDown(e);
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (onSubmit && searchQuery.trim()) {
+                  onSubmit(searchQuery.trim());
                 }
-              }}
-              onKeyDown={(e) => {
-                handleKeyDown(e);
-                // CHAT MODE: Submit on Enter key (instant, bypasses debounce)
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  if (onSubmit && searchQuery.trim()) {
-                    onSubmit(searchQuery.trim());
-                  }
-                }
-              }}
-              onFocus={() => {
-                if (suggestions.length > 0 && searchQuery.trim().length >= 2) {
-                  setShowSuggestions(true);
-                }
-              }}
-              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 placeholder:opacity-60"
-              style={{ 
-                paddingLeft: isSearching ? '32px' : '0',
-                paddingRight: isAIEnabled && !searchQuery ? '80px' : '0'
-              }}
-            />
-            {/* Travel Intelligence hint */}
-            {isAIEnabled && !searchQuery && (
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-[1px]">
-                <Sparkles className="h-3 w-3" />
-                <span>Travel Intelligence</span>
-              </div>
-            )}
-          </div>
-          
-          {/* AI Suggestions Dropdown */}
+              }
+            }}
+            onFocus={() => {
+              setIsFocused(true);
+              if (suggestions.length > 0 && searchQuery.trim().length >= 2) {
+                setShowSuggestions(true);
+              }
+            }}
+            onBlur={() => setIsFocused(false)}
+            className="w-full text-xl font-normal text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:outline-none bg-transparent border-none py-2 transition-all duration-200"
+            style={{ paddingLeft: isSearching ? '32px' : '0' }}
+          />
+          {/* Subtle underline - visible on focus or hover */}
+          <div
+            className={`absolute bottom-0 left-0 right-0 h-px transition-colors duration-200 ${
+              isFocused
+                ? 'bg-gray-400 dark:bg-gray-500'
+                : 'bg-gray-200 dark:bg-gray-800 group-hover:bg-gray-300 dark:group-hover:bg-gray-700'
+            }`}
+          />
+
+          {/* AI Suggestions Dropdown - simplified */}
           {isAIEnabled && showSuggestions && (suggestions.length > 0 || loadingSuggestions) && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-800 overflow-hidden z-50 max-h-[300px] overflow-y-auto">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-800 overflow-hidden z-50 max-h-[300px] overflow-y-auto">
               {loadingSuggestions ? (
-                <div className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Getting suggestions...</span>
+                <div className="px-4 py-3 flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse" />
+                    <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded w-2/3 animate-pulse" />
+                  </div>
                 </div>
               ) : (
                 <>
@@ -221,12 +213,9 @@ export default function GreetingHero({
                     <button
                       key={index}
                       onClick={() => handleSuggestionClick(suggestion)}
-                      className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0"
+                      className="w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors border-b border-gray-100 dark:border-gray-800 last:border-0"
                     >
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                        <span className="text-sm text-black dark:text-white">{suggestion}</span>
-                      </div>
+                      <span className="text-sm text-gray-900 dark:text-white">{suggestion}</span>
                     </button>
                   ))}
                 </>

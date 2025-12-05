@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { generateContextualGreeting, generateContextualPlaceholder, type GreetingContext } from '@/lib/greetings';
 import { UserProfile } from '@/types/personalization';
@@ -8,42 +8,11 @@ import { JourneyInsights } from '@/lib/greetings/journey-tracker';
 import { RecentAchievement } from '@/lib/greetings/achievement-helper';
 import { GreetingWeatherData } from '@/lib/greetings/weather-helper';
 
-// Typewriter hook for animated text
-function useTypewriter(text: string, speed: number = 50, delay: number = 300) {
-  const [displayedText, setDisplayedText] = useState('');
-  const [isComplete, setIsComplete] = useState(false);
-
-  useEffect(() => {
-    setDisplayedText('');
-    setIsComplete(false);
-
-    const startTimeout = setTimeout(() => {
-      let currentIndex = 0;
-
-      const typeInterval = setInterval(() => {
-        if (currentIndex < text.length) {
-          setDisplayedText(text.slice(0, currentIndex + 1));
-          currentIndex++;
-        } else {
-          clearInterval(typeInterval);
-          setIsComplete(true);
-        }
-      }, speed);
-
-      return () => clearInterval(typeInterval);
-    }, delay);
-
-    return () => clearTimeout(startTimeout);
-  }, [text, speed, delay]);
-
-  return { displayedText, isComplete };
-}
-
 interface GreetingHeroProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   onOpenFilters?: () => void;
-  onSubmit?: (query: string) => void; // CHAT MODE: Explicit submit handler
+  onSubmit?: (query: string) => void;
   userName?: string;
   userProfile?: UserProfile | null;
   lastSession?: {
@@ -58,7 +27,6 @@ interface GreetingHeroProps {
       price_level?: string;
     };
   } | null;
-  // Phase 2 & 3: Enriched context
   enrichedContext?: {
     journey?: JourneyInsights | null;
     recentAchievements?: RecentAchievement[];
@@ -73,7 +41,9 @@ interface GreetingHeroProps {
   onFiltersChange?: (filters: Record<string, unknown>) => void;
   availableCities?: string[];
   availableCategories?: string[];
-  showGreeting?: boolean; // Optional prop to show/hide greeting
+  showGreeting?: boolean;
+  userCity?: string;
+  upcomingTrip?: { city: string } | null;
 }
 
 export default function GreetingHero({
@@ -87,25 +57,24 @@ export default function GreetingHero({
   isAIEnabled = false,
   isSearching = false,
   showGreeting = true,
+  userCity,
+  upcomingTrip,
 }: GreetingHeroProps) {
-  const [currentPlaceholderIndex, setCurrentPlaceholderIndex] = useState(0);
-  const [isTyping, setIsTyping] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Get current time
   const now = new Date();
   const currentHour = now.getHours();
   const currentDay = now.getDay();
 
-  // Generate contextual greeting with Phase 2 & 3 enhancements
+  // Generate contextual greeting (sentence case)
   const greetingContext: GreetingContext = {
     userName,
     userProfile,
     lastSession,
     currentHour,
     currentDay,
-    // Phase 2 & 3 context
     journey: enrichedContext?.journey,
     recentAchievements: enrichedContext?.recentAchievements,
     nextAchievement: enrichedContext?.nextAchievement,
@@ -116,51 +85,46 @@ export default function GreetingHero({
 
   const { greeting } = generateContextualGreeting(greetingContext);
 
-  // Generate the full greeting text for typewriter
-  const fullGreetingText = useMemo(() => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    let timeGreeting = "GOOD EVENING";
-    if (currentHour < 12) timeGreeting = "GOOD MORNING";
-    else if (currentHour < 18) timeGreeting = "GOOD AFTERNOON";
+  // Extract first name only for subtle personalization
+  const firstName = userName?.split(' ')[0];
 
-    return userName ? `${timeGreeting}, ${userName.toUpperCase()}` : timeGreeting;
-  }, [userName]);
-
-  // Typewriter animation for greeting
-  const { displayedText: typedGreeting, isComplete: greetingComplete } = useTypewriter(
-    fullGreetingText,
-    60, // speed - ms per character
-    200  // initial delay
-  );
-
-  // Rotating placeholders - Step One spec
-  const [isInputFocused, setIsInputFocused] = useState(false);
-  const aiPlaceholders = [
-    "Ask me anything about travel",
-    "Where would you like to go?",
-    "Find hotels, restaurants, or hidden gems",
-    "Try: budget hotels in Tokyo",
-    "Try: best cafes near me",
-  ];
-
-  // Rotate placeholder text every 4 seconds when input is empty and not focused
-  useEffect(() => {
-    if (!isAIEnabled || searchQuery.trim().length > 0 || isInputFocused) {
-      return;
+  // Contextual placeholder based on time, location, and trips
+  const getContextualPlaceholder = (): string => {
+    // Has upcoming trip - suggest for that destination
+    if (upcomingTrip?.city) {
+      return `things to do in ${upcomingTrip.city.toLowerCase()}`;
     }
 
-    const interval = setInterval(() => {
-      setCurrentPlaceholderIndex((prev) => (prev + 1) % aiPlaceholders.length);
-    }, 4000);
+    // Use lib/greetings placeholder if available
+    if (userProfile || lastSession) {
+      return generateContextualPlaceholder(greetingContext);
+    }
 
-    return () => clearInterval(interval);
-  }, [searchQuery, isAIEnabled, isInputFocused, aiPlaceholders.length]);
+    // Time-based suggestions
+    if (currentHour >= 6 && currentHour < 10) {
+      return userCity
+        ? `breakfast in ${userCity.toLowerCase()}`
+        : 'best coffee shops nearby';
+    }
+
+    if (currentHour >= 11 && currentHour < 14) {
+      return 'lunch spots nearby';
+    }
+
+    if (currentHour >= 17 && currentHour < 21) {
+      return 'dinner tonight';
+    }
+
+    if (currentHour >= 21 || currentHour < 6) {
+      return 'late night eats';
+    }
+
+    return 'restaurants, hotels, or hidden gems';
+  };
 
   // Keyboard shortcut: Press '/' to focus search
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      // Only trigger if not already focused on an input
       if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
         e.preventDefault();
         inputRef.current?.focus();
@@ -177,130 +141,50 @@ export default function GreetingHero({
     }
   };
 
-  const handleInputChange = (value: string) => {
-    onSearchChange(value);
-    
-    // Show typing indicator when user is typing
-    setIsTyping(true);
-    
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    // Hide typing indicator after 1 second of no typing
-    typingTimeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-    }, 1000);
-  };
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-    };
-  }, []);
-
   return (
     <div className="w-full h-full relative" data-name="Search Bar">
       <div className="w-full relative">
-        {/* Greeting above search - Typewriter animation */}
+        {/* Greeting - subtle, muted, sentence case */}
         {showGreeting && (
-          <div className="text-left mb-[50px]">
-            <h1 className="text-xs text-gray-500 uppercase tracking-[2px] font-medium">
-              <span className="inline-block">
-                {typedGreeting}
-                {/* Blinking cursor while typing */}
-                {!greetingComplete && (
-                  <span className="inline-block w-[2px] h-[12px] bg-gray-400 ml-[2px] animate-blink align-middle" />
-                )}
-              </span>
-            </h1>
-          </div>
+          <p className="text-sm font-medium text-gray-400 dark:text-gray-500 tracking-wide mb-2">
+            {greeting}{firstName ? '' : ''}
+          </p>
         )}
 
-        {/* Borderless Text Input - Minimal editorial style with shimmering placeholder */}
-        <div className="relative mb-[50px]">
+        {/* Search input with subtle underline */}
+        <div className="search-input-container relative group">
           {isSearching && (
             <div className="absolute left-0 top-1/2 -translate-y-1/2 text-gray-400 z-10">
               <Loader2 className="w-4 h-4 animate-spin" />
             </div>
           )}
-          <div className="relative w-full">
-            {/* Shimmering placeholder text overlay with blinking cursor */}
-            {!searchQuery && !isInputFocused && (
-              <div
-                className="absolute left-0 top-0 text-xs uppercase tracking-[2px] font-medium z-0 shimmer-text cursor-text group/placeholder hover:opacity-80 transition-opacity duration-200"
-                style={{
-                  paddingLeft: isSearching ? '32px' : '0'
-                }}
-                aria-hidden="true"
-                onClick={() => inputRef.current?.focus()}
-              >
-                {/* Blinking cursor to signal "type here" */}
-                <span className="inline-block w-[2px] h-[12px] bg-gray-400 dark:bg-gray-500 mr-1 align-middle animate-blink" />
-                {isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything"}
-                {/* Subtle underline on hover */}
-                <span className="absolute left-0 bottom-0 w-0 h-[1px] bg-gray-300 dark:bg-gray-600 group-hover/placeholder:w-full transition-all duration-300" />
-              </div>
-            )}
-            <input
-              ref={inputRef}
-              placeholder={isInputFocused ? (isAIEnabled ? aiPlaceholders[currentPlaceholderIndex] : "Ask me anything") : ""}
-              value={searchQuery}
-              onChange={(e) => {
-                handleInputChange(e.target.value);
-              }}
-              onFocus={() => {
-                setIsInputFocused(true);
-              }}
-              onBlur={() => {
-                setIsInputFocused(false);
-              }}
-              onKeyDown={(e) => {
-                handleKeyDown(e);
-                // CHAT MODE: Submit on Enter key (instant, bypasses debounce)
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  if (onSubmit && searchQuery.trim()) {
-                    onSubmit(searchQuery.trim());
-                  }
+          <input
+            ref={inputRef}
+            placeholder={getContextualPlaceholder()}
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            onKeyDown={(e) => {
+              handleKeyDown(e);
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (onSubmit && searchQuery.trim()) {
+                  onSubmit(searchQuery.trim());
                 }
-              }}
-              className="w-full text-left text-xs uppercase tracking-[2px] font-medium placeholder:text-gray-300 dark:placeholder:text-gray-500 focus:outline-none bg-transparent border-none text-black dark:text-white transition-all duration-300 relative z-10"
-              style={{
-                paddingLeft: isSearching ? '32px' : '0'
-              }}
-            />
-            {/* Typing Indicator - Minimal, editorial style */}
-            {isTyping && searchQuery.length > 0 && !isSearching && (
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
-                <span
-                  className="w-0.5 h-0.5 bg-gray-400 rounded-full opacity-60"
-                  style={{
-                    animation: 'typing-dot 1.4s ease-in-out infinite',
-                    animationDelay: '0ms'
-                  }}
-                />
-                <span
-                  className="w-0.5 h-0.5 bg-gray-400 rounded-full opacity-60"
-                  style={{
-                    animation: 'typing-dot 1.4s ease-in-out infinite',
-                    animationDelay: '200ms'
-                  }}
-                />
-                <span
-                  className="w-0.5 h-0.5 bg-gray-400 rounded-full opacity-60"
-                  style={{
-                    animation: 'typing-dot 1.4s ease-in-out infinite',
-                    animationDelay: '400ms'
-                  }}
-                />
-              </div>
-            )}
-          </div>
+              }
+            }}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            className="w-full text-xl font-normal text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:outline-none bg-transparent border-none py-2 transition-all duration-200"
+            style={{ paddingLeft: isSearching ? '32px' : '0' }}
+          />
+          {/* Subtle underline - visible on focus or hover */}
+          <div
+            className={`absolute bottom-0 left-0 right-0 h-px transition-colors duration-200 ${
+              isFocused
+                ? 'bg-gray-400 dark:bg-gray-500'
+                : 'bg-gray-200 dark:bg-gray-800 group-hover:bg-gray-300 dark:group-hover:bg-gray-700'
+            }`}
+          />
         </div>
       </div>
     </div>
