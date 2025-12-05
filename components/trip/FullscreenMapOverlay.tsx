@@ -95,7 +95,8 @@ export default function FullscreenMapOverlay({
           onAddPlace={onAddPlace}
           showSearch={true}
           showDayFilter={true}
-          className="h-full pt-16"
+          hasHeader={true}
+          className="h-full"
         />
       </div>
     </div>

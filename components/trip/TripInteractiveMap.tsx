@@ -50,6 +50,7 @@ interface TripInteractiveMapProps {
   showDayFilter?: boolean;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  hasHeader?: boolean; // When true, offsets controls for external header
 }
 
 // Day colors for multi-day trips
@@ -102,7 +103,10 @@ export default function TripInteractiveMap({
   showDayFilter = true,
   isFullscreen = false,
   onToggleFullscreen,
+  hasHeader = false,
 }: TripInteractiveMapProps) {
+  // Offset for controls when there's an external header
+  const topOffset = hasHeader ? 'top-20' : 'top-4';
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
@@ -663,7 +667,7 @@ export default function TripInteractiveMap({
 
       {/* Search Bar */}
       {showSearch && mapLoaded && !mapError && (
-        <div className="absolute top-4 left-4 right-16 max-w-md z-10">
+        <div className={`absolute ${topOffset} left-4 right-16 max-w-md z-10`}>
           <form onSubmit={handleSearch} className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -689,7 +693,7 @@ export default function TripInteractiveMap({
 
       {/* Day Filter */}
       {showDayFilter && uniqueDays.length > 1 && mapLoaded && !mapError && (
-        <div className="absolute top-4 left-4 top-16 z-10">
+        <div className={`absolute ${hasHeader ? 'top-32' : 'top-16'} left-4 z-10`}>
           <div className="flex items-center gap-1 bg-white dark:bg-gray-900 rounded-xl p-1 shadow-lg border border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setFilterDay(null)}
@@ -724,7 +728,7 @@ export default function TripInteractiveMap({
 
       {/* Map Controls */}
       {mapLoaded && !mapError && (
-        <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
+        <div className={`absolute ${topOffset} right-4 flex flex-col gap-2 z-10`}>
           {onClose && (
             <button
               onClick={onClose}
