@@ -111,9 +111,9 @@ export default function DrawerMount() {
           desktopWidth="420px"
         >
           <TripSettingsDrawer
-            trip={props.trip}
-            onUpdate={props?.onUpdate}
-            onDelete={props?.onDelete}
+            trip={props.trip as import('@/types/trip').Trip}
+            onUpdate={props?.onUpdate as (() => void) | undefined}
+            onDelete={props?.onDelete as (() => void) | undefined}
           />
         </Drawer>
       )}
@@ -186,11 +186,11 @@ export default function DrawerMount() {
           style={drawerStyle}
         >
           <AISuggestionsDrawer
-            day={props.day || null}
-            trip={props.trip || null}
-            index={props.index}
-            suggestions={props.suggestions}
-            onApply={props.onApply}
+            day={(props.day || null) as { date: string; city: string } | null}
+            trip={(props.trip || null) as { days: unknown[] } | null}
+            index={props.index as number | undefined}
+            suggestions={props.suggestions as Array<{ id?: string | number; title?: string }> | undefined}
+            onApply={props.onApply as ((updatedTrip: { days: unknown[] }) => void) | undefined}
           />
         </Drawer>
       )}
