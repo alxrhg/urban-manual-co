@@ -190,7 +190,7 @@ export function ExpandableHomeControls({
           {/* Mobile: Single toggle button */}
           <button
             onClick={() => onViewModeChange(viewMode === 'grid' ? 'map' : 'grid')}
-            className="sm:hidden flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 bg-[#2A2A2A] dark:bg-[rgba(255,255,255,0.06)] border border-gray-700 dark:border-[rgba(255,255,255,0.18)] text-white dark:text-[#F7F7F7] hover:bg-[#3A3A3A] dark:hover:bg-[rgba(255,255,255,0.16)]"
+            className="sm:hidden flex items-center justify-center w-11 h-11 rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-700 dark:text-[#F7F7F7] hover:bg-gray-100 dark:hover:bg-[rgba(255,255,255,0.16)]"
             aria-label={viewMode === 'grid' ? 'Switch to map view' : 'Switch to grid view'}
             title={viewMode === 'grid' ? 'Map View' : 'Grid View'}
           >
@@ -232,11 +232,11 @@ export function ExpandableHomeControls({
             </button>
           </div>
 
-          {/* New Trip Button - Circular on mobile, pill on desktop */}
+          {/* New Trip Button - Circular on mobile (same as others), pill on desktop */}
           {isAdmin && onAddPOI ? (
             <button
               onClick={onAddPOI}
-              className="flex items-center justify-center gap-2 w-11 h-11 sm:w-auto sm:h-11 sm:px-4 text-sm font-medium bg-white dark:bg-[rgba(255,255,255,0.06)] sm:bg-black sm:dark:bg-white text-gray-900 dark:text-white sm:text-white sm:dark:text-black border border-gray-200 dark:border-[rgba(255,255,255,0.18)] sm:border-transparent rounded-full hover:bg-gray-100 dark:hover:bg-[rgba(255,255,255,0.16)] sm:hover:bg-gray-800 sm:dark:hover:bg-gray-100 transition-all duration-200"
+              className="flex items-center justify-center w-11 h-11 sm:w-auto sm:h-11 sm:px-4 sm:gap-2 text-sm font-medium bg-white dark:bg-[rgba(255,255,255,0.06)] sm:bg-black sm:dark:bg-white text-gray-700 dark:text-[#F7F7F7] sm:text-white sm:dark:text-black border border-gray-200 dark:border-[rgba(255,255,255,0.18)] sm:border-transparent rounded-full hover:bg-gray-100 dark:hover:bg-[rgba(255,255,255,0.16)] sm:hover:bg-gray-800 sm:dark:hover:bg-gray-100 transition-all duration-200"
               title="Add a new point of interest"
             >
               <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
@@ -245,7 +245,7 @@ export function ExpandableHomeControls({
           ) : (
             <button
               onClick={onCreateTrip}
-              className="flex items-center justify-center gap-2 w-11 h-11 sm:w-auto sm:h-11 sm:px-4 text-sm font-medium bg-white dark:bg-[rgba(255,255,255,0.06)] sm:bg-black sm:dark:bg-white text-gray-900 dark:text-white sm:text-white sm:dark:text-black border border-gray-200 dark:border-[rgba(255,255,255,0.18)] sm:border-transparent rounded-full hover:bg-gray-100 dark:hover:bg-[rgba(255,255,255,0.16)] sm:hover:bg-gray-800 sm:dark:hover:bg-gray-100 transition-all duration-200"
+              className="flex items-center justify-center w-11 h-11 sm:w-auto sm:h-11 sm:px-4 sm:gap-2 text-sm font-medium bg-white dark:bg-[rgba(255,255,255,0.06)] sm:bg-black sm:dark:bg-white text-gray-700 dark:text-[#F7F7F7] sm:text-white sm:dark:text-black border border-gray-200 dark:border-[rgba(255,255,255,0.18)] sm:border-transparent rounded-full hover:bg-gray-100 dark:hover:bg-[rgba(255,255,255,0.16)] sm:hover:bg-gray-800 sm:dark:hover:bg-gray-100 transition-all duration-200"
               title="Create a new trip"
             >
               <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
@@ -256,7 +256,7 @@ export function ExpandableHomeControls({
           {/* Filters Button - Circular on mobile, pill on desktop */}
           <button
             onClick={handleFilterPillClick}
-            className={`relative flex items-center justify-center gap-2 w-11 h-11 sm:w-auto sm:h-11 sm:px-4 rounded-full transition-all duration-200 bg-[#2A2A2A] dark:bg-[rgba(255,255,255,0.06)] sm:bg-white sm:dark:bg-[rgba(255,255,255,0.06)] border border-gray-700 dark:border-[rgba(255,255,255,0.18)] sm:border-gray-200 text-white dark:text-[#F7F7F7] sm:text-gray-900 hover:bg-[#3A3A3A] dark:hover:bg-[rgba(255,255,255,0.16)] sm:hover:bg-gray-100 backdrop-blur-[12px] ${
+            className={`relative flex items-center justify-center w-11 h-11 sm:w-auto sm:h-11 sm:px-4 sm:gap-2 rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-700 dark:text-[#F7F7F7] sm:text-gray-900 hover:bg-gray-100 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px] ${
               hasActiveFilters ? 'ring-2 ring-blue-500/50' : ''
             }`}
             aria-label={hasActiveFilters ? `Filters (${activeFiltersCount} active)` : 'Open filters'}
@@ -277,7 +277,7 @@ export function ExpandableHomeControls({
           {/* Cities Button - Circular on mobile, pill on desktop */}
           <Link
             href="/cities"
-            className="flex items-center justify-center gap-2 w-11 h-11 sm:w-auto sm:h-11 sm:px-4 text-sm font-medium rounded-full transition-all duration-200 bg-[#2A2A2A] dark:bg-[rgba(255,255,255,0.06)] sm:bg-white sm:dark:bg-[rgba(255,255,255,0.06)] border border-gray-700 dark:border-[rgba(255,255,255,0.18)] sm:border-gray-200 text-white dark:text-[#F7F7F7] sm:text-gray-900 hover:bg-[#3A3A3A] dark:hover:bg-[rgba(255,255,255,0.16)] sm:hover:bg-gray-100 backdrop-blur-[12px]"
+            className="flex items-center justify-center w-11 h-11 sm:w-auto sm:h-11 sm:px-4 sm:gap-2 text-sm font-medium rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-700 dark:text-[#F7F7F7] sm:text-gray-900 hover:bg-gray-100 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px]"
             title="Browse destinations by city"
           >
             <Globe className="h-5 w-5 sm:h-4 sm:w-4" />
