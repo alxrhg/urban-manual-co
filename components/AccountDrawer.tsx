@@ -308,10 +308,16 @@ export function AccountDrawer() {
             .eq('user_id', user.id),
         ]);
 
-        // Calculate unique countries
+        // Calculate unique countries - handle both single object and array from Supabase join
         const uniqueCountries = new Set(
           (countriesResult.data || [])
-            .map((item: { destinations: { country: string | null } }) => item.destinations?.country)
+            .map((item: Record<string, unknown>) => {
+              const dest = item.destinations;
+              if (Array.isArray(dest)) {
+                return dest[0]?.country;
+              }
+              return (dest as { country?: string | null } | null)?.country;
+            })
             .filter(Boolean)
         );
 
