@@ -3,6 +3,83 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Destination } from '@/types/destination';
 
+// CSS for marker animations with spring-like physics
+const markerStyles = `
+  @keyframes markerEntrance {
+    0% {
+      opacity: 0;
+      transform: scale(0) translateY(10px);
+    }
+    60% {
+      transform: scale(1.2) translateY(-2px);
+    }
+    80% {
+      transform: scale(0.9) translateY(1px);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes markerPulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 rgba(28, 28, 28, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(28, 28, 28, 0);
+    }
+  }
+
+  @keyframes markerBounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-4px);
+    }
+  }
+
+  .map-marker {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #1C1C1C;
+    border: 1.5px solid #FFFFFF;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    animation: markerEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.2s ease,
+                width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                height 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .map-marker:hover {
+    transform: scale(1.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  .map-marker.selected {
+    width: 16px;
+    height: 16px;
+    background-color: #3B82F6;
+    border-color: #FFFFFF;
+    animation: markerPulse 2s ease-in-out infinite;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
+  }
+
+  .map-marker.crown {
+    background-color: #F59E0B;
+    border-color: #FFFFFF;
+  }
+
+  .map-marker.michelin {
+    background-color: #EF4444;
+    border-color: #FFFFFF;
+  }
+`;
+
 interface GoogleInteractiveMapProps {
   destinations: Destination[];
   onMarkerClick?: (destination: Destination) => void;
@@ -30,6 +107,7 @@ export default function GoogleInteractiveMap({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const markerElementsRef = useRef<Map<string, HTMLDivElement>>(new Map());
   const infoWindowsRef = useRef<google.maps.InfoWindow[]>([]);
   const isInitializedRef = useRef(false);
   const lastCenterRef = useRef<{ lat: number; lng: number } | null>(null);
@@ -37,8 +115,23 @@ export default function GoogleInteractiveMap({
   const lastDestinationsHashRef = useRef<string>('');
   const zoomListenerRef = useRef<google.maps.MapsEventListener | null>(null);
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const stylesInjectedRef = useRef(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Inject marker animation styles
+  useEffect(() => {
+    if (stylesInjectedRef.current) return;
+
+    const styleId = 'map-marker-styles';
+    if (!document.getElementById(styleId)) {
+      const styleSheet = document.createElement('style');
+      styleSheet.id = styleId;
+      styleSheet.textContent = markerStyles;
+      document.head.appendChild(styleSheet);
+    }
+    stylesInjectedRef.current = true;
+  }, []);
 
   // Add markers
   const addMarkers = useCallback(() => {
@@ -64,6 +157,7 @@ export default function GoogleInteractiveMap({
       marker.map = null;
     });
     markersRef.current = [];
+    markerElementsRef.current.clear();
     infoWindowsRef.current.forEach(iw => iw.close());
     infoWindowsRef.current = [];
 
@@ -77,16 +171,25 @@ export default function GoogleInteractiveMap({
       bounds.extend(position);
       hasValidMarkers = true;
 
-      // Create a visible pin element
+      // Create an animated pin element with micro-interactions
       const pinElement = document.createElement('div');
-      pinElement.style.width = '12px';
-      pinElement.style.height = '12px';
-      pinElement.style.borderRadius = '50%';
-      pinElement.style.backgroundColor = '#1C1C1C';
-      pinElement.style.border = '1.5px solid #FFFFFF';
-      pinElement.style.cursor = 'pointer';
-      pinElement.style.transition = 'all 0.2s ease';
-      pinElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
+      pinElement.className = 'map-marker';
+
+      // Add special classes for crown/michelin destinations
+      if (dest.crown) {
+        pinElement.classList.add('crown');
+      } else if (dest.michelin_stars && dest.michelin_stars > 0) {
+        pinElement.classList.add('michelin');
+      }
+
+      // Stagger animation delay for entrance effect
+      const index = destinations.indexOf(dest);
+      pinElement.style.animationDelay = `${Math.min(index * 30, 500)}ms`;
+      pinElement.style.opacity = '0'; // Start invisible, animation will fade in
+
+      // Store reference to pin element for later updates (e.g., selected state)
+      const destKey = dest.slug || String(dest.id);
+      markerElementsRef.current.set(destKey, pinElement);
 
       // Create marker with visible element
       const marker = new google.maps.marker.AdvancedMarkerElement({
@@ -409,6 +512,7 @@ export default function GoogleInteractiveMap({
       // Cleanup markers
       markersRef.current.forEach(marker => marker.map = null);
       markersRef.current = [];
+      markerElementsRef.current.clear();
       infoWindowsRef.current.forEach(iw => iw.close());
       infoWindowsRef.current = [];
       // Cleanup zoom listener
@@ -423,6 +527,23 @@ export default function GoogleInteractiveMap({
       }
     };
   }, [initializeMap]);
+
+  // Update selected marker visual state
+  useEffect(() => {
+    // Clear all selected states first
+    markerElementsRef.current.forEach((element) => {
+      element.classList.remove('selected');
+    });
+
+    // Add selected state to the current selection
+    if (selectedDestination) {
+      const destKey = selectedDestination.slug || String(selectedDestination.id);
+      const selectedElement = markerElementsRef.current.get(destKey);
+      if (selectedElement) {
+        selectedElement.classList.add('selected');
+      }
+    }
+  }, [selectedDestination?.id, selectedDestination?.slug]);
 
   // Zoom to selected destination on desktop
   useEffect(() => {

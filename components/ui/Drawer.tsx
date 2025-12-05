@@ -1,8 +1,24 @@
 'use client';
 
-import { useEffect, ReactNode, useRef, useState, useCallback } from 'react';
+import { useEffect, ReactNode, useRef, useCallback } from 'react';
 import { X } from 'lucide-react';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { DRAWER_STYLES } from '@/lib/drawer-styles';
+
+// Spring configuration for natural physics-based animations
+const springConfig = {
+  type: 'spring' as const,
+  damping: 30,
+  stiffness: 300,
+  mass: 0.8,
+};
+
+// Smoother spring for backdrop
+const backdropSpring = {
+  type: 'spring' as const,
+  damping: 40,
+  stiffness: 400,
+};
 
 export interface DrawerProps {
   isOpen: boolean;
@@ -65,18 +81,7 @@ export function Drawer({
   // Refs
   const mobileBottomRef = useRef<HTMLDivElement>(null);
   const mobileSideRef = useRef<HTMLDivElement>(null);
-  const tabletRef = useRef<HTMLDivElement>(null);
   const desktopRef = useRef<HTMLDivElement>(null);
-  
-  // Gesture State
-  const isDraggingRef = useRef(false);
-  const startYRef = useRef<number>(0);
-  const currentYRef = useRef<number>(0);
-  const lastYRef = useRef<number>(0);
-  const startTimeRef = useRef<number>(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState(0);
-
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
 
   // Get the currently visible drawer element
@@ -89,11 +94,7 @@ export function Drawer({
     if (mobileVariant === 'side' && window.innerWidth < 768) {
       return mobileSideRef.current;
     }
-    const width = window.innerWidth;
-    if (width >= 768 && width < 1024) {
-      return tabletRef.current;
-    }
-    if (width >= 1024) {
+    if (window.innerWidth >= 768) {
       return desktopRef.current;
     }
     return null;
@@ -154,83 +155,6 @@ export function Drawer({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  // Mobile Bottom Sheet Gestures
-  useEffect(() => {
-    if (!isOpen || mobileVariant !== 'bottom') return;
-
-    const drawer = mobileBottomRef.current;
-    const handle = drawer?.querySelector('.drawer-handle') as HTMLElement;
-    
-    if (!drawer || !handle) return;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      isDraggingRef.current = true;
-      startYRef.current = e.touches[0].clientY;
-      lastYRef.current = e.touches[0].clientY;
-      startTimeRef.current = Date.now();
-      setIsDragging(true);
-      // Disable transition during drag for instant response
-      drawer.style.transition = 'none';
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isDraggingRef.current) return;
-      
-      const clientY = e.touches[0].clientY;
-      const deltaY = clientY - startYRef.current;
-      lastYRef.current = clientY;
-
-      // Only allow dragging downwards or slightly upwards (resistance)
-      if (deltaY > 0) {
-        drawer.style.transform = `translate3d(0, ${deltaY}px, 0)`;
-        setDragOffset(deltaY);
-      } else {
-        // Resistance when pulling up
-        const resistedY = deltaY * 0.2;
-        drawer.style.transform = `translate3d(0, ${resistedY}px, 0)`;
-        setDragOffset(resistedY);
-      }
-      
-      // Prevent scrolling content while dragging handle
-      if (e.target === handle || handle.contains(e.target as Node)) {
-        e.preventDefault();
-      }
-    };
-
-    const handleTouchEnd = () => {
-      if (!isDraggingRef.current) return;
-      isDraggingRef.current = false;
-      setIsDragging(false);
-
-      // Re-enable transition for snap animation
-      drawer.style.transition = 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)';
-
-      const endTime = Date.now();
-      const timeDiff = endTime - startTimeRef.current;
-      const distY = lastYRef.current - startYRef.current;
-      const velocity = distY / timeDiff;
-
-      // Close if dragged down significantly or flicked down fast
-      if (distY > 150 || (distY > 50 && velocity > 0.5)) {
-        onClose();
-      } else {
-        // Snap back to open
-        drawer.style.transform = '';
-        setDragOffset(0);
-      }
-    };
-
-    handle.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', handleTouchEnd);
-
-    return () => {
-      handle.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [isOpen, mobileVariant, onClose]);
-
   // Styling
   const backgroundClasses = style === 'glassy' 
     ? `${DRAWER_STYLES.glassyBackground} ${position === 'right' ? DRAWER_STYLES.glassyBorderLeft : DRAWER_STYLES.glassyBorderRight}`
@@ -282,102 +206,192 @@ export function Drawer({
 
   return (
     <>
-      {/* Backdrop */}
-      {showBackdrop && (
-        <div
-          className={`fixed inset-0 transition-opacity duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-            isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-          style={{
-            backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity) / 100})`,
-            zIndex: zIndex - 10,
-          }}
-          onClick={onClose}
-          aria-hidden="true"
-        />
-      )}
+      {/* Backdrop with framer-motion */}
+      <AnimatePresence>
+        {showBackdrop && isOpen && (
+          <motion.div
+            key="drawer-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={backdropSpring}
+            className="fixed inset-0"
+            style={{
+              backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity) / 100})`,
+              zIndex: zIndex - 10,
+            }}
+            onClick={onClose}
+            aria-hidden="true"
+          />
+        )}
+      </AnimatePresence>
 
-      {/* Mobile Bottom Sheet */}
-      {mobileVariant === 'bottom' && (
-        <div
-          ref={mobileBottomRef}
-          className={`md:hidden fixed inset-x-0 bottom-0 transform transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1) flex flex-col ${backgroundClasses} w-full ${radiusClass} shadow-[0_-8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.4)] ${
-            !isOpen ? 'translate-y-full' : 'translate-y-0'
-          }`}
-          style={{
-            zIndex,
-            maxHeight: computedMobileMaxHeight,
-            height: isOpen ? (isDragging ? undefined : computedMobileHeight) : computedMobileHeight,
-            transform: !isOpen ? 'translate3d(0, 100%, 0)' : undefined,
-            // Ensure bottom safe area is handled by content padding, not bottom constraint
-            // bottom: 0 is implicit via inset-x-0 bottom-0
-          }}
-          role="dialog"
-          aria-modal="true"
-        >
-          {/* Drag Handle Area */}
-          <div className="drawer-handle flex-shrink-0 w-full h-6 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none bg-inherit z-10 absolute top-0 left-0 right-0 rounded-t-[28px]">
-            <div className="w-10 h-1.5 rounded-full bg-gray-300/80 dark:bg-gray-600/80 mt-2" />
-          </div>
-
-          {/* Header space filler if handle overlaps content */}
-          <div className="h-3 flex-shrink-0" />
-
-          {renderHeader()}
-
-          <div className="flex-1 overflow-y-auto overflow-x-hidden w-full overscroll-contain relative pb-[env(safe-area-inset-bottom)]">
-            {children}
-          </div>
-
-          {footerContent && (
-            <div className={`flex-shrink-0 border-t border-gray-100 dark:border-gray-800 pb-[calc(1rem+env(safe-area-inset-bottom))] ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white dark:bg-gray-950'}`}>
-              {footerContent}
+      {/* Mobile Bottom Sheet with framer-motion */}
+      <AnimatePresence>
+        {mobileVariant === 'bottom' && isOpen && (
+          <motion.div
+            key="mobile-bottom-sheet"
+            ref={mobileBottomRef}
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={springConfig}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0.05, bottom: 0.5 }}
+            onDragEnd={(event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+              // Close if dragged down significantly or flicked down fast
+              if (info.offset.y > 150 || (info.offset.y > 50 && info.velocity.y > 500)) {
+                onClose();
+              }
+            }}
+            className={`md:hidden fixed inset-x-0 bottom-0 flex flex-col ${backgroundClasses} w-full ${radiusClass} shadow-[0_-8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.4)]`}
+            style={{
+              zIndex,
+              maxHeight: computedMobileMaxHeight,
+              height: computedMobileHeight,
+            }}
+            role="dialog"
+            aria-modal="true"
+          >
+            {/* Drag Handle Area */}
+            <div className="drawer-handle flex-shrink-0 w-full h-6 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none bg-inherit z-10 absolute top-0 left-0 right-0 rounded-t-[28px]">
+              <motion.div
+                className="w-10 h-1.5 rounded-full bg-gray-300/80 dark:bg-gray-600/80 mt-2"
+                whileHover={{ scaleX: 1.2 }}
+                whileTap={{ scaleX: 1.4 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+              />
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Side Drawer (Mobile Side & Desktop) */}
-      {(mobileVariant === 'side' || typeof window !== 'undefined' && window.innerWidth >= 768) && (
-        <div
-          ref={window.innerWidth >= 1024 ? desktopRef : (window.innerWidth >= 768 ? tabletRef : mobileSideRef)}
-          className={`
-            fixed 
-            ${window.innerWidth >= 768 
-              ? `${desktopSpacing} rounded-2xl` 
-              : `top-0 bottom-0 w-full ${position === 'right' ? 'right-0' : 'left-0'}`
-            }
-            ${backgroundClasses} ${shadowClasses} ${window.innerWidth >= 768 ? borderClasses : ''}
-            z-50 transform transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1)
-            flex flex-col overflow-hidden
-            ${isOpen 
-              ? 'translate-x-0 opacity-100' 
-              : (position === 'right' ? 'translate-x-[110%]' : '-translate-x-[110%]')
-            }
-            ${fullScreen && window.innerWidth >= 1024 ? 'inset-0 !rounded-none !w-full !max-w-none !translate-x-0' : ''}
-            ${fullScreen && window.innerWidth >= 1024 && !isOpen ? '!opacity-0 pointer-events-none' : ''}
-          `}
-          style={{ 
-            zIndex, 
-            width: window.innerWidth >= 768 && !fullScreen ? desktopWidth : '100%',
-            maxWidth: window.innerWidth >= 768 && !fullScreen ? 'calc(100vw - 2rem)' : '100%',
-          }}
-          role="dialog"
-          aria-modal="true"
-        >
-          {renderHeader()}
-          
-          <div className="flex-1 overflow-y-auto overscroll-contain">
-            {children}
-          </div>
+            {/* Header space filler if handle overlaps content */}
+            <div className="h-3 flex-shrink-0" />
 
-          {footerContent && (
-            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
-              {footerContent}
+            {renderHeader()}
+
+            <div className="flex-1 overflow-y-auto overflow-x-hidden w-full overscroll-contain relative pb-[env(safe-area-inset-bottom)]">
+              {children}
             </div>
-          )}
-        </div>
-      )}
+
+            {footerContent && (
+              <div className={`flex-shrink-0 border-t border-gray-100 dark:border-gray-800 pb-[calc(1rem+env(safe-area-inset-bottom))] ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white dark:bg-gray-950'}`}>
+                {footerContent}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Side Drawer (Desktop/Tablet) with framer-motion */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            key="side-drawer"
+            ref={desktopRef}
+            initial={{
+              x: position === 'right' ? '110%' : '-110%',
+              opacity: 0,
+            }}
+            animate={{
+              x: fullScreen ? 0 : 0,
+              opacity: 1,
+            }}
+            exit={{
+              x: position === 'right' ? '110%' : '-110%',
+              opacity: 0,
+            }}
+            transition={springConfig}
+            className={`
+              hidden md:flex fixed
+              ${desktopSpacing} rounded-2xl
+              ${backgroundClasses} ${shadowClasses} ${borderClasses}
+              z-50 flex-col overflow-hidden
+              ${fullScreen ? 'inset-0 !rounded-none !w-full !max-w-none' : ''}
+            `}
+            style={{
+              zIndex,
+              width: fullScreen ? '100%' : desktopWidth,
+              maxWidth: fullScreen ? '100%' : 'calc(100vw - 2rem)',
+            }}
+            role="dialog"
+            aria-modal="true"
+          >
+            {renderHeader()}
+
+            <motion.div
+              className="flex-1 overflow-y-auto overscroll-contain"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, ...springConfig }}
+            >
+              {children}
+            </motion.div>
+
+            {footerContent && (
+              <motion.div
+                className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15, ...springConfig }}
+              >
+                {footerContent}
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Mobile Side Drawer with framer-motion */}
+      <AnimatePresence>
+        {mobileVariant === 'side' && isOpen && (
+          <motion.div
+            key="mobile-side-drawer"
+            ref={mobileSideRef}
+            initial={{
+              x: position === 'right' ? '100%' : '-100%',
+              opacity: 0,
+            }}
+            animate={{
+              x: 0,
+              opacity: 1,
+            }}
+            exit={{
+              x: position === 'right' ? '100%' : '-100%',
+              opacity: 0,
+            }}
+            transition={springConfig}
+            className={`
+              md:hidden fixed top-0 bottom-0 w-full
+              ${position === 'right' ? 'right-0' : 'left-0'}
+              ${backgroundClasses} ${shadowClasses}
+              z-50 flex flex-col overflow-hidden
+            `}
+            style={{
+              zIndex,
+              maxWidth: mobileWidth,
+            }}
+            role="dialog"
+            aria-modal="true"
+          >
+            {renderHeader()}
+
+            <motion.div
+              className="flex-1 overflow-y-auto overscroll-contain"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              {children}
+            </motion.div>
+
+            {footerContent && (
+              <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
+                {footerContent}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
