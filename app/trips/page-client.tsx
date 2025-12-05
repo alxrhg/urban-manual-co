@@ -221,7 +221,7 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
                   value={searchQuery.trim()}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   autoFocus
-                  className="w-full pl-10 pr-10 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/10 dark:focus:ring-white/10 transition-all"
+                  className="w-full pl-10 pr-10 py-3 bg-stone-100/80 dark:bg-gray-800/80 border border-stone-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:border-stone-400 dark:focus:border-gray-500 transition-all"
                 />
                 <button
                   onClick={() => setSearchQuery('')}
@@ -237,7 +237,7 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
         {/* Trip List */}
         {trips.length === 0 ? (
           /* Empty State */
-          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-700 bg-stone-50/50 dark:bg-gray-800/30">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <Plane className="w-7 h-7 text-gray-400" />
             </div>
@@ -262,7 +262,7 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
           </div>
         ) : filteredTrips.length === 0 ? (
           /* No Results */
-          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
+          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-700 bg-stone-50/50 dark:bg-gray-800/30">
             <div className="w-14 h-14 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <Search className="w-6 h-6 text-gray-400" />
             </div>
@@ -323,12 +323,12 @@ function TripCard({ trip, state }: TripCardProps) {
     <Link
       href={`/trips/${trip.id}`}
       className={`
-        group flex gap-4 p-4 rounded-2xl bg-white dark:bg-gray-900
-        border border-gray-200 dark:border-gray-800
-        hover:border-gray-300 dark:hover:border-gray-700
-        hover:shadow-sm hover:scale-[1.01]
+        group flex gap-4 p-4 rounded-2xl
+        bg-stone-100/80 dark:bg-gray-800/80
+        border border-stone-200 dark:border-gray-700
+        hover:bg-stone-200/80 dark:hover:bg-gray-700/80
         transition-all duration-200 ease-out cursor-pointer
-        ${isPast ? 'opacity-90' : ''}
+        ${isPast ? 'opacity-80' : ''}
       `}
     >
       {/* Cover Image */}
