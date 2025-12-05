@@ -18,7 +18,7 @@ export default function TripsUnauthenticated() {
         </p>
         <button
           onClick={() => router.push('/auth/login')}
-          className="w-full px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-xl hover:opacity-90 transition-opacity"
+          className="w-full px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-full hover:opacity-90 transition-opacity"
         >
           Sign In
         </button>
