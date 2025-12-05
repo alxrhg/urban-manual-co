@@ -18,6 +18,7 @@ export type DrawerType =
   | 'trip-view'
   | 'map'
   | 'create-trip'
+  | 'passport'
   | null;
 
 /**

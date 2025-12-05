@@ -31,6 +31,7 @@ import {
   Calendar,
   Plane,
   Sparkles,
+  Globe,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -623,6 +624,36 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
             </p>
           </div>
         </div>
+
+        {/* Digital Passport */}
+        {stats.countries > 0 && (
+          <div className="px-5 mb-4">
+            <button
+              onClick={() => {
+                onClose();
+                openLegacyDrawer('passport');
+              }}
+              className="w-full p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-left group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <span className="text-lg">🛂</span>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">
+                      Digital Passport
+                    </h4>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {stats.countries} {stats.countries === 1 ? 'stamp' : 'stamps'} collected
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </button>
+          </div>
+        )}
 
         {/* Library Grid */}
         <div className="px-5 mb-4">
