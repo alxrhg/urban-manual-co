@@ -180,66 +180,93 @@ export function ExpandableHomeControls({
         style={springStyle}
       >
         {/* Collapsed State - Right-aligned horizontal stack */}
-        <div 
+        <div
           className={`flex flex-wrap lg:flex-nowrap items-center justify-end gap-2 transition-all duration-300 ${
             isExpanded ? 'opacity-0 h-0 overflow-hidden pointer-events-none' : 'opacity-100 h-11'
           }`}
           style={{ gap: '8px' }}
         >
-          {/* Discover by Cities Pill */}
+          {/* Cities Pill */}
           <Link
             href="/cities"
-            className="flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F7F7F7] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px]"
+            className="flex items-center justify-center gap-2 h-11 px-4 text-sm font-medium rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F7F7F7] hover:bg-gray-100 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px]"
+            title="Browse destinations by city"
           >
             <Globe className="h-4 w-4" />
-            <span>Discover by Cities</span>
+            <span className="hidden sm:inline">Cities</span>
           </Link>
 
-          {/* Filter Pill */}
+          {/* Filters Pill */}
           <button
             onClick={handleFilterPillClick}
-            className={`relative flex items-center justify-center h-11 w-11 rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F7F7F7] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px] ${
+            className={`relative flex items-center justify-center gap-2 h-11 px-4 rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F7F7F7] hover:bg-gray-100 dark:hover:bg-[rgba(255,255,255,0.16)] backdrop-blur-[12px] ${
               hasActiveFilters ? 'ring-2 ring-blue-500/50' : ''
             }`}
-            aria-label="Toggle filters"
+            aria-label={hasActiveFilters ? `Filters (${activeFiltersCount} active)` : 'Open filters'}
+            title={hasActiveFilters ? `Filters (${activeFiltersCount} active)` : 'Filter destinations'}
           >
             <Funnel className="h-4 w-4" />
+            <span className="hidden sm:inline">
+              {hasActiveFilters ? `Filters (${Math.min(activeFiltersCount, 99)})` : 'Filters'}
+            </span>
+            {/* Mobile-only badge when filters active */}
             {hasActiveFilters && (
-              <span className="absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[11px] bg-blue-500 text-white rounded-full">
+              <span className="sm:hidden absolute -top-1 -right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[11px] bg-blue-500 text-white rounded-full">
                 {Math.min(activeFiltersCount, 99)}
               </span>
             )}
           </button>
 
-          {/* Grid/Map Toggle - Single Icon Button */}
-          <button
-            onClick={() => onViewModeChange(viewMode === 'grid' ? 'map' : 'grid')}
-            className="flex items-center justify-center h-11 w-11 rounded-full transition-all duration-200 bg-white dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] text-gray-900 dark:text-[#F5F5F5] hover:bg-gray-50 dark:hover:bg-[rgba(255,255,255,0.12)] active:bg-gray-100 dark:active:bg-[rgba(255,255,255,0.18)] backdrop-blur-[14px]"
-            aria-label={viewMode === 'grid' ? 'Switch to map view' : 'Switch to grid view'}
-          >
-            {viewMode === 'grid' ? (
-              <Map className="h-4 w-4" />
-            ) : (
+          {/* Grid/Map Toggle - Segmented Control */}
+          <div className="flex items-center bg-gray-100 dark:bg-[rgba(255,255,255,0.06)] border border-gray-200 dark:border-[rgba(255,255,255,0.18)] rounded-full p-0.5 sm:p-1 backdrop-blur-[12px]">
+            <button
+              onClick={() => onViewModeChange('grid')}
+              className={`flex items-center justify-center gap-1.5 min-w-[44px] h-10 sm:h-9 px-3 text-sm font-medium rounded-full transition-all duration-200 ${
+                viewMode === 'grid'
+                  ? 'bg-white dark:bg-[rgba(255,255,255,0.12)] text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+              aria-label="Grid view"
+              aria-pressed={viewMode === 'grid'}
+              title="View as grid"
+            >
               <LayoutGrid className="h-4 w-4" />
-            )}
-          </button>
+              <span className="hidden sm:inline">Grid</span>
+            </button>
+            <button
+              onClick={() => onViewModeChange('map')}
+              className={`flex items-center justify-center gap-1.5 min-w-[44px] h-10 sm:h-9 px-3 text-sm font-medium rounded-full transition-all duration-200 ${
+                viewMode === 'map'
+                  ? 'bg-white dark:bg-[rgba(255,255,255,0.12)] text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+              aria-label="Map view"
+              aria-pressed={viewMode === 'map'}
+              title="View on map"
+            >
+              <Map className="h-4 w-4" />
+              <span className="hidden sm:inline">Map</span>
+            </button>
+          </div>
 
-          {/* Create Trip Pill */}
+          {/* New Trip Pill (Primary CTA) */}
           {isAdmin && onAddPOI ? (
             <button
               onClick={onAddPOI}
-              className="flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200"
+              className="flex items-center justify-center gap-2 h-11 px-4 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:bg-gray-800 dark:hover:bg-gray-100 transition-all duration-200"
+              title="Add a new point of interest"
             >
               <Plus className="h-4 w-4" />
-              <span>Add POI</span>
+              <span className="hidden sm:inline">Add POI</span>
             </button>
           ) : (
             <button
               onClick={onCreateTrip}
-              className="flex items-center justify-center gap-2 h-11 px-3.5 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-all duration-200"
+              className="flex items-center justify-center gap-2 h-11 px-4 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-full hover:bg-gray-800 dark:hover:bg-gray-100 transition-all duration-200"
+              title="Create a new trip"
             >
               <Plus className="h-4 w-4" />
-              <span>Create Trip</span>
+              <span className="hidden sm:inline">New Trip</span>
             </button>
           )}
         </div>
