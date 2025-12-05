@@ -16,6 +16,7 @@ import { EditModeToggle } from '@/components/EditModeToggle';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { MultiplexAd } from '@/components/GoogleAd';
 import { CityClock } from '@/components/CityClock';
+import { TripContextBanner } from '@/components/TripContextBanner';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
 
@@ -356,6 +357,9 @@ export default function CityPageClient({
                 </div>
               </div>
             )}
+
+            {/* Trip Context Banner - shows when user has upcoming trip to this city */}
+            <TripContextBanner city={citySlug} className="mb-8" />
 
             {/* Filters - Matching homepage style */}
             <div className="space-y-4">
