@@ -12,6 +12,7 @@ import ItineraryView from '@/components/trip/ItineraryView';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
 import TripSuggestions from '@/components/trip/TripSuggestions';
+import TripInsights from '@/components/trip/TripInsights';
 
 // Existing components
 import { PageLoader } from '@/components/LoadingStates';
@@ -56,6 +57,17 @@ export default function TripPageRedesign() {
   // Parse destinations
   const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
   const primaryCity = destinations[0] || '';
+
+  // Calculate trip duration
+  const tripDuration = useMemo(() => {
+    if (trip?.start_date && trip?.end_date) {
+      const start = new Date(trip.start_date);
+      const end = new Date(trip.end_date);
+      const diffTime = end.getTime() - start.getTime();
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    }
+    return days.length || 3; // Default to days array length or 3
+  }, [trip?.start_date, trip?.end_date, days.length]);
 
   // UI State
   const [activeContentTab, setActiveContentTab] = useState<'itinerary' | 'flights' | 'hotels' | 'notes'>('itinerary');
@@ -390,6 +402,17 @@ export default function TripPageRedesign() {
               />
             ) : (
               <>
+                {/* Trip Health */}
+                <TripInsights
+                  days={days}
+                  tripDuration={tripDuration}
+                  onNavigateToDay={setSelectedDayNumber}
+                  onAddToDay={(dayNumber, category) => {
+                    setSelectedDayNumber(dayNumber);
+                    handleAddSuggestion({ dayNumber, category });
+                  }}
+                />
+
                 {/* Interactive Map */}
                 <InteractiveMapCard
                   locationName={primaryCity || 'Map'}
