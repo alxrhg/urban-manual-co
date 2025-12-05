@@ -9,7 +9,7 @@ import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 
 // Trip components
 import TripHeader, { type AddItemType } from '@/components/trip/TripHeader';
-import ItineraryView from '@/components/trip/ItineraryView';
+import { ItineraryViewRedesign } from '@/components/trip/itinerary';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
 import TripMapView from '@/components/trips/TripMapView';
@@ -19,6 +19,7 @@ import { PageLoader } from '@/components/LoadingStates';
 import AddPlaceBox from '@/components/trip/AddPlaceBox';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import DestinationBox from '@/components/trip/DestinationBox';
+import CompanionPanel from '@/components/trip/CompanionPanel';
 
 /**
  * TripPage - Trip detail page with itinerary view
@@ -68,6 +69,7 @@ export default function TripPage() {
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showMapView, setShowMapView] = useState(false);
+  const [showCompanionPanel, setShowCompanionPanel] = useState(false);
 
   // Auto-fix items on wrong days based on their dates
   const hasAutoFixed = useRef(false);
@@ -247,6 +249,11 @@ export default function TripPage() {
     }
   }, [updateItem, moveItemToDay, trip?.start_date, trip?.end_date, days]);
 
+  // Handle travel mode change between items
+  const handleUpdateTravelMode = useCallback((itemId: string, mode: 'walking' | 'driving' | 'transit') => {
+    updateItem(itemId, { travelModeToNext: mode });
+  }, [updateItem]);
+
   // Loading state
   if (loading) {
     return (
@@ -333,8 +340,8 @@ export default function TripPage() {
                   </div>
                 )}
 
-                {/* Itinerary List */}
-                <ItineraryView
+                {/* Itinerary List - New Design with Visual Cards */}
+                <ItineraryViewRedesign
                   days={days}
                   selectedDayNumber={selectedDayNumber}
                   onSelectDay={setSelectedDayNumber}
@@ -344,12 +351,13 @@ export default function TripPage() {
                     setShowAddPlaceBox(true);
                   }}
                   onOptimizeDay={handleOptimizeDay}
-                  onUpdateItemNotes={(itemId, notes) => updateItem(itemId, notes)}
+                  onUpdateTravelMode={handleUpdateTravelMode}
                   onRemoveItem={removeItem}
                   isOptimizing={optimizingDay !== null}
                   isEditMode={isEditMode}
                   activeItemId={selectedItem?.id}
                   allHotels={allHotels}
+                  showDayNavigation={false}
                 />
               </>
             )}
@@ -492,9 +500,10 @@ export default function TripPage() {
                   onExpand={() => {}}
                 />
 
-                {/* Travel AI */}
+                {/* Travel AI - Opens Companion Panel */}
                 <TravelAISidebar
                   onAddSuggestion={handleAddSuggestion}
+                  onOpenChat={() => setShowCompanionPanel(true)}
                 />
               </>
             )}
@@ -569,10 +578,22 @@ export default function TripPage() {
           ) : (
             <TravelAISidebar
               onAddSuggestion={handleAddSuggestion}
+              onOpenChat={() => setShowCompanionPanel(true)}
             />
           )}
         </div>
       </div>
+
+      {/* Companion Panel - AI Chat Sidebar */}
+      <CompanionPanel
+        isOpen={showCompanionPanel}
+        onClose={() => setShowCompanionPanel(false)}
+        tripTitle={trip.title}
+        destination={primaryCity}
+        days={days}
+        selectedDayNumber={selectedDayNumber}
+        onAddSuggestion={handleAddSuggestion}
+      />
     </main>
   );
 }

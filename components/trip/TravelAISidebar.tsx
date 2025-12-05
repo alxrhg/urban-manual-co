@@ -15,6 +15,7 @@ interface TravelAISidebarProps {
   suggestions?: Suggestion[];
   onAddSuggestion?: (suggestion: Suggestion) => void;
   onAskQuestion?: (question: string) => Promise<string>;
+  onOpenChat?: () => void;
   isLoading?: boolean;
   className?: string;
 }
@@ -27,6 +28,7 @@ export default function TravelAISidebar({
   suggestions = [],
   onAddSuggestion,
   onAskQuestion,
+  onOpenChat,
   isLoading = false,
   className = '',
 }: TravelAISidebarProps) {
@@ -73,7 +75,11 @@ export default function TravelAISidebar({
           <Sparkles className="w-4 h-4 text-gray-500 dark:text-gray-400" />
           <span className="font-medium text-gray-900 dark:text-white text-sm">Travel AI</span>
         </div>
-        <button className="p-1 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+        <button
+          onClick={onOpenChat}
+          className="p-1 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          title="Open full chat"
+        >
           <ExternalLink className="w-4 h-4" />
         </button>
       </div>
