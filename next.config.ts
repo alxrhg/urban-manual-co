@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 import withPWAInit from "@ducanh2912/next-pwa";
-import { withPayload } from "@payloadcms/next/withPayload";
+// Note: withPayload removed due to Next.js 16 compatibility issues
+// Payload routes still work without it for basic functionality
 
 const cspDirectives = [
   "default-src 'self'",
@@ -269,11 +270,10 @@ const withPWA = withPWAInit({
   },
 });
 
-// Wrap the Next.js config with PWA, Payload, and Sentry
+// Wrap the Next.js config with PWA and Sentry
 const pwaConfig = withPWA(nextConfig);
-const payloadConfig = withPayload(pwaConfig);
 
-const sentryConfig = withSentryConfig(payloadConfig, {
+const sentryConfig = withSentryConfig(pwaConfig, {
   // For all available options, see:
   // https://github.com/getsentry/sentry-webpack-plugin#options
 
