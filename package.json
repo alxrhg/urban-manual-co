@@ -6,7 +6,7 @@
     "test:intelligence": "tsx scripts/test-intelligence-endpoints.ts",
     "test:unit": "tsx --test tests/**/*.test.ts",
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "enrich:google": "tsx scripts/enrich-with-google.ts",
