@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Check, ChevronRight, X, Loader2, Calendar, MapPin, Plus, Sparkles } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Check, ChevronRight, X, Loader2, Calendar, MapPin, Plus, Sparkles, MessageSquare } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDestinationsFromField } from '@/types/trip';
@@ -26,7 +26,7 @@ interface InlineTripPromptProps {
 
 /**
  * Inline trip prompt that appears after saving a destination
- * Shows relevant upcoming trips and allows quick add or dismiss
+ * Shows relevant upcoming trips, allows adding notes, and quick add or dismiss
  */
 export function InlineTripPrompt({
   destinationSlug,
@@ -42,6 +42,13 @@ export function InlineTripPrompt({
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Note input state
+  const [showNoteInput, setShowNoteInput] = useState(false);
+  const [note, setNote] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+  const [noteSaved, setNoteSaved] = useState(false);
+  const noteInputRef = useRef<HTMLInputElement>(null);
 
   // Load user's upcoming/planning trips
   useEffect(() => {
@@ -143,6 +150,39 @@ export function InlineTripPrompt({
     }
   }, [user, adding, destinationSlug, destinationName, onAddToTrip]);
 
+  // Save note to saved_places
+  const handleSaveNote = useCallback(async () => {
+    if (!user || !note.trim() || savingNote) return;
+
+    setSavingNote(true);
+    try {
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const { error } = await supabase
+        .from('saved_places')
+        .update({ note: note.trim() })
+        .eq('user_id', user.id)
+        .eq('destination_slug', destinationSlug);
+
+      if (error) throw error;
+
+      setNoteSaved(true);
+      setShowNoteInput(false);
+    } catch (error) {
+      console.error('Error saving note:', error);
+    } finally {
+      setSavingNote(false);
+    }
+  }, [user, note, savingNote, destinationSlug]);
+
+  // Focus input when shown
+  useEffect(() => {
+    if (showNoteInput && noteInputRef.current) {
+      noteInputRef.current.focus();
+    }
+  }, [showNoteInput]);
+
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -170,6 +210,65 @@ export function InlineTripPrompt({
   if (trips.length === 0) {
     return (
       <div className={`mt-3 p-3 bg-stone-50 dark:bg-stone-900 rounded-xl animate-in fade-in slide-in-from-top-2 ${className}`}>
+        {/* Saved confirmation + Note */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+              <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <span className="text-xs font-medium text-stone-700 dark:text-stone-300">Saved</span>
+            {noteSaved && note && (
+              <span className="text-[10px] text-stone-400 italic truncate max-w-[120px]">
+                "{note}"
+              </span>
+            )}
+          </div>
+
+          {!showNoteInput && !noteSaved && (
+            <button
+              onClick={() => setShowNoteInput(true)}
+              className="text-[10px] text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 flex items-center gap-1 transition-colors"
+            >
+              <MessageSquare className="w-3 h-3" />
+              Add note
+            </button>
+          )}
+        </div>
+
+        {/* Note input */}
+        {showNoteInput && (
+          <div className="mb-3 animate-in fade-in slide-in-from-top-1">
+            <div className="flex gap-2">
+              <input
+                ref={noteInputRef}
+                type="text"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveNote();
+                  if (e.key === 'Escape') setShowNoteInput(false);
+                }}
+                placeholder="Alex recommended, try the omakase..."
+                className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 dark:focus:ring-stone-500 placeholder:text-stone-400"
+                maxLength={200}
+              />
+              <button
+                onClick={handleSaveNote}
+                disabled={!note.trim() || savingNote}
+                className="px-2.5 py-1.5 text-xs font-medium text-white bg-stone-900 dark:bg-white dark:text-stone-900 rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
+              >
+                {savingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+              </button>
+              <button
+                onClick={() => setShowNoteInput(false)}
+                className="p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="w-3.5 h-3.5 text-stone-400" />
@@ -207,6 +306,65 @@ export function InlineTripPrompt({
 
   return (
     <div className={`mt-3 p-3 bg-stone-50 dark:bg-stone-900 rounded-xl animate-in fade-in slide-in-from-top-2 ${className}`}>
+      {/* Saved confirmation + Note */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+            <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <span className="text-xs font-medium text-stone-700 dark:text-stone-300">Saved</span>
+          {noteSaved && note && (
+            <span className="text-[10px] text-stone-400 italic truncate max-w-[120px]">
+              "{note}"
+            </span>
+          )}
+        </div>
+
+        {!showNoteInput && !noteSaved && (
+          <button
+            onClick={() => setShowNoteInput(true)}
+            className="text-[10px] text-stone-500 hover:text-stone-700 dark:hover:text-stone-300 flex items-center gap-1 transition-colors"
+          >
+            <MessageSquare className="w-3 h-3" />
+            Add note
+          </button>
+        )}
+      </div>
+
+      {/* Note input */}
+      {showNoteInput && (
+        <div className="mb-3 animate-in fade-in slide-in-from-top-1">
+          <div className="flex gap-2">
+            <input
+              ref={noteInputRef}
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleSaveNote();
+                if (e.key === 'Escape') setShowNoteInput(false);
+              }}
+              placeholder="Alex recommended, try the omakase..."
+              className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg focus:outline-none focus:ring-1 focus:ring-stone-400 dark:focus:ring-stone-500 placeholder:text-stone-400"
+              maxLength={200}
+            />
+            <button
+              onClick={handleSaveNote}
+              disabled={!note.trim() || savingNote}
+              className="px-2.5 py-1.5 text-xs font-medium text-white bg-stone-900 dark:bg-white dark:text-stone-900 rounded-lg hover:opacity-90 transition-all disabled:opacity-50"
+            >
+              {savingNote ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Save'}
+            </button>
+            <button
+              onClick={() => setShowNoteInput(false)}
+              className="p-1.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Primary trip suggestion */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0 flex-1">
