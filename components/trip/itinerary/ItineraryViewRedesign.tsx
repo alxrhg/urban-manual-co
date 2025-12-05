@@ -8,7 +8,7 @@ import { getAirportCoordinates } from '@/lib/utils/airports';
 
 // Import new itinerary components
 import ItineraryCard from './ItineraryCard';
-import ItineraryMinimalRow, { BreakfastRow, CheckoutRow, NightStayRow } from './ItineraryMinimalRow';
+import ItineraryMinimalRow, { BreakfastRow, CheckoutRow, CheckInRow, NightStayRow } from './ItineraryMinimalRow';
 import TravelConnector, { InteractiveTravelConnector } from './TravelConnector';
 import GapSuggestion, { CompactGapIndicator } from './GapSuggestion';
 import DayHeader, { DayNavigation } from './DayHeader';
@@ -134,21 +134,21 @@ export default function ItineraryViewRedesign({
         isOptimizing={isOptimizing}
       />
 
-      {/* Morning Items (Checkout & Breakfast) */}
+      {/* Morning Items (Breakfast & Checkout) */}
       {(checkoutHotel || breakfastHotel) && (
         <div className="space-y-1 pt-4">
-          {checkoutHotel && (
-            <CheckoutRow
-              hotelName={checkoutHotel.title || 'Hotel'}
-              time={checkoutHotel.parsedNotes?.checkOutTime || '11:00'}
-              onClick={() => onEditItem?.(checkoutHotel)}
-            />
-          )}
           {breakfastHotel && (
             <BreakfastRow
               hotelName={breakfastHotel.title || 'Hotel'}
               time="7:00 - 10:00 AM"
               onClick={() => onEditItem?.(breakfastHotel)}
+            />
+          )}
+          {checkoutHotel && (
+            <CheckoutRow
+              hotelName={checkoutHotel.title || 'Hotel'}
+              time={checkoutHotel.parsedNotes?.checkOutTime || '11:00'}
+              onClick={() => onEditItem?.(checkoutHotel)}
             />
           )}
         </div>
@@ -175,7 +175,13 @@ export default function ItineraryViewRedesign({
                 )}
 
                 {/* Render card or minimal row based on item type */}
-                {isCard ? (
+                {item.parsedNotes?.type === 'hotel' ? (
+                  <CheckInRow
+                    hotelName={item.title || 'Hotel'}
+                    time={item.parsedNotes?.checkInTime || item.time || undefined}
+                    onClick={() => onEditItem?.(item)}
+                  />
+                ) : isCard ? (
                   <ItineraryCard
                     item={item}
                     isActive={item.id === activeItemId}

@@ -49,7 +49,7 @@ export default function TravelConnector({
   const distanceText = formatDistance(distanceKm);
 
   return (
-    <div className={`flex items-center justify-center py-2 ${className}`}>
+    <div className={`flex items-center justify-end py-2 ${className}`}>
       <div className="flex items-center gap-2 text-xs text-stone-400 dark:text-gray-500">
         {/* Arrow */}
         <ArrowDown className="w-3 h-3" />
@@ -123,7 +123,7 @@ export function InteractiveTravelConnector({
   const distanceText = formatDistance(distanceKm);
 
   return (
-    <div className={`flex items-center justify-center py-2 ${className}`}>
+    <div className={`flex items-center justify-end py-2 ${className}`}>
       <div className="flex items-center gap-3">
         {/* Arrow indicator */}
         <ArrowDown className="w-3 h-3 text-stone-300 dark:text-gray-600" />
@@ -201,7 +201,7 @@ export function CompactTravelConnector({
   };
 
   return (
-    <div className={`flex items-center justify-center py-1.5 ${className}`}>
+    <div className={`flex items-center justify-end py-1.5 ${className}`}>
       <span className="text-[10px] text-stone-400 dark:text-gray-500">
         ↓ {formatDuration(durationMinutes)} {modeLabels[mode]}
       </span>

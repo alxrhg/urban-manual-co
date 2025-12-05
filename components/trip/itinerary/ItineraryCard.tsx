@@ -366,7 +366,7 @@ function EventCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           {notes?.eventType && (
             <div className="absolute bottom-3 left-4">
-              <span className="px-2 py-0.5 rounded-full bg-purple-500/80 text-white text-xs font-medium capitalize">
+              <span className="px-2 py-0.5 rounded-full bg-stone-800/80 text-white text-xs font-medium capitalize">
                 {notes.eventType}
               </span>
             </div>
@@ -378,8 +378,8 @@ function EventCard({
       <div className="p-4">
         <div className="flex items-start gap-3">
           {!image && (
-            <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center flex-shrink-0">
-              <Ticket className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <Ticket className="w-5 h-5 text-stone-500 dark:text-gray-400" />
             </div>
           )}
           <div className="flex-1 min-w-0">

@@ -17,6 +17,7 @@ export {
   default as ItineraryMinimalRow,
   BreakfastRow,
   CheckoutRow,
+  CheckInRow,
   NightStayRow,
 } from './ItineraryMinimalRow';
 

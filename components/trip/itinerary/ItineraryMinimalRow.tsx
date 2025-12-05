@@ -247,6 +247,44 @@ export function CheckoutRow({ hotelName, time, onClick, className = '' }: Checko
   );
 }
 
+interface CheckInRowProps {
+  hotelName: string;
+  time?: string;
+  onClick?: () => void;
+  className?: string;
+}
+
+/**
+ * CheckInRow - Minimal row for hotel check-in
+ */
+export function CheckInRow({ hotelName, time, onClick, className = '' }: CheckInRowProps) {
+  return (
+    <button
+      onClick={onClick}
+      className={`
+        w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all
+        hover:bg-stone-50 dark:hover:bg-gray-800/50
+        ${className}
+      `}
+    >
+      <span className="text-base flex-shrink-0 w-6 text-center">🏨</span>
+      <div className="flex-1 min-w-0">
+        <span className="text-sm font-medium text-stone-900 dark:text-white">
+          Check-in
+        </span>
+        <span className="text-xs text-stone-400 dark:text-gray-500 ml-2">
+          at {hotelName}
+        </span>
+      </div>
+      {time && (
+        <span className="text-xs text-stone-500 dark:text-gray-400">
+          {time}
+        </span>
+      )}
+    </button>
+  );
+}
+
 interface NightStayRowProps {
   hotelName: string;
   hasBreakfast?: boolean;
