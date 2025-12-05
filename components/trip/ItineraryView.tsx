@@ -243,7 +243,7 @@ export default function ItineraryView({
               <div className="absolute left-[14px] top-3 w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-700 z-10" />
               <button
                 onClick={() => onAddItem(selectedDay.dayNumber)}
-                className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-800 rounded-xl text-xs text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white hover:border-stone-300 dark:hover:border-gray-700 transition-colors flex items-center justify-center gap-1.5"
+                className="w-full py-3 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white hover:border-gray-300 dark:hover:border-gray-700 transition-colors flex items-center justify-center gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5" />
                 Add stop
@@ -337,7 +337,7 @@ function DayHeaderSection({
     <div className="flex items-center gap-3 mb-6">
       {/* Date Badge */}
       {day.date && (
-        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-stone-100 dark:bg-gray-900 flex flex-col items-center justify-center">
+        <div className="flex-shrink-0 w-11 h-11 rounded-2xl bg-gray-100 dark:bg-gray-900 flex flex-col items-center justify-center">
           <span className="text-[9px] font-medium text-stone-400 dark:text-gray-500 tracking-wider uppercase">
             {month}
           </span>
@@ -654,11 +654,11 @@ function HotelCard({
       `}
     >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
-          <Building2 className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+        <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <Building2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />
         </div>
         <div className="flex-1">
-          <h4 className="text-sm font-medium text-stone-900 dark:text-white">Check-in at {item.title || 'Hotel'}</h4>
+          <h4 className="text-sm font-medium text-gray-900 dark:text-white">Check-in at {item.title || 'Hotel'}</h4>
           <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
             {checkInTime ? `At ${formatTime(checkInTime)}` : 'Time not set'}
           </p>
@@ -685,11 +685,11 @@ function NightStayCard({
       className="rounded-2xl bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
     >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
           <span className="text-lg">☽</span>
         </div>
         <div className="flex-1">
-          <h4 className="text-sm font-medium text-stone-900 dark:text-white">Overnight at {hotel.title || 'Hotel'}</h4>
+          <h4 className="text-sm font-medium text-gray-900 dark:text-white">Overnight at {hotel.title || 'Hotel'}</h4>
           <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
             {breakfastIncluded ? '1 night · Breakfast included' : '1 night'}
           </p>
@@ -716,11 +716,11 @@ function BreakfastCard({
       className="rounded-2xl bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
     >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+        <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
           <span className="text-lg">🍳</span>
         </div>
         <div className="flex-1">
-          <h4 className="text-sm font-medium text-stone-900 dark:text-white">Breakfast at {hotel.title || 'Hotel'}</h4>
+          <h4 className="text-sm font-medium text-gray-900 dark:text-white">Breakfast at {hotel.title || 'Hotel'}</h4>
           {breakfastTime && (
             <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">{breakfastTime}</p>
           )}
@@ -754,11 +754,11 @@ function CheckoutCard({
       className="rounded-2xl bg-stone-50 dark:bg-gray-900 border border-stone-200 dark:border-gray-800 p-4 cursor-pointer transition-all hover:border-stone-300 dark:hover:border-gray-700"
     >
       <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
-          <Building2 className="w-5 h-5 text-stone-500 dark:text-gray-400" />
+        <div className="w-10 h-10 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <Building2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />
         </div>
         <div className="flex-1">
-          <h4 className="text-sm font-medium text-stone-900 dark:text-white">Check-out from {hotel.title || 'Hotel'}</h4>
+          <h4 className="text-sm font-medium text-gray-900 dark:text-white">Check-out from {hotel.title || 'Hotel'}</h4>
           <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">Before {checkOutTime}</p>
         </div>
       </div>

@@ -138,7 +138,7 @@ export function HotelAutocompleteInput({
           }}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full px-4 py-2 rounded-xl border border-gray-200 dark:border-white/20 bg-white dark:bg-[#1A1C1F] text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed pr-10 ${className}`}
+          className={`w-full px-4 py-2.5 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed pr-10 ${className}`}
         />
         {searchQuery && !disabled && (
           <button
@@ -156,7 +156,7 @@ export function HotelAutocompleteInput({
       {showSuggestions && filteredHotels.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1A1C1F] border border-gray-200 dark:border-white/10 rounded-xl shadow-lg max-h-60 overflow-y-auto"
+          className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-lg max-h-60 overflow-y-auto"
         >
           {loading && (
             <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">

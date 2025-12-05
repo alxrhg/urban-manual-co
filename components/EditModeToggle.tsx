@@ -16,14 +16,14 @@ export function EditModeToggle({ active, onToggle, className = '', size = 'defau
       onClick={onToggle}
       aria-pressed={active}
       className={`
-        group relative inline-flex items-center gap-2 rounded-xl border
-        transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-gray-500/20 focus:ring-offset-2
-        dark:focus:ring-gray-400/30 dark:focus:ring-offset-gray-900
+        group relative inline-flex items-center gap-2 rounded-full border
+        transition-all duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2
+        active:scale-[0.98]
         ${active
-          ? 'bg-gray-900 text-white border-gray-900 shadow-md shadow-gray-900/25 hover:bg-gray-800 hover:shadow-lg hover:shadow-gray-900/30 dark:bg-gray-100 dark:text-gray-900 dark:border-gray-100 dark:hover:bg-gray-200'
-          : 'bg-white text-gray-700 dark:bg-gray-900 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800'
+          ? 'bg-black text-white border-black hover:bg-gray-900 dark:bg-white dark:text-black dark:border-white dark:hover:bg-gray-200'
+          : 'bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800'
         }
-        ${size === 'compact' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2 text-sm'}
+        ${size === 'compact' ? 'px-3 py-1.5 text-xs' : 'px-4 py-2.5 text-sm'}
         ${className}
       `}
     >
