@@ -218,10 +218,10 @@ export default function TripHeader({
         </div>
       )}
 
-      {/* Content Tabs - Matching /trips tab style */}
+      {/* Content Tabs - Pill style with dark bg for active */}
       <div className="mb-4">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
+          <div className="flex gap-2 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
             {[
               { key: 'itinerary', label: 'Itinerary', count: 0 },
               { key: 'flights', label: 'Flights', count: flightCount },
@@ -233,10 +233,9 @@ export default function TripHeader({
                 onClick={() => onContentTabChange(key as typeof activeContentTab)}
                 className={`
                   transition-all flex items-center gap-1.5 whitespace-nowrap
-                  px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
-                  min-h-[40px] sm:min-h-0
+                  px-3 py-2 rounded-full
                   ${activeContentTab === key
-                    ? 'font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
+                    ? 'font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                     : 'font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                   }
                 `}
@@ -245,7 +244,7 @@ export default function TripHeader({
                   <span className={`
                     w-4 h-4 rounded-full text-[10px] flex items-center justify-center
                     ${activeContentTab === key
-                      ? 'bg-gray-200 dark:bg-gray-700'
+                      ? 'bg-white/20 dark:bg-gray-900/20'
                       : 'bg-gray-100 dark:bg-gray-800'
                     }
                   `}>
@@ -270,19 +269,19 @@ export default function TripHeader({
         </div>
       </div>
 
-      {/* Day Tabs Row (only for itinerary tab) */}
+      {/* Day Tabs Row - Underline style (only for itinerary tab) */}
       {days.length > 0 && activeContentTab === 'itinerary' && (
-        <div className="flex items-center justify-between">
-          {/* Day Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mx-1 px-1">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800">
+          {/* Day Tabs with underline */}
+          <div className="flex items-center gap-4 overflow-x-auto scrollbar-hide -mx-1 px-1">
             {days.map((day) => (
               <button
                 key={day.dayNumber}
                 onClick={() => onSelectDay?.(day.dayNumber)}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors whitespace-nowrap min-h-[32px] ${
+                className={`pb-2 text-xs font-medium transition-colors whitespace-nowrap ${
                   day.dayNumber === selectedDayNumber
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300'
+                    ? 'text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white -mb-[1px]'
+                    : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                 }`}
               >
                 Day {day.dayNumber}
@@ -293,9 +292,9 @@ export default function TripHeader({
           {/* Edit Button */}
           <button
             onClick={onEditClick}
-            className={`flex items-center gap-1.5 text-xs font-medium transition-colors flex-shrink-0 ${
+            className={`flex items-center gap-1.5 text-xs font-medium transition-colors flex-shrink-0 pb-2 ${
               isEditMode
-                ? 'text-blue-600 dark:text-blue-400'
+                ? 'text-gray-900 dark:text-white'
                 : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
