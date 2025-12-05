@@ -218,6 +218,7 @@ export default function ItineraryViewRedesign({
                   hotelHasPool={nightStayHotel?.parsedNotes?.tags?.includes('pool')}
                   hotelHasSpa={nightStayHotel?.parsedNotes?.tags?.includes('spa')}
                   hotelHasGym={nightStayHotel?.parsedNotes?.tags?.includes('gym')}
+                  locationName={item.title || item.destination?.name}
                   onAddActivity={
                     onAddActivity
                       ? (type) => onAddActivity(selectedDay.dayNumber, type)

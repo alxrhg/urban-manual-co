@@ -11,6 +11,8 @@ import {
   Coffee,
   Ticket,
   ChevronRight,
+  Clock,
+  ExternalLink,
 } from 'lucide-react';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import type { ItineraryItemNotes } from '@/types/trip';
@@ -23,8 +25,76 @@ interface ItineraryCardProps {
   className?: string;
 }
 
+// Color scheme for different item types (left border accent)
+const typeColors: Record<string, { border: string; bg: string; text: string }> = {
+  flight: {
+    border: 'border-l-blue-500',
+    bg: 'bg-blue-50 dark:bg-blue-900/20',
+    text: 'text-blue-600 dark:text-blue-400',
+  },
+  hotel: {
+    border: 'border-l-purple-500',
+    bg: 'bg-purple-50 dark:bg-purple-900/20',
+    text: 'text-purple-600 dark:text-purple-400',
+  },
+  restaurant: {
+    border: 'border-l-amber-500',
+    bg: 'bg-amber-50 dark:bg-amber-900/20',
+    text: 'text-amber-600 dark:text-amber-400',
+  },
+  bar: {
+    border: 'border-l-amber-500',
+    bg: 'bg-amber-50 dark:bg-amber-900/20',
+    text: 'text-amber-600 dark:text-amber-400',
+  },
+  cafe: {
+    border: 'border-l-amber-500',
+    bg: 'bg-amber-50 dark:bg-amber-900/20',
+    text: 'text-amber-600 dark:text-amber-400',
+  },
+  event: {
+    border: 'border-l-pink-500',
+    bg: 'bg-pink-50 dark:bg-pink-900/20',
+    text: 'text-pink-600 dark:text-pink-400',
+  },
+  attraction: {
+    border: 'border-l-emerald-500',
+    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+    text: 'text-emerald-600 dark:text-emerald-400',
+  },
+  activity: {
+    border: 'border-l-teal-500',
+    bg: 'bg-teal-50 dark:bg-teal-900/20',
+    text: 'text-teal-600 dark:text-teal-400',
+  },
+  place: {
+    border: 'border-l-stone-400',
+    bg: 'bg-stone-50 dark:bg-gray-800',
+    text: 'text-stone-600 dark:text-gray-400',
+  },
+};
+
+// Get type color scheme, with fallback
+function getTypeColors(itemType: string, category?: string) {
+  // Check category first (for destinations)
+  if (category && typeColors[category]) {
+    return typeColors[category];
+  }
+  return typeColors[itemType] || typeColors.place;
+}
+
+// Format time for display
+function formatTime(timeStr?: string | null): string | null {
+  if (!timeStr) return null;
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  if (isNaN(hours)) return timeStr;
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const displayHours = hours % 12 || 12;
+  return `${displayHours}:${minutes?.toString().padStart(2, '0')} ${period}`;
+}
+
 /**
- * ItineraryCard - Full visual card with image
+ * ItineraryCard - Unified visual card with color-coded left border
  * Used for: flights, hotels, restaurants, attractions, bars, events
  */
 export default function ItineraryCard({
@@ -135,6 +205,7 @@ function FlightCard({
   className,
 }: ItineraryCardProps & { onUpdateNotes?: (itemId: string, notes: Record<string, unknown>) => void }) {
   const notes = item.parsedNotes;
+  const colors = getTypeColors('flight');
 
   // Parse airport codes
   const parseAirport = (value?: string) => {
@@ -162,15 +233,19 @@ function FlightCard({
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
-        ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
+        rounded-2xl bg-white dark:bg-gray-900/80 border-l-4 border border-t border-r border-b overflow-hidden cursor-pointer transition-all
+        ${colors.border}
+        ${isActive
+          ? 'border-t-stone-900 border-r-stone-900 border-b-stone-900 dark:border-t-white dark:border-r-white dark:border-b-white ring-1 ring-stone-900/10 dark:ring-white/10'
+          : 'border-t-stone-200 border-r-stone-200 border-b-stone-200 dark:border-t-gray-800 dark:border-r-gray-800 dark:border-b-gray-800 hover:border-t-stone-300 hover:border-r-stone-300 hover:border-b-stone-300 dark:hover:border-t-gray-700 dark:hover:border-r-gray-700 dark:hover:border-b-gray-700'
+        }
         ${className}
       `}
     >
       {/* Flight Header */}
       <div className="px-4 pt-4 pb-3">
-        <div className="flex items-center gap-2 text-stone-500 dark:text-gray-400 text-sm mb-4">
-          <Plane className="w-4 h-4" />
+        <div className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide mb-4 ${colors.text}`}>
+          <Plane className="w-3.5 h-3.5" />
           <span>Flight to {destination.name || destination.code}</span>
         </div>
 
@@ -184,22 +259,22 @@ function FlightCard({
             <div className="text-xs text-stone-500 mt-1">
               {origin.name || 'Departure'}
             </div>
-            <div className="text-sm font-medium text-stone-900 dark:text-white mt-1">
+            <div className="text-sm font-semibold text-stone-900 dark:text-white mt-1">
               {notes?.departureTime || '--:--'}
             </div>
           </div>
 
           {/* Flight Path */}
           <div className="flex-1 flex flex-col items-center px-4">
-            <div className="text-xs text-stone-500 mb-1">{duration}</div>
+            <div className="text-xs text-stone-500 dark:text-gray-400 mb-1">{duration}</div>
             <div className="w-full flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600" />
-              <div className="flex-1 h-px bg-stone-200 dark:bg-gray-700 relative">
-                <Plane className="w-4 h-4 text-stone-400 dark:text-gray-500 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+              <div className="w-2 h-2 rounded-full bg-blue-400" />
+              <div className="flex-1 h-px bg-gradient-to-r from-blue-300 to-blue-400 dark:from-blue-600 dark:to-blue-500 relative">
+                <Plane className="w-4 h-4 text-blue-500 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
               </div>
-              <div className="w-2 h-2 rounded-full bg-stone-300 dark:bg-gray-600" />
+              <div className="w-2 h-2 rounded-full bg-blue-400" />
             </div>
-            <div className="px-2 py-0.5 bg-stone-100 dark:bg-gray-800 rounded text-xs text-stone-500 dark:text-gray-400 mt-2">
+            <div className="px-2 py-0.5 bg-blue-50 dark:bg-blue-900/30 rounded text-xs text-blue-600 dark:text-blue-400 font-medium mt-2">
               {flightNumber}
             </div>
           </div>
@@ -212,7 +287,7 @@ function FlightCard({
             <div className="text-xs text-stone-500 mt-1">
               {destination.name || 'Arrival'}
             </div>
-            <div className="text-sm font-medium text-stone-900 dark:text-white mt-1">
+            <div className="text-sm font-semibold text-stone-900 dark:text-white mt-1">
               {notes?.arrivalTime || '--:--'}
             </div>
           </div>
@@ -220,30 +295,28 @@ function FlightCard({
       </div>
 
       {/* Footer with editable details */}
-      <div className="px-4 py-3 bg-stone-50 dark:bg-gray-900/50 border-t border-stone-100 dark:border-gray-800 flex items-center justify-between">
-        <div className="flex items-center gap-4 text-xs text-stone-500 font-mono">
+      <div className="px-4 py-3 bg-blue-50/50 dark:bg-blue-900/10 border-t border-blue-100 dark:border-blue-900/30 flex items-center justify-between">
+        <div className="flex items-center gap-4 text-xs text-stone-600 dark:text-gray-400 font-mono">
           <InlineEditField
-            label="TERMINAL"
+            label="Terminal:"
             value={notes?.terminal || ''}
             placeholder="T1"
             onSave={(v) => handleUpdateField('terminal', v)}
           />
           <InlineEditField
-            label="GATE"
+            label="Gate:"
             value={notes?.gate || ''}
             placeholder="A1"
             onSave={(v) => handleUpdateField('gate', v)}
           />
           <InlineEditField
-            label="SEAT"
+            label="Seat:"
             value={notes?.seatNumber || ''}
             placeholder="1A"
             onSave={(v) => handleUpdateField('seatNumber', v)}
           />
         </div>
-        <button className="text-xs text-stone-500 hover:text-stone-900 dark:hover:text-white transition-colors">
-          Details
-        </button>
+        <ChevronRight className="w-4 h-4 text-stone-400" />
       </div>
     </div>
   );
@@ -260,6 +333,7 @@ function HotelCard({
   className,
 }: ItineraryCardProps) {
   const notes = item.parsedNotes;
+  const colors = getTypeColors('hotel');
   const image = item.destination?.image || item.parsedNotes?.image;
   const checkInTime = notes?.checkInTime || item.time;
   const nights = notes?.checkInDate && notes?.checkOutDate
@@ -270,18 +344,19 @@ function HotelCard({
     <button
       onClick={onClick}
       className={`
-        w-full text-left rounded-2xl overflow-hidden transition-all
-        bg-white dark:bg-gray-900 border
+        w-full text-left rounded-2xl overflow-hidden transition-all border-l-4
+        bg-white dark:bg-gray-900 border border-t border-r border-b
+        ${colors.border}
         ${isActive
-          ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10'
-          : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'
+          ? 'border-t-stone-900 border-r-stone-900 border-b-stone-900 dark:border-t-white dark:border-r-white dark:border-b-white ring-1 ring-stone-900/10 dark:ring-white/10'
+          : 'border-t-stone-200 border-r-stone-200 border-b-stone-200 dark:border-t-gray-800 dark:border-r-gray-800 dark:border-b-gray-800 hover:border-t-stone-300 hover:border-r-stone-300 hover:border-b-stone-300 dark:hover:border-t-gray-700 dark:hover:border-r-gray-700 dark:hover:border-b-gray-700'
         }
         ${className}
       `}
     >
       {/* Image */}
       {image && (
-        <div className="relative h-32 w-full">
+        <div className="relative h-28 w-full">
           <Image
             src={image}
             alt={item.title || 'Hotel'}
@@ -292,11 +367,11 @@ function HotelCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           {/* Badges */}
           <div className="absolute bottom-3 left-4 flex items-center gap-1.5">
-            <span className="px-2 py-0.5 rounded-full bg-amber-500/80 text-white text-xs font-medium">
+            <span className="px-2 py-0.5 rounded-full bg-purple-500/90 text-white text-xs font-medium">
               {nights} {nights === 1 ? 'night' : 'nights'}
             </span>
             {notes?.breakfastIncluded && (
-              <span className="px-2 py-0.5 rounded-full bg-amber-500/80 text-white text-xs font-medium">
+              <span className="px-2 py-0.5 rounded-full bg-purple-500/90 text-white text-xs font-medium">
                 Breakfast
               </span>
             )}
@@ -306,21 +381,22 @@ function HotelCard({
 
       {/* Content */}
       <div className="p-4">
-        <div className="flex items-start gap-3">
-          {!image && (
-            <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              <Building2 className="w-5 h-5 text-stone-500 dark:text-gray-400" />
-            </div>
-          )}
+        {/* Type Label */}
+        <div className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide mb-1.5 ${colors.text}`}>
+          <Building2 className="w-3.5 h-3.5" />
+          <span>Hotel</span>
+        </div>
+
+        <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-stone-900 dark:text-white truncate">
+            <h4 className="font-semibold text-stone-900 dark:text-white text-base leading-tight">
               {item.title || 'Hotel'}
             </h4>
-            <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
-              {checkInTime ? `Check-in ${checkInTime}` : 'Check-in time not set'}
+            <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+              {checkInTime ? `Check-in ${formatTime(checkInTime)}` : 'Check-in time not set'}
             </p>
           </div>
-          <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
+          <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0 mt-1" />
         </div>
       </div>
     </button>
@@ -338,21 +414,33 @@ function EventCard({
   className,
 }: ItineraryCardProps) {
   const notes = item.parsedNotes;
+  const colors = getTypeColors('event');
   const image = item.destination?.image || item.parsedNotes?.image;
+  const time = notes?.eventTime || item.time;
 
   return (
     <button
       onClick={onClick}
       className={`
-        w-full text-left rounded-2xl overflow-hidden transition-all
-        bg-white dark:bg-gray-900 border
+        w-full text-left rounded-2xl overflow-hidden transition-all border-l-4
+        bg-white dark:bg-gray-900 border border-t border-r border-b
+        ${colors.border}
         ${isActive
-          ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10'
-          : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'
+          ? 'border-t-stone-900 border-r-stone-900 border-b-stone-900 dark:border-t-white dark:border-r-white dark:border-b-white ring-1 ring-stone-900/10 dark:ring-white/10'
+          : 'border-t-stone-200 border-r-stone-200 border-b-stone-200 dark:border-t-gray-800 dark:border-r-gray-800 dark:border-b-gray-800 hover:border-t-stone-300 hover:border-r-stone-300 hover:border-b-stone-300 dark:hover:border-t-gray-700 dark:hover:border-r-gray-700 dark:hover:border-b-gray-700'
         }
         ${className}
       `}
     >
+      {/* Time badge */}
+      {time && (
+        <div className="absolute top-3 right-3 z-10">
+          <span className="text-sm font-medium text-stone-700 dark:text-gray-300 bg-white/90 dark:bg-gray-900/90 px-2 py-0.5 rounded-md backdrop-blur-sm">
+            {formatTime(time)}
+          </span>
+        </div>
+      )}
+
       {/* Image */}
       {image && (
         <div className="relative h-28 w-full">
@@ -366,7 +454,7 @@ function EventCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           {notes?.eventType && (
             <div className="absolute bottom-3 left-4">
-              <span className="px-2 py-0.5 rounded-full bg-stone-800/80 text-white text-xs font-medium capitalize">
+              <span className="px-2 py-0.5 rounded-full bg-pink-500/90 text-white text-xs font-medium capitalize">
                 {notes.eventType}
               </span>
             </div>
@@ -376,22 +464,24 @@ function EventCard({
 
       {/* Content */}
       <div className="p-4">
-        <div className="flex items-start gap-3">
-          {!image && (
-            <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              <Ticket className="w-5 h-5 text-stone-500 dark:text-gray-400" />
-            </div>
-          )}
+        {/* Type Label */}
+        <div className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide mb-1.5 ${colors.text}`}>
+          <Ticket className="w-3.5 h-3.5" />
+          <span>Event</span>
+        </div>
+
+        <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-stone-900 dark:text-white truncate">
+            <h4 className="font-semibold text-stone-900 dark:text-white text-base leading-tight">
               {item.title || 'Event'}
             </h4>
-            <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
-              {notes?.venue && `${notes.venue} · `}
-              {notes?.eventTime || item.time || 'Time not set'}
-            </p>
+            {notes?.venue && (
+              <p className="text-xs text-stone-500 dark:text-gray-400 mt-1">
+                {notes.venue}
+              </p>
+            )}
           </div>
-          <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0" />
+          <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0 mt-1" />
         </div>
       </div>
     </button>
@@ -408,17 +498,37 @@ function PlaceCard({
   onClick,
   className,
 }: ItineraryCardProps) {
-  const image = item.destination?.image || item.destination?.image_thumbnail;
-  const category = item.parsedNotes?.category || item.destination?.category;
+  const image = item.destination?.image || item.destination?.image_thumbnail || item.parsedNotes?.image;
+  const category = item.parsedNotes?.category || item.destination?.category || 'place';
   const time = item.time;
+  const itemType = item.parsedNotes?.type || category;
+  const colors = getTypeColors(itemType, category);
 
-  // Format time display
-  const formatTime = (timeStr?: string | null) => {
-    if (!timeStr) return null;
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const period = hours >= 12 ? 'PM' : 'AM';
-    const displayHours = hours % 12 || 12;
-    return { time: `${displayHours}:${minutes?.toString().padStart(2, '0')}`, period };
+  // Get category display label
+  const getCategoryLabel = (cat: string): string => {
+    const labels: Record<string, string> = {
+      restaurant: 'Restaurant',
+      bar: 'Bar',
+      cafe: 'Cafe',
+      attraction: 'Attraction',
+      hotel: 'Hotel',
+      place: 'Place',
+    };
+    return labels[cat] || cat.replace(/_/g, ' ');
+  };
+
+  // Get category icon
+  const getCategoryIcon = (cat: string) => {
+    switch (cat) {
+      case 'restaurant':
+        return <UtensilsCrossed className="w-3.5 h-3.5" />;
+      case 'bar':
+        return <Wine className="w-3.5 h-3.5" />;
+      case 'cafe':
+        return <Coffee className="w-3.5 h-3.5" />;
+      default:
+        return <MapPin className="w-3.5 h-3.5" />;
+    }
   };
 
   const formattedTime = formatTime(time);
@@ -427,13 +537,27 @@ function PlaceCard({
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
-        ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
+        relative rounded-2xl bg-white dark:bg-gray-900/80 border-l-4 border border-t border-r border-b overflow-hidden cursor-pointer transition-all
+        ${colors.border}
+        ${isActive
+          ? 'border-t-stone-900 border-r-stone-900 border-b-stone-900 dark:border-t-white dark:border-r-white dark:border-b-white ring-1 ring-stone-900/10 dark:ring-white/10'
+          : 'border-t-stone-200 border-r-stone-200 border-b-stone-200 dark:border-t-gray-800 dark:border-r-gray-800 dark:border-b-gray-800 hover:border-t-stone-300 hover:border-r-stone-300 hover:border-b-stone-300 dark:hover:border-t-gray-700 dark:hover:border-r-gray-700 dark:hover:border-b-gray-700'
+        }
         ${className}
       `}
     >
+      {/* Time badge */}
+      {formattedTime && (
+        <div className="absolute top-3 right-3 z-10">
+          <span className="text-sm font-medium text-stone-700 dark:text-gray-300 bg-white/90 dark:bg-gray-900/90 px-2 py-0.5 rounded-md backdrop-blur-sm">
+            {formattedTime}
+          </span>
+        </div>
+      )}
+
+      {/* Image */}
       {image && (
-        <div className="relative h-32 w-full">
+        <div className="relative h-28 w-full">
           <Image
             src={image}
             alt={item.title || 'Place'}
@@ -441,31 +565,29 @@ function PlaceCard({
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         </div>
       )}
 
+      {/* Content */}
       <div className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-stone-500 flex-shrink-0" />
-              <h4 className="font-semibold text-stone-900 dark:text-white truncate">
-                {item.title || 'Place'}
-              </h4>
-            </div>
-            {category && (
-              <p className="text-xs text-stone-500 capitalize mt-1 ml-6">
-                {category.replace(/_/g, ' ')}
-              </p>
-            )}
-          </div>
-          {formattedTime && (
-            <div className="text-sm text-stone-600 dark:text-gray-400 flex-shrink-0">
-              {formattedTime.time} {formattedTime.period}
-            </div>
-          )}
+        {/* Type Label */}
+        <div className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide mb-1.5 ${colors.text}`}>
+          {getCategoryIcon(category)}
+          <span>{getCategoryLabel(category)}</span>
         </div>
+
+        {/* Title */}
+        <h4 className="font-semibold text-stone-900 dark:text-white text-base leading-tight mb-1">
+          {item.title || 'Place'}
+        </h4>
+
+        {/* Subtitle / Address */}
+        {(item.destination?.micro_description || item.parsedNotes?.address) && (
+          <p className="text-xs text-stone-500 dark:text-gray-400 line-clamp-1">
+            {item.destination?.micro_description || item.parsedNotes?.address}
+          </p>
+        )}
       </div>
     </div>
   );

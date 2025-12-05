@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles, Coffee, MapPin, Camera, ShoppingBag, Waves, ChevronDown, ChevronUp } from 'lucide-react';
 import type { ActivityType } from '@/types/trip';
 
 interface GapSuggestionProps {
@@ -10,9 +10,11 @@ interface GapSuggestionProps {
   hotelHasPool?: boolean;
   hotelHasSpa?: boolean;
   hotelHasGym?: boolean;
+  locationName?: string;
   suggestions?: SuggestionItem[];
   onAddActivity?: (activityType: ActivityType) => void;
   onAddCustom?: () => void;
+  onGetAISuggestions?: () => void;
   className?: string;
 }
 
@@ -23,9 +25,16 @@ interface SuggestionItem {
   sublabel?: string;
 }
 
-// Activity suggestions based on time of day and available amenities
-const getDefaultSuggestions = (
-  gapMinutes: number,
+// Quick suggestion chips for common activities
+const quickSuggestions: SuggestionItem[] = [
+  { type: 'cafe' as ActivityType, emoji: '☕', label: 'Nearby cafes' },
+  { type: 'attraction' as ActivityType, emoji: '🏛️', label: 'Museums' },
+  { type: 'shopping-time' as ActivityType, emoji: '🛍️', label: 'Shopping' },
+  { type: 'photo-walk' as ActivityType, emoji: '📸', label: 'Photo spots' },
+];
+
+// Activity suggestions based on available amenities
+const getHotelSuggestions = (
   hotelName?: string,
   hotelHasPool?: boolean,
   hotelHasSpa?: boolean,
@@ -33,74 +42,25 @@ const getDefaultSuggestions = (
 ): SuggestionItem[] => {
   const suggestions: SuggestionItem[] = [];
 
-  // Hotel-based suggestions (if hotel is linked)
   if (hotelName) {
-    if (hotelHasPool && gapMinutes >= 60) {
-      suggestions.push({
-        type: 'pool',
-        emoji: '🏊',
-        label: 'Pool time',
-        sublabel: hotelName,
-      });
+    if (hotelHasPool) {
+      suggestions.push({ type: 'pool' as ActivityType, emoji: '🏊', label: 'Pool time', sublabel: hotelName });
     }
-    if (hotelHasSpa && gapMinutes >= 90) {
-      suggestions.push({
-        type: 'spa',
-        emoji: '💆',
-        label: 'Spa session',
-        sublabel: hotelName,
-      });
+    if (hotelHasSpa) {
+      suggestions.push({ type: 'spa' as ActivityType, emoji: '💆', label: 'Spa session', sublabel: hotelName });
     }
-    if (hotelHasGym && gapMinutes >= 45) {
-      suggestions.push({
-        type: 'gym',
-        emoji: '🏋️',
-        label: 'Workout',
-        sublabel: hotelName,
-      });
+    if (hotelHasGym) {
+      suggestions.push({ type: 'gym' as ActivityType, emoji: '🏋️', label: 'Workout', sublabel: hotelName });
     }
-    if (gapMinutes >= 60) {
-      suggestions.push({
-        type: 'nap',
-        emoji: '😴',
-        label: 'Rest at hotel',
-        sublabel: hotelName,
-      });
-    }
-  }
-
-  // General suggestions
-  if (gapMinutes >= 120) {
-    suggestions.push({
-      type: 'free-time',
-      emoji: '☀️',
-      label: 'Free time',
-      sublabel: 'Explore the area',
-    });
-  }
-
-  if (gapMinutes >= 30) {
-    suggestions.push({
-      type: 'photo-walk',
-      emoji: '📸',
-      label: 'Photo walk',
-    });
-  }
-
-  if (gapMinutes >= 45) {
-    suggestions.push({
-      type: 'shopping-time',
-      emoji: '🛍️',
-      label: 'Shopping',
-    });
+    suggestions.push({ type: 'nap' as ActivityType, emoji: '😴', label: 'Rest at hotel', sublabel: hotelName });
   }
 
   return suggestions;
 };
 
 /**
- * GapSuggestion - Shows suggestions for free time gaps > 2 hours
- * Displays: "☀️ 5h free · Pool at hotel" style with quick add options
+ * GapSuggestion - Prominent free time opportunity card
+ * Shows free time as an opportunity with quick suggestions
  */
 export default function GapSuggestion({
   gapMinutes,
@@ -108,12 +68,14 @@ export default function GapSuggestion({
   hotelHasPool,
   hotelHasSpa,
   hotelHasGym,
+  locationName,
   suggestions: customSuggestions,
   onAddActivity,
   onAddCustom,
+  onGetAISuggestions,
   className = '',
 }: GapSuggestionProps) {
-  const [isExpanded, setIsExpanded] = React.useState(false);
+  const [isExpanded, setIsExpanded] = React.useState(true);
 
   // Only show for gaps >= 2 hours
   if (gapMinutes < 120) return null;
@@ -127,85 +89,88 @@ export default function GapSuggestion({
     return `${h}h ${m}m`;
   };
 
-  const suggestions = customSuggestions || getDefaultSuggestions(
-    gapMinutes,
-    hotelName,
-    hotelHasPool,
-    hotelHasSpa,
-    hotelHasGym
-  );
-
-  // Get primary suggestion for collapsed view
-  const primarySuggestion = suggestions[0];
+  const hotelSuggestions = getHotelSuggestions(hotelName, hotelHasPool, hotelHasSpa, hotelHasGym);
+  const suggestions = customSuggestions || [...quickSuggestions, ...hotelSuggestions];
 
   return (
-    <div className={`py-3 ${className}`}>
-      {/* Collapsed View */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-center gap-3 group"
-      >
-        {/* Dashed line left */}
-        <div className="flex-1 border-t border-dashed border-stone-200 dark:border-gray-700" />
-
-        {/* Gap indicator */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-900/20 border border-amber-200/50 dark:border-amber-800/50 transition-all group-hover:bg-amber-100 dark:group-hover:bg-amber-900/30">
-          <span className="text-sm">{primarySuggestion?.emoji || '☀️'}</span>
-          <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
-            {formatGap(gapMinutes)} free
-          </span>
-          {primarySuggestion && (
-            <>
-              <span className="text-amber-400 dark:text-amber-600">·</span>
-              <span className="text-xs text-amber-600 dark:text-amber-400">
-                {primarySuggestion.label}
-                {primarySuggestion.sublabel && ` at ${primarySuggestion.sublabel}`}
-              </span>
-            </>
-          )}
-          <Plus className={`w-3 h-3 text-amber-500 transition-transform ${isExpanded ? 'rotate-45' : ''}`} />
+    <div className={`my-4 ${className}`}>
+      {/* Main Free Time Card */}
+      <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200 dark:border-amber-800/50 overflow-hidden">
+        {/* Header */}
+        <div
+          className="flex items-center justify-between p-4 cursor-pointer"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">☀️</span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                  Free Time
+                </span>
+                <span className="text-base font-bold text-amber-900 dark:text-amber-300">
+                  {formatGap(gapMinutes)}
+                </span>
+              </div>
+              {locationName && (
+                <p className="text-xs text-amber-600 dark:text-amber-500 mt-0.5">
+                  You're at {locationName}. Here are some ideas:
+                </p>
+              )}
+            </div>
+          </div>
+          <button className="p-1 text-amber-500 hover:text-amber-700 dark:hover:text-amber-300">
+            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
         </div>
 
-        {/* Dashed line right */}
-        <div className="flex-1 border-t border-dashed border-stone-200 dark:border-gray-700" />
-      </button>
+        {/* Expanded Content */}
+        {isExpanded && (
+          <div className="px-4 pb-4 space-y-3">
+            {/* Quick Suggestion Chips */}
+            <div className="flex flex-wrap gap-2">
+              {suggestions.slice(0, 6).map((suggestion, index) => (
+                <button
+                  key={`${suggestion.type}-${index}`}
+                  onClick={() => {
+                    if (suggestion.type === 'custom') {
+                      onAddCustom?.();
+                    } else {
+                      onAddActivity?.(suggestion.type as ActivityType);
+                    }
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-700 hover:border-amber-300 dark:hover:border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-all text-sm shadow-sm"
+                >
+                  <span>{suggestion.emoji}</span>
+                  <span className="text-amber-800 dark:text-amber-200 font-medium">{suggestion.label}</span>
+                </button>
+              ))}
+            </div>
 
-      {/* Expanded View - Suggestions */}
-      {isExpanded && suggestions.length > 0 && (
-        <div className="mt-3 flex flex-wrap justify-center gap-2">
-          {suggestions.map((suggestion, index) => (
-            <button
-              key={`${suggestion.type}-${index}`}
-              onClick={() => {
-                if (suggestion.type === 'custom') {
-                  onAddCustom?.();
-                } else {
-                  onAddActivity?.(suggestion.type as ActivityType);
-                }
-                setIsExpanded(false);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-stone-200 dark:border-gray-700 hover:border-stone-300 dark:hover:border-gray-600 transition-colors text-xs"
-            >
-              <span>{suggestion.emoji}</span>
-              <span className="text-stone-700 dark:text-gray-300">{suggestion.label}</span>
-            </button>
-          ))}
+            {/* AI Suggestions Button */}
+            {onGetAISuggestions && (
+              <button
+                onClick={onGetAISuggestions}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-800 dark:bg-amber-700 text-white hover:bg-amber-900 dark:hover:bg-amber-600 transition-colors font-medium text-sm"
+              >
+                <Sparkles className="w-4 h-4" />
+                Get AI recommendations
+              </button>
+            )}
 
-          {/* Custom option */}
-          {onAddCustom && (
-            <button
-              onClick={() => {
-                onAddCustom();
-                setIsExpanded(false);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-dashed border-stone-300 dark:border-gray-600 hover:border-stone-400 dark:hover:border-gray-500 transition-colors text-xs text-stone-500 dark:text-gray-400"
-            >
-              <Plus className="w-3 h-3" />
-              <span>Custom</span>
-            </button>
-          )}
-        </div>
-      )}
+            {/* Add Custom */}
+            {onAddCustom && !onGetAISuggestions && (
+              <button
+                onClick={onAddCustom}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors font-medium text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                Add custom activity
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

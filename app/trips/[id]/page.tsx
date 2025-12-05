@@ -99,17 +99,24 @@ export default function TripPage() {
     hasAutoFixed.current = true;
   }, [loading, trip?.start_date, trip?.end_date, days, moveItemToDay]);
 
-  // Calculate flight and hotel counts
-  const { flightCount, hotelCount } = useMemo(() => {
+  // Calculate flight, hotel, and dining counts
+  const { flightCount, hotelCount, diningCount } = useMemo(() => {
     let flights = 0;
     let hotels = 0;
+    let dining = 0;
     for (const day of days) {
       for (const item of day.items) {
-        if (item.parsedNotes?.type === 'flight') flights++;
-        if (item.parsedNotes?.type === 'hotel') hotels++;
+        const itemType = item.parsedNotes?.type;
+        const category = item.parsedNotes?.category || item.destination?.category;
+        if (itemType === 'flight') flights++;
+        if (itemType === 'hotel') hotels++;
+        if (['restaurant', 'bar', 'cafe'].includes(itemType || '') ||
+            ['restaurant', 'bar', 'cafe'].includes(category || '')) {
+          dining++;
+        }
       }
     }
-    return { flightCount: flights, hotelCount: hotels };
+    return { flightCount: flights, hotelCount: hotels, diningCount: dining };
   }, [days]);
 
   // Get all flights for flights tab
@@ -294,6 +301,7 @@ export default function TripPage() {
           onContentTabChange={setActiveContentTab}
           flightCount={flightCount}
           hotelCount={hotelCount}
+          diningCount={diningCount}
           days={days}
           selectedDayNumber={selectedDayNumber}
           onSelectDay={setSelectedDayNumber}
