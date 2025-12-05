@@ -2,18 +2,13 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Loader2, Plane, Search, X } from 'lucide-react';
-import { formatTripDateRange, calculateTripDays } from '@/lib/utils';
 import { formatDestinationsFromField } from '@/types/trip';
-import { TripCoverImage } from '@/components/trips/TripCoverImage';
-import { TripStats } from '@/components/trips/TripStats';
+import { CalendarTripCard, type CalendarActivity } from '@/components/trips/CalendarTripCard';
 import {
   getTripState,
   getTimeLabel,
-  getActionCTA,
-  getTotalItems,
   type TripStats as TripStatsType,
   type TripState,
 } from '@/lib/trip';
@@ -23,16 +18,21 @@ export interface TripWithStats extends Trip {
   stats: TripStatsType;
 }
 
+// Re-export activity type for server component
+export type TripActivity = CalendarActivity;
+
 type FilterTab = 'all' | 'upcoming' | 'past';
 
 interface TripsPageClientProps {
   initialTrips: TripWithStats[];
+  activitiesByTrip: Record<string, TripActivity[]>;
   userId: string;
 }
 
-export default function TripsPageClient({ initialTrips, userId }: TripsPageClientProps) {
+export default function TripsPageClient({ initialTrips, activitiesByTrip, userId }: TripsPageClientProps) {
   const router = useRouter();
   const [trips, setTrips] = useState<TripWithStats[]>(initialTrips);
+  const [activities] = useState<Record<string, TripActivity[]>>(activitiesByTrip);
   const [creating, setCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
@@ -124,37 +124,38 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
     }
   };
 
+  // Calculate summary counts
+  const upcomingCount = tabCounts.upcoming;
+  const pastCount = tabCounts.past;
+
   return (
     <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950">
-      <div className="max-w-5xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <h1 className="text-xl sm:text-2xl font-medium text-gray-900 dark:text-white">
+      <div className="max-w-3xl mx-auto">
+        {/* Header - redesigned with title left, button right */}
+        <div className="flex items-center justify-between mb-6 sm:mb-8">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-white">
               Trips
             </h1>
-
-            <div className="hidden sm:block flex-1" />
-
             {trips.length > 0 && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">
-                {trips.length} trip{trips.length !== 1 ? 's' : ''}
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                {upcomingCount} upcoming{pastCount > 0 ? ` · ${pastCount} past` : ''}
               </p>
             )}
-
-            <button
-              onClick={createTrip}
-              disabled={creating}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-50 min-h-[44px]"
-            >
-              {creating ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4" />
-              )}
-              New Trip
-            </button>
           </div>
+
+          <button
+            onClick={createTrip}
+            disabled={creating}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50 min-h-[44px]"
+          >
+            {creating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            New Trip
+          </button>
         </div>
 
         {/* Tab Navigation */}
@@ -280,104 +281,32 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
             </button>
           </div>
         ) : (
-          /* Trip List */
-          <div className="space-y-3">
-            {filteredTrips.map(({ trip, state }) => (
-              <TripCard key={trip.id} trip={trip} state={state} />
-            ))}
+          /* Trip List with Calendar Cards */
+          <div className="space-y-4">
+            {filteredTrips.map(({ trip, state }) => {
+              const timeLabel = getTimeLabel(trip.start_date, trip.end_date, state);
+              const tripActivities = activities[trip.id] || [];
+
+              return (
+                <CalendarTripCard
+                  key={trip.id}
+                  trip={{
+                    id: trip.id,
+                    title: trip.title,
+                    emoji: undefined, // emoji field not in current Trip type
+                    start_date: trip.start_date,
+                    end_date: trip.end_date,
+                    stats: trip.stats,
+                  }}
+                  activities={tripActivities}
+                  state={state}
+                  timeLabel={timeLabel}
+                />
+              );
+            })}
           </div>
         )}
       </div>
     </main>
-  );
-}
-
-/**
- * Individual Trip Card Component
- */
-interface TripCardProps {
-  trip: TripWithStats;
-  state: TripState;
-}
-
-function TripCard({ trip, state }: TripCardProps) {
-  const daysCount = calculateTripDays(trip.start_date, trip.end_date);
-  const dateDisplay = formatTripDateRange(trip.start_date, trip.end_date);
-
-  const isPast = state === 'past';
-  const isPlanning = state === 'planning';
-  const totalItems = getTotalItems(trip.stats);
-
-  // Time label (countdown or relative time)
-  const timeLabel = getTimeLabel(trip.start_date, trip.end_date, state);
-
-  // Action CTA for planning state
-  const actionCTA = isPlanning ? getActionCTA(trip.stats) : null;
-
-  // Build meta line: "Dec 14 – 16 · 3 days"
-  const metaParts: string[] = [];
-  if (dateDisplay) metaParts.push(dateDisplay);
-  if (daysCount && daysCount > 0) metaParts.push(`${daysCount} day${daysCount !== 1 ? 's' : ''}`);
-
-  return (
-    <Link
-      href={`/trips/${trip.id}`}
-      className={`
-        group flex gap-4 p-4 rounded-2xl bg-white dark:bg-gray-900
-        border border-gray-200 dark:border-gray-800
-        hover:border-gray-300 dark:hover:border-gray-700
-        hover:shadow-sm hover:scale-[1.01]
-        transition-all duration-200 ease-out cursor-pointer
-        ${isPast ? 'opacity-90' : ''}
-      `}
-    >
-      {/* Cover Image */}
-      <TripCoverImage
-        coverImageUrl={trip.cover_image}
-        title={trip.title}
-        isPast={isPast}
-        className="w-16 h-16 sm:w-20 sm:h-20"
-      />
-
-      {/* Content */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        {/* Title */}
-        <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-          {trip.title}
-        </h3>
-
-        {/* Meta: dates, duration */}
-        {metaParts.length > 0 && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 truncate">
-            {metaParts.join(' · ')}
-          </p>
-        )}
-
-        {/* Stats */}
-        <div className="mt-1">
-          {totalItems > 0 ? (
-            <TripStats stats={trip.stats} />
-          ) : (
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              No plans yet
-            </span>
-          )}
-        </div>
-
-        {/* Time Label or Action CTA */}
-        <div className="mt-auto pt-1 flex items-center justify-end">
-          {actionCTA && !isPast && (
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {actionCTA}
-            </span>
-          )}
-          {timeLabel && !actionCTA && (
-            <span className="text-sm text-gray-400 dark:text-gray-500">
-              {timeLabel}
-            </span>
-          )}
-        </div>
-      </div>
-    </Link>
   );
 }
