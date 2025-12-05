@@ -290,9 +290,9 @@ function HotelCard({
             sizes="(max-width: 768px) 100vw, 400px"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          {/* Nights Badge */}
+          {/* Badges */}
           <div className="absolute bottom-3 left-4 flex items-center gap-1.5">
-            <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium">
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/80 text-white text-xs font-medium">
               {nights} {nights === 1 ? 'night' : 'nights'}
             </span>
             {notes?.breakfastIncluded && (
@@ -408,114 +408,65 @@ function PlaceCard({
   onClick,
   className,
 }: ItineraryCardProps) {
-  const image = item.destination?.image || item.destination?.image_thumbnail || item.parsedNotes?.image;
-  const category = item.parsedNotes?.category || item.destination?.category || '';
+  const image = item.destination?.image || item.destination?.image_thumbnail;
+  const category = item.parsedNotes?.category || item.destination?.category;
   const time = item.time;
 
-  // Get category icon
-  const getCategoryIcon = (cat: string) => {
-    const lowerCat = cat.toLowerCase();
-    if (lowerCat.includes('restaurant') || lowerCat.includes('food')) return UtensilsCrossed;
-    if (lowerCat.includes('bar') || lowerCat.includes('wine')) return Wine;
-    if (lowerCat.includes('cafe') || lowerCat.includes('coffee')) return Coffee;
-    return MapPin;
-  };
-
-  const CategoryIcon = getCategoryIcon(category);
-
-  // Format time
+  // Format time display
   const formatTime = (timeStr?: string | null) => {
     if (!timeStr) return null;
     const [hours, minutes] = timeStr.split(':').map(Number);
     const period = hours >= 12 ? 'PM' : 'AM';
     const displayHours = hours % 12 || 12;
-    return `${displayHours}:${minutes?.toString().padStart(2, '0')} ${period}`;
+    return { time: `${displayHours}:${minutes?.toString().padStart(2, '0')}`, period };
   };
 
   const formattedTime = formatTime(time);
 
-  // Check if this is a "featured" destination (has high rating or Michelin stars)
-  const isFeatured = item.destination?.michelin_stars || (item.destination?.rating && item.destination.rating >= 4.5);
-
   return (
-    <button
+    <div
       onClick={onClick}
       className={`
-        w-full text-left rounded-2xl overflow-hidden transition-all
-        bg-white dark:bg-gray-900 border
-        ${isActive
-          ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10'
-          : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'
-        }
+        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
+        ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
         ${className}
       `}
     >
-      {/* Image */}
       {image && (
-        <div className="relative h-36 w-full">
+        <div className="relative h-32 w-full">
           <Image
             src={image}
             alt={item.title || 'Place'}
             fill
             className="object-cover"
-            sizes="(max-width: 768px) 100vw, 400px"
+            sizes="(max-width: 768px) 100vw, 50vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-
-          {/* Time Badge */}
-          {formattedTime && (
-            <div className="absolute top-3 right-3">
-              <span className="px-2.5 py-1 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm text-xs font-medium text-stone-900 dark:text-white">
-                {formattedTime}
-              </span>
-            </div>
-          )}
-
-          {/* Category & Rating */}
-          <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
-            <span className="px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium capitalize">
-              {category.replace(/_/g, ' ') || 'Place'}
-            </span>
-            {isFeatured && (
-              <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/90 text-white text-xs font-medium">
-                {item.destination?.michelin_stars ? (
-                  <>{'★'.repeat(item.destination.michelin_stars)}</>
-                ) : (
-                  <>★ {item.destination?.rating?.toFixed(1)}</>
-                )}
-              </span>
-            )}
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
         </div>
       )}
 
-      {/* Content */}
       <div className="p-4">
-        <div className="flex items-start gap-3">
-          {!image && (
-            <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              <CategoryIcon className="w-5 h-5 text-stone-500 dark:text-gray-400" />
-            </div>
-          )}
+        <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-stone-900 dark:text-white truncate">
-              {item.title || 'Place'}
-            </h4>
-            {!image && category && (
-              <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5 capitalize">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-stone-500 flex-shrink-0" />
+              <h4 className="font-semibold text-stone-900 dark:text-white truncate">
+                {item.title || 'Place'}
+              </h4>
+            </div>
+            {category && (
+              <p className="text-xs text-stone-500 capitalize mt-1 ml-6">
                 {category.replace(/_/g, ' ')}
-                {formattedTime && ` · ${formattedTime}`}
-              </p>
-            )}
-            {image && item.destination?.neighborhood && (
-              <p className="text-xs text-stone-500 dark:text-gray-400 mt-0.5">
-                {item.destination.neighborhood}
               </p>
             )}
           </div>
-          <ChevronRight className="w-4 h-4 text-stone-400 flex-shrink-0 mt-0.5" />
+          {formattedTime && (
+            <div className="text-sm text-stone-600 dark:text-gray-400 flex-shrink-0">
+              {formattedTime.time} {formattedTime.period}
+            </div>
+          )}
         </div>
       </div>
-    </button>
+    </div>
   );
 }

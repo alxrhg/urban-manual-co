@@ -16,8 +16,8 @@ interface DayHeaderProps {
 }
 
 /**
- * DayHeader - Editorial style day header
- * Shows: "SUNDAY 14" with "Day 1" on right
+ * DayHeader - Date badge style header
+ * Shows: [MAR 15] Day 1 · 5 stops
  */
 export default function DayHeader({
   dayNumber,
@@ -30,10 +30,10 @@ export default function DayHeader({
   className = '',
 }: DayHeaderProps) {
   // Parse date components
-  const getDayOfWeek = (dateStr: string | null | undefined): string => {
+  const getMonth = (dateStr: string | null | undefined): string => {
     if (!dateStr) return '';
     try {
-      return format(parseISO(dateStr), 'EEEE').toUpperCase();
+      return format(parseISO(dateStr), 'MMM').toUpperCase();
     } catch {
       return '';
     }
@@ -48,89 +48,68 @@ export default function DayHeader({
     }
   };
 
-  const getMonthYear = (dateStr: string | null | undefined): string => {
+  const getDayOfWeek = (dateStr: string | null | undefined): string => {
     if (!dateStr) return '';
     try {
-      return format(parseISO(dateStr), 'MMMM yyyy');
+      return format(parseISO(dateStr), 'EEEE');
     } catch {
       return '';
     }
   };
 
-  const dayOfWeek = getDayOfWeek(date);
+  const month = getMonth(date);
   const dayNum = getDayNum(date);
-  const monthYear = getMonthYear(date);
+  const dayOfWeek = getDayOfWeek(date);
 
   return (
-    <div className={`flex items-end justify-between py-4 border-b border-stone-100 dark:border-gray-800 ${className}`}>
-      {/* Left: Date */}
-      <div>
-        {date ? (
-          <>
-            <div className="flex items-baseline gap-2">
-              <span className="text-xs font-medium tracking-widest text-stone-400 dark:text-gray-500">
-                {dayOfWeek}
-              </span>
-              <span className="text-3xl font-bold text-stone-900 dark:text-white tracking-tight">
-                {dayNum}
-              </span>
-            </div>
-            <div className="text-xs text-stone-400 dark:text-gray-500 mt-0.5">
-              {monthYear}
-              {cityName && <span className="ml-2">· {cityName}</span>}
-            </div>
-          </>
-        ) : (
-          <div className="text-xl font-bold text-stone-900 dark:text-white">
-            Day {dayNumber}
-            {cityName && (
-              <span className="text-sm font-normal text-stone-400 dark:text-gray-500 ml-2">
-                {cityName}
-              </span>
-            )}
-          </div>
-        )}
+    <div className={`flex items-center gap-3 mb-6 ${className}`}>
+      {/* Date Badge */}
+      {date && (
+        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-stone-100 dark:bg-gray-900 flex flex-col items-center justify-center">
+          <span className="text-[9px] font-medium text-stone-400 dark:text-gray-500 tracking-wider uppercase">
+            {month}
+          </span>
+          <span className="text-base font-semibold text-stone-900 dark:text-white leading-none">
+            {dayNum}
+          </span>
+        </div>
+      )}
+
+      {/* Day Info */}
+      <div className="flex-1 min-w-0">
+        <h3 className="text-sm font-medium text-stone-900 dark:text-white">
+          Day {dayNumber}
+          {cityName && <span className="text-stone-400 dark:text-gray-500 font-normal"> · {cityName}</span>}
+        </h3>
+        <p className="text-xs text-stone-400 dark:text-gray-500">
+          {dayOfWeek && `${dayOfWeek} · `}
+          {itemCount !== undefined && `${itemCount} ${itemCount === 1 ? 'stop' : 'stops'}`}
+        </p>
       </div>
 
-      {/* Right: Day number & actions */}
-      <div className="flex items-center gap-3">
-        {/* Item count */}
-        {itemCount !== undefined && (
-          <span className="text-xs text-stone-400 dark:text-gray-500">
-            {itemCount} {itemCount === 1 ? 'stop' : 'stops'}
-          </span>
+      {/* Actions */}
+      <div className="flex items-center gap-1">
+        {onOptimize && (
+          <button
+            onClick={onOptimize}
+            disabled={isOptimizing}
+            className="flex-shrink-0 text-xs text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50"
+          >
+            {isOptimizing ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" />
+            )}
+          </button>
         )}
-
-        {/* Day badge */}
-        <span className="px-2.5 py-1 rounded-full bg-stone-100 dark:bg-gray-800 text-xs font-medium text-stone-600 dark:text-gray-400">
-          Day {dayNumber}
-        </span>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1">
-          {onOptimize && (
-            <button
-              onClick={onOptimize}
-              disabled={isOptimizing}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-stone-100 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-              title="Optimize day"
-            >
-              {isOptimizing ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-            </button>
-          )}
-          {onMore && (
-            <button
-              onClick={onMore}
-              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-stone-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </button>
-          )}
-        </div>
+        {onMore && (
+          <button
+            onClick={onMore}
+            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 dark:text-gray-500 dark:hover:text-gray-300 hover:bg-stone-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+        )}
       </div>
     </div>
   );
