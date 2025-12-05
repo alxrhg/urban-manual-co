@@ -25,51 +25,57 @@ interface ItineraryCardProps {
   className?: string;
 }
 
-// Color scheme for different item types (left border accent)
+// Color scheme for different item types - monochromatic with info accent for transport
+// Per design system: only use colors for status (green/yellow/red/blue for info)
 const typeColors: Record<string, { border: string; bg: string; text: string }> = {
   flight: {
+    // Blue for transport/info items per design system
     border: 'border-l-blue-500',
     bg: 'bg-blue-50 dark:bg-blue-900/20',
     text: 'text-blue-600 dark:text-blue-400',
   },
   hotel: {
-    border: 'border-l-purple-500',
-    bg: 'bg-purple-50 dark:bg-purple-900/20',
-    text: 'text-purple-600 dark:text-purple-400',
+    // Gray for accommodations (no purple - forbidden)
+    border: 'border-l-gray-400 dark:border-l-gray-500',
+    bg: 'bg-gray-50 dark:bg-gray-800/50',
+    text: 'text-gray-600 dark:text-gray-400',
   },
   restaurant: {
-    border: 'border-l-amber-500',
-    bg: 'bg-amber-50 dark:bg-amber-900/20',
-    text: 'text-amber-600 dark:text-amber-400',
+    // Gray for dining
+    border: 'border-l-stone-400 dark:border-l-stone-500',
+    bg: 'bg-stone-50 dark:bg-gray-800/50',
+    text: 'text-stone-600 dark:text-gray-400',
   },
   bar: {
-    border: 'border-l-amber-500',
-    bg: 'bg-amber-50 dark:bg-amber-900/20',
-    text: 'text-amber-600 dark:text-amber-400',
+    border: 'border-l-stone-400 dark:border-l-stone-500',
+    bg: 'bg-stone-50 dark:bg-gray-800/50',
+    text: 'text-stone-600 dark:text-gray-400',
   },
   cafe: {
-    border: 'border-l-amber-500',
-    bg: 'bg-amber-50 dark:bg-amber-900/20',
-    text: 'text-amber-600 dark:text-amber-400',
+    border: 'border-l-stone-400 dark:border-l-stone-500',
+    bg: 'bg-stone-50 dark:bg-gray-800/50',
+    text: 'text-stone-600 dark:text-gray-400',
   },
   event: {
-    border: 'border-l-pink-500',
-    bg: 'bg-pink-50 dark:bg-pink-900/20',
-    text: 'text-pink-600 dark:text-pink-400',
+    // Gray for events
+    border: 'border-l-gray-500 dark:border-l-gray-400',
+    bg: 'bg-gray-50 dark:bg-gray-800/50',
+    text: 'text-gray-600 dark:text-gray-400',
   },
   attraction: {
-    border: 'border-l-emerald-500',
-    bg: 'bg-emerald-50 dark:bg-emerald-900/20',
-    text: 'text-emerald-600 dark:text-emerald-400',
+    // Gray for attractions
+    border: 'border-l-stone-500 dark:border-l-stone-400',
+    bg: 'bg-stone-50 dark:bg-gray-800/50',
+    text: 'text-stone-600 dark:text-gray-400',
   },
   activity: {
-    border: 'border-l-teal-500',
-    bg: 'bg-teal-50 dark:bg-teal-900/20',
-    text: 'text-teal-600 dark:text-teal-400',
+    border: 'border-l-stone-400 dark:border-l-stone-500',
+    bg: 'bg-stone-50 dark:bg-gray-800/50',
+    text: 'text-stone-600 dark:text-gray-400',
   },
   place: {
-    border: 'border-l-stone-400',
-    bg: 'bg-stone-50 dark:bg-gray-800',
+    border: 'border-l-stone-300 dark:border-l-gray-600',
+    bg: 'bg-stone-50 dark:bg-gray-800/50',
     text: 'text-stone-600 dark:text-gray-400',
   },
 };
@@ -367,11 +373,11 @@ function HotelCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           {/* Badges */}
           <div className="absolute bottom-3 left-4 flex items-center gap-1.5">
-            <span className="px-2 py-0.5 rounded-full bg-purple-500/90 text-white text-xs font-medium">
+            <span className="px-2 py-0.5 rounded-full bg-black/70 text-white text-xs font-medium">
               {nights} {nights === 1 ? 'night' : 'nights'}
             </span>
             {notes?.breakfastIncluded && (
-              <span className="px-2 py-0.5 rounded-full bg-purple-500/90 text-white text-xs font-medium">
+              <span className="px-2 py-0.5 rounded-full bg-black/70 text-white text-xs font-medium">
                 Breakfast
               </span>
             )}
@@ -454,7 +460,7 @@ function EventCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           {notes?.eventType && (
             <div className="absolute bottom-3 left-4">
-              <span className="px-2 py-0.5 rounded-full bg-pink-500/90 text-white text-xs font-medium capitalize">
+              <span className="px-2 py-0.5 rounded-full bg-black/70 text-white text-xs font-medium capitalize">
                 {notes.eventType}
               </span>
             </div>

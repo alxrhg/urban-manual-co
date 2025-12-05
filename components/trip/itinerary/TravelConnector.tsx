@@ -25,15 +25,9 @@ const modeLabels: Record<TravelMode, string> = {
   transit: 'Transit',
 };
 
-const modeEmojis: Record<TravelMode, string> = {
-  walking: '🚶',
-  driving: '🚗',
-  transit: '🚇',
-};
-
 /**
  * TravelConnector - Clean connector showing travel time between items
- * Shows: "🚗 39 min · 16 km" style with directions link
+ * Shows mode icon with duration and distance
  */
 export default function TravelConnector({
   durationMinutes,
@@ -72,8 +66,8 @@ export default function TravelConnector({
 
       {/* Transport info pill */}
       <div className="flex items-center gap-2 px-3 py-1.5 bg-stone-50 dark:bg-gray-800/50 rounded-full border border-stone-200 dark:border-gray-700">
-        {/* Mode emoji */}
-        <span className="text-sm">{modeEmojis[mode]}</span>
+        {/* Mode icon */}
+        {React.createElement(modeIcons[mode], { className: 'w-3.5 h-3.5 text-stone-500 dark:text-gray-400' })}
 
         {/* Duration */}
         <span className="text-xs font-medium text-stone-700 dark:text-gray-300 tabular-nums">
@@ -192,7 +186,7 @@ export function InteractiveTravelConnector({
                   }
                 `}
               >
-                <span>{modeEmojis[m]}</span>
+                {React.createElement(modeIcons[m], { className: 'w-3 h-3' })}
                 <span className="tabular-nums">
                   {duration !== undefined ? formatDuration(duration) : '--'}
                 </span>

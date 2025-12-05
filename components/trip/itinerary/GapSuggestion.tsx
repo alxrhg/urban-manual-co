@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
-import { Plus, Sparkles, Coffee, MapPin, Camera, ShoppingBag, Waves, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Sparkles, Coffee, MapPin, Camera, ShoppingBag, Waves, ChevronDown, ChevronUp, Building, Dumbbell, Clock } from 'lucide-react';
 import type { ActivityType } from '@/types/trip';
+import type { LucideIcon } from 'lucide-react';
 
 interface GapSuggestionProps {
   gapMinutes: number;
@@ -20,17 +21,17 @@ interface GapSuggestionProps {
 
 interface SuggestionItem {
   type: ActivityType | 'custom';
-  emoji: string;
+  icon: LucideIcon;
   label: string;
   sublabel?: string;
 }
 
 // Quick suggestion chips for common activities
 const quickSuggestions: SuggestionItem[] = [
-  { type: 'cafe' as ActivityType, emoji: '☕', label: 'Nearby cafes' },
-  { type: 'attraction' as ActivityType, emoji: '🏛️', label: 'Museums' },
-  { type: 'shopping-time' as ActivityType, emoji: '🛍️', label: 'Shopping' },
-  { type: 'photo-walk' as ActivityType, emoji: '📸', label: 'Photo spots' },
+  { type: 'cafe' as ActivityType, icon: Coffee, label: 'Nearby cafes' },
+  { type: 'attraction' as ActivityType, icon: Building, label: 'Museums' },
+  { type: 'shopping-time' as ActivityType, icon: ShoppingBag, label: 'Shopping' },
+  { type: 'photo-walk' as ActivityType, icon: Camera, label: 'Photo spots' },
 ];
 
 // Activity suggestions based on available amenities
@@ -44,15 +45,15 @@ const getHotelSuggestions = (
 
   if (hotelName) {
     if (hotelHasPool) {
-      suggestions.push({ type: 'pool' as ActivityType, emoji: '🏊', label: 'Pool time', sublabel: hotelName });
+      suggestions.push({ type: 'pool' as ActivityType, icon: Waves, label: 'Pool time', sublabel: hotelName });
     }
     if (hotelHasSpa) {
-      suggestions.push({ type: 'spa' as ActivityType, emoji: '💆', label: 'Spa session', sublabel: hotelName });
+      suggestions.push({ type: 'spa' as ActivityType, icon: Sparkles, label: 'Spa session', sublabel: hotelName });
     }
     if (hotelHasGym) {
-      suggestions.push({ type: 'gym' as ActivityType, emoji: '🏋️', label: 'Workout', sublabel: hotelName });
+      suggestions.push({ type: 'gym' as ActivityType, icon: Dumbbell, label: 'Workout', sublabel: hotelName });
     }
-    suggestions.push({ type: 'nap' as ActivityType, emoji: '😴', label: 'Rest at hotel', sublabel: hotelName });
+    suggestions.push({ type: 'nap' as ActivityType, icon: Clock, label: 'Rest at hotel', sublabel: hotelName });
   }
 
   return suggestions;
@@ -94,32 +95,34 @@ export default function GapSuggestion({
 
   return (
     <div className={`my-4 ${className}`}>
-      {/* Main Free Time Card */}
-      <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20 border border-amber-200 dark:border-amber-800/50 overflow-hidden">
+      {/* Main Free Time Card - Monochromatic per design system */}
+      <div className="rounded-2xl bg-stone-50 dark:bg-gray-800/50 border border-stone-200 dark:border-gray-700 overflow-hidden">
         {/* Header */}
         <div
           className="flex items-center justify-between p-4 cursor-pointer"
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <div className="flex items-center gap-3">
-            <span className="text-2xl">☀️</span>
+            <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-gray-700 flex items-center justify-center">
+              <Clock className="w-4 h-4 text-stone-500 dark:text-gray-400" />
+            </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                <span className="text-xs font-bold uppercase tracking-wide text-stone-600 dark:text-gray-400">
                   Free Time
                 </span>
-                <span className="text-base font-bold text-amber-900 dark:text-amber-300">
+                <span className="text-base font-bold text-stone-900 dark:text-white">
                   {formatGap(gapMinutes)}
                 </span>
               </div>
               {locationName && (
-                <p className="text-xs text-amber-600 dark:text-amber-500 mt-0.5">
-                  You're at {locationName}. Here are some ideas:
+                <p className="text-xs text-stone-500 dark:text-gray-500 mt-0.5">
+                  Near {locationName}
                 </p>
               )}
             </div>
           </div>
-          <button className="p-1 text-amber-500 hover:text-amber-700 dark:hover:text-amber-300">
+          <button className="p-1 text-stone-400 hover:text-stone-600 dark:hover:text-gray-300">
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>
@@ -129,29 +132,32 @@ export default function GapSuggestion({
           <div className="px-4 pb-4 space-y-3">
             {/* Quick Suggestion Chips */}
             <div className="flex flex-wrap gap-2">
-              {suggestions.slice(0, 6).map((suggestion, index) => (
-                <button
-                  key={`${suggestion.type}-${index}`}
-                  onClick={() => {
-                    if (suggestion.type === 'custom') {
-                      onAddCustom?.();
-                    } else {
-                      onAddActivity?.(suggestion.type as ActivityType);
-                    }
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white dark:bg-gray-800 border border-amber-200 dark:border-amber-700 hover:border-amber-300 dark:hover:border-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/30 transition-all text-sm shadow-sm"
-                >
-                  <span>{suggestion.emoji}</span>
-                  <span className="text-amber-800 dark:text-amber-200 font-medium">{suggestion.label}</span>
-                </button>
-              ))}
+              {suggestions.slice(0, 6).map((suggestion, index) => {
+                const IconComponent = suggestion.icon;
+                return (
+                  <button
+                    key={`${suggestion.type}-${index}`}
+                    onClick={() => {
+                      if (suggestion.type === 'custom') {
+                        onAddCustom?.();
+                      } else {
+                        onAddActivity?.(suggestion.type as ActivityType);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-white dark:bg-gray-800 border border-stone-200 dark:border-gray-700 hover:border-stone-300 dark:hover:border-gray-600 hover:bg-stone-50 dark:hover:bg-gray-700/50 transition-all text-sm"
+                  >
+                    <IconComponent className="w-3.5 h-3.5 text-stone-500 dark:text-gray-400" />
+                    <span className="text-stone-700 dark:text-gray-300 font-medium">{suggestion.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* AI Suggestions Button */}
             {onGetAISuggestions && (
               <button
                 onClick={onGetAISuggestions}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-800 dark:bg-amber-700 text-white hover:bg-amber-900 dark:hover:bg-amber-600 transition-colors font-medium text-sm"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-stone-900 dark:bg-white text-white dark:text-stone-900 hover:opacity-90 transition-opacity font-medium text-sm"
               >
                 <Sparkles className="w-4 h-4" />
                 Get AI recommendations
@@ -162,7 +168,7 @@ export default function GapSuggestion({
             {onAddCustom && !onGetAISuggestions && (
               <button
                 onClick={onAddCustom}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors font-medium text-sm"
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 border-dashed border-stone-200 dark:border-gray-700 text-stone-600 dark:text-gray-400 hover:bg-stone-100 dark:hover:bg-gray-700/50 transition-colors font-medium text-sm"
               >
                 <Plus className="w-4 h-4" />
                 Add custom activity
@@ -241,25 +247,28 @@ export function AISuggestionBanner({
   className = '',
 }: AISuggestionBannerProps) {
   return (
-    <div className={`p-4 rounded-xl bg-gradient-to-r from-stone-50 to-gray-50 dark:from-gray-900/50 dark:to-gray-800/50 border border-stone-200/50 dark:border-gray-700/50 ${className}`}>
+    <div className={`p-4 rounded-xl bg-stone-50 dark:bg-gray-800/50 border border-stone-200 dark:border-gray-700 ${className}`}>
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
           <Sparkles className="w-4 h-4 text-stone-500 dark:text-gray-400" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm text-stone-900 dark:text-gray-100">{message}</p>
           {suggestions.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
-              {suggestions.map((suggestion, index) => (
-                <button
-                  key={index}
-                  onClick={() => onAccept?.(suggestion)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-stone-200 dark:border-gray-700 hover:border-stone-300 dark:hover:border-gray-600 transition-colors text-xs"
-                >
-                  <span>{suggestion.emoji}</span>
-                  <span className="text-stone-700 dark:text-gray-300">{suggestion.label}</span>
-                </button>
-              ))}
+              {suggestions.map((suggestion, index) => {
+                const IconComponent = suggestion.icon;
+                return (
+                  <button
+                    key={index}
+                    onClick={() => onAccept?.(suggestion)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-stone-200 dark:border-gray-700 hover:border-stone-300 dark:hover:border-gray-600 transition-colors text-xs"
+                  >
+                    <IconComponent className="w-3 h-3 text-stone-500 dark:text-gray-400" />
+                    <span className="text-stone-700 dark:text-gray-300">{suggestion.label}</span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
