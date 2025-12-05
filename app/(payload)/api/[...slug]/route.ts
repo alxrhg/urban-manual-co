@@ -1,16 +1,17 @@
 /* THIS FILE WAS GENERATED AUTOMATICALLY BY PAYLOAD. */
 /* DO NOT MODIFY IT BECAUSE IT COULD BE REWRITTEN AT ANY TIME. */
-import { createRouteHandler } from '@payloadcms/next/routes'
-import configPromise from '../../../../payload.config'
+import {
+  REST_DELETE,
+  REST_GET,
+  REST_OPTIONS,
+  REST_PATCH,
+  REST_POST,
+  REST_PUT,
+} from '@payloadcms/next/routes'
 
-const routeHandler = createRouteHandler({
-  config: configPromise,
-})
-
-export const DELETE = routeHandler.DELETE
-export const GET = routeHandler.GET
-export const HEAD = routeHandler.HEAD
-export const OPTIONS = routeHandler.OPTIONS
-export const PATCH = routeHandler.PATCH
-export const POST = routeHandler.POST
-export const PUT = routeHandler.PUT
+export const DELETE = REST_DELETE
+export const GET = REST_GET
+export const OPTIONS = REST_OPTIONS
+export const PATCH = REST_PATCH
+export const POST = REST_POST
+export const PUT = REST_PUT
