@@ -58,32 +58,39 @@ async function findPlaceId(query: string, name?: string, city?: string): Promise
   return null;
 }
 
-async function getPlaceDetails(placeId: string) {
+async function getPlaceDetails(placeId: string, minimal: boolean = false) {
   if (!GOOGLE_API_KEY) return null;
-  
+
+  // Build field mask - skip photos in minimal mode for faster response
+  const fields = [
+    'displayName',
+    'formattedAddress',
+    'addressComponents',
+    'internationalPhoneNumber',
+    'websiteUri',
+    'priceLevel',
+    'rating',
+    'userRatingCount',
+    'regularOpeningHours',
+    'currentOpeningHours',
+    'editorialSummary',
+    'types',
+    'primaryTypeDisplayName',
+    'location',
+  ];
+
+  // Only request photos if not in minimal mode
+  if (!minimal) {
+    fields.push('photos');
+  }
+
   // Use Places API (New) - Place Details
   const response = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
       'X-Goog-Api-Key': GOOGLE_API_KEY,
-      'X-Goog-FieldMask': [
-        'displayName',
-        'formattedAddress',
-        'addressComponents',
-        'internationalPhoneNumber',
-        'websiteUri',
-        'priceLevel',
-        'rating',
-        'userRatingCount',
-        'regularOpeningHours',
-        'currentOpeningHours',
-        'editorialSummary',
-        'types',
-        'primaryTypeDisplayName',
-        'photos',
-        'location',
-      ].join(','),
+      'X-Goog-FieldMask': fields.join(','),
     },
   });
 
@@ -163,17 +170,17 @@ function transformOpeningHours(hours: any): any {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, city, placeId } = body;
+    const { name, city, placeId, minimal } = body;
 
     // If placeId is provided directly, use it (from autocomplete)
     let finalPlaceId: string | null = null;
-    
+
     if (placeId) {
       finalPlaceId = placeId;
     } else if (name) {
       // Build search query
       const query = city ? `${name}, ${city}` : name;
-      
+
       // Find place ID
       finalPlaceId = await findPlaceId(query, name, city);
       if (!finalPlaceId) {
@@ -188,8 +195,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Place ID is required' }, { status: 400 });
     }
 
-    // Get place details
-    const details = await getPlaceDetails(finalPlaceId);
+    // Get place details (skip photos in minimal mode for faster itinerary additions)
+    const details = await getPlaceDetails(finalPlaceId, minimal === true);
     if (!details) {
       return NextResponse.json({ error: 'Failed to fetch place details' }, { status: 500 });
     }
