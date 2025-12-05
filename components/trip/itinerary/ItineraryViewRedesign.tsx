@@ -312,21 +312,7 @@ export default function ItineraryViewRedesign({
                     onRemoveItem={onRemoveItem}
                   />
 
-                  {/* Travel Connector */}
-                  {travelTime && index < sortedItems.length - 1 && (
-                    <InteractiveTravelConnector
-                      durationMinutes={travelTime.durationMinutes}
-                      distanceKm={travelTime.distanceKm}
-                      mode={travelTime.mode}
-                      onModeChange={
-                        onUpdateTravelMode
-                          ? (mode) => onUpdateTravelMode(item.id, mode)
-                          : undefined
-                      }
-                    />
-                  )}
-
-                  {/* Gap Suggestion (for gaps > 2 hours) */}
+                  {/* Gap Suggestion (for gaps > 2 hours) - shown before travel time */}
                   {gap && gap >= 120 && (
                     <GapSuggestion
                       gapMinutes={gap}
@@ -347,11 +333,25 @@ export default function ItineraryViewRedesign({
                     />
                   )}
 
-                  {/* Compact gap indicator (for 30min - 2h gaps) */}
+                  {/* Compact gap indicator (for 30min - 2h gaps) - shown before travel time */}
                   {gap && gap >= 30 && gap < 120 && (
                     <CompactGapIndicator
                       gapMinutes={gap}
                       onClick={onAddItem ? () => onAddItem(selectedDay.dayNumber) : undefined}
+                    />
+                  )}
+
+                  {/* Travel Connector - shown after free time gap */}
+                  {travelTime && index < sortedItems.length - 1 && (
+                    <InteractiveTravelConnector
+                      durationMinutes={travelTime.durationMinutes}
+                      distanceKm={travelTime.distanceKm}
+                      mode={travelTime.mode}
+                      onModeChange={
+                        onUpdateTravelMode
+                          ? (mode) => onUpdateTravelMode(item.id, mode)
+                          : undefined
+                      }
                     />
                   )}
                 </React.Fragment>
