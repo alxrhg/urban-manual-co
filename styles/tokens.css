@@ -4,10 +4,10 @@
      Premium, institutional typography system
      ============================================ */
 
-  /* Font Family */
-  --um-font-sans: 'Inter', 'Geist', system-ui, -apple-system, 'SF Pro Text', sans-serif;
-  --um-font-serif: 'Playfair Display', Georgia, serif;
-  --um-font-display: 'Instrument Serif', 'Playfair Display', Georgia, serif;
+  /* Font Family - Cormorant Garamond throughout */
+  --um-font-sans: 'Cormorant Garamond', Garamond, Georgia, serif;
+  --um-font-serif: 'Cormorant Garamond', Garamond, Georgia, serif;
+  --um-font-display: 'Cormorant Garamond', Garamond, Georgia, serif;
   --um-font-mono: 'JetBrains Mono', Menlo, monospace;
 
   /* Font Sizes - Hierarchical Scale */

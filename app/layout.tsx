@@ -96,24 +96,14 @@ export default function RootLayout({
         )}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Critical fonts - Inter for body text (premium, neutral sans-serif) */}
+        {/* Critical fonts - Cormorant Garamond for elegant, classical typography */}
         <link
           rel="preload"
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap"
           as="style"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-        {/* Geist font - modern UI font for institutional feel */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-        {/* Non-critical fonts - editorial display fonts */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Playfair+Display:wght@400;500;600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&display=swap"
           rel="stylesheet"
         />
         {/* Code font - only needed in admin/code sections */}
@@ -179,7 +169,7 @@ export default function RootLayout({
           __html: `
             /* Critical CSS - Above the fold */
             *,::before,::after{box-sizing:border-box}
-            body{margin:0;font-family:'Inter','Geist',system-ui,-apple-system,'SF Pro Text',sans-serif;line-height:1.5}
+            body{margin:0;font-family:'Cormorant Garamond',Garamond,Georgia,serif;line-height:1.5}
             .dark{color-scheme:dark}
           `
         }} />

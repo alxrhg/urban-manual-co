@@ -2,15 +2,13 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // Premium, neutral sans-serifs - institutional yet modern
-        // Primary: Inter for body, Geist for UI, SF Pro as system fallback
-        sans: ['Inter', 'Geist', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'SF Pro Text', 'sans-serif'],
-        // Display font for large headings - maintains editorial feel
-        serif: ['Playfair Display', 'Georgia', 'serif'],
+        // Cormorant Garamond - elegant, classical serif for editorial authority
+        sans: ['Cormorant Garamond', 'Garamond', 'Georgia', 'serif'],
+        serif: ['Cormorant Garamond', 'Garamond', 'Georgia', 'serif'],
+        display: ['Cormorant Garamond', 'Garamond', 'Georgia', 'serif'],
+        body: ['Cormorant Garamond', 'Garamond', 'Georgia', 'serif'],
+        // Monospace for code
         mono: ['JetBrains Mono', 'Menlo', 'monospace'],
-        display: ['Instrument Serif', 'Playfair Display', 'Georgia', 'serif'],
-        // Alternative body font for specific sections
-        body: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       // Typography scale with clear hierarchy
       fontSize: {

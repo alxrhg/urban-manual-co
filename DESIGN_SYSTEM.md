@@ -19,7 +19,7 @@
 ### 3. **Typography-First**
 - **Clear Hierarchy**: Distinct visual separation between Headings, Subheadings, and Body text
 - **Optimal Readability**: Line height of 1.5 for body text, 60-75 character line length
-- **Premium Fonts**: Inter + Geist (institutional, modern sans-serifs), SF Pro fallback
+- **Premium Font**: Cormorant Garamond (elegant, classical serif for editorial authority)
 - Line clamping for overflow
 
 ### 4. **No Dashboard Cards**
@@ -83,13 +83,12 @@
 
 **Typography is the voice of the brand.** The Urban Manual uses a premium, institutional typographic system that emphasizes clarity, readability, and hierarchy.
 
-#### Font Stack (Premium Sans-Serif)
+#### Font Stack (Cormorant Garamond)
 ```css
-/* Primary - Body & UI */
---um-font-sans: 'Inter', 'Geist', system-ui, -apple-system, 'SF Pro Text', sans-serif;
-
-/* Editorial - Display headings */
---um-font-display: 'Instrument Serif', 'Playfair Display', Georgia, serif;
+/* Primary - Body, UI & Display (unified serif system) */
+--um-font-sans: 'Cormorant Garamond', Garamond, Georgia, serif;
+--um-font-serif: 'Cormorant Garamond', Garamond, Georgia, serif;
+--um-font-display: 'Cormorant Garamond', Garamond, Georgia, serif;
 
 /* Code - Technical content */
 --um-font-mono: 'JetBrains Mono', Menlo, monospace;
