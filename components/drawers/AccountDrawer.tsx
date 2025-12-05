@@ -33,6 +33,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import Image from 'next/image';
+import { AccountDrawerSkeleton } from '@/components/skeletons/AccountDrawerSkeleton';
 
 interface UserStats {
   visited: number;
@@ -314,6 +315,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
   });
   const [upcomingTrip, setUpcomingTrip] = useState<UpcomingTrip | null>(null);
   const [recommendations, setRecommendations] = useState<Destination[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchProfileAndStats() {
@@ -323,8 +325,11 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         setStats({ visited: 0, saved: 0, trips: 0, countries: 0 });
         setUpcomingTrip(null);
         setRecommendations([]);
+        setIsLoading(false);
         return;
       }
+
+      setIsLoading(true);
 
       try {
         const supabaseClient = createClient();
@@ -467,6 +472,8 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         }
       } catch (error) {
         console.error('Error fetching profile and stats:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -522,6 +529,11 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         </div>
       </div>
     );
+  }
+
+  // Loading state - show skeleton to prevent layout shift
+  if (isLoading) {
+    return <AccountDrawerSkeleton />;
   }
 
   // Logged in state

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Destination } from '@/types/destination';
+import { MapSkeleton } from '@/components/skeletons/MapSkeleton';
 
 interface GoogleInteractiveMapProps {
   destinations: Destination[];
@@ -483,13 +484,11 @@ export default function GoogleInteractiveMap({
 
   return (
     <div className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
+      {/* Skeleton loader - maintains layout during load */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 z-10">
-          <div className="text-center p-6">
-            <p className="text-sm font-medium">Loading map...</p>
-          </div>
-        </div>
+        <MapSkeleton showMarkers={destinations.length > 0} />
       )}
+      {/* Error state */}
       {error && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-900 text-gray-600 dark:text-gray-400 z-10">
           <div className="text-center p-6">
@@ -498,10 +497,11 @@ export default function GoogleInteractiveMap({
           </div>
         </div>
       )}
-      <div 
-        ref={mapRef} 
+      {/* Map container - hidden until loaded */}
+      <div
+        ref={mapRef}
         className="absolute inset-0 w-full h-full"
-        style={{ 
+        style={{
           visibility: isLoading || error ? 'hidden' : 'visible',
           padding: 0,
           margin: 0,
