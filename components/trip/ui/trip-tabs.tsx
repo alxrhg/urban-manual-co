@@ -30,7 +30,7 @@ function TripTabsList({
     <TabsPrimitive.List
       data-slot="trip-tabs-list"
       className={cn(
-        "px-4 pt-3 pb-2 flex gap-4 text-xs border-b border-gray-100 dark:border-gray-800 overflow-x-auto scrollbar-hide",
+        "px-4 py-3 flex gap-2 text-xs border-b border-gray-100 dark:border-gray-800 overflow-x-auto scrollbar-hide",
         className
       )}
       {...props}
@@ -52,11 +52,12 @@ function TripTabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="trip-tabs-trigger"
       className={cn(
-        "transition-all pb-2 whitespace-nowrap flex items-center gap-1.5",
+        "transition-all whitespace-nowrap flex items-center gap-1.5",
+        "px-3 py-2 rounded-full",
         "font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300",
         "data-[state=active]:text-gray-900 dark:data-[state=active]:text-white",
-        "data-[state=active]:border-b-2 data-[state=active]:border-gray-900 dark:data-[state=active]:border-white",
-        "data-[state=active]:-mb-[9px]",
+        "data-[state=active]:bg-gray-900 dark:data-[state=active]:bg-white",
+        "data-[state=active]:text-white dark:data-[state=active]:text-gray-900",
         className
       )}
       {...props}

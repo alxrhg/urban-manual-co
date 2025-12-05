@@ -37,7 +37,7 @@ export default function DayTabNav({
       {/* Tabs Container - scrollable horizontally */}
       <div
         ref={scrollRef}
-        className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide"
+        className="flex gap-x-4 text-xs overflow-x-auto scrollbar-hide border-b border-gray-100 dark:border-gray-800"
       >
         {days.map((day) => {
           const isSelected = day.dayNumber === selectedDayNumber;
@@ -49,10 +49,9 @@ export default function DayTabNav({
               onClick={() => onSelectDay(day.dayNumber)}
               className={`
                 transition-all flex items-center gap-1.5 whitespace-nowrap
-                px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
-                min-h-[40px] sm:min-h-0
+                pb-2
                 ${isSelected
-                  ? 'font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
+                  ? 'font-medium text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white -mb-[1px]'
                   : 'font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                 }
               `}
