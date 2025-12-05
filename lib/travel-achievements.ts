@@ -6,12 +6,8 @@
 export interface TravelBadge {
   id: string;
   name: string;
-  emoji: string;
   minPlaces: number;
   maxPlaces: number | null;
-  color: string;
-  bgColor: string;
-  darkBgColor: string;
 }
 
 export interface MilestoneProgress {
@@ -28,52 +24,32 @@ export const TRAVEL_BADGES: TravelBadge[] = [
   {
     id: 'newcomer',
     name: 'Newcomer',
-    emoji: '🌱',
     minPlaces: 0,
     maxPlaces: 10,
-    color: '#059669',
-    bgColor: '#d1fae5',
-    darkBgColor: 'rgba(16, 185, 129, 0.2)',
   },
   {
     id: 'explorer',
     name: 'Explorer',
-    emoji: '🧭',
     minPlaces: 11,
     maxPlaces: 25,
-    color: '#0284c7',
-    bgColor: '#e0f2fe',
-    darkBgColor: 'rgba(14, 165, 233, 0.2)',
   },
   {
     id: 'adventurer',
     name: 'Adventurer',
-    emoji: '✈️',
     minPlaces: 26,
     maxPlaces: 50,
-    color: '#7c3aed',
-    bgColor: '#ede9fe',
-    darkBgColor: 'rgba(139, 92, 246, 0.2)',
   },
   {
     id: 'globetrotter',
     name: 'Globetrotter',
-    emoji: '🌍',
     minPlaces: 51,
     maxPlaces: 100,
-    color: '#ea580c',
-    bgColor: '#ffedd5',
-    darkBgColor: 'rgba(249, 115, 22, 0.2)',
   },
   {
     id: 'world-traveler',
     name: 'World Traveler',
-    emoji: '🏆',
     minPlaces: 101,
     maxPlaces: null,
-    color: '#ca8a04',
-    bgColor: '#fef3c7',
-    darkBgColor: 'rgba(234, 179, 8, 0.2)',
   },
 ];
 
@@ -152,11 +128,11 @@ export function getMilestoneMessage(progress: MilestoneProgress): string {
   const { remaining, target, nextBadge } = progress;
 
   if (remaining <= 5) {
-    return `Almost there! Just ${remaining} more to reach ${target}`;
+    return `Almost there! ${remaining} more to reach ${target}`;
   }
 
   if (nextBadge && target === nextBadge.minPlaces) {
-    return `${remaining} more to become ${nextBadge.emoji} ${nextBadge.name}`;
+    return `${remaining} more to become ${nextBadge.name}`;
   }
 
   return `${remaining} more to reach ${target} places`;

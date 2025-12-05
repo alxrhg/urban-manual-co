@@ -20,13 +20,11 @@ import {
   ChevronRight,
   User,
   X,
-  Sparkles,
   Edit3,
   Compass,
   Moon,
   Sun,
   HelpCircle,
-  Map,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -47,14 +45,14 @@ function CloseButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="p-2.5 sm:p-2 rounded-full bg-stone-100 dark:bg-gray-800 text-stone-500 dark:text-gray-400 hover:bg-stone-200 dark:hover:bg-gray-700 hover:text-stone-900 dark:hover:text-white active:scale-95 transition-all min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
+      className="p-2.5 sm:p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white active:scale-95 transition-all min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
     >
       <X className="w-5 h-5 sm:w-4 sm:h-4" />
     </button>
   );
 }
 
-// Avatar with Progress Ring
+// Avatar with Progress Ring - uses black/gray per design system
 function AvatarWithRing({
   avatarUrl,
   displayUsername,
@@ -70,10 +68,10 @@ function AvatarWithRing({
     <div
       className="relative w-[72px] h-[72px] rounded-full p-1 flex items-center justify-center"
       style={{
-        background: `conic-gradient(#3b82f6 ${progressDegrees}deg, #e5e7eb ${progressDegrees}deg)`,
+        background: `conic-gradient(#000 ${progressDegrees}deg, #e5e7eb ${progressDegrees}deg)`,
       }}
     >
-      <div className="w-16 h-16 rounded-full overflow-hidden bg-stone-100 dark:bg-gray-800 flex items-center justify-center">
+      <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
         {avatarUrl ? (
           <Image
             src={avatarUrl}
@@ -83,7 +81,7 @@ function AvatarWithRing({
             sizes="64px"
           />
         ) : (
-          <span className="text-2xl font-semibold text-stone-500 dark:text-gray-400">
+          <span className="text-2xl font-semibold text-gray-500 dark:text-gray-400">
             {displayUsername.charAt(0).toUpperCase()}
           </span>
         )}
@@ -92,34 +90,16 @@ function AvatarWithRing({
   );
 }
 
-// Travel Badge Component
-function TravelBadge({
-  badge,
-}: {
-  badge: { emoji: string; name: string; bgColor: string; darkBgColor: string; color: string };
-}) {
+// Travel Badge Component - neutral gray style per design system
+function TravelBadge({ badge }: { badge: { name: string } }) {
   return (
-    <div
-      className="mt-2 px-3 py-1 rounded-full text-xs font-semibold"
-      style={{
-        backgroundColor: 'var(--badge-bg)',
-        color: badge.color,
-      }}
-    >
-      <style jsx>{`
-        div {
-          --badge-bg: ${badge.bgColor};
-        }
-        :global(.dark) div {
-          --badge-bg: ${badge.darkBgColor};
-        }
-      `}</style>
-      {badge.emoji} {badge.name}
-    </div>
+    <span className="mt-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-full text-xs font-medium text-gray-600 dark:text-gray-400">
+      {badge.name}
+    </span>
   );
 }
 
-// Stats Card Component
+// Stats Card Component - minimal style per design system
 function StatsCard({
   visited,
   countries,
@@ -132,36 +112,31 @@ function StatsCard({
   milestone: string;
 }) {
   return (
-    <div className="mx-5 mt-5 p-4 rounded-2xl bg-stone-50 dark:bg-gray-900/50 border border-stone-100 dark:border-gray-800">
-      <div className="flex items-center gap-2 mb-2">
-        <Map className="w-5 h-5 text-stone-500 dark:text-gray-400" />
-        <span className="text-sm font-semibold text-stone-700 dark:text-gray-300">
-          Your Journey
-        </span>
-      </div>
-      <p className="text-sm text-stone-600 dark:text-gray-400 mb-3">
-        <span className="font-bold text-stone-900 dark:text-white">{visited}</span> places visited
+    <div className="mx-5 mt-5 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+        <span className="font-semibold text-gray-900 dark:text-white">{visited}</span> places visited
         {countries > 0 && (
           <>
-            {' '}
-            · <span className="font-bold text-stone-900 dark:text-white">{countries}</span> {countries === 1 ? 'country' : 'countries'}
+            {' · '}
+            <span className="font-semibold text-gray-900 dark:text-white">{countries}</span> {countries === 1 ? 'country' : 'countries'}
           </>
         )}
       </p>
-      <div className="h-1.5 bg-stone-200 dark:bg-gray-700 rounded-full overflow-hidden mb-2">
+      {/* Progress bar - black per design system */}
+      <div className="h-1 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden mb-2">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500"
+          className="h-full rounded-full bg-black dark:bg-white transition-all duration-500"
           style={{ width: `${progress.percentage}%` }}
         />
       </div>
-      <p className="text-xs text-stone-500 dark:text-gray-500">
+      <p className="text-xs text-gray-500 dark:text-gray-500">
         {milestone}
       </p>
     </div>
   );
 }
 
-// Library Tile Component
+// Library Tile Component - minimal card style
 function LibraryTile({
   icon: Icon,
   count,
@@ -176,15 +151,13 @@ function LibraryTile({
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center gap-1 p-4 rounded-2xl bg-stone-50 dark:bg-gray-900/50 border border-stone-100 dark:border-gray-800 hover:bg-stone-100 dark:hover:bg-gray-800/50 hover:border-stone-200 dark:hover:border-gray-700 active:scale-[0.98] transition-all"
+      className="flex flex-col items-center justify-center gap-1 p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 active:scale-[0.98] transition-all"
     >
-      <div className="p-2 rounded-xl bg-white dark:bg-gray-800 shadow-sm mb-1">
-        <Icon className="w-5 h-5 text-stone-600 dark:text-gray-300" />
-      </div>
-      <span className="text-xl font-bold text-stone-900 dark:text-white">
+      <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400 mb-1" />
+      <span className="text-xl font-semibold text-gray-900 dark:text-white">
         {count}
       </span>
-      <span className="text-[10px] font-medium uppercase tracking-wider text-stone-500 dark:text-gray-400">
+      <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">
         {label}
       </span>
     </button>
@@ -197,36 +170,26 @@ function SettingsRow({
   label,
   onClick,
   rightElement,
-  danger = false,
 }: {
   icon: React.ElementType;
   label: string;
   onClick?: () => void;
   rightElement?: React.ReactNode;
-  danger?: boolean;
 }) {
   const Component = onClick ? 'button' : 'div';
   return (
     <Component
       onClick={onClick}
-      className={`group w-full flex items-center justify-between gap-3 px-4 py-3.5 rounded-xl transition-colors ${
-        onClick ? 'cursor-pointer' : ''
-      } ${
-        danger
-          ? 'text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10'
-          : 'text-stone-600 dark:text-gray-300 hover:bg-stone-100 dark:hover:bg-gray-800/50'
+      className={`group w-full flex items-center justify-between gap-3 px-4 py-3 rounded-2xl transition-colors ${
+        onClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900' : ''
       }`}
     >
       <div className="flex items-center gap-3">
-        <Icon className="w-5 h-5" />
-        <span className="text-sm font-medium">{label}</span>
+        <Icon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+        <span className="text-sm font-medium text-gray-900 dark:text-white">{label}</span>
       </div>
       {rightElement || (
-        <ChevronRight
-          className={`w-4 h-4 transition-transform group-hover:translate-x-0.5 ${
-            danger ? 'text-red-400' : 'text-stone-400 dark:text-gray-500'
-          }`}
-        />
+        <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-600 transition-transform group-hover:translate-x-0.5" />
       )}
     </Component>
   );
@@ -254,14 +217,14 @@ function DarkModeToggle() {
 
   return (
     <div className="flex items-center gap-2">
-      <Sun className={`w-4 h-4 ${isDark ? 'text-stone-400' : 'text-amber-500'}`} />
+      <Sun className={`w-4 h-4 ${isDark ? 'text-gray-500' : 'text-gray-900'}`} />
       <Switch
         checked={isDark}
         onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
         className="scale-75"
         aria-label="Toggle dark mode"
       />
-      <Moon className={`w-4 h-4 ${isDark ? 'text-blue-400' : 'text-stone-400'}`} />
+      <Moon className={`w-4 h-4 ${isDark ? 'text-white' : 'text-gray-400'}`} />
     </div>
   );
 }
@@ -392,32 +355,27 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         {/* Content */}
         <div className="flex-1 flex flex-col items-center justify-center px-8 sm:px-10 pb-8 text-center">
           {/* Icon */}
-          <div className="relative mb-8">
-            <div className="w-28 h-28 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-stone-100 to-stone-200 dark:from-stone-800 dark:to-stone-900 flex items-center justify-center">
-              <Sparkles className="w-12 h-12 sm:w-10 sm:h-10 text-stone-400 dark:text-gray-500" />
-            </div>
-            <div className="absolute -bottom-1 -right-1 w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-stone-900 dark:bg-white flex items-center justify-center">
-              <User className="w-5 h-5 sm:w-4 sm:h-4 text-white dark:text-gray-900" />
-            </div>
+          <div className="w-24 h-24 sm:w-20 sm:h-20 rounded-full bg-gray-100 dark:bg-gray-900 flex items-center justify-center mb-6">
+            <User className="w-10 h-10 sm:w-8 sm:h-8 text-gray-400 dark:text-gray-500" />
           </div>
 
           {/* Text */}
-          <h2 className="text-2xl sm:text-xl font-semibold text-stone-900 dark:text-white mb-3">
+          <h2 className="text-2xl sm:text-xl font-semibold text-gray-900 dark:text-white mb-3">
             Start Your Journey
           </h2>
-          <p className="text-base sm:text-sm text-stone-500 dark:text-gray-400 mb-10 max-w-[280px] leading-relaxed">
-            Sign in to track your travels, earn badges, and unlock your personal travel achievements.
+          <p className="text-base sm:text-sm text-gray-600 dark:text-gray-400 mb-10 max-w-[280px] leading-relaxed">
+            Sign in to track your travels and unlock your personal travel achievements.
           </p>
 
           {/* CTA */}
           <button
             onClick={() => handleNavigate('/auth/login')}
-            className="w-full max-w-[280px] py-4 sm:py-3.5 rounded-2xl sm:rounded-xl bg-stone-900 dark:bg-white text-white dark:text-gray-900 text-base sm:text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all min-h-[56px] sm:min-h-[48px]"
+            className="w-full max-w-[280px] py-4 sm:py-3 rounded-full bg-black dark:bg-white text-white dark:text-black text-base sm:text-sm font-medium hover:opacity-80 transition-opacity min-h-[56px] sm:min-h-[48px]"
           >
             Get Started
           </button>
 
-          <p className="text-xs text-stone-400 dark:text-gray-500 mt-4">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-4">
             Free to use, no credit card required
           </p>
         </div>
@@ -425,7 +383,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
     );
   }
 
-  // Logged in state - Redesigned with gamification
+  // Logged in state
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-950">
       {/* Close button */}
@@ -442,16 +400,16 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
         />
         <TravelBadge badge={badge} />
 
-        <h2 className="text-xl font-semibold text-stone-900 dark:text-white mt-3 text-center">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mt-3 text-center">
           {displayUsername}
         </h2>
-        <p className="text-sm text-stone-500 dark:text-gray-400 mt-1 text-center truncate max-w-full">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 text-center truncate max-w-full">
           {user.email}
         </p>
 
         <button
           onClick={() => handleNavigate('/account')}
-          className="mt-3 flex items-center gap-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+          className="mt-3 flex items-center gap-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white transition-colors"
         >
           <Edit3 className="w-3.5 h-3.5" />
           Edit Profile
@@ -468,7 +426,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
 
       {/* Library Grid */}
       <div className="px-5 mt-6">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-stone-400 dark:text-gray-500 mb-3">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
           Your Library
         </h3>
         <div className="grid grid-cols-3 gap-3">
@@ -506,7 +464,7 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       <div className="flex-1 min-h-4" />
 
       {/* Quick Settings */}
-      <div className="px-5 py-4 border-t border-stone-100 dark:border-gray-800">
+      <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-800">
         <SettingsRow
           icon={Settings}
           label="Settings"
@@ -525,10 +483,10 @@ export default function AccountDrawer({ isOpen, onClose }: AccountDrawerProps) {
       </div>
 
       {/* Sign Out Footer */}
-      <div className="px-5 pb-5 pt-2 border-t border-stone-100 dark:border-gray-800">
+      <div className="px-5 pb-5 pt-2 border-t border-gray-200 dark:border-gray-800">
         <button
           onClick={handleSignOut}
-          className="flex w-full items-center justify-center gap-2 py-3 rounded-xl text-sm font-medium text-stone-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors"
+          className="flex w-full items-center justify-center gap-2 py-3 rounded-full text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
         >
           <LogOut className="w-4 h-4" />
           Sign Out
