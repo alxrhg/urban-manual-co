@@ -3,18 +3,12 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Destination } from '@/types/destination';
 
-// CSS for marker animations with spring-like physics
+// CSS for marker animations with smooth slide-in
 const markerStyles = `
-  @keyframes markerEntrance {
+  @keyframes markerSlideIn {
     0% {
       opacity: 0;
-      transform: scale(0) translateY(10px);
-    }
-    60% {
-      transform: scale(1.2) translateY(-2px);
-    }
-    80% {
-      transform: scale(0.9) translateY(1px);
+      transform: scale(0.5) translateY(8px);
     }
     100% {
       opacity: 1;
@@ -22,21 +16,12 @@ const markerStyles = `
     }
   }
 
-  @keyframes markerPulse {
-    0%, 100% {
-      box-shadow: 0 0 0 0 rgba(28, 28, 28, 0.4);
+  @keyframes markerFadeIn {
+    0% {
+      opacity: 0;
     }
-    50% {
-      box-shadow: 0 0 0 8px rgba(28, 28, 28, 0);
-    }
-  }
-
-  @keyframes markerBounce {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-4px);
+    100% {
+      opacity: 1;
     }
   }
 
@@ -48,15 +33,16 @@ const markerStyles = `
     border: 1.5px solid #FFFFFF;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-    animation: markerEntrance 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    animation: markerSlideIn 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+    transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1),
                 box-shadow 0.2s ease,
-                width 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
-                height 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+                width 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+                height 0.2s cubic-bezier(0.32, 0.72, 0, 1),
+                background-color 0.2s ease;
   }
 
   .map-marker:hover {
-    transform: scale(1.3);
+    transform: scale(1.25);
     box-shadow: 0 4px 12px rgba(0,0,0,0.4);
   }
 
@@ -65,7 +51,6 @@ const markerStyles = `
     height: 16px;
     background-color: #3B82F6;
     border-color: #FFFFFF;
-    animation: markerPulse 2s ease-in-out infinite;
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3);
   }
 

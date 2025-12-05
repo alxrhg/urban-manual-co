@@ -5,19 +5,18 @@ import { X } from 'lucide-react';
 import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { DRAWER_STYLES } from '@/lib/drawer-styles';
 
-// Spring configuration for natural physics-based animations
-const springConfig = {
-  type: 'spring' as const,
-  damping: 30,
-  stiffness: 300,
-  mass: 0.8,
+// Smooth easing configuration for slide animations
+const slideConfig = {
+  type: 'tween' as const,
+  duration: 0.35,
+  ease: [0.32, 0.72, 0, 1], // Custom ease curve for smooth deceleration
 };
 
-// Smoother spring for backdrop
-const backdropSpring = {
-  type: 'spring' as const,
-  damping: 40,
-  stiffness: 400,
+// Backdrop transition
+const backdropConfig = {
+  type: 'tween' as const,
+  duration: 0.3,
+  ease: 'easeOut',
 };
 
 export interface DrawerProps {
@@ -214,7 +213,7 @@ export function Drawer({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={backdropSpring}
+            transition={backdropConfig}
             className="fixed inset-0"
             style={{
               backgroundColor: `rgba(0, 0, 0, ${parseInt(backdropOpacity) / 100})`,
@@ -235,7 +234,7 @@ export function Drawer({
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={springConfig}
+            transition={slideConfig}
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0.05, bottom: 0.5 }}
@@ -260,7 +259,7 @@ export function Drawer({
                 className="w-10 h-1.5 rounded-full bg-gray-300/80 dark:bg-gray-600/80 mt-2"
                 whileHover={{ scaleX: 1.2 }}
                 whileTap={{ scaleX: 1.4 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                transition={{ duration: 0.15, ease: 'easeOut' }}
               />
             </div>
 
@@ -300,7 +299,7 @@ export function Drawer({
               x: position === 'right' ? '110%' : '-110%',
               opacity: 0,
             }}
-            transition={springConfig}
+            transition={slideConfig}
             className={`
               hidden md:flex fixed
               ${desktopSpacing} rounded-2xl
@@ -320,9 +319,10 @@ export function Drawer({
 
             <motion.div
               className="flex-1 overflow-y-auto overscroll-contain"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, ...springConfig }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut', delay: 0.05 }}
             >
               {children}
             </motion.div>
@@ -330,9 +330,10 @@ export function Drawer({
             {footerContent && (
               <motion.div
                 className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15, ...springConfig }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut', delay: 0.1 }}
               >
                 {footerContent}
               </motion.div>
@@ -359,7 +360,7 @@ export function Drawer({
               x: position === 'right' ? '100%' : '-100%',
               opacity: 0,
             }}
-            transition={springConfig}
+            transition={slideConfig}
             className={`
               md:hidden fixed top-0 bottom-0 w-full
               ${position === 'right' ? 'right-0' : 'left-0'}
@@ -379,7 +380,8 @@ export function Drawer({
               className="flex-1 overflow-y-auto overscroll-contain"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: 'easeOut', delay: 0.05 }}
             >
               {children}
             </motion.div>
