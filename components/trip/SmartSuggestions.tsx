@@ -48,6 +48,38 @@ interface AISuggestion {
   reason: string;
 }
 
+interface MoveAction {
+  targetItem: string;
+  newTime: string;
+}
+
+interface CompoundResult {
+  isCompound: boolean;
+  actions: Array<{
+    action: string;
+    success: boolean;
+    message: string;
+    targetItem?: string;
+    newTime?: string;
+    destination?: {
+      id: number;
+      slug: string;
+      name: string;
+      category: string;
+    };
+  }>;
+  destination?: {
+    id: number;
+    slug: string;
+    name: string;
+    category: string;
+  };
+  dayNumber?: number;
+  time?: string;
+  moveDetails?: MoveAction;
+  message: string;
+}
+
 interface SmartSuggestionsProps {
   days: TripDay[];
   destination?: string | null;
@@ -55,6 +87,7 @@ interface SmartSuggestionsProps {
   onAddPlace?: (dayNumber: number, category?: string) => void;
   onAddAISuggestion?: (suggestion: AISuggestion) => void;
   onAddFromNL?: (destination: unknown, dayNumber: number, time?: string) => Promise<void>;
+  onMoveItem?: (targetItem: string, newTime: string) => Promise<void>;
   className?: string;
 }
 
@@ -81,6 +114,7 @@ export default function SmartSuggestions({
   onAddPlace,
   onAddAISuggestion,
   onAddFromNL,
+  onMoveItem,
   className = '',
 }: SmartSuggestionsProps) {
   const [aiSuggestions, setAISuggestions] = useState<AISuggestion[]>([]);
@@ -91,6 +125,7 @@ export default function SmartSuggestions({
   const [nlInput, setNlInput] = useState('');
   const [isProcessingNL, setIsProcessingNL] = useState(false);
   const [nlResult, setNlResult] = useState<string | null>(null);
+  const [pendingActions, setPendingActions] = useState<CompoundResult['actions'] | null>(null);
 
   // Fetch AI suggestions automatically when destination is set
   const fetchAISuggestions = useCallback(async () => {
@@ -142,6 +177,7 @@ export default function SmartSuggestions({
 
     setIsProcessingNL(true);
     setNlResult(null);
+    setPendingActions(null);
 
     try {
       const response = await fetch('/api/intelligence/natural-language', {
@@ -157,6 +193,48 @@ export default function SmartSuggestions({
       if (response.ok) {
         const result = await response.json();
 
+        // Handle compound commands (e.g., "Move dinner to 8pm and find a bar nearby")
+        if (result.isCompound) {
+          const actions = result.actions as CompoundResult['actions'];
+          let actionsCompleted = 0;
+          const actionMessages: string[] = [];
+
+          for (const action of actions) {
+            if (action.action === 'move' && action.targetItem && action.newTime && onMoveItem) {
+              await onMoveItem(action.targetItem, action.newTime);
+              actionMessages.push(`Moved ${action.targetItem} to ${action.newTime}`);
+              actionsCompleted++;
+            } else if ((action.action === 'add_place' || action.action === 'find_nearby') && action.destination && onAddFromNL) {
+              await onAddFromNL(
+                action.destination,
+                result.dayNumber || selectedDayNumber,
+                result.time
+              );
+              actionMessages.push(`Added ${action.destination.name}`);
+              actionsCompleted++;
+            }
+          }
+
+          if (actionsCompleted > 0) {
+            setNlResult(actionMessages.join(' · '));
+            setNlInput('');
+            setTimeout(() => setNlResult(null), 3000);
+          } else {
+            setNlResult(result.message || 'Could not complete actions');
+          }
+          return;
+        }
+
+        // Handle single move action
+        if (result.action === 'move' && result.targetItem && result.newTime && onMoveItem) {
+          await onMoveItem(result.targetItem, result.newTime);
+          setNlResult(`Moved ${result.targetItem} to ${result.newTime}`);
+          setNlInput('');
+          setTimeout(() => setNlResult(null), 3000);
+          return;
+        }
+
+        // Handle single add action
         if (result.destination && onAddFromNL) {
           setNlResult(`Adding: ${result.destination.name}`);
           await onAddFromNL(
@@ -180,7 +258,7 @@ export default function SmartSuggestions({
     } finally {
       setIsProcessingNL(false);
     }
-  }, [nlInput, destination, days.length, selectedDayNumber, onAddFromNL]);
+  }, [nlInput, destination, days.length, selectedDayNumber, onAddFromNL, onMoveItem]);
 
   const handleNLKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -324,7 +402,7 @@ export default function SmartSuggestions({
               value={nlInput}
               onChange={(e) => setNlInput(e.target.value)}
               onKeyDown={handleNLKeyDown}
-              placeholder={`"Add dinner near the Eiffel Tower..."`}
+              placeholder={`"Move dinner to 8pm and find a bar nearby..."`}
               disabled={isProcessingNL}
               className="w-full px-3 py-2.5 pr-10 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50"
             />
@@ -341,7 +419,7 @@ export default function SmartSuggestions({
             </button>
           </div>
           {nlResult && (
-            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+            <p className={`mt-1.5 text-xs ${nlResult.includes('Moved') || nlResult.includes('Added') ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
               {nlResult}
             </p>
           )}
