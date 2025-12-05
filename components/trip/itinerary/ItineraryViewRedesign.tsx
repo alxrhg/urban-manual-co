@@ -99,17 +99,38 @@ export default function ItineraryViewRedesign({
     return timeToMinutes(timeA) - timeToMinutes(timeB);
   });
 
+  // Calculate map index for items with coordinates (matching map markers)
+  // Map markers are numbered for non-flight items that have lat/lng
+  let mapMarkerIndex = 0;
+  const itemMapIndices = new Map<string, number>();
+
+  sortedItems.forEach((item) => {
+    // Skip flights - they don't appear as markers on the map
+    if (item.parsedNotes?.type === 'flight') return;
+
+    // Check if item has coordinates
+    const lat = item.parsedNotes?.latitude ?? item.destination?.latitude;
+    const lng = item.parsedNotes?.longitude ?? item.destination?.longitude;
+
+    if (lat && lng) {
+      mapMarkerIndex++;
+      itemMapIndices.set(item.id, mapMarkerIndex);
+    }
+  });
+
   // Calculate gaps and travel times between items
   const itemsWithMeta = sortedItems.map((item, index) => {
     const nextItem = sortedItems[index + 1];
     const travelTime = calculateTravelTime(item, nextItem);
     const gap = nextItem ? calculateGap(item, nextItem, travelTime?.durationMinutes) : null;
+    const mapIndex = itemMapIndices.get(item.id);
 
     return {
       item,
       travelTime,
       gap,
       isCard: shouldUseCard(item),
+      mapIndex,
     };
   });
 
@@ -157,7 +178,7 @@ export default function ItineraryViewRedesign({
       {/* Main Itinerary */}
       {sortedItems.length > 0 ? (
         <div className="space-y-0 pt-4">
-          {itemsWithMeta.map(({ item, travelTime, gap, isCard }, index) => (
+          {itemsWithMeta.map(({ item, travelTime, gap, isCard, mapIndex }, index) => (
             <React.Fragment key={item.id}>
               {/* Item Row/Card */}
               <div className="relative group">
@@ -186,12 +207,14 @@ export default function ItineraryViewRedesign({
                     item={item}
                     isActive={item.id === activeItemId}
                     onClick={() => onEditItem?.(item)}
+                    mapIndex={mapIndex}
                   />
                 ) : (
                   <ItineraryMinimalRow
                     item={item}
                     isActive={item.id === activeItemId}
                     onClick={() => onEditItem?.(item)}
+                    mapIndex={mapIndex}
                   />
                 )}
               </div>

@@ -24,6 +24,7 @@ interface ItineraryMinimalRowProps {
   item: EnrichedItineraryItem;
   isActive?: boolean;
   onClick?: () => void;
+  mapIndex?: number; // Map marker number (1, 2, 3...) - only for items with coordinates
   className?: string;
 }
 
@@ -79,6 +80,7 @@ export default function ItineraryMinimalRow({
   item,
   isActive = false,
   onClick,
+  mapIndex,
   className = '',
 }: ItineraryMinimalRowProps) {
   const notes = item.parsedNotes;
@@ -126,10 +128,25 @@ export default function ItineraryMinimalRow({
         ${className}
       `}
     >
-      {/* Emoji/Icon */}
-      <span className="text-base flex-shrink-0 w-6 text-center">
-        {emoji}
-      </span>
+      {/* Map marker badge or Emoji */}
+      {mapIndex ? (
+        <div
+          className={`
+            w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
+            ${isActive
+              ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-900 dark:border-gray-600'
+            }
+          `}
+          title={`Stop ${mapIndex} on map`}
+        >
+          {mapIndex}
+        </div>
+      ) : (
+        <span className="text-base flex-shrink-0 w-6 text-center">
+          {emoji}
+        </span>
+      )}
 
       {/* Content */}
       <div className="flex-1 min-w-0">

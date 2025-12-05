@@ -20,6 +20,7 @@ interface ItineraryCardProps {
   isActive?: boolean;
   onClick?: () => void;
   onUpdateNotes?: (itemId: string, notes: Record<string, unknown>) => void;
+  mapIndex?: number; // Map marker number (1, 2, 3...) - only for items with coordinates
   className?: string;
 }
 
@@ -32,6 +33,7 @@ export default function ItineraryCard({
   isActive = false,
   onClick,
   onUpdateNotes,
+  mapIndex,
   className = '',
 }: ItineraryCardProps) {
   const itemType = item.parsedNotes?.type || 'place';
@@ -41,12 +43,33 @@ export default function ItineraryCard({
     case 'flight':
       return <FlightCard item={item} isActive={isActive} onClick={onClick} onUpdateNotes={onUpdateNotes} className={className} />;
     case 'hotel':
-      return <HotelCard item={item} isActive={isActive} onClick={onClick} className={className} />;
+      return <HotelCard item={item} isActive={isActive} onClick={onClick} mapIndex={mapIndex} className={className} />;
     case 'event':
-      return <EventCard item={item} isActive={isActive} onClick={onClick} className={className} />;
+      return <EventCard item={item} isActive={isActive} onClick={onClick} mapIndex={mapIndex} className={className} />;
     default:
-      return <PlaceCard item={item} isActive={isActive} onClick={onClick} className={className} />;
+      return <PlaceCard item={item} isActive={isActive} onClick={onClick} mapIndex={mapIndex} className={className} />;
   }
+}
+
+// ============================================================================
+// Map Marker Badge - Shows the marker number matching the map
+// ============================================================================
+
+function MapMarkerBadge({ index, isActive }: { index: number; isActive?: boolean }) {
+  return (
+    <div
+      className={`
+        w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0
+        ${isActive
+          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+          : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-900 dark:border-gray-600'
+        }
+      `}
+      title={`Stop ${index} on map`}
+    >
+      {index}
+    </div>
+  );
 }
 
 // ============================================================================
@@ -257,6 +280,7 @@ function HotelCard({
   item,
   isActive,
   onClick,
+  mapIndex,
   className,
 }: ItineraryCardProps) {
   const notes = item.parsedNotes;
@@ -290,13 +314,19 @@ function HotelCard({
             sizes="(max-width: 768px) 100vw, 400px"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          {/* Map marker badge */}
+          {mapIndex && (
+            <div className="absolute top-3 left-3">
+              <MapMarkerBadge index={mapIndex} isActive={isActive} />
+            </div>
+          )}
           {/* Badges */}
           <div className="absolute bottom-3 left-4 flex items-center gap-1.5">
-            <span className="px-2 py-0.5 rounded-full bg-amber-500/80 text-white text-xs font-medium">
+            <span className="px-2 py-0.5 rounded-full bg-gray-900/80 text-white text-xs font-medium">
               {nights} {nights === 1 ? 'night' : 'nights'}
             </span>
             {notes?.breakfastIncluded && (
-              <span className="px-2 py-0.5 rounded-full bg-amber-500/80 text-white text-xs font-medium">
+              <span className="px-2 py-0.5 rounded-full bg-gray-900/80 text-white text-xs font-medium">
                 Breakfast
               </span>
             )}
@@ -307,7 +337,10 @@ function HotelCard({
       {/* Content */}
       <div className="p-4">
         <div className="flex items-start gap-3">
-          {!image && (
+          {!image && mapIndex && (
+            <MapMarkerBadge index={mapIndex} isActive={isActive} />
+          )}
+          {!image && !mapIndex && (
             <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
               <Building2 className="w-5 h-5 text-stone-500 dark:text-gray-400" />
             </div>
@@ -335,6 +368,7 @@ function EventCard({
   item,
   isActive,
   onClick,
+  mapIndex,
   className,
 }: ItineraryCardProps) {
   const notes = item.parsedNotes;
@@ -364,9 +398,15 @@ function EventCard({
             sizes="(max-width: 768px) 100vw, 400px"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          {/* Map marker badge */}
+          {mapIndex && (
+            <div className="absolute top-3 left-3">
+              <MapMarkerBadge index={mapIndex} isActive={isActive} />
+            </div>
+          )}
           {notes?.eventType && (
             <div className="absolute bottom-3 left-4">
-              <span className="px-2 py-0.5 rounded-full bg-stone-800/80 text-white text-xs font-medium capitalize">
+              <span className="px-2 py-0.5 rounded-full bg-gray-900/80 text-white text-xs font-medium capitalize">
                 {notes.eventType}
               </span>
             </div>
@@ -377,7 +417,10 @@ function EventCard({
       {/* Content */}
       <div className="p-4">
         <div className="flex items-start gap-3">
-          {!image && (
+          {!image && mapIndex && (
+            <MapMarkerBadge index={mapIndex} isActive={isActive} />
+          )}
+          {!image && !mapIndex && (
             <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
               <Ticket className="w-5 h-5 text-stone-500 dark:text-gray-400" />
             </div>
@@ -406,6 +449,7 @@ function PlaceCard({
   item,
   isActive,
   onClick,
+  mapIndex,
   className,
 }: ItineraryCardProps) {
   const image = item.destination?.image || item.destination?.image_thumbnail;
@@ -442,23 +486,32 @@ function PlaceCard({
             sizes="(max-width: 768px) 100vw, 50vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+          {/* Map marker badge on image */}
+          {mapIndex && (
+            <div className="absolute top-3 left-3">
+              <MapMarkerBadge index={mapIndex} isActive={isActive} />
+            </div>
+          )}
         </div>
       )}
 
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-stone-500 flex-shrink-0" />
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {/* Map marker badge (when no image) */}
+            {!image && mapIndex && (
+              <MapMarkerBadge index={mapIndex} isActive={isActive} />
+            )}
+            <div className="flex-1 min-w-0">
               <h4 className="font-semibold text-stone-900 dark:text-white truncate">
                 {item.title || 'Place'}
               </h4>
+              {category && (
+                <p className="text-xs text-stone-500 capitalize mt-0.5">
+                  {category.replace(/_/g, ' ')}
+                </p>
+              )}
             </div>
-            {category && (
-              <p className="text-xs text-stone-500 capitalize mt-1 ml-6">
-                {category.replace(/_/g, ' ')}
-              </p>
-            )}
           </div>
           {formattedTime && (
             <div className="text-sm text-stone-600 dark:text-gray-400 flex-shrink-0">
