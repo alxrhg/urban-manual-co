@@ -7,6 +7,9 @@ import { generatePageMetadata, NotFoundPage } from '@payloadcms/next/views'
 import configPromise from '../../../../payload.config'
 import { importMap } from '../importMap'
 
+// Force dynamic rendering to avoid static generation issues
+export const dynamic = 'force-dynamic'
+
 type Args = {
   params: Promise<{
     segments: string[]
