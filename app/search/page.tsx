@@ -1,9 +1,9 @@
 'use client';
 
-import { Suspense, useEffect, useState, useCallback } from 'react';
+import { Suspense, useEffect, useState, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CompactResponseSection, type Message } from '@/src/features/search/CompactResponseSection';
+import { CompactResponseSection, type Message, type ConciergeState } from '@/src/features/search/CompactResponseSection';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { DestinationCard } from '@/components/DestinationCard';
 import { EditModeToggle } from '@/components/EditModeToggle';
@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
+import { useConciergeContext } from '@/hooks/useConciergeContext';
 import type { Destination as DestinationType } from '@/types/destination';
 
 import { useDrawerStore } from '@/lib/stores/drawer-store';
@@ -52,6 +53,9 @@ function SearchPageContent() {
   const query = searchParams?.get('q') || '';
   const { user } = useAuth();
 
+  // Concierge context for trip awareness and personalization
+  const conciergeContext = useConciergeContext();
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = useItemsPerPage(4); // Always 4 full rows
   const [editingDestination, setEditingDestination] = useState<DestinationType | null>(null);
@@ -77,6 +81,105 @@ function SearchPageContent() {
     conversationHistory: [],
     suggestions: [],
   });
+
+  // Generate concierge state based on results and context
+  const conciergeState = useMemo((): ConciergeState => {
+    const state: ConciergeState = {};
+
+    // Trip context awareness - show if query matches trip destination
+    if (conciergeContext.upcomingTrip && conciergeContext.upcomingTrip.daysUntil >= 0) {
+      const queryLower = query.toLowerCase();
+      const matchesTrip = conciergeContext.upcomingTrip.destinations.some(
+        dest => queryLower.includes(dest.toLowerCase())
+      );
+
+      if (matchesTrip) {
+        const { daysUntil, destinations } = conciergeContext.upcomingTrip;
+        const timeText = daysUntil === 0
+          ? 'today'
+          : daysUntil === 1
+            ? 'tomorrow'
+            : `in ${daysUntil} days`;
+        state.contextNote = `You're heading to ${destinations[0]} ${timeText}.`;
+      }
+    }
+
+    // Check for ambiguous queries needing clarification
+    const queryLower = query.toLowerCase();
+    const resultCount = searchState.filteredResults.length;
+
+    if (resultCount > 10) {
+      // "Special" without context
+      if (queryLower.includes('special') && !queryLower.includes('celebration') && !queryLower.includes('romantic')) {
+        state.needsClarification = true;
+        state.clarificationQuestion = 'Special how?';
+        state.clarificationOptions = ['celebration', 'romantic', 'solo treat', 'business'];
+      }
+      // "Nice" without context
+      else if (queryLower.includes('nice') && queryLower.split(' ').length <= 3) {
+        state.needsClarification = true;
+        state.clarificationQuestion = 'Nice meaning?';
+        state.clarificationOptions = ['upscale', 'relaxed', 'views', 'quiet'];
+      }
+      // "Good" without specifics
+      else if (queryLower.startsWith('good ') && !queryLower.includes('for')) {
+        state.needsClarification = true;
+        state.clarificationQuestion = 'Good for what?';
+        state.clarificationOptions = ['groups', 'dates', 'solo', 'working'];
+      }
+    }
+
+    // Generate soft suggestions based on results
+    if (resultCount > 6 && searchState.suggestions.length === 0) {
+      const softSuggestions: string[] = [];
+
+      // Check result characteristics to generate relevant suggestions
+      const hasOutdoor = searchState.filteredResults.some((r: any) =>
+        r.vibe_tags?.some((t: string) => t?.toLowerCase().includes('outdoor') || t?.toLowerCase().includes('terrace'))
+      );
+      const hasQuiet = searchState.filteredResults.some((r: any) =>
+        r.vibe_tags?.some((t: string) => t?.toLowerCase().includes('quiet') || t?.toLowerCase().includes('intimate'))
+      );
+
+      if (!queryLower.includes('quiet') && hasQuiet) softSuggestions.push('quiet');
+      if (!queryLower.includes('outdoor') && hasOutdoor) softSuggestions.push('outdoor seating');
+      if (!queryLower.includes('late')) softSuggestions.push('open late');
+      if (!queryLower.includes('upscale') && !queryLower.includes('fine')) softSuggestions.push('upscale');
+
+      if (softSuggestions.length > 0) {
+        state.softSuggestions = softSuggestions.slice(0, 4);
+      }
+    }
+
+    return state;
+  }, [query, searchState.filteredResults, searchState.suggestions, conciergeContext.upcomingTrip]);
+
+  // Generate evolved greeting
+  const greetingContent = useMemo(() => {
+    const baseGreeting = conciergeContext.greeting;
+    const userName = conciergeContext.userName;
+
+    // With user name
+    if (userName) {
+      // With upcoming trip context
+      if (conciergeContext.upcomingTrip && conciergeContext.upcomingTrip.daysUntil >= 0) {
+        const { destinations, daysUntil } = conciergeContext.upcomingTrip;
+        const timeText = daysUntil === 0
+          ? 'today'
+          : daysUntil === 1
+            ? 'tomorrow'
+            : `in ${daysUntil} days`;
+        return {
+          greeting: `${baseGreeting}, ${userName}`,
+          subtext: `${destinations[0]} ${timeText} — need recommendations?`
+        };
+      }
+      return { greeting: `${baseGreeting}, ${userName}`, subtext: null };
+    }
+
+    // Without user name
+    return { greeting: baseGreeting.toUpperCase(), subtext: null };
+  }, [conciergeContext]);
 
   const performInitialSearch = useCallback(async (searchQuery: string) => {
     setSearchState(prev => ({ ...prev, isLoading: true }));
@@ -248,9 +351,25 @@ function SearchPageContent() {
   return (
     <>
       <div className="w-full px-6 md:px-10 py-20 min-h-screen">
-      <p className="text-xs tracking-widest text-gray-400 mb-8">
-        {new Date().getHours() < 12 ? 'GOOD MORNING' : new Date().getHours() < 18 ? 'GOOD AFTERNOON' : 'GOOD EVENING'}
-      </p>
+      {/* Evolved Concierge Greeting */}
+      <div className="mb-8">
+        {conciergeContext.userName ? (
+          <>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {greetingContent.greeting}
+            </p>
+            {greetingContent.subtext && (
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                {greetingContent.subtext}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-xs tracking-widest text-gray-400">
+            {greetingContent.greeting}
+          </p>
+        )}
+      </div>
 
       <CompactResponseSection
         query={searchState.originalQuery}
@@ -258,6 +377,9 @@ function SearchPageContent() {
         suggestions={searchState.suggestions}
         onChipClick={handleChipClick}
         onFollowUp={handleFollowUp}
+        concierge={conciergeState}
+        onClarificationSelect={handleRefinement}
+        onSoftSuggestionSelect={handleRefinement}
       />
 
       {/* Intent Confirmation Chips */}
