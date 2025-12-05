@@ -411,7 +411,7 @@ export default function Account() {
             </p>
             <button
               onClick={() => router.push('/auth/login')}
-              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-sm hover:opacity-80 transition-opacity"
+              className="w-full px-6 py-3 bg-black dark:bg-white text-white dark:text-black text-sm font-medium rounded-full hover:opacity-80 transition-opacity"
             >
               Sign In
             </button>
