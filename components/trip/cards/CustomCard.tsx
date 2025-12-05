@@ -32,8 +32,7 @@ export default function CustomCard({
       className={`
         cursor-pointer rounded-2xl transition-all duration-200
         bg-stone-100 dark:bg-gray-800/50
-        ${isSelected ? 'ring-2 ring-stone-900 dark:ring-white' : ''}
-        hover:ring-1 hover:ring-stone-300 dark:hover:ring-gray-600
+        ${isSelected ? 'bg-stone-200 dark:bg-gray-700' : 'hover:bg-stone-200/60 dark:hover:bg-gray-700/60'}
       `}
     >
       <div className="p-4 flex items-start gap-3">
