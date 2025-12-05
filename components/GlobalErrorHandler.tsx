@@ -51,7 +51,7 @@ export function GlobalErrorHandler({
 
       // Optionally show a toast
       if (showToast) {
-        toast.safeError(event.reason, toastMessage);
+        toast.safeError(event.reason, { fallback: toastMessage });
       }
     };
 
