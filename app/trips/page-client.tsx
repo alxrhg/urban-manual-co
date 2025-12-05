@@ -324,9 +324,9 @@ function TripCard({ trip, state }: TripCardProps) {
       href={`/trips/${trip.id}`}
       className={`
         group flex gap-4 p-4 rounded-2xl
-        bg-stone-100/80 dark:bg-gray-800/80
+        bg-white dark:bg-gray-900
         border border-stone-200 dark:border-gray-700
-        hover:bg-stone-200/80 dark:hover:bg-gray-700/80
+        hover:bg-stone-100/80 dark:hover:bg-gray-800/80
         transition-all duration-200 ease-out cursor-pointer
         ${isPast ? 'opacity-80' : ''}
       `}
