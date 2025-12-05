@@ -77,6 +77,9 @@ export function Drawer({
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
 
+  // Cursor Reflection State (for glassy style)
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
+
   const previousActiveElementRef = useRef<HTMLElement | null>(null);
 
   // Get the currently visible drawer element
@@ -98,6 +101,20 @@ export function Drawer({
     }
     return null;
   }, [mobileVariant]);
+
+  // Cursor reflection handler for glassy style
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (style !== 'glassy') return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMousePosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  }, [style]);
+
+  const handleMouseLeave = useCallback(() => {
+    setMousePosition(null);
+  }, []);
 
   // Body Scroll Locking
   useEffect(() => {
@@ -255,10 +272,30 @@ export function Drawer({
 
   if (!isOpen && !keepStateOnClose) return null;
 
+  // Render cursor reflection overlay for glassy style
+  const renderCursorReflection = () => {
+    if (style !== 'glassy' || !mousePosition) return null;
+    return (
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit] z-0"
+        aria-hidden="true"
+      >
+        <div
+          className="absolute w-[400px] h-[400px] -translate-x-1/2 -translate-y-1/2 transition-opacity duration-300"
+          style={{
+            left: mousePosition.x,
+            top: mousePosition.y,
+            background: 'radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 40%, transparent 70%)',
+          }}
+        />
+      </div>
+    );
+  };
+
   const renderHeader = () => {
     if (!title && !headerContent) return null;
     return (
-      <div className={`flex-shrink-0 min-h-[3.5rem] px-6 flex items-center justify-between ${headerBackground} border-b border-black/5 dark:border-white/5 z-20`}>
+      <div className={`flex-shrink-0 min-h-[3.5rem] px-6 flex items-center justify-between ${headerBackground} border-b border-black/5 dark:border-white/5 relative z-20`}>
         {headerContent || (
           <>
             <div className="w-9" /> {/* Spacer */}
@@ -314,7 +351,10 @@ export function Drawer({
           }}
           role="dialog"
           aria-modal="true"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
+          {renderCursorReflection()}
           {/* Drag Handle Area */}
           <div className="drawer-handle flex-shrink-0 w-full h-6 flex items-center justify-center cursor-grab active:cursor-grabbing touch-none bg-inherit z-10 absolute top-0 left-0 right-0 rounded-t-[28px]">
             <div className="w-10 h-1.5 rounded-full bg-gray-300/80 dark:bg-gray-600/80 mt-2" />
@@ -364,15 +404,18 @@ export function Drawer({
           }}
           role="dialog"
           aria-modal="true"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
         >
+          {renderCursorReflection()}
           {renderHeader()}
-          
-          <div className="flex-1 overflow-y-auto overscroll-contain">
+
+          <div className="flex-1 overflow-y-auto overscroll-contain relative z-10">
             {children}
           </div>
 
           {footerContent && (
-            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
+            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 relative z-10 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
               {footerContent}
             </div>
           )}
