@@ -23,15 +23,15 @@ interface MapSidebarCardProps {
   className?: string;
 }
 
-// Day colors for multi-day trips (matching TripInteractiveMap)
+// Day colors - monochromatic scheme per design system (matching TripInteractiveMap)
 const DAY_COLORS = [
-  { bg: '#111827', border: '#ffffff', text: '#ffffff' }, // Day 1 - Dark
-  { bg: '#3b82f6', border: '#ffffff', text: '#ffffff' }, // Day 2 - Blue
-  { bg: '#10b981', border: '#ffffff', text: '#ffffff' }, // Day 3 - Green
-  { bg: '#f59e0b', border: '#ffffff', text: '#ffffff' }, // Day 4 - Amber
-  { bg: '#8b5cf6', border: '#ffffff', text: '#ffffff' }, // Day 5 - Purple
-  { bg: '#ec4899', border: '#ffffff', text: '#ffffff' }, // Day 6 - Pink
-  { bg: '#06b6d4', border: '#ffffff', text: '#ffffff' }, // Day 7 - Cyan
+  { bg: '#111827', border: '#ffffff', text: '#ffffff' }, // Day 1 - Dark (gray-900)
+  { bg: '#374151', border: '#ffffff', text: '#ffffff' }, // Day 2 - Medium (gray-700)
+  { bg: '#6b7280', border: '#ffffff', text: '#ffffff' }, // Day 3 - Gray (gray-500)
+  { bg: '#1f2937', border: '#ffffff', text: '#ffffff' }, // Day 4 - Charcoal (gray-800)
+  { bg: '#4b5563', border: '#ffffff', text: '#ffffff' }, // Day 5 - Slate (gray-600)
+  { bg: '#030712', border: '#ffffff', text: '#ffffff' }, // Day 6 - Near black (gray-950)
+  { bg: '#9ca3af', border: '#111827', text: '#111827' }, // Day 7 - Light gray (gray-400)
 ];
 
 // Grayscale map style for Google Maps

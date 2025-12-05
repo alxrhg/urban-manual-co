@@ -60,12 +60,12 @@ export default function FullscreenMapOverlay({
     <div className="fixed inset-0 z-50">
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50"
         onClick={onClose}
       />
 
       {/* Map Container */}
-      <div className="absolute inset-4 md:inset-6 lg:inset-8 bg-white dark:bg-gray-900 rounded-3xl shadow-2xl overflow-hidden">
+      <div className="absolute inset-4 md:inset-6 lg:inset-8 bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-4 bg-gradient-to-b from-white/95 dark:from-gray-900/95 to-transparent">
           <div>

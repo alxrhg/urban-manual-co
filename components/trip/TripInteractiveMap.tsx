@@ -53,15 +53,15 @@ interface TripInteractiveMapProps {
   hasHeader?: boolean; // When true, offsets controls for external header
 }
 
-// Day colors for multi-day trips
+// Day colors - monochromatic scheme per design system
 const DAY_COLORS = [
-  { bg: '#111827', border: '#ffffff', text: '#ffffff' }, // Day 1 - Dark
-  { bg: '#3b82f6', border: '#ffffff', text: '#ffffff' }, // Day 2 - Blue
-  { bg: '#10b981', border: '#ffffff', text: '#ffffff' }, // Day 3 - Green
-  { bg: '#f59e0b', border: '#ffffff', text: '#ffffff' }, // Day 4 - Amber
-  { bg: '#8b5cf6', border: '#ffffff', text: '#ffffff' }, // Day 5 - Purple
-  { bg: '#ec4899', border: '#ffffff', text: '#ffffff' }, // Day 6 - Pink
-  { bg: '#06b6d4', border: '#ffffff', text: '#ffffff' }, // Day 7 - Cyan
+  { bg: '#111827', border: '#ffffff', text: '#ffffff' }, // Day 1 - Dark (gray-900)
+  { bg: '#374151', border: '#ffffff', text: '#ffffff' }, // Day 2 - Medium (gray-700)
+  { bg: '#6b7280', border: '#ffffff', text: '#ffffff' }, // Day 3 - Gray (gray-500)
+  { bg: '#1f2937', border: '#ffffff', text: '#ffffff' }, // Day 4 - Charcoal (gray-800)
+  { bg: '#4b5563', border: '#ffffff', text: '#ffffff' }, // Day 5 - Slate (gray-600)
+  { bg: '#030712', border: '#ffffff', text: '#ffffff' }, // Day 6 - Near black (gray-950)
+  { bg: '#9ca3af', border: '#111827', text: '#111827' }, // Day 7 - Light gray (gray-400)
 ];
 
 // Grayscale map style for Google Maps
@@ -303,7 +303,7 @@ export default function TripInteractiveMap({
       searchMarkerRef.current.map = null;
     }
 
-    // Create search marker element
+    // Create search marker element - uses black per design system
     const markerEl = document.createElement('div');
     markerEl.innerHTML = `
       <div style="
@@ -317,9 +317,9 @@ export default function TripInteractiveMap({
           height: 36px;
           border-radius: 50% 50% 50% 0;
           transform: rotate(-45deg);
-          background: #ef4444;
+          background: #111827;
           border: 2px solid white;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
           display: flex;
           align-items: center;
           justify-content: center;
