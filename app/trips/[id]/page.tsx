@@ -354,6 +354,7 @@ export default function TripPage() {
                   onOptimizeDay={handleOptimizeDay}
                   onUpdateTravelMode={handleUpdateTravelMode}
                   onRemoveItem={removeItem}
+                  onReorderItems={reorderItems}
                   isOptimizing={optimizingDay !== null}
                   isEditMode={isEditMode}
                   activeItemId={selectedItem?.id}
