@@ -9,7 +9,7 @@ import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 
 // Trip components
 import TripHeader, { type AddItemType } from '@/components/trip/TripHeader';
-import ItineraryView from '@/components/trip/ItineraryView';
+import ItineraryViewRedesign from '@/components/trip/itinerary/ItineraryViewRedesign';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
 import TripMapView from '@/components/trips/TripMapView';
@@ -333,8 +333,8 @@ export default function TripPage() {
                   </div>
                 )}
 
-                {/* Itinerary List */}
-                <ItineraryView
+                {/* Itinerary List - Timeline with Visual Cards */}
+                <ItineraryViewRedesign
                   days={days}
                   selectedDayNumber={selectedDayNumber}
                   onSelectDay={setSelectedDayNumber}
@@ -344,12 +344,13 @@ export default function TripPage() {
                     setShowAddPlaceBox(true);
                   }}
                   onOptimizeDay={handleOptimizeDay}
-                  onUpdateItemNotes={(itemId, notes) => updateItem(itemId, notes)}
+                  onUpdateTravelMode={handleUpdateTravelMode}
                   onRemoveItem={removeItem}
                   isOptimizing={optimizingDay !== null}
                   isEditMode={isEditMode}
                   activeItemId={selectedItem?.id}
                   allHotels={allHotels}
+                  showDayNavigation={false}
                 />
               </>
             )}
