@@ -79,7 +79,7 @@ export default function DrawerMount() {
       <TripOverviewDrawer
         isOpen={open && type === 'trip-overview'}
         onClose={closeDrawer}
-        trip={props?.trip ?? null}
+        trip={(props?.trip ?? null) as import('@/types/trip').Trip | null}
       />
 
       {open && type === 'trip-list' && !shouldSkipOverlay('trip-list') && (
@@ -98,7 +98,7 @@ export default function DrawerMount() {
       <TripOverviewQuickDrawer
         isOpen={open && type === 'trip-overview-quick'}
         onClose={closeDrawer}
-        trip={props.trip || null}
+        trip={(props.trip || null) as import('@/types/trip').Trip | null}
       />
 
       {open && type === 'trip-settings' && props?.trip && !shouldSkipOverlay('trip-settings') && (
@@ -128,16 +128,16 @@ export default function DrawerMount() {
           desktopWidth="420px"
         >
           <PlaceSelectorDrawer
-            tripId={props?.tripId}
-            dayNumber={props?.dayNumber}
-            city={props?.city}
-            category={props?.category}
-            onSelect={props?.onSelect}
+            tripId={props?.tripId as string | undefined}
+            dayNumber={props?.dayNumber as number | undefined}
+            city={props?.city as string | null | undefined}
+            category={props?.category as string | undefined}
+            onSelect={props?.onSelect as ((destination: import('@/types/destination').Destination) => void) | undefined}
             day={props?.day}
             trip={props?.trip}
-            index={props?.index}
-            mealType={props?.mealType}
-            replaceIndex={props?.replaceIndex}
+            index={props?.index as number | undefined}
+            mealType={props?.mealType as string | null | undefined}
+            replaceIndex={props?.replaceIndex as number | null | undefined}
           />
         </Drawer>
       )}
@@ -154,7 +154,7 @@ export default function DrawerMount() {
           <AddHotelDrawer
             trip={props.trip || null}
             day={props.day || null}
-            index={props.index}
+            index={props.index as number | undefined}
           />
         </Drawer>
       )}
@@ -169,9 +169,9 @@ export default function DrawerMount() {
           desktopWidth="420px"
         >
           <AddFlightDrawer
-            tripId={props?.tripId}
-            dayNumber={props?.dayNumber}
-            onAdd={props?.onAdd}
+            tripId={props?.tripId as string | undefined}
+            dayNumber={props?.dayNumber as number | undefined}
+            onAdd={props?.onAdd as ((flightData: import('@/components/drawers/AddFlightDrawer').FlightData) => void) | undefined}
           />
         </Drawer>
       )}
