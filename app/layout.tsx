@@ -222,7 +222,7 @@ export default function RootLayout({
         <MyStatsig>
           <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
+            defaultTheme="light"
             enableSystem={false}
             storageKey="urban-manual-theme"
           >
