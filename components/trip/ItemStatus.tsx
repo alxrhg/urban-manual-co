@@ -29,20 +29,20 @@ export default function ItemStatus({
   const statusConfig = {
     open: {
       icon: CheckCircle2,
-      color: 'text-green-600 dark:text-green-400',
-      bg: 'bg-green-100 dark:bg-green-900/30',
+      color: 'text-gray-600 dark:text-gray-300',
+      bg: 'bg-gray-100 dark:bg-gray-800',
       label: 'Open',
     },
     closing_soon: {
       icon: AlertCircle,
-      color: 'text-amber-600 dark:text-amber-400',
-      bg: 'bg-amber-100 dark:bg-amber-900/30',
+      color: 'text-gray-600 dark:text-gray-300',
+      bg: 'bg-gray-100 dark:bg-gray-800',
       label: closingTime ? `Closes ${closingTime}` : 'Closing soon',
     },
     closed: {
       icon: AlertCircle,
-      color: 'text-red-600 dark:text-red-400',
-      bg: 'bg-red-100 dark:bg-red-900/30',
+      color: 'text-gray-500 dark:text-gray-400',
+      bg: 'bg-gray-100 dark:bg-gray-800',
       label: 'Closed',
     },
     unknown: {
@@ -102,9 +102,9 @@ export function StatusDot({ status }: { status?: StatusType }) {
   if (!status || status === 'unknown') return null;
 
   const colors = {
-    open: 'bg-green-500',
-    closing_soon: 'bg-amber-500',
-    closed: 'bg-red-500',
+    open: 'bg-gray-400',
+    closing_soon: 'bg-gray-500',
+    closed: 'bg-gray-600',
   };
 
   return (

@@ -259,7 +259,7 @@ export default function TripSettingsBox({
                 </button>
                 <button
                   onClick={handleRemoveCover}
-                  className="px-3 py-1.5 bg-red-500/90 text-white text-xs font-medium rounded-full hover:bg-red-500 transition-colors"
+                  className="px-3 py-1.5 bg-gray-900/90 text-white text-xs font-medium rounded-full hover:bg-gray-900 transition-colors"
                 >
                   Remove
                 </button>
@@ -427,7 +427,7 @@ export default function TripSettingsBox({
           ) : (
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-red-500 hover:text-red-600 transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Delete Trip

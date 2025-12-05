@@ -163,7 +163,7 @@ export default function GapSuggestion({
               </span>
             </>
           )}
-          <Plus className={`w-3 h-3 text-blue-500 dark:text-blue-400 transition-transform ${isExpanded ? 'rotate-45' : ''}`} />
+          <Plus className={`w-3 h-3 text-stone-400 dark:text-gray-500 transition-transform ${isExpanded ? 'rotate-45' : ''}`} />
         </div>
 
         {/* Dashed line right */}
