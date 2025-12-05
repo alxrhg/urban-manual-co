@@ -50,7 +50,7 @@ export default function PlaceCard({
   };
 
   return (
-    <div className="p-4 rounded-2xl bg-stone-100/80 dark:bg-gray-800/80 border border-stone-200 dark:border-gray-700 flex gap-4 transition-all hover:bg-stone-200/80 dark:hover:bg-gray-700/80">
+    <div className="p-4 rounded-2xl bg-stone-100 dark:bg-gray-800/50 flex gap-4">
       {/* Thumbnail */}
       {image && (
         <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-stone-200 dark:bg-gray-700">

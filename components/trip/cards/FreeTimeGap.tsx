@@ -34,14 +34,15 @@ export default function FreeTimeGap({
         cursor-pointer rounded-xl transition-all duration-200
         border border-dashed border-stone-200 dark:border-gray-700
         bg-stone-50/50 dark:bg-gray-800/20
-        ${isSelected ? 'border-solid border-stone-400 dark:border-gray-500 bg-stone-100/80 dark:bg-gray-800/50' : ''}
-        hover:bg-stone-100/80 dark:hover:bg-gray-800/40
+        ${isSelected ? 'ring-2 ring-stone-900 dark:ring-white border-solid' : ''}
+        hover:border-stone-300 dark:hover:border-gray-600
+        hover:bg-stone-100/50 dark:hover:bg-gray-800/40
       `}
     >
       <div className="px-4 py-3 flex items-center gap-3">
         {/* Icon */}
-        <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-          <Coffee className="w-4 h-4 text-stone-400 dark:text-gray-500" />
+        <div className="w-8 h-8 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
+          <Coffee className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
         </div>
 
         {/* Content */}

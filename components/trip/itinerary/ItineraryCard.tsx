@@ -162,8 +162,8 @@ function FlightCard({
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-stone-100/80 dark:bg-gray-800/80 border overflow-hidden cursor-pointer transition-all
-        ${isActive ? 'border-stone-400 dark:border-gray-500 bg-stone-200/80 dark:bg-gray-700/80' : 'border-stone-200 dark:border-gray-700 hover:bg-stone-200/80 dark:hover:bg-gray-700/80'}
+        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
+        ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
         ${className}
       `}
     >
@@ -220,7 +220,7 @@ function FlightCard({
       </div>
 
       {/* Footer with editable details */}
-      <div className="px-4 py-3 bg-stone-200/50 dark:bg-gray-900/50 border-t border-stone-200/50 dark:border-gray-700/50 flex items-center justify-between">
+      <div className="px-4 py-3 bg-stone-50 dark:bg-gray-900/50 border-t border-stone-100 dark:border-gray-800 flex items-center justify-between">
         <div className="flex items-center gap-4 text-xs text-stone-500 font-mono">
           <InlineEditField
             label="TERMINAL"
@@ -271,10 +271,10 @@ function HotelCard({
       onClick={onClick}
       className={`
         w-full text-left rounded-2xl overflow-hidden transition-all
-        bg-stone-100/80 dark:bg-gray-800/80 border
+        bg-white dark:bg-gray-900 border
         ${isActive
-          ? 'border-stone-400 dark:border-gray-500 bg-stone-200/80 dark:bg-gray-700/80'
-          : 'border-stone-200 dark:border-gray-700 hover:bg-stone-200/80 dark:hover:bg-gray-700/80'
+          ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10'
+          : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'
         }
         ${className}
       `}
@@ -292,11 +292,11 @@ function HotelCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           {/* Badges */}
           <div className="absolute bottom-3 left-4 flex items-center gap-1.5">
-            <span className="px-2 py-0.5 rounded-full bg-gray-900/80 dark:bg-white/90 text-white dark:text-gray-900 text-xs font-medium">
+            <span className="px-2 py-0.5 rounded-full bg-amber-500/80 text-white text-xs font-medium">
               {nights} {nights === 1 ? 'night' : 'nights'}
             </span>
             {notes?.breakfastIncluded && (
-              <span className="px-2 py-0.5 rounded-full bg-gray-900/80 dark:bg-white/90 text-white dark:text-gray-900 text-xs font-medium">
+              <span className="px-2 py-0.5 rounded-full bg-amber-500/80 text-white text-xs font-medium">
                 Breakfast
               </span>
             )}
@@ -308,7 +308,7 @@ function HotelCard({
       <div className="p-4">
         <div className="flex items-start gap-3">
           {!image && (
-            <div className="w-10 h-10 rounded-xl bg-stone-200/80 dark:bg-gray-700/80 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
               <Building2 className="w-5 h-5 text-stone-500 dark:text-gray-400" />
             </div>
           )}
@@ -345,10 +345,10 @@ function EventCard({
       onClick={onClick}
       className={`
         w-full text-left rounded-2xl overflow-hidden transition-all
-        bg-stone-100/80 dark:bg-gray-800/80 border
+        bg-white dark:bg-gray-900 border
         ${isActive
-          ? 'border-stone-400 dark:border-gray-500 bg-stone-200/80 dark:bg-gray-700/80'
-          : 'border-stone-200 dark:border-gray-700 hover:bg-stone-200/80 dark:hover:bg-gray-700/80'
+          ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10'
+          : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'
         }
         ${className}
       `}
@@ -366,7 +366,7 @@ function EventCard({
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           {notes?.eventType && (
             <div className="absolute bottom-3 left-4">
-              <span className="px-2 py-0.5 rounded-full bg-gray-900/80 dark:bg-white/90 text-white dark:text-gray-900 text-xs font-medium capitalize">
+              <span className="px-2 py-0.5 rounded-full bg-stone-800/80 text-white text-xs font-medium capitalize">
                 {notes.eventType}
               </span>
             </div>
@@ -378,7 +378,7 @@ function EventCard({
       <div className="p-4">
         <div className="flex items-start gap-3">
           {!image && (
-            <div className="w-10 h-10 rounded-xl bg-stone-200/80 dark:bg-gray-700/80 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
               <Ticket className="w-5 h-5 text-stone-500 dark:text-gray-400" />
             </div>
           )}
@@ -427,8 +427,8 @@ function PlaceCard({
     <div
       onClick={onClick}
       className={`
-        rounded-2xl bg-stone-100/80 dark:bg-gray-800/80 border overflow-hidden cursor-pointer transition-all
-        ${isActive ? 'border-stone-400 dark:border-gray-500 bg-stone-200/80 dark:bg-gray-700/80' : 'border-stone-200 dark:border-gray-700 hover:bg-stone-200/80 dark:hover:bg-gray-700/80'}
+        rounded-2xl bg-white dark:bg-gray-900/80 border overflow-hidden cursor-pointer transition-all
+        ${isActive ? 'border-stone-900 dark:border-white ring-1 ring-stone-900/10 dark:ring-white/10' : 'border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-gray-700'}
         ${className}
       `}
     >

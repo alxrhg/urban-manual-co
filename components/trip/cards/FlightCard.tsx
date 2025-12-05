@@ -51,7 +51,8 @@ export default function FlightCard({
       onKeyDown={(e) => e.key === 'Enter' && onSelect()}
       className={`
         cursor-pointer rounded-2xl transition-all duration-200
-        ${isSelected ? 'bg-stone-200/80 dark:bg-gray-700/80' : 'hover:bg-stone-200/60 dark:hover:bg-gray-700/60'}
+        ${isSelected ? 'ring-2 ring-stone-900 dark:ring-white' : ''}
+        hover:ring-1 hover:ring-stone-300 dark:hover:ring-gray-600
       `}
     >
       <FlightStatusCard
