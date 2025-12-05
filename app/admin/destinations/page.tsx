@@ -98,8 +98,8 @@ export default function AdminDestinationsPage() {
       setRefreshKey(prev => prev + 1);
       toast.success(editingDestination ? 'Destination updated successfully' : 'Destination created successfully');
     } catch (e: unknown) {
-      const error = e as Error;
-      toast.error(`Error: ${error.message}`);
+      // ZERO JANK POLICY: Never expose raw error messages to users
+      toast.safeError(e, 'Unable to save destination');
     } finally {
       setIsSaving(false);
     }
