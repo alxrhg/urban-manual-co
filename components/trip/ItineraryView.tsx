@@ -10,6 +10,8 @@ import {
   Building2,
   MapPin,
   Plus,
+  Route,
+  Zap,
 } from 'lucide-react';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import TransitConnector from './TransitConnector';
@@ -22,12 +24,52 @@ interface ItineraryViewProps {
   onEditItem?: (item: EnrichedItineraryItem) => void;
   onAddItem?: (dayNumber: number) => void;
   onOptimizeDay?: (dayNumber: number) => void;
+  onAutoFillDay?: (dayNumber: number) => void;
   onUpdateItemNotes?: (itemId: string, notes: Record<string, unknown>) => void;
   onRemoveItem?: (itemId: string) => void;
   isOptimizing?: boolean;
+  isAutoFilling?: boolean;
   isEditMode?: boolean;
   activeItemId?: string | null;
   allHotels?: EnrichedItineraryItem[];
+}
+
+// Duration estimates by category (minutes)
+const DURATION_BY_CATEGORY: Record<string, number> = {
+  restaurant: 90,
+  cafe: 45,
+  bar: 60,
+  museum: 120,
+  gallery: 90,
+  landmark: 45,
+  attraction: 90,
+  hotel: 30,
+  shop: 45,
+  default: 60,
+};
+
+function getDuration(item: EnrichedItineraryItem): number {
+  const category = (item.parsedNotes?.category || item.destination?.category || '').toLowerCase();
+  const type = item.parsedNotes?.type;
+
+  if (type === 'flight') return 180;
+  if (type === 'hotel') return 30;
+
+  for (const [key, duration] of Object.entries(DURATION_BY_CATEGORY)) {
+    if (category.includes(key)) return duration;
+  }
+  return DURATION_BY_CATEGORY.default;
+}
+
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 /**
@@ -41,9 +83,11 @@ export default function ItineraryView({
   onEditItem,
   onAddItem,
   onOptimizeDay,
+  onAutoFillDay,
   onUpdateItemNotes,
   onRemoveItem,
   isOptimizing = false,
+  isAutoFilling = false,
   isEditMode = false,
   activeItemId,
   allHotels = [],
@@ -168,11 +212,13 @@ export default function ItineraryView({
 
   return (
     <div className="space-y-6">
-      {/* Day Header with Date Badge */}
+      {/* Day Header with Date Badge and Pacing */}
       <DayHeaderSection
         day={selectedDay}
         onAutoOptimize={() => onOptimizeDay?.(selectedDay.dayNumber)}
+        onAutoFill={() => onAutoFillDay?.(selectedDay.dayNumber)}
         isOptimizing={isOptimizing}
+        isAutoFilling={isAutoFilling}
       />
 
       {/* Morning Cards - Checkout and Breakfast */}
@@ -292,15 +338,19 @@ export default function ItineraryView({
   );
 }
 
-// Day Header with Date Badge
+// Day Header with Date Badge and Pacing Analysis
 function DayHeaderSection({
   day,
   onAutoOptimize,
+  onAutoFill,
   isOptimizing,
+  isAutoFilling,
 }: {
   day: TripDay;
   onAutoOptimize?: () => void;
+  onAutoFill?: () => void;
   isOptimizing?: boolean;
+  isAutoFilling?: boolean;
 }) {
   const formatMonth = (dateStr: string | null) => {
     if (!dateStr) return '';
@@ -329,48 +379,151 @@ function DayHeaderSection({
     }
   };
 
+  // Calculate day pacing
+  const pacing = React.useMemo(() => {
+    let totalActivityMinutes = 0;
+    let totalTransitMinutes = 0;
+
+    day.items.forEach((item, index) => {
+      totalActivityMinutes += getDuration(item);
+
+      // Estimate transit time to next item
+      if (index < day.items.length - 1) {
+        const nextItem = day.items[index + 1];
+        const lat1 = item.destination?.latitude;
+        const lng1 = item.destination?.longitude;
+        const lat2 = nextItem.destination?.latitude;
+        const lng2 = nextItem.destination?.longitude;
+
+        if (lat1 && lng1 && lat2 && lng2) {
+          const distance = calculateDistance(lat1, lng1, lat2, lng2);
+          totalTransitMinutes += Math.ceil(distance * 15); // 15 min per km
+        } else {
+          totalTransitMinutes += 20; // Default
+        }
+      }
+    });
+
+    const totalMinutes = totalActivityMinutes + totalTransitMinutes;
+    const usableMinutes = 10 * 60; // 10 hours
+    const utilization = Math.min(100, Math.round((totalMinutes / usableMinutes) * 100));
+    const isOverstuffed = totalMinutes > 12 * 60;
+    const hasGaps = day.items.length > 0 && day.items.length < 3;
+
+    return {
+      totalTransitMinutes,
+      utilization,
+      isOverstuffed,
+      hasGaps,
+    };
+  }, [day.items]);
+
   const month = formatMonth(day.date);
   const dayNum = formatDayNum(day.date);
   const dayOfWeek = formatDayOfWeek(day.date);
 
   return (
-    <div className="flex items-center gap-3 mb-6">
-      {/* Date Badge */}
-      {day.date && (
-        <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-stone-100 dark:bg-gray-900 flex flex-col items-center justify-center">
-          <span className="text-[9px] font-medium text-stone-400 dark:text-gray-500 tracking-wider uppercase">
-            {month}
-          </span>
-          <span className="text-base font-semibold text-stone-900 dark:text-white leading-none">
-            {dayNum}
-          </span>
-        </div>
-      )}
+    <div className="mb-6">
+      <div className="flex items-center gap-3">
+        {/* Date Badge */}
+        {day.date && (
+          <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-stone-100 dark:bg-gray-900 flex flex-col items-center justify-center">
+            <span className="text-[9px] font-medium text-stone-400 dark:text-gray-500 tracking-wider uppercase">
+              {month}
+            </span>
+            <span className="text-base font-semibold text-stone-900 dark:text-white leading-none">
+              {dayNum}
+            </span>
+          </div>
+        )}
 
-      {/* Day Info */}
-      <div className="flex-1 min-w-0">
-        <h3 className="text-sm font-medium text-stone-900 dark:text-white">
-          Day {day.dayNumber}
-        </h3>
-        <p className="text-xs text-stone-400 dark:text-gray-500">
-          {dayOfWeek && `${dayOfWeek} · `}
-          {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
-        </p>
+        {/* Day Info */}
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-medium text-stone-900 dark:text-white">
+            Day {day.dayNumber}
+          </h3>
+          <p className="text-xs text-stone-400 dark:text-gray-500">
+            {dayOfWeek && `${dayOfWeek} · `}
+            {day.items.length} {day.items.length === 1 ? 'stop' : 'stops'}
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2">
+          {/* Optimize Button */}
+          {onAutoOptimize && day.items.length >= 2 && (
+            <button
+              onClick={onAutoOptimize}
+              disabled={isOptimizing}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-gray-800 rounded transition-colors disabled:opacity-50"
+              title="Optimize route"
+            >
+              {isOptimizing ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Route className="w-3 h-3" />
+              )}
+            </button>
+          )}
+
+          {/* Auto-fill Button */}
+          {onAutoFill && (day.items.length === 0 || pacing.hasGaps) && (
+            <button
+              onClick={onAutoFill}
+              disabled={isAutoFilling}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-stone-500 dark:text-gray-400 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-gray-800 rounded transition-colors disabled:opacity-50"
+              title="Auto-fill suggestions"
+            >
+              {isAutoFilling ? (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              ) : (
+                <Zap className="w-3 h-3" />
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Auto-optimize Button */}
-      {onAutoOptimize && (
-        <button
-          onClick={onAutoOptimize}
-          disabled={isOptimizing}
-          className="flex-shrink-0 text-xs text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white transition-colors disabled:opacity-50"
-        >
-          {isOptimizing ? (
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <Clock className="w-3.5 h-3.5" />
+      {/* Pacing Bar - only show if there are items */}
+      {day.items.length > 0 && (
+        <div className="flex items-center gap-3 mt-3 pl-14">
+          {/* Utilization meter */}
+          <div className="flex items-center gap-2">
+            <Clock className="w-3 h-3 text-stone-400" />
+            <div className="flex items-center gap-1.5">
+              <div className="w-20 h-1.5 bg-stone-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${
+                    pacing.isOverstuffed
+                      ? 'bg-red-500'
+                      : pacing.utilization > 80
+                        ? 'bg-amber-500'
+                        : 'bg-stone-400 dark:bg-gray-500'
+                  }`}
+                  style={{ width: `${Math.min(100, pacing.utilization)}%` }}
+                />
+              </div>
+              <span className={`text-[10px] font-medium ${
+                pacing.isOverstuffed
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-stone-500 dark:text-gray-400'
+              }`}>
+                {pacing.utilization}%
+              </span>
+            </div>
+            {pacing.isOverstuffed && (
+              <span className="text-[10px] text-red-600 dark:text-red-400">Packed</span>
+            )}
+          </div>
+
+          {/* Transit time */}
+          {pacing.totalTransitMinutes > 0 && (
+            <div className="flex items-center gap-1 text-[10px] text-stone-400">
+              <Route className="w-3 h-3" />
+              <span>{Math.round(pacing.totalTransitMinutes)} min transit</span>
+            </div>
           )}
-        </button>
+        </div>
       )}
     </div>
   );
