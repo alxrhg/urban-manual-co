@@ -38,6 +38,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
+import { InlineTripPrompt } from '@/components/InlineTripPrompt';
 import { trackEvent } from '@/lib/analytics/track';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -215,6 +216,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showVisitedModal, setShowVisitedModal] = useState(false);
   const [showAddToTripModal, setShowAddToTripModal] = useState(false);
+  const [showTripPrompt, setShowTripPrompt] = useState(false);
   const [addToTripError, setAddToTripError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [showSaveDropdown, setShowSaveDropdown] = useState(false);
@@ -2203,12 +2205,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                               .upsert({
                                 user_id: user.id,
                                 destination_slug: destination.slug,
+                                source_city: destination.city || null,
                               });
                             if (!error) {
                               setIsSaved(true);
                               if (onSaveToggle) onSaveToggle(destination.slug, true);
-                              // Also open modal to optionally save to collection
-                              setShowSaveModal(true);
+                              // Show inline trip prompt instead of modal
+                              setShowTripPrompt(true);
                             } else {
                               console.error('Error saving place:', error);
                               const message = 'Failed to save. Please try again.';
@@ -2355,6 +2358,25 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </Link>
               ) : null}
                   </div>
+
+            {/* Inline Trip Prompt - appears after saving */}
+            {showTripPrompt && destination && (
+              <InlineTripPrompt
+                destinationSlug={destination.slug}
+                destinationName={destination.name}
+                destinationCity={destination.city}
+                onAddToTrip={(tripId, tripTitle) => {
+                  setShowTripPrompt(false);
+                  setIsAddedToTrip(true);
+                  toast.success(`Added to ${tripTitle}`);
+                }}
+                onDismiss={() => setShowTripPrompt(false)}
+                onCreateTrip={() => {
+                  setShowTripPrompt(false);
+                  router.push('/trips/new');
+                }}
+              />
+            )}
                 </div>
 
           {/* Sign in prompt */}
@@ -2967,12 +2989,13 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                               .upsert({
                                 user_id: user.id,
                                 destination_slug: destination.slug,
+                                source_city: destination.city || null,
                               });
                             if (!error) {
                               setIsSaved(true);
                               if (onSaveToggle) onSaveToggle(destination.slug, true);
-                              // Also open modal to optionally save to collection
-                              setShowSaveModal(true);
+                              // Show inline trip prompt instead of modal
+                              setShowTripPrompt(true);
                             } else {
                               console.error('Error saving place:', error);
                               const message = 'Failed to save. Please try again.';
@@ -3119,6 +3142,25 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </Link>
               ) : null}
                   </div>
+
+            {/* Inline Trip Prompt - appears after saving */}
+            {showTripPrompt && destination && (
+              <InlineTripPrompt
+                destinationSlug={destination.slug}
+                destinationName={destination.name}
+                destinationCity={destination.city}
+                onAddToTrip={(tripId, tripTitle) => {
+                  setShowTripPrompt(false);
+                  setIsAddedToTrip(true);
+                  toast.success(`Added to ${tripTitle}`);
+                }}
+                onDismiss={() => setShowTripPrompt(false)}
+                onCreateTrip={() => {
+                  setShowTripPrompt(false);
+                  router.push('/trips/new');
+                }}
+              />
+            )}
                 </div>
 
           {/* Sign in prompt */}

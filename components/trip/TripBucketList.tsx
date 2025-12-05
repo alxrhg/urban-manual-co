@@ -19,6 +19,9 @@ import type { Destination } from '@/types/destination';
 interface SavedPlaceWithDestination {
   destination_slug: string;
   destination: Destination;
+  created_at?: string;
+  note?: string | null;
+  intent?: string | null;
 }
 
 interface TripBucketListProps {
@@ -31,6 +34,24 @@ interface TripBucketListProps {
 interface DraggablePlaceCardProps {
   place: SavedPlaceWithDestination;
   onAddToTrip: (destination: Destination) => void;
+}
+
+// Helper to format relative time
+function formatRelativeTime(dateStr: string | undefined): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffWeeks = Math.floor(diffDays / 7);
+  const diffMonths = Math.floor(diffDays / 30);
+
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return `${diffDays}d ago`;
+  if (diffWeeks < 4) return `${diffWeeks}w ago`;
+  if (diffMonths < 12) return `${diffMonths}mo ago`;
+  return `${Math.floor(diffMonths / 12)}y ago`;
 }
 
 function DraggablePlaceCard({ place, onAddToTrip }: DraggablePlaceCardProps) {
@@ -99,7 +120,17 @@ function DraggablePlaceCard({ place, onAddToTrip }: DraggablePlaceCardProps) {
               {dest.rating.toFixed(1)}
             </span>
           )}
+          {place.created_at && (
+            <span className="text-gray-400 dark:text-gray-500">
+              · {formatRelativeTime(place.created_at)}
+            </span>
+          )}
         </div>
+        {place.note && (
+          <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate mt-0.5 italic">
+            "{place.note}"
+          </p>
+        )}
       </div>
 
       {/* Quick Add Button */}
@@ -141,11 +172,12 @@ export default function TripBucketList({
       const supabase = createClient();
       if (!supabase) return;
 
-      // First get all saved places for the user
+      // First get all saved places for the user with intent context
       const { data: savedResult, error: savedError } = await supabase
         .from('saved_places')
-        .select('destination_slug')
-        .eq('user_id', user.id);
+        .select('destination_slug, created_at, note, intent')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (savedError) throw savedError;
 
@@ -164,6 +196,11 @@ export default function TripBucketList({
 
       if (destError) throw destError;
 
+      // Create a map of saved metadata by slug
+      const savedMetaMap = new Map(
+        savedResult.map((s) => [s.destination_slug, { created_at: s.created_at, note: s.note, intent: s.intent }])
+      );
+
       // Filter destinations that match the trip's cities (case-insensitive)
       const lowerCaseDestinations = destinations.map((d) => d.toLowerCase());
       const matchingPlaces: SavedPlaceWithDestination[] = [];
@@ -171,11 +208,22 @@ export default function TripBucketList({
       destData?.forEach((dest) => {
         const destCity = dest.city?.toLowerCase() || '';
         if (lowerCaseDestinations.includes(destCity)) {
+          const savedMeta = savedMetaMap.get(dest.slug);
           matchingPlaces.push({
             destination_slug: dest.slug,
             destination: dest as Destination,
+            created_at: savedMeta?.created_at,
+            note: savedMeta?.note,
+            intent: savedMeta?.intent,
           });
         }
+      });
+
+      // Sort by created_at (most recent first)
+      matchingPlaces.sort((a, b) => {
+        if (!a.created_at) return 1;
+        if (!b.created_at) return -1;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
 
       setSavedPlaces(matchingPlaces);
@@ -209,7 +257,7 @@ export default function TripBucketList({
         <div className="flex items-center gap-2">
           <Bookmark className="w-4 h-4 text-gray-400" />
           <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-            Bucket List
+            From Your Saves
           </h3>
           {!loading && savedPlaces.length > 0 && (
             <span className="text-xs text-gray-400 dark:text-gray-500">
