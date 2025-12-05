@@ -475,13 +475,13 @@ export function DestinationDrawerContent({
       </div>
 
       {/* Modals */}
-      {destination?.slug && (
+      {destination?.slug && destination?.id && (
         <>
           <SaveDestinationModal
             isOpen={showSaveModal}
             onClose={handleSaveModalClose}
+            destinationId={destination.id}
             destinationSlug={destination.slug}
-            destinationName={destination.name}
           />
           <VisitedModal
             isOpen={showVisitedModal}
