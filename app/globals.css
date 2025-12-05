@@ -72,6 +72,10 @@
 }
 
 @import "tailwindcss";
+
+/* Configure dark mode to use class selector (for next-themes compatibility) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @import "../styles/layout.css";
 @import "../styles/image-system.css";
 @import "../styles/tokens.css";
