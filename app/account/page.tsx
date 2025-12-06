@@ -784,37 +784,43 @@ export default function Account() {
 
         {/* Settings Tab */}
         {activeTab === 'settings' && user && (
-          <div className="fade-in space-y-10">
-            <ProfileEditor
-              userId={user.id}
-              onSaveComplete={() => {
-                toast.success('Profile updated successfully');
-              }}
-            />
+          <div className="fade-in space-y-12">
+            {/* Profile Section */}
+            <section>
+              <h2 className="text-lg font-light mb-6">Profile</h2>
+              <ProfileEditor
+                userId={user.id}
+                onSaveComplete={() => {
+                  toast.success('Profile updated');
+                }}
+              />
+            </section>
 
-            {/* Security Settings */}
-            <div>
+            {/* Security Section */}
+            <section>
               <h2 className="text-lg font-light mb-6">Security</h2>
               <SecuritySettings />
-            </div>
+            </section>
 
-            <AccountPrivacyManager />
+            {/* Privacy & Data Section */}
+            <section>
+              <h2 className="text-lg font-light mb-6">Privacy & Data</h2>
+              <AccountPrivacyManager />
 
-            {/* Cookie Settings */}
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-lg font-light mb-2">Cookie Preferences</h2>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                  Manage your cookie preferences to control how we collect and use data.
-                </p>
+              {/* Cookie Settings */}
+              <div className="py-4 border-t border-gray-200 dark:border-gray-800 mt-6">
+                <div>
+                  <p className="text-sm font-medium">Cookie Preferences</p>
+                  <p className="text-sm text-gray-500 mt-0.5">Control how we use cookies</p>
+                </div>
                 <button
                   onClick={openCookieSettings}
-                  className="px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-sm font-medium"
+                  className="text-xs text-gray-500 hover:text-black dark:hover:text-white mt-2"
                 >
-                  Manage Cookie Settings
+                  Manage cookies
                 </button>
               </div>
-            </div>
+            </section>
           </div>
         )}
       </div>
