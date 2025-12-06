@@ -18,6 +18,8 @@ interface DestinationCardProps {
   showQuickActions?: boolean;
   className?: string;
   onAddToTrip?: () => void;
+  /** Enable staggered fade-in animation based on index */
+  animateIn?: boolean;
 }
 
 /**
@@ -33,13 +35,18 @@ export const DestinationCard = memo(function DestinationCard({
   showQuickActions = true,
   className = '',
   onAddToTrip,
+  animateIn = true,
 }: DestinationCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [hasAnimated, setHasAnimated] = useState(false);
   const cardRef = useRef<HTMLButtonElement>(null);
 
-  // Intersection Observer for progressive loading
+  // Staggered animation delay calculation (cap at 500ms for perceived speed)
+  const staggerDelay = Math.min(index * 50, 500);
+
+  // Intersection Observer for progressive loading and animation
   useEffect(() => {
     if (!cardRef.current) return;
 
@@ -48,6 +55,10 @@ export const DestinationCard = memo(function DestinationCard({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setIsInView(true);
+            // Trigger animation after stagger delay
+            if (animateIn && !hasAnimated) {
+              setTimeout(() => setHasAnimated(true), staggerDelay);
+            }
             observer.disconnect();
           }
         });
@@ -63,7 +74,7 @@ export const DestinationCard = memo(function DestinationCard({
     return () => {
       observer.disconnect();
     };
-  }, []);
+  }, [animateIn, hasAnimated, staggerDelay]);
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -72,35 +83,54 @@ export const DestinationCard = memo(function DestinationCard({
     onClick?.();
   };
 
+  // Animation classes for staggered fade-in
+  const animationClasses = animateIn
+    ? hasAnimated || !isInView
+      ? 'opacity-100 translate-y-0'
+      : 'opacity-0 translate-y-3'
+    : 'opacity-100 translate-y-0';
+
   return (
     <button
       ref={cardRef}
       onClick={handleClick}
       type="button"
       className={`
-        group relative w-full flex flex-col transition-all duration-300 ease-out
+        group relative w-full flex flex-col
         cursor-pointer text-left focus-ring
         hover:scale-[1.01]
         active:scale-[0.98]
+        transition-all duration-300 ease-out
+        ${animationClasses}
         ${className}
       `}
+      style={{
+        transitionDelay: animateIn && !hasAnimated ? `${staggerDelay}ms` : '0ms',
+      }}
       aria-label={`View ${destination.name} in ${capitalizeCity(destination.city)}`}
     >
         {/* Image Container with Progressive Loading */}
         <div
+          className="relative aspect-video overflow-hidden rounded-2xl
+            bg-neutral-100 dark:bg-neutral-800/60
+            border border-neutral-200/50 dark:border-neutral-700/30
+            mb-3"
+        >
+        {/* Shimmer skeleton while loading - always present until image loads */}
+        <div
           className={`
-            relative aspect-video overflow-hidden rounded-2xl
-            bg-gray-100 dark:bg-gray-800
-            border border-gray-200 dark:border-gray-800
-            transition-all duration-300 ease-out
-            mb-3
-            ${isLoaded ? 'opacity-100' : 'opacity-0'}
+            absolute inset-0 overflow-hidden
+            transition-opacity duration-500 ease-out
+            ${isLoaded ? 'opacity-0' : 'opacity-100'}
           `}
         >
-        {/* Skeleton while loading */}
-        {!isLoaded && isInView && (
-          <div className="absolute inset-0 animate-pulse bg-gray-200 dark:bg-gray-700" />
-        )}
+          <div
+            className="absolute inset-0 -translate-x-full animate-[shimmer_2s_ease-in-out_infinite]"
+            style={{
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)',
+            }}
+          />
+        </div>
 
         {/* Actual Image - Use thumbnail for cards, fallback to full image */}
         {isInView && (destination.image_thumbnail || destination.image) && !imageError ? (
@@ -113,22 +143,23 @@ export const DestinationCard = memo(function DestinationCard({
               object-cover
               transition-all duration-500 ease-out
               group-hover:scale-105
-              ${isLoaded ? 'opacity-100' : 'opacity-0'}
+              ${isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.02]'}
             `}
             quality={80}
             loading={index < 6 ? 'eager' : 'lazy'}
             fetchPriority={index === 0 ? 'high' : 'auto'}
+            placeholder="empty"
             onLoad={() => setIsLoaded(true)}
             onError={() => {
               setImageError(true);
               setIsLoaded(true);
             }}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-            <MapPin className="h-12 w-12 opacity-20 transition-transform duration-300 group-hover:scale-105" />
+        ) : isInView && imageError ? (
+          <div className="w-full h-full flex items-center justify-center text-neutral-300 dark:text-neutral-600">
+            <MapPin className="h-10 w-10 opacity-30 transition-transform duration-300 group-hover:scale-105" />
           </div>
-        )}
+        ) : null}
 
         {/* Hover Overlay */}
         <div

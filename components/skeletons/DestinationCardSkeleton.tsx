@@ -1,25 +1,41 @@
 /**
  * Skeleton loading component for destination cards
  * Matches the exact layout of destination cards for seamless transition
+ * Uses subtle shimmer animation for polished loading experience
  */
+
+/**
+ * Shimmer effect overlay for skeleton elements
+ */
+function ShimmerOverlay() {
+  return (
+    <div
+      className="absolute inset-0 -translate-x-full animate-[shimmer_2s_ease-in-out_infinite]"
+      style={{
+        background:
+          'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)',
+      }}
+    />
+  );
+}
+
 export function DestinationCardSkeleton() {
   return (
-    <div className="group animate-pulse w-full">
-      {/* Image skeleton */}
-      <div className="aspect-square bg-gray-200 dark:bg-gray-800 rounded-2xl mb-3 relative overflow-hidden">
-        {/* Shimmer effect */}
-        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+    <div className="group w-full flex flex-col">
+      {/* Image skeleton - aspect-video to match actual cards */}
+      <div className="relative aspect-video bg-neutral-100 dark:bg-neutral-800/60 rounded-2xl mb-3 overflow-hidden">
+        <ShimmerOverlay />
       </div>
 
       {/* Title skeleton */}
-      <div className="space-y-0.5">
-        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4 mb-2 relative overflow-hidden min-h-[2.5rem]">
-          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+      <div className="space-y-1.5">
+        <div className="relative h-4 bg-neutral-100 dark:bg-neutral-800/60 rounded-md w-3/4 overflow-hidden">
+          <ShimmerOverlay />
         </div>
 
         {/* Micro description skeleton */}
-        <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-2/3 relative overflow-hidden">
-          <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="relative h-3 bg-neutral-100 dark:bg-neutral-800/60 rounded-md w-2/3 overflow-hidden">
+          <ShimmerOverlay />
         </div>
       </div>
     </div>
@@ -28,12 +44,18 @@ export function DestinationCardSkeleton() {
 
 /**
  * Grid of skeleton cards for initial loading state
+ * Uses staggered animation delays for polished cascade effect
  */
-export function DestinationGridSkeleton({ count = 28 }: { count?: number }) {
+export function DestinationGridSkeleton({ count = 21 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4 md:gap-6 items-start">
       {Array.from({ length: count }).map((_, i) => (
-        <DestinationCardSkeleton key={i} />
+        <div
+          key={i}
+          style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+        >
+          <DestinationCardSkeleton />
+        </div>
       ))}
     </div>
   );
