@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { MapPin, Heart, Award, Sparkles, ArrowRight } from 'lucide-react';
 
 interface Achievement {
   id: string;
@@ -257,217 +256,99 @@ export function AchievementsDisplay({
   const unlockedCount = achievements.filter(a => a.unlocked).length;
   const totalCount = achievements.length;
 
-  // Helper to calculate remaining progress
-  const getProgressText = (achievement: Achievement): string => {
-    if (achievement.unlocked) return 'Unlocked';
-    if (achievement.progress !== undefined && achievement.total !== undefined) {
-      const remaining = achievement.total - achievement.progress;
-      if (remaining === 1) {
-        return '1 away';
-      }
-      return `${remaining} away`;
-    }
-    return 'Locked';
-  };
-
-  // Empty state messages by theme
-  const getEmptyStateMessage = (theme: string): { title: string; description: string; cta: string; route: string } => {
-    switch (theme) {
-      case 'first-steps':
-        return {
-          title: 'Begin Your Journey',
-          description: 'Save your first place or mark your first visit to get started.',
-          cta: 'Browse destinations',
-          route: '/'
-        };
-      case 'city-explorer':
-        return {
-          title: 'Explore the World',
-          description: 'Visit different cities and countries to unlock exploration achievements.',
-          cta: 'Discover cities',
-          route: '/cities'
-        };
-      case 'michelin':
-        return {
-          title: 'Fine Dining Awaits',
-          description: 'Visit Michelin-starred restaurants to unlock culinary achievements.',
-          cta: 'Find Michelin restaurants',
-          route: '/?michelin=true'
-        };
-      case 'specialists':
-        return {
-          title: 'Become a Specialist',
-          description: 'Deep dive into a city or category to earn specialist badges.',
-          cta: 'Explore destinations',
-          route: '/'
-        };
-      default:
-        return {
-          title: 'Start Exploring',
-          description: 'Visit places to unlock achievements.',
-          cta: 'Browse destinations',
-          route: '/'
-        };
-    }
+  const themeLabels: Record<string, string> = {
+    'first-steps': 'First Steps',
+    'city-explorer': 'Exploration',
+    'michelin': 'Fine Dining',
+    'specialists': 'Specialist'
   };
 
   return (
-    <div className="space-y-16 md:space-y-24">
-      {/* Manifesto Block */}
-      <div className="space-y-6">
-        <h2 className="text-4xl md:text-5xl font-light leading-tight">
-          Your Achievements
-        </h2>
-        <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
-          Track your journey through the world's best destinations. Each milestone tells a story of discovery, from your first saved place to becoming a city specialist.
-        </p>
-        <div className="flex items-center gap-6 pt-4">
-          <div>
-            <div className="text-3xl md:text-4xl font-light mb-1">{unlockedCount}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-wider">
-              Unlocked
-            </div>
-          </div>
-          <div className="h-12 w-px bg-gray-200 dark:bg-gray-800" />
-          <div>
-            <div className="text-3xl md:text-4xl font-light mb-1">{totalCount}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-500 uppercase tracking-wider">
-              Total
-            </div>
-          </div>
+    <div>
+      {/* Header Stats */}
+      <div className="pb-8 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-baseline gap-2 mb-1">
+          <span className="text-4xl font-light">{unlockedCount}</span>
+          <span className="text-sm text-gray-500">of {totalCount} unlocked</span>
         </div>
+        <p className="text-xs text-gray-400">
+          Track your journey through the world&apos;s best destinations
+        </p>
       </div>
 
-      {/* Themed Sections */}
+      {/* Achievement Sections */}
       {Object.entries(groupedAchievements).map(([theme, themeAchievements]) => {
         if (themeAchievements.length === 0) return null;
 
-        const unlocked = themeAchievements.filter(a => a.unlocked);
-        const locked = themeAchievements.filter(a => !a.unlocked);
-        const emptyState = getEmptyStateMessage(theme);
-
-        const themeConfig = {
-          'first-steps': { title: 'First Steps', icon: Sparkles, color: 'from-blue-50 to-blue-100 dark:from-blue-900/10 dark:to-blue-800/10' },
-          'city-explorer': { title: 'City Explorer', icon: MapPin, color: 'from-green-50 to-green-100 dark:from-green-900/10 dark:to-green-800/10' },
-          'michelin': { title: 'Michelin', icon: Award, color: 'from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10' },
-          'specialists': { title: 'Specialists', icon: Heart, color: 'from-gray-50 to-gray-100 dark:from-gray-900/10 dark:to-gray-800/10' }
-        }[theme] || { title: theme, icon: Award, color: '' };
-
-        const IconComponent = themeConfig.icon;
+        const unlockedInTheme = themeAchievements.filter(a => a.unlocked).length;
 
         return (
-          <div key={theme} className="space-y-8">
+          <div key={theme} className="py-8 border-b border-gray-200 dark:border-gray-800 last:border-b-0">
             {/* Section Header */}
-            <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-xl bg-gradient-to-br ${themeConfig.color} border border-gray-100 dark:border-gray-800`}>
-                <IconComponent className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-              </div>
-              <div>
-                <h3 className="text-2xl md:text-3xl font-light mb-1">{themeConfig.title}</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-500">
-                  {unlocked.length} of {themeAchievements.length} unlocked
-                </p>
-              </div>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-sm font-medium">{themeLabels[theme]}</h3>
+              <span className="text-xs text-gray-400">
+                {unlockedInTheme}/{themeAchievements.length}
+              </span>
             </div>
 
-            {/* Achievements Grid/Timeline */}
-            {themeAchievements.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {themeAchievements.map((achievement) => {
-                  const isUnlocked = achievement.unlocked;
-                  const progressText = getProgressText(achievement);
-                  const progressPercent = achievement.progress !== undefined && achievement.total !== undefined
-                    ? Math.min(100, (achievement.progress / achievement.total) * 100)
-                    : 0;
+            {/* Achievement List */}
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              {themeAchievements.map((achievement) => {
+                const isUnlocked = achievement.unlocked;
+                const progressPercent = achievement.progress !== undefined && achievement.total !== undefined
+                  ? Math.min(100, (achievement.progress / achievement.total) * 100)
+                  : 0;
 
-                  return (
-                    <div
-                      key={achievement.id}
-                      className={`relative p-6 rounded-2xl border transition-all ${
-                        isUnlocked
-                          ? 'border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm'
-                          : 'border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 opacity-75'
-                      }`}
-                    >
-                      {/* Unlocked accent */}
-                      {isUnlocked && (
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-yellow-100/50 to-orange-100/50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-bl-full" />
-                      )}
+                return (
+                  <div
+                    key={achievement.id}
+                    className={`py-4 flex items-start gap-4 ${!isUnlocked ? 'opacity-50' : ''}`}
+                  >
+                    {/* Emoji */}
+                    <span className={`text-2xl ${!isUnlocked ? 'grayscale' : ''}`}>
+                      {achievement.emoji}
+                    </span>
 
-                      <div className="relative">
-                        {/* Emoji/Icon */}
-                        <div className={`text-4xl mb-4 ${!isUnlocked ? 'grayscale opacity-50' : ''}`}>
-                          {achievement.emoji}
-                        </div>
-
-                        {/* Content */}
-                        <div className="space-y-3">
-                          <div>
-                            <h4 className={`text-base font-medium mb-1 ${isUnlocked ? 'text-black dark:text-white' : 'text-gray-600 dark:text-gray-400'}`}>
-                              {achievement.name}
-                            </h4>
-                            <p className="text-sm text-gray-500 dark:text-gray-500">
-                              {achievement.description}
-                            </p>
-                          </div>
-
-                          {/* Progress */}
-                          {!isUnlocked && achievement.progress !== undefined && achievement.total !== undefined && (
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between text-xs">
-                                <span className="text-gray-500 dark:text-gray-500">{progressText}</span>
-                                <span className="text-gray-400 dark:text-gray-600">
-                                  {achievement.progress} / {achievement.total}
-                                </span>
-                              </div>
-                              <div className="w-full bg-gray-200 dark:bg-gray-800 rounded-full h-1.5 overflow-hidden">
-                                <div
-                                  className="bg-black dark:bg-white h-1.5 rounded-full transition-all duration-500"
-                                  style={{ width: `${progressPercent}%` }}
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {/* CTA */}
-                          {achievement.ctaRoute && achievement.ctaLabel && (
-                            <button
-                              onClick={() => router.push(achievement.ctaRoute!)}
-                              className={`flex items-center gap-2 text-xs font-medium transition-colors ${
-                                isUnlocked
-                                  ? 'text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white'
-                                  : 'text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300'
-                              }`}
-                            >
-                              <span>{achievement.ctaLabel}</span>
-                              <ArrowRight className="h-3 w-3" />
-                            </button>
-                          )}
-                        </div>
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{achievement.name}</span>
+                        {isUnlocked && (
+                          <span className="text-xs text-gray-400">Unlocked</span>
+                        )}
                       </div>
+                      <p className="text-xs text-gray-500 mt-0.5">{achievement.description}</p>
+
+                      {/* Progress bar for locked achievements */}
+                      {!isUnlocked && achievement.progress !== undefined && achievement.total !== undefined && (
+                        <div className="mt-2 flex items-center gap-3">
+                          <div className="flex-1 h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-black dark:bg-white transition-all duration-500"
+                              style={{ width: `${progressPercent}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-gray-400 tabular-nums">
+                            {achievement.progress}/{achievement.total}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              /* Empty State for Theme */
-              <div className="p-12 rounded-2xl border border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 text-center">
-                <div className="text-4xl mb-4 opacity-50">
-                  <IconComponent className="h-12 w-12 mx-auto text-gray-400" />
-                </div>
-                <h4 className="text-lg font-medium mb-2 text-gray-700 dark:text-gray-300">{emptyState.title}</h4>
-                <p className="text-sm text-gray-500 dark:text-gray-500 mb-6 max-w-md mx-auto">
-                  {emptyState.description}
-                </p>
-                <button
-                  onClick={() => router.push(emptyState.route)}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-medium text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 border border-orange-200 dark:border-orange-800 rounded-lg transition-colors"
-                >
-                  <span>{emptyState.cta}</span>
-                  <ArrowRight className="h-3 w-3" />
-                </button>
-              </div>
-            )}
+
+                    {/* CTA for locked achievements */}
+                    {!isUnlocked && achievement.ctaRoute && (
+                      <button
+                        onClick={() => router.push(achievement.ctaRoute!)}
+                        className="text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors whitespace-nowrap"
+                      >
+                        {achievement.ctaLabel}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         );
       })}
