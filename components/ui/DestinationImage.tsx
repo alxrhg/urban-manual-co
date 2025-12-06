@@ -31,10 +31,21 @@ interface DestinationImageProps {
   fallback?: React.ReactNode;
 }
 
+/** Internal type for alt text generation that accepts optional fields */
+interface AltTextDestination {
+  name?: string;
+  category?: string;
+  city?: string;
+  country?: string;
+  micro_description?: string;
+  image?: string;
+  image_thumbnail?: string;
+}
+
 /**
  * Generate descriptive alt text from destination metadata
  */
-function generateDestinationAltText(destination: DestinationImageProps['destination']): string {
+function generateDestinationAltText(destination: AltTextDestination): string {
   const parts: string[] = [];
 
   // Start with name
@@ -70,7 +81,7 @@ function generateDestinationAltText(destination: DestinationImageProps['destinat
 /**
  * Get the best available image URL for a destination
  */
-function getDestinationImageUrl(destination: DestinationImageProps['destination'], override?: string): string | null {
+function getDestinationImageUrl(destination: AltTextDestination, override?: string): string | null {
   if (override) return override;
   return destination.image_thumbnail || destination.image || null;
 }
@@ -139,13 +150,5 @@ export function DestinationImage({
  * Can be used directly when DestinationImage component is not suitable
  */
 export function getDestinationAltText(destination: Partial<Destination>): string {
-  return generateDestinationAltText({
-    name: destination.name || '',
-    category: destination.category,
-    city: destination.city,
-    country: destination.country,
-    micro_description: destination.micro_description,
-    image: destination.image,
-    image_thumbnail: destination.image_thumbnail
-  });
+  return generateDestinationAltText(destination);
 }
