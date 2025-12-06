@@ -312,7 +312,16 @@ export default function ItineraryViewRedesign({
 
       {/* Main Itinerary */}
       {sortedItems.length > 0 ? (
-        <div className="space-y-0 pt-4">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={sortedItems.map((item) => item.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-0 pt-4">
           {itemsWithMeta.map(({ item, travelTime, gap, isCard, mapIndex }, index) => (
             <React.Fragment key={item.id}>
               {/* Item Row/Card */}
@@ -340,7 +349,6 @@ export default function ItineraryViewRedesign({
                 ) : isCard ? (
                   <ItineraryCard
                     item={item}
-                    isEditMode={isEditMode}
                     isActive={item.id === activeItemId}
                     onClick={() => onEditItem?.(item)}
                     mapIndex={mapIndex}
