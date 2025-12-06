@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { DrawerProvider } from "@/contexts/DrawerContext";
+import { ChristmasThemeProvider } from "@/contexts/ChristmasThemeContext";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { Toaster } from "@/components/ui/sonner";
@@ -114,6 +115,11 @@ export default function RootLayout({
         {/* Code font - only needed in admin/code sections */}
         <link
           href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+        {/* Gaegu font for Christmas theme */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap"
           rel="stylesheet"
         />
         
@@ -226,6 +232,7 @@ export default function RootLayout({
             enableSystem={true}
             storageKey="urban-manual-theme"
           >
+            <ChristmasThemeProvider>
             <SkipNavigation />
             <SplashScreen />
             <TooltipProvider>
@@ -256,6 +263,7 @@ export default function RootLayout({
             <GoogleAnalytics />
             <Analytics />
             <SpeedInsights />
+            </ChristmasThemeProvider>
           </ThemeProvider>
         </MyStatsig>
       </body>
