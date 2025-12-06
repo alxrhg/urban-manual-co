@@ -35,6 +35,7 @@ export function AppleMapView() {
     openDestination,
     selectedDestination,
     isDrawerOpen,
+    setViewMode,
   } = useHomepageData();
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -176,28 +177,44 @@ export function AppleMapView() {
 
   // Render error state
   if (error) {
+    const isCredentialError = error.includes('timeout') || error.includes('authorization');
     return (
       <div className="w-full h-[70vh] rounded-2xl bg-gray-100 dark:bg-[#1c1c1e] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4 text-center px-6">
-          <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/20 flex items-center justify-center">
-            <AlertCircle className="w-7 h-7 text-red-500" />
+          <div className="w-14 h-14 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
+            <MapPin className="w-7 h-7 text-amber-500" />
           </div>
           <div>
             <h3 className="text-[16px] font-medium text-gray-900 dark:text-white mb-1">
-              Map unavailable
+              {isCredentialError ? 'Map configuration required' : 'Map unavailable'}
             </h3>
-            <p className="text-[14px] text-gray-500 dark:text-gray-400 max-w-xs">
-              {error}
+            <p className="text-[14px] text-gray-500 dark:text-gray-400 max-w-sm">
+              {isCredentialError
+                ? 'Apple Maps requires MapKit credentials to be configured. Switch to grid view to browse destinations.'
+                : error}
             </p>
           </div>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-5 py-2.5 text-[14px] font-medium rounded-full
-                       bg-gray-900 dark:bg-white text-white dark:text-gray-900
-                       hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
-          >
-            Reload page
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setViewMode('grid')}
+              className="px-5 py-2.5 text-[14px] font-medium rounded-full
+                         bg-gray-900 dark:bg-white text-white dark:text-gray-900
+                         hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+            >
+              Switch to Grid
+            </button>
+            {!isCredentialError && (
+              <button
+                onClick={() => window.location.reload()}
+                className="px-5 py-2.5 text-[14px] font-medium rounded-full
+                           border border-gray-300 dark:border-white/20
+                           text-gray-700 dark:text-gray-300
+                           hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+              >
+                Retry
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
