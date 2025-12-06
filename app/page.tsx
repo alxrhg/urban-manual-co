@@ -3,6 +3,7 @@ import { Metadata } from 'next';
 import HomePageClient from './page-client';
 import { prefetchHomepageData } from '@/lib/data/fetch-destinations';
 import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
+import { generateOrganizationSchema, generateWebSiteSchema } from '@/lib/metadata';
 
 /**
  * Homepage - Highest Performance Architecture
@@ -102,9 +103,31 @@ async function HomepageContent() {
 }
 
 export default function HomePage() {
+  // Generate structured data for SEO
+  const organizationSchema = generateOrganizationSchema();
+  const webSiteSchema = generateWebSiteSchema();
+
   return (
-    <Suspense fallback={<HomepageSkeleton />}>
-      <HomepageContent />
-    </Suspense>
+    <>
+      {/* Organization Schema - helps search engines understand the brand */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationSchema),
+        }}
+      />
+
+      {/* WebSite Schema with SearchAction - enables sitelinks searchbox in SERP */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(webSiteSchema),
+        }}
+      />
+
+      <Suspense fallback={<HomepageSkeleton />}>
+        <HomepageContent />
+      </Suspense>
+    </>
   );
 }

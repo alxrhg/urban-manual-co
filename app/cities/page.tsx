@@ -4,6 +4,10 @@ import CitiesPageClient from './page-client';
 import { fetchCityStats } from '@/lib/data/fetch-destinations';
 import SearchGridSkeleton from '@/src/features/search/SearchGridSkeleton';
 import { ErrorState } from '@/components/ui/empty-state';
+import {
+  generateCitiesListBreadcrumb,
+  generateCitiesCollectionSchema
+} from '@/lib/metadata';
 
 /**
  * Cities Page - Highest Performance Architecture
@@ -70,11 +74,23 @@ async function CitiesContent() {
       new Set(cityStats.map(s => s.country).filter(Boolean))
     ).sort();
 
+    // Generate schema for SEO
+    const collectionSchema = generateCitiesCollectionSchema(cityStats);
+
     return (
-      <CitiesPageClient
-        initialCityStats={cityStats}
-        initialCountries={countries}
-      />
+      <>
+        {/* CollectionPage Schema with ItemList */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(collectionSchema),
+          }}
+        />
+        <CitiesPageClient
+          initialCityStats={cityStats}
+          initialCountries={countries}
+        />
+      </>
     );
   } catch (error) {
     console.error('Failed to fetch city stats:', error);
@@ -91,9 +107,21 @@ async function CitiesContent() {
 }
 
 export default function CitiesPage() {
+  // Generate breadcrumb schema
+  const breadcrumb = generateCitiesListBreadcrumb();
+
   return (
-    <Suspense fallback={<CitiesSkeleton />}>
-      <CitiesContent />
-    </Suspense>
+    <>
+      {/* Breadcrumb Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumb),
+        }}
+      />
+      <Suspense fallback={<CitiesSkeleton />}>
+        <CitiesContent />
+      </Suspense>
+    </>
   );
 }
