@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateDestinationEmbedding } from '@/lib/ml/embeddings';
-import { batchUpsertDestinationEmbeddings } from '@/lib/upstash-vector';
+import { batchUpsertDestinationEmbeddings } from '@/lib/supabase-vector-buckets';
 import { requireAdmin, AuthError } from '@/lib/adminAuth';
 import {
   adminRatelimit,

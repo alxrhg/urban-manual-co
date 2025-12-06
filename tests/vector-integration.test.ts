@@ -1,6 +1,6 @@
 /**
- * Tests for Upstash Vector Integration
- * 
+ * Tests for Supabase Vector Buckets Integration
+ *
  * Tests semantic search and admin reindexing endpoints
  */
 
@@ -10,8 +10,6 @@ import { mock, test } from 'node:test';
 // Mock environment variables
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-secret';
-process.env.UPSTASH_VECTOR_REST_URL = 'https://test.upstash.io';
-process.env.UPSTASH_VECTOR_REST_TOKEN = 'test-token';
 process.env.OPENAI_API_KEY = 'sk-test';
 
 test('semantic search route validates query parameter', async () => {
@@ -100,23 +98,27 @@ test('generate descriptions job validates Gemini API key', async () => {
   if (originalGoogle) process.env.GOOGLE_AI_API_KEY = originalGoogle;
 });
 
-test('upstash-vector client throws when credentials missing', async () => {
-  const originalUrl = process.env.UPSTASH_VECTOR_REST_URL;
-  const originalToken = process.env.UPSTASH_VECTOR_REST_TOKEN;
-  
-  delete process.env.UPSTASH_VECTOR_REST_URL;
-  delete process.env.UPSTASH_VECTOR_REST_TOKEN;
+test('supabase-vector-buckets client throws when credentials missing', async () => {
+  const originalUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const originalKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-  const { getVectorIndex } = await import('../lib/upstash-vector');
+  delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  // Clear the module cache to force re-initialization
+  const modulePath = require.resolve('../lib/supabase-vector-buckets');
+  delete require.cache[modulePath];
+
+  const { getVectorIndex } = await import('../lib/supabase-vector-buckets');
 
   assert.throws(
     () => getVectorIndex(),
-    /Missing Upstash Vector credentials/
+    /Missing Supabase credentials/
   );
 
   // Restore
-  if (originalUrl) process.env.UPSTASH_VECTOR_REST_URL = originalUrl;
-  if (originalToken) process.env.UPSTASH_VECTOR_REST_TOKEN = originalToken;
+  if (originalUrl) process.env.NEXT_PUBLIC_SUPABASE_URL = originalUrl;
+  if (originalKey) process.env.SUPABASE_SERVICE_ROLE_KEY = originalKey;
 });
 
 test('embedding client uses ML service URL from env', async () => {

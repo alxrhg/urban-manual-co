@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTextEmbedding } from '@/lib/ml/embeddings';
-import { queryVectorIndex } from '@/lib/upstash-vector';
+import { queryVectorIndex } from '@/lib/supabase-vector-buckets';
 import { createClient } from '@supabase/supabase-js';
 import { withErrorHandling } from '@/lib/errors';
 import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';

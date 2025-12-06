@@ -14,7 +14,7 @@
 | Styling | Tailwind CSS v4 |
 | Database | Supabase (PostgreSQL) |
 | Authentication | Supabase Auth (Google OAuth, Apple Sign-In) |
-| AI/ML | Google Gemini, OpenAI, Upstash Vector |
+| AI/ML | Google Gemini, OpenAI, Supabase Vector Buckets |
 | CMS | Sanity (optional), Plasmic (visual builder) |
 | Monitoring | Sentry |
 | Deployment | Vercel |

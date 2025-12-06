@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getVectorIndex } from '@/lib/upstash-vector';
+import { createCompatibleIndex } from '@/lib/supabase-vector-buckets';
 import { generateTextEmbedding } from '@/lib/ml/embeddings';
 import { withErrorHandling } from '@/lib/errors';
 
@@ -68,7 +68,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const embeddingResult = await generateTextEmbedding(query);
 
   // Step 2: Query vector database for semantic matches
-  const vectorIndex = getVectorIndex();
+  const vectorIndex = createCompatibleIndex();
   const vectorResults = await vectorIndex.query({
     vector: embeddingResult.embedding,
     topK: limit * 2, // Get more results for filtering

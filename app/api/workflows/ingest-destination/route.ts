@@ -1,21 +1,21 @@
 /**
  * Destination Ingestion Workflow
- * 
+ *
  * POST /api/workflows/ingest-destination
- * 
+ *
  * Multi-step workflow for ingesting a new destination:
  * 1. Fetch destination from Supabase
  * 2. Geocode if missing coordinates
  * 3. Generate AI description if missing
  * 4. Generate embedding
- * 5. Upsert to Upstash Vector
+ * 5. Upsert to Supabase Vector Buckets
  * 6. Update Supabase with last_indexed_at
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { generateDestinationEmbedding } from '@/lib/ml/embeddings';
-import { upsertDestinationEmbedding } from '@/lib/upstash-vector';
+import { upsertDestinationEmbedding } from '@/lib/supabase-vector-buckets';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
       workflow[workflow.length - 1].status = 'completed';
       workflow[workflow.length - 1].duration_ms = Date.now() - embedStart;
 
-      // Step 5: Upsert to Upstash Vector
+      // Step 5: Upsert to Supabase Vector Buckets
       workflow.push({ step: 'upsert_vector', status: 'running' });
       const vectorStart = Date.now();
 
