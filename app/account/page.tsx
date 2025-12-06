@@ -460,77 +460,58 @@ export default function Account() {
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="space-y-12 fade-in">
-            {/* Curation Completion - Prominent gamification stat */}
-            <div className="p-6 border border-gray-200 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-950">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="text-4xl font-light mb-1">{stats.curationCompletionPercentage}%</div>
-                  <div className="text-xs text-gray-500">of curation explored</div>
-                </div>
-                <div className="text-right text-xs text-gray-400">
-                  {stats.visitedCount} / {totalDestinations} places
-                </div>
+          <div className="fade-in">
+            {/* Curation Progress */}
+            <div className="pb-8 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className="text-4xl font-light">{stats.curationCompletionPercentage}%</span>
+                <span className="text-sm text-gray-500">of curation explored</span>
               </div>
-              {/* Progress bar */}
-              <div className="w-full h-2 bg-gray-200 dark:bg-gray-800 rounded-full overflow-hidden">
+              <div className="w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-2">
                 <div
                   className="h-full bg-black dark:bg-white transition-all duration-500 ease-out"
                   style={{ width: `${Math.min(stats.curationCompletionPercentage, 100)}%` }}
                 />
               </div>
-              {stats.curationCompletionPercentage < 100 && (
-                <p className="text-xs text-gray-400 mt-3">
-                  {stats.curationCompletionPercentage < 10
-                    ? "Just getting started! Keep exploring."
-                    : stats.curationCompletionPercentage < 25
-                    ? "Great start! Many more places to discover."
-                    : stats.curationCompletionPercentage < 50
-                    ? "Halfway there! You're doing amazing."
-                    : stats.curationCompletionPercentage < 75
-                    ? "Impressive! You're a seasoned explorer."
-                    : "Almost there! You've explored most of our curation."}
-                </p>
-              )}
-              {stats.curationCompletionPercentage === 100 && (
-                <p className="text-xs text-gray-400 mt-3">
-                  🎉 Incredible! You've visited every place in our curation!
-                </p>
-              )}
+              <p className="text-xs text-gray-400">
+                {stats.visitedCount} of {totalDestinations} places visited
+              </p>
             </div>
 
-            {/* Stats Grid - Minimal, like homepage cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.visitedCount}</div>
-                <div className="text-xs text-gray-500">Visited</div>
-              </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.savedCount}</div>
-                <div className="text-xs text-gray-500">Saved</div>
-              </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.uniqueCities.size}</div>
-                <div className="text-xs text-gray-500">Cities</div>
-              </div>
-              <div className="p-4 border border-gray-200 dark:border-gray-800 rounded-2xl">
-                <div className="text-2xl font-light mb-1">{stats.uniqueCountries.size}</div>
-                <div className="text-xs text-gray-500">Countries</div>
+            {/* Stats Row */}
+            <div className="py-8 border-b border-gray-200 dark:border-gray-800">
+              <div className="flex flex-wrap gap-x-12 gap-y-4">
+                <div>
+                  <div className="text-2xl font-light">{stats.visitedCount}</div>
+                  <div className="text-xs text-gray-500">Visited</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-light">{stats.savedCount}</div>
+                  <div className="text-xs text-gray-500">Saved</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-light">{stats.uniqueCities.size}</div>
+                  <div className="text-xs text-gray-500">Cities</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-light">{stats.uniqueCountries.size}</div>
+                  <div className="text-xs text-gray-500">Countries</div>
+                </div>
               </div>
             </div>
 
             {/* World Map */}
             {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
-              <div>
+              <div className="py-8 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xs font-medium text-gray-500 dark:text-gray-400">Travel Map</h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <h2 className="text-sm font-medium">Travel Map</h2>
+                  <p className="text-xs text-gray-500">
                     {stats.uniqueCountries.size > 0 && `${stats.uniqueCountries.size} ${stats.uniqueCountries.size === 1 ? 'country' : 'countries'}`}
-                    {stats.uniqueCountries.size > 0 && stats.uniqueCities.size > 0 && ' • '}
+                    {stats.uniqueCountries.size > 0 && stats.uniqueCities.size > 0 && ' · '}
                     {stats.uniqueCities.size > 0 && `${stats.uniqueCities.size} ${stats.uniqueCities.size === 1 ? 'city' : 'cities'}`}
                   </p>
                 </div>
-                <WorldMapVisualization 
+                <WorldMapVisualization
                   visitedCountries={stats.uniqueCountries}
                   visitedDestinations={stats.visitedDestinationsWithCoords}
                 />
@@ -539,34 +520,34 @@ export default function Account() {
 
             {/* Recent Visits */}
             {visitedPlaces.length > 0 && (
-              <div>
-                <h2 className="text-xs font-medium mb-4 text-gray-500 dark:text-gray-400">Recent Visits</h2>
-                <div className="space-y-2">
+              <div className="py-8">
+                <h2 className="text-sm font-medium mb-6">Recent Visits</h2>
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
                   {visitedPlaces.slice(0, 5).map((place) => (
                     <button
                       key={place.destination_slug}
                       onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                      className="w-full flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-2xl transition-colors text-left"
+                      className="w-full flex items-center gap-4 py-4 hover:bg-gray-50 dark:hover:bg-gray-900/50 -mx-2 px-2 transition-colors text-left"
                     >
                       {place.destination?.image && (
-                        <div className="relative w-16 h-16 flex-shrink-0 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <div className="relative w-12 h-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
                           <Image
                             src={place.destination.image}
                             alt={place.destination.name}
                             fill
                             className="object-cover"
-                            sizes="64px"
+                            sizes="48px"
                           />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="text-sm font-medium truncate">{place.destination?.name}</div>
                         <div className="text-xs text-gray-500 mt-0.5">
-                          {place.destination && capitalizeCity(place.destination.city)} • {place.destination?.category}
+                          {place.destination && capitalizeCity(place.destination.city)} · {place.destination?.category}
                         </div>
-                        <div className="text-xs text-gray-400 mt-0.5">
-                          {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
-                        </div>
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {place.visited_at && new Date(place.visited_at).toLocaleDateString()}
                       </div>
                     </button>
                   ))}
@@ -600,31 +581,36 @@ export default function Account() {
               <NoCollectionsEmptyState onCreateCollection={() => setShowCreateModal(true)} />
             ) : (
               <>
-                <div className="flex justify-end mb-4">
+                <div className="flex items-center justify-between pb-6 border-b border-gray-200 dark:border-gray-800">
+                  <div>
+                    <h2 className="text-sm font-medium">{collections.length} {collections.length === 1 ? 'Collection' : 'Collections'}</h2>
+                  </div>
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+                    className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
                   >
-                    + New Collection
+                    New Collection
                   </button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
                   {collections.map((collection) => (
                     <button
                       key={collection.id}
                       onClick={() => router.push(`/collection/${collection.id}`)}
-                      className="text-left p-4 border border-gray-200 dark:border-gray-800 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      className="w-full flex items-center gap-4 py-5 hover:bg-gray-50 dark:hover:bg-gray-900/50 -mx-2 px-2 transition-colors text-left"
                     >
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">{collection.emoji || '📚'}</span>
-                        <h3 className="font-medium text-sm flex-1">{collection.name}</h3>
+                      <span className="text-2xl">{collection.emoji || '📚'}</span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium">{collection.name}</div>
+                        {collection.description && (
+                          <p className="text-xs text-gray-500 line-clamp-1 mt-0.5">{collection.description}</p>
+                        )}
                       </div>
-                      {collection.description && (
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{collection.description}</p>
-                      )}
-                      <div className="flex items-center gap-2 text-xs text-gray-400">
+                      <div className="text-xs text-gray-400 flex items-center gap-2">
                         <span>{collection.destination_count || 0} places</span>
-                        {collection.is_public && <span>• Public</span>}
+                        {collection.is_public && (
+                          <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">Public</span>
+                        )}
                       </div>
                     </button>
                   ))}
@@ -637,27 +623,9 @@ export default function Account() {
         {/* Trips Tab */}
         {activeTab === 'trips' && (
           <div className="fade-in">
-            <div className="flex justify-end mb-4">
-              <button
-                onClick={() => {
-                  if (!user) {
-                    router.push('/auth/login');
-                  } else {
-                    setEditingTripId(null);
-                    setShowTripDialog(true);
-                  }
-                }}
-                className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity flex items-center gap-2"
-              >
-                <Plus className="h-3 w-3" />
-                {user ? "New Trip" : "Sign in to create trip"}
-              </button>
-            </div>
-
             {trips.length === 0 ? (
-              <div className="text-center py-12 border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl">
-                <MapPin className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">No trips yet</p>
+              <div className="py-16 text-center">
+                <p className="text-sm text-gray-500 mb-6">No trips yet</p>
                 <button
                   onClick={() => {
                     if (!user) {
@@ -667,98 +635,105 @@ export default function Account() {
                       setShowTripDialog(true);
                     }
                   }}
-                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-2xl hover:opacity-80 transition-opacity"
+                  className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-80 transition-opacity"
                 >
                   {user ? "Create your first trip" : "Sign in to create trip"}
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {trips.map((trip) => (
-                  <div
-                    key={trip.id}
-                    className="flex flex-col border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <button
-                      onClick={() => router.push(`/trips/${trip.id}`)}
-                      className="text-left p-4 flex-1"
-                    >
-                      <h3 className="font-medium text-sm mb-2 line-clamp-2">{trip.title}</h3>
-                      {trip.description && (
-                        <p className="text-xs text-gray-500 line-clamp-2 mb-2">{trip.description}</p>
-                      )}
-                      <div className="space-y-1 text-xs text-gray-400">
-                        {trip.destination && (
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-3 w-3" />
-                            <span>{formatDestinationsFromField(trip.destination)}</span>
-                          </div>
-                        )}
-                        {(trip.start_date || trip.end_date) && (
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-3 w-3" />
-                            <span>
-                              {trip.start_date ? new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
-                              {trip.end_date && ` – ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`}
-                            </span>
-                          </div>
-                        )}
-                        {trip.status && (
-                          <div>
-                            <span className="capitalize text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800">
-                              {trip.status}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </button>
-                    <div className="flex items-center gap-2 p-4 pt-0 border-t border-gray-200 dark:border-gray-800">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(`/trips/${trip.id}`);
-                        }}
-                        className="flex-1 text-xs font-medium py-2 px-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        View
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingTripId(trip.id);
-                          setShowTripDialog(true);
-                        }}
-                        className="p-2 rounded-xl text-gray-600 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
-                        aria-label={`Edit ${trip.title}`}
-                      >
-                        <Edit2 className="h-3 w-3" />
-                      </button>
-                      <button
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (confirm(`Are you sure you want to delete "${trip.title}"?`)) {
-                            try {
-                              const { error } = await supabase
-                                .from('trips')
-                                .delete()
-                                .eq('id', trip.id);
-                              if (error) throw error;
-                              await loadUserData();
-                            } catch (error) {
-                              console.error('Error deleting trip:', error);
-                              toast.error('Failed to delete trip');
-                            }
-                          }
-                        }}
-                        className="p-2 rounded-xl text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
-                        aria-label={`Delete ${trip.title}`}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
-                    </div>
+              <>
+                <div className="flex items-center justify-between pb-6 border-b border-gray-200 dark:border-gray-800">
+                  <div>
+                    <h2 className="text-sm font-medium">{trips.length} {trips.length === 1 ? 'Trip' : 'Trips'}</h2>
                   </div>
-                ))}
-              </div>
+                  <button
+                    onClick={() => {
+                      if (!user) {
+                        router.push('/auth/login');
+                      } else {
+                        setEditingTripId(null);
+                        setShowTripDialog(true);
+                      }
+                    }}
+                    className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-medium rounded-full hover:opacity-80 transition-opacity flex items-center gap-2"
+                  >
+                    <Plus className="h-3 w-3" />
+                    New Trip
+                  </button>
+                </div>
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {trips.map((trip) => (
+                    <div
+                      key={trip.id}
+                      className="py-5 -mx-2 px-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <button
+                          onClick={() => router.push(`/trips/${trip.id}`)}
+                          className="flex-1 text-left min-w-0"
+                        >
+                          <h3 className="text-sm font-medium line-clamp-1">{trip.title}</h3>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-gray-500">
+                            {trip.destination && (
+                              <span className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {formatDestinationsFromField(trip.destination)}
+                              </span>
+                            )}
+                            {(trip.start_date || trip.end_date) && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {trip.start_date ? new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                                {trip.end_date && ` – ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                              </span>
+                            )}
+                            {trip.status && (
+                              <span className="capitalize px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
+                                {trip.status}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingTripId(trip.id);
+                              setShowTripDialog(true);
+                            }}
+                            className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                            aria-label={`Edit ${trip.title}`}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (confirm(`Are you sure you want to delete "${trip.title}"?`)) {
+                                try {
+                                  const { error } = await supabase
+                                    .from('trips')
+                                    .delete()
+                                    .eq('id', trip.id);
+                                  if (error) throw error;
+                                  await loadUserData();
+                                } catch (error) {
+                                  console.error('Error deleting trip:', error);
+                                  toast.error('Failed to delete trip');
+                                }
+                              }
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                            aria-label={`Delete ${trip.title}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
@@ -784,10 +759,10 @@ export default function Account() {
 
         {/* Settings Tab */}
         {activeTab === 'settings' && user && (
-          <div className="fade-in space-y-12">
+          <div className="fade-in">
             {/* Profile Section */}
-            <section>
-              <h2 className="text-lg font-light mb-6">Profile</h2>
+            <section className="pb-8 border-b border-gray-200 dark:border-gray-800">
+              <h2 className="text-sm font-medium mb-6">Profile</h2>
               <ProfileEditor
                 userId={user.id}
                 onSaveComplete={() => {
@@ -797,27 +772,27 @@ export default function Account() {
             </section>
 
             {/* Security Section */}
-            <section>
-              <h2 className="text-lg font-light mb-6">Security</h2>
+            <section className="py-8 border-b border-gray-200 dark:border-gray-800">
+              <h2 className="text-sm font-medium mb-6">Security</h2>
               <SecuritySettings />
             </section>
 
             {/* Privacy & Data Section */}
-            <section>
-              <h2 className="text-lg font-light mb-6">Privacy & Data</h2>
+            <section className="py-8">
+              <h2 className="text-sm font-medium mb-6">Privacy & Data</h2>
               <AccountPrivacyManager />
 
               {/* Cookie Settings */}
-              <div className="py-4 border-t border-gray-200 dark:border-gray-800 mt-6">
+              <div className="flex items-center justify-between py-4 border-t border-gray-100 dark:border-gray-800 mt-6">
                 <div>
                   <p className="text-sm font-medium">Cookie Preferences</p>
-                  <p className="text-sm text-gray-500 mt-0.5">Control how we use cookies</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Control how we use cookies</p>
                 </div>
                 <button
                   onClick={openCookieSettings}
-                  className="text-xs text-gray-500 hover:text-black dark:hover:text-white mt-2"
+                  className="text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors"
                 >
-                  Manage cookies
+                  Manage
                 </button>
               </div>
             </section>
@@ -828,32 +803,24 @@ export default function Account() {
       {/* Create Collection Modal */}
       {showCreateModal && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => setShowCreateModal(false)}
         >
           <div
-            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md"
+            className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-md shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-light">Create Collection</h2>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="p-2 hover:opacity-60 transition-opacity"
-              >
-                <span className="text-lg">×</span>
-              </button>
-            </div>
+            <h2 className="text-lg font-medium mb-6">Create Collection</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium mb-2">Collection Name *</label>
+                <label className="block text-xs font-medium mb-2">Name</label>
                 <input
                   type="text"
                   value={newCollectionName}
                   onChange={(e) => setNewCollectionName(e.target.value)}
                   placeholder="e.g., Tokyo Favorites"
-                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white text-sm"
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white text-sm"
                   autoFocus
                   maxLength={50}
                 />
@@ -866,40 +833,37 @@ export default function Account() {
                   onChange={(e) => setNewCollectionDescription(e.target.value)}
                   placeholder="Optional description..."
                   rows={3}
-                  className="w-full px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl focus:outline-none focus:border-black dark:focus:border-white resize-none text-sm"
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white resize-none text-sm"
                   maxLength={200}
                 />
               </div>
 
-              <div className="flex items-center gap-3">
+              <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  id="collection-public"
                   checked={newCollectionPublic}
                   onChange={(e) => setNewCollectionPublic(e.target.checked)}
                   className="rounded"
                 />
-                <label htmlFor="collection-public" className="text-xs">
-                  Make this collection public
-                </label>
-              </div>
+                <span className="text-sm">Make this collection public</span>
+              </label>
+            </div>
 
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 px-4 py-2.5 border border-gray-200 dark:border-gray-800 rounded-2xl hover:opacity-80 transition-opacity text-sm font-medium"
-                  disabled={creatingCollection}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCreateCollection}
-                  disabled={!newCollectionName.trim() || creatingCollection}
-                  className="flex-1 px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-                >
-                  {creatingCollection ? 'Creating...' : 'Create'}
-                </button>
-              </div>
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-sm"
+                disabled={creatingCollection}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleCreateCollection}
+                disabled={!newCollectionName.trim() || creatingCollection}
+                className="flex-1 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                {creatingCollection ? 'Creating...' : 'Create'}
+              </button>
             </div>
           </div>
         </div>
