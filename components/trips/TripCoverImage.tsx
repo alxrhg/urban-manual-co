@@ -40,7 +40,7 @@ export function TripCoverImage({
       <div className={combinedClasses}>
         <Image
           src={coverImageUrl}
-          alt={title}
+          alt={`Cover image for trip: ${title}`}
           width={80}
           height={80}
           className="w-full h-full object-cover"
@@ -55,7 +55,7 @@ export function TripCoverImage({
       <div className={combinedClasses}>
         <Image
           src={destinationImageUrl}
-          alt={title}
+          alt={`Destination preview for trip: ${title}`}
           width={80}
           height={80}
           className="w-full h-full object-cover"
@@ -67,7 +67,8 @@ export function TripCoverImage({
   // Priority 3: Gray placeholder with icon
   return (
     <div className={`${combinedClasses} flex items-center justify-center`}>
-      <MapPin className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+      <MapPin className="w-6 h-6 text-gray-400 dark:text-gray-500" aria-hidden="true" />
+      <span className="sr-only">No cover image for trip: {title}</span>
     </div>
   );
 }
