@@ -1268,3 +1268,227 @@ html {
 .page-transition {
   animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ============================================
+   CHRISTMAS THEME STYLES
+   Simple, festive theme with visible snow
+   ============================================ */
+
+/* Christmas mode font - Gaegu handwritten style */
+.christmas-mode {
+  font-family: 'Gaegu', cursive !important;
+}
+
+.christmas-mode * {
+  font-family: 'Gaegu', cursive !important;
+}
+
+/* Preserve icon fonts */
+.christmas-mode .lucide,
+.christmas-mode [class*="icon"],
+.christmas-mode svg {
+  font-family: inherit !important;
+}
+
+/* Christmas color scheme */
+.christmas-mode {
+  --christmas-red: #B22234;
+  --christmas-green: #165B33;
+  --christmas-gold: #FFD700;
+  --christmas-snow: #E8F4F8;
+  --christmas-pine: #0B3D0B;
+}
+
+/* Snowfall effect - Blue/gray on light mode for visibility */
+html.christmas-mode::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background-image:
+    radial-gradient(3px 3px at 10% 10%, #6B8BA4 50%, transparent 50%),
+    radial-gradient(2px 2px at 20% 25%, #7A9BB5 50%, transparent 50%),
+    radial-gradient(3px 3px at 30% 15%, #5C7A8F 50%, transparent 50%),
+    radial-gradient(2px 2px at 40% 35%, #8AADC4 50%, transparent 50%),
+    radial-gradient(3px 3px at 50% 20%, #6B8BA4 50%, transparent 50%),
+    radial-gradient(2px 2px at 60% 40%, #7A9BB5 50%, transparent 50%),
+    radial-gradient(3px 3px at 70% 10%, #5C7A8F 50%, transparent 50%),
+    radial-gradient(2px 2px at 80% 30%, #8AADC4 50%, transparent 50%),
+    radial-gradient(3px 3px at 90% 25%, #6B8BA4 50%, transparent 50%),
+    radial-gradient(2px 2px at 15% 55%, #7A9BB5 50%, transparent 50%),
+    radial-gradient(3px 3px at 25% 65%, #5C7A8F 50%, transparent 50%),
+    radial-gradient(2px 2px at 35% 50%, #8AADC4 50%, transparent 50%),
+    radial-gradient(3px 3px at 45% 70%, #6B8BA4 50%, transparent 50%),
+    radial-gradient(2px 2px at 55% 60%, #7A9BB5 50%, transparent 50%),
+    radial-gradient(3px 3px at 65% 75%, #5C7A8F 50%, transparent 50%),
+    radial-gradient(2px 2px at 75% 55%, #8AADC4 50%, transparent 50%),
+    radial-gradient(3px 3px at 85% 70%, #6B8BA4 50%, transparent 50%),
+    radial-gradient(2px 2px at 95% 60%, #7A9BB5 50%, transparent 50%);
+  background-size: 100% 100%;
+  animation: snowfall 20s linear infinite;
+  opacity: 0.6;
+}
+
+/* White snow on dark mode */
+html.christmas-mode.dark::before,
+.dark html.christmas-mode::before {
+  background-image:
+    radial-gradient(3px 3px at 10% 10%, rgba(255,255,255,0.9) 50%, transparent 50%),
+    radial-gradient(2px 2px at 20% 25%, rgba(255,255,255,0.8) 50%, transparent 50%),
+    radial-gradient(3px 3px at 30% 15%, rgba(255,255,255,0.85) 50%, transparent 50%),
+    radial-gradient(2px 2px at 40% 35%, rgba(255,255,255,0.75) 50%, transparent 50%),
+    radial-gradient(3px 3px at 50% 20%, rgba(255,255,255,0.9) 50%, transparent 50%),
+    radial-gradient(2px 2px at 60% 40%, rgba(255,255,255,0.8) 50%, transparent 50%),
+    radial-gradient(3px 3px at 70% 10%, rgba(255,255,255,0.85) 50%, transparent 50%),
+    radial-gradient(2px 2px at 80% 30%, rgba(255,255,255,0.75) 50%, transparent 50%),
+    radial-gradient(3px 3px at 90% 25%, rgba(255,255,255,0.9) 50%, transparent 50%),
+    radial-gradient(2px 2px at 15% 55%, rgba(255,255,255,0.8) 50%, transparent 50%),
+    radial-gradient(3px 3px at 25% 65%, rgba(255,255,255,0.85) 50%, transparent 50%),
+    radial-gradient(2px 2px at 35% 50%, rgba(255,255,255,0.75) 50%, transparent 50%),
+    radial-gradient(3px 3px at 45% 70%, rgba(255,255,255,0.9) 50%, transparent 50%),
+    radial-gradient(2px 2px at 55% 60%, rgba(255,255,255,0.8) 50%, transparent 50%),
+    radial-gradient(3px 3px at 65% 75%, rgba(255,255,255,0.85) 50%, transparent 50%),
+    radial-gradient(2px 2px at 75% 55%, rgba(255,255,255,0.75) 50%, transparent 50%),
+    radial-gradient(3px 3px at 85% 70%, rgba(255,255,255,0.9) 50%, transparent 50%),
+    radial-gradient(2px 2px at 95% 60%, rgba(255,255,255,0.8) 50%, transparent 50%);
+  opacity: 0.7;
+}
+
+@keyframes snowfall {
+  0% {
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+  }
+  100% {
+    background-position:
+      50px 600px, -30px 500px, 40px 550px, -50px 650px,
+      60px 620px, -40px 580px, 30px 630px, -60px 570px,
+      70px 610px, -20px 590px, 50px 640px, -70px 560px,
+      20px 680px, -45px 520px, 55px 660px, -35px 540px,
+      45px 670px, -55px 530px;
+  }
+}
+
+/* Christmas tree toggle button */
+.christmas-tree-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.christmas-tree-toggle:hover {
+  transform: scale(1.1);
+}
+
+.christmas-tree-toggle:active {
+  transform: scale(0.95);
+}
+
+.christmas-tree-active {
+  filter: drop-shadow(0 0 6px rgba(22, 91, 51, 0.8));
+}
+
+/* Twinkle animation for tree ornaments */
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.85);
+  }
+}
+
+.animate-twinkle {
+  animation: twinkle 1.5s ease-in-out infinite;
+}
+
+/* Slow pulse for glow effect */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 2s ease-in-out infinite;
+}
+
+/* Christmas red buttons - warm festive red, not aggressive */
+.christmas-mode .bg-black,
+.christmas-mode [class*="bg-black"] {
+  background-color: var(--christmas-red) !important;
+  border-color: var(--christmas-red) !important;
+}
+
+.christmas-mode .bg-black:hover,
+.christmas-mode [class*="bg-black"]:hover {
+  background-color: #9A1C2B !important;
+  border-color: #9A1C2B !important;
+}
+
+/* Green accents for secondary elements */
+.christmas-mode .border-gray-200,
+.christmas-mode .border-gray-300 {
+  border-color: rgba(22, 91, 51, 0.3) !important;
+}
+
+/* Festive focus states */
+.christmas-mode input:focus,
+.christmas-mode textarea:focus,
+.christmas-mode select:focus {
+  border-color: var(--christmas-green) !important;
+  box-shadow: 0 0 0 2px rgba(22, 91, 51, 0.2) !important;
+}
+
+/* Christmas footer accent */
+.christmas-mode footer {
+  border-top: 2px solid rgba(22, 91, 51, 0.2);
+}
+
+/* Festive scrollbar */
+.christmas-mode::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--christmas-red) 0%, var(--christmas-green) 100%);
+  border-radius: 4px;
+}
+
+/* Festive selection color */
+.christmas-mode ::selection {
+  background-color: rgba(178, 34, 52, 0.25);
+  color: inherit;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  html.christmas-mode::before {
+    animation: none;
+    opacity: 0.4;
+  }
+  
+  .animate-twinkle,
+  .animate-pulse-slow {
+    animation: none;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  html.christmas-mode::before {
+    opacity: 0.5;
+  }
+}
