@@ -2,8 +2,9 @@ import { Metadata } from 'next';
 import { prefetchHomepageData } from '@/lib/data/fetch-destinations';
 import { generateOrganizationSchema, generateWebSiteSchema } from '@/lib/metadata';
 import { HomepageDataProvider } from '@/components/homepage/HomepageDataProvider';
-import { ClientDestinationGrid } from '@/components/homepage/ClientDestinationGrid';
+import { HomepageContent } from '@/components/homepage/HomepageContent';
 import { DestinationDrawer } from '@/components/homepage/DestinationDrawer';
+import { AISearchChatWrapper } from '@/components/homepage/AISearchChatWrapper';
 import InteractiveHero from '@/components/homepage/InteractiveHero';
 import NavigationBar from '@/components/homepage/NavigationBar';
 
@@ -95,14 +96,17 @@ export default async function HomePage() {
               {/* Navigation bar */}
               <NavigationBar />
 
-              {/* Grid with pagination - Uses context for data & state */}
-              <ClientDestinationGrid />
+              {/* Grid or Map view - switches based on viewMode */}
+              <HomepageContent />
             </div>
           </div>
         </main>
 
         {/* Destination Drawer - slides in from right when a card is clicked */}
         <DestinationDrawer />
+
+        {/* AI Search Chat - modal chat interface */}
+        <AISearchChatWrapper />
       </HomepageDataProvider>
     </>
   );

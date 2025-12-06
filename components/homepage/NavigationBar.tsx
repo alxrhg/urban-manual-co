@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Map, LayoutGrid, Plus, Globe, Loader2, X } from 'lucide-react';
+import { Map, LayoutGrid, Plus, Globe, Loader2, X, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -24,6 +24,7 @@ export default function NavigationBar() {
     selectedCategory,
     searchTerm,
     clearFilters,
+    openAIChat,
   } = useHomepageData();
   const [creatingTrip, setCreatingTrip] = useState(false);
 
@@ -86,6 +87,19 @@ export default function NavigationBar() {
 
         {/* Right side - Actions */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+          {/* AI Search - Apple-style gradient button */}
+          <button
+            onClick={openAIChat}
+            className="flex h-[38px] flex-shrink-0 items-center justify-center gap-2 rounded-full
+                       bg-gradient-to-r from-purple-500 to-pink-500 px-4
+                       text-[13px] font-medium text-white
+                       hover:from-purple-600 hover:to-pink-600
+                       active:scale-[0.98] transition-all duration-200"
+          >
+            <Sparkles className="h-[15px] w-[15px]" />
+            <span className="hidden sm:inline">AI Search</span>
+          </button>
+
           {/* View Toggle - Apple-style segmented control look */}
           <button
             onClick={handleViewToggle}

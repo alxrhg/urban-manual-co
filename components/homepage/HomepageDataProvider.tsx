@@ -39,6 +39,9 @@ interface HomepageDataContextType {
   selectedDestination: Destination | null;
   isDrawerOpen: boolean;
 
+  // AI Chat state
+  isAIChatOpen: boolean;
+
   // Actions
   setCurrentPage: (page: number) => void;
   setSelectedCity: (city: string) => void;
@@ -48,6 +51,8 @@ interface HomepageDataContextType {
   clearFilters: () => void;
   openDestination: (destination: Destination) => void;
   closeDrawer: () => void;
+  openAIChat: () => void;
+  closeAIChat: () => void;
 }
 
 const HomepageDataContext = createContext<HomepageDataContextType | null>(null);
@@ -117,6 +122,9 @@ function HomepageDataProviderInner({
   // Drawer state
   const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // AI Chat state
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
 
   // Initialize view mode from URL
   useEffect(() => {
@@ -270,6 +278,16 @@ function HomepageDataProviderInner({
     setTimeout(() => setSelectedDestination(null), 300);
   }, []);
 
+  // Open AI chat
+  const openAIChat = useCallback(() => {
+    setIsAIChatOpen(true);
+  }, []);
+
+  // Close AI chat
+  const closeAIChat = useCallback(() => {
+    setIsAIChatOpen(false);
+  }, []);
+
   const contextValue: HomepageDataContextType = {
     destinations,
     filteredDestinations,
@@ -285,6 +303,7 @@ function HomepageDataProviderInner({
     viewMode,
     selectedDestination,
     isDrawerOpen,
+    isAIChatOpen,
     setCurrentPage,
     setSelectedCity,
     setSelectedCategory,
@@ -293,6 +312,8 @@ function HomepageDataProviderInner({
     clearFilters,
     openDestination,
     closeDrawer,
+    openAIChat,
+    closeAIChat,
   };
 
   return (
