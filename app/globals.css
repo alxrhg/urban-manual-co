@@ -1456,11 +1456,7 @@ html.christmas-mode.dark::before,
   box-shadow: 0 0 0 2px rgba(22, 91, 51, 0.2) !important;
 }
 
-/* Christmas header/footer accents */
-.christmas-mode header {
-  border-bottom: 2px solid rgba(178, 34, 52, 0.2);
-}
-
+/* Christmas footer accent */
 .christmas-mode footer {
   border-top: 2px solid rgba(22, 91, 51, 0.2);
 }
