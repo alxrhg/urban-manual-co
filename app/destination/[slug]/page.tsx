@@ -135,6 +135,35 @@ export default async function DestinationPage({
     }
   }
 
+  // If still not found, try stripping common city suffixes
+  // This handles cases like "le-bernardin-new-york" -> "le-bernardin"
+  if (!destination && !error) {
+    const commonCitySuffixes = [
+      '-new-york', '-london', '-paris', '-tokyo', '-los-angeles', '-san-francisco',
+      '-chicago', '-miami', '-hong-kong', '-singapore', '-bangkok', '-taipei',
+      '-sydney', '-melbourne', '-berlin', '-rome', '-milan', '-barcelona',
+      '-madrid', '-amsterdam', '-dubai', '-seattle', '-boston', '-washington-dc'
+    ];
+
+    for (const suffix of commonCitySuffixes) {
+      if (decodedSlug.toLowerCase().endsWith(suffix)) {
+        const strippedSlug = decodedSlug.slice(0, -suffix.length);
+        const { data: strippedMatch, error: strippedError } = await supabase
+          .from('destinations')
+          .select('*')
+          .ilike('slug', strippedSlug)
+          .maybeSingle();
+
+        if (strippedMatch && !strippedError) {
+          // Redirect to the correct URL
+          const { redirect } = await import('next/navigation');
+          redirect(`/destination/${strippedMatch.slug}`);
+        }
+        break;
+      }
+    }
+  }
+
   // Load parent destination if this is a nested destination
   let parentDestination: Destination | null = null;
   if (destination?.parent_destination_id) {
