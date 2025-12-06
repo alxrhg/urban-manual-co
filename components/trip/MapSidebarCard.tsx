@@ -341,10 +341,10 @@ export default function MapSidebarCard({
       markersRef.current.push(advancedMarker);
     });
 
-    // Draw polylines for each day (excluding flight markers)
+    // Draw polylines for each day (excluding departure airports)
     Object.entries(markersByDay).forEach(([dayNumber, dayMarkers]) => {
-      // Filter out flight markers from polylines
-      const groundMarkers = dayMarkers.filter((m) => m.itemType !== 'flight');
+      // Filter out departure airport markers - only arrival airports connect to ground routes
+      const groundMarkers = dayMarkers.filter((m) => m.isArrivalAirport !== false);
       if (groundMarkers.length < 2) return;
 
       const colors = DAY_COLORS[(parseInt(dayNumber) - 1) % DAY_COLORS.length];

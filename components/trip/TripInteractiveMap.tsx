@@ -595,10 +595,12 @@ export default function TripInteractiveMap({
       markersRef.current.push(advancedMarker);
     });
 
-    // Draw polylines for each day (excluding flight markers - those are air routes, not ground routes)
+    // Draw polylines for each day (excluding departure airports - they shouldn't connect to ground routes)
     Object.entries(markersByDay).forEach(([dayNumber, dayMarkers]) => {
-      // Filter out flight markers from polylines
-      const groundMarkers = dayMarkers.filter((m) => m.item.parsedNotes?.type !== 'flight');
+      // Filter out departure airport markers - only arrival airports should connect to ground routes
+      // isArrivalAirport === false means departure, isArrivalAirport === true means arrival
+      // undefined means not a flight (hotel/place), so include those
+      const groundMarkers = dayMarkers.filter((m) => m.isArrivalAirport !== false);
       if (groundMarkers.length < 2) return;
 
       const colors = DAY_COLORS[(parseInt(dayNumber) - 1) % DAY_COLORS.length];
