@@ -2,16 +2,15 @@
  * Supabase Client Exports
  *
  * Main entry point for Supabase clients.
- * Re-exports all client creation functions.
+ *
+ * IMPORTANT: This file only exports client-safe code.
+ * For server-side code, import directly from '@/lib/supabase/server'.
  */
 
 import { createClient } from './client';
 
 // Client-side (browser)
 export { createClient as createBrowserClient } from './client';
-
-// Server-side
-export { createServerClient, createServiceRoleClient } from './server';
 
 // Middleware
 export { createClient as createMiddlewareClient } from './middleware';
