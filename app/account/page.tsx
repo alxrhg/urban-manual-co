@@ -15,6 +15,7 @@ import { PageLoader } from "@/components/LoadingStates";
 import { NoCollectionsEmptyState } from "@/components/EmptyStates";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
+import { SecuritySettings } from "@/components/SecuritySettings";
 import { PreferencesTab } from "@/components/account/PreferencesTab";
 import { openCookieSettings } from "@/components/CookieConsent";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
@@ -790,6 +791,13 @@ export default function Account() {
                 toast.success('Profile updated successfully');
               }}
             />
+
+            {/* Security Settings */}
+            <div>
+              <h2 className="text-lg font-light mb-6">Security</h2>
+              <SecuritySettings />
+            </div>
+
             <AccountPrivacyManager />
 
             {/* Cookie Settings */}
