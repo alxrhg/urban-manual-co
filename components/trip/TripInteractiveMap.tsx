@@ -112,6 +112,7 @@ export default function TripInteractiveMap({
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const markerCleanupRef = useRef<(() => void)[]>([]); // Cleanup functions for marker event listeners
   const polylinesRef = useRef<google.maps.Polyline[]>([]);
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const searchMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
@@ -283,6 +284,9 @@ export default function TripInteractiveMap({
     }
 
     return () => {
+      // Clean up marker event listeners
+      markerCleanupRef.current.forEach((cleanup) => cleanup());
+      markerCleanupRef.current = [];
       markersRef.current.forEach((m) => (m.map = null));
       markersRef.current = [];
       polylinesRef.current.forEach((p) => p.setMap(null));
@@ -467,7 +471,9 @@ export default function TripInteractiveMap({
   useEffect(() => {
     if (!mapRef.current || !mapLoaded || !googleLoaded) return;
 
-    // Clear existing markers
+    // Clear existing markers and their event listeners
+    markerCleanupRef.current.forEach((cleanup) => cleanup());
+    markerCleanupRef.current = [];
     markersRef.current.forEach((m) => (m.map = null));
     markersRef.current = [];
 
@@ -568,14 +574,23 @@ export default function TripInteractiveMap({
         markerEl.textContent = String(marker.index);
       }
 
-      markerEl.addEventListener('mouseenter', () => {
+      // Add hover effects with named handlers for cleanup
+      const handleMouseEnter = () => {
         markerEl.style.transform = 'scale(1.15)';
         markerEl.style.boxShadow = '0 6px 16px rgba(0, 0, 0, 0.2)';
-      });
-
-      markerEl.addEventListener('mouseleave', () => {
+      };
+      const handleMouseLeave = () => {
         markerEl.style.transform = 'scale(1)';
         markerEl.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+      };
+
+      markerEl.addEventListener('mouseenter', handleMouseEnter);
+      markerEl.addEventListener('mouseleave', handleMouseLeave);
+
+      // Store cleanup function for this marker's event listeners
+      markerCleanupRef.current.push(() => {
+        markerEl.removeEventListener('mouseenter', handleMouseEnter);
+        markerEl.removeEventListener('mouseleave', handleMouseLeave);
       });
 
       const advancedMarker = new google.maps.marker.AdvancedMarkerElement({
