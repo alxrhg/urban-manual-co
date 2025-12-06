@@ -15,6 +15,7 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
  * - City/Category filtering
  * - Search functionality
  * - View mode (grid/map)
+ * - Destination drawer state
  */
 
 interface HomepageDataContextType {
@@ -34,6 +35,10 @@ interface HomepageDataContextType {
   searchTerm: string;
   viewMode: 'grid' | 'map';
 
+  // Drawer state
+  selectedDestination: Destination | null;
+  isDrawerOpen: boolean;
+
   // Actions
   setCurrentPage: (page: number) => void;
   setSelectedCity: (city: string) => void;
@@ -41,6 +46,8 @@ interface HomepageDataContextType {
   setSearchTerm: (term: string) => void;
   setViewMode: (mode: 'grid' | 'map') => void;
   clearFilters: () => void;
+  openDestination: (destination: Destination) => void;
+  closeDrawer: () => void;
 }
 
 const HomepageDataContext = createContext<HomepageDataContextType | null>(null);
@@ -106,6 +113,10 @@ function HomepageDataProviderInner({
 
   // View mode
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+
+  // Drawer state
+  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Initialize view mode from URL
   useEffect(() => {
@@ -246,6 +257,19 @@ function HomepageDataProviderInner({
     router.push(url.pathname + url.search, { scroll: false });
   }, [router]);
 
+  // Open destination in drawer
+  const openDestination = useCallback((destination: Destination) => {
+    setSelectedDestination(destination);
+    setIsDrawerOpen(true);
+  }, []);
+
+  // Close drawer
+  const closeDrawer = useCallback(() => {
+    setIsDrawerOpen(false);
+    // Delay clearing destination to allow close animation
+    setTimeout(() => setSelectedDestination(null), 300);
+  }, []);
+
   const contextValue: HomepageDataContextType = {
     destinations,
     filteredDestinations,
@@ -259,12 +283,16 @@ function HomepageDataProviderInner({
     selectedCategory,
     searchTerm,
     viewMode,
+    selectedDestination,
+    isDrawerOpen,
     setCurrentPage,
     setSelectedCity,
     setSelectedCategory,
     setSearchTerm,
     setViewMode: handleSetViewMode,
     clearFilters,
+    openDestination,
+    closeDrawer,
   };
 
   return (

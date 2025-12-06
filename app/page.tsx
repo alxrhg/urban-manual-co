@@ -3,6 +3,7 @@ import { prefetchHomepageData } from '@/lib/data/fetch-destinations';
 import { generateOrganizationSchema, generateWebSiteSchema } from '@/lib/metadata';
 import { HomepageDataProvider } from '@/components/homepage/HomepageDataProvider';
 import { ClientDestinationGrid } from '@/components/homepage/ClientDestinationGrid';
+import { DestinationDrawer } from '@/components/homepage/DestinationDrawer';
 import InteractiveHero from '@/components/homepage/InteractiveHero';
 import NavigationBar from '@/components/homepage/NavigationBar';
 
@@ -99,6 +100,9 @@ export default async function HomePage() {
             </div>
           </div>
         </main>
+
+        {/* Destination Drawer - slides in from right when a card is clicked */}
+        <DestinationDrawer />
       </HomepageDataProvider>
     </>
   );

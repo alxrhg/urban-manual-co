@@ -28,6 +28,7 @@ export function ClientDestinationGrid() {
     selectedCategory,
     searchTerm,
     clearFilters,
+    openDestination,
   } = useHomepageData();
 
   const hasFilters = selectedCity || selectedCategory || searchTerm;
@@ -112,7 +113,10 @@ export function ClientDestinationGrid() {
   return (
     <div>
       {/* Grid */}
-      <ClientGridWrapper destinations={displayedDestinations}>
+      <ClientGridWrapper
+        destinations={displayedDestinations}
+        onDestinationSelect={openDestination}
+      >
         <ServerDestinationGrid destinations={displayedDestinations} />
       </ClientGridWrapper>
 
