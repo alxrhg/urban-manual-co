@@ -22,10 +22,28 @@ export async function GET(request: Request) {
   const keyId = process.env.MAPKIT_KEY_ID;
   const privateKeyRaw = process.env.MAPKIT_PRIVATE_KEY;
 
+  // Log which vars are present (not the values)
+  console.log('[MapKit Token] Checking credentials:', {
+    hasTeamId: !!teamId,
+    hasKeyId: !!keyId,
+    hasPrivateKey: !!privateKeyRaw,
+    privateKeyLength: privateKeyRaw?.length || 0,
+  });
+
   if (!teamId || !keyId || !privateKeyRaw) {
+    console.error('[MapKit Token] Missing credentials:', {
+      teamId: !!teamId,
+      keyId: !!keyId,
+      privateKey: !!privateKeyRaw,
+    });
     return NextResponse.json(
       {
-        error: 'MapKit credentials not configured. Required: MAPKIT_TEAM_ID, MAPKIT_KEY_ID, MAPKIT_PRIVATE_KEY'
+        error: 'MapKit credentials not configured',
+        missing: {
+          teamId: !teamId,
+          keyId: !keyId,
+          privateKey: !privateKeyRaw,
+        }
       },
       { status: 500 }
     );
@@ -47,9 +65,11 @@ export async function GET(request: Request) {
     const fallbackOrigin = (process.env.NEXT_PUBLIC_SITE_URL || '').replace(/\/$/, '');
     const origin = originHeader || refererOrigin || fallbackOrigin;
 
+    console.log('[MapKit Token] Generating token for origin:', origin || '(none)');
+
     // Build JWT per Apple MapKit JS requirements
     // Required claims: iss (Team ID), iat, exp. Including origin is recommended to scope the token.
-    const payload: Record<string, any> = {
+    const payload: Record<string, unknown> = {
       iss: teamId,
       iat: now,
       exp: now + 60 * 60, // 1 hour
@@ -63,16 +83,19 @@ export async function GET(request: Request) {
       keyid: keyId,
     });
 
+    console.log('[MapKit Token] Token generated successfully, length:', token.length);
+
     const res = NextResponse.json({ token });
     // Prevent caching of short-lived tokens
     res.headers.set('Cache-Control', 'no-store, max-age=0');
     return res;
-  } catch (error: any) {
-    console.error('Error generating MapKit token:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[MapKit Token] Error generating token:', errorMessage);
     return NextResponse.json(
       {
         error: 'Failed to generate token',
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        details: errorMessage,
       },
       { status: 500 }
     );
