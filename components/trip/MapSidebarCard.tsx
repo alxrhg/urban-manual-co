@@ -373,6 +373,50 @@ export default function MapSidebarCard({
       polylinesRef.current.push(polyline);
     });
 
+    // Draw flight route lines (departure airport → arrival airport)
+    const flightMarkers = markers.filter((m) => m.itemType === 'flight');
+    const processedFlights = new Set<string>();
+
+    flightMarkers.forEach((marker) => {
+      // Extract the base item ID from marker ID (remove -departure or -arrival suffix)
+      const baseId = marker.id.replace(/-departure$|-arrival$/, '');
+      if (processedFlights.has(baseId)) return;
+      processedFlights.add(baseId);
+
+      // Find departure and arrival markers for this flight
+      const departure = flightMarkers.find((m) => m.id === `${baseId}-departure`);
+      const arrival = flightMarkers.find((m) => m.id === `${baseId}-arrival`);
+
+      if (departure && arrival) {
+        const colors = DAY_COLORS[(marker.dayNumber - 1) % DAY_COLORS.length];
+
+        const flightPolyline = new google.maps.Polyline({
+          path: [
+            { lat: departure.lat, lng: departure.lng },
+            { lat: arrival.lat, lng: arrival.lng },
+          ],
+          geodesic: true,
+          strokeColor: colors.bg,
+          strokeOpacity: 0,
+          strokeWeight: 2,
+          map: mapRef.current,
+          icons: [
+            {
+              icon: {
+                path: 'M 0,-1 0,1',
+                strokeOpacity: 0.4,
+                scale: 2,
+              },
+              offset: '0',
+              repeat: '8px',
+            },
+          ],
+        });
+
+        polylinesRef.current.push(flightPolyline);
+      }
+    });
+
     // Fit bounds to markers
     const bounds = new google.maps.LatLngBounds();
     markers.forEach((m) => bounds.extend({ lat: m.lat, lng: m.lng }));
