@@ -198,8 +198,22 @@ function LoginDrawerContent({ isOpen, onClose }: LoginDrawerProps) {
                   {showPassword ? <EyeOff className="w-5 h-5 sm:w-4 sm:h-4" /> : <Eye className="w-5 h-5 sm:w-4 sm:h-4" />}
                 </button>
               </div>
-              {isSignUp && (
+              {isSignUp ? (
                 <p className="text-xs text-gray-400 mt-2">Minimum 6 characters</p>
+              ) : (
+                <div className="mt-2 text-right">
+                  <a
+                    href="/auth/forgot-password"
+                    className="text-xs text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onClose();
+                      window.location.href = '/auth/forgot-password';
+                    }}
+                  >
+                    Forgot password?
+                  </a>
+                </div>
               )}
             </div>
 
