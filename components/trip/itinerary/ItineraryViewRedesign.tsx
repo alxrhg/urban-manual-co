@@ -363,6 +363,35 @@ export default function ItineraryViewRedesign({
                 )}
               </div>
 
+              {/* Gap Suggestion (for gaps > 2 hours) */}
+              {gap && gap >= 120 && (
+                <GapSuggestion
+                  gapMinutes={gap}
+                  hotelName={nightStayHotel?.title}
+                  hotelHasPool={nightStayHotel?.parsedNotes?.tags?.includes('pool')}
+                  hotelHasSpa={nightStayHotel?.parsedNotes?.tags?.includes('spa')}
+                  hotelHasGym={nightStayHotel?.parsedNotes?.tags?.includes('gym')}
+                  onAddActivity={
+                    onAddActivity
+                      ? (type) => onAddActivity(selectedDay.dayNumber, type)
+                      : undefined
+                  }
+                  onAddCustom={
+                    onAddItem
+                      ? () => onAddItem(selectedDay.dayNumber)
+                      : undefined
+                  }
+                />
+              )}
+
+              {/* Compact gap indicator (for 30min - 2h gaps) */}
+              {gap && gap >= 30 && gap < 120 && (
+                <CompactGapIndicator
+                  gapMinutes={gap}
+                  onClick={onAddItem ? () => onAddItem(selectedDay.dayNumber) : undefined}
+                />
+              )}
+
               {/* Travel Connector */}
               {travelTime && index < sortedItems.length - 1 && (
                 <InteractiveTravelConnector
@@ -376,50 +405,7 @@ export default function ItineraryViewRedesign({
                   }
                 />
               )}
-
-                  {/* Gap Suggestion (for gaps > 2 hours) - shown before travel time */}
-                  {gap && gap >= 120 && (
-                    <GapSuggestion
-                      gapMinutes={gap}
-                      hotelName={nightStayHotel?.title}
-                      hotelHasPool={nightStayHotel?.parsedNotes?.tags?.includes('pool')}
-                      hotelHasSpa={nightStayHotel?.parsedNotes?.tags?.includes('spa')}
-                      hotelHasGym={nightStayHotel?.parsedNotes?.tags?.includes('gym')}
-                      onAddActivity={
-                        onAddActivity
-                          ? (type) => onAddActivity(selectedDay.dayNumber, type)
-                          : undefined
-                      }
-                      onAddCustom={
-                        onAddItem
-                          ? () => onAddItem(selectedDay.dayNumber)
-                          : undefined
-                      }
-                    />
-                  )}
-
-                  {/* Compact gap indicator (for 30min - 2h gaps) - shown before travel time */}
-                  {gap && gap >= 30 && gap < 120 && (
-                    <CompactGapIndicator
-                      gapMinutes={gap}
-                      onClick={onAddItem ? () => onAddItem(selectedDay.dayNumber) : undefined}
-                    />
-                  )}
-
-                  {/* Travel Connector - shown after free time gap */}
-                  {travelTime && index < sortedItems.length - 1 && (
-                    <InteractiveTravelConnector
-                      durationMinutes={travelTime.durationMinutes}
-                      distanceKm={travelTime.distanceKm}
-                      mode={travelTime.mode}
-                      onModeChange={
-                        onUpdateTravelMode
-                          ? (mode) => onUpdateTravelMode(item.id, mode)
-                          : undefined
-                      }
-                    />
-                  )}
-                </React.Fragment>
+            </React.Fragment>
               ))}
 
               {/* Add Stop Button */}
