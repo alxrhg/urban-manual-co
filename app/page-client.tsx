@@ -81,7 +81,6 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useDestinationLoading } from '@/hooks/useDestinationLoading';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
-import { AIAssistant } from '@/components/AIAssistant';
 import { ScrollToTop } from '@/components/ScrollToTop';
 
 // Lazy load components that are conditionally rendered or not immediately visible
@@ -3575,7 +3574,6 @@ export default function HomePageClient({
             }}
           />
         )}
-        <AIAssistant />
         <ScrollToTop threshold={400} />
       </main>
     </ErrorBoundary>

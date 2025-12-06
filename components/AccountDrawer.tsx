@@ -31,6 +31,7 @@ import {
   Calendar,
   Plane,
   Sparkles,
+  MessageCircle,
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -656,6 +657,14 @@ export function AccountDrawer() {
 
         {/* Quick Settings */}
         <div className="px-5 py-4 border-t border-gray-200 dark:border-gray-800">
+          <SettingsRow
+            icon={MessageCircle}
+            label="Chat with AI"
+            onClick={() => {
+              closeLegacyDrawer();
+              setTimeout(() => openLegacyDrawer('chat'), 200);
+            }}
+          />
           <SettingsRow
             icon={Settings}
             label="Settings"
