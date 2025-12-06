@@ -49,6 +49,7 @@ import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { Drawer } from '@/components/ui/Drawer';
 import { architectNameToSlug } from '@/lib/architect-utils';
 import { DestinationCard } from '@/components/DestinationCard';
+import { capitalizeCity, formatHighlightTag, CITY_TIMEZONES } from '@/lib/utils';
 
 
 // Dynamically import GoogleStaticMap for small map in drawer
@@ -85,36 +86,6 @@ interface DestinationDrawerProps {
   onDestinationUpdate?: () => void; // Callback when destination is updated/deleted
   renderMode?: 'drawer' | 'inline'; // 'inline' renders without Drawer wrapper for split-pane
 }
-
-function capitalizeCity(city: string): string {
-  return city
-    .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-function formatHighlightTag(tag: string): string {
-  return tag
-    .split(/[-_]/)
-    .filter(Boolean)
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-// City timezone mapping (fallback if timezone_id not available)
-const CITY_TIMEZONES: Record<string, string> = {
-  'tokyo': 'Asia/Tokyo',
-  'new-york': 'America/New_York',
-  'london': 'Europe/London',
-  'paris': 'Europe/Paris',
-  'los-angeles': 'America/Los_Angeles',
-  'singapore': 'Asia/Singapore',
-  'hong-kong': 'Asia/Hong_Kong',
-  'sydney': 'Australia/Sydney',
-  'dubai': 'Asia/Dubai',
-  'bangkok': 'Asia/Bangkok',
-  // Add more as needed
-};
 
 function getOpenStatus(openingHours: any, city: string, timezoneId?: string | null, utcOffset?: number | null): { isOpen: boolean; currentDay?: string; todayHours?: string } {
   if (!openingHours || !openingHours.weekday_text) {

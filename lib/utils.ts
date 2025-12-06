@@ -33,6 +33,81 @@ export function capitalizeCategory(category: string): string {
 }
 
 /**
+ * Format highlight tag for display (handles hyphens and underscores)
+ * @example "pet-friendly" → "Pet Friendly"
+ */
+export function formatHighlightTag(tag: string): string {
+  return tag
+    .split(/[-_]/)
+    .filter(Boolean)
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * City timezone mapping for local time calculations
+ * Used as fallback when timezone_id is not available from Google Places API
+ */
+export const CITY_TIMEZONES: Record<string, string> = {
+  'tokyo': 'Asia/Tokyo',
+  'new-york': 'America/New_York',
+  'london': 'Europe/London',
+  'paris': 'Europe/Paris',
+  'los-angeles': 'America/Los_Angeles',
+  'singapore': 'Asia/Singapore',
+  'hong-kong': 'Asia/Hong_Kong',
+  'sydney': 'Australia/Sydney',
+  'dubai': 'Asia/Dubai',
+  'bangkok': 'Asia/Bangkok',
+  'berlin': 'Europe/Berlin',
+  'amsterdam': 'Europe/Amsterdam',
+  'rome': 'Europe/Rome',
+  'barcelona': 'Europe/Madrid',
+  'madrid': 'Europe/Madrid',
+  'lisbon': 'Europe/Lisbon',
+  'copenhagen': 'Europe/Copenhagen',
+  'stockholm': 'Europe/Stockholm',
+  'vienna': 'Europe/Vienna',
+  'prague': 'Europe/Prague',
+  'seoul': 'Asia/Seoul',
+  'osaka': 'Asia/Tokyo',
+  'kyoto': 'Asia/Tokyo',
+  'taipei': 'Asia/Taipei',
+  'melbourne': 'Australia/Melbourne',
+  'auckland': 'Pacific/Auckland',
+  'vancouver': 'America/Vancouver',
+  'toronto': 'America/Toronto',
+  'chicago': 'America/Chicago',
+  'miami': 'America/New_York',
+  'san-francisco': 'America/Los_Angeles',
+  'seattle': 'America/Los_Angeles',
+  'denver': 'America/Denver',
+  'mexico-city': 'America/Mexico_City',
+  'sao-paulo': 'America/Sao_Paulo',
+  'buenos-aires': 'America/Argentina/Buenos_Aires',
+  'johannesburg': 'Africa/Johannesburg',
+  'cape-town': 'Africa/Johannesburg',
+  'cairo': 'Africa/Cairo',
+  'mumbai': 'Asia/Kolkata',
+  'delhi': 'Asia/Kolkata',
+  'shanghai': 'Asia/Shanghai',
+  'beijing': 'Asia/Shanghai',
+  'kuala-lumpur': 'Asia/Kuala_Lumpur',
+  'jakarta': 'Asia/Jakarta',
+  'bali': 'Asia/Makassar',
+  'phuket': 'Asia/Bangkok',
+  'hanoi': 'Asia/Ho_Chi_Minh',
+  'ho-chi-minh': 'Asia/Ho_Chi_Minh',
+  'istanbul': 'Europe/Istanbul',
+  'athens': 'Europe/Athens',
+  'moscow': 'Europe/Moscow',
+  'tel-aviv': 'Asia/Jerusalem',
+  'doha': 'Asia/Qatar',
+  'abu-dhabi': 'Asia/Dubai',
+  'riyadh': 'Asia/Riyadh',
+};
+
+/**
  * Format distance for display
  * @example 0.5 → "500m", 5 → "5km"
  */

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import {
   Bookmark,
   Plus,
@@ -115,8 +116,15 @@ function SortableBucketItem({
 
         {/* Thumbnail or Icon */}
         {item.thumbnail ? (
-          <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-stone-100 dark:bg-gray-800">
-            <img src={item.thumbnail} alt="" className="w-full h-full object-cover" />
+          <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-stone-100 dark:bg-gray-800">
+            <Image
+              src={item.thumbnail}
+              alt={item.title || 'Bucket list item'}
+              fill
+              sizes="48px"
+              className="object-cover"
+              loading="lazy"
+            />
           </div>
         ) : (
           <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
