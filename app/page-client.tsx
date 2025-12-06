@@ -175,7 +175,6 @@ const RealtimeStatusBadge = dynamic(
     })),
   { ssr: false }
 );
-import { Onboarding, useOnboarding } from '@/components/Onboarding';
 
 // Category icons using Untitled UI icons
 function getCategoryIcon(
@@ -386,7 +385,6 @@ export default function HomePageClient({
     canUseEditMode,
   } = useAdminEditMode();
   const { trackAction, predictions } = useSequenceTracker();
-  const { showOnboarding, completeOnboarding } = useOnboarding();
   const [isAdmin, setIsAdmin] = useState(false);
   const { openDrawer: openGlobalDrawer } = useDrawerStore();
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
@@ -2441,12 +2439,6 @@ export default function HomePageClient({
 
   return (
     <ErrorBoundary>
-      {/* Onboarding popup for first-time visitors */}
-      <Onboarding
-        isOpen={showOnboarding}
-        onComplete={completeOnboarding}
-        onSkip={completeOnboarding}
-      />
       {/* Structured Data for SEO */}
       <script
         type="application/ld+json"

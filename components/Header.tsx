@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
-import { User, Map } from "lucide-react";
+import { User, Map, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { Onboarding, useOnboarding } from "@/components/Onboarding";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
 import { ChatDrawer } from "@/components/ChatDrawer";
@@ -21,6 +22,8 @@ export function Header() {
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const { showOnboarding, completeOnboarding } = useOnboarding();
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
 
   // Determine admin role from user metadata (sync, no useEffect needed)
   const isAdmin = useMemo(() => {
@@ -109,6 +112,25 @@ export function Header() {
         >
           {buildVersion}
         </span>
+      )}
+
+      {/* First Time button - only for new users */}
+      {showOnboarding && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => setIsOnboardingOpen(true)}
+              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-full text-sm font-medium hover:opacity-90 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              aria-label="Get started with Urban Manual"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>First Time?</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Learn how Urban Manual works</p>
+          </TooltipContent>
+        </Tooltip>
       )}
 
       {/* Trips button - always visible */}
@@ -214,6 +236,19 @@ export function Header() {
           onClose={closeDrawer}
         />
       )}
+
+      {/* Onboarding popup for first-time users */}
+      <Onboarding
+        isOpen={isOnboardingOpen}
+        onComplete={() => {
+          setIsOnboardingOpen(false);
+          completeOnboarding();
+        }}
+        onSkip={() => {
+          setIsOnboardingOpen(false);
+          completeOnboarding();
+        }}
+      />
     </header>
   );
 }
