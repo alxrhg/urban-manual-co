@@ -59,12 +59,15 @@ declare global {
   }
 }
 
+// Track authorization state for better error handling
+let authorizationFailed = false;
+
 function fetchAuthorizationToken(done: (token: string) => void) {
   // Create abort controller for timeout (with fallback for older browsers)
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-  fetch('/api/mapkit-token', { 
+  fetch('/api/mapkit-token', {
     credentials: 'same-origin',
     signal: controller.signal
   })
@@ -79,18 +82,24 @@ function fetchAuthorizationToken(done: (token: string) => void) {
       if (!data.token) {
         throw new Error('No token received from server');
       }
+      authorizationFailed = false;
       done(data.token);
     })
     .catch(error => {
       clearTimeout(timeoutId);
+      authorizationFailed = true;
       if (error.name === 'AbortError') {
         console.error('MapKit authorization error: Request timeout');
       } else {
         console.error('MapKit authorization error:', error);
       }
-      // Pass empty token but log the error - MapKit will handle the failure
+      // Pass empty token - will cause MapKit to fail
       done('');
     });
+}
+
+export function didAuthorizationFail(): boolean {
+  return authorizationFailed;
 }
 
 function waitForMapkitReady(): Promise<void> {
@@ -100,17 +109,28 @@ function waitForMapkitReady(): Promise<void> {
       return;
     }
 
-    // Increased timeout to 15 seconds to account for slow networks and authorization
+    // Reduced timeout - fail faster if authorization failed
     const timeout = window.setTimeout(() => {
-      reject(new Error('MapKit initialization timeout - the authorization token may be invalid or the network is slow'));
-    }, 15000);
+      if (authorizationFailed) {
+        reject(new Error('MapKit authorization failed - check credentials'));
+      } else {
+        reject(new Error('MapKit initialization timeout - the authorization token may be invalid or the network is slow'));
+      }
+    }, 10000);
 
     let attempts = 0;
-    const maxAttempts = 300; // 15 seconds at ~50ms per check
+    const maxAttempts = 200; // 10 seconds at ~50ms per check
 
     const checkLoaded = () => {
       attempts++;
-      
+
+      // Fail fast if authorization failed
+      if (authorizationFailed) {
+        window.clearTimeout(timeout);
+        reject(new Error('MapKit authorization failed - credentials may not be configured'));
+        return;
+      }
+
       // Check if MapKit is loaded and initialized
       if (window.mapkit?.loaded) {
         window.clearTimeout(timeout);
