@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, Suspense, useId } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -21,6 +21,7 @@ interface LoginModalProps {
 function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { signIn, signUp, signInWithApple } = useAuth();
   const uniqueId = useId();
   const [isSignUp, setIsSignUp] = useState(false);
@@ -31,7 +32,8 @@ function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [returnTo, setReturnTo] = useState('/');
+  // Default to current page so user stays on same page after login
+  const [returnTo, setReturnTo] = useState(pathname || '/');
 
   useEffect(() => {
     if (!isOpen) {
@@ -45,12 +47,17 @@ function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
       return;
     }
 
+    // Check for explicit redirect params, otherwise use current pathname
     const redirect = searchParams?.get('redirect') || searchParams?.get('returnTo') || null;
-    if (redirect) setReturnTo(redirect);
+    if (redirect) {
+      setReturnTo(redirect);
+    } else if (pathname) {
+      setReturnTo(pathname);
+    }
 
     const errorParam = searchParams?.get('error');
     if (errorParam) setError(decodeURIComponent(errorParam));
-  }, [isOpen, searchParams]);
+  }, [isOpen, searchParams, pathname]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,7 +75,12 @@ function LoginModalContent({ isOpen, onClose }: LoginModalProps) {
       } else {
         await signIn(email, password);
         onClose();
-        router.push(returnTo);
+        // Refresh to update server components with new auth state
+        // then navigate to return URL (usually stays on same page)
+        router.refresh();
+        if (returnTo !== pathname) {
+          router.push(returnTo);
+        }
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');
