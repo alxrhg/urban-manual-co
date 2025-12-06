@@ -2,13 +2,22 @@
 
 import React from 'react';
 import { format, parseISO } from 'date-fns';
-import { MoreHorizontal, Sparkles, Loader2 } from 'lucide-react';
+import { MoreHorizontal, Sparkles, Loader2, Sun, Cloud, CloudRain, CloudSnow } from 'lucide-react';
+
+export interface DayWeather {
+  date: string;
+  temp: { min: number; max: number };
+  condition: string;
+  icon: string;
+  precipitation: number;
+}
 
 interface DayHeaderProps {
   dayNumber: number;
   date?: string | null; // ISO date string
   itemCount?: number;
   cityName?: string;
+  weather?: DayWeather | null;
   onOptimize?: () => void;
   onMore?: () => void;
   isOptimizing?: boolean;
@@ -19,11 +28,26 @@ interface DayHeaderProps {
  * DayHeader - Date badge style header
  * Shows: [MAR 15] Day 1 · 5 stops
  */
+// Weather icon helper
+function getWeatherIcon(icon: string, className: string = 'w-4 h-4') {
+  switch (icon) {
+    case 'sun':
+      return <Sun className={`${className} text-yellow-500`} />;
+    case 'rain':
+      return <CloudRain className={`${className} text-blue-500`} />;
+    case 'snow':
+      return <CloudSnow className={`${className} text-blue-300`} />;
+    default:
+      return <Cloud className={`${className} text-stone-400`} />;
+  }
+}
+
 export default function DayHeader({
   dayNumber,
   date,
   itemCount,
   cityName,
+  weather,
   onOptimize,
   onMore,
   isOptimizing = false,
@@ -86,6 +110,21 @@ export default function DayHeader({
           {itemCount !== undefined && `${itemCount} ${itemCount === 1 ? 'stop' : 'stops'}`}
         </p>
       </div>
+
+      {/* Weather */}
+      {weather && (
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-stone-50 dark:bg-gray-800/50">
+          {getWeatherIcon(weather.icon)}
+          <span className="text-sm font-medium text-stone-700 dark:text-gray-300">
+            {weather.temp.max}°
+          </span>
+          {weather.precipitation > 0 && (
+            <span className="text-xs text-blue-500">
+              {weather.precipitation}mm
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center gap-1">

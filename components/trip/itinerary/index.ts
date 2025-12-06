@@ -41,6 +41,7 @@ export {
   CompactDayHeader,
   DayNavigation,
   DayDivider,
+  type DayWeather,
 } from './DayHeader';
 
 // Re-export the main view

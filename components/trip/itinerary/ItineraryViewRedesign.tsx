@@ -30,7 +30,7 @@ import ItineraryCard from './ItineraryCard';
 import ItineraryMinimalRow, { BreakfastRow, CheckoutRow, CheckInRow, NightStayRow } from './ItineraryMinimalRow';
 import TravelConnector, { InteractiveTravelConnector } from './TravelConnector';
 import GapSuggestion, { CompactGapIndicator } from './GapSuggestion';
-import DayHeader, { DayNavigation } from './DayHeader';
+import DayHeader, { DayNavigation, type DayWeather } from './DayHeader';
 
 interface ItineraryViewRedesignProps {
   days: TripDay[];
@@ -48,6 +48,7 @@ interface ItineraryViewRedesignProps {
   activeItemId?: string | null;
   allHotels?: EnrichedItineraryItem[];
   showDayNavigation?: boolean;
+  weatherForecast?: DayWeather[];
   className?: string;
 }
 
@@ -165,6 +166,7 @@ export default function ItineraryViewRedesign({
   activeItemId,
   allHotels = [],
   showDayNavigation = true,
+  weatherForecast = [],
   className = '',
 }: ItineraryViewRedesignProps) {
   // DnD sensors
@@ -264,6 +266,7 @@ export default function ItineraryViewRedesign({
         dayNumber={selectedDay.dayNumber}
         date={selectedDay.date}
         itemCount={selectedDay.items.length}
+        weather={selectedDay.date ? weatherForecast.find(w => w.date === selectedDay.date) : undefined}
         onOptimize={onOptimizeDay ? () => onOptimizeDay(selectedDay.dayNumber) : undefined}
         isOptimizing={isOptimizing}
       />

@@ -9,11 +9,10 @@ import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 
 // Trip components
 import TripHeader, { type AddItemType } from '@/components/trip/TripHeader';
-import { ItineraryViewRedesign } from '@/components/trip/itinerary';
+import { ItineraryViewRedesign, type DayWeather } from '@/components/trip/itinerary';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
 import TripMapView from '@/components/trips/TripMapView';
-import TripWeatherForecast from '@/components/trips/TripWeatherForecast';
 
 // Existing components
 import { PageLoader } from '@/components/LoadingStates';
@@ -72,6 +71,7 @@ export default function TripPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showMapView, setShowMapView] = useState(false);
   const [showCompanionPanel, setShowCompanionPanel] = useState(false);
+  const [weatherForecast, setWeatherForecast] = useState<DayWeather[]>([]);
 
   // Auto-fix items on wrong days based on their dates
   const hasAutoFixed = useRef(false);
@@ -100,6 +100,32 @@ export default function TripPage() {
     }
     hasAutoFixed.current = true;
   }, [loading, trip?.start_date, trip?.end_date, days, moveItemToDay]);
+
+  // Fetch weather forecast for trip dates
+  useEffect(() => {
+    if (!primaryCity || !trip?.start_date) return;
+
+    const fetchWeather = async () => {
+      try {
+        const params = new URLSearchParams();
+        params.set('destination', primaryCity);
+        params.set('startDate', trip.start_date);
+        if (trip.end_date) params.set('endDate', trip.end_date);
+
+        const response = await fetch(`/api/weather?${params.toString()}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.forecast) {
+            setWeatherForecast(data.forecast);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch weather:', err);
+      }
+    };
+
+    fetchWeather();
+  }, [primaryCity, trip?.start_date, trip?.end_date]);
 
   // Calculate flight and hotel counts
   const { flightCount, hotelCount } = useMemo(() => {
@@ -361,6 +387,7 @@ export default function TripPage() {
                   activeItemId={selectedItem?.id}
                   allHotels={allHotels}
                   showDayNavigation={false}
+                  weatherForecast={weatherForecast}
                 />
               </>
             )}
@@ -502,16 +529,6 @@ export default function TripPage() {
               />
             ) : (
               <>
-                {/* Weather Forecast */}
-                <div className="p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                  <TripWeatherForecast
-                    destination={primaryCity}
-                    startDate={trip.start_date}
-                    endDate={trip.end_date}
-                    compact={false}
-                  />
-                </div>
-
                 {/* Interactive Map */}
                 <InteractiveMapCard
                   locationName={primaryCity || 'Map'}
@@ -594,22 +611,10 @@ export default function TripPage() {
               }}
             />
           ) : (
-            <>
-              {/* Weather Forecast - Compact for mobile */}
-              <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <TripWeatherForecast
-                  destination={primaryCity}
-                  startDate={trip.start_date}
-                  endDate={trip.end_date}
-                  compact={true}
-                />
-              </div>
-
-              <TravelAISidebar
-                onAddSuggestion={handleAddSuggestion}
-                onOpenChat={() => setShowCompanionPanel(true)}
-              />
-            </>
+            <TravelAISidebar
+              onAddSuggestion={handleAddSuggestion}
+              onOpenChat={() => setShowCompanionPanel(true)}
+            />
           )}
         </div>
       </div>
