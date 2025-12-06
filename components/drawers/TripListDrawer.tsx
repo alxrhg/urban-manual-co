@@ -12,6 +12,7 @@ import { formatTripDateRange } from '@/lib/utils';
 import { formatDestinationsFromField } from '@/types/trip';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import CreateTripModal from '@/components/trip/CreateTripModal';
 
 const LOADING_TIMEOUT = 15000; // 15 seconds
 
@@ -73,6 +74,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
   const [trips, setTrips] = useState<any[]>(propsTrips || []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchTrips = useCallback(async () => {
     if (!user) {
@@ -124,7 +126,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
     }
   }, [propsTrips, fetchTrips]);
 
-  const handleNewTrip = async () => {
+  const handleNewTrip = () => {
     if (onNewTrip) {
       onNewTrip();
       return;
@@ -135,32 +137,17 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
       return;
     }
 
-    // Create trip directly and navigate to it
-    try {
-      const supabaseClient = createClient();
-      if (!supabaseClient) return;
+    // Show the enhanced trip creation modal
+    setShowCreateModal(true);
+  };
 
-      const { data, error } = await supabaseClient
-        .from('trips')
-        .insert({
-          user_id: user.id,
-          title: 'New Trip',
-          status: 'planning',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      closeDrawer();
-      if (data) {
-        setTimeout(() => {
-          router.push(`/trips/${data.id}`);
-        }, 200);
-      }
-    } catch (err) {
-      console.error('Error creating trip:', err);
-    }
+  const handleTripCreated = (tripId: string) => {
+    setShowCreateModal(false);
+    closeDrawer();
+    fetchTrips(); // Refresh trips list
+    setTimeout(() => {
+      router.push(`/trips/${tripId}`);
+    }, 200);
   };
 
   const handleSelectTrip = (trip: any) => {
@@ -196,6 +183,7 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
   }
 
   return (
+    <>
     <div className="px-5 py-6 space-y-6">
       {/* MAIN CTA */}
       <Button
@@ -316,5 +304,13 @@ export default function TripListDrawer({ trips: propsTrips, onNewTrip }: TripLis
         )}
       </div>
     </div>
+
+    {/* Create Trip Modal */}
+    <CreateTripModal
+      isOpen={showCreateModal}
+      onClose={() => setShowCreateModal(false)}
+      onSuccess={handleTripCreated}
+    />
+    </>
   );
 }

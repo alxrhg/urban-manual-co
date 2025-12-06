@@ -48,6 +48,46 @@ export type TripVisibility = 'private' | 'shared' | 'public';
 
 export type CollaboratorRole = 'owner' | 'editor' | 'viewer';
 
+export type TripType = 'leisure' | 'work';
+
+// ============================================
+// SEASONAL INTELLIGENCE
+// ============================================
+
+export interface SeasonalIntelligence {
+  isPeakSeason: boolean;
+  crowdLevel: 'low' | 'moderate' | 'high' | 'very_high';
+  seasonDescription: string;
+  tips: string[];
+  bestTimeToVisit?: string;
+  weatherPattern?: string;
+  majorEvents?: string[];
+}
+
+// ============================================
+// WEATHER FORECAST
+// ============================================
+
+export interface TripWeatherForecast {
+  tempHigh: number;
+  tempLow: number;
+  tempUnit: 'F' | 'C';
+  condition: string;
+  precipitation: number;
+  humidity?: number;
+  uvIndex?: number;
+}
+
+// ============================================
+// TRIP NARRATIVE
+// ============================================
+
+export interface TripNarrative {
+  summary: string;
+  dayHighlights?: string[];
+  generatedAt: string;
+}
+
 // ============================================
 // TRIP (v2)
 // ============================================
@@ -380,6 +420,12 @@ export interface Trip {
   notes: string | null; // TEXT (JSON with TripNotes structure)
   created_at: string; // TIMESTAMP WITH TIME ZONE
   updated_at: string; // TIMESTAMP WITH TIME ZONE
+  // O3Pack-inspired fields
+  trip_type: TripType | null; // 'leisure' | 'work'
+  arrival_airport: string | null; // IATA airport code (e.g., 'JFK', 'LAX')
+  narrative: string | null; // JSON with TripNarrative structure
+  seasonal_intelligence: string | null; // JSON with SeasonalIntelligence structure
+  weather_forecast: string | null; // JSON with TripWeatherForecast structure
 }
 
 /**
@@ -496,6 +542,11 @@ export interface InsertTrip {
   is_public?: boolean;
   cover_image?: string | null;
   notes?: string | null;
+  trip_type?: TripType | null;
+  arrival_airport?: string | null;
+  narrative?: string | null;
+  seasonal_intelligence?: string | null;
+  weather_forecast?: string | null;
 }
 
 export interface UpdateTrip {
@@ -508,6 +559,68 @@ export interface UpdateTrip {
   is_public?: boolean;
   cover_image?: string | null;
   notes?: string | null;
+  trip_type?: TripType | null;
+  arrival_airport?: string | null;
+  narrative?: string | null;
+  seasonal_intelligence?: string | null;
+  weather_forecast?: string | null;
+}
+
+/**
+ * Helper to parse trip narrative JSON safely
+ */
+export function parseTripNarrative(narrative: string | null): TripNarrative | null {
+  if (!narrative) return null;
+  try {
+    return JSON.parse(narrative);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Helper to stringify trip narrative for storage
+ */
+export function stringifyTripNarrative(narrative: TripNarrative): string {
+  return JSON.stringify(narrative);
+}
+
+/**
+ * Helper to parse seasonal intelligence JSON safely
+ */
+export function parseSeasonalIntelligence(data: string | null): SeasonalIntelligence | null {
+  if (!data) return null;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Helper to stringify seasonal intelligence for storage
+ */
+export function stringifySeasonalIntelligence(data: SeasonalIntelligence): string {
+  return JSON.stringify(data);
+}
+
+/**
+ * Helper to parse weather forecast JSON safely
+ */
+export function parseWeatherForecast(data: string | null): TripWeatherForecast | null {
+  if (!data) return null;
+  try {
+    return JSON.parse(data);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Helper to stringify weather forecast for storage
+ */
+export function stringifyWeatherForecast(data: TripWeatherForecast): string {
+  return JSON.stringify(data);
 }
 
 export type ItineraryItemType = 'place' | 'flight' | 'train' | 'drive' | 'hotel' | 'breakfast' | 'event' | 'activity' | 'custom';
