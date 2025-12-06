@@ -6,7 +6,6 @@ import { User, Map } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
-import { ChatDrawer } from "@/components/ChatDrawer";
 import { LoginDrawer } from "@/components/LoginDrawer";
 import { CommandPalette } from "@/components/CommandPalette";
 import {
@@ -199,14 +198,6 @@ export function Header() {
           </div>
         </nav>
       </div>
-      {/* Chat Drawer - Only render when open */}
-      {isDrawerOpen('chat') && (
-        <ChatDrawer
-          isOpen={true}
-          onClose={closeDrawer}
-        />
-      )}
-
       {/* Login Drawer - Only render when open */}
       {isDrawerOpen('login') && (
         <LoginDrawer

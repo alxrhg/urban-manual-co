@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
+import { useDrawer } from '@/contexts/DrawerContext';
 
 import { AccountDrawer } from '@/components/AccountDrawer';
 import { DestinationDrawer } from '@/src/features/detail/DestinationDrawer';
@@ -9,6 +10,7 @@ import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
 import { TripsDrawer } from '@/components/TripsDrawer';
 import { QuickTripSelector } from '@/components/QuickTripSelector';
+import { ChatDrawer } from '@/components/ChatDrawer';
 
 import AddHotelDrawer from '@/components/drawers/AddHotelDrawer';
 import AddFlightDrawer from '@/components/drawers/AddFlightDrawer';
@@ -27,6 +29,7 @@ const INLINE_TYPES = ['destination', 'account-new', 'trip-list', 'trip-settings'
 
 export default function DrawerMount() {
   const { open, type, props, closeDrawer, displayMode } = useDrawerStore();
+  const { isDrawerOpen, closeDrawer: closeContextDrawer } = useDrawer();
   const drawerStyle = useDrawerStyle();
 
   // Track desktop state for conditional rendering
@@ -203,6 +206,14 @@ export default function DrawerMount() {
         destinationName={props?.destinationName || ''}
         destinationCity={props?.destinationCity}
       />
+
+      {/* Chat Drawer - uses DrawerContext */}
+      {isDrawerOpen('chat') && (
+        <ChatDrawer
+          isOpen={true}
+          onClose={closeContextDrawer}
+        />
+      )}
     </>
   );
 }
