@@ -139,22 +139,31 @@ export default function TripInteractiveMap({
   // Extract markers from days
   const allMarkers: MapMarker[] = useMemo(() => {
     const markers: MapMarker[] = [];
-    days.forEach((day) => {
-      day.items.forEach((item, index) => {
-        // Skip flights
-        if (item.parsedNotes?.type === 'flight') return;
+    let stopIndex = 0; // Counter for numbered stops (excluding hotels/flights)
 
+    days.forEach((day) => {
+      day.items.forEach((item) => {
+        const itemType = item.parsedNotes?.type;
         const lat = item.parsedNotes?.latitude ?? item.destination?.latitude;
         const lng = item.parsedNotes?.longitude ?? item.destination?.longitude;
 
         if (lat && lng) {
+          // Hotels and flights get special icons (index = 0 means use icon)
+          // Regular places get numbered markers
+          const isHotel = itemType === 'hotel';
+          const isFlight = itemType === 'flight';
+
+          if (!isHotel && !isFlight) {
+            stopIndex++;
+          }
+
           markers.push({
             id: item.id,
             lat,
             lng,
-            label: item.title || `Stop ${index + 1}`,
+            label: item.title || `Stop ${stopIndex}`,
             dayNumber: day.dayNumber,
-            index: index + 1,
+            index: (isHotel || isFlight) ? 0 : stopIndex, // 0 = special icon
             item,
           });
         }
@@ -444,28 +453,83 @@ export default function TripInteractiveMap({
     markers.forEach((marker) => {
       const colors = DAY_COLORS[(marker.dayNumber - 1) % DAY_COLORS.length];
       const isActive = marker.id === activeItemId;
+      const itemType = marker.item.parsedNotes?.type;
+      const isHotel = itemType === 'hotel';
+      const isFlight = itemType === 'flight';
 
       // Create custom marker element
       const markerEl = document.createElement('div');
       markerEl.className = 'trip-marker';
-      markerEl.style.cssText = `
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: ${isActive ? '40px' : '32px'};
-        height: ${isActive ? '40px' : '32px'};
-        border-radius: 50%;
-        background: ${isActive ? colors.bg : 'white'};
-        color: ${isActive ? colors.text : colors.bg};
-        border: 2px solid ${isActive ? colors.border : colors.bg};
-        font-weight: 600;
-        font-size: ${isActive ? '16px' : '14px'};
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        cursor: pointer;
-        transition: all 0.2s ease;
-        z-index: ${isActive ? 1000 : 1};
-      `;
-      markerEl.textContent = String(marker.index);
+
+      if (isHotel) {
+        // Hotel marker - building icon
+        markerEl.style.cssText = `
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: ${isActive ? '40px' : '32px'};
+          height: ${isActive ? '40px' : '32px'};
+          border-radius: 8px;
+          background: ${isActive ? colors.bg : 'white'};
+          border: 2px solid ${colors.bg};
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          z-index: ${isActive ? 1000 : 1};
+        `;
+        markerEl.innerHTML = `
+          <svg width="${isActive ? '20' : '16'}" height="${isActive ? '20' : '16'}" viewBox="0 0 24 24" fill="none" stroke="${isActive ? colors.text : colors.bg}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/>
+            <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/>
+            <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/>
+            <path d="M10 6h4"/>
+            <path d="M10 10h4"/>
+            <path d="M10 14h4"/>
+            <path d="M10 18h4"/>
+          </svg>
+        `;
+      } else if (isFlight) {
+        // Flight marker - plane icon
+        markerEl.style.cssText = `
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: ${isActive ? '40px' : '32px'};
+          height: ${isActive ? '40px' : '32px'};
+          border-radius: 8px;
+          background: ${isActive ? colors.bg : 'white'};
+          border: 2px solid ${colors.bg};
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          z-index: ${isActive ? 1000 : 1};
+        `;
+        markerEl.innerHTML = `
+          <svg width="${isActive ? '20' : '16'}" height="${isActive ? '20' : '16'}" viewBox="0 0 24 24" fill="none" stroke="${isActive ? colors.text : colors.bg}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/>
+          </svg>
+        `;
+      } else {
+        // Regular numbered marker
+        markerEl.style.cssText = `
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: ${isActive ? '40px' : '32px'};
+          height: ${isActive ? '40px' : '32px'};
+          border-radius: 50%;
+          background: ${isActive ? colors.bg : 'white'};
+          color: ${isActive ? colors.text : colors.bg};
+          border: 2px solid ${isActive ? colors.border : colors.bg};
+          font-weight: 600;
+          font-size: ${isActive ? '16px' : '14px'};
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          z-index: ${isActive ? 1000 : 1};
+        `;
+        markerEl.textContent = String(marker.index);
+      }
 
       markerEl.addEventListener('mouseenter', () => {
         markerEl.style.transform = 'scale(1.15)';
@@ -482,7 +546,7 @@ export default function TripInteractiveMap({
         position: { lat: marker.lat, lng: marker.lng },
         content: markerEl,
         title: marker.label,
-        zIndex: isActive ? 1000 : marker.index,
+        zIndex: isActive ? 1000 : marker.index || 1,
       });
 
       advancedMarker.addListener('click', () => {

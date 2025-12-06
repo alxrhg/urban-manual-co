@@ -100,13 +100,14 @@ export default function ItineraryViewRedesign({
   });
 
   // Calculate map index for items with coordinates (matching map markers)
-  // Map markers are numbered for non-flight items that have lat/lng
+  // Only regular places get numbered markers - hotels and flights get special icons
   let mapMarkerIndex = 0;
   const itemMapIndices = new Map<string, number>();
 
   sortedItems.forEach((item) => {
-    // Skip flights - they don't appear as markers on the map
-    if (item.parsedNotes?.type === 'flight') return;
+    const itemType = item.parsedNotes?.type;
+    // Skip flights and hotels - they show icons instead of numbers
+    if (itemType === 'flight' || itemType === 'hotel') return;
 
     // Check if item has coordinates
     const lat = item.parsedNotes?.latitude ?? item.destination?.latitude;
