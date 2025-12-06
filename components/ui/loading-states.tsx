@@ -2,6 +2,7 @@
  * Loading States Components
  *
  * Consistent loading indicators and skeletons.
+ * Supports both legacy LoadingState enum and TanStack Query status.
  */
 
 'use client';
@@ -9,7 +10,40 @@
 import * as React from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { LoadingState } from '@/hooks/useDataFetching';
+import type { QueryStatus } from '@/hooks/useQueryFetching';
+
+/**
+ * @deprecated Use QueryStatus from useQueryFetching instead
+ * Kept for backward compatibility with existing code
+ */
+export enum LoadingState {
+  Idle = 'idle',
+  Loading = 'loading',
+  Success = 'success',
+  Error = 'error',
+  Refreshing = 'refreshing',
+  Revalidating = 'revalidating',
+}
+
+/**
+ * Convert QueryStatus to LoadingState for backward compatibility
+ */
+export function queryStatusToLoadingState(status: QueryStatus): LoadingState {
+  switch (status) {
+    case 'idle':
+      return LoadingState.Idle;
+    case 'loading':
+      return LoadingState.Loading;
+    case 'success':
+      return LoadingState.Success;
+    case 'error':
+      return LoadingState.Error;
+    case 'refreshing':
+      return LoadingState.Refreshing;
+    default:
+      return LoadingState.Idle;
+  }
+}
 
 /**
  * Spinner component for inline loading
@@ -191,11 +225,12 @@ export function LoadingOverlay({
 }
 
 /**
- * Loading state wrapper
+ * Loading state wrapper (legacy)
+ * @deprecated Use QueryStateWrapper for new code
  */
 interface LoadingStateWrapperProps {
-  /** Current loading state */
-  state: LoadingState;
+  /** Current loading state (supports both LoadingState enum and QueryStatus string) */
+  state: LoadingState | QueryStatus;
   /** Content to show when loaded */
   children: React.ReactNode;
   /** Skeleton to show while loading */
@@ -225,8 +260,11 @@ export function LoadingStateWrapper({
   isEmpty = false,
   className,
 }: LoadingStateWrapperProps) {
+  // Normalize state to string for comparison (works with both enum and string)
+  const stateStr = String(state);
+
   // Show skeleton for initial loading
-  if (state === LoadingState.Idle || state === LoadingState.Loading) {
+  if (stateStr === 'idle' || stateStr === 'loading') {
     return (
       <div className={className} role="status" aria-busy="true">
         {skeleton || (
@@ -239,7 +277,7 @@ export function LoadingStateWrapper({
   }
 
   // Show error state
-  if (state === LoadingState.Error) {
+  if (stateStr === 'error') {
     const errorContent =
       typeof error === 'function' ? error(errorObject ?? null) : error;
     return (
@@ -271,13 +309,128 @@ export function LoadingStateWrapper({
   // Show content with optional refreshing indicator
   return (
     <div className={cn('relative', className)}>
-      {(state === LoadingState.Refreshing ||
-        state === LoadingState.Revalidating) && (
+      {(stateStr === 'refreshing' || stateStr === 'revalidating') && (
         <div className="absolute top-2 right-2 z-10">
           <Spinner size="sm" />
         </div>
       )}
       {children}
+    </div>
+  );
+}
+
+/**
+ * Query state wrapper - designed for TanStack Query
+ * Provides a cleaner API that works directly with query results
+ */
+interface QueryStateWrapperProps<T> {
+  /** Whether query is loading (no data yet) */
+  isLoading: boolean;
+  /** Whether query is fetching (may have stale data) */
+  isFetching?: boolean;
+  /** Whether query has an error */
+  isError: boolean;
+  /** Error object if any */
+  error: Error | null;
+  /** Data from query */
+  data: T | undefined;
+  /** Content to render with data */
+  children: React.ReactNode | ((data: T) => React.ReactNode);
+  /** Skeleton to show while loading */
+  skeleton?: React.ReactNode;
+  /** Error component or render function */
+  errorRender?: React.ReactNode | ((error: Error | null) => React.ReactNode);
+  /** Retry callback for error state */
+  onRetry?: () => void;
+  /** Empty state when data is empty */
+  emptyRender?: React.ReactNode;
+  /** Function to check if data is empty */
+  isEmpty?: (data: T | undefined) => boolean;
+  /** Show refreshing indicator */
+  showRefreshing?: boolean;
+  /** Custom class name */
+  className?: string;
+}
+
+export function QueryStateWrapper<T>({
+  isLoading,
+  isFetching = false,
+  isError,
+  error,
+  data,
+  children,
+  skeleton,
+  errorRender,
+  onRetry,
+  emptyRender,
+  isEmpty,
+  showRefreshing = true,
+  className,
+}: QueryStateWrapperProps<T>) {
+  // Show skeleton for initial loading
+  if (isLoading) {
+    return (
+      <div className={className} role="status" aria-busy="true">
+        {skeleton || (
+          <div className="flex items-center justify-center py-12">
+            <Spinner size="lg" />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Show error state
+  if (isError) {
+    const errorContent =
+      typeof errorRender === 'function' ? errorRender(error) : errorRender;
+    return (
+      <div className={cn('text-center py-12', className)}>
+        {errorContent || (
+          <div className="space-y-4">
+            <p className="text-red-600 dark:text-red-400">
+              {error?.message || 'An error occurred'}
+            </p>
+            {onRetry && (
+              <button
+                onClick={onRetry}
+                className="px-4 py-2 text-sm font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full hover:opacity-90 transition-opacity"
+              >
+                Try again
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Show empty state
+  const dataIsEmpty = isEmpty ? isEmpty(data) : data === undefined;
+  if (dataIsEmpty && emptyRender) {
+    return <div className={className}>{emptyRender}</div>;
+  }
+
+  // Render content - handle function children
+  const renderContent = (): React.ReactNode => {
+    if (typeof children === 'function') {
+      if (data !== undefined) {
+        return children(data);
+      }
+      return null;
+    }
+    return children;
+  };
+
+  // Show content with optional refreshing indicator
+  return (
+    <div className={cn('relative', className)}>
+      {showRefreshing && isFetching && data !== undefined && (
+        <div className="absolute top-2 right-2 z-10">
+          <Spinner size="sm" />
+        </div>
+      )}
+      {renderContent()}
     </div>
   );
 }
