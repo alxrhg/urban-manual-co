@@ -68,9 +68,15 @@ function setupMapkitErrorHandler() {
   if (typeof window === 'undefined' || !window.mapkit) return;
 
   // MapKit fires 'error' event when authorization fails
-  const handleMapkitError = (event: Event & { status?: string; message?: string }) => {
-    console.error('[MapKit Client] MapKit error event:', event);
-    mapkitError = event.message || event.status || 'Unknown MapKit error';
+  const handleMapkitError = (event: Event) => {
+    // Extract additional properties that MapKit may add
+    const customEvent = event as Event & { status?: string; message?: string };
+    console.error('[MapKit Client] MapKit error event:', {
+      type: event.type,
+      status: customEvent.status,
+      message: customEvent.message,
+    });
+    mapkitError = customEvent.message || customEvent.status || 'Unknown MapKit error';
     authorizationFailed = true;
   };
 
