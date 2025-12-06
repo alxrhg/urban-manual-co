@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getFeatureFlags, getABTestVariant, getABTestAssignment } from '@/lib/discovery-engine/feature-flags';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/errors';
 
 /**

@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase-server";
+import { createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { withErrorHandling } from '@/lib/errors';
 

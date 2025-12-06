@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/errors';
 
 /**

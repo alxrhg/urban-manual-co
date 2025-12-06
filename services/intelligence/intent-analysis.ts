@@ -5,7 +5,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateJSON } from '@/lib/llm';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 export interface EnhancedIntent {
   primaryIntent: 'discover' | 'plan' | 'compare' | 'recommend' | 'learn' | 'book';

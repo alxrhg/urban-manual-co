@@ -3,7 +3,7 @@
  * Uses time-series models to predict demand, prices, and availability
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 interface ForecastData {
   date: string;

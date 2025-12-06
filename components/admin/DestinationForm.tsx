@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Loader2, X } from 'lucide-react';
-import { stripHtmlTags } from '@/lib/stripHtmlTags';
+import { htmlToPlainText } from '@/lib/sanitize';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
 import type { Destination } from '@/types/destination';
 
@@ -35,8 +35,8 @@ export function DestinationForm({
     name: destination?.name || '',
     city: destination?.city || '',
     category: destination?.category || '',
-    description: stripHtmlTags(destination?.description || ''),
-    content: stripHtmlTags(destination?.content || ''),
+    description: htmlToPlainText(destination?.description || ''),
+    content: htmlToPlainText(destination?.content || ''),
     image: destination?.image || '',
     michelin_stars: destination?.michelin_stars || null,
     crown: destination?.crown || false,
@@ -60,8 +60,8 @@ export function DestinationForm({
         name: destination.name || '',
         city: destination.city || '',
         category: destination.category || '',
-        description: stripHtmlTags(destination.description || ''),
-        content: stripHtmlTags(destination.content || ''),
+        description: htmlToPlainText(destination.description || ''),
+        content: htmlToPlainText(destination.content || ''),
         image: destination.image || '',
         michelin_stars: destination.michelin_stars || null,
         crown: destination.crown || false,
@@ -284,8 +284,8 @@ export function DestinationForm({
         name: data.name || prev.name,
         city: data.city || prev.city,
         category: data.category || prev.category,
-        description: stripHtmlTags(data.description || prev.description),
-        content: stripHtmlTags(data.content || prev.content),
+        description: htmlToPlainText(data.description || prev.description),
+        content: htmlToPlainText(data.content || prev.content),
         image: data.image || prev.image,
       }));
 
@@ -377,8 +377,8 @@ export function DestinationForm({
                         name: data.name || prev.name,
                         city: data.city || prev.city,
                         category: data.category || prev.category,
-                        description: stripHtmlTags(data.description || ''),
-                        content: stripHtmlTags(data.content || ''),
+                        description: htmlToPlainText(data.description || ''),
+                        content: htmlToPlainText(data.content || ''),
                         image: data.image || prev.image,
                       }));
                       if (data.image) {

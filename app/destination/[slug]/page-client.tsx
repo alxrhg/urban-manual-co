@@ -14,7 +14,7 @@ import {
 
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
-import { stripHtmlTags } from '@/lib/stripHtmlTags';
+import { htmlToPlainText } from '@/lib/sanitize';
 import { CARD_MEDIA, CARD_TITLE, CARD_WRAPPER } from '@/components/CardStyles';
 import { trackEvent } from '@/lib/analytics/track';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
@@ -613,7 +613,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
           <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
             <h2 className="text-sm font-medium mb-4">About</h2>
             <div className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-              {stripHtmlTags(destination.content)}
+              {htmlToPlainText(destination.content)}
             </div>
             {destination.micro_description && destination.micro_description !== destination.content && (
               <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">

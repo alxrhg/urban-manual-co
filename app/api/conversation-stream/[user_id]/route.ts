@@ -4,7 +4,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { openai, OPENAI_MODEL } from '@/lib/openai';
 import {
   genAI,

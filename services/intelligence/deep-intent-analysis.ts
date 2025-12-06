@@ -5,7 +5,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateJSON } from '@/lib/llm';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { intentAnalysisService, EnhancedIntent } from '@/services/intelligence/intent-analysis';
 
 export interface MultiIntentResult {

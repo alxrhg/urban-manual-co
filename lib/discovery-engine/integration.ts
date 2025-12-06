@@ -8,7 +8,7 @@ import { getFeatureFlags, getABTestVariant } from '@/lib/discovery-engine/featur
 import { withCache, getDiscoveryEngineCache } from '@/lib/discovery-engine/cache';
 import { semanticBlendSearch } from '@/lib/search/semanticSearch';
 import { advancedRecommendationEngine } from '@/services/intelligence/recommendations-advanced';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 export interface SearchOptions {
   query: string;

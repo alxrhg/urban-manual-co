@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { advancedRecommendationEngine } from '@/services/intelligence/recommendations-advanced';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
 
 export const GET = withErrorHandling(async (request: NextRequest) => {

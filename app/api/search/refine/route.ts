@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { generateSearchResponseContext } from '@/lib/search/generateSearchContext';
 import { generateSuggestions } from '@/lib/search/generateSuggestions';
 import { withErrorHandling } from '@/lib/errors';

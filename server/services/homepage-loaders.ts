@@ -1,6 +1,6 @@
 import type { Destination } from '@/types/destination';
 import type { UserProfile } from '@/types/personalization';
-import { createServiceRoleClient, createServerClient } from '@/lib/supabase-server';
+import { createServiceRoleClient, createServerClient } from '@/lib/supabase/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { unstable_cache } from 'next/cache';
 

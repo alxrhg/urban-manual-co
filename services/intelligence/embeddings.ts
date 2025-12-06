@@ -1,5 +1,5 @@
 import { embedText } from '@/lib/llm';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 export async function updateDestinationEmbeddingById(destinationId: string, text: string): Promise<boolean> {
   const supabase = createServiceRoleClient();

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deepIntentAnalysisService } from '@/services/intelligence/deep-intent-analysis';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
 
 /**

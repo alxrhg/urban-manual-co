@@ -4,7 +4,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import {
   genAI,
   GEMINI_MODEL_PRO,

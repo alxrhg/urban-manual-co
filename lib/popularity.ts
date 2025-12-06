@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 /**
  * Calculate popularity score for destinations

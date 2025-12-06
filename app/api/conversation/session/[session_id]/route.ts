@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getConversationMessages } from '../../utils/contextHandler';
 import { withErrorHandling } from '@/lib/errors';
 

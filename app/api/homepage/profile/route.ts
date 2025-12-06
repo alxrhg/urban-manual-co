@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { UserProfile } from '@/types/personalization';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { getUserProfileById } from '@/server/services/homepage-loaders';
 
 type ProfileHandlerDeps = {

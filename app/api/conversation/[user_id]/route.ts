@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { openai, OPENAI_MODEL } from '@/lib/openai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { URBAN_MANUAL_EDITOR_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';

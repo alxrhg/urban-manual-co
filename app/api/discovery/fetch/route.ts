@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from "@/lib/supabase-server";
+import { createServerClient } from "@/lib/supabase/server";
 import { withErrorHandling } from '@/lib/errors';
 
 const GOOGLE_KEY = process.env.GOOGLE_PLACES_KEY || process.env.NEXT_PUBLIC_GOOGLE_API_KEY;

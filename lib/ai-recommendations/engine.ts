@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { extractUserProfile } from './profile-extractor';
 import { selectCandidates } from './candidate-selector';
 import { buildScoringPrompt } from './prompt-builder';
