@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
 import { ChatDrawer } from "@/components/ChatDrawer";
 import { LoginDrawer } from "@/components/LoginDrawer";
+import { LoginModal } from "@/components/LoginModal";
 import { CommandPalette } from "@/components/CommandPalette";
 import {
   Tooltip,
@@ -247,6 +248,14 @@ export function Header() {
       {/* Login Drawer - Only render when open */}
       {isDrawerOpen('login') && (
         <LoginDrawer
+          isOpen={true}
+          onClose={closeDrawer}
+        />
+      )}
+
+      {/* Login Modal - Centered on-page modal for auth prompts */}
+      {isDrawerOpen('login-modal') && (
+        <LoginModal
           isOpen={true}
           onClose={closeDrawer}
         />
