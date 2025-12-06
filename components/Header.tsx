@@ -147,14 +147,39 @@ export function Header() {
                     className="w-full h-full object-cover rounded-full"
                   />
                   {isChristmasMode && (
-                    <span className="absolute -top-2 -right-1 text-sm" aria-hidden="true">🎅</span>
+                    <svg
+                      className="absolute -top-3 -left-1 w-5 h-5 -rotate-12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 2L4 14H20L12 2Z" fill="#C41E3A" />
+                      <path d="M12 2L4 14H20L12 2Z" fill="url(#hat-gradient)" />
+                      <ellipse cx="12" cy="14" rx="9" ry="2" fill="#FFFFFF" />
+                      <circle cx="12" cy="2" r="2" fill="#FFFFFF" />
+                      <defs>
+                        <linearGradient id="hat-gradient" x1="12" y1="2" x2="12" y2="14" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#E63946" />
+                          <stop offset="1" stopColor="#9A1C2B" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
                   )}
                 </span>
               ) : (
                 <span className="relative">
                   <User className="w-4 h-4" />
                   {isChristmasMode && (
-                    <span className="absolute -top-2 -right-2 text-xs" aria-hidden="true">🎅</span>
+                    <svg
+                      className="absolute -top-3 -left-2 w-4 h-4 -rotate-12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 2L4 14H20L12 2Z" fill="#C41E3A" />
+                      <ellipse cx="12" cy="14" rx="9" ry="2" fill="#FFFFFF" />
+                      <circle cx="12" cy="2" r="2" fill="#FFFFFF" />
+                    </svg>
                   )}
                 </span>
               )}
