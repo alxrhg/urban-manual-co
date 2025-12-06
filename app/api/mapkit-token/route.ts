@@ -25,9 +25,13 @@ export async function GET(request: Request) {
   // Log which vars are present (not the values)
   console.log('[MapKit Token] Checking credentials:', {
     hasTeamId: !!teamId,
+    teamIdLength: teamId?.length || 0,
     hasKeyId: !!keyId,
+    keyIdLength: keyId?.length || 0,
     hasPrivateKey: !!privateKeyRaw,
     privateKeyLength: privateKeyRaw?.length || 0,
+    privateKeyHasHeader: privateKeyRaw?.includes('BEGIN') || false,
+    privateKeyHasNewlines: privateKeyRaw?.includes('\n') || privateKeyRaw?.includes('\\n') || false,
   });
 
   if (!teamId || !keyId || !privateKeyRaw) {
@@ -84,6 +88,21 @@ export async function GET(request: Request) {
       algorithm: 'ES256',
       keyid: keyId,
     });
+
+    // Decode and log token structure for debugging (without signature)
+    const [headerB64, payloadB64] = token.split('.');
+    try {
+      const header = JSON.parse(Buffer.from(headerB64, 'base64url').toString());
+      const decodedPayload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
+      console.log('[MapKit Token] Token header:', header);
+      console.log('[MapKit Token] Token payload:', {
+        ...decodedPayload,
+        iat: new Date(decodedPayload.iat * 1000).toISOString(),
+        exp: new Date(decodedPayload.exp * 1000).toISOString(),
+      });
+    } catch {
+      console.log('[MapKit Token] Could not decode token for logging');
+    }
 
     console.log('[MapKit Token] Token generated successfully, length:', token.length);
 
