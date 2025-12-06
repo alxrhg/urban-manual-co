@@ -70,7 +70,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   // If tripId provided, save to trip
   if (tripId) {
     try {
-      const supabase = createServerClient();
+      const supabase = await createServerClient();
 
       const { error } = await supabase
         .from('trips')

@@ -45,7 +45,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     tempUnit = 'F',
   } = body;
 
-  const supabase = createServerClient();
+  const supabase = await createServerClient();
 
   // Get user from session
   const {
