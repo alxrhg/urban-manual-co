@@ -1271,9 +1271,10 @@ html {
 
 /* ============================================
    CHRISTMAS THEME STYLES
+   Simple, festive theme with visible snow
    ============================================ */
 
-/* Christmas mode font - Gaegu */
+/* Christmas mode font - Gaegu handwritten style */
 .christmas-mode {
   font-family: 'Gaegu', cursive !important;
 }
@@ -1291,18 +1292,14 @@ html {
 
 /* Christmas color scheme */
 .christmas-mode {
-  --christmas-red: #C41E3A;
-  --christmas-green: #228B22;
+  --christmas-red: #B22234;
+  --christmas-green: #165B33;
   --christmas-gold: #FFD700;
-  --christmas-snow: #FFFAFA;
+  --christmas-snow: #E8F4F8;
   --christmas-pine: #0B3D0B;
 }
 
-/* Christmas background overlay */
-html.christmas-mode {
-  position: relative;
-}
-
+/* Snowfall effect - Blue/gray on light mode for visibility */
 html.christmas-mode::before {
   content: '';
   position: fixed;
@@ -1313,26 +1310,51 @@ html.christmas-mode::before {
   pointer-events: none;
   z-index: 9999;
   background-image:
-    radial-gradient(2px 2px at 20% 10%, white 50%, transparent 50%),
-    radial-gradient(2px 2px at 40% 30%, white 50%, transparent 50%),
-    radial-gradient(1.5px 1.5px at 60% 20%, white 50%, transparent 50%),
-    radial-gradient(2px 2px at 80% 40%, white 50%, transparent 50%),
-    radial-gradient(1.5px 1.5px at 10% 50%, white 50%, transparent 50%),
-    radial-gradient(2px 2px at 30% 60%, white 50%, transparent 50%),
-    radial-gradient(1.5px 1.5px at 50% 70%, white 50%, transparent 50%),
-    radial-gradient(2px 2px at 70% 80%, white 50%, transparent 50%),
-    radial-gradient(1.5px 1.5px at 90% 50%, white 50%, transparent 50%),
-    radial-gradient(2px 2px at 15% 80%, white 50%, transparent 50%),
-    radial-gradient(1.5px 1.5px at 35% 90%, white 50%, transparent 50%),
-    radial-gradient(2px 2px at 55% 85%, white 50%, transparent 50%),
-    radial-gradient(1.5px 1.5px at 75% 95%, white 50%, transparent 50%),
-    radial-gradient(2px 2px at 95% 70%, white 50%, transparent 50%),
-    radial-gradient(1px 1px at 25% 25%, white 50%, transparent 50%),
-    radial-gradient(1px 1px at 45% 45%, white 50%, transparent 50%),
-    radial-gradient(1px 1px at 65% 35%, white 50%, transparent 50%),
-    radial-gradient(1px 1px at 85% 55%, white 50%, transparent 50%);
+    radial-gradient(3px 3px at 10% 10%, #6B8BA4 50%, transparent 50%),
+    radial-gradient(2px 2px at 20% 25%, #7A9BB5 50%, transparent 50%),
+    radial-gradient(3px 3px at 30% 15%, #5C7A8F 50%, transparent 50%),
+    radial-gradient(2px 2px at 40% 35%, #8AADC4 50%, transparent 50%),
+    radial-gradient(3px 3px at 50% 20%, #6B8BA4 50%, transparent 50%),
+    radial-gradient(2px 2px at 60% 40%, #7A9BB5 50%, transparent 50%),
+    radial-gradient(3px 3px at 70% 10%, #5C7A8F 50%, transparent 50%),
+    radial-gradient(2px 2px at 80% 30%, #8AADC4 50%, transparent 50%),
+    radial-gradient(3px 3px at 90% 25%, #6B8BA4 50%, transparent 50%),
+    radial-gradient(2px 2px at 15% 55%, #7A9BB5 50%, transparent 50%),
+    radial-gradient(3px 3px at 25% 65%, #5C7A8F 50%, transparent 50%),
+    radial-gradient(2px 2px at 35% 50%, #8AADC4 50%, transparent 50%),
+    radial-gradient(3px 3px at 45% 70%, #6B8BA4 50%, transparent 50%),
+    radial-gradient(2px 2px at 55% 60%, #7A9BB5 50%, transparent 50%),
+    radial-gradient(3px 3px at 65% 75%, #5C7A8F 50%, transparent 50%),
+    radial-gradient(2px 2px at 75% 55%, #8AADC4 50%, transparent 50%),
+    radial-gradient(3px 3px at 85% 70%, #6B8BA4 50%, transparent 50%),
+    radial-gradient(2px 2px at 95% 60%, #7A9BB5 50%, transparent 50%);
   background-size: 100% 100%;
-  animation: snowfall 15s linear infinite;
+  animation: snowfall 20s linear infinite;
+  opacity: 0.6;
+}
+
+/* White snow on dark mode */
+html.christmas-mode.dark::before,
+.dark html.christmas-mode::before {
+  background-image:
+    radial-gradient(3px 3px at 10% 10%, rgba(255,255,255,0.9) 50%, transparent 50%),
+    radial-gradient(2px 2px at 20% 25%, rgba(255,255,255,0.8) 50%, transparent 50%),
+    radial-gradient(3px 3px at 30% 15%, rgba(255,255,255,0.85) 50%, transparent 50%),
+    radial-gradient(2px 2px at 40% 35%, rgba(255,255,255,0.75) 50%, transparent 50%),
+    radial-gradient(3px 3px at 50% 20%, rgba(255,255,255,0.9) 50%, transparent 50%),
+    radial-gradient(2px 2px at 60% 40%, rgba(255,255,255,0.8) 50%, transparent 50%),
+    radial-gradient(3px 3px at 70% 10%, rgba(255,255,255,0.85) 50%, transparent 50%),
+    radial-gradient(2px 2px at 80% 30%, rgba(255,255,255,0.75) 50%, transparent 50%),
+    radial-gradient(3px 3px at 90% 25%, rgba(255,255,255,0.9) 50%, transparent 50%),
+    radial-gradient(2px 2px at 15% 55%, rgba(255,255,255,0.8) 50%, transparent 50%),
+    radial-gradient(3px 3px at 25% 65%, rgba(255,255,255,0.85) 50%, transparent 50%),
+    radial-gradient(2px 2px at 35% 50%, rgba(255,255,255,0.75) 50%, transparent 50%),
+    radial-gradient(3px 3px at 45% 70%, rgba(255,255,255,0.9) 50%, transparent 50%),
+    radial-gradient(2px 2px at 55% 60%, rgba(255,255,255,0.8) 50%, transparent 50%),
+    radial-gradient(3px 3px at 65% 75%, rgba(255,255,255,0.85) 50%, transparent 50%),
+    radial-gradient(2px 2px at 75% 55%, rgba(255,255,255,0.75) 50%, transparent 50%),
+    radial-gradient(3px 3px at 85% 70%, rgba(255,255,255,0.9) 50%, transparent 50%),
+    radial-gradient(2px 2px at 95% 60%, rgba(255,255,255,0.8) 50%, transparent 50%);
   opacity: 0.7;
 }
 
@@ -1342,19 +1364,11 @@ html.christmas-mode::before {
   }
   100% {
     background-position:
-      50px 500px, -30px 400px, 40px 450px, -50px 550px,
-      60px 520px, -40px 480px, 30px 530px, -60px 470px,
-      70px 510px, -20px 490px, 50px 540px, -70px 460px,
-      20px 580px, -45px 420px, 55px 560px, -35px 440px,
-      45px 570px, -55px 430px;
-  }
-}
-
-/* Respect reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-  html.christmas-mode::before {
-    animation: none;
-    opacity: 0.4;
+      50px 600px, -30px 500px, 40px 550px, -50px 650px,
+      60px 620px, -40px 580px, 30px 630px, -60px 570px,
+      70px 610px, -20px 590px, 50px 640px, -70px 560px,
+      20px 680px, -45px 520px, 55px 660px, -35px 540px,
+      45px 670px, -55px 530px;
   }
 }
 
@@ -1380,18 +1394,18 @@ html.christmas-mode::before {
 }
 
 .christmas-tree-active {
-  filter: drop-shadow(0 0 4px rgba(34, 139, 34, 0.6));
+  filter: drop-shadow(0 0 6px rgba(22, 91, 51, 0.8));
 }
 
-/* Twinkle animation for ornaments and star */
+/* Twinkle animation for tree ornaments */
 @keyframes twinkle {
   0%, 100% {
     opacity: 1;
     transform: scale(1);
   }
   50% {
-    opacity: 0.6;
-    transform: scale(0.9);
+    opacity: 0.5;
+    transform: scale(0.85);
   }
 }
 
@@ -1415,1279 +1429,70 @@ html.christmas-mode::before {
   animation: pulse-slow 2s ease-in-out infinite;
 }
 
-/* Christmas mode accent colors */
-.christmas-mode .text-primary,
-.christmas-mode a:not(.christmas-tree-toggle) {
-  color: var(--christmas-red);
+/* Christmas red buttons - warm festive red, not aggressive */
+.christmas-mode .bg-black,
+.christmas-mode [class*="bg-black"] {
+  background-color: var(--christmas-red) !important;
+  border-color: var(--christmas-red) !important;
 }
 
-.christmas-mode button:not(.christmas-tree-toggle):hover {
-  border-color: var(--christmas-green);
+.christmas-mode .bg-black:hover,
+.christmas-mode [class*="bg-black"]:hover {
+  background-color: #9A1C2B !important;
+  border-color: #9A1C2B !important;
 }
 
-/* Christmas decorative border for cards */
-.christmas-mode .card,
-.christmas-mode [class*="border"] {
-  border-color: rgba(196, 30, 58, 0.2);
+/* Green accents for secondary elements */
+.christmas-mode .border-gray-200,
+.christmas-mode .border-gray-300 {
+  border-color: rgba(22, 91, 51, 0.3) !important;
 }
 
-/* Christmas header accent */
+/* Festive focus states */
+.christmas-mode input:focus,
+.christmas-mode textarea:focus,
+.christmas-mode select:focus {
+  border-color: var(--christmas-green) !important;
+  box-shadow: 0 0 0 2px rgba(22, 91, 51, 0.2) !important;
+}
+
+/* Christmas header/footer accents */
 .christmas-mode header {
-  border-bottom-color: rgba(196, 30, 58, 0.3);
+  border-bottom: 2px solid rgba(178, 34, 52, 0.2);
 }
 
-/* Christmas footer accent */
 .christmas-mode footer {
-  border-top-color: rgba(34, 139, 34, 0.3);
+  border-top: 2px solid rgba(22, 91, 51, 0.2);
 }
 
-/* Gold accents for buttons in Christmas mode */
-.christmas-mode .btn-primary,
-.christmas-mode [class*="bg-primary"] {
-  background-color: var(--christmas-green) !important;
-}
-
-.christmas-mode .btn-primary:hover,
-.christmas-mode [class*="bg-primary"]:hover {
-  background-color: var(--christmas-pine) !important;
+/* Festive scrollbar */
+.christmas-mode::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--christmas-red) 0%, var(--christmas-green) 100%);
+  border-radius: 4px;
 }
 
 /* Festive selection color */
 .christmas-mode ::selection {
-  background-color: rgba(196, 30, 58, 0.3);
+  background-color: rgba(178, 34, 52, 0.25);
   color: inherit;
 }
 
-/* Christmas mode scrollbar */
-.christmas-mode::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, var(--christmas-red) 0%, var(--christmas-green) 100%);
-}
-
-/* Candy cane stripe effect for special elements */
-.christmas-stripe {
-  background: repeating-linear-gradient(
-    45deg,
-    var(--christmas-red),
-    var(--christmas-red) 10px,
-    white 10px,
-    white 20px
-  );
-}
-
-/* Holly leaf decoration pseudo element */
-.christmas-holly::before {
-  content: '🎄';
-  margin-right: 8px;
-}
-
-.christmas-holly::after {
-  content: '🎄';
-  margin-left: 8px;
-}
-
-/* ============================================
-   CHRISTMAS LIGHTS
-   ============================================ */
-.christmas-lights {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 20px;
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  z-index: 10000;
-  pointer-events: none;
-  padding: 0 20px;
-}
-
-.christmas-light {
-  width: 12px;
-  height: 16px;
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-  position: relative;
-  animation: lightGlow 1.5s ease-in-out infinite;
-  box-shadow: 0 0 10px currentColor, 0 0 20px currentColor;
-}
-
-.christmas-light::before {
-  content: '';
-  position: absolute;
-  top: -4px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 6px;
-  background: #333;
-  border-radius: 2px 2px 0 0;
-}
-
-.christmas-light:nth-child(5n+1) { background: #ff0000; color: #ff0000; }
-.christmas-light:nth-child(5n+2) { background: #00ff00; color: #00ff00; }
-.christmas-light:nth-child(5n+3) { background: #ffff00; color: #ffff00; }
-.christmas-light:nth-child(5n+4) { background: #0080ff; color: #0080ff; }
-.christmas-light:nth-child(5n+5) { background: #ff00ff; color: #ff00ff; }
-
-@keyframes lightGlow {
-  0%, 100% {
-    opacity: 1;
-    filter: brightness(1.2);
-  }
-  50% {
-    opacity: 0.6;
-    filter: brightness(0.8);
-  }
-}
-
-/* Wire connecting lights */
-.christmas-lights::before {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: #2a2a2a;
-  z-index: -1;
-}
-
-/* ============================================
-   CHRISTMAS COUNTDOWN
-   ============================================ */
-.christmas-countdown {
-  position: fixed;
-  bottom: 80px;
-  left: 20px;
-  background: linear-gradient(135deg, var(--christmas-red) 0%, var(--christmas-pine) 100%);
-  color: white;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 600;
-  z-index: 9998;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  animation: slideInFromLeft 0.5s ease-out;
-}
-
-.christmas-countdown-celebration {
-  background: linear-gradient(135deg, var(--christmas-gold) 0%, var(--christmas-red) 100%);
-  animation: celebrate 1s ease-in-out infinite;
-}
-
-@keyframes celebrate {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
-.countdown-label {
-  font-size: 11px;
-  opacity: 0.9;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.countdown-time {
-  font-family: 'JetBrains Mono', monospace !important;
-  font-size: 16px;
-}
-
-/* ============================================
-   FLYING SANTA
-   ============================================ */
-.flying-santa {
-  position: fixed;
-  top: 60px;
-  left: -200px;
-  z-index: 9997;
-  animation: flySanta 8s linear forwards;
-  pointer-events: none;
-}
-
-.santa-sleigh {
-  font-size: 32px;
-  display: inline-block;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-}
-
-@keyframes flySanta {
-  0% {
-    left: -200px;
-    top: 60px;
-    transform: rotate(-5deg);
-  }
-  25% {
-    top: 100px;
-    transform: rotate(0deg);
-  }
-  50% {
-    top: 50px;
-    transform: rotate(-3deg);
-  }
-  75% {
-    top: 80px;
-    transform: rotate(2deg);
-  }
-  100% {
-    left: calc(100vw + 200px);
-    top: 40px;
-    transform: rotate(-5deg);
-  }
-}
-
-/* ============================================
-   CLICK SPARKLES
-   ============================================ */
-.click-sparkle {
-  position: fixed;
-  pointer-events: none;
-  z-index: 10001;
-  transform: translate(-50%, -50%);
-}
-
-.sparkle-emoji {
-  position: absolute;
-  font-size: 20px;
-  animation: sparkleOut 1s ease-out forwards;
-}
-
-.sparkle-2 {
-  animation-delay: 0.1s;
-  transform: rotate(45deg);
-}
-
-.sparkle-3 {
-  animation-delay: 0.2s;
-  transform: rotate(-45deg);
-}
-
-@keyframes sparkleOut {
-  0% {
-    opacity: 1;
-    transform: scale(0) translate(0, 0);
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1) translate(var(--tx, 20px), var(--ty, -30px));
-  }
-}
-
-.sparkle-emoji:nth-child(1) { --tx: 0px; --ty: -40px; }
-.sparkle-emoji:nth-child(2) { --tx: 30px; --ty: -20px; }
-.sparkle-emoji:nth-child(3) { --tx: -30px; --ty: -20px; }
-
-/* ============================================
-   GIFT BOX
-   ============================================ */
-.gift-box {
-  position: fixed;
-  z-index: 9998;
-  cursor: pointer;
-  transition: transform 0.3s ease;
-  background: none;
-  border: none;
-  padding: 0;
-}
-
-.gift-box:hover {
-  transform: scale(1.2) rotate(-5deg);
-}
-
-.gift-closed {
-  animation: giftBounce 2s ease-in-out infinite;
-}
-
-.gift-emoji {
-  font-size: 48px;
-  display: block;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
-}
-
-.gift-opened {
-  animation: giftOpen 0.5s ease-out forwards;
-}
-
-.gift-message {
-  background: linear-gradient(135deg, var(--christmas-gold) 0%, var(--christmas-red) 100%);
-  color: white;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  white-space: nowrap;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-@keyframes giftBounce {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  25% { transform: translateY(-8px) rotate(-3deg); }
-  75% { transform: translateY(-4px) rotate(3deg); }
-}
-
-@keyframes giftOpen {
-  0% { transform: scale(1); }
-  30% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-
-/* ============================================
-   SNOW PILE AT BOTTOM
-   ============================================ */
-.snow-pile {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 30px;
-  background: linear-gradient(to top,
-    rgba(255, 255, 255, 0.9) 0%,
-    rgba(255, 255, 255, 0.6) 40%,
-    rgba(255, 255, 255, 0.2) 70%,
-    transparent 100%
-  );
-  z-index: 9996;
-  pointer-events: none;
-}
-
-.dark .snow-pile {
-  background: linear-gradient(to top,
-    rgba(200, 220, 255, 0.3) 0%,
-    rgba(200, 220, 255, 0.15) 40%,
-    rgba(200, 220, 255, 0.05) 70%,
-    transparent 100%
-  );
-}
-
-/* ============================================
-   SUPER CHRISTMAS MODE (Konami Code)
-   ============================================ */
-.christmas-super-mode .christmas-lights .christmas-light {
-  animation: superGlow 0.5s ease-in-out infinite;
-}
-
-@keyframes superGlow {
-  0%, 100% {
-    opacity: 1;
-    filter: brightness(1.5);
-    transform: scale(1.1);
-  }
-  50% {
-    opacity: 0.8;
-    filter: brightness(1);
-    transform: scale(1);
-  }
-}
-
-.super-christmas-overlay {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9995;
-  background: radial-gradient(circle at center, transparent 0%, rgba(255, 0, 0, 0.03) 100%);
-}
-
-.christmas-super-mode .flying-santa .santa-sleigh {
-  font-size: 48px;
-  animation: superSanta 0.5s ease-in-out infinite;
-}
-
-@keyframes superSanta {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
-
-/* Extra snow in super mode */
-.christmas-super-mode html.christmas-mode::before {
-  opacity: 0.9;
-  animation-duration: 8s;
-}
-
-/* ============================================
-   DEEPER THEME CHANGES
-   ============================================ */
-
-/* Christmas mode background tint */
-.christmas-mode body {
-  background: linear-gradient(
-    180deg,
-    hsl(var(--background)) 0%,
-    hsla(120, 30%, 95%, 0.3) 50%,
-    hsla(0, 30%, 95%, 0.3) 100%
-  );
-}
-
-.christmas-mode.dark body {
-  background: linear-gradient(
-    180deg,
-    hsl(var(--background)) 0%,
-    hsla(120, 30%, 8%, 0.5) 50%,
-    hsla(0, 30%, 8%, 0.5) 100%
-  );
-}
-
-/* Festive cursor */
-.christmas-mode,
-.christmas-mode * {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ctext y='20' font-size='20'%3E❄️%3C/text%3E%3C/svg%3E") 12 12, auto !important;
-}
-
-.christmas-mode a,
-.christmas-mode button,
-.christmas-mode [role='button'],
-.christmas-mode input,
-.christmas-mode select,
-.christmas-mode textarea {
-  cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'%3E%3Ctext y='20' font-size='20'%3E🎄%3C/text%3E%3C/svg%3E") 12 12, pointer !important;
-}
-
-/* Christmas card effects */
-.christmas-mode .card,
-.christmas-mode [class*="rounded"] {
-  position: relative;
-}
-
-.christmas-mode .card::before,
-.christmas-mode [class*="bg-white"][class*="rounded"]::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(
-    45deg,
-    var(--christmas-red) 0%,
-    var(--christmas-green) 25%,
-    var(--christmas-gold) 50%,
-    var(--christmas-green) 75%,
-    var(--christmas-red) 100%
-  );
-  background-size: 400% 400%;
-  border-radius: inherit;
-  z-index: -1;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  animation: borderGlow 3s ease infinite;
-}
-
-.christmas-mode .card:hover::before,
-.christmas-mode [class*="bg-white"][class*="rounded"]:hover::before {
-  opacity: 0.6;
-}
-
-@keyframes borderGlow {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-/* Festive inputs */
-.christmas-mode input:focus,
-.christmas-mode textarea:focus,
-.christmas-mode select:focus {
-  border-color: var(--christmas-green) !important;
-  box-shadow: 0 0 0 3px rgba(34, 139, 34, 0.2) !important;
-}
-
-/* Christmas mode buttons */
-.christmas-mode button:not(.christmas-tree-toggle):not(.gift-box) {
-  position: relative;
-  overflow: hidden;
-}
-
-.christmas-mode button:not(.christmas-tree-toggle):not(.gift-box)::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
-    transparent 100%
-  );
-  transition: left 0.5s ease;
-}
-
-.christmas-mode button:not(.christmas-tree-toggle):not(.gift-box):hover::after {
-  left: 100%;
-}
-
-/* Festive links with candy cane underline */
-.christmas-mode a:not(.christmas-tree-toggle):hover {
-  text-decoration-color: var(--christmas-red);
-  text-decoration-style: wavy;
-}
-
-/* Header festive border */
-.christmas-mode header {
-  border-bottom: 3px solid transparent;
-  border-image: repeating-linear-gradient(
-    90deg,
-    var(--christmas-red) 0px,
-    var(--christmas-red) 20px,
-    white 20px,
-    white 40px,
-    var(--christmas-green) 40px,
-    var(--christmas-green) 60px,
-    white 60px,
-    white 80px
-  ) 1;
-}
-
-/* Footer festive top border */
-.christmas-mode footer {
-  border-top: 3px solid transparent;
-  border-image: repeating-linear-gradient(
-    90deg,
-    var(--christmas-green) 0px,
-    var(--christmas-green) 20px,
-    white 20px,
-    white 40px,
-    var(--christmas-red) 40px,
-    var(--christmas-red) 60px,
-    white 60px,
-    white 80px
-  ) 1;
-}
-
-/* Festive loading skeleton */
-.christmas-mode .animate-pulse {
-  background: linear-gradient(
-    90deg,
-    var(--christmas-red) 0%,
-    var(--christmas-green) 50%,
-    var(--christmas-red) 100%
-  );
-  background-size: 200% 100%;
-  animation: christmasPulse 2s ease-in-out infinite;
-}
-
-@keyframes christmasPulse {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* Image corner ribbons */
-.christmas-mode img {
-  position: relative;
-}
-
-/* Festive scrollbar */
-.christmas-mode::-webkit-scrollbar {
-  width: 12px;
-}
-
-.christmas-mode::-webkit-scrollbar-track {
-  background: linear-gradient(180deg,
-    var(--christmas-pine) 0%,
-    var(--christmas-green) 50%,
-    var(--christmas-pine) 100%
-  );
-}
-
-.christmas-mode::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg,
-    var(--christmas-red) 0%,
-    var(--christmas-gold) 50%,
-    var(--christmas-red) 100%
-  );
-  border-radius: 6px;
-  border: 2px solid var(--christmas-pine);
-}
-
-.christmas-mode::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg,
-    #ff1a1a 0%,
-    #ffea00 50%,
-    #ff1a1a 100%
-  );
-}
-
-/* Text shimmer effect for headings in Christmas mode */
-.christmas-mode h1,
-.christmas-mode h2,
-.christmas-mode h3 {
-  background: linear-gradient(
-    90deg,
-    currentColor 0%,
-    var(--christmas-red) 25%,
-    currentColor 50%,
-    var(--christmas-green) 75%,
-    currentColor 100%
-  );
-  background-size: 200% auto;
-  background-clip: text;
-  -webkit-background-clip: text;
-  animation: headingShimmer 5s linear infinite;
-}
-
-@keyframes headingShimmer {
-  0% { background-position: 0% center; }
-  100% { background-position: 200% center; }
-}
-
-/* Mobile responsiveness for Christmas elements */
-@media (max-width: 768px) {
-  .christmas-lights {
-    height: 16px;
-  }
-
-  .christmas-light {
-    width: 8px;
-    height: 12px;
-  }
-
-  .christmas-countdown {
-    bottom: 70px;
-    left: 10px;
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-
-  .countdown-time {
-    font-size: 14px;
-  }
-
-  .flying-santa .santa-sleigh {
-    font-size: 24px;
-  }
-
-  .gift-emoji {
-    font-size: 36px;
-  }
-
-  .snow-pile {
-    height: 20px;
-  }
-}
-
-/* Reduced motion preferences */
+/* Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
-  .christmas-lights .christmas-light,
-  .flying-santa,
-  .click-sparkle,
-  .gift-closed,
-  .christmas-mode h1,
-  .christmas-mode h2,
-  .christmas-mode h3,
-  .christmas-mode button::after {
-    animation: none !important;
+  html.christmas-mode::before {
+    animation: none;
+    opacity: 0.4;
   }
-
-  .flying-santa {
-    display: none;
+  
+  .animate-twinkle,
+  .animate-pulse-slow {
+    animation: none;
   }
 }
 
-/* ============================================
-   CHRISTMAS UI COMPONENTS
-   Full festive styling for all UI elements
-   ============================================ */
-
-/* ===== BUTTONS ===== */
-
-/* Primary buttons - Christmas red with gold accents */
-.christmas-mode .bg-black,
-.christmas-mode .bg-primary,
-.christmas-mode [class*="bg-black"] {
-  background: linear-gradient(135deg, var(--christmas-red) 0%, #a01830 100%) !important;
-  border: 2px solid var(--christmas-gold) !important;
-  box-shadow: 0 4px 15px rgba(196, 30, 58, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
-}
-
-.christmas-mode .bg-black:hover,
-.christmas-mode .bg-primary:hover,
-.christmas-mode [class*="bg-black"]:hover {
-  background: linear-gradient(135deg, #d62548 0%, var(--christmas-red) 100%) !important;
-  box-shadow: 0 6px 20px rgba(196, 30, 58, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
-  transform: translateY(-2px);
-}
-
-/* Secondary/outline buttons - Christmas green */
-.christmas-mode .bg-white:not(body),
-.christmas-mode .border-gray-200,
-.christmas-mode [class*="border-gray"] {
-  border-color: var(--christmas-green) !important;
-}
-
-.christmas-mode .bg-white:not(body):hover,
-.christmas-mode button.bg-white:hover {
-  background: linear-gradient(135deg, rgba(34, 139, 34, 0.1) 0%, rgba(34, 139, 34, 0.05) 100%) !important;
-  border-color: var(--christmas-pine) !important;
-}
-
-/* Icon buttons and small actions */
-.christmas-mode button[class*="rounded-full"] {
-  position: relative;
-}
-
-.christmas-mode button[class*="rounded-full"]::before {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border-radius: inherit;
-  background: conic-gradient(
-    from 0deg,
-    var(--christmas-red),
-    var(--christmas-gold),
-    var(--christmas-green),
-    var(--christmas-gold),
-    var(--christmas-red)
-  );
-  opacity: 0;
-  z-index: -1;
-  transition: opacity 0.3s ease;
-}
-
-.christmas-mode button[class*="rounded-full"]:hover::before {
-  opacity: 0.7;
-  animation: rotateGradient 3s linear infinite;
-}
-
-@keyframes rotateGradient {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* ===== FORM INPUTS ===== */
-
-/* Text inputs, textareas, selects */
-.christmas-mode input[type="text"],
-.christmas-mode input[type="email"],
-.christmas-mode input[type="password"],
-.christmas-mode input[type="search"],
-.christmas-mode input[type="number"],
-.christmas-mode input[type="tel"],
-.christmas-mode input[type="url"],
-.christmas-mode textarea,
-.christmas-mode select {
-  border: 2px solid rgba(34, 139, 34, 0.3) !important;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 255, 245, 0.9) 100%) !important;
-  transition: all 0.3s ease !important;
-}
-
-.christmas-mode.dark input[type="text"],
-.christmas-mode.dark input[type="email"],
-.christmas-mode.dark input[type="password"],
-.christmas-mode.dark input[type="search"],
-.christmas-mode.dark input[type="number"],
-.christmas-mode.dark input[type="tel"],
-.christmas-mode.dark input[type="url"],
-.christmas-mode.dark textarea,
-.christmas-mode.dark select {
-  background: linear-gradient(180deg, rgba(20, 30, 20, 0.95) 0%, rgba(15, 25, 15, 0.9) 100%) !important;
-  border-color: rgba(34, 139, 34, 0.4) !important;
-}
-
-.christmas-mode input:focus,
-.christmas-mode textarea:focus,
-.christmas-mode select:focus {
-  border-color: var(--christmas-green) !important;
-  box-shadow:
-    0 0 0 3px rgba(34, 139, 34, 0.2),
-    0 0 20px rgba(34, 139, 34, 0.15) !important;
-  outline: none !important;
-}
-
-/* Input placeholder styling */
-.christmas-mode input::placeholder,
-.christmas-mode textarea::placeholder {
-  color: rgba(34, 139, 34, 0.5) !important;
-}
-
-/* Checkboxes and radio buttons */
-.christmas-mode input[type="checkbox"],
-.christmas-mode input[type="radio"] {
-  accent-color: var(--christmas-green) !important;
-}
-
-.christmas-mode input[type="checkbox"]:checked,
-.christmas-mode input[type="radio"]:checked {
-  background-color: var(--christmas-green) !important;
-  border-color: var(--christmas-pine) !important;
-}
-
-/* ===== CARDS ===== */
-
-.christmas-mode .card,
-.christmas-mode [class*="rounded-lg"][class*="bg-white"],
-.christmas-mode [class*="rounded-xl"][class*="bg-white"],
-.christmas-mode [class*="shadow"] {
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(255, 250, 250, 0.95) 50%,
-    rgba(250, 255, 250, 0.95) 100%
-  ) !important;
-  border: 1px solid rgba(196, 30, 58, 0.15) !important;
-  box-shadow:
-    0 4px 20px rgba(196, 30, 58, 0.1),
-    0 1px 3px rgba(34, 139, 34, 0.1) !important;
-}
-
-.christmas-mode.dark .card,
-.christmas-mode.dark [class*="rounded-lg"][class*="bg-gray"],
-.christmas-mode.dark [class*="rounded-xl"][class*="bg-gray"] {
-  background: linear-gradient(
-    135deg,
-    rgba(20, 20, 25, 0.98) 0%,
-    rgba(25, 15, 15, 0.95) 50%,
-    rgba(15, 25, 15, 0.95) 100%
-  ) !important;
-  border: 1px solid rgba(196, 30, 58, 0.25) !important;
-}
-
-.christmas-mode .card:hover,
-.christmas-mode [class*="rounded-lg"]:hover,
-.christmas-mode [class*="rounded-xl"]:hover {
-  box-shadow:
-    0 8px 30px rgba(196, 30, 58, 0.15),
-    0 2px 8px rgba(34, 139, 34, 0.15),
-    0 0 0 1px rgba(255, 215, 0, 0.2) !important;
-}
-
-/* Card corner ribbon decoration */
-.christmas-mode .card::after,
-.christmas-mode [class*="rounded-lg"][class*="bg-white"]::after {
-  content: '🎄';
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  font-size: 16px;
-  opacity: 0;
-  transform: scale(0) rotate(-20deg);
-  transition: all 0.3s ease;
-  pointer-events: none;
-}
-
-.christmas-mode .card:hover::after,
-.christmas-mode [class*="rounded-lg"][class*="bg-white"]:hover::after {
-  opacity: 1;
-  transform: scale(1) rotate(0deg);
-}
-
-/* ===== BADGES & TAGS ===== */
-
-.christmas-mode [class*="badge"],
-.christmas-mode [class*="tag"],
-.christmas-mode .bg-gray-100,
-.christmas-mode .bg-gray-200 {
-  background: linear-gradient(135deg, rgba(34, 139, 34, 0.15) 0%, rgba(196, 30, 58, 0.1) 100%) !important;
-  border: 1px solid rgba(34, 139, 34, 0.3) !important;
-  color: var(--christmas-pine) !important;
-}
-
-.christmas-mode.dark [class*="badge"],
-.christmas-mode.dark [class*="tag"],
-.christmas-mode.dark .bg-gray-800,
-.christmas-mode.dark .bg-gray-700 {
-  background: linear-gradient(135deg, rgba(34, 139, 34, 0.25) 0%, rgba(196, 30, 58, 0.15) 100%) !important;
-  color: var(--christmas-snow) !important;
-}
-
-/* ===== TOOLTIPS & POPOVERS ===== */
-
-.christmas-mode [role="tooltip"],
-.christmas-mode [data-state="open"][class*="popover"],
-.christmas-mode [class*="tooltip"] {
-  background: linear-gradient(135deg, var(--christmas-pine) 0%, #0a2d0a 100%) !important;
-  border: 1px solid var(--christmas-green) !important;
-  color: var(--christmas-snow) !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* ===== MODALS & DIALOGS ===== */
-
-.christmas-mode [role="dialog"],
-.christmas-mode [class*="modal"],
-.christmas-mode [class*="drawer"] {
-  border: 2px solid var(--christmas-red) !important;
-  box-shadow:
-    0 0 0 4px rgba(255, 215, 0, 0.2),
-    0 25px 50px rgba(0, 0, 0, 0.3) !important;
-}
-
-.christmas-mode [role="dialog"]::before,
-.christmas-mode [class*="modal"]::before {
-  content: '🎅 🎄 ⭐ 🎁';
-  position: absolute;
-  top: -30px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 20px;
-  letter-spacing: 8px;
-}
-
-/* ===== DROPDOWN MENUS ===== */
-
-.christmas-mode [role="menu"],
-.christmas-mode [class*="dropdown"],
-.christmas-mode [data-state="open"][class*="content"] {
-  background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(255, 250, 245, 0.95) 100%
-  ) !important;
-  border: 2px solid rgba(34, 139, 34, 0.3) !important;
-  box-shadow:
-    0 10px 40px rgba(196, 30, 58, 0.15),
-    0 0 0 1px rgba(255, 215, 0, 0.1) !important;
-}
-
-.christmas-mode.dark [role="menu"],
-.christmas-mode.dark [class*="dropdown"],
-.christmas-mode.dark [data-state="open"][class*="content"] {
-  background: linear-gradient(180deg,
-    rgba(25, 25, 30, 0.98) 0%,
-    rgba(20, 15, 15, 0.95) 100%
-  ) !important;
-}
-
-.christmas-mode [role="menuitem"]:hover,
-.christmas-mode [class*="dropdown"] li:hover {
-  background: linear-gradient(90deg,
-    rgba(196, 30, 58, 0.1) 0%,
-    rgba(34, 139, 34, 0.1) 100%
-  ) !important;
-}
-
-/* ===== TABS ===== */
-
-.christmas-mode [role="tablist"] {
-  border-bottom: 2px solid rgba(34, 139, 34, 0.3) !important;
-}
-
-.christmas-mode [role="tab"][data-state="active"],
-.christmas-mode [role="tab"][aria-selected="true"] {
-  background: linear-gradient(135deg, var(--christmas-red) 0%, #a01830 100%) !important;
-  color: white !important;
-  border-color: var(--christmas-gold) !important;
-}
-
-.christmas-mode [role="tab"]:hover:not([data-state="active"]) {
-  background: rgba(34, 139, 34, 0.1) !important;
-}
-
-/* ===== PROGRESS BARS ===== */
-
-.christmas-mode progress,
-.christmas-mode [role="progressbar"],
-.christmas-mode [class*="progress"] {
-  background: linear-gradient(90deg,
-    rgba(34, 139, 34, 0.2) 0%,
-    rgba(196, 30, 58, 0.2) 100%
-  ) !important;
-}
-
-.christmas-mode progress::-webkit-progress-value,
-.christmas-mode [class*="progress"] > div {
-  background: linear-gradient(90deg,
-    var(--christmas-green) 0%,
-    var(--christmas-gold) 50%,
-    var(--christmas-red) 100%
-  ) !important;
-  background-size: 200% 100%;
-  animation: progressShimmer 2s linear infinite;
-}
-
-@keyframes progressShimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* ===== AVATARS ===== */
-
-.christmas-mode [class*="avatar"],
-.christmas-mode img[class*="rounded-full"] {
-  border: 3px solid var(--christmas-red) !important;
-  box-shadow: 0 0 0 2px var(--christmas-gold) !important;
-}
-
-.christmas-mode [class*="avatar"]::after,
-.christmas-mode img[class*="rounded-full"]::after {
-  content: '🎅';
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  font-size: 12px;
-}
-
-/* ===== DIVIDERS ===== */
-
-.christmas-mode hr,
-.christmas-mode [class*="divider"],
-.christmas-mode .border-t,
-.christmas-mode .border-b {
-  border-image: repeating-linear-gradient(
-    90deg,
-    var(--christmas-red) 0px,
-    var(--christmas-red) 10px,
-    transparent 10px,
-    transparent 15px,
-    var(--christmas-green) 15px,
-    var(--christmas-green) 25px,
-    transparent 25px,
-    transparent 30px
-  ) 1 !important;
-}
-
-/* ===== NAVIGATION ===== */
-
-.christmas-mode nav a,
-.christmas-mode [class*="nav"] a {
-  position: relative;
-}
-
-.christmas-mode nav a::before,
-.christmas-mode [class*="nav"] a::before {
-  content: '❄️';
-  position: absolute;
-  left: -20px;
-  opacity: 0;
-  transform: translateX(-10px);
-  transition: all 0.3s ease;
-}
-
-.christmas-mode nav a:hover::before,
-.christmas-mode [class*="nav"] a:hover::before {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* ===== LISTS ===== */
-
-.christmas-mode ul li::marker,
-.christmas-mode ol li::marker {
-  color: var(--christmas-red);
-}
-
-.christmas-mode ul:not([role]) li::before {
-  content: '🎄 ';
-}
-
-/* ===== ALERTS & NOTIFICATIONS ===== */
-
-.christmas-mode [class*="alert"],
-.christmas-mode [class*="toast"],
-.christmas-mode [class*="notification"] {
-  background: linear-gradient(135deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(255, 250, 240, 0.9) 100%
-  ) !important;
-  border-left: 4px solid var(--christmas-red) !important;
-  box-shadow:
-    0 4px 20px rgba(196, 30, 58, 0.15),
-    inset 0 0 20px rgba(255, 215, 0, 0.05) !important;
-}
-
-/* ===== LOADING STATES ===== */
-
-.christmas-mode .animate-spin {
-  border-color: var(--christmas-green) !important;
-  border-top-color: var(--christmas-red) !important;
-}
-
-.christmas-mode [class*="skeleton"],
-.christmas-mode [class*="loading"] {
-  background: linear-gradient(
-    90deg,
-    rgba(34, 139, 34, 0.1) 0%,
-    rgba(255, 215, 0, 0.2) 50%,
-    rgba(196, 30, 58, 0.1) 100%
-  ) !important;
-  background-size: 200% 100%;
-  animation: christmasLoading 1.5s ease-in-out infinite;
-}
-
-@keyframes christmasLoading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-/* ===== EMPTY STATES ===== */
-
-.christmas-mode [class*="empty"]::before {
-  content: '🎁 ';
-}
-
-/* ===== ICONS ===== */
-
-.christmas-mode .lucide,
-.christmas-mode svg[class*="icon"],
-.christmas-mode [class*="icon"] svg {
-  filter: drop-shadow(0 0 2px rgba(196, 30, 58, 0.3));
-}
-
-.christmas-mode .lucide:hover,
-.christmas-mode svg[class*="icon"]:hover {
-  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
-}
-
-/* ===== LINKS ===== */
-
-.christmas-mode a:not(.christmas-tree-toggle):not(nav a) {
-  color: var(--christmas-red);
-  text-decoration-color: transparent;
-  text-underline-offset: 3px;
-  transition: all 0.3s ease;
-}
-
-.christmas-mode a:not(.christmas-tree-toggle):not(nav a):hover {
-  color: var(--christmas-pine);
-  text-decoration: underline;
-  text-decoration-color: var(--christmas-green);
-  text-decoration-style: wavy;
-}
-
-/* ===== SWITCHES/TOGGLES ===== */
-
-.christmas-mode [role="switch"],
-.christmas-mode [class*="toggle"],
-.christmas-mode [class*="switch"] {
-  background: linear-gradient(90deg,
-    rgba(196, 30, 58, 0.3) 0%,
-    rgba(34, 139, 34, 0.3) 100%
-  ) !important;
-}
-
-.christmas-mode [role="switch"][data-state="checked"],
-.christmas-mode [class*="toggle"]:checked {
-  background: linear-gradient(90deg,
-    var(--christmas-green) 0%,
-    var(--christmas-pine) 100%
-  ) !important;
-}
-
-/* ===== SLIDERS/RANGE ===== */
-
-.christmas-mode input[type="range"] {
-  accent-color: var(--christmas-red);
-}
-
-.christmas-mode input[type="range"]::-webkit-slider-thumb {
-  background: var(--christmas-red) !important;
-  border: 2px solid var(--christmas-gold) !important;
-}
-
-.christmas-mode input[type="range"]::-webkit-slider-runnable-track {
-  background: linear-gradient(90deg,
-    var(--christmas-green) 0%,
-    var(--christmas-gold) 50%,
-    var(--christmas-red) 100%
-  ) !important;
-}
-
-/* ===== TABLES ===== */
-
-.christmas-mode table {
-  border: 2px solid rgba(34, 139, 34, 0.3) !important;
-}
-
-.christmas-mode th {
-  background: linear-gradient(180deg,
-    var(--christmas-pine) 0%,
-    var(--christmas-green) 100%
-  ) !important;
-  color: white !important;
-}
-
-.christmas-mode tr:nth-child(even) {
-  background: rgba(196, 30, 58, 0.05) !important;
-}
-
-.christmas-mode tr:nth-child(odd) {
-  background: rgba(34, 139, 34, 0.05) !important;
-}
-
-.christmas-mode tr:hover {
-  background: rgba(255, 215, 0, 0.1) !important;
-}
-
-/* ===== BLOCKQUOTES ===== */
-
-.christmas-mode blockquote {
-  border-left: 4px solid var(--christmas-red) !important;
-  background: linear-gradient(90deg,
-    rgba(196, 30, 58, 0.05) 0%,
-    transparent 100%
-  ) !important;
-  padding-left: 20px;
-}
-
-.christmas-mode blockquote::before {
-  content: '🎄 ';
-}
-
-/* ===== CODE BLOCKS ===== */
-
-.christmas-mode pre,
-.christmas-mode code {
-  background: linear-gradient(135deg,
-    rgba(11, 61, 11, 0.95) 0%,
-    rgba(5, 40, 5, 0.98) 100%
-  ) !important;
-  border: 1px solid var(--christmas-green) !important;
-  color: #90EE90 !important;
-}
-
-.christmas-mode code {
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-/* ===== IMAGES ===== */
-
-.christmas-mode img:not([class*="avatar"]):not([class*="rounded-full"]) {
-  border: 3px solid transparent;
-  border-image: linear-gradient(135deg,
-    var(--christmas-red) 0%,
-    var(--christmas-gold) 50%,
-    var(--christmas-green) 100%
-  ) 1;
-  transition: all 0.3s ease;
-}
-
-.christmas-mode img:hover:not([class*="avatar"]):not([class*="rounded-full"]) {
-  box-shadow: 0 8px 30px rgba(196, 30, 58, 0.2);
-}
-
-/* ===== LOGO AREA ===== */
-
-.christmas-mode header button:first-of-type,
-.christmas-mode [class*="logo"] {
-  position: relative;
-}
-
-.christmas-mode header button:first-of-type::before {
-  content: '🎅';
-  position: absolute;
-  top: -12px;
-  right: -8px;
-  font-size: 14px;
-  animation: santaWave 2s ease-in-out infinite;
-}
-
-@keyframes santaWave {
-  0%, 100% { transform: rotate(-5deg); }
-  50% { transform: rotate(5deg); }
-}
-
-/* ===== SPECIAL TEXT EFFECTS ===== */
-
-.christmas-mode strong,
-.christmas-mode b {
-  color: var(--christmas-red);
-  text-shadow: 0 0 1px rgba(196, 30, 58, 0.3);
-}
-
-.christmas-mode em,
-.christmas-mode i:not([class]) {
-  color: var(--christmas-green);
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  html.christmas-mode::before {
+    opacity: 0.5;
+  }
 }

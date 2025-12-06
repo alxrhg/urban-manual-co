@@ -8,7 +8,6 @@ import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { DrawerProvider } from "@/contexts/DrawerContext";
 import { ChristmasThemeProvider } from "@/contexts/ChristmasThemeContext";
-import { ChristmasEffects } from "@/components/ChristmasEffects";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { Toaster } from "@/components/ui/sonner";
@@ -234,7 +233,6 @@ export default function RootLayout({
             storageKey="urban-manual-theme"
           >
             <ChristmasThemeProvider>
-            <ChristmasEffects />
             <SkipNavigation />
             <SplashScreen />
             <TooltipProvider>
