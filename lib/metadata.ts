@@ -265,6 +265,203 @@ export function generateCityBreadcrumb(city: string) {
 }
 
 /**
+ * Generate Organization schema for homepage
+ */
+export function generateOrganizationSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': 'https://www.urbanmanual.co/#organization',
+    name: 'The Urban Manual',
+    url: 'https://www.urbanmanual.co',
+    logo: {
+      '@type': 'ImageObject',
+      url: 'https://www.urbanmanual.co/logo.png',
+      width: 512,
+      height: 512,
+    },
+    description: 'Curated guide to the world\'s best hotels, restaurants & travel destinations',
+    sameAs: [
+      'https://www.instagram.com/urbanmanual',
+      'https://twitter.com/urbanmanual',
+    ],
+  };
+}
+
+/**
+ * Generate WebSite schema with SearchAction for homepage
+ */
+export function generateWebSiteSchema() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': 'https://www.urbanmanual.co/#website',
+    url: 'https://www.urbanmanual.co',
+    name: 'The Urban Manual',
+    description: 'Discover handpicked luxury hotels, Michelin-starred restaurants, and hidden gems across 50+ cities worldwide.',
+    publisher: {
+      '@id': 'https://www.urbanmanual.co/#organization',
+    },
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: 'https://www.urbanmanual.co/?q={search_term_string}',
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+}
+
+/**
+ * Generate ItemList schema for city/category listing pages
+ */
+export function generateItemListSchema(
+  items: Array<{ name: string; slug: string; image?: string; description?: string }>,
+  listName: string,
+  listUrl: string
+) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: listName,
+    url: listUrl,
+    numberOfItems: items.length,
+    itemListElement: items.slice(0, 20).map((item, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: item.name,
+      url: `https://www.urbanmanual.co/destination/${item.slug}`,
+      ...(item.image && { image: item.image }),
+      ...(item.description && { description: item.description.replace(/<[^>]*>/g, '').substring(0, 150) }),
+    })),
+  };
+}
+
+/**
+ * Generate metadata for category pages
+ */
+export function generateCategoryMetadata(category: string): Metadata {
+  const categoryName = decodeURIComponent(category)
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  const categoryDescriptions: Record<string, string> = {
+    hotel: 'Discover curated luxury hotels and boutique accommodations worldwide. From design-forward properties to historic landmarks.',
+    restaurant: 'Explore handpicked restaurants featuring Michelin-starred venues and local gems. Fine dining and casual eateries.',
+    cafe: 'Find exceptional cafes around the world. Specialty coffee, artisan pastries, and unique atmospheres.',
+    bar: 'Discover the best bars, cocktail lounges, and drinking establishments. From speakeasies to rooftop venues.',
+    shop: 'Explore curated shops and boutiques. Fashion, design, and unique local finds.',
+    museum: 'Explore world-class museums and cultural institutions. Art, history, and contemporary exhibitions.',
+  };
+
+  const description = categoryDescriptions[category.toLowerCase()] ||
+    `Discover the best ${categoryName.toLowerCase()} destinations around the world. Curated recommendations from The Urban Manual.`;
+
+  const title = `Best ${categoryName}s Worldwide | The Urban Manual`;
+  const canonicalUrl = `https://www.urbanmanual.co/category/${encodeURIComponent(category)}`;
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: 'The Urban Manual',
+      locale: 'en_US',
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  };
+}
+
+/**
+ * Generate breadcrumb schema for category pages
+ */
+export function generateCategoryBreadcrumb(category: string) {
+  const categoryName = decodeURIComponent(category)
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://www.urbanmanual.co',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: categoryName,
+        item: `https://www.urbanmanual.co/category/${encodeURIComponent(category)}`,
+      },
+    ],
+  };
+}
+
+/**
+ * Generate breadcrumb schema for cities listing page
+ */
+export function generateCitiesListBreadcrumb() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: 'https://www.urbanmanual.co',
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Cities',
+        item: 'https://www.urbanmanual.co/cities',
+      },
+    ],
+  };
+}
+
+/**
+ * Generate CollectionPage schema for cities listing
+ */
+export function generateCitiesCollectionSchema(cities: Array<{ city: string; count: number; country?: string }>) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Discover Cities - The Urban Manual',
+    description: 'Explore curated travel destinations by city. Find the best restaurants, hotels, bars, and attractions in cities worldwide.',
+    url: 'https://www.urbanmanual.co/cities',
+    mainEntity: {
+      '@type': 'ItemList',
+      numberOfItems: cities.length,
+      itemListElement: cities.slice(0, 30).map((city, index) => ({
+        '@type': 'ListItem',
+        position: index + 1,
+        name: city.city.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+        url: `https://www.urbanmanual.co/city/${encodeURIComponent(city.city)}`,
+        description: `${city.count} curated destinations in ${city.city.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}${city.country ? `, ${city.country}` : ''}`,
+      })),
+    },
+  };
+}
+
+/**
  * Generate FAQ schema for destination pages
  */
 export function generateDestinationFAQ(destination: Destination) {
