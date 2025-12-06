@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { genAI, GEMINI_MODEL } from '@/lib/gemini';
-import { withErrorHandling, createValidationError } from '@/lib/errors';
+import { createValidationError } from '@/lib/errors';
+import { withCreditsCheck } from '@/lib/credits';
 
 interface ItineraryItem {
   time: string;
@@ -51,11 +52,13 @@ Response format: Return ONLY valid JSON with this structure:
   "tips": ["Optional travel tips"]
 }`;
 
-export const POST = withErrorHandling(async (request: NextRequest) => {
-  const supabase = await createServerClient();
-  const body = await request.json();
+export const POST = withCreditsCheck(
+  { operation: 'plan_day' },
+  async (request: NextRequest, _context, credits) => {
+    const supabase = await createServerClient();
+    const body = await request.json();
 
-  const { city, prompt, userContext, date } = body;
+    const { city, prompt, userContext, date } = body;
 
   if (!city) {
     throw createValidationError('City is required');
@@ -243,4 +246,5 @@ Create a day itinerary matching the user's request. Use ONLY destinations from t
     console.error('AI generation error:', aiError);
     throw createValidationError('Failed to generate itinerary. Please try again.');
   }
-});
+  }
+);

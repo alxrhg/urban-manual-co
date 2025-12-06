@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import { Sparkles, Loader2, ChevronDown, ChevronUp, Calendar, Music, X } from 'lucide-react';
+import { useCredits } from '@/hooks/useCredits';
+import CreditsIndicator, { InsufficientCreditsMessage } from './CreditsIndicator';
 
 interface AIPlannerBarProps {
   city?: string | null;
@@ -39,6 +41,7 @@ export default function AIPlannerBar({
   const [isProcessing, setIsProcessing] = useState(false);
   const [events, setEvents] = useState<LocalEvent[]>([]);
   const [eventsLoaded, setEventsLoaded] = useState(false);
+  const { credits, hasCreditsForOperation, refetch: refetchCredits } = useCredits();
 
   // Fetch events when expanded
   const handleExpand = useCallback(async () => {
@@ -62,6 +65,11 @@ export default function AIPlannerBar({
   const processInput = useCallback(async () => {
     if (!input.trim() || !city) return;
 
+    // Check if user has credits
+    if (!hasCreditsForOperation()) {
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const response = await fetch('/api/intelligence/natural-language', {
@@ -70,11 +78,19 @@ export default function AIPlannerBar({
         body: JSON.stringify({ query: input, city, tripDays }),
       });
 
+      if (response.status === 402) {
+        // Out of credits - refetch to update UI
+        await refetchCredits();
+        return;
+      }
+
       if (response.ok) {
         const result = await response.json();
         if (result.destination && onAddPlace) {
           await onAddPlace(result.destination, result.dayNumber || selectedDayNumber, result.time);
         }
+        // Refetch credits to update the count
+        await refetchCredits();
       }
     } catch (error) {
       console.error('AI planning error:', error);
@@ -82,7 +98,7 @@ export default function AIPlannerBar({
       setIsProcessing(false);
       setInput('');
     }
-  }, [input, city, tripDays, selectedDayNumber, onAddPlace]);
+  }, [input, city, tripDays, selectedDayNumber, onAddPlace, hasCreditsForOperation, refetchCredits]);
 
   const quickActions = [
     { label: 'Breakfast spot', query: 'Add a breakfast cafe' },
@@ -116,6 +132,7 @@ export default function AIPlannerBar({
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-gray-500" />
               <span className="text-xs font-medium text-gray-500 dark:text-gray-400">AI Planner</span>
+              <CreditsIndicator compact className="ml-2" />
             </div>
             <button
               onClick={() => setIsExpanded(false)}
@@ -125,41 +142,48 @@ export default function AIPlannerBar({
             </button>
           </div>
 
-          {/* Input */}
-          <div className="relative">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && processInput()}
-              placeholder={`"Add a rooftop bar for day ${selectedDayNumber}"`}
-              className="w-full px-3 py-2 pr-10 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 dark:focus:ring-gray-600"
-            />
-            <button
-              onClick={processInput}
-              disabled={!input.trim() || isProcessing}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-            >
-              {isProcessing ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Sparkles className="w-4 h-4" />
-              )}
-            </button>
-          </div>
+          {/* Show insufficient credits message if no credits */}
+          {credits && credits.creditsRemaining === 0 ? (
+            <InsufficientCreditsMessage />
+          ) : (
+            <>
+              {/* Input */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && processInput()}
+                  placeholder={`"Add a rooftop bar for day ${selectedDayNumber}"`}
+                  className="w-full px-3 py-2 pr-10 text-sm bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-300 dark:focus:ring-gray-600"
+                />
+                <button
+                  onClick={processInput}
+                  disabled={!input.trim() || isProcessing}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
 
-          {/* Quick Actions */}
-          <div className="flex flex-wrap gap-1.5">
-            {quickActions.map((action) => (
-              <button
-                key={action.label}
-                onClick={() => setInput(action.query)}
-                className="px-2 py-1 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
+              {/* Quick Actions */}
+              <div className="flex flex-wrap gap-1.5">
+                {quickActions.map((action) => (
+                  <button
+                    key={action.label}
+                    onClick={() => setInput(action.query)}
+                    className="px-2 py-1 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Local Events (if any) */}
           {events.length > 0 && (

@@ -1,17 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { withErrorHandling, createValidationError } from '@/lib/errors';
+import { createValidationError } from '@/lib/errors';
+import { withCreditsCheck } from '@/lib/credits';
 
 /**
  * POST /api/intelligence/smart-fill
  * Analyze existing trip items and suggest complementary places
  */
-export const POST = withErrorHandling(async (request: NextRequest) => {
-  const supabase = await createServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+export const POST = withCreditsCheck(
+  { operation: 'smart_suggestions' },
+  async (request: NextRequest, _context, credits) => {
+    const supabase = await createServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  const { city, existingItems, tripDays } = await request.json();
+    const { city, existingItems, tripDays } = await request.json();
 
   if (!city) {
     throw createValidationError('City is required');
@@ -76,7 +79,8 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     analysis,
     count: suggestions.length,
   });
-});
+  }
+);
 
 interface TripAnalysis {
   itemsByDay: Record<number, any[]>;

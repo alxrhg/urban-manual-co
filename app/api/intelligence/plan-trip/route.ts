@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { genAI, GEMINI_MODEL_PRO } from '@/lib/gemini';
 import { withErrorHandling, createValidationError, createUnauthorizedError } from '@/lib/errors';
+import { withCreditsCheck } from '@/lib/credits';
 import { tasteProfileEvolutionService } from '@/services/intelligence/taste-profile-evolution';
 import type { Trip, ItineraryItem, InsertItineraryItem } from '@/types/trip';
 import { SchemaType, type FunctionDeclaration, type FunctionCallingMode, type Content, type Part } from '@google/generative-ai';
@@ -784,20 +785,22 @@ async function executeTool(
 // Main API Handler
 // ============================================================================
 
-export const POST = withErrorHandling(async (request: NextRequest) => {
-  const supabase = await createServerClient();
+export const POST = withCreditsCheck(
+  { operation: 'plan_trip' },
+  async (request: NextRequest, _context, credits) => {
+    const supabase = await createServerClient();
 
-  // Get authenticated user
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+    // Get authenticated user (already verified by withCreditsCheck)
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
-  if (authError || !user) {
-    throw createUnauthorizedError('Authentication required');
-  }
+    if (authError || !user) {
+      throw createUnauthorizedError('Authentication required');
+    }
 
-  const body: PlanTripRequest = await request.json();
+    const body: PlanTripRequest = await request.json();
   const { prompt, context } = body;
 
   if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
@@ -933,4 +936,5 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     console.error('[plan-trip] AI error:', aiError);
     throw createValidationError('Failed to process trip planning request. Please try again.');
   }
-});
+  }
+);
