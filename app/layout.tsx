@@ -222,8 +222,8 @@ export default function RootLayout({
         <MyStatsig>
           <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
-            enableSystem={false}
+            defaultTheme="system"
+            enableSystem={true}
             storageKey="urban-manual-theme"
           >
             <SkipNavigation />

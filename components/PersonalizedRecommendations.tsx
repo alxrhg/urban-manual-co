@@ -7,6 +7,7 @@ import { MapPin, Sparkles } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
 import Link from 'next/link';
 import { useMemo, memo } from 'react';
+import { getDestinationAltText } from './ui/DestinationImage';
 
 interface PersonalizedRecommendationsProps {
   limit?: number;
@@ -113,7 +114,7 @@ function PersonalizedRecommendationsComponent({
                 {destination.image ? (
                   <Image
                     src={destination.image}
-                    alt={destination.name}
+                    alt={getDestinationAltText(destination)}
                     fill
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -122,7 +123,8 @@ function PersonalizedRecommendationsComponent({
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                    <MapPin className="h-12 w-12 opacity-20" />
+                    <MapPin className="h-12 w-12 opacity-20" aria-hidden="true" />
+                    <span className="sr-only">{getDestinationAltText(destination)}</span>
                   </div>
                 )}
 

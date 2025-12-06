@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertTriangle, FileDown, Loader2, Shield, Trash2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface ExportRequest {
   id: string;
@@ -10,7 +10,6 @@ interface ExportRequest {
   processed_at?: string | null;
   created_at: string;
   last_error?: string | null;
-  email_sent_at?: string | null;
 }
 
 interface PrivacyState {
@@ -29,18 +28,15 @@ export function AccountPrivacyManager() {
   const [privacy, setPrivacy] = useState<PrivacyState>(defaultPrivacy);
   const [privacyLoading, setPrivacyLoading] = useState(true);
   const [privacySaving, setPrivacySaving] = useState(false);
-  const [privacyMessage, setPrivacyMessage] = useState<string | null>(null);
-  const [privacyError, setPrivacyError] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const [exportRequests, setExportRequests] = useState<ExportRequest[]>([]);
   const [exportsLoading, setExportsLoading] = useState(true);
-  const [exportStatus, setExportStatus] = useState<string | null>(null);
-  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportSubmitting, setExportSubmitting] = useState(false);
 
   const [deletionReason, setDeletionReason] = useState('');
-  const [deletionStatus, setDeletionStatus] = useState<string | null>(null);
-  const [deletionError, setDeletionError] = useState<string | null>(null);
   const [deletionSubmitting, setDeletionSubmitting] = useState(false);
+  const [showDeletionForm, setShowDeletionForm] = useState(false);
 
   useEffect(() => {
     loadPrivacy();
@@ -51,9 +47,7 @@ export function AccountPrivacyManager() {
     try {
       setPrivacyLoading(true);
       const response = await fetch('/api/account/profile');
-      if (!response.ok) {
-        throw new Error('Failed to load privacy preferences');
-      }
+      if (!response.ok) throw new Error('Failed to load preferences');
       const data = await response.json();
       setPrivacy({
         privacy_mode: data.profile?.privacy_mode ?? false,
@@ -61,19 +55,16 @@ export function AccountPrivacyManager() {
         email_notifications: data.profile?.email_notifications ?? true,
       });
     } catch (error) {
-      const message = getErrorMessage(error);
-      console.error('[privacy] Failed to load preferences', error);
-      setPrivacyError(message);
+      setMessage({ type: 'error', text: getErrorMessage(error) });
     } finally {
       setPrivacyLoading(false);
     }
   }
 
   async function persistPrivacy(update: Partial<PrivacyState>) {
-    setPrivacy(prev => ({ ...prev, ...update }));
+    setPrivacy((prev) => ({ ...prev, ...update }));
     setPrivacySaving(true);
-    setPrivacyMessage(null);
-    setPrivacyError(null);
+    setMessage(null);
 
     try {
       const response = await fetch('/api/account/privacy', {
@@ -84,15 +75,13 @@ export function AccountPrivacyManager() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to update privacy');
+        throw new Error(data.error || 'Failed to update');
       }
 
-      setPrivacyMessage('Privacy preferences updated');
-      setTimeout(() => setPrivacyMessage(null), 4000);
+      setMessage({ type: 'success', text: 'Preferences updated' });
+      setTimeout(() => setMessage(null), 3000);
     } catch (error) {
-      const message = getErrorMessage(error) || 'Failed to update privacy preferences';
-      console.error('[privacy] Failed to update preferences', error);
-      setPrivacyError(message);
+      setMessage({ type: 'error', text: getErrorMessage(error) });
     } finally {
       setPrivacySaving(false);
     }
@@ -101,17 +90,12 @@ export function AccountPrivacyManager() {
   async function loadExportRequests() {
     try {
       setExportsLoading(true);
-      setExportError(null);
       const response = await fetch('/api/account/export');
       const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to load export requests');
-      }
+      if (!response.ok) throw new Error(data.error || 'Failed to load');
       setExportRequests(data.requests || []);
     } catch (error) {
-      const message = getErrorMessage(error);
-      console.error('[privacy] Failed to load export requests', error);
-      setExportError(message);
+      console.error('[privacy] Failed to load exports', error);
     } finally {
       setExportsLoading(false);
     }
@@ -119,36 +103,29 @@ export function AccountPrivacyManager() {
 
   async function handleExportRequest() {
     try {
-      setExportStatus('Submitting request…');
-      setExportError(null);
+      setExportSubmitting(true);
+      setMessage(null);
       const response = await fetch('/api/account/export?create=true');
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to queue export');
+        throw new Error(data.error || 'Failed to request export');
       }
       await loadExportRequests();
-      setExportStatus('Export request queued. Watch your inbox for a link.');
-      setTimeout(() => setExportStatus(null), 6000);
+      setMessage({ type: 'success', text: 'Export queued. Check your email.' });
     } catch (error) {
-      const message = getErrorMessage(error) || 'Failed to queue export';
-      console.error('[privacy] Failed to queue export', error);
-      setExportError(message);
+      setMessage({ type: 'error', text: getErrorMessage(error) });
+    } finally {
+      setExportSubmitting(false);
     }
   }
 
   async function handleDeletionRequest() {
     if (deletionSubmitting) return;
-
-    const confirmed = typeof window !== 'undefined'
-      ? window.confirm('This will permanently delete your account, saved places, and trips. Continue?')
-      : true;
-
-    if (!confirmed) return;
+    if (!confirm('Delete your account permanently? This cannot be undone.')) return;
 
     try {
       setDeletionSubmitting(true);
-      setDeletionError(null);
-      setDeletionStatus(null);
+      setMessage(null);
 
       const response = await fetch('/api/account/delete', {
         method: 'POST',
@@ -158,199 +135,153 @@ export function AccountPrivacyManager() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.error || 'Failed to request deletion');
+        throw new Error(data.errors?.[0]?.message || data.error || 'Failed to request deletion');
       }
 
-      setDeletionStatus('Account deletion has been requested. We will email you once it is complete.');
+      setMessage({ type: 'success', text: 'Deletion requested. Check your email for confirmation.' });
       setDeletionReason('');
+      setShowDeletionForm(false);
     } catch (error) {
-      const message = getErrorMessage(error) || 'Failed to request deletion';
-      console.error('[privacy] Failed to queue deletion', error);
-      setDeletionError(message);
+      setMessage({ type: 'error', text: getErrorMessage(error) });
     } finally {
       setDeletionSubmitting(false);
     }
   }
 
-  const latestComplete = exportRequests.find((req) => req.status === 'complete' && req.file_url);
+  const latestExport = exportRequests.find((r) => r.status === 'complete' && r.file_url);
 
   return (
-    <div className="mt-10 space-y-8">
-      <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <Shield className="h-5 w-5" />
-          <div>
-            <h3 className="text-lg font-semibold">Privacy Controls</h3>
-            <p className="text-sm text-gray-500">Toggle how we handle personalization and notifications.</p>
-          </div>
-        </div>
+    <div className="space-y-6">
+      {/* Message */}
+      {message && (
+        <p className={`text-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+          {message.text}
+        </p>
+      )}
 
-        {privacyError && (
-          <div className="mb-4 rounded-lg bg-red-50 text-red-700 px-3 py-2 text-sm">
-            {privacyError}
-          </div>
-        )}
-        {privacyMessage && (
-          <div className="mb-4 rounded-lg bg-green-50 text-green-700 px-3 py-2 text-sm">
-            {privacyMessage}
-          </div>
-        )}
-
+      {/* Privacy Controls */}
+      <div className="py-4 border-b border-gray-200 dark:border-gray-800">
+        <p className="text-sm font-medium mb-4">Privacy</p>
         <div className="space-y-4">
-          <PreferenceToggle
+          <PrivacyToggle
             label="Privacy mode"
-            description="Hide your activity from other members and discovery surfaces."
+            description="Hide activity from other members"
             checked={privacy.privacy_mode}
             disabled={privacyLoading || privacySaving}
-            onChange={(value) => persistPrivacy({ privacy_mode: value })}
+            onChange={(v) => persistPrivacy({ privacy_mode: v })}
           />
-          <PreferenceToggle
-            label="Allow tracking for better recommendations"
-            description="Share anonymous engagement data to help our models improve."
+          <PrivacyToggle
+            label="Analytics"
+            description="Share anonymous data for better recommendations"
             checked={privacy.allow_tracking}
             disabled={privacyLoading || privacySaving}
-            onChange={(value) => persistPrivacy({ allow_tracking: value })}
+            onChange={(v) => persistPrivacy({ allow_tracking: v })}
           />
-          <PreferenceToggle
+          <PrivacyToggle
             label="Email notifications"
-            description="Receive trip updates, export notifications, and privacy confirmations."
+            description="Receive updates about trips and exports"
             checked={privacy.email_notifications}
             disabled={privacyLoading || privacySaving}
-            onChange={(value) => persistPrivacy({ email_notifications: value })}
+            onChange={(v) => persistPrivacy({ email_notifications: v })}
           />
         </div>
+      </div>
 
-        {privacySaving && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-gray-500">
-            <Loader2 className="h-3 w-3 animate-spin" /> Saving changes…
-          </div>
-        )}
-      </section>
-
-      <section className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <FileDown className="h-5 w-5" />
+      {/* Data Export */}
+      <div className="py-4 border-b border-gray-200 dark:border-gray-800">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold">Data Export</h3>
-            <p className="text-sm text-gray-500">Download everything we know about your account.</p>
+            <p className="text-sm font-medium">Data Export</p>
+            <p className="text-sm text-gray-500 mt-0.5">Download your account data as JSON</p>
           </div>
         </div>
 
-        {exportError && (
-          <div className="mb-4 rounded-lg bg-red-50 text-red-700 px-3 py-2 text-sm">
-            {exportError}
-          </div>
-        )}
-        {exportStatus && (
-          <div className="mb-4 rounded-lg bg-blue-50 text-blue-700 px-3 py-2 text-sm">
-            {exportStatus}
-          </div>
-        )}
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            onClick={handleExportRequest}
+            disabled={exportSubmitting || exportsLoading}
+            className="text-xs text-gray-500 hover:text-black dark:hover:text-white disabled:opacity-50"
+          >
+            {exportSubmitting ? 'Requesting...' : 'Request export'}
+          </button>
 
-        <button
-          onClick={handleExportRequest}
-          disabled={exportsLoading}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-black text-white text-sm hover:bg-gray-800 disabled:opacity-60"
-        >
-          <FileDown className="h-4 w-4" />
-          Request new export
-        </button>
-
-        {latestComplete && (
-          <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-            <p className="font-medium">Latest export:</p>
+          {latestExport && (
             <a
-              href={latestComplete.file_url || '#'}
+              href={latestExport.file_url || '#'}
               download="urban-manual-export.json"
-              className="text-blue-600 dark:text-blue-400 underline"
+              className="text-xs text-blue-600 hover:underline"
             >
-              Download JSON archive
+              Download latest ({formatDate(latestExport.processed_at || latestExport.created_at)})
             </a>
-            <p className="text-xs text-gray-400">
-              Processed {formatDate(latestComplete.processed_at || latestComplete.created_at)}
-            </p>
-          </div>
-        )}
+          )}
+        </div>
 
-        <div className="mt-4">
-          <p className="text-xs uppercase text-gray-500 tracking-wide mb-2">Recent requests</p>
-          <div className="space-y-2">
-            {exportsLoading && <p className="text-sm text-gray-500">Loading export history…</p>}
-            {!exportsLoading && exportRequests.length === 0 && (
-              <p className="text-sm text-gray-500">No export history yet.</p>
-            )}
-            {exportRequests.map((req) => (
-              <div key={req.id} className="flex items-center justify-between text-sm border border-gray-100 dark:border-gray-800 rounded-xl px-3 py-2">
-                <div>
-                  <p className="font-medium">{formatDate(req.created_at)}</p>
-                  <p className="text-xs text-gray-500">Status: {req.status}</p>
-                  {req.last_error && <p className="text-xs text-red-500">{req.last_error}</p>}
+        {exportRequests.length > 0 && (
+          <div className="mt-4">
+            <p className="text-xs text-gray-400 mb-2">Recent requests</p>
+            <div className="space-y-1">
+              {exportRequests.slice(0, 3).map((req) => (
+                <div key={req.id} className="flex items-center justify-between text-xs text-gray-500">
+                  <span>{formatDate(req.created_at)}</span>
+                  <span className={req.status === 'complete' ? 'text-green-600' : ''}>{req.status}</span>
                 </div>
-                {req.file_url && req.status === 'complete' && (
-                  <a
-                    href={req.file_url}
-                    download="urban-manual-export.json"
-                    className="text-xs text-blue-600 dark:text-blue-400 underline"
-                  >
-                    Download
-                  </a>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        )}
+      </div>
 
-      <section className="bg-white dark:bg-gray-900 border border-red-200 dark:border-red-900 rounded-2xl p-6 shadow-sm">
-        <div className="flex items-center gap-3 mb-4 text-red-600">
-          <Trash2 className="h-5 w-5" />
+      {/* Account Deletion */}
+      <div className="py-4">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold">Delete account</h3>
-            <p className="text-sm text-red-600 dark:text-red-400">This action is permanent.</p>
+            <p className="text-sm font-medium text-red-600">Delete Account</p>
+            <p className="text-sm text-gray-500 mt-0.5">Permanently remove your account and data</p>
           </div>
         </div>
 
-        <div className="flex items-start gap-3 text-sm text-red-700 bg-red-50 dark:bg-red-900/20 rounded-xl p-3 mb-4">
-          <AlertTriangle className="h-4 w-4 mt-0.5" />
-          <p>
-            We will queue your deletion request, remove saved places, trips, personalization data, and permanently delete your Supabase user record. You will receive a confirmation email when processing is complete.
-          </p>
-        </div>
-
-        {deletionError && (
-          <div className="mb-4 rounded-lg bg-red-50 text-red-700 px-3 py-2 text-sm">
-            {deletionError}
+        {showDeletionForm ? (
+          <div className="mt-4 space-y-3">
+            <textarea
+              value={deletionReason}
+              onChange={(e) => setDeletionReason(e.target.value)}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-800 rounded-lg bg-transparent text-sm focus:outline-none focus:border-black dark:focus:border-white resize-none"
+              placeholder="Why are you leaving? (optional)"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowDeletionForm(false);
+                  setDeletionReason('');
+                }}
+                className="text-sm text-gray-500 hover:text-black dark:hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeletionRequest}
+                disabled={deletionSubmitting}
+                className="text-sm text-red-600 font-medium hover:opacity-70 disabled:opacity-50"
+              >
+                {deletionSubmitting ? 'Requesting...' : 'Confirm deletion'}
+              </button>
+            </div>
           </div>
+        ) : (
+          <button
+            onClick={() => setShowDeletionForm(true)}
+            className="text-xs text-red-600 hover:underline mt-2"
+          >
+            Delete my account
+          </button>
         )}
-        {deletionStatus && (
-          <div className="mb-4 rounded-lg bg-green-50 text-green-700 px-3 py-2 text-sm">
-            {deletionStatus}
-          </div>
-        )}
-
-        <label className="block text-sm font-medium mb-2">Tell us why (optional)</label>
-        <textarea
-          value={deletionReason}
-          onChange={(e) => setDeletionReason(e.target.value)}
-          rows={3}
-          className="w-full rounded-2xl border border-gray-200 dark:border-gray-800 bg-transparent px-3 py-2 text-sm"
-          placeholder="Feedback helps us improve before your account disappears forever."
-        />
-
-        <button
-          onClick={handleDeletionRequest}
-          disabled={deletionSubmitting}
-          className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 text-white text-sm hover:bg-red-500 disabled:opacity-60"
-        >
-          {deletionSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-          Request account deletion
-        </button>
-      </section>
+      </div>
     </div>
   );
 }
 
-interface PreferenceToggleProps {
+interface PrivacyToggleProps {
   label: string;
   description: string;
   checked: boolean;
@@ -358,19 +289,19 @@ interface PreferenceToggleProps {
   onChange: (value: boolean) => void;
 }
 
-function PreferenceToggle({ label, description, checked, disabled, onChange }: PreferenceToggleProps) {
+function PrivacyToggle({ label, description, checked, disabled, onChange }: PrivacyToggleProps) {
   return (
-    <label className={`flex items-start gap-3 p-3 rounded-2xl border ${checked ? 'border-black dark:border-white bg-gray-50 dark:bg-gray-800/40' : 'border-gray-200 dark:border-gray-800'}`}>
+    <label className="flex items-start gap-3 cursor-pointer">
       <input
         type="checkbox"
-        className="mt-1 h-4 w-4"
+        className="mt-1 h-4 w-4 accent-black dark:accent-white"
         checked={checked}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.checked)}
+        onChange={(e) => onChange(e.target.checked)}
       />
       <div>
-        <p className="font-medium">{label}</p>
-        <p className="text-sm text-gray-500">{description}</p>
+        <p className="text-sm">{label}</p>
+        <p className="text-xs text-gray-500">{description}</p>
       </div>
     </label>
   );
@@ -378,7 +309,7 @@ function PreferenceToggle({ label, description, checked, disabled, onChange }: P
 
 function formatDate(value: string) {
   try {
-    return new Date(value).toLocaleString();
+    return new Date(value).toLocaleDateString();
   } catch {
     return value;
   }
@@ -387,8 +318,5 @@ function formatDate(value: string) {
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
-  if (error && typeof error === 'object' && 'message' in error) {
-    return String((error as { message?: unknown }).message);
-  }
-  return 'Unexpected error';
+  return 'An error occurred';
 }

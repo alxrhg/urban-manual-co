@@ -24,6 +24,12 @@ import {
   ChevronDown,
   ArrowUpDown,
   MapPin,
+  Download,
+  Sparkles,
+  AlertTriangle,
+  FileText,
+  Tag,
+  Calendar,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import type { Destination } from '@/types/destination';
@@ -67,9 +73,11 @@ interface ContentManagerProps {
   onCreateNew?: () => void;
 }
 
-type SortField = 'name' | 'city' | 'category' | 'updated_at';
+type SortField = 'name' | 'city' | 'category' | 'updated_at' | 'created_at';
 type SortOrder = 'asc' | 'desc';
 type ViewMode = 'table' | 'grid';
+type EnrichedFilter = 'all' | 'enriched' | 'not_enriched';
+type MissingDataFilter = 'all' | 'no_image' | 'no_description' | 'no_content';
 
 const CATEGORIES = [
   'restaurant',
@@ -87,7 +95,8 @@ const CATEGORIES = [
   'club',
 ];
 
-const ITEMS_PER_PAGE = 24;
+const ITEMS_PER_PAGE_OPTIONS = [12, 24, 48, 96];
+const DEFAULT_ITEMS_PER_PAGE = 24;
 
 export function ContentManager({ onEditDestination, onCreateNew }: ContentManagerProps) {
   const [destinations, setDestinations] = useState<Destination[]>([]);
@@ -107,6 +116,15 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
   const [cities, setCities] = useState<string[]>([]);
   const [citySearchQuery, setCitySearchQuery] = useState('');
   const [showCityDropdown, setShowCityDropdown] = useState(false);
+  // New filter states
+  const [enrichedFilter, setEnrichedFilter] = useState<EnrichedFilter>('all');
+  const [crownOnly, setCrownOnly] = useState(false);
+  const [michelinOnly, setMichelinOnly] = useState(false);
+  const [missingDataFilter, setMissingDataFilter] = useState<MissingDataFilter>('all');
+  const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
+  // Bulk action states
+  const [showBulkCategoryModal, setShowBulkCategoryModal] = useState(false);
+  const [bulkCategory, setBulkCategory] = useState<string>('');
 
   // Fetch unique cities
   useEffect(() => {
@@ -139,22 +157,54 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
         .from('destinations')
         .select('*', { count: 'exact' });
 
-      if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,city.ilike.%${searchQuery}%,slug.ilike.%${searchQuery}%`);
+      // Text search with proper escaping
+      if (searchQuery && searchQuery.trim()) {
+        const escaped = searchQuery.trim().replace(/[%_]/g, '\\$&');
+        query = query.or(`name.ilike.%${escaped}%,city.ilike.%${escaped}%,slug.ilike.%${escaped}%`);
       }
 
-      if (selectedCategory) {
+      // Category filter
+      if (selectedCategory && selectedCategory !== 'all') {
         query = query.eq('category', selectedCategory);
       }
 
-      if (selectedCity) {
+      // City filter
+      if (selectedCity && selectedCity !== 'all') {
         query = query.eq('city', selectedCity);
       }
 
+      // Enrichment status filter
+      if (enrichedFilter === 'enriched') {
+        query = query.not('last_enriched_at', 'is', null);
+      } else if (enrichedFilter === 'not_enriched') {
+        query = query.is('last_enriched_at', null);
+      }
+
+      // Crown filter
+      if (crownOnly) {
+        query = query.eq('crown', true);
+      }
+
+      // Michelin filter
+      if (michelinOnly) {
+        query = query.gt('michelin_stars', 0);
+      }
+
+      // Missing data filters
+      if (missingDataFilter === 'no_image') {
+        query = query.or('image.is.null,image.eq.');
+      } else if (missingDataFilter === 'no_description') {
+        query = query.or('description.is.null,description.eq.');
+      } else if (missingDataFilter === 'no_content') {
+        query = query.or('content.is.null,content.eq.');
+      }
+
+      // Sorting
       query = query.order(sortField, { ascending: sortOrder === 'asc' });
 
-      const from = (page - 1) * ITEMS_PER_PAGE;
-      const to = from + ITEMS_PER_PAGE - 1;
+      // Pagination
+      const from = (page - 1) * itemsPerPage;
+      const to = from + itemsPerPage - 1;
       query = query.range(from, to);
 
       const { data, count, error } = await query;
@@ -165,10 +215,12 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
       setTotalCount(count || 0);
     } catch (error) {
       console.error('Failed to fetch destinations:', error);
+      setDestinations([]);
+      setTotalCount(0);
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, selectedCategory, selectedCity, sortField, sortOrder, page]);
+  }, [searchQuery, selectedCategory, selectedCity, sortField, sortOrder, page, enrichedFilter, crownOnly, michelinOnly, missingDataFilter, itemsPerPage]);
 
   useEffect(() => {
     fetchDestinations();
@@ -176,7 +228,7 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
   useEffect(() => {
     setPage(1);
-  }, [searchQuery, selectedCategory, selectedCity]);
+  }, [searchQuery, selectedCategory, selectedCity, enrichedFilter, crownOnly, michelinOnly, missingDataFilter]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -263,10 +315,127 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
     setSelectedCategory('');
     setSelectedCity('');
     setSearchQuery('');
+    setEnrichedFilter('all');
+    setCrownOnly(false);
+    setMichelinOnly(false);
+    setMissingDataFilter('all');
   };
 
-  const hasActiveFilters = !!(selectedCategory || selectedCity || searchQuery);
-  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const hasActiveFilters = !!(
+    selectedCategory ||
+    selectedCity ||
+    searchQuery ||
+    enrichedFilter !== 'all' ||
+    crownOnly ||
+    michelinOnly ||
+    missingDataFilter !== 'all'
+  );
+
+  const activeFilterCount = [
+    selectedCategory,
+    selectedCity,
+    enrichedFilter !== 'all' ? enrichedFilter : '',
+    crownOnly ? 'crown' : '',
+    michelinOnly ? 'michelin' : '',
+    missingDataFilter !== 'all' ? missingDataFilter : '',
+  ].filter(Boolean).length;
+
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  // Bulk actions handlers
+  const handleBulkEnrich = async () => {
+    if (selectedItems.size === 0) return;
+    setBulkActionLoading(true);
+    try {
+      // Get slugs for selected items
+      const selectedDests = destinations.filter(d => selectedItems.has(d.id!));
+      const slugs = selectedDests.map(d => d.slug);
+
+      // Call enrich API for each (could batch this)
+      for (const slug of slugs) {
+        await fetch('/api/enrich-google', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug }),
+        });
+      }
+
+      setSelectedItems(new Set());
+      fetchDestinations();
+    } catch (error) {
+      console.error('Bulk enrich failed:', error);
+      alert('Failed to enrich destinations');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkCategoryChange = async (category: string) => {
+    if (selectedItems.size === 0 || !category) return;
+    setBulkActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('destinations')
+        .update({ category })
+        .in('id', Array.from(selectedItems));
+
+      if (error) throw error;
+
+      setSelectedItems(new Set());
+      setShowBulkCategoryModal(false);
+      fetchDestinations();
+    } catch (error) {
+      console.error('Bulk category change failed:', error);
+      alert('Failed to update categories');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleBulkToggleCrown = async (crownValue: boolean) => {
+    if (selectedItems.size === 0) return;
+    setBulkActionLoading(true);
+    try {
+      const { error } = await supabase
+        .from('destinations')
+        .update({ crown: crownValue })
+        .in('id', Array.from(selectedItems));
+
+      if (error) throw error;
+
+      setSelectedItems(new Set());
+      fetchDestinations();
+    } catch (error) {
+      console.error('Bulk crown toggle failed:', error);
+      alert('Failed to update crown status');
+    } finally {
+      setBulkActionLoading(false);
+    }
+  };
+
+  const handleExportSelected = () => {
+    const selectedDests = destinations.filter(d => selectedItems.has(d.id!));
+    const csv = [
+      ['name', 'city', 'category', 'slug', 'michelin_stars', 'crown', 'enriched'].join(','),
+      ...selectedDests.map(d => [
+        `"${d.name}"`,
+        `"${d.city}"`,
+        d.category,
+        d.slug,
+        d.michelin_stars || 0,
+        d.crown ? 'Yes' : 'No',
+        d.last_enriched_at ? 'Yes' : 'No'
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `destinations-export-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6">
@@ -306,8 +475,10 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
           >
             <SlidersHorizontal className="w-4 h-4 mr-2" />
             <span className="hidden sm:inline">Filters</span>
-            {hasActiveFilters && (
-              <span className="w-1.5 h-1.5 rounded-full bg-black dark:bg-white ml-2" />
+            {activeFilterCount > 0 && (
+              <Badge variant="secondary" className="ml-2 h-5 min-w-[20px] text-xs">
+                {activeFilterCount}
+              </Badge>
             )}
           </Button>
 
@@ -333,120 +504,275 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
 
         {/* Filters Panel */}
         {showFilters && (
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            {/* City Filter */}
-            <Popover open={showCityDropdown} onOpenChange={setShowCityDropdown}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={selectedCity ? 'border-black dark:border-white' : ''}
-                >
-                  <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                  {selectedCity || 'All Cities'}
-                  <ChevronDown className="w-4 h-4 ml-2 text-gray-400" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-0" align="start">
-                <Command>
-                  <CommandInput
-                    placeholder="Search cities..."
-                    value={citySearchQuery}
-                    onValueChange={setCitySearchQuery}
-                  />
-                  <CommandList>
-                    <CommandEmpty>No city found.</CommandEmpty>
-                    <CommandGroup>
-                      <CommandItem
-                        onSelect={() => {
-                          setSelectedCity('');
-                          setShowCityDropdown(false);
-                          setCitySearchQuery('');
-                        }}
-                        className={!selectedCity ? 'font-medium' : ''}
-                      >
-                        <Check className={`w-4 h-4 mr-2 ${!selectedCity ? 'opacity-100' : 'opacity-0'}`} />
-                        All Cities
-                      </CommandItem>
-                      {filteredCities.map((city) => (
+          <div className="space-y-3 pt-2">
+            {/* Row 1: City, Category, Status */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* City Filter */}
+              <Popover open={showCityDropdown} onOpenChange={setShowCityDropdown}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={selectedCity ? 'border-black dark:border-white' : ''}
+                  >
+                    <MapPin className="w-4 h-4 mr-2 text-gray-400" />
+                    {selectedCity || 'All Cities'}
+                    <ChevronDown className="w-4 h-4 ml-2 text-gray-400" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0" align="start">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search cities..."
+                      value={citySearchQuery}
+                      onValueChange={setCitySearchQuery}
+                    />
+                    <CommandList>
+                      <CommandEmpty>No city found.</CommandEmpty>
+                      <CommandGroup>
                         <CommandItem
-                          key={city}
                           onSelect={() => {
-                            setSelectedCity(city);
+                            setSelectedCity('');
                             setShowCityDropdown(false);
                             setCitySearchQuery('');
                           }}
-                          className={selectedCity === city ? 'font-medium' : ''}
+                          className={!selectedCity ? 'font-medium' : ''}
                         >
-                          <Check className={`w-4 h-4 mr-2 ${selectedCity === city ? 'opacity-100' : 'opacity-0'}`} />
-                          {city}
+                          <Check className={`w-4 h-4 mr-2 ${!selectedCity ? 'opacity-100' : 'opacity-0'}`} />
+                          All Cities
                         </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                        {filteredCities.map((city) => (
+                          <CommandItem
+                            key={city}
+                            onSelect={() => {
+                              setSelectedCity(city);
+                              setShowCityDropdown(false);
+                              setCitySearchQuery('');
+                            }}
+                            className={selectedCity === city ? 'font-medium' : ''}
+                          >
+                            <Check className={`w-4 h-4 mr-2 ${selectedCity === city ? 'opacity-100' : 'opacity-0'}`} />
+                            {city}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
 
-            {/* Category Filter */}
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
-                {CATEGORIES.map((cat) => (
-                  <SelectItem key={cat} value={cat} className="capitalize">
-                    {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Sort */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 dark:text-gray-400">Sort:</span>
-              <Select
-                value={`${sortField}-${sortOrder}`}
-                onValueChange={(value) => {
-                  const [field, order] = value.split('-') as [SortField, SortOrder];
-                  setSortField(field);
-                  setSortOrder(order);
-                }}
-              >
+              {/* Category Filter */}
+              <Select value={selectedCategory || 'all'} onValueChange={(val) => setSelectedCategory(val === 'all' ? '' : val)}>
                 <SelectTrigger className="w-[160px]">
+                  <Tag className="w-4 h-4 mr-2 text-gray-400" />
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem key={cat} value={cat} className="capitalize">
+                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Enrichment Status Filter */}
+              <Select value={enrichedFilter} onValueChange={(val) => setEnrichedFilter(val as EnrichedFilter)}>
+                <SelectTrigger className="w-[150px]">
+                  <Sparkles className="w-4 h-4 mr-2 text-gray-400" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="name-asc">Name A-Z</SelectItem>
-                  <SelectItem value="name-desc">Name Z-A</SelectItem>
-                  <SelectItem value="city-asc">City A-Z</SelectItem>
-                  <SelectItem value="city-desc">City Z-A</SelectItem>
-                  <SelectItem value="category-asc">Category A-Z</SelectItem>
-                  <SelectItem value="updated_at-desc">Recently Updated</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="enriched">Enriched</SelectItem>
+                  <SelectItem value="not_enriched">Not Enriched</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Missing Data Filter */}
+              <Select value={missingDataFilter} onValueChange={(val) => setMissingDataFilter(val as MissingDataFilter)}>
+                <SelectTrigger className="w-[160px]">
+                  <AlertTriangle className="w-4 h-4 mr-2 text-gray-400" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Data</SelectItem>
+                  <SelectItem value="no_image">Missing Image</SelectItem>
+                  <SelectItem value="no_description">Missing Description</SelectItem>
+                  <SelectItem value="no_content">Missing Content</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="text-xs text-gray-500"
-              >
-                <X className="w-3 h-3 mr-1" />
-                Clear all
-              </Button>
-            )}
+            {/* Row 2: Quick Filters + Sort */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Quick Filter Toggles */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={crownOnly ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setCrownOnly(!crownOnly)}
+                  className="h-8"
+                >
+                  <Crown className={`w-3.5 h-3.5 mr-1.5 ${crownOnly ? 'text-amber-200' : 'text-amber-500'}`} />
+                  Crown Only
+                </Button>
+                <Button
+                  variant={michelinOnly ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setMichelinOnly(!michelinOnly)}
+                  className="h-8"
+                >
+                  <Star className={`w-3.5 h-3.5 mr-1.5 ${michelinOnly ? 'text-red-200' : 'text-red-500'}`} />
+                  Michelin Only
+                </Button>
+              </div>
+
+              <Separator orientation="vertical" className="h-6" />
+
+              {/* Sort */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Sort:</span>
+                <Select
+                  value={`${sortField}-${sortOrder}`}
+                  onValueChange={(value) => {
+                    const [field, order] = value.split('-') as [SortField, SortOrder];
+                    setSortField(field);
+                    setSortOrder(order);
+                  }}
+                >
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="name-asc">Name A-Z</SelectItem>
+                    <SelectItem value="name-desc">Name Z-A</SelectItem>
+                    <SelectItem value="city-asc">City A-Z</SelectItem>
+                    <SelectItem value="city-desc">City Z-A</SelectItem>
+                    <SelectItem value="category-asc">Category A-Z</SelectItem>
+                    <SelectItem value="updated_at-desc">Recently Updated</SelectItem>
+                    <SelectItem value="created_at-desc">Recently Added</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Items per page */}
+              <div className="flex items-center gap-2 ml-auto">
+                <span className="text-xs text-gray-500 dark:text-gray-400">Show:</span>
+                <Select
+                  value={String(itemsPerPage)}
+                  onValueChange={(val) => setItemsPerPage(Number(val))}
+                >
+                  <SelectTrigger className="w-[80px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ITEMS_PER_PAGE_OPTIONS.map((n) => (
+                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="text-xs text-gray-500"
+                >
+                  <X className="w-3 h-3 mr-1" />
+                  Clear all
+                </Button>
+              )}
+            </div>
           </div>
         )}
       </div>
 
       {/* Bulk Actions */}
       {selectedItems.size > 0 && (
-        <div className="flex items-center gap-3 px-3 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
-          <Badge variant="secondary">{selectedItems.size} selected</Badge>
-          <Separator orientation="vertical" className="h-4" />
+        <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg">
+          <Badge variant="secondary" className="font-medium">{selectedItems.size} selected</Badge>
+          <Separator orientation="vertical" className="h-5" />
+
+          {/* Category Change */}
+          <Popover open={showBulkCategoryModal} onOpenChange={setShowBulkCategoryModal}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" disabled={bulkActionLoading}>
+                <Tag className="w-3.5 h-3.5 mr-1.5" />
+                Category
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="start">
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 dark:text-gray-400 px-2">Change category to:</p>
+                {CATEGORIES.map((cat) => (
+                  <Button
+                    key={cat}
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start capitalize"
+                    onClick={() => handleBulkCategoryChange(cat)}
+                    disabled={bulkActionLoading}
+                  >
+                    {cat}
+                  </Button>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Crown Toggle */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" disabled={bulkActionLoading}>
+                <Crown className="w-3.5 h-3.5 mr-1.5 text-amber-500" />
+                Crown
+                <ChevronDown className="w-3 h-3 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => handleBulkToggleCrown(true)}>
+                <Crown className="w-4 h-4 mr-2 text-amber-500" />
+                Add Crown
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleBulkToggleCrown(false)}>
+                <X className="w-4 h-4 mr-2" />
+                Remove Crown
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Enrich */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleBulkEnrich}
+            disabled={bulkActionLoading}
+          >
+            {bulkActionLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+            )}
+            Enrich
+          </Button>
+
+          {/* Export */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleExportSelected}
+            disabled={bulkActionLoading}
+          >
+            <Download className="w-3.5 h-3.5 mr-1.5" />
+            Export CSV
+          </Button>
+
+          <Separator orientation="vertical" className="h-5" />
+
+          {/* Delete */}
           <Button
             variant="ghost"
             size="sm"
@@ -454,17 +780,20 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
             disabled={bulkActionLoading}
             className="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10"
           >
-            {bulkActionLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Trash2 className="w-3 h-3 mr-1" />}
+            {bulkActionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Trash2 className="w-3.5 h-3.5 mr-1.5" />}
             Delete
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setSelectedItems(new Set())}
-          >
-            <X className="w-3 h-3 mr-1" />
-            Clear
-          </Button>
+
+          <div className="ml-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSelectedItems(new Set())}
+            >
+              <X className="w-3.5 h-3.5 mr-1.5" />
+              Clear
+            </Button>
+          </div>
         </div>
       )}
 
@@ -505,7 +834,7 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-800">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {((page - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(page * ITEMS_PER_PAGE, totalCount)} of {totalCount}
+            {((page - 1) * itemsPerPage) + 1}–{Math.min(page * itemsPerPage, totalCount)} of {totalCount}
           </p>
           <div className="flex items-center gap-1">
             <Button

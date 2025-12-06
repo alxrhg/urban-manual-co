@@ -344,10 +344,11 @@ export default function AddPlaceBox({
       setGoogleLoading(true);
       setGooglePlace(null);
 
+      // Use minimal mode to skip fetching photos - itinerary cards don't need images
       const response = await fetch('/api/fetch-google-place', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ placeId: placeDetails.placeId }),
+        body: JSON.stringify({ placeId: placeDetails.placeId, minimal: true }),
       });
 
       const data = await response.json();

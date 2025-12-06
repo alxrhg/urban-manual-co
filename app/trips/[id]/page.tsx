@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
-import { parseDestinations } from '@/types/trip';
+import { parseDestinations, parseTripNotes, stringifyTripNotes, type TripNotes } from '@/types/trip';
 import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 import type { Destination } from '@/types/destination';
 
@@ -22,6 +22,7 @@ import AddPlaceBox from '@/components/trip/AddPlaceBox';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import DestinationBox from '@/components/trip/DestinationBox';
 import CompanionPanel from '@/components/trip/CompanionPanel';
+import TripNotesEditor from '@/components/trips/TripNotesEditor';
 
 /**
  * TripPage - Trip detail page with itinerary view
@@ -387,6 +388,7 @@ export default function TripPage() {
                   onOptimizeDay={handleOptimizeDay}
                   onUpdateTravelMode={handleUpdateTravelMode}
                   onRemoveItem={removeItem}
+                  onReorderItems={reorderItems}
                   isOptimizing={optimizingDay !== null}
                   isEditMode={isEditMode}
                   activeItemId={selectedItem?.id}
@@ -455,8 +457,13 @@ export default function TripPage() {
             )}
 
             {activeContentTab === 'notes' && (
-              <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Notes feature coming soon</p>
+              <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <TripNotesEditor
+                  notes={parseTripNotes(trip?.notes ?? null)}
+                  onChange={(notes: TripNotes) => {
+                    updateTrip({ notes: stringifyTripNotes(notes) });
+                  }}
+                />
               </div>
             )}
           </div>

@@ -1,10 +1,29 @@
 'use client';
 
 import React from 'react';
-import { Plus, MapPin } from 'lucide-react';
+import { Plus, MapPin, GripVertical } from 'lucide-react';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import type { ActivityType, ItineraryItemNotes } from '@/types/trip';
 import { getAirportCoordinates } from '@/lib/utils/airports';
+
+// DnD Kit imports
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Import new itinerary components
 import ItineraryCard from './ItineraryCard';
@@ -23,6 +42,7 @@ interface ItineraryViewRedesignProps {
   onOptimizeDay?: (dayNumber: number) => void;
   onUpdateTravelMode?: (itemId: string, mode: 'walking' | 'driving' | 'transit') => void;
   onRemoveItem?: (itemId: string) => void;
+  onReorderItems?: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
   isOptimizing?: boolean;
   isEditMode?: boolean;
   activeItemId?: string | null;
@@ -45,6 +65,90 @@ const MINIMAL_TYPES = ['activity', 'breakfast', 'custom'];
  * - Clean travel connectors with time estimates
  * - Smart gap suggestions for free time > 2 hours
  */
+// Sortable Item Wrapper Component
+interface SortableItemProps {
+  item: EnrichedItineraryItem;
+  isEditMode: boolean;
+  isActive: boolean;
+  isCard: boolean;
+  onEditItem?: (item: EnrichedItineraryItem) => void;
+  onRemoveItem?: (itemId: string) => void;
+}
+
+function SortableItineraryItem({
+  item,
+  isEditMode,
+  isActive,
+  isCard,
+  onEditItem,
+  onRemoveItem,
+}: SortableItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 1000 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative group">
+      {/* Drag Handle (edit mode only) */}
+      {isEditMode && (
+        <div
+          {...attributes}
+          {...listeners}
+          className="absolute -left-7 top-1/2 -translate-y-1/2 w-6 h-8 flex items-center justify-center cursor-grab active:cursor-grabbing text-stone-300 dark:text-gray-600 hover:text-stone-500 dark:hover:text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+        >
+          <GripVertical className="w-4 h-4" />
+        </div>
+      )}
+
+      {/* Delete button (edit mode) */}
+      {isEditMode && onRemoveItem && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemoveItem(item.id);
+          }}
+          className="absolute -right-2 top-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-20 opacity-0 group-hover:opacity-100"
+        >
+          ×
+        </button>
+      )}
+
+      {/* Render card or minimal row based on item type */}
+      {item.parsedNotes?.type === 'hotel' ? (
+        <CheckInRow
+          hotelName={item.title || 'Hotel'}
+          time={item.parsedNotes?.checkInTime || item.time || undefined}
+          onClick={() => onEditItem?.(item)}
+        />
+      ) : isCard ? (
+        <ItineraryCard
+          item={item}
+          isActive={isActive}
+          onClick={() => onEditItem?.(item)}
+        />
+      ) : (
+        <ItineraryMinimalRow
+          item={item}
+          isActive={isActive}
+          onClick={() => onEditItem?.(item)}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function ItineraryViewRedesign({
   days,
   selectedDayNumber,
@@ -55,6 +159,7 @@ export default function ItineraryViewRedesign({
   onOptimizeDay,
   onUpdateTravelMode,
   onRemoveItem,
+  onReorderItems,
   isOptimizing = false,
   isEditMode = false,
   activeItemId,
@@ -62,7 +167,36 @@ export default function ItineraryViewRedesign({
   showDayNavigation = true,
   className = '',
 }: ItineraryViewRedesignProps) {
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px movement required before drag starts
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
   const selectedDay = days.find((d) => d.dayNumber === selectedDayNumber);
+
+  // Handle drag end - reorder items
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id || !selectedDay || !onReorderItems) {
+      return;
+    }
+
+    const oldIndex = selectedDay.items.findIndex((item) => item.id === active.id);
+    const newIndex = selectedDay.items.findIndex((item) => item.id === over.id);
+
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newItems = arrayMove(selectedDay.items, oldIndex, newIndex);
+      onReorderItems(selectedDayNumber, newItems);
+    }
+  };
 
   if (!selectedDay) return null;
 
@@ -206,6 +340,7 @@ export default function ItineraryViewRedesign({
                 ) : isCard ? (
                   <ItineraryCard
                     item={item}
+                    isEditMode={isEditMode}
                     isActive={item.id === activeItemId}
                     onClick={() => onEditItem?.(item)}
                     mapIndex={mapIndex}
@@ -234,61 +369,77 @@ export default function ItineraryViewRedesign({
                 />
               )}
 
-              {/* Gap Suggestion (for gaps > 2 hours) */}
-              {gap && gap >= 120 && (
-                <GapSuggestion
-                  gapMinutes={gap}
-                  hotelName={nightStayHotel?.title}
-                  hotelHasPool={nightStayHotel?.parsedNotes?.tags?.includes('pool')}
-                  hotelHasSpa={nightStayHotel?.parsedNotes?.tags?.includes('spa')}
-                  hotelHasGym={nightStayHotel?.parsedNotes?.tags?.includes('gym')}
-                  onAddActivity={
-                    onAddActivity
-                      ? (type) => onAddActivity(selectedDay.dayNumber, type)
-                      : undefined
-                  }
-                  onAddCustom={
-                    onAddItem
-                      ? () => onAddItem(selectedDay.dayNumber)
-                      : undefined
-                  }
-                />
+                  {/* Gap Suggestion (for gaps > 2 hours) - shown before travel time */}
+                  {gap && gap >= 120 && (
+                    <GapSuggestion
+                      gapMinutes={gap}
+                      hotelName={nightStayHotel?.title}
+                      hotelHasPool={nightStayHotel?.parsedNotes?.tags?.includes('pool')}
+                      hotelHasSpa={nightStayHotel?.parsedNotes?.tags?.includes('spa')}
+                      hotelHasGym={nightStayHotel?.parsedNotes?.tags?.includes('gym')}
+                      onAddActivity={
+                        onAddActivity
+                          ? (type) => onAddActivity(selectedDay.dayNumber, type)
+                          : undefined
+                      }
+                      onAddCustom={
+                        onAddItem
+                          ? () => onAddItem(selectedDay.dayNumber)
+                          : undefined
+                      }
+                    />
+                  )}
+
+                  {/* Compact gap indicator (for 30min - 2h gaps) - shown before travel time */}
+                  {gap && gap >= 30 && gap < 120 && (
+                    <CompactGapIndicator
+                      gapMinutes={gap}
+                      onClick={onAddItem ? () => onAddItem(selectedDay.dayNumber) : undefined}
+                    />
+                  )}
+
+                  {/* Travel Connector - shown after free time gap */}
+                  {travelTime && index < sortedItems.length - 1 && (
+                    <InteractiveTravelConnector
+                      durationMinutes={travelTime.durationMinutes}
+                      distanceKm={travelTime.distanceKm}
+                      mode={travelTime.mode}
+                      onModeChange={
+                        onUpdateTravelMode
+                          ? (mode) => onUpdateTravelMode(item.id, mode)
+                          : undefined
+                      }
+                    />
+                  )}
+                </React.Fragment>
+              ))}
+
+              {/* Add Stop Button */}
+              {onAddItem && (
+                <div className="pt-4">
+                  <button
+                    onClick={() => onAddItem(selectedDay.dayNumber)}
+                    className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-700 rounded-xl text-xs text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white hover:border-stone-300 dark:hover:border-gray-600 transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    Add stop
+                  </button>
+                </div>
               )}
 
-              {/* Compact gap indicator (for 30min - 2h gaps) */}
-              {gap && gap >= 30 && gap < 120 && (
-                <CompactGapIndicator
-                  gapMinutes={gap}
-                  onClick={onAddItem ? () => onAddItem(selectedDay.dayNumber) : undefined}
-                />
+              {/* Night Stay Indicator */}
+              {nightStayHotel && (
+                <div className="pt-6">
+                  <NightStayRow
+                    hotelName={nightStayHotel.title || 'Hotel'}
+                    hasBreakfast={nightStayHotel.parsedNotes?.breakfastIncluded}
+                    onClick={() => onEditItem?.(nightStayHotel)}
+                  />
+                </div>
               )}
-            </React.Fragment>
-          ))}
-
-          {/* Add Stop Button */}
-          {onAddItem && (
-            <div className="pt-4">
-              <button
-                onClick={() => onAddItem(selectedDay.dayNumber)}
-                className="w-full py-3 border border-dashed border-stone-200 dark:border-gray-700 rounded-xl text-xs text-stone-400 dark:text-gray-500 hover:text-stone-900 dark:hover:text-white hover:border-stone-300 dark:hover:border-gray-600 transition-colors flex items-center justify-center gap-1.5"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                Add stop
-              </button>
             </div>
-          )}
-
-          {/* Night Stay Indicator */}
-          {nightStayHotel && (
-            <div className="pt-6">
-              <NightStayRow
-                hotelName={nightStayHotel.title || 'Hotel'}
-                hasBreakfast={nightStayHotel.parsedNotes?.breakfastIncluded}
-                onClick={() => onEditItem?.(nightStayHotel)}
-              />
-            </div>
-          )}
-        </div>
+          </SortableContext>
+        </DndContext>
       ) : (
         /* Empty State */
         <div className="py-16 text-center">

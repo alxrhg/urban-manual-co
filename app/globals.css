@@ -72,6 +72,10 @@
 }
 
 @import "tailwindcss";
+
+/* Configure dark mode to use class selector (for next-themes compatibility) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @import "../styles/layout.css";
 @import "../styles/image-system.css";
 @import "../styles/tokens.css";
@@ -381,7 +385,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 43 27% 92%; /* PANTONE 11-4201 Cloud Dancer #F0EDE5 */
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
@@ -415,7 +419,7 @@
   }
 
   .dark {
-    --background: 0 0% 9%;
+    --background: 43 20% 10%; /* Warm dark to complement Cloud Dancer #1C1A17 */
     --foreground: 0 0% 98%;
     --card: 0 0% 9%;
     --card-foreground: 0 0% 98%;

@@ -11,6 +11,8 @@ interface Toast {
   success: (message: string) => void;
   error: (message: string) => void;
   warning: (message: string) => void;
+  /** ZERO JANK POLICY: Use this for caught errors to ensure no raw technical details are exposed */
+  safeError?: (error: unknown, fallbackMessage?: string) => void;
 }
 
 interface DestinationFormProps {
@@ -223,9 +225,14 @@ export function DestinationForm({
 
       const data = await res.json();
       return data.url;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Upload error:', error);
-      toast.error(`Image upload failed: ${error.message}`);
+      // ZERO JANK POLICY: Never expose raw error messages to users
+      if (toast.safeError) {
+        toast.safeError(error, 'Image upload failed. Please try again.');
+      } else {
+        toast.error('Image upload failed. Please try again.');
+      }
       return null;
     } finally {
       setUploadingImage(false);
@@ -287,9 +294,14 @@ export function DestinationForm({
       }
 
       toast.success(`Fetched data from Google Places! Name: ${data.name}, City: ${data.city}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Fetch Google error:', error);
-      toast.error(`Failed to fetch from Google: ${error.message}`);
+      // ZERO JANK POLICY: Never expose raw error messages to users
+      if (toast.safeError) {
+        toast.safeError(error, 'Unable to fetch place details. Please try again.');
+      } else {
+        toast.error('Unable to fetch place details. Please try again.');
+      }
     } finally {
       setFetchingGoogle(false);
     }

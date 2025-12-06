@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { MapPin } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
+import { getDestinationAltText } from './ui/DestinationImage';
 
 interface HorizontalDestinationCardProps {
   destination: Destination;
@@ -43,14 +44,15 @@ export const HorizontalDestinationCard = memo(function HorizontalDestinationCard
         {destination.image || destination.image_thumbnail ? (
           <Image
             src={destination.image_thumbnail || destination.image!}
-            alt={destination.name}
+            alt={getDestinationAltText(destination)}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             sizes="80px"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <MapPin className="h-8 w-8 text-gray-400 dark:text-gray-600" />
+            <MapPin className="h-8 w-8 text-gray-400 dark:text-gray-600" aria-hidden="true" />
+            <span className="sr-only">{getDestinationAltText(destination)}</span>
           </div>
         )}
       </div>

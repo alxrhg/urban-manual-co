@@ -3,6 +3,7 @@
 import Image from 'next/image';
 import { Destination } from '@/types/destination';
 import { DestinationBadges } from './DestinationBadges';
+import { getDestinationAltText } from './ui/DestinationImage';
 
 interface LovablyDestinationCardProps {
   destination: Destination;
@@ -40,7 +41,7 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
         <div className="absolute inset-0">
           <Image
             src={destination.image}
-            alt={destination.name}
+            alt={getDestinationAltText(destination)}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 50vw, 25vw"
@@ -49,7 +50,8 @@ export function LovablyDestinationCard({ destination, borderColor, onClick, show
         </div>
       ) : (
         <div className="absolute inset-0 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-          <span className="text-4xl opacity-20">📍</span>
+          <span className="text-4xl opacity-20" aria-hidden="true">📍</span>
+          <span className="sr-only">{getDestinationAltText(destination)}</span>
         </div>
       )}
 

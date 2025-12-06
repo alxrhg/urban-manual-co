@@ -1,43 +1,70 @@
 # Sanity Webhook Setup Guide
 
-Quick guide to set up automatic bidirectional sync between Sanity and Supabase.
+Complete guide to set up automatic sync between Sanity CMS and Supabase with draft/publish workflow, conflict detection, and audit logging.
+
+## Features
+
+- **Draft/Publish Workflow**: Only published content syncs to production
+- **Conflict Detection**: Identifies when both systems are edited simultaneously
+- **Audit Logging**: Full history of all content changes
+- **Expanded Schema**: 40+ fields mapped between Sanity and Supabase
+- **Bi-directional Mapping**: Editorial fields sync from Sanity, enrichment fields sync from Supabase
 
 ## Prerequisites
 
-✅ Your application is deployed (webhook needs a public URL)  
-✅ Environment variables are configured  
-✅ Initial sync from Supabase to Sanity is complete
+- ✅ Application deployed (webhook needs a public URL)
+- ✅ Environment variables configured
+- ✅ Initial sync from Supabase to Sanity complete
+- ✅ Audit log migration applied (`438_content_audit_log.sql`)
+
+## Environment Variables
+
+Add these to your `.env.local` and production environment:
+
+```bash
+# Required for webhook
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Required for fetching documents
+NEXT_PUBLIC_SANITY_PROJECT_ID=your-project-id
+NEXT_PUBLIC_SANITY_DATASET=production
+SANITY_API_READ_TOKEN=your-api-token
+
+# Recommended for security
+SANITY_WEBHOOK_SECRET=your-secret-here  # Generate with: openssl rand -hex 32
+```
 
 ## Step-by-Step Setup
 
 ### 1. Get Your Webhook URL
 
-Your webhook endpoint is:
+**Production:**
 ```
-https://your-domain.com/api/sanity-webhook
+https://www.urbanmanual.co/api/sanity-webhook
 ```
 
-For local testing, use a tunneling service:
+**Local Testing (with ngrok):**
 ```bash
 # Install ngrok
 npm install -g ngrok
 
-# Start your dev server
+# Start dev server
 npm run dev
 
-# In another terminal, create tunnel
+# Create tunnel (in another terminal)
 ngrok http 3000
 
-# Use the ngrok URL: https://your-ngrok-url.ngrok.io/api/sanity-webhook
+# Use: https://your-ngrok-url.ngrok.io/api/sanity-webhook
 ```
 
-### 2. Generate Webhook Secret (Optional but Recommended)
+### 2. Generate Webhook Secret
 
 ```bash
-# Generate a secure random secret
+# Generate secure random secret
 openssl rand -hex 32
 
-# Add to your .env.local
+# Add to .env.local
 SANITY_WEBHOOK_SECRET=your-generated-secret-here
 ```
 
@@ -55,49 +82,182 @@ SANITY_WEBHOOK_SECRET=your-generated-secret-here
 3. **Configure Webhook**
    ```
    Name: Sync to Supabase
-   URL: https://your-domain.com/api/sanity-webhook
+   URL: https://www.urbanmanual.co/api/sanity-webhook
    Dataset: production
+
    Trigger on:
      ☑ Document created
      ☑ Document updated
      ☐ Document deleted (optional)
+
    Filter: _type == "destination"
+
    HTTP method: POST
-   API version: v2023-10-01 (or latest)
-   Secret: [paste your SANITY_WEBHOOK_SECRET if configured]
+   API version: v2023-10-01
+
+   Secret: [paste your SANITY_WEBHOOK_SECRET]
    ```
 
 4. **Save the webhook**
 
-### 4. Test the Webhook
+### 4. Apply Audit Log Migration
 
-1. **Make a test change in Sanity Studio**
-   - Go to `/studio`
-   - Edit a destination's description
-   - Save the changes
+```bash
+# Run the migration in Supabase
+npx supabase db push
 
-2. **Check webhook delivery**
-   - Go back to Sanity Manage → API → Webhooks
-   - Click on your webhook
-   - Check "Recent deliveries" tab
-   - Should show successful delivery (200 status)
+# Or apply manually in Supabase SQL editor:
+# Copy contents of supabase/migrations/438_content_audit_log.sql
+```
 
-3. **Verify in Supabase**
-   - Check your Supabase `destinations` table
-   - The `description` field should be updated
-   - `updated_at` should reflect the change time
+### 5. Test the Webhook
 
-### 5. Monitor Webhook Activity
+**Verify endpoint is active:**
+```bash
+curl https://www.urbanmanual.co/api/sanity-webhook
+```
 
-**In Sanity:**
-- Webhook dashboard shows delivery status
-- Failed deliveries are retried automatically
-- Check logs for any errors
+Expected response:
+```json
+{
+  "status": "active",
+  "message": "Sanity webhook endpoint is ready",
+  "configuration": {
+    "signatureVerification": true,
+    "supabaseConfigured": true,
+    "sanityConfigured": true
+  },
+  "features": [
+    "Draft/publish workflow support",
+    "Conflict detection",
+    "Audit logging",
+    "Expanded field mapping (40+ fields)"
+  ]
+}
+```
 
-**In Your Application:**
-- Check server logs for webhook requests
-- Look for `[Sanity Webhook]` log messages
-- Monitor for any sync errors
+**Test a change:**
+1. Go to `/studio`
+2. Edit a destination
+3. Set status to "Published"
+4. Save changes
+5. Check Sanity Manage → Webhooks → Recent deliveries
+6. Verify data in Supabase
+
+## Publishing Workflow
+
+### Content Statuses
+
+| Status | Syncs to Supabase | Visible on Site |
+|--------|-------------------|-----------------|
+| Draft | ❌ No | ❌ No |
+| In Review | ❌ No | ❌ No |
+| Published | ✅ Yes | ✅ Yes |
+| Scheduled | ❌ No (until scheduled time) | ❌ No |
+| Archived | ❌ No | ❌ No |
+
+### Workflow Steps
+
+1. **Create/Edit in Sanity Studio**
+   - Status defaults to "Draft"
+   - Make your changes
+   - Content stays in Sanity only
+
+2. **Review (Optional)**
+   - Set status to "In Review"
+   - Have team member approve
+
+3. **Publish**
+   - Set status to "Published"
+   - Webhook triggers automatically
+   - Content syncs to Supabase
+   - Changes appear on site immediately
+
+4. **Schedule (Optional)**
+   - Set status to "Scheduled"
+   - Set "Scheduled For" date/time
+   - Cron job publishes at scheduled time
+
+## Field Mapping
+
+### Editorial Fields (Sanity → Supabase)
+
+These fields are edited in Sanity and sync to Supabase:
+
+| Sanity Field | Supabase Column |
+|--------------|-----------------|
+| `name` | `name` |
+| `slug` | `slug` |
+| `category` | `category` |
+| `microDescription` | `micro_description` |
+| `description` | `description` |
+| `city` | `city` |
+| `country` | `country` |
+| `neighborhood` | `neighborhood` |
+| `geopoint.lat/lng` | `latitude`/`longitude` |
+| `michelinStars` | `michelin_stars` |
+| `rating` | `rating` |
+| `priceLevel` | `price_level` |
+| `architect` | `architect` |
+| `website` | `website` |
+| `tags` | `tags` |
+| `crown` | `crown` |
+| ...and more | |
+
+### Enrichment Fields (Supabase → Sanity)
+
+These fields are read-only in Sanity, populated from Supabase:
+
+| Supabase Column | Sanity Field |
+|-----------------|--------------|
+| `place_id` | `placeId` |
+| `user_ratings_total` | `userRatingsTotal` |
+| `opening_hours_json` | `openingHours` |
+| `views_count` | `viewsCount` |
+| `saves_count` | `savesCount` |
+| `last_enriched_at` | `lastEnrichedAt` |
+
+## Conflict Detection
+
+When both Sanity and Supabase are edited within 5 minutes, the webhook detects a conflict:
+
+1. **Conflict is logged** to `content_audit_log` table
+2. **Sanity wins** (editorial source of truth)
+3. **Review conflicts** in admin dashboard or SQL:
+
+```sql
+-- View recent conflicts
+SELECT * FROM get_recent_conflicts(24, 100);
+
+-- View history for a destination
+SELECT * FROM get_destination_history('destination-slug', 50);
+```
+
+## Audit Log
+
+All changes are logged to `content_audit_log`:
+
+```sql
+-- View recent changes
+SELECT * FROM content_audit_log
+ORDER BY created_at DESC
+LIMIT 100;
+
+-- View changes by action
+SELECT * FROM content_audit_log
+WHERE action = 'update'
+ORDER BY created_at DESC;
+```
+
+### Log Actions
+
+| Action | Description |
+|--------|-------------|
+| `create` | New destination created in Supabase |
+| `update` | Destination updated |
+| `delete` | Destination deleted |
+| `unpublish` | Status changed from published |
+| `conflict` | Conflict detected during sync |
 
 ## Troubleshooting
 
@@ -105,93 +265,77 @@ SANITY_WEBHOOK_SECRET=your-generated-secret-here
 
 **Check:**
 - ✅ Webhook URL is correct and accessible
-- ✅ Filter matches your document type (`_type == "destination"`)
-- ✅ Trigger events are enabled (created, updated)
-- ✅ Webhook is enabled (not paused)
+- ✅ Filter matches document type (`_type == "destination"`)
+- ✅ Trigger events enabled (created, updated)
+- ✅ Webhook is not paused
 
-**Test webhook endpoint:**
+**Test endpoint:**
 ```bash
-curl https://your-domain.com/api/sanity-webhook
-# Should return: {"message":"Sanity webhook endpoint is active",...}
+curl https://www.urbanmanual.co/api/sanity-webhook
 ```
 
 ### Webhook Receiving but Not Syncing
 
 **Check application logs for:**
-- Missing Supabase credentials
-- Missing Sanity credentials
-- Document mapping errors
-- Database constraint violations
+- `[Sanity Webhook]` messages
+- Missing credentials errors
+- Document status (must be "published")
 
 **Common issues:**
-- Slug mismatch between Sanity and Supabase
-- Missing required fields in Supabase
-- Database permissions issues
+- Status is "draft" - change to "published"
+- Missing required fields
+- Slug mismatch
 
 ### Signature Verification Failing
 
-If you set `SANITY_WEBHOOK_SECRET`:
-- Ensure the secret in Sanity webhook config matches your env variable
-- Secret must be exactly the same in both places
-- Check for extra spaces or encoding issues
+- Ensure secret in Sanity matches `SANITY_WEBHOOK_SECRET`
+- Check for extra spaces
+- Regenerate secret if needed
 
-### Rate Limiting
+### Content Not Appearing on Site
 
-Sanity webhooks have rate limits based on your plan:
-- **Free tier**: Limited requests
-- **Team/Enterprise**: Higher limits
-
-If you hit limits:
-- Reduce webhook frequency
-- Use manual sync script for bulk updates
-- Consider upgrading your Sanity plan
+1. Check status is "Published"
+2. Check webhook delivery in Sanity Manage
+3. Verify data in Supabase
+4. Check for cached data (may need to wait for revalidation)
 
 ## Security Best Practices
 
-1. **Use Webhook Secret**
-   - Always set `SANITY_WEBHOOK_SECRET`
-   - Verify signatures in production
-   - Rotate secrets periodically
+1. **Use Webhook Secret** - Always set `SANITY_WEBHOOK_SECRET`
+2. **Rotate Secrets** - Change periodically
+3. **Monitor Logs** - Check audit log for unusual activity
+4. **Restrict Access** - Only admins should access audit logs
 
-2. **Restrict Webhook Access**
-   - Use environment-specific webhooks
-   - Don't expose webhook URL publicly
-   - Monitor for unauthorized access
+## Files Reference
 
-3. **Validate Data**
-   - Webhook validates document structure
-   - Only processes `destination` type documents
-   - Skips invalid or malformed documents
+| File | Purpose |
+|------|---------|
+| `sanity/schemas/destination.ts` | Expanded Sanity schema (40+ fields) |
+| `lib/sanity/field-mapping.ts` | Bi-directional field mapping |
+| `app/api/sanity-webhook/route.ts` | Webhook endpoint |
+| `supabase/migrations/438_content_audit_log.sql` | Audit log table |
 
-## Advanced Configuration
+## Related Commands
 
-### Filter Specific Fields
+```bash
+# Manual sync (Supabase → Sanity)
+npm run sanity:sync
 
-Only sync when specific fields change:
+# Reverse sync (Sanity → Supabase)
+npm run sanity:sync:reverse
+
+# Check sync status
+curl https://www.urbanmanual.co/api/sanity-webhook
 ```
-Filter: _type == "destination" && defined(description)
-```
-
-### Multiple Webhooks
-
-Set up separate webhooks for:
-- Production dataset → Production Supabase
-- Development dataset → Development Supabase
-
-### Webhook Retry Logic
-
-Sanity automatically retries failed webhooks:
-- Immediate retry for 5xx errors
-- Exponential backoff for persistent failures
-- Manual retry available in webhook dashboard
 
 ## Next Steps
 
 After webhook is set up:
+
 1. ✅ Test with a few document changes
-2. ✅ Monitor webhook delivery status
-3. ✅ Verify data syncs correctly
-4. ✅ Set up alerts for webhook failures (optional)
+2. ✅ Verify draft → published workflow
+3. ✅ Monitor webhook delivery status
+4. ✅ Check audit logs are being created
+5. ✅ Set up alerts for webhook failures (optional)
 
-Your bidirectional sync is now active! 🎉
-
+Your CMS sync is now active with full publishing workflow! 🎉

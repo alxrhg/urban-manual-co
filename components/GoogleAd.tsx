@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface GoogleAdProps {
   slot: string;
@@ -21,13 +22,17 @@ export function GoogleAd({
   className = '',
   responsive = true
 }: GoogleAdProps) {
+  const { user } = useAuth();
   const adRef = useRef<HTMLModElement>(null);
   const initializedRef = useRef(false);
 
   useEffect(() => {
+    // Don't initialize ads for logged-in users
+    if (user) return;
+
     // Prevent double initialization (React Strict Mode, re-renders)
     if (initializedRef.current) return;
-    
+
     // Wait for DOM element to be ready
     if (!adRef.current) {
       // Retry after a short delay if element isn't ready yet
@@ -55,7 +60,7 @@ export function GoogleAd({
       }, 100);
       return () => clearTimeout(timer);
     }
-    
+
     // Check if ad is already initialized by Google
     if (adRef.current.getAttribute('data-ad-status')) {
       initializedRef.current = true;
@@ -74,7 +79,12 @@ export function GoogleAd({
         console.error('AdSense error:', err);
       }
     }
-  }, []);
+  }, [user]);
+
+  // Hide ads for logged-in users
+  if (user) {
+    return null;
+  }
 
   return (
     <div className={`overflow-hidden ${className}`}>
@@ -99,14 +109,18 @@ export function GoogleAd({
  * Automatically hides if no ad content is available
  */
 export function DisplayAd({ slot, className = '' }: { slot: string; className?: string }) {
+  const { user } = useAuth();
   const adRef = useRef<HTMLModElement>(null);
   const initializedRef = useRef(false);
   const [shouldShow, setShouldShow] = useState(true);
 
   useEffect(() => {
+    // Don't initialize ads for logged-in users
+    if (user) return;
+
     // Prevent double initialization (React Strict Mode, re-renders)
     if (initializedRef.current) return;
-    
+
     // Wait for DOM element to be ready
     if (!adRef.current) {
       // Retry after a short delay if element isn't ready yet
@@ -134,7 +148,7 @@ export function DisplayAd({ slot, className = '' }: { slot: string; className?: 
       }, 100);
       return () => clearTimeout(timer);
     }
-    
+
     // Check if ad is already initialized by Google
     if (adRef.current.getAttribute('data-ad-status')) {
       initializedRef.current = true;
@@ -194,7 +208,12 @@ export function DisplayAd({ slot, className = '' }: { slot: string; className?: 
         setShouldShow(false);
       }
     }
-  }, []);
+  }, [user]);
+
+  // Hide ads for logged-in users
+  if (user) {
+    return null;
+  }
 
   // Don't render if ad didn't load
   if (!shouldShow) {
@@ -227,14 +246,18 @@ export function DisplayAd({ slot, className = '' }: { slot: string; className?: 
  * Automatically hides if no ad content is available
  */
 export function MultiplexAd({ slot, className = '' }: { slot: string; className?: string }) {
+  const { user } = useAuth();
   const adRef = useRef<HTMLModElement>(null);
   const initializedRef = useRef(false);
   const [shouldShow, setShouldShow] = useState(true);
 
   useEffect(() => {
+    // Don't initialize ads for logged-in users
+    if (user) return;
+
     // Prevent double initialization (React Strict Mode, re-renders)
     if (initializedRef.current) return;
-    
+
     // Wait for DOM element to be ready
     if (!adRef.current) {
       // Retry after a short delay if element isn't ready yet
@@ -262,7 +285,7 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
       }, 100);
       return () => clearTimeout(timer);
     }
-    
+
     // Check if ad is already initialized by Google
     if (adRef.current.getAttribute('data-ad-status')) {
       initializedRef.current = true;
@@ -322,7 +345,12 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
         setShouldShow(false);
       }
     }
-  }, []);
+  }, [user]);
+
+  // Hide ads for logged-in users
+  if (user) {
+    return null;
+  }
 
   // Don't render if ad didn't load
   if (!shouldShow) {
@@ -351,6 +379,13 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
  * In-feed ad that matches the destination card style
  */
 export function InFeedAd({ slot }: { slot: string }) {
+  const { user } = useAuth();
+
+  // Hide ads for logged-in users
+  if (user) {
+    return null;
+  }
+
   return (
     <div className="relative">
       <div className="aspect-square overflow-hidden rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 mb-2">

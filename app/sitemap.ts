@@ -1,6 +1,12 @@
 import { MetadataRoute } from 'next';
 import { supabase } from '@/lib/supabase';
-import { Destination } from '@/types/destination';
+
+interface SitemapDestination {
+  slug: string;
+  city: string;
+  category?: string;
+  last_enriched_at?: string | null;
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Determine base URL based on environment
@@ -12,20 +18,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const currentDate = new Date().toISOString();
 
-  let destinationData: Destination[] = [];
+  let destinationData: SitemapDestination[] = [];
   let cities: string[] = [];
 
   try {
-    // Fetch all destinations and cities
+    // Fetch all destinations with last_enriched_at for accurate lastModified dates
     const { data: destinations, error } = await supabase
       .from('destinations')
-      .select('slug, city, category')
+      .select('slug, city, category, last_enriched_at')
       .order('slug');
 
     if (error) {
       console.warn('Sitemap: Could not fetch destinations from Supabase:', error.message);
     } else {
-      destinationData = (destinations || []) as Destination[];
+      destinationData = (destinations || []) as SitemapDestination[];
       // Get unique cities
       cities = Array.from(new Set(destinationData.map(d => d.city)));
     }
@@ -91,9 +97,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Higher priority for featured destinations (restaurants, cafes, bars)
     const isPrimaryCategory = ['restaurant', 'cafe', 'bar', 'hotel'].includes(dest.category?.toLowerCase() || '');
 
+    // Use last_enriched_at if available, otherwise fall back to current date
+    const lastModified = dest.last_enriched_at
+      ? new Date(dest.last_enriched_at).toISOString()
+      : currentDate;
+
     return {
       url: `${baseUrl}/destination/${dest.slug}`,
-      lastModified: currentDate,
+      lastModified,
       changeFrequency: 'monthly',
       priority: isPrimaryCategory ? 0.75 : 0.65,
     };
