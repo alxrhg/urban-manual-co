@@ -1,11 +1,22 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { Sparkles, Send, Loader2 } from 'lucide-react';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHomepageData } from './HomepageDataProvider';
 
 const FEATURED_CITIES = ['Taipei', 'Tokyo', 'New York', 'London'];
+
+// AI-style rotating placeholders
+const AI_PLACEHOLDERS = [
+  'Ask me anything about travel...',
+  'Where would you like to go?',
+  'Find restaurants, hotels, or hidden gems...',
+  'Try: "best cafes in Tokyo"',
+  'Try: "romantic dinner in Paris"',
+  'Try: "budget hotels near me"',
+];
 
 /**
  * Interactive Hero Component - Apple Design System
@@ -27,10 +38,38 @@ export default function InteractiveHero() {
     setSelectedCategory,
     setSearchTerm,
     filteredDestinations,
+    openAIChat,
   } = useHomepageData();
 
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [showAllCities, setShowAllCities] = useState(false);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Rotate placeholders when input is empty and not focused
+  useEffect(() => {
+    if (localSearchTerm.trim() || isFocused) return;
+
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % AI_PLACEHOLDERS.length);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [localSearchTerm, isFocused]);
+
+  // Keyboard shortcut: Press '/' to focus search
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
 
   // Get user's first name for greeting
   const userName = user?.user_metadata?.name?.split(' ')[0] ||
@@ -99,32 +138,48 @@ export default function InteractiveHero() {
                 : `${destinationCount}+ curated destinations worldwide`}
           </p>
 
-          {/* Search Input - Apple-style rounded search */}
+          {/* Search Input - Chat-style AI search */}
           <form onSubmit={handleSearch} className="mb-10">
             <div className="relative max-w-xl">
+              {/* AI indicator */}
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                <Sparkles className={`w-4 h-4 transition-colors ${isFocused ? 'text-purple-500' : 'text-gray-400'}`} />
+              </div>
               <input
+                ref={inputRef}
                 type="text"
                 value={localSearchTerm}
                 onChange={(e) => setLocalSearchTerm(e.target.value)}
-                placeholder="Search destinations..."
-                className="w-full h-[52px] pl-5 pr-12 text-[15px] bg-gray-100/80 dark:bg-white/[0.08]
-                           border-0 rounded-[14px] text-gray-900 dark:text-white
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                placeholder={AI_PLACEHOLDERS[placeholderIndex]}
+                className="w-full h-[56px] pl-11 pr-14 text-[15px] bg-gray-100/80 dark:bg-white/[0.08]
+                           border-0 rounded-[16px] text-gray-900 dark:text-white
                            placeholder:text-gray-400 dark:placeholder:text-gray-500
-                           focus:outline-none focus:ring-2 focus:ring-gray-900/10 dark:focus:ring-white/20
+                           focus:outline-none focus:ring-2 focus:ring-purple-500/30 dark:focus:ring-purple-500/40
+                           focus:bg-white dark:focus:bg-white/[0.12]
                            transition-all duration-200"
               />
               <button
                 type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center
-                           rounded-[10px] bg-gray-900 dark:bg-white text-white dark:text-gray-900
-                           hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors duration-200"
+                disabled={isSearching}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center
+                           rounded-[12px] bg-gradient-to-r from-purple-500 to-pink-500
+                           text-white shadow-lg shadow-purple-500/25
+                           hover:from-purple-600 hover:to-pink-600
+                           disabled:opacity-50 transition-all duration-200"
                 aria-label="Search"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                {isSearching ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </button>
             </div>
+            <p className="mt-2 text-[12px] text-gray-400 dark:text-gray-500">
+              Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">/</kbd> to focus • Enter to search
+            </p>
           </form>
         </div>
       </div>

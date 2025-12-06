@@ -42,6 +42,10 @@ interface HomepageDataContextType {
   // AI Chat state
   isAIChatOpen: boolean;
 
+  // Advanced filters
+  michelinOnly: boolean;
+  crownOnly: boolean;
+
   // Actions
   setCurrentPage: (page: number) => void;
   setSelectedCity: (city: string) => void;
@@ -53,6 +57,8 @@ interface HomepageDataContextType {
   closeDrawer: () => void;
   openAIChat: () => void;
   closeAIChat: () => void;
+  setMichelinOnly: (value: boolean) => void;
+  setCrownOnly: (value: boolean) => void;
 }
 
 const HomepageDataContext = createContext<HomepageDataContextType | null>(null);
@@ -125,6 +131,10 @@ function HomepageDataProviderInner({
 
   // AI Chat state
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+
+  // Advanced filters
+  const [michelinOnly, setMichelinOnly] = useState(false);
+  const [crownOnly, setCrownOnly] = useState(false);
 
   // Initialize view mode from URL
   useEffect(() => {
@@ -232,8 +242,20 @@ function HomepageDataProviderInner({
       );
     }
 
+    // Filter by Michelin stars
+    if (michelinOnly) {
+      filtered = filtered.filter(d =>
+        d.michelin_stars && d.michelin_stars > 0
+      );
+    }
+
+    // Filter by Crown (Editor's Pick)
+    if (crownOnly) {
+      filtered = filtered.filter(d => d.crown === true);
+    }
+
     return filtered;
-  }, [destinations, selectedCity, selectedCategory, searchTerm]);
+  }, [destinations, selectedCity, selectedCategory, searchTerm, michelinOnly, crownOnly]);
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
@@ -247,13 +269,15 @@ function HomepageDataProviderInner({
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedCity, selectedCategory, searchTerm]);
+  }, [selectedCity, selectedCategory, searchTerm, michelinOnly, crownOnly]);
 
   // Clear all filters
   const clearFilters = useCallback(() => {
     setSelectedCity('');
     setSelectedCategory('');
     setSearchTerm('');
+    setMichelinOnly(false);
+    setCrownOnly(false);
     setCurrentPage(1);
   }, []);
 
@@ -304,6 +328,8 @@ function HomepageDataProviderInner({
     selectedDestination,
     isDrawerOpen,
     isAIChatOpen,
+    michelinOnly,
+    crownOnly,
     setCurrentPage,
     setSelectedCity,
     setSelectedCategory,
@@ -314,6 +340,8 @@ function HomepageDataProviderInner({
     closeDrawer,
     openAIChat,
     closeAIChat,
+    setMichelinOnly,
+    setCrownOnly,
   };
 
   return (

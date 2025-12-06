@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Map, LayoutGrid, Plus, Globe, Loader2, X, Sparkles } from 'lucide-react';
+import { Map, LayoutGrid, Plus, Globe, Loader2, X, SlidersHorizontal, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -24,11 +24,29 @@ export default function NavigationBar() {
     selectedCategory,
     searchTerm,
     clearFilters,
-    openAIChat,
+    filteredDestinations,
+    michelinOnly,
+    crownOnly,
+    setMichelinOnly,
+    setCrownOnly,
   } = useHomepageData();
   const [creatingTrip, setCreatingTrip] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   const hasFilters = selectedCity || selectedCategory || searchTerm;
+  const hasAdvancedFilters = michelinOnly || crownOnly;
+
+  // Close filter dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setShowFilters(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Handle create trip
   const handleCreateTrip = useCallback(async () => {
@@ -87,18 +105,84 @@ export default function NavigationBar() {
 
         {/* Right side - Actions */}
         <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
-          {/* AI Search - Apple-style gradient button */}
-          <button
-            onClick={openAIChat}
-            className="flex h-[38px] flex-shrink-0 items-center justify-center gap-2 rounded-full
-                       bg-gradient-to-r from-purple-500 to-pink-500 px-4
-                       text-[13px] font-medium text-white
-                       hover:from-purple-600 hover:to-pink-600
-                       active:scale-[0.98] transition-all duration-200"
-          >
-            <Sparkles className="h-[15px] w-[15px]" />
-            <span className="hidden sm:inline">AI Search</span>
-          </button>
+          {/* Filters Button with Dropdown */}
+          <div ref={filterRef} className="relative">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex h-[38px] flex-shrink-0 items-center justify-center gap-2 rounded-full
+                         border px-4 text-[13px] font-medium transition-all duration-200
+                         active:scale-[0.98] ${
+                           hasAdvancedFilters
+                             ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                             : 'border-gray-200/80 dark:border-white/[0.12] bg-white dark:bg-white/[0.06] text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.1]'
+                         }`}
+            >
+              <SlidersHorizontal className="h-[15px] w-[15px]" />
+              <span className="hidden sm:inline">Filters</span>
+              {hasAdvancedFilters && (
+                <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-white dark:bg-gray-900 text-[11px] font-semibold text-gray-900 dark:text-white">
+                  {(michelinOnly ? 1 : 0) + (crownOnly ? 1 : 0)}
+                </span>
+              )}
+            </button>
+
+            {/* Filter Dropdown */}
+            {showFilters && (
+              <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1c1c1e] shadow-xl z-50 overflow-hidden">
+                <div className="p-4">
+                  <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white mb-4">
+                    Filter Destinations
+                  </h3>
+
+                  {/* Michelin Stars */}
+                  <label className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/10 cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <Star className="h-4 w-4 text-amber-500" />
+                      <span className="text-[14px] text-gray-700 dark:text-gray-300">Michelin Starred</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={michelinOnly}
+                      onChange={(e) => setMichelinOnly(e.target.checked)}
+                      className="h-5 w-5 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                    />
+                  </label>
+
+                  {/* Crown */}
+                  <label className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/10 cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <span className="text-amber-500">👑</span>
+                      <span className="text-[14px] text-gray-700 dark:text-gray-300">Editor's Pick</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={crownOnly}
+                      onChange={(e) => setCrownOnly(e.target.checked)}
+                      className="h-5 w-5 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                    />
+                  </label>
+
+                  {/* Result count */}
+                  <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-4">
+                    {filteredDestinations.length} destinations match
+                  </p>
+
+                  {/* Clear button */}
+                  {hasAdvancedFilters && (
+                    <button
+                      onClick={() => {
+                        setMichelinOnly(false);
+                        setCrownOnly(false);
+                      }}
+                      className="mt-3 w-full py-2 text-[13px] font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* View Toggle - Apple-style segmented control look */}
           <button
