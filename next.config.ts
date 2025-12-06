@@ -10,7 +10,8 @@ const cspDirectives = [
   // More granular control for script elements (separate from inline scripts)
   "script-src-elem 'self' 'unsafe-inline' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "img-src 'self' data: blob: https://*",
+  // Restrict img-src to known domains instead of all HTTPS
+  "img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in https://images.unsplash.com https://guide.michelin.com https://cdn.prod.website-files.com https://framerusercontent.com https://*.framerusercontent.com https://*.webflow.com https://*.public.blob.vercel-storage.com https://maps.googleapis.com https://maps.gstatic.com https://www.google.com https://www.gstatic.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://cdn.jsdelivr.net https://googleads.g.doubleclick.net https://*.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://*.api.sanity.io https://*.sentry.io https://*.ingest.sentry.io",
   "worker-src 'self' blob:",
