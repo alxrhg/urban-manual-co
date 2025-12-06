@@ -41,14 +41,16 @@ interface UseCreditsReturn {
  * }
  */
 export function useCredits(includeHistory = false): UseCreditsReturn {
-  const { user, isAuthenticated } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [credits, setCredits] = useState<Credits | null>(null);
   const [history, setHistory] = useState<CreditUsageItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCredits = useCallback(async () => {
-    if (!isAuthenticated || !user) {
+    if (authLoading) return;
+
+    if (!user) {
       setCredits(null);
       setHistory([]);
       setLoading(false);
@@ -86,7 +88,7 @@ export function useCredits(includeHistory = false): UseCreditsReturn {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user, includeHistory]);
+  }, [authLoading, user, includeHistory]);
 
   useEffect(() => {
     fetchCredits();
