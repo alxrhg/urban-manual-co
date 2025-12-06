@@ -140,10 +140,9 @@ export default function NewHomePageClient({
       {/* Destination Drawer */}
       {isDrawerOpen && selectedDestination && (
         <DestinationDrawer
+          destination={selectedDestination}
           isOpen={isDrawerOpen}
           onClose={handleDrawerClose}
-          slug={selectedDestination.slug}
-          initialData={selectedDestination}
         />
       )}
     </div>
