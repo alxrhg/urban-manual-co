@@ -595,12 +595,14 @@ export default function TripInteractiveMap({
       markersRef.current.push(advancedMarker);
     });
 
-    // Draw polylines for each day
+    // Draw polylines for each day (excluding flight markers - those are air routes, not ground routes)
     Object.entries(markersByDay).forEach(([dayNumber, dayMarkers]) => {
-      if (dayMarkers.length < 2) return;
+      // Filter out flight markers from polylines
+      const groundMarkers = dayMarkers.filter((m) => m.item.parsedNotes?.type !== 'flight');
+      if (groundMarkers.length < 2) return;
 
       const colors = DAY_COLORS[(parseInt(dayNumber) - 1) % DAY_COLORS.length];
-      const path = dayMarkers.map((m) => ({ lat: m.lat, lng: m.lng }));
+      const path = groundMarkers.map((m) => ({ lat: m.lat, lng: m.lng }));
 
       const polyline = new google.maps.Polyline({
         path,
