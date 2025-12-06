@@ -8,6 +8,7 @@ import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useAuth } from '@/contexts/AuthContext';
 import { Destination } from '@/types/destination';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from './CardStyles';
+import { getDestinationAltText } from './ui/DestinationImage';
 
 function capitalizeCity(city: string): string {
   return city
@@ -122,14 +123,15 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
               {item.image ? (
                 <Image
                   src={item.image}
-                  alt={item.name}
+                  alt={getDestinationAltText(item as Destination)}
                   fill
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                  <MapPin className="h-12 w-12 opacity-20" />
+                  <MapPin className="h-12 w-12 opacity-20" aria-hidden="true" />
+                  <span className="sr-only">{getDestinationAltText(item as Destination)}</span>
                 </div>
               )}
               {item.michelin_stars && item.michelin_stars > 0 && (

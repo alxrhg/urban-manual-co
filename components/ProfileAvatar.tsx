@@ -26,10 +26,10 @@ export default function ProfileAvatar({ avatarUrl, initials, onUpload }: {
         onClick={() => setOpen(true)}
       >
         {avatarUrl && !imageError ? (
-          <Image 
-            src={avatarUrl} 
-            alt="" 
-            fill 
+          <Image
+            src={avatarUrl}
+            alt={initials ? `${initials}'s profile photo` : "Profile photo"}
+            fill
             className="object-cover um-image"
             onError={() => setImageError(true)}
           />

@@ -111,7 +111,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
                   <div className="absolute inset-0 opacity-20">
                     <img
                       src={imageUrl}
-                      alt=""
+                      alt={`Background image for ${title}`}
                       className="w-full h-full object-cover"
                     />
                   </div>

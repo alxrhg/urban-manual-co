@@ -116,7 +116,7 @@ function SortableBucketItem({
         {/* Thumbnail or Icon */}
         {item.thumbnail ? (
           <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-stone-100 dark:bg-gray-800">
-            <img src={item.thumbnail} alt="" className="w-full h-full object-cover" />
+            <img src={item.thumbnail} alt={`Thumbnail for ${item.title}`} className="w-full h-full object-cover" />
           </div>
         ) : (
           <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
