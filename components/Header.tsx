@@ -120,7 +120,7 @@ export function Header() {
           <TooltipTrigger asChild>
             <button
               onClick={() => setIsOnboardingOpen(true)}
-              className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-500 text-white rounded-full text-sm font-medium hover:opacity-90 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+              className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
               aria-label="Get started with Urban Manual"
             >
               <Sparkles className="w-4 h-4" />
