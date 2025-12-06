@@ -2079,15 +2079,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 </div>
               )}
 
-              {/* Rating - Bold rating */}
-              {(enrichedData?.rating || destination.rating) && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">
-                    {(enrichedData?.rating || destination.rating).toFixed(1)}
-                  </span>
-                </div>
-              )}
-
               {/* Tags - Small pills */}
               {destination.tags && Array.isArray(destination.tags) && destination.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
@@ -2288,14 +2279,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 )}
               </DropdownMenu>
 
-              <button
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                onClick={handleShare}
-              >
-                <Share2 className="h-3 w-3" />
-                {copied ? 'Copied!' : 'Share'}
-              </button>
-
               {/* Visited Button with Dropdown */}
               {user && (
                 <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
@@ -2339,21 +2322,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   )}
                 </DropdownMenu>
               )}
-
-              {destination.slug && destination.slug.trim() ? (
-                <Link
-                  href={`/destination/${destination.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  View Full Page
-                </Link>
-              ) : null}
                   </div>
                 </div>
 
@@ -2515,18 +2483,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               );
             })()}
 
-            {/* Address */}
+            {/* Location & Address */}
             {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.neighborhood || destination.city || destination.country) && (
               <div>
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <div className="text-sm font-medium text-black dark:text-white mb-2">Location</div>
-                    {/* Neighborhood, City, Country - Better organized */}
-                    {((!parentDestination && destination.neighborhood) || destination.city || destination.country) && (
-                      <div className="space-y-1 mb-2">
+                    {/* Show full formatted address if available, otherwise show city/country */}
+                    {enrichedData?.formatted_address ? (
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{enrichedData.formatted_address}</div>
+                    ) : (
+                      <>
                         {!parentDestination && destination.neighborhood && (
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">
                             {destination.neighborhood}
                           </div>
                         )}
@@ -2537,14 +2507,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                             {destination.country && destination.country}
                           </div>
                         )}
-                      </div>
-                    )}
-                    {/* Full Address */}
-                    {enrichedData?.formatted_address && (
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{enrichedData.formatted_address}</div>
-                    )}
-                    {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
-                      <div className="text-xs text-gray-500 dark:text-gray-500">{enrichedData.vicinity}</div>
+                      </>
                     )}
                   </div>
                 </div>
@@ -2694,27 +2657,26 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* AI Review Summary */}
-          {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
+          {/* AI Review Summary - only show when loading or has content */}
+          {(loadingReviewSummary || reviewSummary) && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">What Reviewers Say</h3>
               {loadingReviewSummary ? (
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-white"></div>
                   <span>Summarizing reviews...</span>
-                        </div>
-              ) : reviewSummary ? (
+                </div>
+              ) : (
                 <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/50">
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
-                      </div>
-              ) : null}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Map Section - Small static map */}
+          {/* Map */}
           {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
+            <div className="mt-4">
               <div className="w-full h-48 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
                 <GoogleStaticMap
                   center={{
@@ -3052,14 +3014,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                 )}
               </DropdownMenu>
 
-              <button
-                className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                onClick={handleShare}
-              >
-                <Share2 className="h-3 w-3" />
-                {copied ? 'Copied!' : 'Share'}
-              </button>
-
               {/* Visited Button with Dropdown */}
               {user && (
                 <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
@@ -3103,21 +3057,6 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                   )}
                 </DropdownMenu>
               )}
-
-              {destination.slug && destination.slug.trim() ? (
-                <Link
-                  href={`/destination/${destination.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  View Full Page
-                </Link>
-              ) : null}
                   </div>
                 </div>
 
@@ -3279,18 +3218,20 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
               );
             })()}
 
-            {/* Address */}
+            {/* Location & Address */}
             {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.neighborhood || destination.city || destination.country) && (
               <div>
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <div className="text-sm font-medium text-black dark:text-white mb-2">Location</div>
-                    {/* Neighborhood, City, Country - Better organized */}
-                    {((!parentDestination && destination.neighborhood) || destination.city || destination.country) && (
-                      <div className="space-y-1 mb-2">
+                    {/* Show full formatted address if available, otherwise show city/country */}
+                    {enrichedData?.formatted_address ? (
+                      <div className="text-sm text-gray-600 dark:text-gray-400">{enrichedData.formatted_address}</div>
+                    ) : (
+                      <>
                         {!parentDestination && destination.neighborhood && (
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white mb-1">
                             {destination.neighborhood}
                           </div>
                         )}
@@ -3301,19 +3242,12 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
                             {destination.country && destination.country}
                           </div>
                         )}
-                      </div>
+                      </>
                     )}
-                    {/* Full Address */}
-                    {enrichedData?.formatted_address && (
-                      <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{enrichedData.formatted_address}</div>
-                    )}
-                    {enrichedData?.vicinity && enrichedData.vicinity !== enrichedData?.formatted_address && (
-                      <div className="text-xs text-gray-500 dark:text-gray-500">{enrichedData.vicinity}</div>
-                    )}
+                  </div>
+                </div>
               </div>
-              </div>
-            </div>
-          )}
+            )}
 
             {/* Actions */}
             <div className="flex flex-wrap gap-2">
@@ -3459,27 +3393,26 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             </div>
           )}
 
-          {/* AI Review Summary */}
-          {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
+          {/* AI Review Summary - only show when loading or has content */}
+          {(loadingReviewSummary || reviewSummary) && (
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">What Reviewers Say</h3>
               {loadingReviewSummary ? (
                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-white"></div>
                   <span>Summarizing reviews...</span>
-                        </div>
-              ) : reviewSummary ? (
+                </div>
+              ) : (
                 <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/50">
                   <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
-                      </div>
-              ) : null}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Map Section - Small static map */}
+          {/* Map */}
           {((destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude)) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
+            <div className="mt-4">
               <div className="w-full h-48 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
                 <GoogleStaticMap
                   center={{
