@@ -5,7 +5,6 @@ import { useDrawerStore } from '@/lib/stores/drawer-store';
 import { useDrawer } from '@/contexts/DrawerContext';
 
 import { AccountDrawer } from '@/components/AccountDrawer';
-import { ChatDrawer } from '@/components/ChatDrawer';
 import { DestinationDrawer } from '@/src/features/detail/DestinationDrawer';
 import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
@@ -206,14 +205,6 @@ export default function DrawerMount() {
         destinationName={props?.destinationName || ''}
         destinationCity={props?.destinationCity}
       />
-
-      {/* Chat Drawer - uses DrawerContext and /api/ai-chat */}
-      {isDrawerOpen('chat') && (
-        <ChatDrawer
-          isOpen={true}
-          onClose={closeContextDrawer}
-        />
-      )}
     </>
   );
 }
