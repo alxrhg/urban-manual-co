@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, MapPin } from 'lucide-react';
+import { Send, MapPin, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Drawer } from '@/components/ui/Drawer';
-import { DrawerHeader } from '@/components/ui/DrawerHeader';
 
 interface ChatDrawerProps {
   isOpen: boolean;
@@ -55,13 +54,11 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     setIsLoading(true);
 
     try {
-      // Build conversation history
       const conversationHistory = messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
       }));
 
-      // Call /api/ai-chat endpoint
       const response = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -92,7 +89,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
         ...prev,
         {
           role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again.',
+          content: 'Sorry, something went wrong. Want to try again?',
         },
       ]);
     } finally {
@@ -105,30 +102,32 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     inputRef.current?.focus();
   }
 
-  const statusBadge = (
-    <div className="flex items-center gap-2">
-      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-      <span className="text-xs text-gray-500">Online</span>
-    </div>
-  );
-
   return (
-    <Drawer isOpen={isOpen} onClose={onClose} desktopWidth="500px">
-      <DrawerHeader title="AI Assistant" rightAccessory={statusBadge} />
+    <Drawer isOpen={isOpen} onClose={onClose} desktopWidth="480px" fullScreen>
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-800">
+        <h2 className="text-base font-medium text-black dark:text-white">Chat</h2>
+        <button
+          onClick={onClose}
+          className="p-2 -mr-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
+        >
+          <X className="h-5 w-5 text-gray-500" />
+        </button>
+      </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6">
         {messages.length === 0 && !isLoading && (
-          <div className="text-center py-8">
-            <Sparkles className="h-8 w-8 mx-auto mb-3 text-gray-400" />
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-              Ask about destinations, restaurants, or travel tips.
+          <div className="flex flex-col items-center justify-center h-full text-center">
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 max-w-xs">
+              Ask me about places to eat, drink, or stay. I know our whole collection.
             </p>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {['Best restaurants in Tokyo', 'Michelin-starred restaurants', 'Cafes in Paris'].map((suggestion) => (
+            <div className="flex flex-wrap gap-2 justify-center max-w-sm">
+              {['Restaurants in Tokyo', 'Best cafes in Paris', 'Hotels in London'].map((suggestion) => (
                 <button
                   key={suggestion}
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="px-4 py-2 text-sm border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors text-gray-700 dark:text-gray-300"
                 >
                   {suggestion}
                 </button>
@@ -138,42 +137,33 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
         )}
 
         {messages.map((message, idx) => (
-          <div
-            key={idx}
-            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
+          <div key={idx} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+              className={`max-w-[90%] ${
                 message.role === 'user'
-                  ? 'bg-black text-white dark:bg-white dark:text-black'
-                  : 'bg-gray-100 dark:bg-gray-800 text-black dark:text-white'
+                  ? 'bg-black text-white dark:bg-white dark:text-black rounded-2xl rounded-br-md px-4 py-3'
+                  : 'text-black dark:text-white'
               }`}
             >
-              {message.role === 'assistant' && (
-                <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="h-4 w-4" />
-                  <span className="text-xs font-medium opacity-70">AI Assistant</span>
-                </div>
-              )}
-              <div className="text-sm whitespace-pre-wrap leading-relaxed">
+              <div className="text-sm leading-relaxed">
                 {message.content.split('\n').map((line, i) => {
                   const parts = line.split(/(\*\*.*?\*\*)/g);
                   return (
-                    <div key={i}>
+                    <p key={i} className={i > 0 ? 'mt-2' : ''}>
                       {parts.map((part, j) => {
                         if (part.startsWith('**') && part.endsWith('**')) {
-                          return <strong key={j}>{part.slice(2, -2)}</strong>;
+                          return <strong key={j} className="font-semibold">{part.slice(2, -2)}</strong>;
                         }
                         return <span key={j}>{part}</span>;
                       })}
-                    </div>
+                    </p>
                   );
                 })}
               </div>
 
-              {/* Destination Cards - Show top 4 picks */}
+              {/* Destination Cards */}
               {message.destinations && message.destinations.length > 0 && (
-                <div className="mt-3 grid grid-cols-2 gap-3">
+                <div className="mt-4 grid grid-cols-2 gap-3">
                   {message.destinations.slice(0, 4).map((dest) => (
                     <a
                       key={dest.slug}
@@ -184,7 +174,7 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                         window.location.href = `/destination/${dest.slug}`;
                       }}
                     >
-                      <div className="relative aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-2">
+                      <div className="relative aspect-square bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
                         {dest.image ? (
                           <img
                             src={dest.image}
@@ -192,30 +182,26 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400">
-                            <MapPin className="h-8 w-8 opacity-30" />
+                          <div className="w-full h-full flex items-center justify-center">
+                            <MapPin className="h-6 w-6 text-gray-300 dark:text-gray-600" />
                           </div>
                         )}
                         {dest.crown && (
-                          <div className="absolute top-2 left-2 text-lg">👑</div>
+                          <div className="absolute top-2 left-2 text-sm">👑</div>
                         )}
                         {dest.michelin_stars && dest.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                            <img
-                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                              alt="Michelin star"
-                              className="h-3 w-3"
-                            />
+                          <div className="absolute bottom-2 left-2 bg-white dark:bg-black px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                            <span className="text-red-500">★</span>
                             <span>{dest.michelin_stars}</span>
                           </div>
                         )}
                       </div>
-                      <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1">
+                      <h4 className="mt-2 font-medium text-sm leading-tight line-clamp-2 text-black dark:text-white">
                         {dest.name}
                       </h4>
-                      <span className="text-xs text-gray-500 capitalize">
-                        {dest.city.replace(/-/g, ' ')} · {dest.category}
-                      </span>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 capitalize">
+                        {dest.city.replace(/-/g, ' ')}
+                      </p>
                     </a>
                   ))}
                 </div>
@@ -226,35 +212,32 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3">
-              <div className="flex items-center gap-2">
-                <div className="flex gap-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                </div>
-              </div>
+            <div className="flex gap-1.5 py-2">
+              <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+              <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+              <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t border-gray-200 dark:border-gray-800 px-4 py-3">
-        <form onSubmit={handleSubmit} className="flex gap-2">
+      {/* Input */}
+      <div className="border-t border-gray-200 dark:border-gray-800 px-6 py-4">
+        <form onSubmit={handleSubmit} className="flex gap-3">
           <input
             ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about destinations, restaurants..."
-            className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-full text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors"
+            placeholder="Ask me anything..."
+            className="flex-1 px-4 py-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all"
             disabled={isLoading}
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="px-4 py-3 bg-black dark:bg-white text-white dark:text-black rounded-2xl hover:opacity-80 transition-opacity disabled:opacity-40"
           >
             <Send className="h-4 w-4" />
           </button>

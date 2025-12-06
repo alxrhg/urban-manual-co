@@ -602,7 +602,7 @@ async function generateIntelligentResponse(
   userId?: string
 ): Promise<string> {
   if (results.length === 0) {
-    return "I couldn't find any places matching your search. Try adjusting your filters or search terms.";
+    return "Hmm, I don't have any places matching that in our collection yet. Want to try a different city or type of spot? I'd love to help you find something great.";
   }
 
   // Get contextual information from enriched data
@@ -764,7 +764,7 @@ async function* generateStreamingResponse(
   userId?: string
 ): AsyncGenerator<string, void, unknown> {
   if (results.length === 0) {
-    yield "I couldn't find any places matching your search. Try adjusting your filters or search terms.";
+    yield "Hmm, I don't have any places matching that in our collection yet. Want to try a different city or type of spot? I'd love to help you find something great.";
     return;
   }
 
@@ -866,17 +866,14 @@ Generate a brief, helpful response.`;
 
 function generateResponse(count: number, city?: string, category?: string): string {
   const location = city ? ` in ${city}` : '';
-  const categoryText = category ? ` ${category}` : ' place';
-  
+  const categoryText = category ? `${category}s` : 'spots';
+
   if (count === 0) {
-    return `I couldn't find any${categoryText}s${location}. Try a different search or browse all destinations.`;
+    return `Hmm, I don't have any ${categoryText}${location} in our collection yet. Want to try something else?`;
   }
-  
-  if (count === 1) {
-    return `I found 1${categoryText}${location}.`;
-  }
-  
-  return `I found ${count}${categoryText}s${location}.`;
+
+  // Don't return count-based responses - let the AI handle it conversationally
+  return '';
 }
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
