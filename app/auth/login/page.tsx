@@ -7,6 +7,7 @@ import { LoginDrawer } from '@/components/LoginDrawer';
 function LoginPageContent() {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(true);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     // Open drawer when page loads
@@ -14,16 +15,21 @@ function LoginPageContent() {
   }, []);
 
   const handleClose = () => {
+    setIsClosing(true);
     setIsOpen(false);
-    // Navigate back after a short delay to allow animation
+    // Navigate back after animation completes
     setTimeout(() => {
       router.push('/');
-    }, 300);
+    }, 350);
   };
 
-  // Render drawer over transparent background (drawer has its own backdrop)
+  // Seamless background that matches the app theme
   return (
-    <div className="min-h-screen bg-transparent">
+    <div
+      className={`min-h-screen bg-[hsl(43,27%,92%)] dark:bg-[hsl(43,20%,10%)] transition-opacity duration-300 ${
+        isClosing ? 'opacity-0' : 'opacity-100'
+      }`}
+    >
       <LoginDrawer isOpen={isOpen} onClose={handleClose} />
     </div>
   );
@@ -31,11 +37,13 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-transparent flex items-center justify-center">
-        <div className="text-gray-500 text-sm">Loading...</div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[hsl(43,27%,92%)] dark:bg-[hsl(43,20%,10%)] flex items-center justify-center">
+          <div className="text-gray-400 dark:text-gray-500 text-sm animate-pulse">Loading...</div>
+        </div>
+      }
+    >
       <LoginPageContent />
     </Suspense>
   );

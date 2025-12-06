@@ -1268,3 +1268,106 @@ html {
 .page-transition {
   animation: slideUpFade 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* ============================================
+   AUTH FLOW POLISH
+   Smooth transitions and native feel for auth
+   ============================================ */
+
+/* Auth input fields - enhanced focus states */
+.auth-input {
+  transition: all 0.2s ease-out;
+}
+
+.auth-input:focus {
+  transform: translateY(-1px);
+}
+
+.auth-input::placeholder {
+  transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.auth-input:focus::placeholder {
+  opacity: 0.5;
+  transform: translateX(4px);
+}
+
+/* Auth button press effect */
+@keyframes authButtonPress {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.auth-button-press {
+  animation: authButtonPress 0.15s ease-out;
+}
+
+/* Auth view transition */
+@keyframes authViewIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes authViewOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.auth-view-enter {
+  animation: authViewIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.auth-view-exit {
+  animation: authViewOut 0.15s ease-in forwards;
+}
+
+/* Auth alert animations */
+@keyframes authAlertIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.auth-alert-enter {
+  animation: authAlertIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Password toggle icon transition */
+.password-toggle-icon {
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+/* Auth loading spinner */
+@keyframes authSpinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.auth-spinner {
+  animation: authSpinner 0.8s linear infinite;
+}

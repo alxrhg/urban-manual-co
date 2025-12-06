@@ -17,7 +17,7 @@ export interface DrawerProps {
   showBackdrop?: boolean;
   backdropOpacity?: string;
   position?: 'right' | 'left';
-  style?: 'glassy' | 'solid';
+  style?: 'glassy' | 'solid' | 'native';
   mobileWidth?: string;
   desktopSpacing?: string;
   mobileHeight?: string;
@@ -231,19 +231,29 @@ export function Drawer({
     };
   }, [isOpen, mobileVariant, onClose]);
 
-  // Styling
-  const backgroundClasses = style === 'glassy' 
+  // Styling - 'native' style uses app background for seamless integration
+  const backgroundClasses = style === 'glassy'
     ? `${DRAWER_STYLES.glassyBackground} ${position === 'right' ? DRAWER_STYLES.glassyBorderLeft : DRAWER_STYLES.glassyBorderRight}`
+    : style === 'native'
+    ? 'bg-[hsl(43,27%,92%)] dark:bg-[hsl(43,20%,10%)]'
     : 'bg-white dark:bg-gray-950';
-  
+
   const borderClasses = style === 'glassy'
     ? (position === 'right' ? DRAWER_STYLES.glassyBorderLeft : DRAWER_STYLES.glassyBorderRight)
+    : style === 'native'
+    ? '' // No visible border for native style
     : (position === 'right' ? 'border-l border-gray-200 dark:border-gray-800' : 'border-r border-gray-200 dark:border-gray-800');
 
-  const shadowClasses = style === 'solid' ? 'shadow-2xl ring-1 ring-black/5 dark:ring-white/5' : '';
-  
+  const shadowClasses = style === 'solid'
+    ? 'shadow-2xl ring-1 ring-black/5 dark:ring-white/5'
+    : style === 'native'
+    ? 'shadow-xl' // Subtle shadow for native style
+    : '';
+
   const headerBackground = style === 'glassy'
     ? DRAWER_STYLES.headerBackground
+    : style === 'native'
+    ? 'bg-[hsl(43,27%,92%)]/95 dark:bg-[hsl(43,20%,10%)]/95 backdrop-blur-sm'
     : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm';
 
   // Mobile Height Calculation - Ensure it reaches bottom
@@ -330,7 +340,13 @@ export function Drawer({
           </div>
 
           {footerContent && (
-            <div className={`flex-shrink-0 border-t border-gray-100 dark:border-gray-800 pb-[calc(1rem+env(safe-area-inset-bottom))] ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white dark:bg-gray-950'}`}>
+            <div className={`flex-shrink-0 border-t border-gray-100 dark:border-gray-800 pb-[calc(1rem+env(safe-area-inset-bottom))] ${
+              style === 'glassy'
+                ? DRAWER_STYLES.footerBackground
+                : style === 'native'
+                ? 'bg-[hsl(43,27%,92%)] dark:bg-[hsl(43,20%,10%)] border-black/5 dark:border-white/5'
+                : 'bg-white dark:bg-gray-950'
+            }`}>
               {footerContent}
             </div>
           )}
@@ -372,7 +388,13 @@ export function Drawer({
           </div>
 
           {footerContent && (
-            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
+            <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${
+              style === 'glassy'
+                ? DRAWER_STYLES.footerBackground
+                : style === 'native'
+                ? 'bg-[hsl(43,27%,92%)]/95 dark:bg-[hsl(43,20%,10%)]/95 backdrop-blur-sm border-black/5 dark:border-white/5'
+                : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'
+            }`}>
               {footerContent}
             </div>
           )}
