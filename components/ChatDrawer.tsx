@@ -1,40 +1,43 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send } from 'lucide-react';
-import { ConversationBubble } from '@/app/components/chat/ConversationBubble';
+import { Send, Sparkles, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Drawer } from '@/components/ui/Drawer';
 import { DrawerHeader } from '@/components/ui/DrawerHeader';
-import { DrawerSection } from '@/components/ui/DrawerSection';
-import { ensureConversationSessionToken, persistConversationSessionToken } from '@/lib/chat/sessionToken';
 
 interface ChatDrawerProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+interface Destination {
+  slug: string;
+  name: string;
+  city: string;
+  category: string;
+  image: string | null;
+  michelin_stars: number | null;
+  crown: boolean;
+}
+
 interface Message {
   role: 'user' | 'assistant';
   content: string;
-  suggestions?: string[];
+  destinations?: Destination[];
 }
 
 export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [streamingContent, setStreamingContent] = useState('');
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [guestSessionToken, setGuestSessionToken] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingContent]);
+  }, [messages]);
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -42,120 +45,64 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
     }
   }, [isOpen]);
 
-  useEffect(() => {
-    if (!user) {
-      const token = ensureConversationSessionToken();
-      if (token) setGuestSessionToken(token);
-    } else {
-      setGuestSessionToken(null);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (isOpen && (user?.id || guestSessionToken)) {
-      loadConversationHistory();
-    }
-  }, [isOpen, user?.id, guestSessionToken]);
-
-  async function loadConversationHistory() {
-    try {
-      const isGuest = !user?.id;
-      const resolvedToken = isGuest ? guestSessionToken : undefined;
-      if (isGuest && !resolvedToken) return;
-      const userId = user?.id || 'guest';
-      const tokenQuery = resolvedToken ? `?session_token=${resolvedToken}` : '';
-      const response = await fetch(`/api/conversation/${userId}${tokenQuery}`);
-      if (response.ok) {
-        const data = await response.json();
-        setMessages(data.messages || []);
-        setSessionId(data.session_id || null);
-        if (isGuest && data.session_token) {
-          persistConversationSessionToken(data.session_token);
-          setGuestSessionToken(data.session_token);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading conversation:', error);
-    }
-  }
-
-  async function handleSubmitStreaming(userMessage: string) {
-    setIsStreaming(true);
-    setStreamingContent('');
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
-
-    try {
-      const isGuest = !user?.id;
-      let resolvedToken = isGuest ? guestSessionToken : undefined;
-      if (isGuest && !resolvedToken) {
-        resolvedToken = ensureConversationSessionToken();
-        if (resolvedToken) setGuestSessionToken(resolvedToken);
-      }
-      const userId = user?.id || 'guest';
-      const response = await fetch(`/api/conversation-stream/${userId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: userMessage, session_token: resolvedToken }),
-      });
-
-      if (!response.ok) throw new Error('Streaming failed');
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      if (!reader) throw new Error('No reader available');
-
-      let fullResponse = '';
-      let lastSuggestions: string[] = [];
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
-
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.type === 'chunk') {
-                fullResponse += data.content;
-                setStreamingContent(fullResponse);
-              } else if (data.type === 'complete') {
-                setSessionId(data.session_id || sessionId);
-                lastSuggestions = data.suggestions || [];
-              }
-            } catch {}
-          }
-        }
-      }
-
-      setMessages((prev) => [...prev, { role: 'assistant', content: fullResponse, suggestions: lastSuggestions }]);
-      if (isGuest && resolvedToken) persistConversationSessionToken(resolvedToken);
-    } catch (error) {
-      console.error('Streaming error:', error);
-      setMessages((prev) => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }]);
-    } finally {
-      setIsStreaming(false);
-      setStreamingContent('');
-    }
-  }
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!input.trim() || isLoading || isStreaming) return;
+    if (!input.trim() || isLoading) return;
+
     const userMessage = input.trim();
     setInput('');
-    await handleSubmitStreaming(userMessage);
+    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
+    setIsLoading(true);
+
+    try {
+      // Build conversation history
+      const conversationHistory = messages.map((msg) => ({
+        role: msg.role,
+        content: msg.content,
+      }));
+
+      // Call /api/ai-chat endpoint
+      const response = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: userMessage,
+          userId: user?.id,
+          conversationHistory,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('AI chat failed');
+      }
+
+      const data = await response.json();
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: data.content || '',
+          destinations: data.destinations,
+        },
+      ]);
+    } catch (error) {
+      console.error('AI error:', error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Sorry, I encountered an error. Please try again.',
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function handleSuggestionClick(suggestion: string) {
     setInput(suggestion);
     inputRef.current?.focus();
-    setTimeout(() => {
-      const form = inputRef.current?.form;
-      if (form) form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    }, 100);
   }
 
   const statusBadge = (
@@ -167,38 +114,128 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
 
   return (
     <Drawer isOpen={isOpen} onClose={onClose} desktopWidth="500px">
-      <DrawerHeader title="Travel Chat" rightAccessory={statusBadge} />
+      <DrawerHeader title="AI Assistant" rightAccessory={statusBadge} />
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0">
-        {messages.length === 0 && !isStreaming && (
-          <DrawerSection>
-            <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-4">
+        {messages.length === 0 && !isLoading && (
+          <div className="text-center py-8">
+            <Sparkles className="h-8 w-8 mx-auto mb-3 text-gray-400" />
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
               Ask about destinations, restaurants, or travel tips.
             </p>
             <div className="flex flex-wrap gap-2 justify-center">
-              {['Best restaurants in Tokyo', 'Hotels in Paris', 'Romantic dinner spots'].map((suggestion) => (
+              {['Best restaurants in Tokyo', 'Michelin-starred restaurants', 'Cafes in Paris'].map((suggestion) => (
                 <button
                   key={suggestion}
                   onClick={() => handleSuggestionClick(suggestion)}
-                  className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                  className="px-3 py-1.5 text-xs border border-gray-200 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   {suggestion}
                 </button>
               ))}
             </div>
-          </DrawerSection>
+          </div>
         )}
+
         {messages.map((message, idx) => (
-          <ConversationBubble
+          <div
             key={idx}
-            role={message.role}
-            content={message.content}
-            suggestions={message.suggestions}
-            onSuggestionClick={handleSuggestionClick}
-          />
+            className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
+            <div
+              className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+                message.role === 'user'
+                  ? 'bg-black text-white dark:bg-white dark:text-black'
+                  : 'bg-gray-100 dark:bg-gray-800 text-black dark:text-white'
+              }`}
+            >
+              {message.role === 'assistant' && (
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="text-xs font-medium opacity-70">AI Assistant</span>
+                </div>
+              )}
+              <div className="text-sm whitespace-pre-wrap leading-relaxed">
+                {message.content.split('\n').map((line, i) => {
+                  const parts = line.split(/(\*\*.*?\*\*)/g);
+                  return (
+                    <div key={i}>
+                      {parts.map((part, j) => {
+                        if (part.startsWith('**') && part.endsWith('**')) {
+                          return <strong key={j}>{part.slice(2, -2)}</strong>;
+                        }
+                        return <span key={j}>{part}</span>;
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Destination Cards */}
+              {message.destinations && message.destinations.length > 0 && (
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  {message.destinations.map((dest) => (
+                    <a
+                      key={dest.slug}
+                      href={`/destination/${dest.slug}`}
+                      className="group block"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        window.location.href = `/destination/${dest.slug}`;
+                      }}
+                    >
+                      <div className="relative aspect-square bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden mb-2">
+                        {dest.image ? (
+                          <img
+                            src={dest.image}
+                            alt={dest.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-400">
+                            <MapPin className="h-8 w-8 opacity-30" />
+                          </div>
+                        )}
+                        {dest.crown && (
+                          <div className="absolute top-2 left-2 text-lg">👑</div>
+                        )}
+                        {dest.michelin_stars && dest.michelin_stars > 0 && (
+                          <div className="absolute bottom-2 left-2 bg-white dark:bg-gray-900 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+                            <img
+                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                              alt="Michelin star"
+                              className="h-3 w-3"
+                            />
+                            <span>{dest.michelin_stars}</span>
+                          </div>
+                        )}
+                      </div>
+                      <h4 className="font-medium text-xs leading-tight line-clamp-2 mb-1">
+                        {dest.name}
+                      </h4>
+                      <span className="text-xs text-gray-500 capitalize">
+                        {dest.city.replace(/-/g, ' ')} · {dest.category}
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         ))}
-        {isStreaming && (
-          <ConversationBubble role="assistant" content={streamingContent} isTyping={!streamingContent} />
+
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl px-4 py-3">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
         <div ref={messagesEndRef} />
       </div>
@@ -210,13 +247,13 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about restaurants, hotels..."
+            placeholder="Ask about destinations, restaurants..."
             className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-full text-sm focus:outline-none focus:border-black dark:focus:border-white transition-colors"
-            disabled={isLoading || isStreaming}
+            disabled={isLoading}
           />
           <button
             type="submit"
-            disabled={!input.trim() || isLoading || isStreaming}
+            disabled={!input.trim() || isLoading}
             className="px-4 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             <Send className="h-4 w-4" />
