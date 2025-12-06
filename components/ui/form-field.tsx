@@ -242,7 +242,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
                 .join(' ') || undefined
             }
             className={cn(
-              'pr-10',
+              'pr-10 transition-all duration-200',
               hasError &&
                 'border-red-500 dark:border-red-500 focus-visible:ring-red-500',
               isValid &&
@@ -254,11 +254,11 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
 
           {/* Validation icon */}
           {showValidation && touched && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 transition-all duration-200">
               {hasError ? (
-                <AlertCircle className="h-4 w-4 text-red-500" />
+                <AlertCircle className="h-4 w-4 text-red-500 animate-in zoom-in-50 duration-200" />
               ) : isValid ? (
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <CheckCircle2 className="h-4 w-4 text-green-500 animate-in zoom-in-50 duration-200" />
               ) : null}
             </div>
           )}
@@ -268,7 +268,7 @@ export const FormField = React.forwardRef<HTMLInputElement, FormFieldProps>(
         {displayError && (
           <p
             id={errorId}
-            className="text-sm text-red-500 dark:text-red-400 flex items-center gap-1"
+            className="text-sm text-red-500 dark:text-red-400 flex items-center gap-1 animate-in fade-in-0 slide-in-from-top-1 duration-200"
             role="alert"
           >
             <AlertCircle className="h-3 w-3 flex-shrink-0" />

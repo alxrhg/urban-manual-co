@@ -14,7 +14,14 @@ function Card({ className, children, onClick }: CardProps) {
     "bg-white dark:bg-gray-900",
     "text-gray-900 dark:text-white",
     "overflow-hidden",
-    onClick && "cursor-pointer text-left w-full",
+    "transition-all duration-200 ease-out",
+    onClick && [
+      "cursor-pointer text-left w-full",
+      "hover:shadow-md hover:border-gray-300 dark:hover:border-gray-700",
+      "hover:-translate-y-0.5",
+      "active:scale-[0.99] active:shadow-sm",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black dark:focus-visible:ring-white focus-visible:ring-offset-2",
+    ],
     className
   );
 

@@ -25,14 +25,14 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      "flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none focus:bg-gray-50 dark:focus:bg-gray-900 data-[state=open]:bg-gray-50 dark:data-[state=open]:bg-gray-900",
+      "flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none transition-all duration-150 ease-out focus:bg-gray-50 dark:focus:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-900 data-[state=open]:bg-gray-50 dark:data-[state=open]:bg-gray-900",
       inset && "pl-8",
       className
     )}
     {...props}
   >
     {children}
-    <ChevronRight className="ml-auto h-4 w-4" />
+    <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-150 group-data-[state=open]:rotate-90" />
   </DropdownMenuPrimitive.SubTrigger>
 ))
 DropdownMenuSubTrigger.displayName =
@@ -81,7 +81,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none transition-colors focus:bg-gray-50 dark:focus:bg-gray-900 focus:text-black dark:focus:text-white data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-lg px-2 py-1.5 text-sm outline-none transition-all duration-150 ease-out focus:bg-gray-50 dark:focus:bg-gray-900 focus:text-black dark:focus:text-white hover:bg-gray-50 dark:hover:bg-gray-900 active:scale-[0.98] data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className
     )}
