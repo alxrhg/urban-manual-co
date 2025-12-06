@@ -175,6 +175,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       });
 
       if (error) {
+        // Provide clearer error for manual linking disabled
+        if (error.message.toLowerCase().includes('manual linking')) {
+          throw createValidationError(
+            'Account linking is not enabled. Please contact support or enable Manual Linking in Supabase Dashboard.'
+          );
+        }
         throw createValidationError(error.message);
       }
 
