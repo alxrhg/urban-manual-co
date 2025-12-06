@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { Loader2, X } from 'lucide-react';
 import { stripHtmlTags } from '@/lib/stripHtmlTags';
 import GooglePlacesAutocomplete from '@/components/GooglePlacesAutocomplete';
+import { generateDestinationSlug } from '@/lib/slugify';
 import type { Destination } from '@/types/destination';
 
 interface Toast {
@@ -195,7 +196,7 @@ export function DestinationForm({
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('file', imageFile);
-      formDataToSend.append('slug', formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+      formDataToSend.append('slug', formData.slug || generateDestinationSlug(formData.name, formData.city));
 
       const supabase = createClient({ skipValidation: true });
       const { data: { session } } = await supabase.auth.getSession();

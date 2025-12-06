@@ -11,6 +11,7 @@ import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 import { CategoryAutocompleteInput } from '@/components/CategoryAutocompleteInput';
 import { ParentDestinationAutocompleteInput } from '@/components/ParentDestinationAutocompleteInput';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
+import { generateDestinationSlug } from '@/lib/slugify';
 import type { Destination } from '@/types/destination';
 
 interface POIEditorDrawerProps {
@@ -68,12 +69,13 @@ export default function POIEditorDrawer({ destination, initialCity, onSave }: PO
     }
   }, [destination, initialCity]);
 
+  // Auto-generate slug from name and city
   useEffect(() => {
-    if (formData.name && !formData.slug) {
-      const slug = formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    if (formData.name && !destination?.slug) {
+      const slug = generateDestinationSlug(formData.name, formData.city);
       setFormData(prev => ({ ...prev, slug }));
     }
-  }, [formData.name, formData.slug]);
+  }, [formData.name, formData.city, destination?.slug]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -104,7 +106,7 @@ export default function POIEditorDrawer({ destination, initialCity, onSave }: PO
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('file', imageFile);
-      formDataToSend.append('slug', formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+      formDataToSend.append('slug', formData.slug || generateDestinationSlug(formData.name, formData.city));
 
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -147,7 +149,7 @@ export default function POIEditorDrawer({ destination, initialCity, onSave }: PO
       if (!session) throw new Error('Not authenticated');
 
       const destinationData = {
-        slug: formData.slug || formData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        slug: formData.slug || generateDestinationSlug(formData.name, formData.city),
         name: formData.name.trim(),
         city: formData.city.trim(),
         category: formData.category.trim(),

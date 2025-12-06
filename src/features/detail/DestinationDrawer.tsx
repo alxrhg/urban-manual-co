@@ -10,6 +10,7 @@ import { CityAutocompleteInput } from '@/components/CityAutocompleteInput';
 import { CategoryAutocompleteInput } from '@/components/CategoryAutocompleteInput';
 import { ParentDestinationAutocompleteInput } from '@/components/ParentDestinationAutocompleteInput';
 import { ArchitectTagInput } from '@/components/ArchitectTagInput';
+import { generateDestinationSlug } from '@/lib/slugify';
 
 // Helper function to extract domain from URL
 function extractDomain(url: string): string {
@@ -477,7 +478,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('file', imageFile);
-      formDataToSend.append('slug', editFormData.slug || editFormData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+      formDataToSend.append('slug', editFormData.slug || generateDestinationSlug(editFormData.name, editFormData.city));
 
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -520,7 +521,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
       if (!session) throw new Error('Not authenticated');
 
       const destinationData = {
-        slug: editFormData.slug || editFormData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        slug: editFormData.slug || generateDestinationSlug(editFormData.name, editFormData.city),
         name: editFormData.name.trim(),
         city: editFormData.city.trim(),
         category: editFormData.category.trim(),
