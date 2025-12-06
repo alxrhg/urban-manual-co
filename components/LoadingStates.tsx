@@ -316,7 +316,7 @@ export function PageLoader({ message = "Loading..." }: { message?: string }) {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <div className="text-center">
-        <UISpinner className="size-8 mb-4 mx-auto" />
+        <UISpinner size="lg" className="mb-4 mx-auto" />
         <div className="text-sm text-gray-500 dark:text-gray-400">{message}</div>
       </div>
     </div>
@@ -327,7 +327,7 @@ export function PageLoader({ message = "Loading..." }: { message?: string }) {
 export function SectionLoader({ height = "h-64" }: { height?: string }) {
   return (
     <div className={cn("flex items-center justify-center", height)}>
-      <UISpinner className="size-6" />
+      <UISpinner size="default" />
     </div>
   );
 }
@@ -336,23 +336,16 @@ export function SectionLoader({ height = "h-64" }: { height?: string }) {
 // SPINNERS
 // ============================================
 
-// Inline spinner
+// Inline spinner - re-export with size mapping
 export function Spinner({ size = "sm" }: { size?: "xs" | "sm" | "md" | "lg" }) {
-  const sizeClasses = {
-    xs: "size-3",
-    sm: "size-4",
-    md: "size-6",
-    lg: "size-8"
-  };
-
-  return (
-    <UISpinner className={sizeClasses[size]} />
-  );
+  // Map md to default for the UI spinner
+  const mappedSize = size === "md" ? "default" : size;
+  return <UISpinner size={mappedSize} />;
 }
 
 // Button loading state
 export function ButtonSpinner() {
-  return <UISpinner className="size-4" />;
+  return <UISpinner size="sm" />;
 }
 
 // ============================================

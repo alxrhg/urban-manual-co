@@ -337,36 +337,63 @@ export function Drawer({
         </div>
       )}
 
-      {/* Side Drawer (Mobile Side & Desktop) */}
-      {(mobileVariant === 'side' || typeof window !== 'undefined' && window.innerWidth >= 768) && (
+      {/* Desktop/Tablet Side Drawer - Always rendered, visibility controlled by CSS */}
+      <div
+        ref={desktopRef}
+        className={`
+          hidden md:flex
+          fixed ${desktopSpacing} rounded-2xl
+          ${backgroundClasses} ${shadowClasses} ${borderClasses}
+          z-50 transform transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
+          flex-col overflow-hidden
+          ${isOpen
+            ? 'translate-x-0 opacity-100'
+            : (position === 'right' ? 'translate-x-[110%]' : '-translate-x-[110%]')
+          }
+          ${fullScreen ? 'lg:inset-4 lg:!rounded-2xl' : ''}
+        `}
+        style={{
+          zIndex,
+          width: fullScreen ? undefined : desktopWidth,
+          maxWidth: fullScreen ? undefined : 'calc(100vw - 2rem)',
+        }}
+        role="dialog"
+        aria-modal="true"
+      >
+        {renderHeader()}
+
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          {children}
+        </div>
+
+        {footerContent && (
+          <div className={`flex-shrink-0 border-t border-gray-200 dark:border-gray-800 ${style === 'glassy' ? DRAWER_STYLES.footerBackground : 'bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm'}`}>
+            {footerContent}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Side Drawer - only shows when mobileVariant is 'side' */}
+      {mobileVariant === 'side' && (
         <div
-          ref={window.innerWidth >= 1024 ? desktopRef : (window.innerWidth >= 768 ? tabletRef : mobileSideRef)}
+          ref={mobileSideRef}
           className={`
-            fixed 
-            ${window.innerWidth >= 768 
-              ? `${desktopSpacing} rounded-2xl` 
-              : `top-0 bottom-0 w-full ${position === 'right' ? 'right-0' : 'left-0'}`
-            }
-            ${backgroundClasses} ${shadowClasses} ${window.innerWidth >= 768 ? borderClasses : ''}
-            z-50 transform transition-transform duration-500 cubic-bezier(0.32, 0.72, 0, 1)
+            md:hidden
+            fixed top-0 bottom-0 w-full ${position === 'right' ? 'right-0' : 'left-0'}
+            ${backgroundClasses} ${shadowClasses}
+            z-50 transform transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
             flex flex-col overflow-hidden
-            ${isOpen 
-              ? 'translate-x-0 opacity-100' 
+            ${isOpen
+              ? 'translate-x-0 opacity-100'
               : (position === 'right' ? 'translate-x-[110%]' : '-translate-x-[110%]')
             }
-            ${fullScreen && window.innerWidth >= 1024 ? 'inset-0 !rounded-none !w-full !max-w-none !translate-x-0' : ''}
-            ${fullScreen && window.innerWidth >= 1024 && !isOpen ? '!opacity-0 pointer-events-none' : ''}
           `}
-          style={{ 
-            zIndex, 
-            width: window.innerWidth >= 768 && !fullScreen ? desktopWidth : '100%',
-            maxWidth: window.innerWidth >= 768 && !fullScreen ? 'calc(100vw - 2rem)' : '100%',
-          }}
+          style={{ zIndex }}
           role="dialog"
           aria-modal="true"
         >
           {renderHeader()}
-          
+
           <div className="flex-1 overflow-y-auto overscroll-contain">
             {children}
           </div>
