@@ -97,11 +97,7 @@ export function AIAssistant() {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 flex items-center gap-2 px-6 py-3 bg-white/10 dark:bg-white/10 backdrop-blur-xl text-white border border-white/20 hover:bg-white/20 transition-all duration-200"
-        style={{
-          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)',
-          borderRadius: '9999px'
-        }}
+        className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-40 flex items-center gap-2 px-6 py-3 bg-black dark:bg-white/10 backdrop-blur-xl text-white border border-gray-800 dark:border-white/20 hover:bg-gray-900 dark:hover:bg-white/20 transition-all duration-200 rounded-full shadow-lg"
       >
         <Sparkles className="h-5 w-5" />
         <span className="font-medium">AI</span>
