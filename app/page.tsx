@@ -94,8 +94,8 @@ export default async function HomePage() {
               {/* Navigation bar */}
               <NavigationBar />
 
-              {/* Grid - Uses context, handles its own loading state */}
-              <ClientDestinationGrid limit={28} />
+              {/* Grid with pagination - Uses context for data & state */}
+              <ClientDestinationGrid />
             </div>
           </div>
         </main>

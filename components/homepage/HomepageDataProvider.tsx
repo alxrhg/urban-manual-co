@@ -1,41 +1,56 @@
 'use client';
 
-import { useState, useEffect, ReactNode, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, useMemo, ReactNode, createContext, useContext, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Destination } from '@/types/destination';
 import { createClient } from '@/lib/supabase/client';
+import { useItemsPerPage } from '@/hooks/useGridColumns';
 
 /**
- * Homepage Data Provider
+ * Homepage Data Provider with Full Features
  *
- * Provides client-side data fetching fallback when server-side data is empty.
- * This ensures the homepage always shows content, even if SSR fails.
- *
- * Architecture:
- * 1. Server attempts to fetch data and passes it as props
- * 2. If server data is empty, this component fetches on the client
- * 3. Children receive data via context, avoiding prop drilling
- *
- * Fallback Strategy:
- * 1. Try Supabase client-side fetch first
- * 2. If that fails, fall back to /destinations.json static file
+ * Provides:
+ * - Data loading with fallback (Supabase -> Static JSON)
+ * - Pagination (page-based, 4 rows per page)
+ * - City/Category filtering
+ * - Search functionality
+ * - View mode (grid/map)
  */
 
 interface HomepageDataContextType {
+  // Data
   destinations: Destination[];
+  filteredDestinations: Destination[];
+  displayedDestinations: Destination[];
   cities: string[];
   categories: string[];
+
+  // State
   isLoading: boolean;
+  currentPage: number;
+  totalPages: number;
+  selectedCity: string;
+  selectedCategory: string;
+  searchTerm: string;
+  viewMode: 'grid' | 'map';
+
+  // Actions
+  setCurrentPage: (page: number) => void;
+  setSelectedCity: (city: string) => void;
+  setSelectedCategory: (category: string) => void;
+  setSearchTerm: (term: string) => void;
+  setViewMode: (mode: 'grid' | 'map') => void;
+  clearFilters: () => void;
 }
 
-const HomepageDataContext = createContext<HomepageDataContextType>({
-  destinations: [],
-  cities: [],
-  categories: [],
-  isLoading: true,
-});
+const HomepageDataContext = createContext<HomepageDataContextType | null>(null);
 
 export function useHomepageData() {
-  return useContext(HomepageDataContext);
+  const context = useContext(HomepageDataContext);
+  if (!context) {
+    throw new Error('useHomepageData must be used within HomepageDataProvider');
+  }
+  return context;
 }
 
 interface HomepageDataProviderProps {
@@ -65,76 +80,76 @@ function extractFilters(destinations: Destination[]): { cities: string[]; catego
   };
 }
 
-export function HomepageDataProvider({
+function HomepageDataProviderInner({
   children,
   serverDestinations,
   serverCities,
   serverCategories,
 }: HomepageDataProviderProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Core data state
   const [destinations, setDestinations] = useState<Destination[]>(serverDestinations);
   const [cities, setCities] = useState<string[]>(serverCities);
   const [categories, setCategories] = useState<string[]>(serverCategories);
   const [isLoading, setIsLoading] = useState(serverDestinations.length === 0);
 
+  // Filter state
+  const [selectedCity, setSelectedCity] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = useItemsPerPage(4); // 4 rows
+
+  // View mode
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+
+  // Initialize view mode from URL
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    if (viewParam === 'map') setViewMode('map');
+    else if (viewParam === 'grid') setViewMode('grid');
+  }, [searchParams]);
+
   // Client-side fallback fetch when server data is empty
   useEffect(() => {
     if (serverDestinations.length > 0) {
-      // Server data is available, no need to fetch
       setIsLoading(false);
       return;
     }
 
-    // Fetch data on client side
     async function fetchClientData() {
       try {
-        // First, try Supabase client-side fetch
+        // Try Supabase first
         const supabase = createClient();
-
-        const { data: destData, error: destError } = await supabase
+        const { data, error } = await supabase
           .from('destinations')
           .select(`
-            id,
-            slug,
-            name,
-            city,
-            country,
-            neighborhood,
-            category,
-            micro_description,
-            description,
-            content,
-            image,
-            image_thumbnail,
-            michelin_stars,
-            crown,
-            rating,
-            price_level,
-            tags,
-            opening_hours_json,
-            latitude,
-            longitude
+            id, slug, name, city, country, neighborhood, category,
+            micro_description, description, image, image_thumbnail,
+            michelin_stars, crown, rating, price_level, tags
           `)
           .order('rating', { ascending: false, nullsFirst: false })
-          .limit(200);
+          .limit(500);
 
-        if (!destError && destData && destData.length > 0) {
-          const typedData = destData as Destination[];
-          setDestinations(typedData);
-          const filters = extractFilters(typedData);
+        if (!error && data && data.length > 0) {
+          setDestinations(data as Destination[]);
+          const filters = extractFilters(data as Destination[]);
           setCities(filters.cities);
           setCategories(filters.categories);
           setIsLoading(false);
           return;
         }
 
-        // Supabase failed or returned empty, try static JSON fallback
-        console.log('[Client] Supabase fetch failed or empty, trying /destinations.json');
+        // Fallback to static JSON
+        console.log('[Client] Trying /destinations.json fallback');
         const response = await fetch('/destinations.json');
-
         if (response.ok) {
           const jsonData = await response.json();
           const fallbackData = (Array.isArray(jsonData) ? jsonData : jsonData.destinations || []) as Destination[];
-
           if (fallbackData.length > 0) {
             setDestinations(fallbackData);
             const filters = extractFilters(fallbackData);
@@ -143,15 +158,13 @@ export function HomepageDataProvider({
           }
         }
       } catch (error) {
-        console.error('[Client] Error fetching homepage data:', error);
-
-        // Last resort: try static JSON
+        console.error('[Client] Error fetching data:', error);
+        // Try static JSON as last resort
         try {
           const response = await fetch('/destinations.json');
           if (response.ok) {
             const jsonData = await response.json();
             const fallbackData = (Array.isArray(jsonData) ? jsonData : jsonData.destinations || []) as Destination[];
-
             if (fallbackData.length > 0) {
               setDestinations(fallbackData);
               const filters = extractFilters(fallbackData);
@@ -159,8 +172,8 @@ export function HomepageDataProvider({
               setCategories(filters.categories);
             }
           }
-        } catch (fallbackError) {
-          console.error('[Client] Fallback fetch also failed:', fallbackError);
+        } catch {
+          // Silent fail
         }
       } finally {
         setIsLoading(false);
@@ -170,10 +183,103 @@ export function HomepageDataProvider({
     fetchClientData();
   }, [serverDestinations]);
 
+  // Filter destinations based on selected filters
+  const filteredDestinations = useMemo(() => {
+    let filtered = [...destinations];
+
+    // Filter by city
+    if (selectedCity) {
+      filtered = filtered.filter(d =>
+        d.city?.toLowerCase() === selectedCity.toLowerCase()
+      );
+    }
+
+    // Filter by category
+    if (selectedCategory) {
+      filtered = filtered.filter(d =>
+        d.category?.toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
+
+    // Filter by search term (local search)
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(d =>
+        d.name?.toLowerCase().includes(term) ||
+        d.city?.toLowerCase().includes(term) ||
+        d.category?.toLowerCase().includes(term) ||
+        d.neighborhood?.toLowerCase().includes(term) ||
+        d.micro_description?.toLowerCase().includes(term)
+      );
+    }
+
+    return filtered;
+  }, [destinations, selectedCity, selectedCategory, searchTerm]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
+
+  // Get current page of destinations
+  const displayedDestinations = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredDestinations.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredDestinations, currentPage, itemsPerPage]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCity, selectedCategory, searchTerm]);
+
+  // Clear all filters
+  const clearFilters = useCallback(() => {
+    setSelectedCity('');
+    setSelectedCategory('');
+    setSearchTerm('');
+    setCurrentPage(1);
+  }, []);
+
+  // Update URL when view mode changes
+  const handleSetViewMode = useCallback((mode: 'grid' | 'map') => {
+    setViewMode(mode);
+    const url = new URL(window.location.href);
+    url.searchParams.set('view', mode);
+    router.push(url.pathname + url.search, { scroll: false });
+  }, [router]);
+
+  const contextValue: HomepageDataContextType = {
+    destinations,
+    filteredDestinations,
+    displayedDestinations,
+    cities,
+    categories,
+    isLoading,
+    currentPage,
+    totalPages,
+    selectedCity,
+    selectedCategory,
+    searchTerm,
+    viewMode,
+    setCurrentPage,
+    setSelectedCity,
+    setSelectedCategory,
+    setSearchTerm,
+    setViewMode: handleSetViewMode,
+    clearFilters,
+  };
+
   return (
-    <HomepageDataContext.Provider value={{ destinations, cities, categories, isLoading }}>
+    <HomepageDataContext.Provider value={contextValue}>
       {children}
     </HomepageDataContext.Provider>
+  );
+}
+
+// Wrap with Suspense for useSearchParams
+export function HomepageDataProvider(props: HomepageDataProviderProps) {
+  return (
+    <Suspense fallback={null}>
+      <HomepageDataProviderInner {...props} />
+    </Suspense>
   );
 }
 

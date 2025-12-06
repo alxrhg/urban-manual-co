@@ -2,10 +2,11 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Map, LayoutGrid, Plus, Globe, Loader2 } from 'lucide-react';
+import { Map, LayoutGrid, Plus, Globe, Loader2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { useHomepageData } from './HomepageDataProvider';
 
 /**
  * Navigation Bar Component - Apple Design System
@@ -16,8 +17,17 @@ import { createClient } from '@/lib/supabase/client';
 export default function NavigationBar() {
   const router = useRouter();
   const { user } = useAuth();
-  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const {
+    viewMode,
+    setViewMode,
+    selectedCity,
+    selectedCategory,
+    searchTerm,
+    clearFilters,
+  } = useHomepageData();
   const [creatingTrip, setCreatingTrip] = useState(false);
+
+  const hasFilters = selectedCity || selectedCategory || searchTerm;
 
   // Handle create trip
   const handleCreateTrip = useCallback(async () => {
@@ -52,17 +62,30 @@ export default function NavigationBar() {
 
   // Handle view mode toggle
   const handleViewToggle = useCallback(() => {
-    const newMode = viewMode === 'grid' ? 'map' : 'grid';
-    setViewMode(newMode);
-    const url = new URL(window.location.href);
-    url.searchParams.set('view', newMode);
-    router.push(url.pathname + url.search);
-  }, [viewMode, router]);
+    setViewMode(viewMode === 'grid' ? 'map' : 'grid');
+  }, [viewMode, setViewMode]);
 
   return (
     <div className="mb-8">
-      <div className="flex justify-start sm:justify-end">
-        <div className="flex w-full items-center gap-2 overflow-x-auto pb-2 no-scrollbar sm:justify-end sm:overflow-visible">
+      <div className="flex justify-between items-center">
+        {/* Left side - Active filters indicator */}
+        <div className="flex items-center gap-2">
+          {hasFilters && (
+            <button
+              onClick={clearFilters}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium
+                         text-gray-500 dark:text-gray-400
+                         hover:text-gray-900 dark:hover:text-white
+                         transition-colors"
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear filters
+            </button>
+          )}
+        </div>
+
+        {/* Right side - Actions */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
           {/* View Toggle - Apple-style segmented control look */}
           <button
             onClick={handleViewToggle}

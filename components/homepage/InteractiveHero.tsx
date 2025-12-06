@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { capitalizeCity } from '@/lib/utils';
+import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHomepageData } from './HomepageDataProvider';
 
@@ -15,11 +14,22 @@ const FEATURED_CITIES = ['Taipei', 'Tokyo', 'New York', 'London'];
  * Uses SF Pro-inspired typography and Apple's spacious layout principles.
  */
 export default function InteractiveHero() {
-  const router = useRouter();
   const { user } = useAuth();
-  const { destinations, cities, categories, isLoading } = useHomepageData();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
+  const {
+    destinations,
+    cities,
+    categories,
+    isLoading,
+    selectedCity,
+    selectedCategory,
+    searchTerm,
+    setSelectedCity,
+    setSelectedCategory,
+    setSearchTerm,
+    filteredDestinations,
+  } = useHomepageData();
+
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [showAllCities, setShowAllCities] = useState(false);
 
   // Get user's first name for greeting
@@ -40,21 +50,26 @@ export default function InteractiveHero() {
   // Handle search submit
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    if (searchTerm.trim()) {
-      router.push(`/?q=${encodeURIComponent(searchTerm.trim())}`);
-    }
-  }, [searchTerm, router]);
+    setSearchTerm(localSearchTerm);
+  }, [localSearchTerm, setSearchTerm]);
 
   // Handle city filter
   const handleCityClick = useCallback((city: string) => {
-    if (city === selectedCity) {
+    if (city.toLowerCase() === selectedCity.toLowerCase()) {
       setSelectedCity('');
-      router.push('/');
     } else {
       setSelectedCity(city);
-      router.push(`/city/${city.toLowerCase().replace(/\s+/g, '-')}`);
     }
-  }, [selectedCity, router]);
+  }, [selectedCity, setSelectedCity]);
+
+  // Handle category filter
+  const handleCategoryClick = useCallback((category: string) => {
+    if (category.toLowerCase() === selectedCategory.toLowerCase()) {
+      setSelectedCategory('');
+    } else {
+      setSelectedCategory(category);
+    }
+  }, [selectedCategory, setSelectedCategory]);
 
   // Get greeting based on time of day
   const getGreeting = () => {
@@ -65,6 +80,8 @@ export default function InteractiveHero() {
   };
 
   const destinationCount = destinations.length || '800';
+  const filteredCount = filteredDestinations.length;
+  const hasFilters = selectedCity || selectedCategory || searchTerm;
 
   return (
     <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
@@ -75,7 +92,11 @@ export default function InteractiveHero() {
             {userName ? `${getGreeting()}, ${userName}` : 'Discover the world'}
           </h2>
           <p className="text-[15px] text-gray-500 dark:text-gray-400 mb-8 tracking-[-0.01em]">
-            {isLoading ? 'Loading destinations...' : `${destinationCount}+ curated destinations worldwide`}
+            {isLoading
+              ? 'Loading destinations...'
+              : hasFilters
+                ? `${filteredCount} of ${destinationCount}+ destinations`
+                : `${destinationCount}+ curated destinations worldwide`}
           </p>
 
           {/* Search Input - Apple-style rounded search */}
@@ -83,9 +104,9 @@ export default function InteractiveHero() {
             <div className="relative max-w-xl">
               <input
                 type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Where do you want to go?"
+                value={localSearchTerm}
+                onChange={(e) => setLocalSearchTerm(e.target.value)}
+                placeholder="Search destinations..."
                 className="w-full h-[52px] pl-5 pr-12 text-[15px] bg-gray-100/80 dark:bg-white/[0.08]
                            border-0 rounded-[14px] text-gray-900 dark:text-white
                            placeholder:text-gray-400 dark:placeholder:text-gray-500
@@ -111,20 +132,17 @@ export default function InteractiveHero() {
       {/* City Filters - Apple-style pill buttons */}
       <div className="flex-1 flex items-end">
         <div className="w-full pt-6">
-          <div className="mb-12">
+          <div className="mb-8">
             <div className="flex flex-wrap gap-x-1 gap-y-2">
               <button
-                onClick={() => {
-                  setSelectedCity('');
-                  router.push('/');
-                }}
+                onClick={() => setSelectedCity('')}
                 className={`px-3 py-1.5 text-[13px] font-medium rounded-full transition-all duration-200 ${
                   !selectedCity
                     ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
                 }`}
               >
-                All
+                All Cities
               </button>
               {displayedCities.map((city) => (
                 <button
@@ -158,16 +176,30 @@ export default function InteractiveHero() {
             </div>
           </div>
 
-          {/* Category Filters - Subtle text links */}
+          {/* Category Filters */}
           {categories.length > 0 && (
-            <div className="flex flex-wrap gap-x-5 gap-y-2 text-[13px]">
-              {categories.slice(0, 6).map((category) => (
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-[13px]">
+              <button
+                onClick={() => setSelectedCategory('')}
+                className={`transition-colors duration-200 ${
+                  !selectedCategory
+                    ? 'text-gray-900 dark:text-white font-medium'
+                    : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                All
+              </button>
+              {categories.slice(0, 8).map((category) => (
                 <button
                   key={category}
-                  onClick={() => router.push(`/category/${category.toLowerCase().replace(/\s+/g, '-')}`)}
-                  className="text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors duration-200"
+                  onClick={() => handleCategoryClick(category)}
+                  className={`transition-colors duration-200 ${
+                    selectedCategory.toLowerCase() === category.toLowerCase()
+                      ? 'text-gray-900 dark:text-white font-medium'
+                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                  }`}
                 >
-                  {category.charAt(0).toUpperCase() + category.slice(1).toLowerCase()}
+                  {capitalizeCategory(category)}
                 </button>
               ))}
             </div>
