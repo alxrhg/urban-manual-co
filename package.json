@@ -38,6 +38,9 @@
     "export:r2:dry-run": "tsx scripts/export-destinations-to-r2.ts --dry-run",
     "sanity:sync": "tsx scripts/sync-supabase-to-sanity.ts",
     "sanity:sync:reverse": "tsx scripts/sync-sanity-to-supabase.ts",
+    "migrate:slugs": "tsx scripts/migrate-slugs-with-city.ts",
+    "migrate:slugs:dry-run": "tsx scripts/migrate-slugs-with-city.ts --dry-run",
+    "migrate:slugs:apply": "tsx scripts/migrate-slugs-with-city.ts --apply",
     "plasmic:sync": "plasmic sync --projects pEZdPb88zvW8NfciQQQwSK",
     "plasmic:watch": "plasmic watch --projects pEZdPb88zvW8NfciQQQwSK"
   },

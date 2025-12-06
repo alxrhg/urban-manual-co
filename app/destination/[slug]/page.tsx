@@ -135,8 +135,25 @@ export default async function DestinationPage({
     }
   }
 
-  // If still not found, try stripping common city suffixes
-  // This handles cases like "le-bernardin-new-york" -> "le-bernardin"
+  // If still not found, try to find a matching destination with city suffix
+  // This handles old URLs like "le-bernardin" -> "le-bernardin-new-york"
+  if (!destination && !error) {
+    // Search for destinations where slug starts with the requested slug
+    const { data: potentialMatches } = await supabase
+      .from('destinations')
+      .select('slug')
+      .ilike('slug', `${decodedSlug}-%`)
+      .limit(1);
+
+    if (potentialMatches && potentialMatches.length > 0) {
+      // Redirect to the correct URL with city suffix
+      const { redirect } = await import('next/navigation');
+      redirect(`/destination/${potentialMatches[0].slug}`);
+    }
+  }
+
+  // Also handle the reverse: strip city suffix if someone accesses wrong format
+  // This handles cases like "le-bernardin-new-york" when slug is just "le-bernardin"
   if (!destination && !error) {
     const commonCitySuffixes = [
       '-new-york', '-london', '-paris', '-tokyo', '-los-angeles', '-san-francisco',
@@ -148,14 +165,13 @@ export default async function DestinationPage({
     for (const suffix of commonCitySuffixes) {
       if (decodedSlug.toLowerCase().endsWith(suffix)) {
         const strippedSlug = decodedSlug.slice(0, -suffix.length);
-        const { data: strippedMatch, error: strippedError } = await supabase
+        const { data: strippedMatch } = await supabase
           .from('destinations')
-          .select('*')
+          .select('slug')
           .ilike('slug', strippedSlug)
           .maybeSingle();
 
-        if (strippedMatch && !strippedError) {
-          // Redirect to the correct URL
+        if (strippedMatch) {
           const { redirect } = await import('next/navigation');
           redirect(`/destination/${strippedMatch.slug}`);
         }
