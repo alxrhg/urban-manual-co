@@ -68,13 +68,15 @@ export async function GET(request: Request) {
     console.log('[MapKit Token] Generating token for origin:', origin || '(none)');
 
     // Build JWT per Apple MapKit JS requirements
-    // Required claims: iss (Team ID), iat, exp. Including origin is recommended to scope the token.
+    // Required claims: iss (Team ID), iat, exp
+    // Note: Omitting origin claim to allow token to work across all Vercel preview deployments
     const payload: Record<string, unknown> = {
       iss: teamId,
       iat: now,
-      exp: now + 60 * 60, // 1 hour
+      exp: now + 60 * 60 * 24, // 24 hours - longer expiry for better UX
     };
-    if (origin) {
+    // Only add origin for production domain to prevent origin mismatch on preview deployments
+    if (origin && origin.includes('urbanmanual.co')) {
       payload.origin = origin;
     }
 
