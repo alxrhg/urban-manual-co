@@ -36,7 +36,7 @@ export default function TripWeatherForecast({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchWeather = async () => {
+    const fetchWeatherData = async () => {
       if (!startDate) {
         setError('No trip dates set');
         setLoading(false);
@@ -65,87 +65,36 @@ export default function TripWeatherForecast({
         return;
       }
 
+      if (!destination && !latitude && !longitude) {
+        setError('No destination set');
+        setLoading(false);
+        return;
+      }
+
       try {
-        // Use Open-Meteo API (free, no API key required)
-        let lat = latitude;
-        let lon = longitude;
+        // Use internal API route to fetch weather (handles geocoding server-side)
+        const params = new URLSearchParams();
+        if (destination) params.set('destination', destination);
+        if (latitude) params.set('lat', String(latitude));
+        if (longitude) params.set('lng', String(longitude));
+        if (startDate) params.set('startDate', startDate);
+        if (endDate) params.set('endDate', endDate);
 
-        // If no coordinates, try to geocode the destination
-        if (!lat || !lon) {
-          if (!destination) {
-            setError('No destination set');
-            setLoading(false);
-            return;
-          }
+        const response = await fetch(`/api/weather?${params.toString()}`);
 
-          // Use Open-Meteo geocoding
-          const geoResponse = await fetch(
-            `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(destination)}&count=1`
-          );
-          const geoData = await geoResponse.json();
-
-          if (!geoData.results?.[0]) {
-            setError('Location not found');
-            setLoading(false);
-            return;
-          }
-
-          lat = geoData.results[0].latitude;
-          lon = geoData.results[0].longitude;
-        }
-
-        // Fetch weather forecast
-        const weatherResponse = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weathercode,windspeed_10m_max,relative_humidity_2m_mean&timezone=auto&forecast_days=16`
-        );
-        const weatherData = await weatherResponse.json();
-
-        if (!weatherData.daily) {
-          setError('Weather data unavailable');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          setError(errorData.error || 'Weather data unavailable');
           setLoading(false);
           return;
         }
 
-        // Map weather codes to conditions
-        const getCondition = (code: number): { condition: string; icon: string } => {
-          if (code === 0) return { condition: 'Clear', icon: 'sun' };
-          if (code <= 3) return { condition: 'Partly Cloudy', icon: 'cloud' };
-          if (code <= 49) return { condition: 'Foggy', icon: 'cloud' };
-          if (code <= 59) return { condition: 'Drizzle', icon: 'rain' };
-          if (code <= 69) return { condition: 'Rain', icon: 'rain' };
-          if (code <= 79) return { condition: 'Snow', icon: 'snow' };
-          if (code <= 99) return { condition: 'Thunderstorm', icon: 'rain' };
-          return { condition: 'Unknown', icon: 'cloud' };
-        };
+        const data = await response.json();
 
-        // Filter to trip dates
-        const tripStart = parseDateString(startDate);
-        const tripEnd = parseDateString(endDate) || tripStart;
-
-        const forecastDays: WeatherDay[] = [];
-        weatherData.daily.time.forEach((date: string, i: number) => {
-          const dayDate = parseDateString(date);
-          if (dayDate && tripStart && tripEnd && dayDate >= tripStart && dayDate <= tripEnd) {
-            const { condition, icon } = getCondition(weatherData.daily.weathercode[i]);
-            forecastDays.push({
-              date,
-              temp: {
-                min: Math.round(weatherData.daily.temperature_2m_min[i]),
-                max: Math.round(weatherData.daily.temperature_2m_max[i]),
-              },
-              condition,
-              icon,
-              humidity: Math.round(weatherData.daily.relative_humidity_2m_mean[i]),
-              windSpeed: Math.round(weatherData.daily.windspeed_10m_max[i]),
-              precipitation: Math.round(weatherData.daily.precipitation_sum[i] * 10) / 10,
-            });
-          }
-        });
-
-        if (forecastDays.length === 0) {
+        if (!data.forecast || data.forecast.length === 0) {
           setError('Forecast not yet available');
         } else {
-          setWeather(forecastDays);
+          setWeather(data.forecast);
         }
       } catch (err) {
         console.error('Weather fetch error:', err);
@@ -155,7 +104,7 @@ export default function TripWeatherForecast({
       }
     };
 
-    fetchWeather();
+    fetchWeatherData();
   }, [destination, startDate, endDate, latitude, longitude]);
 
   const getWeatherIcon = (icon: string) => {
