@@ -834,7 +834,7 @@ export function ContentManager({ onEditDestination, onCreateNew }: ContentManage
       {totalPages > 1 && (
         <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-800">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {((page - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(page * ITEMS_PER_PAGE, totalCount)} of {totalCount}
+            {((page - 1) * itemsPerPage) + 1}–{Math.min(page * itemsPerPage, totalCount)} of {totalCount}
           </p>
           <div className="flex items-center gap-1">
             <Button
