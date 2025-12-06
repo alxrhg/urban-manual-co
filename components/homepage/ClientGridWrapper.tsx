@@ -4,14 +4,14 @@ import { ReactNode, useEffect, useRef } from 'react';
 import { Destination } from '@/types/destination';
 
 /**
- * Client Grid Wrapper
+ * Client Grid Wrapper - Apple Design System
  *
  * A lightweight client component that adds interactivity to server-rendered grids.
  * Uses event delegation to minimize JavaScript overhead.
  *
  * Features:
  * - Event delegation for click handling (single listener for all cards)
- * - Hover effects via CSS (no JS needed)
+ * - Subtle hover effects via CSS
  * - Minimal bundle size (~2KB)
  * - Navigation to destination page on click
  */
@@ -95,17 +95,10 @@ export function ClientGridWrapper({
           __html: `
             .client-grid-wrapper [data-destination-slug] {
               cursor: pointer;
-              transition: transform 0.3s ease-out;
-            }
-            .client-grid-wrapper [data-destination-slug]:hover {
-              transform: scale(1.01);
             }
             .client-grid-wrapper [data-destination-slug]:active {
               transform: scale(0.98);
-            }
-            .client-grid-wrapper [data-destination-slug]:hover img {
-              transform: scale(1.05);
-              transition: transform 0.5s ease-out;
+              transition: transform 0.1s ease-out;
             }
           `,
         }}
