@@ -239,18 +239,31 @@ export default function TripPage() {
     await addPlace(destination, dayNumber);
   }, [addPlace, primaryCity]);
 
-  // Handle marker click from map
-  const handleMapMarkerClick = useCallback((itemId: string) => {
-    // Find the item and select it
+  // Memoized lookup map for efficient marker click handling
+  // Maps both regular item IDs and flight compound IDs (item.id-departure, item.id-arrival)
+  const itemMap = useMemo(() => {
+    const map = new Map<string, { item: EnrichedItineraryItem; dayNumber: number }>();
     for (const day of days) {
-      const item = day.items.find(i => i.id === itemId);
-      if (item) {
-        setSelectedDayNumber(day.dayNumber);
-        setSelectedItem(item);
-        break;
+      for (const item of day.items) {
+        if (item.parsedNotes?.type === 'flight') {
+          map.set(`${item.id}-departure`, { item, dayNumber: day.dayNumber });
+          map.set(`${item.id}-arrival`, { item, dayNumber: day.dayNumber });
+        } else {
+          map.set(item.id, { item, dayNumber: day.dayNumber });
+        }
       }
     }
+    return map;
   }, [days]);
+
+  // Handle marker click from map - O(1) lookup using itemMap
+  const handleMapMarkerClick = useCallback((itemId: string) => {
+    const lookup = itemMap.get(itemId);
+    if (lookup) {
+      setSelectedDayNumber(lookup.dayNumber);
+      setSelectedItem(lookup.item);
+    }
+  }, [itemMap]);
 
   // Handle add item from dropdown menu
   const handleAddItemClick = useCallback((type: AddItemType) => {
