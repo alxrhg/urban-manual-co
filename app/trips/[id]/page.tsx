@@ -6,12 +6,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { parseDestinations, parseTripNotes, stringifyTripNotes, type TripNotes } from '@/types/trip';
 import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
+import type { Destination } from '@/types/destination';
 
 // Trip components
 import TripHeader, { type AddItemType } from '@/components/trip/TripHeader';
 import { ItineraryViewRedesign } from '@/components/trip/itinerary';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
-import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
+import MapSidebarCard from '@/components/trip/MapSidebarCard';
+import FullscreenMapOverlay from '@/components/trip/FullscreenMapOverlay';
 import TripMapView from '@/components/trips/TripMapView';
 
 // Existing components
@@ -70,6 +72,7 @@ export default function TripPage() {
   const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showMapView, setShowMapView] = useState(false);
+  const [showFullscreenMap, setShowFullscreenMap] = useState(false);
   const [showCompanionPanel, setShowCompanionPanel] = useState(false);
 
   // Auto-fix items on wrong days based on their dates
@@ -218,6 +221,50 @@ export default function TripPage() {
     await handleAddSuggestion({ dayNumber: selectedDayNumber });
   }, [handleAddSuggestion, selectedDayNumber]);
 
+  // Handle adding a place from map search
+  const handleAddPlaceFromMap = useCallback(async (place: Partial<Destination>, dayNumber: number) => {
+    if (!place.name) return;
+
+    // Create a destination-like object from the map search result
+    const destination: Destination = {
+      slug: place.name.toLowerCase().replace(/\s+/g, '-'),
+      name: place.name,
+      city: place.city || primaryCity,
+      country: place.country,
+      category: place.category || 'attraction',
+      latitude: place.latitude,
+      longitude: place.longitude,
+    };
+
+    await addPlace(destination, dayNumber);
+  }, [addPlace, primaryCity]);
+
+  // Memoized lookup map for efficient marker click handling
+  // Maps both regular item IDs and flight compound IDs (item.id-departure, item.id-arrival)
+  const itemMap = useMemo(() => {
+    const map = new Map<string, { item: EnrichedItineraryItem; dayNumber: number }>();
+    for (const day of days) {
+      for (const item of day.items) {
+        if (item.parsedNotes?.type === 'flight') {
+          map.set(`${item.id}-departure`, { item, dayNumber: day.dayNumber });
+          map.set(`${item.id}-arrival`, { item, dayNumber: day.dayNumber });
+        } else {
+          map.set(item.id, { item, dayNumber: day.dayNumber });
+        }
+      }
+    }
+    return map;
+  }, [days]);
+
+  // Handle marker click from map - O(1) lookup using itemMap
+  const handleMapMarkerClick = useCallback((itemId: string) => {
+    const lookup = itemMap.get(itemId);
+    if (lookup) {
+      setSelectedDayNumber(lookup.dayNumber);
+      setSelectedItem(lookup.item);
+    }
+  }, [itemMap]);
+
   // Handle add item from dropdown menu
   const handleAddItemClick = useCallback((type: AddItemType) => {
     setShowAddPlaceBox(true);
@@ -304,7 +351,7 @@ export default function TripPage() {
           onAddItemClick={handleAddItemClick}
           onEditClick={() => setIsEditMode(!isEditMode)}
           isEditMode={isEditMode}
-          onMapClick={() => setShowMapView(true)}
+          onMapClick={() => setShowFullscreenMap(true)}
         />
 
         {/* Main Content */}
@@ -502,9 +549,12 @@ export default function TripPage() {
             ) : (
               <>
                 {/* Interactive Map */}
-                <InteractiveMapCard
-                  locationName={primaryCity || 'Map'}
-                  onExpand={() => {}}
+                <MapSidebarCard
+                  days={days}
+                  selectedDayNumber={selectedDayNumber}
+                  tripDestination={primaryCity}
+                  onExpand={() => setShowFullscreenMap(true)}
+                  onMarkerClick={handleMapMarkerClick}
                 />
 
                 {/* Travel AI - Opens Companion Panel */}
@@ -600,6 +650,18 @@ export default function TripPage() {
         days={days}
         selectedDayNumber={selectedDayNumber}
         onAddSuggestion={handleAddSuggestion}
+      />
+
+      {/* Fullscreen Interactive Map */}
+      <FullscreenMapOverlay
+        isOpen={showFullscreenMap}
+        onClose={() => setShowFullscreenMap(false)}
+        days={days}
+        selectedDayNumber={selectedDayNumber}
+        activeItemId={selectedItem?.id}
+        tripDestination={primaryCity}
+        onMarkerClick={handleMapMarkerClick}
+        onAddPlace={handleAddPlaceFromMap}
       />
     </main>
   );

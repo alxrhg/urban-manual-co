@@ -233,17 +233,39 @@ export default function ItineraryViewRedesign({
     return timeToMinutes(timeA) - timeToMinutes(timeB);
   });
 
+  // Calculate map index for items with coordinates (matching map markers)
+  // Only regular places get numbered markers - hotels and flights get special icons
+  let mapMarkerIndex = 0;
+  const itemMapIndices = new Map<string, number>();
+
+  sortedItems.forEach((item) => {
+    const itemType = item.parsedNotes?.type;
+    // Skip flights and hotels - they show icons instead of numbers
+    if (itemType === 'flight' || itemType === 'hotel') return;
+
+    // Check if item has coordinates
+    const lat = item.parsedNotes?.latitude ?? item.destination?.latitude;
+    const lng = item.parsedNotes?.longitude ?? item.destination?.longitude;
+
+    if (lat && lng) {
+      mapMarkerIndex++;
+      itemMapIndices.set(item.id, mapMarkerIndex);
+    }
+  });
+
   // Calculate gaps and travel times between items
   const itemsWithMeta = sortedItems.map((item, index) => {
     const nextItem = sortedItems[index + 1];
     const travelTime = calculateTravelTime(item, nextItem);
     const gap = nextItem ? calculateGap(item, nextItem, travelTime?.durationMinutes) : null;
+    const mapIndex = itemMapIndices.get(item.id);
 
     return {
       item,
       travelTime,
       gap,
       isCard: shouldUseCard(item),
+      mapIndex,
     };
   });
 
@@ -299,62 +321,91 @@ export default function ItineraryViewRedesign({
             items={sortedItems.map((item) => item.id)}
             strategy={verticalListSortingStrategy}
           >
-            <div className={`space-y-0 pt-4 ${isEditMode ? 'pl-6' : ''}`}>
-              {itemsWithMeta.map(({ item, travelTime, gap, isCard }, index) => (
-                <React.Fragment key={item.id}>
-                  {/* Sortable Item Row/Card */}
-                  <SortableItineraryItem
-                    item={item}
-                    isEditMode={isEditMode}
-                    isActive={item.id === activeItemId}
-                    isCard={isCard}
-                    onEditItem={onEditItem}
-                    onRemoveItem={onRemoveItem}
+            <div className="space-y-0 pt-4">
+          {itemsWithMeta.map(({ item, travelTime, gap, isCard, mapIndex }, index) => (
+            <React.Fragment key={item.id}>
+              {/* Item Row/Card */}
+              <div className="relative group">
+                {/* Delete button (edit mode) */}
+                {isEditMode && onRemoveItem && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRemoveItem(item.id);
+                    }}
+                    className="absolute -left-2 top-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs hover:bg-red-600 transition-colors z-20 opacity-0 group-hover:opacity-100"
+                  >
+                    ×
+                  </button>
+                )}
+
+                {/* Render card or minimal row based on item type */}
+                {item.parsedNotes?.type === 'hotel' ? (
+                  <CheckInRow
+                    hotelName={item.title || 'Hotel'}
+                    time={item.parsedNotes?.checkInTime || item.time || undefined}
+                    onClick={() => onEditItem?.(item)}
                   />
+                ) : isCard ? (
+                  <ItineraryCard
+                    item={item}
+                    isActive={item.id === activeItemId}
+                    onClick={() => onEditItem?.(item)}
+                    mapIndex={mapIndex}
+                  />
+                ) : (
+                  <ItineraryMinimalRow
+                    item={item}
+                    isActive={item.id === activeItemId}
+                    onClick={() => onEditItem?.(item)}
+                    mapIndex={mapIndex}
+                  />
+                )}
+              </div>
 
-                  {/* Gap Suggestion (for gaps > 2 hours) - shown before travel time */}
-                  {gap && gap >= 120 && (
-                    <GapSuggestion
-                      gapMinutes={gap}
-                      hotelName={nightStayHotel?.title}
-                      hotelHasPool={nightStayHotel?.parsedNotes?.tags?.includes('pool')}
-                      hotelHasSpa={nightStayHotel?.parsedNotes?.tags?.includes('spa')}
-                      hotelHasGym={nightStayHotel?.parsedNotes?.tags?.includes('gym')}
-                      onAddActivity={
-                        onAddActivity
-                          ? (type) => onAddActivity(selectedDay.dayNumber, type)
-                          : undefined
-                      }
-                      onAddCustom={
-                        onAddItem
-                          ? () => onAddItem(selectedDay.dayNumber)
-                          : undefined
-                      }
-                    />
-                  )}
+              {/* Gap Suggestion (for gaps > 2 hours) */}
+              {gap && gap >= 120 && (
+                <GapSuggestion
+                  gapMinutes={gap}
+                  hotelName={nightStayHotel?.title}
+                  hotelHasPool={nightStayHotel?.parsedNotes?.tags?.includes('pool')}
+                  hotelHasSpa={nightStayHotel?.parsedNotes?.tags?.includes('spa')}
+                  hotelHasGym={nightStayHotel?.parsedNotes?.tags?.includes('gym')}
+                  onAddActivity={
+                    onAddActivity
+                      ? (type) => onAddActivity(selectedDay.dayNumber, type)
+                      : undefined
+                  }
+                  onAddCustom={
+                    onAddItem
+                      ? () => onAddItem(selectedDay.dayNumber)
+                      : undefined
+                  }
+                />
+              )}
 
-                  {/* Compact gap indicator (for 30min - 2h gaps) - shown before travel time */}
-                  {gap && gap >= 30 && gap < 120 && (
-                    <CompactGapIndicator
-                      gapMinutes={gap}
-                      onClick={onAddItem ? () => onAddItem(selectedDay.dayNumber) : undefined}
-                    />
-                  )}
+              {/* Compact gap indicator (for 30min - 2h gaps) */}
+              {gap && gap >= 30 && gap < 120 && (
+                <CompactGapIndicator
+                  gapMinutes={gap}
+                  onClick={onAddItem ? () => onAddItem(selectedDay.dayNumber) : undefined}
+                />
+              )}
 
-                  {/* Travel Connector - shown after free time gap */}
-                  {travelTime && index < sortedItems.length - 1 && (
-                    <InteractiveTravelConnector
-                      durationMinutes={travelTime.durationMinutes}
-                      distanceKm={travelTime.distanceKm}
-                      mode={travelTime.mode}
-                      onModeChange={
-                        onUpdateTravelMode
-                          ? (mode) => onUpdateTravelMode(item.id, mode)
-                          : undefined
-                      }
-                    />
-                  )}
-                </React.Fragment>
+              {/* Travel Connector */}
+              {travelTime && index < sortedItems.length - 1 && (
+                <InteractiveTravelConnector
+                  durationMinutes={travelTime.durationMinutes}
+                  distanceKm={travelTime.distanceKm}
+                  mode={travelTime.mode}
+                  onModeChange={
+                    onUpdateTravelMode
+                      ? (mode) => onUpdateTravelMode(item.id, mode)
+                      : undefined
+                  }
+                />
+              )}
+            </React.Fragment>
               ))}
 
               {/* Add Stop Button */}
