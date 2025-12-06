@@ -4,28 +4,68 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  
-  // Adjust this value in production, or use tracesSampler for greater control
-  tracesSampleRate: 1.0,
-  
-  // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: false,
-  
+
+  // Only enable in production or when explicitly enabled
+  enabled: isProduction || process.env.NEXT_PUBLIC_SENTRY_DEBUG === 'true',
+
+  // Environment tag for filtering in Sentry dashboard
+  environment: process.env.NODE_ENV || 'development',
+
+  // Performance Monitoring
+  // Sample 10% of transactions in production for performance monitoring
+  // Use 100% in development for easier debugging
+  tracesSampleRate: isProduction ? 0.1 : 1.0,
+
+  // Debug mode - only in development
+  debug: process.env.NEXT_PUBLIC_SENTRY_DEBUG === 'true',
+
+  // Session Replay Configuration
+  // Capture 100% of sessions with errors
   replaysOnErrorSampleRate: 1.0,
-  
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.1,
-  
-  // You can remove this option if you're not planning to use the Sentry Session Replay feature:
+
+  // Sample 5% of all sessions in production (balance cost vs insight)
+  // Use 100% in development
+  replaysSessionSampleRate: isProduction ? 0.05 : 1.0,
+
+  // Integrations
   integrations: [
     Sentry.replayIntegration({
-      // Additional Replay configuration goes in here, for example:
+      // Mask all text for privacy
       maskAllText: true,
+      // Block all media for privacy and performance
       blockAllMedia: true,
+      // Mask all inputs for privacy
+      maskAllInputs: true,
     }),
+  ],
+
+  // Filter out noisy errors
+  beforeSend(event) {
+    // Ignore chunk loading errors (handled by Next.js retry)
+    if (event.exception?.values?.[0]?.value?.includes('Loading chunk')) {
+      return null;
+    }
+    // Ignore ResizeObserver errors (browser quirk, not actionable)
+    if (event.exception?.values?.[0]?.value?.includes('ResizeObserver')) {
+      return null;
+    }
+    return event;
+  },
+
+  // Ignore specific URLs
+  denyUrls: [
+    // Chrome extensions
+    /extensions\//i,
+    /^chrome:\/\//i,
+    /^chrome-extension:\/\//i,
+    // Safari extensions
+    /^safari-extension:\/\//i,
+    // Firefox extensions
+    /^moz-extension:\/\//i,
   ],
 });
 
