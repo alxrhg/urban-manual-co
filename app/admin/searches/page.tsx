@@ -246,7 +246,7 @@ export default function AdminSearchesPage() {
               label="No Results"
               value={analytics?.noResultCount || 0}
               icon={<AlertTriangle className="w-4 h-4 text-amber-500" />}
-              warning={analytics?.noResultCount && analytics.noResultCount > 10}
+              warning={(analytics?.noResultCount ?? 0) > 10}
             />
             <StatCard
               label="Searches/Day"
