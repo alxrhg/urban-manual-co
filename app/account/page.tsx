@@ -4,22 +4,11 @@ import React from "react";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { MapPin, Plus, Calendar, Trash2, Edit2 } from "lucide-react";
 import { cityCountryMap } from "@/data/cityCountryMap";
 import Image from "next/image";
-import { EnhancedVisitedTab } from "@/components/EnhancedVisitedTab";
-import { EnhancedSavedTab } from "@/components/EnhancedSavedTab";
 import { WorldMapVisualization } from "@/components/WorldMapVisualization";
-import { AchievementsDisplay } from "@/components/AchievementsDisplay";
 import { PageLoader } from "@/components/LoadingStates";
-import { NoCollectionsEmptyState } from "@/components/EmptyStates";
-import { ProfileEditor } from "@/components/ProfileEditor";
-import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
-import { SecuritySettings } from "@/components/SecuritySettings";
-import { PreferencesTab } from "@/components/account/PreferencesTab";
-import { openCookieSettings } from "@/components/CookieConsent";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
-import { formatDestinationsFromField } from "@/types/trip";
 import type { Trip } from "@/types/trip";
 import type { User } from "@supabase/supabase-js";
 import { toast } from "@/lib/toast";
@@ -44,21 +33,6 @@ export default function Account() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [authChecked, setAuthChecked] = useState(false);
-  
-  // Get initial tab from URL query param - use useEffect to avoid SSR issues
-  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips' | 'preferences'>('profile');
-
-  // Update tab from URL params after mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const tab = params.get('tab');
-      const validTabs = ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings', 'trips', 'preferences'] as const;
-      if (tab && validTabs.includes(tab as typeof validTabs[number])) {
-        setActiveTab(tab as typeof activeTab);
-      }
-    }
-  }, []);
   const [totalDestinations, setTotalDestinations] = useState(0);
 
   // Collection creation state
@@ -423,289 +397,204 @@ export default function Account() {
   }
 
   return (
-    <main className="w-full px-6 md:px-10 py-20 min-h-screen">
-      <div className="max-w-4xl">
-        {/* Header */}
-        <header className="mb-16">
-          <h1 className="text-3xl font-light mb-2">Account</h1>
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-500">{user.email}</p>
-            <button
-              onClick={handleSignOut}
-              className="text-sm text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-            >
+    <main className="w-full min-h-screen">
+      {/* Map Hero */}
+      {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
+        <section className="w-full h-[50vh] relative">
+          <WorldMapVisualization
+            visitedCountries={stats.uniqueCountries}
+            visitedDestinations={stats.visitedDestinationsWithCoords}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white dark:to-black pointer-events-none" />
+        </section>
+      )}
+
+      <div className="px-6 md:px-10 py-12">
+        {/* Journey Summary */}
+        <header className="max-w-2xl mb-20">
+          <p className="text-3xl md:text-4xl font-light leading-snug mb-8">
+            {stats.visitedCount === 0 ? (
+              <>Your journey begins here.</>
+            ) : (
+              <>
+                You&apos;ve visited{' '}
+                <span className="text-black dark:text-white">{stats.visitedCount} {stats.visitedCount === 1 ? 'place' : 'places'}</span>
+                {stats.uniqueCities.size > 0 && (
+                  <> across <span className="text-black dark:text-white">{stats.uniqueCities.size} {stats.uniqueCities.size === 1 ? 'city' : 'cities'}</span></>
+                )}
+                {stats.uniqueCountries.size > 0 && (
+                  <> in <span className="text-black dark:text-white">{stats.uniqueCountries.size} {stats.uniqueCountries.size === 1 ? 'country' : 'countries'}</span></>
+                )}.
+              </>
+            )}
+          </p>
+          <div className="flex items-center gap-6 text-sm text-gray-400">
+            <span>{user.email}</span>
+            <span>·</span>
+            <button onClick={handleSignOut} className="hover:text-black dark:hover:text-white transition-colors">
               Sign out
+            </button>
+            <span>·</span>
+            <button onClick={() => router.push('/account/settings')} className="hover:text-black dark:hover:text-white transition-colors">
+              Settings
             </button>
           </div>
         </header>
 
-        {/* Navigation */}
-        <nav className="mb-12 border-b border-gray-200 dark:border-gray-800">
-          <div className="flex gap-8 -mb-px overflow-x-auto">
-            {(['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'preferences', 'settings'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`pb-3 text-sm whitespace-nowrap transition-colors ${
-                  activeTab === tab
-                    ? 'border-b-2 border-black dark:border-white text-black dark:text-white font-medium'
-                    : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-        </nav>
+        {/* Progress */}
+        {totalDestinations > 0 && (
+          <section className="max-w-2xl mb-20">
+            <div className="flex items-baseline justify-between mb-2">
+              <p className="text-sm text-gray-400">{stats.curationCompletionPercentage}% of curation explored</p>
+              <p className="text-xs text-gray-400">{stats.visitedCount}/{totalDestinations}</p>
+            </div>
+            <div className="h-px bg-gray-200 dark:bg-gray-800">
+              <div className="h-px bg-black dark:bg-white transition-all duration-700" style={{ width: `${stats.curationCompletionPercentage}%` }} />
+            </div>
+          </section>
+        )}
 
-        {/* Content */}
-        <div className="fade-in">
-          {/* Profile Tab */}
-          {activeTab === 'profile' && (
-            <div>
-              {/* Progress */}
-              <section className="mb-16">
-                <p className="text-sm text-gray-500 mb-4">Curation Progress</p>
-                <div className="flex items-end gap-3 mb-3">
-                  <span className="text-5xl font-light tabular-nums">{stats.curationCompletionPercentage}</span>
-                  <span className="text-2xl font-light text-gray-400 mb-1">%</span>
-                </div>
-                <div className="h-px bg-gray-200 dark:bg-gray-800 mb-3">
-                  <div
-                    className="h-px bg-black dark:bg-white transition-all duration-700"
-                    style={{ width: `${stats.curationCompletionPercentage}%` }}
-                  />
-                </div>
-                <p className="text-xs text-gray-400">{stats.visitedCount} of {totalDestinations} places</p>
-              </section>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-16 gap-y-20">
+          {/* Left: Activity */}
+          <div>
+            <h2 className="text-xs uppercase tracking-wider text-gray-400 mb-8">Activity</h2>
 
-              {/* Stats */}
-              <section className="mb-16">
-                <div className="grid grid-cols-4 gap-8">
-                  <div>
-                    <p className="text-3xl font-light tabular-nums">{stats.visitedCount}</p>
-                    <p className="text-xs text-gray-500 mt-1">Visited</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-light tabular-nums">{stats.savedCount}</p>
-                    <p className="text-xs text-gray-500 mt-1">Saved</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-light tabular-nums">{stats.uniqueCities.size}</p>
-                    <p className="text-xs text-gray-500 mt-1">Cities</p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-light tabular-nums">{stats.uniqueCountries.size}</p>
-                    <p className="text-xs text-gray-500 mt-1">Countries</p>
-                  </div>
-                </div>
-              </section>
-
-              {/* Map */}
-              {(stats.uniqueCountries.size > 0 || stats.visitedDestinationsWithCoords.length > 0) && (
-                <section className="mb-16">
-                  <div className="flex items-center justify-between mb-6">
-                    <p className="text-sm text-gray-500">Travel Map</p>
-                    <p className="text-xs text-gray-400">
-                      {stats.uniqueCountries.size} {stats.uniqueCountries.size === 1 ? 'country' : 'countries'} · {stats.uniqueCities.size} {stats.uniqueCities.size === 1 ? 'city' : 'cities'}
-                    </p>
-                  </div>
-                  <WorldMapVisualization
-                    visitedCountries={stats.uniqueCountries}
-                    visitedDestinations={stats.visitedDestinationsWithCoords}
-                  />
-                </section>
-              )}
-
-              {/* Recent */}
-              {visitedPlaces.length > 0 && (
-                <section>
-                  <p className="text-sm text-gray-500 mb-6">Recent Visits</p>
-                  {visitedPlaces.slice(0, 5).map((place, i) => (
+            {visitedPlaces.length === 0 && savedPlaces.length === 0 ? (
+              <p className="text-gray-400">
+                No activity yet.{' '}
+                <button onClick={() => router.push('/')} className="text-black dark:text-white hover:opacity-60">
+                  Start exploring
+                </button>
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {/* Combine and sort by date */}
+                {[
+                  ...visitedPlaces.map(p => ({ ...p, type: 'visited' as const })),
+                  ...savedPlaces.map(p => ({ ...p, type: 'saved' as const }))
+                ]
+                  .slice(0, 12)
+                  .map((item) => (
                     <button
-                      key={place.destination_slug}
-                      onClick={() => router.push(`/destination/${place.destination_slug}`)}
-                      className="w-full flex items-center gap-4 py-4 border-t border-gray-100 dark:border-gray-800 first:border-t-0 hover:bg-gray-50 dark:hover:bg-gray-900/50 -mx-2 px-2 transition-colors text-left"
+                      key={`${item.type}-${item.destination_slug}`}
+                      onClick={() => router.push(`/destination/${item.destination_slug}`)}
+                      className="w-full flex items-center gap-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-900/50 -mx-2 px-2 rounded transition-colors text-left group"
                     >
-                      {place.destination?.image && (
-                        <div className="relative w-10 h-10 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                          <Image src={place.destination.image} alt="" fill className="object-cover" sizes="40px" />
+                      {item.destination?.image && (
+                        <div className="relative w-12 h-12 rounded overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                          <Image src={item.destination.image} alt="" fill className="object-cover" sizes="48px" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate">{place.destination?.name}</p>
-                        <p className="text-xs text-gray-400">{place.destination && capitalizeCity(place.destination.city)}</p>
+                        <p className="text-sm group-hover:text-black dark:group-hover:text-white transition-colors">{item.destination?.name}</p>
+                        <p className="text-xs text-gray-400">
+                          {item.destination && capitalizeCity(item.destination.city)}
+                          <span className="mx-2">·</span>
+                          {item.type === 'visited' ? 'Visited' : 'Saved'}
+                        </p>
                       </div>
-                      <p className="text-xs text-gray-400">{place.visited_at && new Date(place.visited_at).toLocaleDateString()}</p>
                     </button>
                   ))}
-                </section>
-              )}
-            </div>
-          )}
+              </div>
+            )}
 
-          {/* Visited Tab */}
-          {activeTab === 'visited' && (
-            <EnhancedVisitedTab visitedPlaces={visitedPlaces} onPlaceAdded={loadUserData} />
-          )}
-
-          {/* Saved Tab */}
-          {activeTab === 'saved' && (
-            <EnhancedSavedTab savedPlaces={savedPlaces} />
-          )}
-
-          {/* Collections Tab */}
-          {activeTab === 'collections' && (
-            <div>
-              {collections.length === 0 ? (
-                <div className="py-20 text-center">
-                  <p className="text-gray-400 mb-6">No collections yet</p>
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="text-sm text-black dark:text-white hover:opacity-60 transition-opacity"
-                  >
-                    Create your first collection
+            {(visitedPlaces.length > 12 || savedPlaces.length > 0) && (
+              <div className="mt-6 flex gap-4 text-sm">
+                {visitedPlaces.length > 0 && (
+                  <button onClick={() => router.push('/account?tab=visited')} className="text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                    All visited ({visitedPlaces.length})
                   </button>
-                </div>
+                )}
+                {savedPlaces.length > 0 && (
+                  <button onClick={() => router.push('/account?tab=saved')} className="text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                    All saved ({savedPlaces.length})
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Organized */}
+          <div>
+            <h2 className="text-xs uppercase tracking-wider text-gray-400 mb-8">Organized</h2>
+
+            {/* Collections */}
+            <div className="mb-12">
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-gray-500">Collections</p>
+                <button onClick={() => setShowCreateModal(true)} className="text-sm text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                  New
+                </button>
+              </div>
+              {collections.length === 0 ? (
+                <p className="text-gray-400 text-sm">No collections yet</p>
               ) : (
-                <>
-                  <div className="flex items-center justify-between mb-8">
-                    <p className="text-sm text-gray-500">{collections.length} {collections.length === 1 ? 'collection' : 'collections'}</p>
-                    <button
-                      onClick={() => setShowCreateModal(true)}
-                      className="text-sm text-black dark:text-white hover:opacity-60 transition-opacity"
-                    >
-                      New
-                    </button>
-                  </div>
-                  {collections.map((collection) => (
+                <div className="space-y-1">
+                  {collections.slice(0, 5).map((collection) => (
                     <button
                       key={collection.id}
                       onClick={() => router.push(`/collection/${collection.id}`)}
-                      className="w-full flex items-center gap-4 py-4 border-t border-gray-100 dark:border-gray-800 first:border-t-0 hover:bg-gray-50 dark:hover:bg-gray-900/50 -mx-2 px-2 transition-colors text-left"
+                      className="w-full flex items-center gap-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 -mx-2 px-2 rounded transition-colors text-left"
                     >
-                      <span className="text-xl">{collection.emoji || '📚'}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm">{collection.name}</p>
-                        {collection.description && <p className="text-xs text-gray-400 truncate">{collection.description}</p>}
-                      </div>
-                      <p className="text-xs text-gray-400">{collection.destination_count || 0}</p>
+                      <span className="text-lg">{collection.emoji || '📚'}</span>
+                      <span className="text-sm flex-1">{collection.name}</span>
+                      <span className="text-xs text-gray-400">{collection.destination_count || 0}</span>
                     </button>
                   ))}
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Trips Tab */}
-          {activeTab === 'trips' && (
-            <div>
-              {trips.length === 0 ? (
-                <div className="py-20 text-center">
-                  <p className="text-gray-400 mb-6">No trips yet</p>
-                  <button
-                    onClick={() => { setEditingTripId(null); setShowTripDialog(true); }}
-                    className="text-sm text-black dark:text-white hover:opacity-60 transition-opacity"
-                  >
-                    Plan your first trip
-                  </button>
                 </div>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between mb-8">
-                    <p className="text-sm text-gray-500">{trips.length} {trips.length === 1 ? 'trip' : 'trips'}</p>
-                    <button
-                      onClick={() => { setEditingTripId(null); setShowTripDialog(true); }}
-                      className="text-sm text-black dark:text-white hover:opacity-60 transition-opacity"
-                    >
-                      New
-                    </button>
-                  </div>
-                  {trips.map((trip) => (
-                    <div
-                      key={trip.id}
-                      className="flex items-center gap-4 py-4 border-t border-gray-100 dark:border-gray-800 first:border-t-0"
-                    >
-                      <button
-                        onClick={() => router.push(`/trips/${trip.id}`)}
-                        className="flex-1 text-left hover:opacity-60 transition-opacity"
-                      >
-                        <p className="text-sm">{trip.title}</p>
-                        <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
-                          {trip.destination && <span>{formatDestinationsFromField(trip.destination)}</span>}
-                          {trip.start_date && (
-                            <span>
-                              {new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                              {trip.end_date && ` – ${new Date(trip.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-                            </span>
-                          )}
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => { setEditingTripId(trip.id); setShowTripDialog(true); }}
-                        className="p-2 text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (confirm(`Delete "${trip.title}"?`)) {
-                            const { error } = await supabase.from('trips').delete().eq('id', trip.id);
-                            if (!error) await loadUserData();
-                          }
-                        }}
-                        className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </>
               )}
             </div>
-          )}
 
-          {/* Achievements Tab */}
-          {activeTab === 'achievements' && (
-            <AchievementsDisplay
-              visitedPlaces={visitedPlaces}
-              savedPlaces={savedPlaces}
-              uniqueCities={stats.uniqueCities}
-              uniqueCountries={stats.uniqueCountries}
-            />
-          )}
-
-          {/* Preferences Tab */}
-          {activeTab === 'preferences' && user && (
-            <PreferencesTab userId={user.id} />
-          )}
-
-          {/* Settings Tab */}
-          {activeTab === 'settings' && user && (
+            {/* Trips */}
             <div>
-              <section className="mb-12">
-                <p className="text-sm text-gray-500 mb-6">Profile</p>
-                <ProfileEditor userId={user.id} onSaveComplete={() => toast.success('Saved')} />
-              </section>
-
-              <section className="mb-12 pt-8 border-t border-gray-200 dark:border-gray-800">
-                <p className="text-sm text-gray-500 mb-6">Security</p>
-                <SecuritySettings />
-              </section>
-
-              <section className="pt-8 border-t border-gray-200 dark:border-gray-800">
-                <p className="text-sm text-gray-500 mb-6">Privacy</p>
-                <AccountPrivacyManager />
-                <button
-                  onClick={openCookieSettings}
-                  className="mt-6 text-sm text-gray-400 hover:text-black dark:hover:text-white transition-colors"
-                >
-                  Cookie preferences
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-sm text-gray-500">Trips</p>
+                <button onClick={() => { setEditingTripId(null); setShowTripDialog(true); }} className="text-sm text-gray-400 hover:text-black dark:hover:text-white transition-colors">
+                  New
                 </button>
-              </section>
+              </div>
+              {trips.length === 0 ? (
+                <p className="text-gray-400 text-sm">No trips planned</p>
+              ) : (
+                <div className="space-y-1">
+                  {trips.slice(0, 5).map((trip) => (
+                    <button
+                      key={trip.id}
+                      onClick={() => router.push(`/trips/${trip.id}`)}
+                      className="w-full flex items-center gap-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 -mx-2 px-2 rounded transition-colors text-left"
+                    >
+                      <span className="text-sm flex-1">{trip.title}</span>
+                      {trip.start_date && (
+                        <span className="text-xs text-gray-400">
+                          {new Date(trip.start_date).toLocaleDateString('en-US', { month: 'short' })}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
+
+        {/* Achievements - Inline badges */}
+        {stats.visitedCount > 0 && (
+          <section className="mt-20 pt-12 border-t border-gray-100 dark:border-gray-800">
+            <h2 className="text-xs uppercase tracking-wider text-gray-400 mb-6">Milestones</h2>
+            <div className="flex flex-wrap gap-3">
+              {stats.visitedCount >= 1 && <span className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs">First visit</span>}
+              {stats.savedCount >= 1 && <span className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs">First save</span>}
+              {stats.uniqueCities.size >= 5 && <span className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs">5 cities</span>}
+              {stats.uniqueCities.size >= 10 && <span className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs">10 cities</span>}
+              {stats.uniqueCountries.size >= 5 && <span className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs">5 countries</span>}
+              {stats.visitedCount >= 10 && <span className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs">10 places</span>}
+              {stats.visitedCount >= 25 && <span className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs">25 places</span>}
+              {stats.visitedCount >= 50 && <span className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs">50 places</span>}
+              {stats.visitedCount >= 100 && <span className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full text-xs">Legend</span>}
+            </div>
+          </section>
+        )}
       </div>
 
       {/* Modal */}
