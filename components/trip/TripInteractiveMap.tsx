@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import type { TripDay, EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import type { Destination } from '@/types/destination';
+import { getAirportCoordinates } from '@/lib/utils/airports';
 
 interface MapMarker {
   id: string;
@@ -26,6 +27,7 @@ interface MapMarker {
   dayNumber: number;
   index: number;
   item: EnrichedItineraryItem;
+  isArrivalAirport?: boolean; // For flights: true = arrival, false/undefined = departure
 }
 
 interface SearchResult {
@@ -144,28 +146,63 @@ export default function TripInteractiveMap({
     days.forEach((day) => {
       day.items.forEach((item) => {
         const itemType = item.parsedNotes?.type;
-        const lat = item.parsedNotes?.latitude ?? item.destination?.latitude;
-        const lng = item.parsedNotes?.longitude ?? item.destination?.longitude;
+        const isHotel = itemType === 'hotel';
+        const isFlight = itemType === 'flight';
 
-        if (lat && lng) {
-          // Hotels and flights get special icons (index = 0 means use icon)
-          // Regular places get numbered markers
-          const isHotel = itemType === 'hotel';
-          const isFlight = itemType === 'flight';
+        if (isFlight) {
+          // For flights, create markers for both departure and arrival airports
+          const fromAirport = item.parsedNotes?.from;
+          const toAirport = item.parsedNotes?.to;
 
-          if (!isHotel && !isFlight) {
-            stopIndex++;
+          // Departure airport marker
+          const departureCoords = getAirportCoordinates(fromAirport);
+          if (departureCoords) {
+            markers.push({
+              id: `${item.id}-departure`,
+              lat: departureCoords.latitude,
+              lng: departureCoords.longitude,
+              label: `${fromAirport} (Departure)`,
+              dayNumber: day.dayNumber,
+              index: 0, // Special icon
+              item,
+              isArrivalAirport: false,
+            });
           }
 
-          markers.push({
-            id: item.id,
-            lat,
-            lng,
-            label: item.title || `Stop ${stopIndex}`,
-            dayNumber: day.dayNumber,
-            index: (isHotel || isFlight) ? 0 : stopIndex, // 0 = special icon
-            item,
-          });
+          // Arrival airport marker
+          const arrivalCoords = getAirportCoordinates(toAirport);
+          if (arrivalCoords) {
+            markers.push({
+              id: `${item.id}-arrival`,
+              lat: arrivalCoords.latitude,
+              lng: arrivalCoords.longitude,
+              label: `${toAirport} (Arrival)`,
+              dayNumber: day.dayNumber,
+              index: 0, // Special icon
+              item,
+              isArrivalAirport: true,
+            });
+          }
+        } else {
+          // Hotels and regular places
+          const lat = item.parsedNotes?.latitude ?? item.destination?.latitude;
+          const lng = item.parsedNotes?.longitude ?? item.destination?.longitude;
+
+          if (lat && lng) {
+            if (!isHotel) {
+              stopIndex++;
+            }
+
+            markers.push({
+              id: item.id,
+              lat,
+              lng,
+              label: item.title || `Stop ${stopIndex}`,
+              dayNumber: day.dayNumber,
+              index: isHotel ? 0 : stopIndex, // 0 = special icon for hotels
+              item,
+            });
+          }
         }
       });
     });

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Maximize2, MapPin, Navigation, AlertTriangle } from 'lucide-react';
 import type { TripDay } from '@/lib/hooks/useTripEditor';
+import { getAirportCoordinates } from '@/lib/utils/airports';
 
 interface MapMarker {
   id: string;
@@ -12,6 +13,7 @@ interface MapMarker {
   dayNumber: number;
   index: number;
   itemType?: string;
+  isArrivalAirport?: boolean;
 }
 
 interface MapSidebarCardProps {
@@ -81,26 +83,63 @@ export default function MapSidebarCard({
 
       day.items.forEach((item) => {
         const itemType = item.parsedNotes?.type;
-        const lat = item.parsedNotes?.latitude ?? item.destination?.latitude;
-        const lng = item.parsedNotes?.longitude ?? item.destination?.longitude;
+        const isHotel = itemType === 'hotel';
+        const isFlight = itemType === 'flight';
 
-        if (lat && lng) {
-          const isHotel = itemType === 'hotel';
-          const isFlight = itemType === 'flight';
+        if (isFlight) {
+          // For flights, create markers for both departure and arrival airports
+          const fromAirport = item.parsedNotes?.from;
+          const toAirport = item.parsedNotes?.to;
 
-          if (!isHotel && !isFlight) {
-            stopIndex++;
+          // Departure airport marker
+          const departureCoords = getAirportCoordinates(fromAirport);
+          if (departureCoords) {
+            result.push({
+              id: `${item.id}-departure`,
+              lat: departureCoords.latitude,
+              lng: departureCoords.longitude,
+              label: `${fromAirport} (Departure)`,
+              dayNumber: day.dayNumber,
+              index: 0,
+              itemType: 'flight',
+              isArrivalAirport: false,
+            });
           }
 
-          result.push({
-            id: item.id,
-            lat,
-            lng,
-            label: item.title || `Stop ${stopIndex}`,
-            dayNumber: day.dayNumber,
-            index: (isHotel || isFlight) ? 0 : stopIndex, // 0 = special icon
-            itemType,
-          });
+          // Arrival airport marker
+          const arrivalCoords = getAirportCoordinates(toAirport);
+          if (arrivalCoords) {
+            result.push({
+              id: `${item.id}-arrival`,
+              lat: arrivalCoords.latitude,
+              lng: arrivalCoords.longitude,
+              label: `${toAirport} (Arrival)`,
+              dayNumber: day.dayNumber,
+              index: 0,
+              itemType: 'flight',
+              isArrivalAirport: true,
+            });
+          }
+        } else {
+          // Hotels and regular places
+          const lat = item.parsedNotes?.latitude ?? item.destination?.latitude;
+          const lng = item.parsedNotes?.longitude ?? item.destination?.longitude;
+
+          if (lat && lng) {
+            if (!isHotel) {
+              stopIndex++;
+            }
+
+            result.push({
+              id: item.id,
+              lat,
+              lng,
+              label: item.title || `Stop ${stopIndex}`,
+              dayNumber: day.dayNumber,
+              index: isHotel ? 0 : stopIndex,
+              itemType,
+            });
+          }
         }
       });
     });
