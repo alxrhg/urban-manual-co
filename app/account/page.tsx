@@ -439,17 +439,17 @@ export default function Account() {
           <p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p>
         </div>
 
-        {/* Tab Navigation - Minimal, matches homepage city/category style */}
+        {/* Tab Navigation - Pill buttons following design system */}
         <div className="mb-12">
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+          <div className="flex flex-wrap gap-2">
             {(['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'preferences', 'settings'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`transition-all ${
+                className={`px-4 py-2 text-xs font-medium rounded-full transition-colors ${
                   activeTab === tab
-                    ? "font-medium text-black dark:text-white"
-                    : "font-medium text-black/30 dark:text-gray-500 hover:text-black/60 dark:hover:text-gray-300"
+                    ? "bg-black dark:bg-white text-white dark:text-black"
+                    : "border border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-900"
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
