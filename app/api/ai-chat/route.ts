@@ -642,46 +642,46 @@ async function generateIntelligentResponse(
     contextInfo += `\n🚶 Walking time from city center: ~${walkingTime} minutes`;
   }
 
-  const systemPrompt = `You are Urban Manual's intelligent travel assistant. You help users discover amazing places with rich, contextual insights.
+  const systemPrompt = `You are Urban Manual's friendly travel concierge. You help users discover handpicked, carefully curated places from our exclusive collection.
 
-AVAILABLE DATA FOR EACH DESTINATION:
-- Photos: High-quality images from Google Places
-- Weather: Current conditions + 7-day forecast (temperature, conditions, humidity)
-- Events: Nearby upcoming events (concerts, exhibitions, festivals)
-- Routes: Walking/driving times from city center
-- Currency: Local currency and exchange rates
+PERSONALITY:
+- Be warm, conversational, and genuinely enthusiastic about great places
+- Talk like a knowledgeable friend sharing insider tips, not a search engine
+- Use natural language, contractions, and a personal touch
+- Show personality - you can express opinions and preferences
 
-GUIDELINES:
-- Mention weather context when relevant (e.g., "perfect for outdoor dining" or "great indoor option for rainy days")
-- Highlight nearby events if they align with the search
-- Note walking distances when helpful
-- Use photos to describe ambiance/style
-- Be concise but informative (2-3 sentences max)
-- Match the user's tone (casual queries get casual responses)
+IMPORTANT GUIDELINES:
+- These are OUR curated picks, not random search results. Present them with pride.
+- Don't overwhelm - highlight 2-3 standout places with specific reasons why they're special
+- Share what makes each place unique (signature dishes, design details, atmosphere)
+- If weather/events are relevant, weave them in naturally
+- Ask follow-up questions to understand what they're really looking for
+- If the query is vague, ask clarifying questions rather than dumping all options
+
+RESPONSE STYLE:
+- Start with a warm, direct response to their question
+- Share 2-3 top picks with brief, compelling reasons
+- End with a question or invitation to explore more
+- Keep it conversational, not listy
 
 ${contextInfo}`;
 
-  const userPrompt = `User searched: "${query}"
-Found ${results.length} results.
+  const userPrompt = `User asked: "${query}"
 
-Top results:
-${topResults.slice(0, 5).map((r: any, i: number) => {
-  let info = `${i + 1}. ${r.name} (${r.city})`;
-  if (r.category) info += ` - ${r.category}`;
-  if (r.rating) info += ` ⭐ ${r.rating}`;
+Our curated picks (${results.length} total in our collection):
+${topResults.slice(0, 4).map((r: any, i: number) => {
+  let info = `${i + 1}. **${r.name}** in ${r.city}`;
+  if (r.category) info += ` (${r.category})`;
+  if (r.rating) info += ` - ${r.rating}★`;
+  if (r.michelin_stars) info += ` - ${r.michelin_stars} Michelin star${r.michelin_stars > 1 ? 's' : ''}`;
+  if (r.description) info += `\n   "${r.description.substring(0, 120)}..."`;
   if (r.currentWeather) {
-    info += ` | Weather: ${r.currentWeather.temperature}°C, ${r.currentWeather.weatherDescription}`;
-  }
-  if (r.walkingTimeFromCenter) {
-    info += ` | ${r.walkingTimeFromCenter} min walk from center`;
-  }
-  if (r.nearbyEvents && r.nearbyEvents.length > 0) {
-    info += ` | ${r.nearbyEvents.length} nearby events`;
+    info += `\n   Weather now: ${r.currentWeather.temperature}°C, ${r.currentWeather.weatherDescription}`;
   }
   return info;
-}).join('\n')}
+}).join('\n\n')}
 
-Generate a natural, helpful response that incorporates relevant context (weather, events, walking distance) when it adds value. Be conversational and concise.`;
+Respond naturally as a friendly concierge. Pick your top 2-3 favorites from above and explain WHY they're great for this person. Don't list everything - be selective and personal. If you need more info about what they're looking for, ask!`;
 
   // Try OpenAI first
   if (openai?.chat) {
@@ -697,10 +697,10 @@ Generate a natural, helpful response that incorporates relevant context (weather
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt }
           ],
-          temperature: 0.7,
-          max_tokens: 150,
+          temperature: 0.8,
+          max_tokens: 350,
         }),
-        5000, // 5 second timeout for response generation
+        6000, // 6 second timeout for response generation
         null
       ) as Awaited<ReturnType<typeof openai.chat.completions.create>> | null;
 
@@ -724,13 +724,13 @@ Generate a natural, helpful response that incorporates relevant context (weather
       const geminiModel = genAI.getGenerativeModel({
         model: GEMINI_MODEL,
         generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 150,
+          temperature: 0.8,
+          maxOutputTokens: 350,
         }
       });
       const result = await withTimeout(
         geminiModel.generateContent(fullPrompt),
-        5000,
+        6000,
         null
       );
       if (result) {

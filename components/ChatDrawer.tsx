@@ -171,10 +171,10 @@ export function ChatDrawer({ isOpen, onClose }: ChatDrawerProps) {
                 })}
               </div>
 
-              {/* Destination Cards */}
+              {/* Destination Cards - Show top 4 picks */}
               {message.destinations && message.destinations.length > 0 && (
                 <div className="mt-3 grid grid-cols-2 gap-3">
-                  {message.destinations.map((dest) => (
+                  {message.destinations.slice(0, 4).map((dest) => (
                     <a
                       key={dest.slug}
                       href={`/destination/${dest.slug}`}
