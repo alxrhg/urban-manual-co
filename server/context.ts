@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 
 export type Context = Awaited<ReturnType<typeof createContext>>;
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDiscoveryEngineService } from '@/services/search/discovery-engine';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { getFeatureFlags, getABTestVariant } from '@/lib/discovery-engine/feature-flags';
 import { withCache, getDiscoveryEngineCache } from '@/lib/discovery-engine/cache';
 import { withPerformanceMonitoring } from '@/lib/discovery-engine/performance';

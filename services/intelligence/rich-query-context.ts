@@ -3,7 +3,7 @@
  * Enriches queries with comprehensive user, destination, and temporal context
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 export interface RichQueryContext {
   user: {

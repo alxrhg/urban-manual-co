@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { opportunityDetectionService } from '@/services/intelligence/opportunity-detection';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/errors';
 
 export const GET = withErrorHandling(async (request: NextRequest) => {

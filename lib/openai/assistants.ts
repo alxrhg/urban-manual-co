@@ -4,7 +4,7 @@
  */
 
 import { getOpenAI } from '../openai';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 
 const ASSISTANT_ID = process.env.OPENAI_ASSISTANT_ID || null;
 const ASSISTANT_NAME = 'Travel Planning Assistant';

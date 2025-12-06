@@ -12,7 +12,7 @@ import {
   updateAssistantPreferences,
   AssistantPreferences
 } from '@/lib/openai/assistants';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/errors';
 
 export const POST = withErrorHandling(async (request: NextRequest) => {

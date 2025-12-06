@@ -3,7 +3,7 @@
  * Detects price drops, availability openings, events, and other opportunities
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { realtimeIntelligenceService } from '@/services/realtime/realtime-intelligence';
 
 export interface Opportunity {

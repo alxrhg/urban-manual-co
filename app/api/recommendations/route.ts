@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { AIRecommendationEngine } from '@/lib/ai-recommendations/engine';
 import { withErrorHandling } from '@/lib/errors';
 

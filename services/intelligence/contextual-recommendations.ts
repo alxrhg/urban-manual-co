@@ -3,7 +3,7 @@
  * Provides recommendations based on current context (location, time, weather, events)
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { richQueryContextService } from '@/services/intelligence/rich-query-context';
 import { realtimeIntelligenceService } from '@/services/realtime/realtime-intelligence';
 

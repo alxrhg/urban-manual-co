@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { URBAN_MANUAL_EDITOR_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';
 
 // Lightweight intent parsing (no dependency on client helpers)

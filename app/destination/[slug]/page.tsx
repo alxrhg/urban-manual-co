@@ -11,7 +11,7 @@ import {
   generateDestinationBreadcrumb,
   generateDestinationFAQ
 } from '@/lib/metadata';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { Destination } from '@/types/destination';
 import DestinationPageClient from './page-client';
 

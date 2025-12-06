@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { createServerClient } from './supabase-server';
+import { createServerClient } from './supabase/server';
 import { Destination } from '@/types/destination';
 
 /**

@@ -9,7 +9,7 @@
  * - TSP-lite nearest neighbor routing
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { knowledgeGraphService } from './knowledge-graph';
 import { forecastingService } from './forecasting';

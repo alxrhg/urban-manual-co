@@ -3,7 +3,7 @@
  * Comprehensive ranking system with Manual Score integration
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { richQueryContextService } from '@/services/intelligence/rich-query-context';
 import { tasteProfileEvolutionService } from '@/services/intelligence/taste-profile-evolution';
 

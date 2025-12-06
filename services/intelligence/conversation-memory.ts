@@ -3,7 +3,7 @@
  * Database-backed conversation storage with context summarization
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface ConversationMemory {

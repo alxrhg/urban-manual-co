@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Buffer } from 'buffer';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { sendPrivacyEmail } from '@/lib/utils/privacy-email';
 
 const EXPORT_BATCH_SIZE = 5;

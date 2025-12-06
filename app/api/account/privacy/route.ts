@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { withErrorHandling, createUnauthorizedError, createValidationError, handleSupabaseError } from '@/lib/errors';
 
 export const POST = withErrorHandling(async (request: NextRequest) => {

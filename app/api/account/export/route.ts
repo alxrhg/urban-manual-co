@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient, createServiceRoleClient } from '@/lib/supabase-server';
+import { createServerClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { withErrorHandling, createUnauthorizedError, handleSupabaseError } from '@/lib/errors';
 
 const PENDING_STATUSES = ['pending', 'in_progress'];

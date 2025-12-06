@@ -5,7 +5,7 @@
  * Analyzes patterns in highly-rated places to find similar destinations.
  */
 
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 
 export interface UserRatingProfile {
   userId: string;

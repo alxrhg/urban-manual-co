@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { routePrompt } from '@/services/ai-gateway';
 import { itineraryIntelligenceService, Itinerary } from '@/services/intelligence/itinerary';
 import { richQueryContextService } from './rich-query-context';

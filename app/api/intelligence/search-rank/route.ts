@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { searchRankingAlgorithm } from '@/services/intelligence/search-ranking';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
 
