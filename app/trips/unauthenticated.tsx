@@ -1,10 +1,11 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { Plane } from 'lucide-react';
+import { useDrawer } from '@/contexts/DrawerContext';
+import { LoginModal } from '@/components/LoginModal';
 
 export default function TripsUnauthenticated() {
-  const router = useRouter();
+  const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
 
   return (
     <main className="w-full min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center px-4">
@@ -17,12 +18,17 @@ export default function TripsUnauthenticated() {
           Sign in to plan and organize your travels
         </p>
         <button
-          onClick={() => router.push('/auth/login')}
+          onClick={() => openDrawer('login-modal')}
           className="w-full px-6 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium rounded-full hover:opacity-90 transition-opacity"
         >
           Sign In
         </button>
       </div>
+
+      {/* Login Modal */}
+      {isDrawerOpen('login-modal') && (
+        <LoginModal isOpen={true} onClose={closeDrawer} />
+      )}
     </main>
   );
 }
