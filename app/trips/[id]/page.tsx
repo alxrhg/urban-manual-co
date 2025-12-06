@@ -13,6 +13,7 @@ import { ItineraryViewRedesign } from '@/components/trip/itinerary';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
 import TripMapView from '@/components/trips/TripMapView';
+import TripWeatherForecast from '@/components/trips/TripWeatherForecast';
 
 // Existing components
 import { PageLoader } from '@/components/LoadingStates';
@@ -501,6 +502,16 @@ export default function TripPage() {
               />
             ) : (
               <>
+                {/* Weather Forecast */}
+                <div className="p-4 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                  <TripWeatherForecast
+                    destination={primaryCity}
+                    startDate={trip.start_date}
+                    endDate={trip.end_date}
+                    compact={false}
+                  />
+                </div>
+
                 {/* Interactive Map */}
                 <InteractiveMapCard
                   locationName={primaryCity || 'Map'}
@@ -583,10 +594,22 @@ export default function TripPage() {
               }}
             />
           ) : (
-            <TravelAISidebar
-              onAddSuggestion={handleAddSuggestion}
-              onOpenChat={() => setShowCompanionPanel(true)}
-            />
+            <>
+              {/* Weather Forecast - Compact for mobile */}
+              <div className="p-3 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                <TripWeatherForecast
+                  destination={primaryCity}
+                  startDate={trip.start_date}
+                  endDate={trip.end_date}
+                  compact={true}
+                />
+              </div>
+
+              <TravelAISidebar
+                onAddSuggestion={handleAddSuggestion}
+                onOpenChat={() => setShowCompanionPanel(true)}
+              />
+            </>
           )}
         </div>
       </div>
