@@ -14,6 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ChristmasTree } from "@/components/ChristmasTree";
 
 export function Header() {
   const router = useRouter();
@@ -194,6 +195,7 @@ export function Header() {
           </button>
 
           <div className="flex items-center gap-2">
+            <ChristmasTree />
             <CommandPalette />
             {actionButtons}
           </div>

@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { ChevronUp, ChevronDown } from 'lucide-react';
 import { openCookieSettings } from '@/components/CookieConsent';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ChristmasTree } from '@/components/ChristmasTree';
 
 const sitemapSections = [
   {
@@ -90,7 +89,6 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-6">
-            <ChristmasTree />
             <ThemeToggle />
             <button
               onClick={openCookieSettings}
