@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { getVectorIndex } from '@/lib/upstash-vector';
 import { generateTextEmbedding } from '@/lib/ml/embeddings';
 import { withErrorHandling } from '@/lib/errors';
+import { enforceRateLimit, conversationRatelimit, memoryConversationRatelimit } from '@/lib/rate-limit';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -54,6 +55,15 @@ interface ConciergeResponse {
  * 5. Return ranked destinations + explanation + references
  */
 export const POST = withErrorHandling(async (request: NextRequest) => {
+  // Rate limit expensive AI concierge operations (embeddings + external API + LLM)
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    message: 'Too many concierge requests. Please wait a moment.',
+    limiter: conversationRatelimit,
+    memoryLimiter: memoryConversationRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   const body: ConciergeRequest = await request.json();
   const { query, userContext, limit = 5, includeExternal = true } = body;
 

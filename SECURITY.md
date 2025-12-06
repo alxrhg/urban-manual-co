@@ -243,10 +243,10 @@ headers: {
    - **Solution**: Add Sentry or similar monitoring
    - **Priority**: HIGH
 
-2. **Limited Rate Limiting Coverage**
-   - **Risk**: Some API endpoints still unprotected
-   - **Solution**: Add rate limiting to `/api/ai-chat`, `/api/intelligence/*`
-   - **Priority**: MEDIUM
+2. ~~**Limited Rate Limiting Coverage**~~ ✅ FIXED (Dec 2025)
+   - Rate limiting now applied to all `/api/intelligence/*` endpoints
+   - Uses `conversationRatelimit` for AI operations (5 req/10s)
+   - Uses `apiRatelimit` for general endpoints (10 req/10s)
 
 3. **No API Key Rotation Policy**
    - **Risk**: Compromised keys remain valid indefinitely
@@ -257,6 +257,49 @@ headers: {
    - **Risk**: Unclear allowed origins
    - **Solution**: Document and review CORS configuration
    - **Priority**: LOW
+
+---
+
+## Google Maps API Key Security
+
+### Why the Key is Client-Side
+
+The Google Maps JavaScript SDK **requires** the API key to be accessible in the browser. This is by design and cannot be avoided. The key is embedded in the script URL:
+
+```html
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_KEY&libraries=places"></script>
+```
+
+### Required Configuration (Google Cloud Console)
+
+**CRITICAL**: You MUST configure API key restrictions to prevent unauthorized use.
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) > APIs & Services > Credentials
+2. Select your `NEXT_PUBLIC_GOOGLE_API_KEY`
+3. Under **Application restrictions**, select "HTTP referrers (websites)"
+4. Add your domains:
+   ```
+   https://www.urbanmanual.co/*
+   https://urbanmanual.co/*
+   http://localhost:3000/*  (for development only)
+   ```
+5. Under **API restrictions**, select "Restrict key" and allow only:
+   - Maps JavaScript API
+   - Places API
+   - Geocoding API (if needed)
+
+### What This Prevents
+
+- ✅ Key cannot be used on unauthorized domains
+- ✅ Key cannot call APIs you haven't explicitly allowed
+- ✅ Abuse attempts from other websites will fail
+- ✅ Quota remains protected
+
+### Monitoring
+
+Set up billing alerts in Google Cloud Console to detect unusual API usage.
+
+See: [Google Maps API Security Best Practices](https://developers.google.com/maps/api-security-best-practices)
 
 ---
 

@@ -2,8 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { forecastingService } from '@/services/intelligence/forecasting';
 import { createServerClient } from '@/lib/supabase-server';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
+import { enforceRateLimit, conversationRatelimit, memoryConversationRatelimit } from '@/lib/rate-limit';
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
+  // Rate limit forecast requests (involves AI/ML computations)
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    message: 'Too many forecast requests. Please wait a moment.',
+    limiter: conversationRatelimit,
+    memoryLimiter: memoryConversationRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   const { searchParams } = new URL(request.url);
   const city = searchParams.get('city');
   const destinationId = searchParams.get('destination_id');

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
+import { enforceRateLimit, apiRatelimit, memoryApiRatelimit } from '@/lib/rate-limit';
 
 interface LocalEvent {
   id: string;
@@ -45,6 +46,15 @@ const SAMPLE_EVENTS: Record<string, LocalEvent[]> = {
  * Returns events happening in a city during trip dates
  */
 export const GET = withErrorHandling(async (request: NextRequest) => {
+  // Rate limit event requests
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    message: 'Too many event requests. Please wait a moment.',
+    limiter: apiRatelimit,
+    memoryLimiter: memoryApiRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   const searchParams = request.nextUrl.searchParams;
   const city = searchParams.get('city');
   const startDate = searchParams.get('startDate');

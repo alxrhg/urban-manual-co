@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { advancedRecommendationEngine } from '@/services/intelligence/recommendations-advanced';
 import { createServerClient } from '@/lib/supabase-server';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
+import { enforceRateLimit, conversationRatelimit, memoryConversationRatelimit } from '@/lib/rate-limit';
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const supabase = await createServerClient();
@@ -10,6 +11,16 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   if (!user) {
     throw createValidationError('Authentication required');
   }
+
+  // Rate limit advanced recommendation requests
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    userId: user.id,
+    message: 'Too many recommendation requests. Please wait a moment.',
+    limiter: conversationRatelimit,
+    memoryLimiter: memoryConversationRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
   const { searchParams } = new URL(request.url);
   const limit = parseInt(searchParams.get('limit') || '20');

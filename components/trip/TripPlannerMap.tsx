@@ -1,5 +1,10 @@
 'use client';
 
+/**
+ * SECURITY NOTE: Google Maps API key must be restricted in Google Cloud Console.
+ * See components/GooglePlacesAutocompleteNative.tsx for configuration instructions.
+ */
+
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Maximize2, Minimize2, Navigation, AlertTriangle } from 'lucide-react';
 import type { TripDay } from '@/lib/hooks/useTripEditor';

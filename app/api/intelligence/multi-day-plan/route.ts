@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { multiDayTripPlanningService } from '@/services/intelligence/multi-day-planning';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
+import { enforceRateLimit, conversationRatelimit, memoryConversationRatelimit, getIdentifier } from '@/lib/rate-limit';
 
 /**
  * POST /api/intelligence/multi-day-plan
@@ -10,6 +11,16 @@ import { withErrorHandling, createValidationError } from '@/lib/errors';
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Rate limit expensive AI planning operations
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    userId: user?.id,
+    message: 'Too many planning requests. Please wait a moment.',
+    limiter: conversationRatelimit,
+    memoryLimiter: memoryConversationRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
   const {
     city,

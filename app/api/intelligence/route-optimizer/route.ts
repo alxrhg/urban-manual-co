@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
+import { enforceRateLimit, apiRatelimit, memoryApiRatelimit } from '@/lib/rate-limit';
 
 interface RouteItem {
   id: string;
@@ -102,6 +103,15 @@ function optimizeRoute(items: RouteItem[]): string[] {
  * Optimizes the order of items to minimize travel distance
  */
 export const POST = withErrorHandling(async (request: NextRequest) => {
+  // Rate limit route optimization requests
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    message: 'Too many route optimization requests. Please wait a moment.',
+    limiter: apiRatelimit,
+    memoryLimiter: memoryApiRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   const body = await request.json();
   const { items } = body;
 

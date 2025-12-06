@@ -4,6 +4,7 @@ import { conversationItineraryService } from '@/services/intelligence/conversati
 import { multiDayTripPlanningService } from '@/services/intelligence/multi-day-planning';
 import { itineraryIntelligenceService } from '@/services/intelligence/itinerary';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
+import { enforceRateLimit, conversationRatelimit, memoryConversationRatelimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/intelligence/itinerary/generate
@@ -12,6 +13,16 @@ import { withErrorHandling, createValidationError } from '@/lib/errors';
 export const POST = withErrorHandling(async (request: NextRequest) => {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Rate limit expensive itinerary generation
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    userId: user?.id,
+    message: 'Too many itinerary requests. Please wait a moment.',
+    limiter: conversationRatelimit,
+    memoryLimiter: memoryConversationRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
   const body = await request.json();
   const {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
 import { createServerClient } from '@/lib/supabase/server';
+import { enforceRateLimit, apiRatelimit, memoryApiRatelimit } from '@/lib/rate-limit';
 
 interface ParsedIntent {
   action: 'add_place' | 'suggest' | 'modify';
@@ -94,6 +95,15 @@ function getTimeForTimeOfDay(timeOfDay?: string): string {
  * Processes natural language queries for trip planning
  */
 export const POST = withErrorHandling(async (request: NextRequest) => {
+  // Rate limit natural language processing
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    message: 'Too many search requests. Please wait a moment.',
+    limiter: apiRatelimit,
+    memoryLimiter: memoryApiRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   const body = await request.json();
   const { query, city, tripDays = 1 } = body;
 

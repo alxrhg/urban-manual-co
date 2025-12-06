@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 import { contextualRecommendationsService } from '@/services/intelligence/contextual-recommendations';
 import { withErrorHandling } from '@/lib/errors';
+import { enforceRateLimit, conversationRatelimit, memoryConversationRatelimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/intelligence/contextual-recommendations
@@ -10,6 +11,16 @@ import { withErrorHandling } from '@/lib/errors';
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
+
+  // Rate limit recommendation requests
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    userId: user?.id,
+    message: 'Too many recommendation requests. Please wait a moment.',
+    limiter: conversationRatelimit,
+    memoryLimiter: memoryConversationRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
 
   const searchParams = request.nextUrl.searchParams;
   const userId = searchParams.get('userId') || user?.id;

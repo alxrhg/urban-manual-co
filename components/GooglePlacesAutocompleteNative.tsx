@@ -1,5 +1,27 @@
 'use client';
 
+/**
+ * SECURITY NOTE: Google Maps API Key Configuration
+ *
+ * The Google Maps JavaScript SDK requires the API key to be client-side accessible.
+ * This is by design and cannot be avoided. To secure the API key:
+ *
+ * 1. Go to Google Cloud Console > APIs & Services > Credentials
+ * 2. Select your NEXT_PUBLIC_GOOGLE_API_KEY
+ * 3. Under "Application restrictions", select "HTTP referrers (websites)"
+ * 4. Add your domains:
+ *    - https://www.urbanmanual.co/*
+ *    - https://urbanmanual.co/*
+ *    - http://localhost:3000/* (for development only)
+ * 5. Under "API restrictions", select "Restrict key" and allow only:
+ *    - Maps JavaScript API
+ *    - Places API
+ *    - Geocoding API (if needed)
+ *
+ * This prevents the API key from being used on unauthorized domains.
+ * See: https://developers.google.com/maps/api-security-best-practices
+ */
+
 import React, { useEffect, useRef, useState } from 'react';
 
 interface GooglePlacesAutocompleteNativeProps {

@@ -6,8 +6,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateTravelIntelligence, type TravelIntelligenceInput } from '@/services/intelligence/engine';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
+import { enforceRateLimit, conversationRatelimit, memoryConversationRatelimit } from '@/lib/rate-limit';
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
+  // Rate limit expensive AI operations
+  const rateLimitResponse = await enforceRateLimit({
+    request,
+    message: 'Too many intelligence requests. Please wait a moment.',
+    limiter: conversationRatelimit,
+    memoryLimiter: memoryConversationRatelimit,
+  });
+  if (rateLimitResponse) return rateLimitResponse;
+
   const body = await request.json();
   const input: TravelIntelligenceInput = {
     destination: body.destination,
