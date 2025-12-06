@@ -16,29 +16,39 @@ export function ChristmasThemeProvider({ children }: { children: ReactNode }) {
   const [isChristmasMode, setIsChristmasMode] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Load preference from localStorage on mount
+  // Check if current month is December
+  const isDecember = new Date().getMonth() === 11;
+
+  // Load preference from localStorage on mount (only in December)
   useEffect(() => {
-    const stored = localStorage.getItem(CHRISTMAS_STORAGE_KEY);
-    if (stored === 'true') {
-      setIsChristmasMode(true);
+    if (isDecember) {
+      const stored = localStorage.getItem(CHRISTMAS_STORAGE_KEY);
+      if (stored === 'true') {
+        setIsChristmasMode(true);
+      }
     }
     setIsHydrated(true);
-  }, []);
+  }, [isDecember]);
 
-  // Update localStorage and body class when mode changes
+  // Update localStorage and body class when mode changes (only in December)
   useEffect(() => {
     if (!isHydrated) return;
 
-    localStorage.setItem(CHRISTMAS_STORAGE_KEY, String(isChristmasMode));
+    // Only apply Christmas mode in December
+    const shouldApply = isChristmasMode && isDecember;
 
-    if (isChristmasMode) {
+    if (isDecember) {
+      localStorage.setItem(CHRISTMAS_STORAGE_KEY, String(isChristmasMode));
+    }
+
+    if (shouldApply) {
       document.documentElement.classList.add('christmas-mode');
       document.body.classList.add('christmas-mode');
     } else {
       document.documentElement.classList.remove('christmas-mode');
       document.body.classList.remove('christmas-mode');
     }
-  }, [isChristmasMode, isHydrated]);
+  }, [isChristmasMode, isHydrated, isDecember]);
 
   const toggleChristmasMode = useCallback(() => {
     setIsChristmasMode((prev: boolean) => !prev);

@@ -15,11 +15,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ChristmasTree } from "@/components/ChristmasTree";
+import { useChristmasTheme } from "@/contexts/ChristmasThemeContext";
 
 export function Header() {
   const router = useRouter();
   const { user } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const { isChristmasMode } = useChristmasTheme();
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -138,15 +140,23 @@ export function Header() {
               aria-label="Open account drawer"
             >
               {avatarUrl ? (
-                <span className="w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                <span className="relative w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-visible">
                   <img
                     src={avatarUrl}
                     alt="Profile"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover rounded-full"
                   />
+                  {isChristmasMode && (
+                    <span className="absolute -top-2 -right-1 text-sm" aria-hidden="true">🎅</span>
+                  )}
                 </span>
               ) : (
-                <User className="w-4 h-4" />
+                <span className="relative">
+                  <User className="w-4 h-4" />
+                  {isChristmasMode && (
+                    <span className="absolute -top-2 -right-2 text-xs" aria-hidden="true">🎅</span>
+                  )}
+                </span>
               )}
               <span>Account</span>
             </button>

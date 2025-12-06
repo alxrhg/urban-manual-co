@@ -5,6 +5,10 @@ import { useChristmasTheme } from '@/contexts/ChristmasThemeContext';
 export function ChristmasTree() {
   const { isChristmasMode, toggleChristmasMode } = useChristmasTheme();
 
+  // Only show in December
+  const isDecember = new Date().getMonth() === 11;
+  if (!isDecember) return null;
+
   return (
     <button
       onClick={toggleChristmasMode}
