@@ -2086,3 +2086,608 @@ html.christmas-mode::before {
     display: none;
   }
 }
+
+/* ============================================
+   CHRISTMAS UI COMPONENTS
+   Full festive styling for all UI elements
+   ============================================ */
+
+/* ===== BUTTONS ===== */
+
+/* Primary buttons - Christmas red with gold accents */
+.christmas-mode .bg-black,
+.christmas-mode .bg-primary,
+.christmas-mode [class*="bg-black"] {
+  background: linear-gradient(135deg, var(--christmas-red) 0%, #a01830 100%) !important;
+  border: 2px solid var(--christmas-gold) !important;
+  box-shadow: 0 4px 15px rgba(196, 30, 58, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+.christmas-mode .bg-black:hover,
+.christmas-mode .bg-primary:hover,
+.christmas-mode [class*="bg-black"]:hover {
+  background: linear-gradient(135deg, #d62548 0%, var(--christmas-red) 100%) !important;
+  box-shadow: 0 6px 20px rgba(196, 30, 58, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  transform: translateY(-2px);
+}
+
+/* Secondary/outline buttons - Christmas green */
+.christmas-mode .bg-white:not(body),
+.christmas-mode .border-gray-200,
+.christmas-mode [class*="border-gray"] {
+  border-color: var(--christmas-green) !important;
+}
+
+.christmas-mode .bg-white:not(body):hover,
+.christmas-mode button.bg-white:hover {
+  background: linear-gradient(135deg, rgba(34, 139, 34, 0.1) 0%, rgba(34, 139, 34, 0.05) 100%) !important;
+  border-color: var(--christmas-pine) !important;
+}
+
+/* Icon buttons and small actions */
+.christmas-mode button[class*="rounded-full"] {
+  position: relative;
+}
+
+.christmas-mode button[class*="rounded-full"]::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    var(--christmas-red),
+    var(--christmas-gold),
+    var(--christmas-green),
+    var(--christmas-gold),
+    var(--christmas-red)
+  );
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+}
+
+.christmas-mode button[class*="rounded-full"]:hover::before {
+  opacity: 0.7;
+  animation: rotateGradient 3s linear infinite;
+}
+
+@keyframes rotateGradient {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===== FORM INPUTS ===== */
+
+/* Text inputs, textareas, selects */
+.christmas-mode input[type="text"],
+.christmas-mode input[type="email"],
+.christmas-mode input[type="password"],
+.christmas-mode input[type="search"],
+.christmas-mode input[type="number"],
+.christmas-mode input[type="tel"],
+.christmas-mode input[type="url"],
+.christmas-mode textarea,
+.christmas-mode select {
+  border: 2px solid rgba(34, 139, 34, 0.3) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 255, 245, 0.9) 100%) !important;
+  transition: all 0.3s ease !important;
+}
+
+.christmas-mode.dark input[type="text"],
+.christmas-mode.dark input[type="email"],
+.christmas-mode.dark input[type="password"],
+.christmas-mode.dark input[type="search"],
+.christmas-mode.dark input[type="number"],
+.christmas-mode.dark input[type="tel"],
+.christmas-mode.dark input[type="url"],
+.christmas-mode.dark textarea,
+.christmas-mode.dark select {
+  background: linear-gradient(180deg, rgba(20, 30, 20, 0.95) 0%, rgba(15, 25, 15, 0.9) 100%) !important;
+  border-color: rgba(34, 139, 34, 0.4) !important;
+}
+
+.christmas-mode input:focus,
+.christmas-mode textarea:focus,
+.christmas-mode select:focus {
+  border-color: var(--christmas-green) !important;
+  box-shadow:
+    0 0 0 3px rgba(34, 139, 34, 0.2),
+    0 0 20px rgba(34, 139, 34, 0.15) !important;
+  outline: none !important;
+}
+
+/* Input placeholder styling */
+.christmas-mode input::placeholder,
+.christmas-mode textarea::placeholder {
+  color: rgba(34, 139, 34, 0.5) !important;
+}
+
+/* Checkboxes and radio buttons */
+.christmas-mode input[type="checkbox"],
+.christmas-mode input[type="radio"] {
+  accent-color: var(--christmas-green) !important;
+}
+
+.christmas-mode input[type="checkbox"]:checked,
+.christmas-mode input[type="radio"]:checked {
+  background-color: var(--christmas-green) !important;
+  border-color: var(--christmas-pine) !important;
+}
+
+/* ===== CARDS ===== */
+
+.christmas-mode .card,
+.christmas-mode [class*="rounded-lg"][class*="bg-white"],
+.christmas-mode [class*="rounded-xl"][class*="bg-white"],
+.christmas-mode [class*="shadow"] {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 250, 250, 0.95) 50%,
+    rgba(250, 255, 250, 0.95) 100%
+  ) !important;
+  border: 1px solid rgba(196, 30, 58, 0.15) !important;
+  box-shadow:
+    0 4px 20px rgba(196, 30, 58, 0.1),
+    0 1px 3px rgba(34, 139, 34, 0.1) !important;
+}
+
+.christmas-mode.dark .card,
+.christmas-mode.dark [class*="rounded-lg"][class*="bg-gray"],
+.christmas-mode.dark [class*="rounded-xl"][class*="bg-gray"] {
+  background: linear-gradient(
+    135deg,
+    rgba(20, 20, 25, 0.98) 0%,
+    rgba(25, 15, 15, 0.95) 50%,
+    rgba(15, 25, 15, 0.95) 100%
+  ) !important;
+  border: 1px solid rgba(196, 30, 58, 0.25) !important;
+}
+
+.christmas-mode .card:hover,
+.christmas-mode [class*="rounded-lg"]:hover,
+.christmas-mode [class*="rounded-xl"]:hover {
+  box-shadow:
+    0 8px 30px rgba(196, 30, 58, 0.15),
+    0 2px 8px rgba(34, 139, 34, 0.15),
+    0 0 0 1px rgba(255, 215, 0, 0.2) !important;
+}
+
+/* Card corner ribbon decoration */
+.christmas-mode .card::after,
+.christmas-mode [class*="rounded-lg"][class*="bg-white"]::after {
+  content: '🎄';
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 16px;
+  opacity: 0;
+  transform: scale(0) rotate(-20deg);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.christmas-mode .card:hover::after,
+.christmas-mode [class*="rounded-lg"][class*="bg-white"]:hover::after {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+/* ===== BADGES & TAGS ===== */
+
+.christmas-mode [class*="badge"],
+.christmas-mode [class*="tag"],
+.christmas-mode .bg-gray-100,
+.christmas-mode .bg-gray-200 {
+  background: linear-gradient(135deg, rgba(34, 139, 34, 0.15) 0%, rgba(196, 30, 58, 0.1) 100%) !important;
+  border: 1px solid rgba(34, 139, 34, 0.3) !important;
+  color: var(--christmas-pine) !important;
+}
+
+.christmas-mode.dark [class*="badge"],
+.christmas-mode.dark [class*="tag"],
+.christmas-mode.dark .bg-gray-800,
+.christmas-mode.dark .bg-gray-700 {
+  background: linear-gradient(135deg, rgba(34, 139, 34, 0.25) 0%, rgba(196, 30, 58, 0.15) 100%) !important;
+  color: var(--christmas-snow) !important;
+}
+
+/* ===== TOOLTIPS & POPOVERS ===== */
+
+.christmas-mode [role="tooltip"],
+.christmas-mode [data-state="open"][class*="popover"],
+.christmas-mode [class*="tooltip"] {
+  background: linear-gradient(135deg, var(--christmas-pine) 0%, #0a2d0a 100%) !important;
+  border: 1px solid var(--christmas-green) !important;
+  color: var(--christmas-snow) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ===== MODALS & DIALOGS ===== */
+
+.christmas-mode [role="dialog"],
+.christmas-mode [class*="modal"],
+.christmas-mode [class*="drawer"] {
+  border: 2px solid var(--christmas-red) !important;
+  box-shadow:
+    0 0 0 4px rgba(255, 215, 0, 0.2),
+    0 25px 50px rgba(0, 0, 0, 0.3) !important;
+}
+
+.christmas-mode [role="dialog"]::before,
+.christmas-mode [class*="modal"]::before {
+  content: '🎅 🎄 ⭐ 🎁';
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 20px;
+  letter-spacing: 8px;
+}
+
+/* ===== DROPDOWN MENUS ===== */
+
+.christmas-mode [role="menu"],
+.christmas-mode [class*="dropdown"],
+.christmas-mode [data-state="open"][class*="content"] {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 250, 245, 0.95) 100%
+  ) !important;
+  border: 2px solid rgba(34, 139, 34, 0.3) !important;
+  box-shadow:
+    0 10px 40px rgba(196, 30, 58, 0.15),
+    0 0 0 1px rgba(255, 215, 0, 0.1) !important;
+}
+
+.christmas-mode.dark [role="menu"],
+.christmas-mode.dark [class*="dropdown"],
+.christmas-mode.dark [data-state="open"][class*="content"] {
+  background: linear-gradient(180deg,
+    rgba(25, 25, 30, 0.98) 0%,
+    rgba(20, 15, 15, 0.95) 100%
+  ) !important;
+}
+
+.christmas-mode [role="menuitem"]:hover,
+.christmas-mode [class*="dropdown"] li:hover {
+  background: linear-gradient(90deg,
+    rgba(196, 30, 58, 0.1) 0%,
+    rgba(34, 139, 34, 0.1) 100%
+  ) !important;
+}
+
+/* ===== TABS ===== */
+
+.christmas-mode [role="tablist"] {
+  border-bottom: 2px solid rgba(34, 139, 34, 0.3) !important;
+}
+
+.christmas-mode [role="tab"][data-state="active"],
+.christmas-mode [role="tab"][aria-selected="true"] {
+  background: linear-gradient(135deg, var(--christmas-red) 0%, #a01830 100%) !important;
+  color: white !important;
+  border-color: var(--christmas-gold) !important;
+}
+
+.christmas-mode [role="tab"]:hover:not([data-state="active"]) {
+  background: rgba(34, 139, 34, 0.1) !important;
+}
+
+/* ===== PROGRESS BARS ===== */
+
+.christmas-mode progress,
+.christmas-mode [role="progressbar"],
+.christmas-mode [class*="progress"] {
+  background: linear-gradient(90deg,
+    rgba(34, 139, 34, 0.2) 0%,
+    rgba(196, 30, 58, 0.2) 100%
+  ) !important;
+}
+
+.christmas-mode progress::-webkit-progress-value,
+.christmas-mode [class*="progress"] > div {
+  background: linear-gradient(90deg,
+    var(--christmas-green) 0%,
+    var(--christmas-gold) 50%,
+    var(--christmas-red) 100%
+  ) !important;
+  background-size: 200% 100%;
+  animation: progressShimmer 2s linear infinite;
+}
+
+@keyframes progressShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ===== AVATARS ===== */
+
+.christmas-mode [class*="avatar"],
+.christmas-mode img[class*="rounded-full"] {
+  border: 3px solid var(--christmas-red) !important;
+  box-shadow: 0 0 0 2px var(--christmas-gold) !important;
+}
+
+.christmas-mode [class*="avatar"]::after,
+.christmas-mode img[class*="rounded-full"]::after {
+  content: '🎅';
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 12px;
+}
+
+/* ===== DIVIDERS ===== */
+
+.christmas-mode hr,
+.christmas-mode [class*="divider"],
+.christmas-mode .border-t,
+.christmas-mode .border-b {
+  border-image: repeating-linear-gradient(
+    90deg,
+    var(--christmas-red) 0px,
+    var(--christmas-red) 10px,
+    transparent 10px,
+    transparent 15px,
+    var(--christmas-green) 15px,
+    var(--christmas-green) 25px,
+    transparent 25px,
+    transparent 30px
+  ) 1 !important;
+}
+
+/* ===== NAVIGATION ===== */
+
+.christmas-mode nav a,
+.christmas-mode [class*="nav"] a {
+  position: relative;
+}
+
+.christmas-mode nav a::before,
+.christmas-mode [class*="nav"] a::before {
+  content: '❄️';
+  position: absolute;
+  left: -20px;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: all 0.3s ease;
+}
+
+.christmas-mode nav a:hover::before,
+.christmas-mode [class*="nav"] a:hover::before {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ===== LISTS ===== */
+
+.christmas-mode ul li::marker,
+.christmas-mode ol li::marker {
+  color: var(--christmas-red);
+}
+
+.christmas-mode ul:not([role]) li::before {
+  content: '🎄 ';
+}
+
+/* ===== ALERTS & NOTIFICATIONS ===== */
+
+.christmas-mode [class*="alert"],
+.christmas-mode [class*="toast"],
+.christmas-mode [class*="notification"] {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 250, 240, 0.9) 100%
+  ) !important;
+  border-left: 4px solid var(--christmas-red) !important;
+  box-shadow:
+    0 4px 20px rgba(196, 30, 58, 0.15),
+    inset 0 0 20px rgba(255, 215, 0, 0.05) !important;
+}
+
+/* ===== LOADING STATES ===== */
+
+.christmas-mode .animate-spin {
+  border-color: var(--christmas-green) !important;
+  border-top-color: var(--christmas-red) !important;
+}
+
+.christmas-mode [class*="skeleton"],
+.christmas-mode [class*="loading"] {
+  background: linear-gradient(
+    90deg,
+    rgba(34, 139, 34, 0.1) 0%,
+    rgba(255, 215, 0, 0.2) 50%,
+    rgba(196, 30, 58, 0.1) 100%
+  ) !important;
+  background-size: 200% 100%;
+  animation: christmasLoading 1.5s ease-in-out infinite;
+}
+
+@keyframes christmasLoading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ===== EMPTY STATES ===== */
+
+.christmas-mode [class*="empty"]::before {
+  content: '🎁 ';
+}
+
+/* ===== ICONS ===== */
+
+.christmas-mode .lucide,
+.christmas-mode svg[class*="icon"],
+.christmas-mode [class*="icon"] svg {
+  filter: drop-shadow(0 0 2px rgba(196, 30, 58, 0.3));
+}
+
+.christmas-mode .lucide:hover,
+.christmas-mode svg[class*="icon"]:hover {
+  filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.5));
+}
+
+/* ===== LINKS ===== */
+
+.christmas-mode a:not(.christmas-tree-toggle):not(nav a) {
+  color: var(--christmas-red);
+  text-decoration-color: transparent;
+  text-underline-offset: 3px;
+  transition: all 0.3s ease;
+}
+
+.christmas-mode a:not(.christmas-tree-toggle):not(nav a):hover {
+  color: var(--christmas-pine);
+  text-decoration: underline;
+  text-decoration-color: var(--christmas-green);
+  text-decoration-style: wavy;
+}
+
+/* ===== SWITCHES/TOGGLES ===== */
+
+.christmas-mode [role="switch"],
+.christmas-mode [class*="toggle"],
+.christmas-mode [class*="switch"] {
+  background: linear-gradient(90deg,
+    rgba(196, 30, 58, 0.3) 0%,
+    rgba(34, 139, 34, 0.3) 100%
+  ) !important;
+}
+
+.christmas-mode [role="switch"][data-state="checked"],
+.christmas-mode [class*="toggle"]:checked {
+  background: linear-gradient(90deg,
+    var(--christmas-green) 0%,
+    var(--christmas-pine) 100%
+  ) !important;
+}
+
+/* ===== SLIDERS/RANGE ===== */
+
+.christmas-mode input[type="range"] {
+  accent-color: var(--christmas-red);
+}
+
+.christmas-mode input[type="range"]::-webkit-slider-thumb {
+  background: var(--christmas-red) !important;
+  border: 2px solid var(--christmas-gold) !important;
+}
+
+.christmas-mode input[type="range"]::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg,
+    var(--christmas-green) 0%,
+    var(--christmas-gold) 50%,
+    var(--christmas-red) 100%
+  ) !important;
+}
+
+/* ===== TABLES ===== */
+
+.christmas-mode table {
+  border: 2px solid rgba(34, 139, 34, 0.3) !important;
+}
+
+.christmas-mode th {
+  background: linear-gradient(180deg,
+    var(--christmas-pine) 0%,
+    var(--christmas-green) 100%
+  ) !important;
+  color: white !important;
+}
+
+.christmas-mode tr:nth-child(even) {
+  background: rgba(196, 30, 58, 0.05) !important;
+}
+
+.christmas-mode tr:nth-child(odd) {
+  background: rgba(34, 139, 34, 0.05) !important;
+}
+
+.christmas-mode tr:hover {
+  background: rgba(255, 215, 0, 0.1) !important;
+}
+
+/* ===== BLOCKQUOTES ===== */
+
+.christmas-mode blockquote {
+  border-left: 4px solid var(--christmas-red) !important;
+  background: linear-gradient(90deg,
+    rgba(196, 30, 58, 0.05) 0%,
+    transparent 100%
+  ) !important;
+  padding-left: 20px;
+}
+
+.christmas-mode blockquote::before {
+  content: '🎄 ';
+}
+
+/* ===== CODE BLOCKS ===== */
+
+.christmas-mode pre,
+.christmas-mode code {
+  background: linear-gradient(135deg,
+    rgba(11, 61, 11, 0.95) 0%,
+    rgba(5, 40, 5, 0.98) 100%
+  ) !important;
+  border: 1px solid var(--christmas-green) !important;
+  color: #90EE90 !important;
+}
+
+.christmas-mode code {
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ===== IMAGES ===== */
+
+.christmas-mode img:not([class*="avatar"]):not([class*="rounded-full"]) {
+  border: 3px solid transparent;
+  border-image: linear-gradient(135deg,
+    var(--christmas-red) 0%,
+    var(--christmas-gold) 50%,
+    var(--christmas-green) 100%
+  ) 1;
+  transition: all 0.3s ease;
+}
+
+.christmas-mode img:hover:not([class*="avatar"]):not([class*="rounded-full"]) {
+  box-shadow: 0 8px 30px rgba(196, 30, 58, 0.2);
+}
+
+/* ===== LOGO AREA ===== */
+
+.christmas-mode header button:first-of-type,
+.christmas-mode [class*="logo"] {
+  position: relative;
+}
+
+.christmas-mode header button:first-of-type::before {
+  content: '🎅';
+  position: absolute;
+  top: -12px;
+  right: -8px;
+  font-size: 14px;
+  animation: santaWave 2s ease-in-out infinite;
+}
+
+@keyframes santaWave {
+  0%, 100% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+}
+
+/* ===== SPECIAL TEXT EFFECTS ===== */
+
+.christmas-mode strong,
+.christmas-mode b {
+  color: var(--christmas-red);
+  text-shadow: 0 0 1px rgba(196, 30, 58, 0.3);
+}
+
+.christmas-mode em,
+.christmas-mode i:not([class]) {
+  color: var(--christmas-green);
+}
