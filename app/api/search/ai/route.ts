@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
-import { embedText } from '@/lib/llm';
-import { rerankDestinations } from '@/lib/search/reranker';
 import { withErrorHandling } from '@/lib/errors';
-import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 
 interface ConversationMessage {
   role: 'user' | 'assistant';
@@ -13,18 +10,9 @@ interface ConversationMessage {
 /**
  * AI Search API - Natural language search for destinations
  *
- * Used by the AI chat interface for conversational search.
- * Combines semantic search with Gemini-powered response generation.
+ * Simple text-based search with natural language processing.
  */
 export const POST = withErrorHandling(async (request: NextRequest) => {
-  const identifier = getIdentifier(request);
-  const limiter = isUpstashConfigured() ? searchRatelimit : memorySearchRatelimit;
-  const { success, limit, remaining, reset } = await limiter.limit(identifier);
-
-  if (!success) {
-    return createRateLimitResponse('Rate limit exceeded. Please try again later.', limit, remaining, reset);
-  }
-
   const body = await request.json();
   const { query, conversationHistory = [] } = body as {
     query: string;
@@ -36,136 +24,128 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   }
 
   const supabase = await createServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
 
   try {
-    // Extract location/category hints from query
     const lowerQuery = query.toLowerCase();
-    let cityFilter: string | null = null;
-    let categoryFilter: string | null = null;
 
-    // Common city patterns
+    // Extract city from query
+    let cityFilter: string | null = null;
     const cityPatterns = [
-      /in\s+(\w+(?:\s+\w+)?)/i,
-      /(\w+(?:\s+\w+)?)\s+restaurants?/i,
-      /(\w+(?:\s+\w+)?)\s+hotels?/i,
-      /(\w+(?:\s+\w+)?)\s+bars?/i,
+      /in\s+([a-zA-Z\s]+?)(?:\s+for|\s+with|\s*$)/i,
+      /([a-zA-Z\s]+?)\s+(?:restaurants?|hotels?|bars?|cafes?|food)/i,
     ];
 
     for (const pattern of cityPatterns) {
-      const match = lowerQuery.match(pattern);
+      const match = query.match(pattern);
       if (match && match[1]) {
         const possibleCity = match[1].trim();
-        // Verify it's a city by checking destinations
-        const { data: cityCheck } = await supabase
-          .from('destinations')
-          .select('city')
-          .ilike('city', `%${possibleCity}%`)
-          .limit(1);
-        if (cityCheck && cityCheck.length > 0) {
-          cityFilter = cityCheck[0].city;
-          break;
+        if (possibleCity.length > 2) {
+          // Verify it's a city
+          const { data: cityCheck } = await supabase
+            .from('destinations')
+            .select('city')
+            .ilike('city', `%${possibleCity}%`)
+            .limit(1);
+          if (cityCheck && cityCheck.length > 0) {
+            cityFilter = cityCheck[0].city;
+            break;
+          }
         }
       }
     }
 
-    // Category hints
-    if (lowerQuery.includes('restaurant') || lowerQuery.includes('food') || lowerQuery.includes('eat')) {
+    // Extract category from query
+    let categoryFilter: string | null = null;
+    if (lowerQuery.includes('restaurant') || lowerQuery.includes('food') || lowerQuery.includes('eat') || lowerQuery.includes('dining')) {
       categoryFilter = 'restaurant';
-    } else if (lowerQuery.includes('hotel') || lowerQuery.includes('stay') || lowerQuery.includes('accommodation')) {
+    } else if (lowerQuery.includes('hotel') || lowerQuery.includes('stay') || lowerQuery.includes('accommodation') || lowerQuery.includes('sleep')) {
       categoryFilter = 'hotel';
     } else if (lowerQuery.includes('bar') || lowerQuery.includes('drink') || lowerQuery.includes('cocktail')) {
       categoryFilter = 'bar';
-    } else if (lowerQuery.includes('coffee') || lowerQuery.includes('cafe')) {
+    } else if (lowerQuery.includes('coffee') || lowerQuery.includes('cafe') || lowerQuery.includes('café')) {
       categoryFilter = 'cafe';
+    } else if (lowerQuery.includes('bakery') || lowerQuery.includes('pastry') || lowerQuery.includes('bread')) {
+      categoryFilter = 'bakery';
     }
 
-    // Generate embedding for semantic search
-    const embedding = await embedText(query);
+    // Build the query
+    let dbQuery = supabase
+      .from('destinations')
+      .select('id, slug, name, city, country, category, micro_description, description, image, image_thumbnail, michelin_stars, crown, rating, price_level, neighborhood');
 
-    if (!embedding) {
-      // Fallback to text search if embedding fails
-      const { data: textResults } = await supabase
-        .from('destinations')
-        .select('*')
-        .or(`name.ilike.%${query}%,city.ilike.%${query}%,category.ilike.%${query}%`)
-        .limit(10);
-
-      return NextResponse.json({
-        response: textResults && textResults.length > 0
-          ? `Found ${textResults.length} places matching your search:`
-          : 'No results found. Try a different search term.',
-        destinations: textResults || [],
-      });
+    // Apply filters
+    if (cityFilter) {
+      dbQuery = dbQuery.ilike('city', `%${cityFilter}%`);
+    }
+    if (categoryFilter) {
+      dbQuery = dbQuery.ilike('category', `%${categoryFilter}%`);
     }
 
-    // Semantic search with optional filters
-    const searchParams: Record<string, unknown> = {
-      query_embedding: `[${embedding.join(',')}]`,
-      user_id_param: session?.user?.id || null,
-      city_filter: cityFilter,
-      category_filter: categoryFilter,
-      open_now_filter: false,
-      limit_count: 50,
-    };
+    // If no filters extracted, do a broader text search
+    if (!cityFilter && !categoryFilter) {
+      // Search in name, city, category, description
+      const searchTerms = query.split(' ').filter(t => t.length > 2);
+      if (searchTerms.length > 0) {
+        const searchPattern = searchTerms.join('%');
+        dbQuery = dbQuery.or(`name.ilike.%${searchPattern}%,city.ilike.%${searchPattern}%,category.ilike.%${searchPattern}%,micro_description.ilike.%${searchPattern}%`);
+      }
+    }
 
-    const { data: results, error } = await supabase.rpc(
-      'search_destinations_intelligent',
-      searchParams
-    );
+    // Execute query
+    const { data: results, error } = await dbQuery.limit(20);
 
     if (error) {
-      console.error('[AI Search] RPC error:', error);
+      console.error('[AI Search] Database error:', error);
       throw error;
     }
 
-    // Re-rank results based on query intent
-    const rerankedResults = rerankDestinations(results || [], {
-      query,
-      queryIntent: {
-        city: cityFilter || undefined,
-        category: categoryFilter || undefined,
-      },
-      userId: session?.user?.id,
-      boostPersonalized: !!session?.user?.id,
+    // Sort results - prioritize Michelin and Crown
+    const sortedResults = (results || []).sort((a, b) => {
+      // Michelin stars first
+      if ((b.michelin_stars || 0) !== (a.michelin_stars || 0)) {
+        return (b.michelin_stars || 0) - (a.michelin_stars || 0);
+      }
+      // Then crown
+      if (b.crown !== a.crown) {
+        return b.crown ? 1 : -1;
+      }
+      // Then rating
+      return (b.rating || 0) - (a.rating || 0);
     });
 
-    const topResults = rerankedResults.slice(0, 6);
+    const topResults = sortedResults.slice(0, 6);
 
-    // Generate a natural response
+    // Generate response based on results and context
     let response = '';
-    if (topResults.length === 0) {
-      response = `I couldn't find any destinations matching "${query}". Try being more specific or searching for a different location.`;
-    } else if (cityFilter && categoryFilter) {
-      response = `Here are ${topResults.length} ${categoryFilter}s in ${cityFilter} that match your search:`;
-    } else if (cityFilter) {
-      response = `Found ${topResults.length} great places in ${cityFilter}:`;
-    } else if (categoryFilter) {
-      response = `Here are ${topResults.length} ${categoryFilter}s you might like:`;
-    } else {
-      response = `Found ${topResults.length} places matching "${query}":`;
-    }
+    const hasContext = conversationHistory.length > 0;
 
-    // Log the search
-    try {
-      await supabase.from('user_interactions').insert({
-        interaction_type: 'ai_search',
-        user_id: session?.user?.id || null,
-        destination_id: null,
-        metadata: {
-          query,
-          filters: { city: cityFilter, category: categoryFilter },
-          resultCount: topResults.length,
-          hasConversationHistory: conversationHistory.length > 0,
-        }
-      });
-    } catch {
-      // Best effort logging
+    if (topResults.length === 0) {
+      if (cityFilter && categoryFilter) {
+        response = `I couldn't find any ${categoryFilter}s in ${cityFilter}. Would you like me to search in a different city or category?`;
+      } else if (cityFilter) {
+        response = `I couldn't find destinations in ${cityFilter} matching your search. Try a different query.`;
+      } else if (categoryFilter) {
+        response = `No ${categoryFilter}s found matching your search. Try specifying a city.`;
+      } else {
+        response = `I couldn't find destinations matching "${query}". Try searching for a specific city or category like "restaurants in Tokyo".`;
+      }
+    } else {
+      const prefix = hasContext ? 'Here are more results:' : '';
+      if (cityFilter && categoryFilter) {
+        response = `${prefix} Found ${topResults.length} ${categoryFilter}s in ${cityFilter}:`.trim();
+      } else if (cityFilter) {
+        response = `${prefix} Here are ${topResults.length} great places in ${cityFilter}:`.trim();
+      } else if (categoryFilter) {
+        response = `${prefix} Found ${topResults.length} ${categoryFilter}s:`.trim();
+      } else {
+        response = `${prefix} Here are ${topResults.length} places matching your search:`.trim();
+      }
     }
 
     return NextResponse.json({
       response,
       destinations: topResults,
+      filters: { city: cityFilter, category: categoryFilter },
     });
 
   } catch (error: unknown) {

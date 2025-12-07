@@ -22,31 +22,51 @@ const AI_PLACEHOLDERS = [
 ];
 
 // Follow-up suggestions based on context
-const generateFollowUps = (query: string, destinations: Destination[]): string[] => {
+const generateFollowUps = (
+  query: string,
+  destinations: Destination[],
+  filters?: { city?: string | null; category?: string | null }
+): string[] => {
   const suggestions: string[] = [];
+  const city = filters?.city;
+  const category = filters?.category;
 
-  // If we found restaurants, suggest related queries
-  if (destinations.some(d => d.category === 'restaurant')) {
-    suggestions.push('Show me ones with outdoor seating');
-    suggestions.push('Which have the best views?');
+  // City-specific follow-ups
+  if (city) {
+    if (category === 'restaurant') {
+      suggestions.push(`Best bars in ${city}`);
+      suggestions.push(`Cafes in ${city}`);
+    } else if (category === 'hotel') {
+      suggestions.push(`Restaurants in ${city}`);
+      suggestions.push(`Things to do in ${city}`);
+    } else if (category === 'bar') {
+      suggestions.push(`Restaurants in ${city}`);
+      suggestions.push(`Late night spots in ${city}`);
+    } else {
+      suggestions.push(`Restaurants in ${city}`);
+      suggestions.push(`Hotels in ${city}`);
+    }
   }
 
-  // If we found hotels, suggest hotel-related queries
-  if (destinations.some(d => d.category === 'hotel')) {
-    suggestions.push('Which are most romantic?');
-    suggestions.push('Show budget-friendly options');
+  // Category-specific without city
+  if (!city && category) {
+    suggestions.push(`${category}s in Tokyo`);
+    suggestions.push(`${category}s in Taipei`);
+    suggestions.push(`Best ${category}s in New York`);
   }
 
-  // City-based suggestions
-  const cities = [...new Set(destinations.map(d => d.city).filter(Boolean))];
-  if (cities.length === 1) {
-    suggestions.push(`What else is great in ${cities[0]}?`);
+  // If we have Michelin results, suggest more premium options
+  if (destinations.some(d => d.michelin_stars && d.michelin_stars > 0)) {
+    suggestions.push('Show me more Michelin starred');
   }
 
-  // Generic suggestions
+  // Generic fallbacks
   if (suggestions.length < 3) {
-    suggestions.push('Show me more options');
-    suggestions.push('Find similar places nearby');
+    if (city) {
+      suggestions.push(`More in ${city}`);
+    }
+    suggestions.push('Restaurants in Paris');
+    suggestions.push('Hotels in London');
   }
 
   return suggestions.slice(0, 3);
@@ -91,6 +111,7 @@ export default function InteractiveHero() {
   const [conversationHistory, setConversationHistory] = useState<Array<{ role: string; content: string }>>([]);
   const [showChatResults, setShowChatResults] = useState(false);
   const [lastQuery, setLastQuery] = useState('');
+  const [lastFilters, setLastFilters] = useState<{ city?: string | null; category?: string | null }>({});
 
   // Rotate placeholders when input is empty and not focused
   useEffect(() => {
@@ -164,11 +185,15 @@ export default function InteractiveHero() {
       setChatResponse(data.response || 'Here are some results:');
       setChatDestinations(data.destinations || []);
 
-      // Generate follow-up suggestions
-      const followUps = generateFollowUps(query, data.destinations || []);
+      // Store filters for contextual follow-ups
+      const filters = data.filters || {};
+      setLastFilters(filters);
+
+      // Generate contextual follow-up suggestions
+      const followUps = generateFollowUps(query, data.destinations || [], filters);
       setFollowUpSuggestions(followUps);
 
-      // Update conversation history
+      // Update conversation history for context
       setConversationHistory(prev => [
         ...prev,
         { role: 'user', content: query },
@@ -180,6 +205,7 @@ export default function InteractiveHero() {
     } catch (error) {
       console.error('AI search error:', error);
       setChatResponse('Sorry, I had trouble searching. Please try again.');
+      setFollowUpSuggestions(['Restaurants in Tokyo', 'Hotels in Paris', 'Cafes in London']);
     } finally {
       setIsSearching(false);
     }
@@ -199,6 +225,7 @@ export default function InteractiveHero() {
     setFollowUpSuggestions([]);
     setConversationHistory([]);
     setLastQuery('');
+    setLastFilters({});
   }, []);
 
   // Handle city filter
