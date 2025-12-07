@@ -1129,10 +1129,14 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       }
     }
 
-    // 8. Fallback to database search
+    // 8. Fallback to database search (always try if vector search returned nothing)
     if (results.length === 0) {
+      console.log('[Travel Intelligence] Vector search returned 0, trying database fallback');
+      console.log('[Travel Intelligence] Filters:', JSON.stringify(intent.filters));
+
       let dbQuery = supabase.from('destinations').select('*');
 
+      // Apply filters - use ilike for case-insensitive matching
       if (intent.filters.city) {
         dbQuery = dbQuery.ilike('city', `%${intent.filters.city}%`);
       }
@@ -1162,9 +1166,12 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       const { data: dbResults, error } = await dbQuery;
 
       if (error) {
-        console.error('Database search error:', error);
+        console.error('[Travel Intelligence] Database search error:', error);
       } else if (dbResults) {
+        console.log('[Travel Intelligence] Database returned', dbResults.length, 'results');
         results = dbResults;
+      } else {
+        console.log('[Travel Intelligence] Database returned null/undefined');
       }
     }
 
