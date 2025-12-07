@@ -163,7 +163,7 @@ function HomepageDataProviderInner({
             latitude, longitude
           `)
           .order('rating', { ascending: false, nullsFirst: false })
-          .limit(500);
+          .limit(1000); // Fetch all destinations (897+)
 
         if (!error && data && data.length > 0) {
           setDestinations(data as Destination[]);

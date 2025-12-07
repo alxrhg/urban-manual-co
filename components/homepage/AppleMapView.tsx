@@ -59,9 +59,9 @@ export function AppleMapView() {
     try {
       console.log('[AppleMapView] Creating map...');
 
-      // Create initial center (Europe as default view)
-      const center = new window.mapkit.Coordinate(48.8566, 2.3522); // Paris
-      const span = new window.mapkit.CoordinateSpan(60, 60); // Wide view
+      // Create initial center (Asia-Pacific as default view)
+      const center = new window.mapkit.Coordinate(25.0330, 121.5654); // Taipei
+      const span = new window.mapkit.CoordinateSpan(80, 120); // Wide view covering Asia
       const region = new window.mapkit.CoordinateRegion(center, span);
 
       const map = new window.mapkit.Map(mapContainerRef.current, {
