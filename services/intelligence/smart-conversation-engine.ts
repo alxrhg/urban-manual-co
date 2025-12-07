@@ -473,30 +473,42 @@ class SmartConversationEngine {
       ? `User liked: ${session.context.likedDestinations.join(', ')}`
       : '';
 
+    // Detect if this is a refinement query (modifies previous, keeps context)
+    const isRefinement = this.detectRefinement(message);
+
     // Use LLM for intent extraction
     const systemPrompt = `You are analyzing a travel search query in context of an ongoing conversation.
 
 CONVERSATION HISTORY:
 ${conversationContext}
 
-CONTEXT:
-${session.context.currentCity ? `Current focus city: ${session.context.currentCity}` : ''}
-${session.context.currentCategory ? `Current category: ${session.context.currentCategory}` : ''}
+CURRENT SESSION CONTEXT:
+${session.context.currentCity ? `Active city: ${session.context.currentCity}` : 'No city set'}
+${session.context.currentCategory ? `Active category: ${session.context.currentCategory}` : 'No category set'}
 ${shownContext}
 ${likedContext}
-${session.context.previousConversationInsights?.length ? `From previous conversations: ${session.context.previousConversationInsights.join('; ')}` : ''}
 
-Extract structured information. For follow-up queries like "more", "similar", "another", infer from conversation context.
-For contrast queries like "something different", "not like that", understand what to avoid.
-For refinement queries like "but cheaper", "with outdoor seating", add to existing filters.
+CRITICAL RULES FOR FOLLOW-UP/REFINEMENT QUERIES:
+1. If user says "more budget", "cheaper option", "but nicer", etc. - this is a REFINEMENT
+2. For refinements: ALWAYS keep the city and category from the active context above
+3. Example: If active category is "Hotel" and user says "more budget option" → category MUST be "Hotel"
+4. Only change city/category if user EXPLICITLY mentions a new one
+5. "more budget option" for hotels → city: same, category: "Hotel", priceLevel: 2
+6. "something different" → keep city, but try different category or style
+
+QUERY TYPE DETECTION:
+- New query: User mentions specific city/category → use what they say
+- Follow-up: "more", "similar", "another" → keep city AND category from context
+- Refinement: "but cheaper", "more budget", "nicer" → keep city AND category, add filter
+- Contrast: "something different" → keep city, maybe change category
 
 Return ONLY valid JSON:
 {
   "keywords": ["array", "of", "keywords"],
-  "city": "city name or null",
-  "category": "category or null",
+  "city": "${session.context.currentCity || 'null if not mentioned and no context'}",
+  "category": "${session.context.currentCategory || 'null if not mentioned and no context'}",
   "filters": {
-    "priceLevel": 1-4 or null,
+    "priceLevel": 1-4 or null (1-2 for budget, 3-4 for luxury),
     "rating": 4-5 or null,
     "michelinStar": 1-3 or null
   },
@@ -504,6 +516,7 @@ Return ONLY valid JSON:
   "confidence": 0.0-1.0,
   "clarifications": ["questions if ambiguous"],
   "isFollowUp": true/false,
+  "isRefinement": true/false,
   "referencesPrevious": true/false,
   "contrastWith": ["things to avoid based on context"],
   "expandOn": ["things to keep from previous context"]
@@ -522,9 +535,48 @@ Return ONLY valid JSON:
         ]);
 
         const parsed = JSON.parse(result.response.text());
+
+        // CRITICAL: Enforce context carryover for refinement/follow-up queries
+        // If this is a follow-up or refinement, ensure we keep the previous context
+        const shouldCarryContext = isFollowUp || isRefinement || parsed.isRefinement || parsed.isFollowUp;
+
+        let finalCity = parsed.city;
+        let finalCategory = parsed.category;
+
+        if (shouldCarryContext && session.messages.length > 0) {
+          // If LLM didn't return a city but we have one in context, use it
+          if (!finalCity && session.context.currentCity) {
+            finalCity = session.context.currentCity;
+            console.log(`[SmartChat] Carrying forward city: ${finalCity}`);
+          }
+          // If LLM didn't return a category but we have one in context, use it
+          if (!finalCategory && session.context.currentCategory) {
+            finalCategory = session.context.currentCategory;
+            console.log(`[SmartChat] Carrying forward category: ${finalCategory}`);
+          }
+        }
+
+        // Extract price filter from refinement queries
+        let priceLevel = parsed.filters?.priceLevel;
+        if (isRefinement && !priceLevel) {
+          const lowerMessage = message.toLowerCase();
+          if (lowerMessage.includes('budget') || lowerMessage.includes('cheap') || lowerMessage.includes('affordable')) {
+            priceLevel = 2;  // Budget: $-$$
+          } else if (lowerMessage.includes('luxury') || lowerMessage.includes('upscale') || lowerMessage.includes('fancy')) {
+            priceLevel = 4;  // Luxury: $$$$
+          }
+        }
+
         return {
           ...parsed,
-          isFollowUp,
+          city: finalCity,
+          category: finalCategory,
+          filters: {
+            ...parsed.filters,
+            priceLevel: priceLevel || parsed.filters?.priceLevel,
+          },
+          isFollowUp: isFollowUp || parsed.isFollowUp,
+          isRefinement: isRefinement || parsed.isRefinement,
           referencesPrevious,
         };
       }
@@ -533,16 +585,30 @@ Return ONLY valid JSON:
     }
 
     // Fallback to rule-based extraction
-    return this.fallbackIntentExtraction(message, session, isFollowUp, referencesPrevious);
+    return this.fallbackIntentExtraction(message, session, isFollowUp, isRefinement, referencesPrevious);
   }
 
   private detectFollowUp(message: string): boolean {
+    const lowerMessage = message.toLowerCase();
+
+    // Patterns that indicate this builds on previous query
     const followUpPatterns = [
       /^(more|another|similar|like that|same|again)/i,
       /^(show me more|give me more|what else)/i,
       /^(any other|anything else|something similar)/i,
+      /\b(but\s+(cheaper|nicer|better|different|closer))/i,
+      /\b(more\s+(budget|affordable|expensive|luxury|cheap))/i,
+      /\b(cheaper|budget|affordable)\s+(option|one|place)/i,
+      /\b(less\s+expensive|lower\s+price)/i,
     ];
-    return followUpPatterns.some(p => p.test(message));
+
+    // Also detect if message is very short and conversational
+    const isShortFollowUp = lowerMessage.split(/\s+/).length <= 5 &&
+      (lowerMessage.includes('more') || lowerMessage.includes('another') ||
+       lowerMessage.includes('cheaper') || lowerMessage.includes('budget') ||
+       lowerMessage.includes('similar') || lowerMessage.includes('different'));
+
+    return followUpPatterns.some(p => p.test(message)) || isShortFollowUp;
   }
 
   private detectPreviousReference(message: string, session: ConversationSession): boolean {
@@ -554,28 +620,60 @@ Return ONLY valid JSON:
     return referencePatterns.some(p => p.test(message)) && session.messages.length > 0;
   }
 
+  private detectRefinement(message: string): boolean {
+    const lowerMessage = message.toLowerCase();
+
+    // Refinement patterns - modifies previous query but keeps core context
+    const refinementPatterns = [
+      /\b(but\s+\w+)/i,  // "but cheaper", "but nicer"
+      /\b(more\s+(budget|affordable|expensive|luxury|cheap|upscale))/i,
+      /\b(less\s+(expensive|pricey))/i,
+      /\b(cheaper|budget|affordable)\s*(option|one|place|alternative)?/i,
+      /\b(nicer|fancier|better|higher\s+end)/i,
+      /\b(with\s+(outdoor|indoor|rooftop|view|parking))/i,
+      /\b(closer\s+to|near\s+the|in\s+the\s+center)/i,
+      /\b(open\s+(now|late|early))/i,
+    ];
+
+    return refinementPatterns.some(p => p.test(lowerMessage));
+  }
+
   private fallbackIntentExtraction(
     message: string,
     session: ConversationSession,
     isFollowUp: boolean,
+    isRefinement: boolean,
     referencesPrevious: boolean
   ): QueryIntent {
     const lowerMessage = message.toLowerCase();
+    const shouldCarryContext = isFollowUp || isRefinement;
 
     // Extract city
     const cityNames = ['tokyo', 'paris', 'london', 'new york', 'berlin', 'barcelona', 'rome', 'amsterdam', 'vienna', 'prague', 'lisbon', 'miami', 'los angeles', 'san francisco'];
     let city = cityNames.find(c => lowerMessage.includes(c));
 
-    // Use session context for follow-ups
-    if (!city && isFollowUp && session.context.currentCity) {
+    // Use session context for follow-ups/refinements
+    if (!city && shouldCarryContext && session.context.currentCity) {
       city = session.context.currentCity;
+      console.log(`[SmartChat Fallback] Carrying forward city: ${city}`);
     }
 
     // Extract category
     const categories = ['restaurant', 'cafe', 'hotel', 'bar', 'museum', 'gallery', 'culture'];
     let category = categories.find(c => lowerMessage.includes(c));
-    if (!category && isFollowUp && session.context.currentCategory) {
+    if (!category && shouldCarryContext && session.context.currentCategory) {
       category = session.context.currentCategory;
+      console.log(`[SmartChat Fallback] Carrying forward category: ${category}`);
+    }
+
+    // Extract price filter from refinement
+    let priceLevel: number | undefined;
+    if (isRefinement) {
+      if (lowerMessage.includes('budget') || lowerMessage.includes('cheap') || lowerMessage.includes('affordable')) {
+        priceLevel = 2;
+      } else if (lowerMessage.includes('luxury') || lowerMessage.includes('upscale') || lowerMessage.includes('fancy')) {
+        priceLevel = 4;
+      }
     }
 
     const keywords = message.split(/\s+/)
@@ -585,7 +683,10 @@ Return ONLY valid JSON:
       keywords,
       city,
       category,
-      intent: `Finding ${category || 'places'}${city ? ` in ${city}` : ''}`,
+      filters: priceLevel ? { priceLevel } : undefined,
+      intent: isRefinement
+        ? `Refining search for ${category || 'places'}${city ? ` in ${city}` : ''}${priceLevel ? ' (budget)' : ''}`
+        : `Finding ${category || 'places'}${city ? ` in ${city}` : ''}`,
       confidence: city ? 0.8 : 0.6,
       isFollowUp,
       referencesPrevious,
