@@ -89,7 +89,7 @@ function setupMapkitErrorHandler() {
 }
 
 function fetchAuthorizationToken(done: (token: string) => void) {
-  console.log('[MapKit Client] Fetching authorization token...');
+  console.log('[MapKit Client] >>> authorizationCallback invoked by MapKit');
 
   // Create abort controller for timeout (with fallback for older browsers)
   const controller = new AbortController();
@@ -112,8 +112,18 @@ function fetchAuthorizationToken(done: (token: string) => void) {
         throw new Error('No token received from server');
       }
       console.log('[MapKit Client] Token received, length:', data.token.length);
+      console.log('[MapKit Client] Token preview:', data.token.substring(0, 50) + '...');
       authorizationFailed = false;
+
+      // Call done with the token
+      console.log('[MapKit Client] Calling done() with token...');
       done(data.token);
+      console.log('[MapKit Client] done() called, checking mapkit.loaded:', window.mapkit?.loaded);
+
+      // Check again after a short delay
+      setTimeout(() => {
+        console.log('[MapKit Client] After 500ms, mapkit.loaded:', window.mapkit?.loaded);
+      }, 500);
     })
     .catch(error => {
       clearTimeout(timeoutId);
