@@ -292,7 +292,7 @@ const DestinationContent = memo(function DestinationContent({
                 Tags
               </span>
               <div className="flex flex-wrap gap-2">
-                {destination.tags.slice(0, 5).map((tag, i) => (
+                {formatTags(destination.tags).slice(0, 5).map((tag, i) => (
                   <span
                     key={i}
                     className="px-3 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-[13px] text-gray-700 dark:text-gray-300"
@@ -412,6 +412,38 @@ function DetailRow({
       </span>
     </div>
   );
+}
+
+/**
+ * Format tags for display
+ * - Filter out generic tags
+ * - Convert snake_case to readable text
+ * - Capitalize properly
+ */
+function formatTags(tags: string[]): string[] {
+  // Tags to filter out (too generic)
+  const genericTags = new Set([
+    'establishment',
+    'point_of_interest',
+    'food',
+    'place',
+    'business',
+    'premise',
+    'subpremise',
+    'store',
+  ]);
+
+  return tags
+    .filter(tag => !genericTags.has(tag.toLowerCase()))
+    .map(tag => {
+      // Convert snake_case or underscore to spaces
+      const spaced = tag.replace(/_/g, ' ');
+      // Capitalize each word
+      return spaced
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    });
 }
 
 export default DestinationContent;

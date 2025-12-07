@@ -47,7 +47,7 @@ const SimilarContent = memo(function SimilarContent({
       setIsLoading(true);
       try {
         const response = await fetch(
-          `/api/intelligence/similar?slug=${destination.slug}&limit=12`
+          `/api/intelligence/similar?slug=${destination.slug}&limit=12&filter=${filter}`
         );
         if (response.ok) {
           const data = await response.json();
@@ -61,7 +61,7 @@ const SimilarContent = memo(function SimilarContent({
     };
 
     fetchSimilar();
-  }, [destination.slug]);
+  }, [destination.slug, filter]);
 
   // Filter options
   const filters = [

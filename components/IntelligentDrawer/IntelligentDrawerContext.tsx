@@ -296,19 +296,37 @@ export function IntelligentDrawerProvider({ children }: { children: ReactNode })
   // ==========================================
 
   const openDestinationWithTrip = useCallback(
-    (destination: Destination, related?: Destination[]) => {
+    async (destination: Destination, related?: Destination[]) => {
       const fitAnalysis = tripBuilder.activeTrip
         ? analyzeDestinationFit(destination, tripBuilder.activeTrip.days)
         : null;
 
+      // Open immediately with what we have
       open('destination', {
         destination,
         related,
         tripFitAnalysis: fitAnalysis || undefined,
         activeTripInfo: activeTripInfo || undefined,
       });
+
+      // If no related provided, fetch them in background
+      if (!related && destination.slug) {
+        try {
+          const response = await fetch(
+            `/api/intelligence/similar?slug=${destination.slug}&limit=4&filter=nearby`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            if (data.similar && data.similar.length > 0) {
+              updateContext({ related: data.similar });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch related:', error);
+        }
+      }
     },
-    [open, tripBuilder.activeTrip, activeTripInfo]
+    [open, updateContext, tripBuilder.activeTrip, activeTripInfo]
   );
 
   const openTrip = useCallback(
