@@ -292,11 +292,8 @@ export function ensureMapkitLoaded(): Promise<void> {
       // Wait for MapKit to be ready, with better error handling
       waitForMapkitReady()
         .then(() => {
-          // Double-check that MapKit is actually ready
-          if (!window.mapkit?.loaded) {
-            reject(new Error('MapKit loaded property is false after initialization'));
-            return;
-          }
+          // MapKit is ready - either via loaded property or constructor check
+          console.log('[MapKit Client] MapKit initialization complete, ready to use');
           resolve();
         })
         .catch((error) => {
