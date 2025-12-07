@@ -27,11 +27,13 @@ export function ClientDestinationGrid() {
     selectedCity,
     selectedCategory,
     searchTerm,
+    michelinOnly,
+    crownOnly,
     clearFilters,
     openDestination,
   } = useHomepageData();
 
-  const hasFilters = selectedCity || selectedCategory || searchTerm;
+  const hasFilters = selectedCity || selectedCategory || searchTerm || michelinOnly || crownOnly;
 
   // Show skeleton while loading
   if (isLoading) {
