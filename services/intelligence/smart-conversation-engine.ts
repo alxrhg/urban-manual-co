@@ -19,6 +19,7 @@ import { extendedConversationMemoryService } from './conversation-memory';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { openai } from '@/lib/openai';
 import { generateTextEmbedding } from '@/lib/ml/embeddings';
+import { getSeasonalContext, getAllSeasonalEvents } from '@/services/seasonality';
 
 // ============================================
 // TYPES
@@ -132,13 +133,20 @@ export interface SmartResponse {
   turnNumber: number;
   intent: QueryIntent;
   confidence: number;
-  // New: Smart disambiguation
+  // Smart disambiguation
   needsClarification?: boolean;
   clarificationQuestion?: string;
   clarificationOptions?: ClarificationOption[];
-  // New: Conversation repair
+  // Conversation repair
   isRepairResponse?: boolean;
   repairContext?: string;
+  // Proactive seasonal awareness
+  seasonalContext?: {
+    event: string;
+    description: string;
+    isActive: boolean;
+    daysUntil?: number;
+  };
 }
 
 // "Why This?" - Each destination includes reasoning
@@ -452,11 +460,12 @@ class SmartConversationEngine {
       );
     }
 
-    // 7. Generate contextual hints
+    // 7. Generate contextual hints (including proactive seasonal awareness)
     const hints = this.generateContextualHints(
       session,
       intelligenceContext,
-      searchResults
+      searchResults,
+      intent.city  // Pass city for seasonal hints
     );
 
     // 8. Update session context
@@ -481,6 +490,9 @@ class SmartConversationEngine {
     // 10. Persist session update
     await this.persistSession(session);
 
+    // 11. Get seasonal context for proactive awareness
+    const seasonalContext = intent.city ? this.buildSeasonalContext(intent.city) : undefined;
+
     return {
       content: response,
       destinations: searchResults,
@@ -491,7 +503,34 @@ class SmartConversationEngine {
       turnNumber,
       intent,
       confidence: intent.confidence || 0.8,
+      seasonalContext,
     };
+  }
+
+  /**
+   * Build structured seasonal context for a city
+   */
+  private buildSeasonalContext(city: string): SmartResponse['seasonalContext'] | undefined {
+    try {
+      const context = getSeasonalContext(city);
+      if (!context) return undefined;
+
+      // Determine if event is currently active
+      const now = new Date();
+      const isActive = now >= context.start && now <= context.end;
+      const daysUntil = !isActive
+        ? Math.ceil((context.start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        : undefined;
+
+      return {
+        event: context.event,
+        description: context.text,
+        isActive,
+        daysUntil: daysUntil && daysUntil > 0 ? daysUntil : undefined,
+      };
+    } catch {
+      return undefined;
+    }
   }
 
   // ============================================
@@ -1110,9 +1149,19 @@ Be concise (2-3 sentences max), helpful, and personalized. Don't list destinatio
   private generateContextualHints(
     session: ConversationSession,
     intelligenceContext: UnifiedContext | null,
-    results: any[]
+    results: any[],
+    city?: string
   ): string[] {
     const hints: string[] = [];
+
+    // 🌸 PROACTIVE SEASONAL AWARENESS - Most important, show first!
+    const searchCity = city || session.context.currentCity;
+    if (searchCity) {
+      const seasonalHint = this.getProactiveSeasonalHint(searchCity);
+      if (seasonalHint) {
+        hints.push(seasonalHint);
+      }
+    }
 
     // Cross-session hints
     if (session.context.previousConversationInsights?.length) {
@@ -1141,7 +1190,36 @@ Be concise (2-3 sentences max), helpful, and personalized. Don't list destinatio
       hints.push('I\'m learning your preferences - these match what you\'ve liked');
     }
 
-    return hints.slice(0, 2);
+    return hints.slice(0, 3);  // Allow 3 hints now (seasonal is important)
+  }
+
+  /**
+   * Get proactive seasonal hint for a city
+   * This is what makes the chat feel "smart" - it knows what's happening NOW
+   */
+  private getProactiveSeasonalHint(city: string): string | null {
+    try {
+      const seasonalContext = getSeasonalContext(city);
+      if (!seasonalContext) return null;
+
+      // Format a natural hint
+      // The seasonality service returns: { text, start, end, event }
+      return `🌸 ${seasonalContext.text}`;
+    } catch (error) {
+      console.error('Error getting seasonal hint:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get all seasonal events for a city (for itinerary planning)
+   */
+  getSeasonalEventsForCity(city: string): any[] {
+    try {
+      return getAllSeasonalEvents(city);
+    } catch {
+      return [];
+    }
   }
 
   // ============================================
