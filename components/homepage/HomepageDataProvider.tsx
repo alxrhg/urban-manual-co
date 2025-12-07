@@ -159,7 +159,8 @@ function HomepageDataProviderInner({
           .select(`
             id, slug, name, city, country, neighborhood, category,
             micro_description, description, image, image_thumbnail,
-            michelin_stars, crown, rating, price_level, tags
+            michelin_stars, crown, rating, price_level, tags,
+            latitude, longitude
           `)
           .order('rating', { ascending: false, nullsFirst: false })
           .limit(500);
