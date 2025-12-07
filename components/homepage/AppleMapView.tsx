@@ -64,16 +64,18 @@ export function AppleMapView() {
       const span = new window.mapkit.CoordinateSpan(80, 120); // Wide view covering Asia
       const region = new window.mapkit.CoordinateRegion(center, span);
 
+      // MapKit colorScheme/mapType use string values at runtime
+      // See: https://developer.apple.com/documentation/mapkitjs/map
       const map = new window.mapkit.Map(mapContainerRef.current, {
         showsCompass: true,
         showsZoomControl: true,
         showsMapTypeControl: false,
         isScrollEnabled: true,
         isZoomEnabled: true,
-        colorScheme: window.mapkit.Map?.ColorSchemes?.Dark || 'dark',
-        mapType: window.mapkit.Map?.MapTypes?.Standard || 'standard',
+        colorScheme: 'dark',
+        mapType: 'standard',
         region: region,
-        loadPriority: window.mapkit.Map?.LoadPriorities?.LandCover || 'landCover',
+        loadPriority: 'landCover',
       });
 
       mapRef.current = map;
