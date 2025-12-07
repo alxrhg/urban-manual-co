@@ -104,9 +104,9 @@ export default function NavigationBar() {
         </div>
 
         {/* Right side - Actions */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar overflow-y-visible">
           {/* Filters Button with Dropdown */}
-          <div ref={filterRef} className="relative">
+          <div ref={filterRef} className="relative z-50">
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex h-[38px] flex-shrink-0 items-center justify-center gap-2 rounded-full
