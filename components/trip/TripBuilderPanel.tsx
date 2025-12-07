@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   X, MapPin, Clock, Navigation, AlertTriangle, Sun, Cloud, CloudRain,
   Sparkles, MoreHorizontal, Trash2, ChevronDown, ChevronUp, Save,
   Share2, Plus, Route, Calendar, Users, Loader2, FolderOpen, ChevronRight,
+  GripVertical, Pencil, MessageSquare, Wand2, Check, Minus,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useTripBuilder, TripItem, TripDay } from '@/contexts/TripBuilderContext';
@@ -18,20 +19,45 @@ import { capitalizeCategory } from '@/lib/utils';
 
 interface TripItemCardProps {
   item: TripItem;
+  index: number;
   onRemove: () => void;
   onTimeChange: (time: string) => void;
+  onNotesChange: (notes: string) => void;
   onOpen: () => void;
+  onDragStart: (index: number) => void;
+  onDragOver: (index: number) => void;
+  onDragEnd: () => void;
+  isDragging: boolean;
   showTravelTime?: boolean;
 }
 
-function TripItemCard({ item, onRemove, onTimeChange, onOpen, showTravelTime }: TripItemCardProps) {
+function TripItemCard({
+  item,
+  index,
+  onRemove,
+  onTimeChange,
+  onNotesChange,
+  onOpen,
+  onDragStart,
+  onDragOver,
+  onDragEnd,
+  isDragging,
+  showTravelTime,
+}: TripItemCardProps) {
   const [showTimeInput, setShowTimeInput] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [noteValue, setNoteValue] = useState(item.notes || '');
 
   const getCrowdColor = (level?: number) => {
     if (!level) return 'text-gray-400';
     if (level < 30) return 'text-green-500';
     if (level < 60) return 'text-yellow-500';
     return 'text-red-500';
+  };
+
+  const handleSaveNotes = () => {
+    onNotesChange(noteValue);
+    setShowNotes(false);
   };
 
   return (
@@ -44,9 +70,22 @@ function TripItemCard({ item, onRemove, onTimeChange, onOpen, showTravelTime }: 
         </div>
       )}
 
-      <div className="group relative flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors">
+      <div
+        draggable
+        onDragStart={() => onDragStart(index)}
+        onDragOver={(e) => { e.preventDefault(); onDragOver(index); }}
+        onDragEnd={onDragEnd}
+        className={`group relative flex items-start gap-2 p-3 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-all ${
+          isDragging ? 'opacity-50 scale-95' : ''
+        }`}
+      >
+        {/* Drag handle */}
+        <div className="flex-shrink-0 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-60 transition-opacity pt-2">
+          <GripVertical className="w-4 h-4 text-gray-400" />
+        </div>
+
         {/* Time slot */}
-        <div className="flex-shrink-0 w-14 text-center">
+        <div className="flex-shrink-0 w-12 text-center">
           {showTimeInput ? (
             <input
               type="time"
@@ -57,17 +96,17 @@ function TripItemCard({ item, onRemove, onTimeChange, onOpen, showTravelTime }: 
               }}
               onBlur={() => setShowTimeInput(false)}
               autoFocus
-              className="w-full text-[12px] bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-gray-900 dark:focus:border-white"
+              className="w-full text-[11px] bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-gray-900 dark:focus:border-white"
             />
           ) : (
             <button
               onClick={() => setShowTimeInput(true)}
-              className="text-[13px] font-medium text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-300"
+              className="text-[12px] font-medium text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-300"
             >
               {item.timeSlot || '--:--'}
             </button>
           )}
-          <div className="text-[10px] text-gray-400 mt-0.5">
+          <div className="text-[9px] text-gray-400 mt-0.5">
             {formatDuration(item.duration)}
           </div>
         </div>
@@ -75,19 +114,19 @@ function TripItemCard({ item, onRemove, onTimeChange, onOpen, showTravelTime }: 
         {/* Image */}
         <button
           onClick={onOpen}
-          className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700"
+          className="flex-shrink-0 w-11 h-11 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700"
         >
           {item.destination.image || item.destination.image_thumbnail ? (
             <Image
               src={item.destination.image_thumbnail || item.destination.image || ''}
               alt={item.destination.name}
-              width={48}
-              height={48}
+              width={44}
+              height={44}
               className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-gray-400" />
+              <MapPin className="w-4 h-4 text-gray-400" />
             </div>
           )}
         </button>
@@ -117,16 +156,61 @@ function TripItemCard({ item, onRemove, onTimeChange, onOpen, showTravelTime }: 
                 Outdoor
               </span>
             )}
+            {item.notes && !showNotes && (
+              <button
+                onClick={() => setShowNotes(true)}
+                className="text-[10px] text-gray-400 flex items-center gap-0.5 hover:text-gray-600"
+              >
+                <MessageSquare className="w-3 h-3" />
+                Note
+              </button>
+            )}
           </div>
+
+          {/* Notes input */}
+          {showNotes && (
+            <div className="mt-2 flex gap-1">
+              <input
+                type="text"
+                value={noteValue}
+                onChange={(e) => setNoteValue(e.target.value)}
+                placeholder="Add a note..."
+                className="flex-1 text-[11px] px-2 py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded focus:outline-none focus:border-gray-400"
+                autoFocus
+              />
+              <button
+                onClick={handleSaveNotes}
+                className="p-1 text-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 rounded"
+              >
+                <Check className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setShowNotes(false)}
+                className="p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Remove button */}
-        <button
-          onClick={onRemove}
-          className="absolute top-2 right-2 p-1 rounded-full opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-white/20 transition-all"
-        >
-          <X className="w-3.5 h-3.5 text-gray-400" />
-        </button>
+        {/* Actions */}
+        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => setShowNotes(!showNotes)}
+            className="p-1 rounded hover:bg-gray-200 dark:hover:bg-white/20"
+            title="Add note"
+          >
+            <MessageSquare className="w-3.5 h-3.5 text-gray-400" />
+          </button>
+          <button
+            onClick={onRemove}
+            className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+            title="Remove"
+          >
+            <X className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
+          </button>
+        </div>
       </div>
     </>
   );
@@ -134,23 +218,38 @@ function TripItemCard({ item, onRemove, onTimeChange, onOpen, showTravelTime }: 
 
 interface DaySectionProps {
   day: TripDay;
+  dayCount: number;
   isExpanded: boolean;
   onToggle: () => void;
   onRemoveItem: (itemId: string) => void;
   onTimeChange: (itemId: string, time: string) => void;
+  onNotesChange: (itemId: string, notes: string) => void;
   onOptimize: () => void;
+  onSuggestNext: () => void;
+  onRemoveDay: () => void;
   onOpenDestination: (slug: string) => void;
+  onReorder: (fromIndex: number, toIndex: number) => void;
+  isSuggesting: boolean;
 }
 
 function DaySection({
   day,
+  dayCount,
   isExpanded,
   onToggle,
   onRemoveItem,
   onTimeChange,
+  onNotesChange,
   onOptimize,
+  onSuggestNext,
+  onRemoveDay,
   onOpenDestination,
+  onReorder,
+  isSuggesting,
 }: DaySectionProps) {
+  const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
   const getWeatherIcon = () => {
     if (!day.weather) return null;
     if (day.weather.isRainy) return <CloudRain className="w-4 h-4 text-blue-400" />;
@@ -158,56 +257,88 @@ function DaySection({
     return <Sun className="w-4 h-4 text-yellow-400" />;
   };
 
+  const handleDragEnd = () => {
+    if (dragFromIndex !== null && dragOverIndex !== null && dragFromIndex !== dragOverIndex) {
+      onReorder(dragFromIndex, dragOverIndex);
+    }
+    setDragFromIndex(null);
+    setDragOverIndex(null);
+  };
+
   return (
     <div className="border-b border-gray-100 dark:border-gray-800 last:border-0">
       {/* Day header */}
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center">
-            <span className="text-[13px] font-semibold text-white dark:text-gray-900">
-              {day.dayNumber}
-            </span>
+      <div className="flex items-center group">
+        <button
+          onClick={onToggle}
+          className="flex-1 flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center">
+              <span className="text-[13px] font-semibold text-white dark:text-gray-900">
+                {day.dayNumber}
+              </span>
+            </div>
+            <div className="text-left">
+              <p className="text-[14px] font-medium text-gray-900 dark:text-white">
+                Day {day.dayNumber}
+                {day.date && (
+                  <span className="text-gray-400 font-normal ml-2">
+                    {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </span>
+                )}
+              </p>
+              <p className="text-[11px] text-gray-500">
+                {day.items.length} {day.items.length === 1 ? 'place' : 'places'}
+                {day.totalTime > 0 && ` • ${formatDuration(day.totalTime)}`}
+              </p>
+            </div>
           </div>
-          <div className="text-left">
-            <p className="text-[14px] font-medium text-gray-900 dark:text-white">
-              Day {day.dayNumber}
-              {day.date && (
-                <span className="text-gray-400 font-normal ml-2">
-                  {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                </span>
-              )}
-            </p>
-            <p className="text-[11px] text-gray-500">
-              {day.items.length} {day.items.length === 1 ? 'place' : 'places'}
-              {day.totalTime > 0 && ` • ${formatDuration(day.totalTime)}`}
-            </p>
+          <div className="flex items-center gap-2">
+            {day.isOverstuffed && (
+              <span className="text-[11px] text-amber-500 flex items-center gap-1">
+                <AlertTriangle className="w-3 h-3" />
+                Busy
+              </span>
+            )}
+            {getWeatherIcon()}
+            {isExpanded ? (
+              <ChevronUp className="w-4 h-4 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            )}
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {day.isOverstuffed && (
-            <span className="text-[11px] text-amber-500 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" />
-              Busy
-            </span>
-          )}
-          {getWeatherIcon()}
-          {isExpanded ? (
-            <ChevronUp className="w-4 h-4 text-gray-400" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-gray-400" />
-          )}
-        </div>
-      </button>
+        </button>
+        {/* Remove day button */}
+        {dayCount > 1 && (
+          <button
+            onClick={onRemoveDay}
+            className="p-2 mr-2 opacity-0 group-hover:opacity-100 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-all"
+            title="Remove day"
+          >
+            <Minus className="w-4 h-4 text-gray-400 hover:text-red-500" />
+          </button>
+        )}
+      </div>
 
       {/* Day content */}
       {isExpanded && (
         <div className="px-4 pb-4">
           {day.items.length === 0 ? (
-            <div className="text-center py-6 text-[13px] text-gray-400">
-              No places added yet
+            <div className="text-center py-6">
+              <p className="text-[13px] text-gray-400 mb-3">No places added yet</p>
+              <button
+                onClick={onSuggestNext}
+                disabled={isSuggesting}
+                className="inline-flex items-center gap-2 px-4 py-2 text-[12px] font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-white/10 rounded-full hover:bg-gray-200 dark:hover:bg-white/20 transition-colors disabled:opacity-50"
+              >
+                {isSuggesting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Wand2 className="w-3.5 h-3.5" />
+                )}
+                Suggest places
+              </button>
             </div>
           ) : (
             <div className="space-y-2">
@@ -215,9 +346,15 @@ function DaySection({
                 <TripItemCard
                   key={item.id}
                   item={item}
+                  index={idx}
                   onRemove={() => onRemoveItem(item.id)}
                   onTimeChange={(time) => onTimeChange(item.id, time)}
+                  onNotesChange={(notes) => onNotesChange(item.id, notes)}
                   onOpen={() => onOpenDestination(item.destination.slug)}
+                  onDragStart={setDragFromIndex}
+                  onDragOver={setDragOverIndex}
+                  onDragEnd={handleDragEnd}
+                  isDragging={dragFromIndex === idx}
                   showTravelTime={idx > 0}
                 />
               ))}
@@ -225,14 +362,30 @@ function DaySection({
           )}
 
           {/* Day actions */}
-          {day.items.length >= 2 && (
-            <button
-              onClick={onOptimize}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2 text-[12px] font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
-            >
-              <Route className="w-3.5 h-3.5" />
-              Optimize Route
-            </button>
+          {day.items.length > 0 && (
+            <div className="mt-3 flex items-center justify-center gap-2">
+              {day.items.length >= 2 && (
+                <button
+                  onClick={onOptimize}
+                  className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-white/5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                >
+                  <Route className="w-3 h-3" />
+                  Optimize
+                </button>
+              )}
+              <button
+                onClick={onSuggestNext}
+                disabled={isSuggesting}
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-white/5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors disabled:opacity-50"
+              >
+                {isSuggesting ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <Wand2 className="w-3 h-3" />
+                )}
+                Suggest next
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -252,12 +405,20 @@ export default function TripBuilderPanel() {
     isPanelOpen,
     isBuilding,
     isLoadingTrips,
+    isSuggestingNext,
     removeFromTrip,
     updateItemTime,
+    updateItemNotes,
+    addDay,
+    removeDay,
+    updateTripDetails,
+    reorderItems,
     clearTrip,
     saveTrip,
     closePanel,
     optimizeDay,
+    suggestNextItem,
+    addToTrip,
     switchToTrip,
     refreshSavedTrips,
     totalItems,
@@ -266,6 +427,9 @@ export default function TripBuilderPanel() {
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([1]));
   const [isSaving, setIsSaving] = useState(false);
   const [showTripSelector, setShowTripSelector] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [isEditingDate, setIsEditingDate] = useState(false);
 
   const toggleDay = useCallback((day: number) => {
     setExpandedDays(prev => {
@@ -292,7 +456,6 @@ export default function TripBuilderPanel() {
   }, [user, saveTrip, refreshSavedTrips]);
 
   const handleShare = useCallback(() => {
-    // TODO: Implement share functionality
     if (activeTrip?.id) {
       const url = `${window.location.origin}/trips/${activeTrip.id}`;
       navigator.clipboard.writeText(url);
@@ -303,7 +466,6 @@ export default function TripBuilderPanel() {
   }, [activeTrip]);
 
   const handleOpenDestination = useCallback((slug: string) => {
-    // Open destination drawer - dispatch event or use context
     const event = new CustomEvent('openDestination', { detail: { slug } });
     window.dispatchEvent(event);
   }, []);
@@ -312,6 +474,29 @@ export default function TripBuilderPanel() {
     setShowTripSelector(false);
     await switchToTrip(tripId);
   }, [switchToTrip]);
+
+  const handleSuggestNext = useCallback(async (dayNumber: number) => {
+    const suggestion = await suggestNextItem(dayNumber);
+    if (suggestion) {
+      addToTrip(suggestion, dayNumber);
+    }
+  }, [suggestNextItem, addToTrip]);
+
+  const handleTitleSave = useCallback(() => {
+    if (editedTitle.trim()) {
+      updateTripDetails({ title: editedTitle.trim() });
+    }
+    setIsEditingTitle(false);
+  }, [editedTitle, updateTripDetails]);
+
+  const handleDateChange = useCallback((date: string) => {
+    updateTripDetails({ startDate: date });
+    setIsEditingDate(false);
+  }, [updateTripDetails]);
+
+  const handleReorder = useCallback((dayNumber: number, fromIndex: number, toIndex: number) => {
+    reorderItems(dayNumber, fromIndex, toIndex);
+  }, [reorderItems]);
 
   // Show trip selector when no active trip but user is logged in
   if (!isPanelOpen) return null;
@@ -388,30 +573,71 @@ export default function TripBuilderPanel() {
         {/* Header */}
         <div className="flex-shrink-0 p-4 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-start justify-between mb-3">
-            <div className="relative">
-              <button
-                onClick={() => savedTrips.length > 0 && setShowTripSelector(!showTripSelector)}
-                className={`text-left ${savedTrips.length > 0 ? 'hover:opacity-80 cursor-pointer' : ''}`}
-              >
+            <div className="relative flex-1 min-w-0">
+              {/* Editable title */}
+              {isEditingTitle ? (
                 <div className="flex items-center gap-2">
-                  <h2 className="text-[18px] font-semibold text-gray-900 dark:text-white">
-                    {activeTrip.title}
-                  </h2>
-                  {savedTrips.length > 0 && (
-                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showTripSelector ? 'rotate-180' : ''}`} />
-                  )}
+                  <input
+                    type="text"
+                    value={editedTitle}
+                    onChange={(e) => setEditedTitle(e.target.value)}
+                    onBlur={handleTitleSave}
+                    onKeyDown={(e) => e.key === 'Enter' && handleTitleSave()}
+                    autoFocus
+                    className="flex-1 text-[18px] font-semibold text-gray-900 dark:text-white bg-transparent border-b-2 border-gray-300 dark:border-gray-600 focus:outline-none focus:border-gray-900 dark:focus:border-white"
+                  />
                 </div>
-              </button>
+              ) : (
+                <button
+                  onClick={() => savedTrips.length > 0 && setShowTripSelector(!showTripSelector)}
+                  className={`text-left ${savedTrips.length > 0 ? 'hover:opacity-80 cursor-pointer' : ''}`}
+                >
+                  <div className="flex items-center gap-2 group">
+                    <h2 className="text-[18px] font-semibold text-gray-900 dark:text-white truncate">
+                      {activeTrip.title}
+                    </h2>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditedTitle(activeTrip.title);
+                        setIsEditingTitle(true);
+                      }}
+                      className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-white/10 rounded transition-all"
+                    >
+                      <Pencil className="w-3 h-3 text-gray-400" />
+                    </button>
+                    {savedTrips.length > 0 && (
+                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showTripSelector ? 'rotate-180' : ''}`} />
+                    )}
+                  </div>
+                </button>
+              )}
+
+              {/* Trip meta info with editable date */}
               <div className="flex items-center gap-3 mt-1 text-[12px] text-gray-500">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
                   {activeTrip.city}
                 </span>
-                {activeTrip.startDate && (
-                  <span className="flex items-center gap-1">
+                {isEditingDate ? (
+                  <input
+                    type="date"
+                    value={activeTrip.startDate || ''}
+                    onChange={(e) => handleDateChange(e.target.value)}
+                    onBlur={() => setIsEditingDate(false)}
+                    autoFocus
+                    className="text-[12px] bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none"
+                  />
+                ) : (
+                  <button
+                    onClick={() => setIsEditingDate(true)}
+                    className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-300"
+                  >
                     <Calendar className="w-3 h-3" />
-                    {new Date(activeTrip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                  </span>
+                    {activeTrip.startDate
+                      ? new Date(activeTrip.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                      : 'Set date'}
+                  </button>
                 )}
                 <span className="flex items-center gap-1">
                   <Users className="w-3 h-3" />
@@ -480,21 +706,35 @@ export default function TripBuilderPanel() {
             </div>
           ) : totalItems === 0 ? (
             <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-              <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center mb-4">
-                <MapPin className="w-7 h-7 text-gray-400" />
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-100 to-gray-50 dark:from-white/10 dark:to-white/5 flex items-center justify-center mb-4">
+                <Sparkles className="w-7 h-7 text-gray-400" />
               </div>
-              <h3 className="text-[15px] font-medium text-gray-900 dark:text-white mb-2">
-                Start adding places
+              <h3 className="text-[16px] font-medium text-gray-900 dark:text-white mb-2">
+                Ready to explore {activeTrip.city}?
               </h3>
-              <p className="text-[13px] text-gray-500 mb-4">
-                Browse destinations and click "Add to Trip" to build your itinerary
+              <p className="text-[13px] text-gray-500 mb-5 max-w-[240px]">
+                Add places from the homepage or let AI suggest the perfect itinerary
               </p>
-              <button
-                onClick={closePanel}
-                className="px-4 py-2 text-[13px] font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-white/10 rounded-full hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
-              >
-                Browse Destinations
-              </button>
+              <div className="flex flex-col gap-2 w-full max-w-[200px]">
+                <button
+                  onClick={() => handleSuggestNext(1)}
+                  disabled={isSuggestingNext}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[13px] font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
+                >
+                  {isSuggestingNext ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-4 h-4" />
+                  )}
+                  Get AI suggestions
+                </button>
+                <button
+                  onClick={closePanel}
+                  className="w-full px-4 py-2.5 text-[13px] font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-white/10 rounded-full hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                >
+                  Browse destinations
+                </button>
+              </div>
             </div>
           ) : (
             <div>
@@ -502,17 +742,24 @@ export default function TripBuilderPanel() {
                 <DaySection
                   key={day.dayNumber}
                   day={day}
+                  dayCount={activeTrip.days.length}
                   isExpanded={expandedDays.has(day.dayNumber)}
                   onToggle={() => toggleDay(day.dayNumber)}
                   onRemoveItem={removeFromTrip}
                   onTimeChange={updateItemTime}
+                  onNotesChange={updateItemNotes}
                   onOptimize={() => optimizeDay(day.dayNumber)}
+                  onSuggestNext={() => handleSuggestNext(day.dayNumber)}
+                  onRemoveDay={() => removeDay(day.dayNumber)}
                   onOpenDestination={handleOpenDestination}
+                  onReorder={(from, to) => handleReorder(day.dayNumber, from, to)}
+                  isSuggesting={isSuggestingNext}
                 />
               ))}
 
               {/* Add day button */}
               <button
+                onClick={addDay}
                 className="w-full p-4 flex items-center justify-center gap-2 text-[13px] font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
               >
                 <Plus className="w-4 h-4" />

@@ -77,6 +77,7 @@ export interface TripBuilderContextType {
   isPanelOpen: boolean;
   isBuilding: boolean;
   isLoadingTrips: boolean;
+  isSuggestingNext: boolean;
 
   // Actions
   startTrip: (city: string, days?: number, startDate?: string) => void;
@@ -84,11 +85,16 @@ export interface TripBuilderContextType {
   removeFromTrip: (itemId: string) => void;
   moveItem: (itemId: string, toDay: number, toIndex: number) => void;
   updateItemTime: (itemId: string, timeSlot: string) => void;
+  updateItemNotes: (itemId: string, notes: string) => void;
+  addDay: () => void;
+  removeDay: (dayNumber: number) => void;
+  updateTripDetails: (updates: { title?: string; startDate?: string; travelers?: number }) => void;
   clearTrip: () => void;
   saveTrip: () => Promise<string | null>;
   loadTrip: (tripId: string) => Promise<void>;
   refreshSavedTrips: () => Promise<void>;
   switchToTrip: (tripId: string) => Promise<void>;
+  reorderItems: (dayNumber: number, fromIndex: number, toIndex: number) => void;
 
   // Panel
   openPanel: () => void;
@@ -209,6 +215,7 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
+  const [isSuggestingNext, setIsSuggestingNext] = useState(false);
 
   // Fetch saved trips from server
   const refreshSavedTrips = useCallback(async () => {
@@ -450,6 +457,143 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       return {
         ...prev,
         days: updatedDays,
+        isModified: true,
+      };
+    });
+  }, []);
+
+  // Update item notes
+  const updateItemNotes = useCallback((itemId: string, notes: string) => {
+    setActiveTrip(prev => {
+      if (!prev) return null;
+
+      const days = prev.days.map(day => ({
+        ...day,
+        items: day.items.map(item =>
+          item.id === itemId ? { ...item, notes } : item
+        ),
+      }));
+
+      return {
+        ...prev,
+        days,
+        isModified: true,
+      };
+    });
+  }, []);
+
+  // Add a new day to the trip
+  const addDay = useCallback(() => {
+    setActiveTrip(prev => {
+      if (!prev) return null;
+
+      const newDayNumber = prev.days.length + 1;
+      const lastDate = prev.days[prev.days.length - 1]?.date;
+      const newDate = lastDate
+        ? new Date(new Date(lastDate).getTime() + 86400000).toISOString().split('T')[0]
+        : undefined;
+
+      const newDay: TripDay = {
+        dayNumber: newDayNumber,
+        date: newDate,
+        items: [],
+        totalTime: 0,
+        totalTravel: 0,
+        isOverstuffed: false,
+      };
+
+      return {
+        ...prev,
+        days: [...prev.days, newDay],
+        endDate: newDate || prev.endDate,
+        isModified: true,
+      };
+    });
+  }, []);
+
+  // Remove a day from the trip
+  const removeDay = useCallback((dayNumber: number) => {
+    setActiveTrip(prev => {
+      if (!prev || prev.days.length <= 1) return prev;
+
+      const days = prev.days
+        .filter(d => d.dayNumber !== dayNumber)
+        .map((d, idx) => ({
+          ...d,
+          dayNumber: idx + 1,
+          items: d.items.map(item => ({ ...item, day: idx + 1 })),
+        }));
+
+      const lastDate = days[days.length - 1]?.date;
+
+      return {
+        ...prev,
+        days: calculateTripMetrics(days),
+        endDate: lastDate || prev.endDate,
+        isModified: true,
+      };
+    });
+  }, []);
+
+  // Update trip details
+  const updateTripDetails = useCallback((updates: { title?: string; startDate?: string; travelers?: number }) => {
+    setActiveTrip(prev => {
+      if (!prev) return null;
+
+      let newDays = prev.days;
+
+      // If startDate changed, recalculate all day dates
+      if (updates.startDate && updates.startDate !== prev.startDate) {
+        const start = new Date(updates.startDate);
+        newDays = prev.days.map((day, idx) => ({
+          ...day,
+          date: new Date(start.getTime() + idx * 86400000).toISOString().split('T')[0],
+        }));
+      }
+
+      return {
+        ...prev,
+        title: updates.title ?? prev.title,
+        startDate: updates.startDate ?? prev.startDate,
+        endDate: updates.startDate
+          ? new Date(new Date(updates.startDate).getTime() + (prev.days.length - 1) * 86400000).toISOString().split('T')[0]
+          : prev.endDate,
+        travelers: updates.travelers ?? prev.travelers,
+        days: newDays,
+        isModified: true,
+      };
+    });
+  }, []);
+
+  // Reorder items within a day (for drag-and-drop)
+  const reorderItems = useCallback((dayNumber: number, fromIndex: number, toIndex: number) => {
+    setActiveTrip(prev => {
+      if (!prev) return null;
+
+      const dayIndex = dayNumber - 1;
+      if (dayIndex >= prev.days.length) return prev;
+
+      const day = prev.days[dayIndex];
+      const items = [...day.items];
+
+      // Move item
+      const [moved] = items.splice(fromIndex, 1);
+      items.splice(toIndex, 0, moved);
+
+      // Recalculate order indexes and time slots based on position
+      const timeSlots = ['09:00', '10:30', '12:00', '14:00', '16:00', '18:00', '20:00', '21:30'];
+      const reordered = items.map((item, idx) => ({
+        ...item,
+        orderIndex: idx,
+        timeSlot: timeSlots[idx] || timeSlots[timeSlots.length - 1],
+      }));
+
+      const days = [...prev.days];
+      days[dayIndex] = { ...days[dayIndex], items: reordered };
+
+      return {
+        ...prev,
+        days: calculateTripMetrics(days),
         isModified: true,
       };
     });
@@ -699,6 +843,7 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     const day = activeTrip.days[dayNumber - 1];
     if (!day) return null;
 
+    setIsSuggestingNext(true);
     try {
       const response = await fetch('/api/intelligence/suggest-next', {
         method: 'POST',
@@ -716,6 +861,8 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
       return data.destination || null;
     } catch {
       return null;
+    } finally {
+      setIsSuggestingNext(false);
     }
   }, [activeTrip]);
 
@@ -758,16 +905,22 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     isPanelOpen,
     isBuilding,
     isLoadingTrips,
+    isSuggestingNext,
     startTrip,
     addToTrip,
     removeFromTrip,
     moveItem,
     updateItemTime,
+    updateItemNotes,
+    addDay,
+    removeDay,
+    updateTripDetails,
     clearTrip,
     saveTrip,
     loadTrip,
     refreshSavedTrips,
     switchToTrip,
+    reorderItems,
     openPanel,
     closePanel,
     togglePanel,
