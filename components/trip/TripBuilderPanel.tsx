@@ -5,10 +5,11 @@ import {
   X, MapPin, Clock, Navigation, AlertTriangle, Sun, Cloud, CloudRain,
   Sparkles, MoreHorizontal, Trash2, ChevronDown, ChevronUp, Save,
   Share2, Plus, Route, Calendar, Users, Loader2, FolderOpen, ChevronRight,
-  GripVertical, Pencil, MessageSquare, Wand2, Check, Minus,
+  GripVertical, Pencil, MessageSquare, Wand2, Check, Minus, ArrowRight,
+  Utensils, Zap, CheckCircle, Info, MoveVertical, Timer,
 } from 'lucide-react';
 import Image from 'next/image';
-import { useTripBuilder, TripItem, TripDay } from '@/contexts/TripBuilderContext';
+import { useTripBuilder, TripItem, TripDay, DayInsight } from '@/contexts/TripBuilderContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { formatDuration } from '@/lib/trip-intelligence';
 import { capitalizeCategory } from '@/lib/utils';
@@ -17,12 +18,75 @@ import { capitalizeCategory } from '@/lib/utils';
 // SUB-COMPONENTS
 // ============================================
 
+// Insight icon mapper
+function getInsightIcon(icon: DayInsight['icon']) {
+  switch (icon) {
+    case 'clock': return <Clock className="w-3.5 h-3.5" />;
+    case 'route': return <Route className="w-3.5 h-3.5" />;
+    case 'crowd': return <Users className="w-3.5 h-3.5" />;
+    case 'weather': return <CloudRain className="w-3.5 h-3.5" />;
+    case 'food': return <Utensils className="w-3.5 h-3.5" />;
+    case 'category': return <Sparkles className="w-3.5 h-3.5" />;
+    default: return <Info className="w-3.5 h-3.5" />;
+  }
+}
+
+function DayInsightsPanel({ insights, onAction }: { insights: DayInsight[]; onAction?: (action: string) => void }) {
+  if (insights.length === 0) return null;
+
+  return (
+    <div className="space-y-1.5 mb-3">
+      {insights.map((insight, idx) => (
+        <div
+          key={idx}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] ${
+            insight.type === 'warning'
+              ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+              : insight.type === 'success'
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+              : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+          }`}
+        >
+          {getInsightIcon(insight.icon)}
+          <span className="flex-1">{insight.message}</span>
+          {insight.action && onAction && (
+            <button
+              onClick={() => onAction(insight.action!)}
+              className="px-2 py-0.5 rounded bg-white/50 dark:bg-black/20 hover:bg-white dark:hover:bg-black/30 font-medium transition-colors"
+            >
+              {insight.action}
+            </button>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TripHealthBadge({ score, label }: { score: number; label: string }) {
+  const getColor = () => {
+    if (score >= 80) return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400';
+    if (score >= 60) return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
+    if (score >= 40) return 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400';
+    return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400';
+  };
+
+  return (
+    <div className={`px-2 py-1 rounded-full text-[10px] font-medium ${getColor()}`}>
+      {score}% {label}
+    </div>
+  );
+}
+
 interface TripItemCardProps {
   item: TripItem;
   index: number;
+  currentDay: number;
+  totalDays: number;
   onRemove: () => void;
   onTimeChange: (time: string) => void;
   onNotesChange: (notes: string) => void;
+  onMoveToDay: (toDay: number) => void;
   onOpen: () => void;
   onDragStart: (index: number) => void;
   onDragOver: (index: number) => void;
@@ -34,9 +98,12 @@ interface TripItemCardProps {
 function TripItemCard({
   item,
   index,
+  currentDay,
+  totalDays,
   onRemove,
   onTimeChange,
   onNotesChange,
+  onMoveToDay,
   onOpen,
   onDragStart,
   onDragOver,
@@ -47,6 +114,7 @@ function TripItemCard({
   const [showTimeInput, setShowTimeInput] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [noteValue, setNoteValue] = useState(item.notes || '');
+  const [showMoveMenu, setShowMoveMenu] = useState(false);
 
   const getCrowdColor = (level?: number) => {
     if (!level) return 'text-gray-400';
@@ -195,7 +263,7 @@ function TripItemCard({
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="relative flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={() => setShowNotes(!showNotes)}
             className="p-1 rounded hover:bg-gray-200 dark:hover:bg-white/20"
@@ -203,6 +271,15 @@ function TripItemCard({
           >
             <MessageSquare className="w-3.5 h-3.5 text-gray-400" />
           </button>
+          {totalDays > 1 && (
+            <button
+              onClick={() => setShowMoveMenu(!showMoveMenu)}
+              className="p-1 rounded hover:bg-gray-200 dark:hover:bg-white/20"
+              title="Move to day"
+            >
+              <MoveVertical className="w-3.5 h-3.5 text-gray-400" />
+            </button>
+          )}
           <button
             onClick={onRemove}
             className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -210,6 +287,28 @@ function TripItemCard({
           >
             <X className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
           </button>
+
+          {/* Move to day dropdown */}
+          {showMoveMenu && (
+            <div className="absolute right-0 top-full mt-1 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-50 animate-in fade-in slide-in-from-top-2">
+              <p className="px-3 py-1 text-[10px] font-medium text-gray-400 uppercase">Move to</p>
+              {Array.from({ length: totalDays }, (_, i) => i + 1)
+                .filter(d => d !== currentDay)
+                .map(dayNum => (
+                  <button
+                    key={dayNum}
+                    onClick={() => {
+                      onMoveToDay(dayNum);
+                      setShowMoveMenu(false);
+                    }}
+                    className="w-full px-3 py-1.5 text-left text-[12px] hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2"
+                  >
+                    <ArrowRight className="w-3 h-3 text-gray-400" />
+                    Day {dayNum}
+                  </button>
+                ))}
+            </div>
+          )}
         </div>
       </div>
     </>
@@ -220,15 +319,19 @@ interface DaySectionProps {
   day: TripDay;
   dayCount: number;
   isExpanded: boolean;
+  insights: DayInsight[];
   onToggle: () => void;
   onRemoveItem: (itemId: string) => void;
   onTimeChange: (itemId: string, time: string) => void;
   onNotesChange: (itemId: string, notes: string) => void;
+  onMoveItemToDay: (itemId: string, toDay: number) => void;
   onOptimize: () => void;
+  onAutoSchedule: () => void;
   onSuggestNext: () => void;
   onRemoveDay: () => void;
   onOpenDestination: (slug: string) => void;
   onReorder: (fromIndex: number, toIndex: number) => void;
+  onInsightAction: (action: string) => void;
   isSuggesting: boolean;
 }
 
@@ -236,15 +339,19 @@ function DaySection({
   day,
   dayCount,
   isExpanded,
+  insights,
   onToggle,
   onRemoveItem,
   onTimeChange,
   onNotesChange,
+  onMoveItemToDay,
   onOptimize,
+  onAutoSchedule,
   onSuggestNext,
   onRemoveDay,
   onOpenDestination,
   onReorder,
+  onInsightAction,
   isSuggesting,
 }: DaySectionProps) {
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
@@ -324,6 +431,9 @@ function DaySection({
       {/* Day content */}
       {isExpanded && (
         <div className="px-4 pb-4">
+          {/* Day insights */}
+          <DayInsightsPanel insights={insights} onAction={onInsightAction} />
+
           {day.items.length === 0 ? (
             <div className="text-center py-6">
               <p className="text-[13px] text-gray-400 mb-3">No places added yet</p>
@@ -347,9 +457,12 @@ function DaySection({
                   key={item.id}
                   item={item}
                   index={idx}
+                  currentDay={day.dayNumber}
+                  totalDays={dayCount}
                   onRemove={() => onRemoveItem(item.id)}
                   onTimeChange={(time) => onTimeChange(item.id, time)}
                   onNotesChange={(notes) => onNotesChange(item.id, notes)}
+                  onMoveToDay={(toDay) => onMoveItemToDay(item.id, toDay)}
                   onOpen={() => onOpenDestination(item.destination.slug)}
                   onDragStart={setDragFromIndex}
                   onDragOver={setDragOverIndex}
@@ -363,7 +476,14 @@ function DaySection({
 
           {/* Day actions */}
           {day.items.length > 0 && (
-            <div className="mt-3 flex items-center justify-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+              <button
+                onClick={onAutoSchedule}
+                className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white bg-gray-50 dark:bg-white/5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+              >
+                <Timer className="w-3 h-3" />
+                Auto-schedule
+              </button>
               {day.items.length >= 2 && (
                 <button
                   onClick={onOptimize}
@@ -417,12 +537,19 @@ export default function TripBuilderPanel() {
     saveTrip,
     closePanel,
     optimizeDay,
+    autoScheduleDay,
+    moveItemToDay,
+    getDayInsights,
+    getTripHealth,
     suggestNextItem,
     addToTrip,
     switchToTrip,
     refreshSavedTrips,
     totalItems,
   } = useTripBuilder();
+
+  // Get trip health for the header badge
+  const tripHealth = getTripHealth();
 
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([1]));
   const [isSaving, setIsSaving] = useState(false);
@@ -497,6 +624,30 @@ export default function TripBuilderPanel() {
   const handleReorder = useCallback((dayNumber: number, fromIndex: number, toIndex: number) => {
     reorderItems(dayNumber, fromIndex, toIndex);
   }, [reorderItems]);
+
+  const handleInsightAction = useCallback((dayNumber: number, action: string) => {
+    switch (action) {
+      case 'Auto-schedule':
+        autoScheduleDay(dayNumber);
+        break;
+      case 'Optimize route':
+        optimizeDay(dayNumber);
+        break;
+      case 'Move items':
+        // Open panel for that day if not expanded
+        setExpandedDays(prev => new Set([...prev, dayNumber]));
+        break;
+      case 'Add restaurant':
+        handleSuggestNext(dayNumber);
+        break;
+      default:
+        break;
+    }
+  }, [autoScheduleDay, optimizeDay, handleSuggestNext]);
+
+  const handleMoveItemToDay = useCallback((itemId: string, fromDay: number, toDay: number) => {
+    moveItemToDay(itemId, fromDay, toDay);
+  }, [moveItemToDay]);
 
   // Show trip selector when no active trip but user is logged in
   if (!isPanelOpen) return null;
@@ -676,7 +827,7 @@ export default function TripBuilderPanel() {
             </button>
           </div>
 
-          {/* Stats bar */}
+          {/* Stats bar with health score */}
           <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-gray-50 dark:bg-white/5">
             <div className="text-center">
               <p className="text-[16px] font-semibold text-gray-900 dark:text-white">{totalItems}</p>
@@ -694,6 +845,12 @@ export default function TripBuilderPanel() {
               </p>
               <p className="text-[10px] text-gray-500">Total</p>
             </div>
+            {totalItems >= 3 && (
+              <>
+                <div className="h-8 w-px bg-gray-200 dark:bg-gray-700" />
+                <TripHealthBadge score={tripHealth.score} label={tripHealth.label} />
+              </>
+            )}
           </div>
         </div>
 
@@ -744,15 +901,19 @@ export default function TripBuilderPanel() {
                   day={day}
                   dayCount={activeTrip.days.length}
                   isExpanded={expandedDays.has(day.dayNumber)}
+                  insights={getDayInsights(day.dayNumber)}
                   onToggle={() => toggleDay(day.dayNumber)}
                   onRemoveItem={removeFromTrip}
                   onTimeChange={updateItemTime}
                   onNotesChange={updateItemNotes}
+                  onMoveItemToDay={(itemId, toDay) => handleMoveItemToDay(itemId, day.dayNumber, toDay)}
                   onOptimize={() => optimizeDay(day.dayNumber)}
+                  onAutoSchedule={() => autoScheduleDay(day.dayNumber)}
                   onSuggestNext={() => handleSuggestNext(day.dayNumber)}
                   onRemoveDay={() => removeDay(day.dayNumber)}
                   onOpenDestination={handleOpenDestination}
                   onReorder={(from, to) => handleReorder(day.dayNumber, from, to)}
+                  onInsightAction={(action) => handleInsightAction(day.dayNumber, action)}
                   isSuggesting={isSuggestingNext}
                 />
               ))}

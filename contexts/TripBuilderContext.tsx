@@ -9,6 +9,7 @@ import {
   analyzeDayItinerary,
   predictCrowdLevel,
   isOutdoorCategory,
+  formatDuration,
 } from '@/lib/trip-intelligence';
 
 // ============================================
@@ -28,6 +29,23 @@ export interface TripItem {
   crowdLevel?: number;
   crowdLabel?: string;
   isOutdoor?: boolean;
+}
+
+export interface DayInsight {
+  type: 'warning' | 'tip' | 'success';
+  icon: 'clock' | 'route' | 'crowd' | 'weather' | 'food' | 'category';
+  message: string;
+  action?: string;
+}
+
+export interface TripHealth {
+  score: number; // 0-100
+  label: string;
+  insights: DayInsight[];
+  categoryBalance: Record<string, number>;
+  totalWalkingTime: number;
+  hasTimeConflicts: boolean;
+  missingMeals: number[];
 }
 
 export interface TripDay {
@@ -109,6 +127,10 @@ export interface TripBuilderContextType {
   }) => Promise<void>;
   optimizeDay: (dayNumber: number) => void;
   suggestNextItem: (dayNumber: number) => Promise<Destination | null>;
+  moveItemToDay: (itemId: string, fromDay: number, toDay: number) => void;
+  autoScheduleDay: (dayNumber: number) => void;
+  getDayInsights: (dayNumber: number) => DayInsight[];
+  getTripHealth: () => TripHealth;
 
   // Computed
   totalItems: number;
@@ -866,6 +888,309 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     }
   }, [activeTrip]);
 
+  // Move item to a different day
+  const moveItemToDay = useCallback((itemId: string, fromDay: number, toDay: number) => {
+    if (fromDay === toDay) return;
+
+    setActiveTrip(prev => {
+      if (!prev) return null;
+
+      // Find and remove item from source day
+      let movedItem: TripItem | null = null;
+      const days = prev.days.map(day => {
+        if (day.dayNumber === fromDay) {
+          const item = day.items.find(i => i.id === itemId);
+          if (item) {
+            movedItem = { ...item, day: toDay };
+          }
+          return {
+            ...day,
+            items: day.items.filter(i => i.id !== itemId),
+          };
+        }
+        return day;
+      });
+
+      if (!movedItem) return prev;
+
+      // Add to target day
+      const targetIdx = toDay - 1;
+      if (targetIdx >= 0 && targetIdx < days.length) {
+        days[targetIdx] = {
+          ...days[targetIdx],
+          items: [...days[targetIdx].items, movedItem],
+        };
+      }
+
+      return {
+        ...prev,
+        days: calculateTripMetrics(days),
+        isModified: true,
+      };
+    });
+  }, []);
+
+  // Auto-schedule a day with optimal times
+  const autoScheduleDay = useCallback((dayNumber: number) => {
+    setActiveTrip(prev => {
+      if (!prev) return null;
+
+      const dayIndex = dayNumber - 1;
+      if (dayIndex >= prev.days.length) return prev;
+
+      const day = prev.days[dayIndex];
+      if (day.items.length === 0) return prev;
+
+      // Smart time assignment based on category
+      const scheduled = day.items.map((item, idx) => {
+        const cat = (item.destination.category || '').toLowerCase();
+        let baseTime: string;
+
+        // Category-based scheduling
+        if (cat.includes('coffee') || cat.includes('breakfast') || cat.includes('bakery')) {
+          baseTime = '09:00';
+        } else if (cat.includes('brunch')) {
+          baseTime = '10:30';
+        } else if (cat.includes('museum') || cat.includes('gallery') || cat.includes('temple')) {
+          baseTime = idx === 0 ? '10:00' : '14:00';
+        } else if (cat.includes('lunch') || (cat.includes('restaurant') && idx < day.items.length / 2)) {
+          baseTime = '12:30';
+        } else if (cat.includes('park') || cat.includes('garden')) {
+          baseTime = '15:00';
+        } else if (cat.includes('bar') || cat.includes('cocktail')) {
+          baseTime = '19:00';
+        } else if (cat.includes('restaurant') || cat.includes('dining')) {
+          baseTime = '19:30';
+        } else if (cat.includes('club') || cat.includes('nightlife')) {
+          baseTime = '22:00';
+        } else {
+          // Default progressive times
+          const defaultTimes = ['10:00', '12:00', '14:30', '16:30', '18:30', '20:00'];
+          baseTime = defaultTimes[idx] || '14:00';
+        }
+
+        return { ...item, timeSlot: baseTime };
+      });
+
+      // Sort by time
+      scheduled.sort((a, b) => (a.timeSlot || '').localeCompare(b.timeSlot || ''));
+
+      // Reassign order indexes
+      const reordered = scheduled.map((item, idx) => ({ ...item, orderIndex: idx }));
+
+      const days = [...prev.days];
+      days[dayIndex] = { ...days[dayIndex], items: reordered };
+
+      return {
+        ...prev,
+        days: calculateTripMetrics(days),
+        isModified: true,
+      };
+    });
+  }, []);
+
+  // Get insights for a specific day
+  const getDayInsights = useCallback((dayNumber: number): DayInsight[] => {
+    if (!activeTrip) return [];
+
+    const day = activeTrip.days[dayNumber - 1];
+    if (!day) return [];
+
+    const insights: DayInsight[] = [];
+
+    // Check for time conflicts
+    const times = day.items.filter(i => i.timeSlot).map(i => i.timeSlot!);
+    const uniqueTimes = new Set(times);
+    if (times.length > uniqueTimes.size) {
+      insights.push({
+        type: 'warning',
+        icon: 'clock',
+        message: 'Some activities have overlapping times',
+        action: 'Auto-schedule',
+      });
+    }
+
+    // Check if day is overstuffed
+    if (day.isOverstuffed) {
+      insights.push({
+        type: 'warning',
+        icon: 'clock',
+        message: `Day is too packed (${formatDuration(day.totalTime)})`,
+        action: 'Move items',
+      });
+    }
+
+    // Check for long travel gaps
+    const longTravel = day.items.find(i => i.travelTimeFromPrev && i.travelTimeFromPrev > 45);
+    if (longTravel) {
+      insights.push({
+        type: 'tip',
+        icon: 'route',
+        message: `Long travel to ${longTravel.destination.name}`,
+        action: 'Optimize route',
+      });
+    }
+
+    // Check for meal gaps
+    const hasMorningFood = day.items.some(i => {
+      const cat = (i.destination.category || '').toLowerCase();
+      const time = parseInt(i.timeSlot?.split(':')[0] || '0');
+      return (cat.includes('cafe') || cat.includes('breakfast') || cat.includes('bakery')) && time < 11;
+    });
+    const hasLunch = day.items.some(i => {
+      const cat = (i.destination.category || '').toLowerCase();
+      const time = parseInt(i.timeSlot?.split(':')[0] || '0');
+      return (cat.includes('restaurant') || cat.includes('lunch')) && time >= 11 && time <= 14;
+    });
+    const hasDinner = day.items.some(i => {
+      const cat = (i.destination.category || '').toLowerCase();
+      const time = parseInt(i.timeSlot?.split(':')[0] || '0');
+      return cat.includes('restaurant') && time >= 18;
+    });
+
+    if (day.items.length >= 3 && !hasLunch) {
+      insights.push({
+        type: 'tip',
+        icon: 'food',
+        message: 'No lunch spot planned',
+        action: 'Add restaurant',
+      });
+    }
+    if (day.items.length >= 4 && !hasDinner) {
+      insights.push({
+        type: 'tip',
+        icon: 'food',
+        message: 'No dinner reservation',
+        action: 'Add restaurant',
+      });
+    }
+
+    // Check for outdoor activities on rainy day
+    if (day.weather?.isRainy) {
+      const outdoorItems = day.items.filter(i => i.isOutdoor);
+      if (outdoorItems.length > 0) {
+        insights.push({
+          type: 'warning',
+          icon: 'weather',
+          message: `Rain expected - ${outdoorItems.length} outdoor activit${outdoorItems.length > 1 ? 'ies' : 'y'}`,
+          action: 'Swap days',
+        });
+      }
+    }
+
+    // Good insights
+    if (day.items.length >= 3 && day.totalTravel < 60 && !day.isOverstuffed) {
+      insights.push({
+        type: 'success',
+        icon: 'route',
+        message: 'Well-optimized route!',
+      });
+    }
+
+    return insights;
+  }, [activeTrip]);
+
+  // Get overall trip health score
+  const getTripHealth = useCallback((): TripHealth => {
+    if (!activeTrip) {
+      return {
+        score: 0,
+        label: 'No trip',
+        insights: [],
+        categoryBalance: {},
+        totalWalkingTime: 0,
+        hasTimeConflicts: false,
+        missingMeals: [],
+      };
+    }
+
+    let score = 100;
+    const insights: DayInsight[] = [];
+    const categoryBalance: Record<string, number> = {};
+    let totalWalkingTime = 0;
+    let hasTimeConflicts = false;
+    const missingMeals: number[] = [];
+
+    // Analyze each day
+    activeTrip.days.forEach(day => {
+      // Count categories
+      day.items.forEach(item => {
+        const cat = item.destination.category || 'other';
+        categoryBalance[cat] = (categoryBalance[cat] || 0) + 1;
+      });
+
+      // Sum travel time
+      totalWalkingTime += day.totalTravel;
+
+      // Check for issues
+      if (day.isOverstuffed) {
+        score -= 10;
+      }
+
+      // Check time conflicts
+      const times = day.items.filter(i => i.timeSlot).map(i => i.timeSlot!);
+      if (times.length !== new Set(times).size) {
+        hasTimeConflicts = true;
+        score -= 5;
+      }
+
+      // Check meal coverage
+      const dayHasLunch = day.items.some(i => {
+        const cat = (i.destination.category || '').toLowerCase();
+        const time = parseInt(i.timeSlot?.split(':')[0] || '0');
+        return cat.includes('restaurant') && time >= 11 && time <= 14;
+      });
+      if (day.items.length >= 3 && !dayHasLunch) {
+        missingMeals.push(day.dayNumber);
+        score -= 3;
+      }
+    });
+
+    // Category diversity bonus/penalty
+    const categoryCount = Object.keys(categoryBalance).length;
+    if (categoryCount >= 4) score += 5;
+    if (categoryCount <= 2 && activeTrip.days.some(d => d.items.length >= 4)) {
+      insights.push({
+        type: 'tip',
+        icon: 'category',
+        message: 'Try adding variety - all similar activities',
+      });
+      score -= 5;
+    }
+
+    // Travel time efficiency
+    const avgTravelPerDay = totalWalkingTime / activeTrip.days.length;
+    if (avgTravelPerDay > 90) {
+      insights.push({
+        type: 'tip',
+        icon: 'route',
+        message: 'High travel time - group nearby places',
+      });
+      score -= 5;
+    }
+
+    // Clamp score
+    score = Math.max(0, Math.min(100, score));
+
+    // Generate label
+    let label: string;
+    if (score >= 90) label = 'Excellent';
+    else if (score >= 75) label = 'Good';
+    else if (score >= 60) label = 'Fair';
+    else if (score >= 40) label = 'Needs work';
+    else label = 'Poor';
+
+    return {
+      score,
+      label,
+      insights,
+      categoryBalance,
+      totalWalkingTime,
+      hasTimeConflicts,
+      missingMeals,
+    };
+  }, [activeTrip]);
+
   // Switch to an existing saved trip
   const switchToTrip = useCallback(async (tripId: string) => {
     // If there's an unsaved active trip, prompt to save
@@ -927,6 +1252,10 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     generateItinerary,
     optimizeDay,
     suggestNextItem,
+    moveItemToDay,
+    autoScheduleDay,
+    getDayInsights,
+    getTripHealth,
     totalItems,
     tripDuration,
     canAddMore,
