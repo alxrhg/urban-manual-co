@@ -57,6 +57,13 @@ export function AppleMapView() {
     if (!mapContainerRef.current || !window.mapkit) return;
 
     try {
+      console.log('[AppleMapView] Creating map...');
+
+      // Create initial center (Europe as default view)
+      const center = new window.mapkit.Coordinate(48.8566, 2.3522); // Paris
+      const span = new window.mapkit.CoordinateSpan(60, 60); // Wide view
+      const region = new window.mapkit.CoordinateRegion(center, span);
+
       const map = new window.mapkit.Map(mapContainerRef.current, {
         showsCompass: true,
         showsZoomControl: true,
@@ -64,9 +71,11 @@ export function AppleMapView() {
         isScrollEnabled: true,
         isZoomEnabled: true,
         colorScheme: 'dark',
+        region: region,
       });
 
       mapRef.current = map;
+      console.log('[AppleMapView] Map created successfully');
 
       // Handle marker selection
       map.addEventListener('select', (event) => {
@@ -75,14 +84,19 @@ export function AppleMapView() {
         }
       });
     } catch (err) {
-      console.error('Map creation error:', err);
+      console.error('[AppleMapView] Map creation error:', err);
       throw err;
     }
   }, [openDestination]);
 
   // Update markers
   const updateMarkers = useCallback(() => {
-    if (!mapRef.current || !window.mapkit) return;
+    if (!mapRef.current || !window.mapkit) {
+      console.log('[AppleMapView] updateMarkers: map or mapkit not ready');
+      return;
+    }
+
+    console.log('[AppleMapView] Updating markers, count:', mappableDestinations.length);
 
     const map = mapRef.current;
 
@@ -116,6 +130,7 @@ export function AppleMapView() {
     if (annotations.length > 0) {
       map.addAnnotations(annotations);
       annotationsRef.current = annotations;
+      console.log('[AppleMapView] Added', annotations.length, 'annotations, fitting to bounds...');
 
       // Fit to show all markers
       map.showItems(annotations, { animate: true });
