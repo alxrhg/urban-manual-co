@@ -70,8 +70,10 @@ export function AppleMapView() {
         showsMapTypeControl: false,
         isScrollEnabled: true,
         isZoomEnabled: true,
-        colorScheme: 'dark',
+        colorScheme: window.mapkit.Map?.ColorSchemes?.Dark || 'dark',
+        mapType: window.mapkit.Map?.MapTypes?.Standard || 'standard',
         region: region,
+        loadPriority: window.mapkit.Map?.LoadPriorities?.LandCover || 'landCover',
       });
 
       mapRef.current = map;
@@ -82,7 +84,7 @@ export function AppleMapView() {
         console.log('[AppleMapView] Configuration change event:', event);
       });
 
-      // Check map element dimensions after creation
+      // Trigger resize and check dimensions after creation
       setTimeout(() => {
         const mapEl = mapContainerRef.current;
         if (mapEl) {
@@ -93,6 +95,10 @@ export function AppleMapView() {
             offsetWidth: mapEl.offsetWidth,
             offsetHeight: mapEl.offsetHeight,
           });
+
+          // Dispatch resize event to trigger map recalculation
+          window.dispatchEvent(new Event('resize'));
+          console.log('[AppleMapView] Dispatched window resize event');
         }
         // Also log the map's internal state
         console.log('[AppleMapView] Map state after 1s:', {
@@ -100,6 +106,19 @@ export function AppleMapView() {
           center: map.region?.center,
           hasAnnotations: annotationsRef.current.length,
         });
+
+        // Re-set the region to trigger tile loading
+        if (window.mapkit) {
+          try {
+            const newCenter = new window.mapkit.Coordinate(25.0330, 121.5654);
+            const newSpan = new window.mapkit.CoordinateSpan(80, 120);
+            const newRegion = new window.mapkit.CoordinateRegion(newCenter, newSpan);
+            map.region = newRegion;
+            console.log('[AppleMapView] Re-set map region to trigger tile load');
+          } catch (e) {
+            console.warn('[AppleMapView] Could not re-set region:', e);
+          }
+        }
       }, 1000);
 
       // Handle marker selection
