@@ -77,6 +77,31 @@ export function AppleMapView() {
       mapRef.current = map;
       console.log('[AppleMapView] Map created successfully');
 
+      // Listen for map errors and configuration events
+      map.addEventListener('configuration-change', (event) => {
+        console.log('[AppleMapView] Configuration change event:', event);
+      });
+
+      // Check map element dimensions after creation
+      setTimeout(() => {
+        const mapEl = mapContainerRef.current;
+        if (mapEl) {
+          const rect = mapEl.getBoundingClientRect();
+          console.log('[AppleMapView] Map container dimensions:', {
+            width: rect.width,
+            height: rect.height,
+            offsetWidth: mapEl.offsetWidth,
+            offsetHeight: mapEl.offsetHeight,
+          });
+        }
+        // Also log the map's internal state
+        console.log('[AppleMapView] Map state after 1s:', {
+          region: map.region,
+          center: map.region?.center,
+          hasAnnotations: annotationsRef.current.length,
+        });
+      }, 1000);
+
       // Handle marker selection
       map.addEventListener('select', (event) => {
         if (event.annotation?.data) {
