@@ -18,6 +18,7 @@ import { unifiedIntelligenceCore, UnifiedContext, TasteFingerprint } from './uni
 import { extendedConversationMemoryService } from './conversation-memory';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { openai } from '@/lib/openai';
+import { generateTextEmbedding } from '@/lib/ml/embeddings';
 
 // ============================================
 // TYPES
@@ -71,6 +72,13 @@ export interface ConversationContext {
   currentCategory?: string;
   currentIntent?: string;
 
+  // Multi-city planning
+  cities?: string[];  // For multi-city trips
+  isMultiCity?: boolean;
+
+  // Companion/Group awareness
+  travelCompanion?: TravelCompanion;
+
   // Accumulated preferences from this conversation
   likedDestinations: string[];  // slugs
   dislikedDestinations: string[];  // implicitly rejected
@@ -102,6 +110,16 @@ export interface ConversationContext {
 
   // Cross-session memory highlights
   previousConversationInsights?: string[];
+}
+
+// Companion/Group awareness types
+export interface TravelCompanion {
+  type: 'solo' | 'couple' | 'family' | 'friends' | 'business';
+  hasKids?: boolean;
+  kidsAges?: number[];
+  groupSize?: number;
+  specialNeeds?: string[];  // e.g., 'wheelchair', 'vegetarian', 'allergies'
+  vibe?: 'romantic' | 'adventurous' | 'relaxed' | 'cultural' | 'party';
 }
 
 export interface SmartResponse {
@@ -1985,6 +2003,841 @@ Summary:`;
       return { tripId: '', success: false };
     }
   }
+
+  // ============================================
+  // SIMILAR PLACE DISCOVERY
+  // ============================================
+
+  /**
+   * Detect if user wants similar places to a specific destination
+   */
+  private detectSimilarPlaceRequest(message: string): {
+    isSimilarRequest: boolean;
+    referencedPlace?: string;
+    similarityType?: 'vibe' | 'style' | 'category' | 'price' | 'experience';
+  } {
+    const lowerMessage = message.toLowerCase();
+
+    // Patterns for "more like X"
+    const similarPatterns = [
+      /\b(more\s+like|similar\s+to|places?\s+like)\s+["']?([^"',]+)["']?/i,
+      /\b(something\s+like|same\s+vibe\s+as)\s+["']?([^"',]+)["']?/i,
+      /\b(another|other)\s+["']?([^"',]+)["']?/i,
+      /\blike\s+["']?([^"',]+)["']?\s+(but|with)/i,
+    ];
+
+    for (const pattern of similarPatterns) {
+      const match = lowerMessage.match(pattern);
+      if (match) {
+        const place = match[2] || match[1];
+        return {
+          isSimilarRequest: true,
+          referencedPlace: place.trim(),
+          similarityType: this.detectSimilarityType(lowerMessage),
+        };
+      }
+    }
+
+    // Also detect "more like that" referencing previous results
+    if (/\b(more\s+like\s+(that|this|those)|similar\s+ones?)\b/i.test(lowerMessage)) {
+      return {
+        isSimilarRequest: true,
+        similarityType: this.detectSimilarityType(lowerMessage),
+      };
+    }
+
+    return { isSimilarRequest: false };
+  }
+
+  private detectSimilarityType(message: string): 'vibe' | 'style' | 'category' | 'price' | 'experience' {
+    if (/\b(vibe|atmosphere|mood|feel)\b/i.test(message)) return 'vibe';
+    if (/\b(style|design|aesthetic|look)\b/i.test(message)) return 'style';
+    if (/\b(price|budget|cost|afford)\b/i.test(message)) return 'price';
+    if (/\b(experience|activity|do|visit)\b/i.test(message)) return 'experience';
+    return 'vibe';  // Default to vibe similarity
+  }
+
+  /**
+   * Find similar places using embeddings and precomputed relationships
+   */
+  async findSimilarPlaces(
+    destinationSlug: string,
+    session: ConversationSession,
+    intelligenceContext: UnifiedContext | null,
+    limit: number = 10
+  ): Promise<DestinationWithReasoning[]> {
+    if (!this.supabase) return [];
+
+    try {
+      // First try precomputed relationships
+      const { data: precomputed } = await this.supabase
+        .from('destination_relationships')
+        .select(`
+          destination_b,
+          similarity_score,
+          relation_type,
+          destinations!destination_relationships_destination_b_fkey (*)
+        `)
+        .eq('destination_a_slug', destinationSlug)
+        .eq('relation_type', 'similar')
+        .gte('similarity_score', 0.6)
+        .order('similarity_score', { ascending: false })
+        .limit(limit);
+
+      if (precomputed && precomputed.length > 0) {
+        return precomputed.map((rel: any) => ({
+          destination: rel.destinations,
+          reasoning: {
+            primaryReason: `Similar vibe to ${destinationSlug} (${Math.round(rel.similarity_score * 100)}% match)`,
+            factors: [{
+              type: 'similar' as const,
+              description: 'Semantic similarity based on style, vibe, and experience',
+              strength: rel.similarity_score > 0.8 ? 'strong' as const : 'moderate' as const,
+            }],
+            matchScore: rel.similarity_score,
+          },
+        }));
+      }
+
+      // Fallback: Use embedding-based search
+      return await this.findSimilarByEmbedding(destinationSlug, session, intelligenceContext, limit);
+    } catch (error) {
+      console.error('Error finding similar places:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Find similar places using real-time embedding comparison
+   */
+  private async findSimilarByEmbedding(
+    destinationSlug: string,
+    session: ConversationSession,
+    intelligenceContext: UnifiedContext | null,
+    limit: number
+  ): Promise<DestinationWithReasoning[]> {
+    if (!this.supabase) return [];
+
+    try {
+      // Get the source destination
+      const { data: source } = await this.supabase
+        .from('destinations')
+        .select('*')
+        .eq('slug', destinationSlug)
+        .single();
+
+      if (!source) return [];
+
+      // Build search text from source destination
+      const searchText = [
+        source.name,
+        source.category,
+        source.micro_description || source.description,
+        source.vibe_tags?.join(' '),
+      ].filter(Boolean).join('. ');
+
+      // Generate embedding for search text
+      const { embedding } = await generateTextEmbedding(searchText);
+
+      // Search by embedding (if we have a vector search capability)
+      // For now, fall back to category/city similarity
+      let query = this.supabase
+        .from('destinations')
+        .select('*')
+        .is('parent_destination_id', null)
+        .neq('slug', destinationSlug)  // Exclude source
+        .limit(limit * 3);
+
+      // Same city, same category for maximum similarity
+      if (source.city) {
+        query = query.ilike('city', `%${source.city}%`);
+      }
+      if (source.category) {
+        query = query.ilike('category', `%${source.category}%`);
+      }
+
+      const { data: candidates } = await query;
+
+      if (!candidates) return [];
+
+      // Score candidates based on multiple factors
+      const scored = candidates.map((dest: any) => {
+        let score = 0;
+
+        // Category match
+        if (dest.category?.toLowerCase() === source.category?.toLowerCase()) score += 0.3;
+
+        // Price level similarity
+        const priceDiff = Math.abs((dest.price_level || 2) - (source.price_level || 2));
+        score += (4 - priceDiff) * 0.1;
+
+        // Both have or don't have Michelin stars
+        if ((dest.michelin_stars > 0) === (source.michelin_stars > 0)) score += 0.15;
+
+        // Both have or don't have architect
+        if ((!!dest.architect_name) === (!!source.architect_name)) score += 0.1;
+
+        // Vibe tag overlap
+        if (dest.vibe_tags && source.vibe_tags) {
+          const overlap = dest.vibe_tags.filter((t: string) =>
+            source.vibe_tags.includes(t)
+          ).length;
+          score += overlap * 0.1;
+        }
+
+        // Rating similarity
+        const ratingDiff = Math.abs((dest.rating || 0) - (source.rating || 0));
+        score += (5 - ratingDiff) * 0.05;
+
+        // Taste fingerprint boost
+        if (intelligenceContext?.tasteFingerprint) {
+          const taste = intelligenceContext.tasteFingerprint;
+          if (dest.architect_name && taste.designSensitivity > 0.6) score += 0.1;
+          if (!dest.michelin_stars && taste.authenticitySeeker > 0.6) score += 0.1;
+        }
+
+        return { destination: dest, score: Math.min(1, score) };
+      });
+
+      // Sort by score and take top results
+      scored.sort((a: { destination: any; score: number }, b: { destination: any; score: number }) => b.score - a.score);
+
+      return scored.slice(0, limit).map((item: { destination: any; score: number }) => ({
+        destination: item.destination,
+        reasoning: {
+          primaryReason: `Similar to ${source.name}`,
+          factors: [
+            {
+              type: 'similar' as const,
+              description: `Matches ${source.name}'s style and vibe`,
+              strength: item.score > 0.7 ? 'strong' as const : 'moderate' as const,
+            },
+            ...(item.destination.category === source.category ? [{
+              type: 'similar' as const,
+              description: `Same category: ${source.category}`,
+              strength: 'moderate' as const,
+            }] : []),
+          ],
+          matchScore: item.score,
+        },
+      }));
+    } catch (error) {
+      console.error('Error in embedding-based similarity search:', error);
+      return [];
+    }
+  }
+
+  // ============================================
+  // MULTI-CITY PLANNING
+  // ============================================
+
+  /**
+   * Detect multi-city trip requests
+   */
+  private detectMultiCityRequest(message: string): {
+    isMultiCity: boolean;
+    cities: string[];
+    tripType?: 'roundtrip' | 'one-way' | 'circuit';
+  } {
+    const lowerMessage = message.toLowerCase();
+
+    // Common city combinations
+    const knownCities = [
+      'tokyo', 'kyoto', 'osaka', 'paris', 'london', 'berlin', 'barcelona',
+      'rome', 'florence', 'venice', 'amsterdam', 'vienna', 'prague',
+      'new york', 'los angeles', 'san francisco', 'miami', 'chicago',
+      'bangkok', 'singapore', 'hong kong', 'seoul', 'taipei',
+      'sydney', 'melbourne', 'lisbon', 'madrid', 'munich', 'copenhagen',
+    ];
+
+    // Patterns for multi-city
+    const multiCityPatterns = [
+      /\b(\w+)\s+and\s+(\w+)\s+(trip|itinerary|vacation|holiday)/i,
+      /\b(trip|itinerary|vacation|holiday)\s+to\s+(\w+)\s+and\s+(\w+)/i,
+      /\b(visiting|going\s+to|traveling\s+to)\s+(\w+)\s+and\s+(\w+)/i,
+      /\b(\w+)\s*[,&]\s*(\w+)(?:\s*[,&]\s*(\w+))?\s+(trip|itinerary)/i,
+      /\b(between|from)\s+(\w+)\s+(and|to)\s+(\w+)/i,
+    ];
+
+    const foundCities: string[] = [];
+
+    // Check each known city mentioned
+    for (const city of knownCities) {
+      if (lowerMessage.includes(city)) {
+        foundCities.push(city);
+      }
+    }
+
+    // Also check for "multiple cities" or "multi-city" keywords
+    const hasMultiCityKeyword = /\b(multi-?city|multiple\s+cities|several\s+cities|city\s+hopping)\b/i.test(lowerMessage);
+
+    if (foundCities.length >= 2 || hasMultiCityKeyword) {
+      // Determine trip type
+      let tripType: 'roundtrip' | 'one-way' | 'circuit' = 'one-way';
+      if (/\b(round\s*trip|return|back\s+to)\b/i.test(lowerMessage)) {
+        tripType = 'roundtrip';
+      } else if (/\b(circuit|loop|tour)\b/i.test(lowerMessage)) {
+        tripType = 'circuit';
+      }
+
+      return {
+        isMultiCity: true,
+        cities: foundCities,
+        tripType,
+      };
+    }
+
+    return { isMultiCity: false, cities: [] };
+  }
+
+  /**
+   * Build multi-city itinerary with logical flow between cities
+   */
+  async buildMultiCityItinerary(
+    cities: string[],
+    session: ConversationSession,
+    intelligenceContext: UnifiedContext | null,
+    daysPerCity: number = 2
+  ): Promise<MultiCityPlan> {
+    const cityPlans: CityPlan[] = [];
+
+    for (const city of cities) {
+      // Build itinerary for each city
+      const itinerary = await this.buildItinerary(
+        city,
+        daysPerCity === 1 ? 'day' : 'weekend',
+        session,
+        intelligenceContext
+      );
+
+      // Get city highlights
+      const highlights = await this.getCityHighlights(city);
+
+      cityPlans.push({
+        city,
+        days: daysPerCity,
+        itinerary,
+        highlights,
+        transitTo: cities[cities.indexOf(city) + 1] || null,
+      });
+    }
+
+    // Calculate total duration
+    const totalDays = cityPlans.reduce((sum, c) => sum + c.days, 0);
+
+    return {
+      cities: cityPlans,
+      totalDays,
+      route: cities,
+      suggestedTransit: this.suggestTransitOptions(cities),
+    };
+  }
+
+  /**
+   * Get city highlights for overview
+   */
+  private async getCityHighlights(city: string): Promise<string[]> {
+    if (!this.supabase) return [];
+
+    try {
+      const { data: topRated } = await this.supabase
+        .from('destinations')
+        .select('name, category')
+        .ilike('city', `%${city}%`)
+        .is('parent_destination_id', null)
+        .order('rating', { ascending: false })
+        .limit(5);
+
+      if (!topRated) return [];
+
+      return topRated.map((d: any) => `${d.name} (${d.category})`);
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Suggest transit options between cities
+   */
+  private suggestTransitOptions(cities: string[]): TransitSuggestion[] {
+    const suggestions: TransitSuggestion[] = [];
+
+    // Known transit options between popular city pairs
+    const transitMap: Record<string, { mode: string; duration: string; tip: string }> = {
+      'tokyo-kyoto': { mode: 'Shinkansen', duration: '2h 15m', tip: 'Reserve seats on Nozomi train' },
+      'tokyo-osaka': { mode: 'Shinkansen', duration: '2h 30m', tip: 'JR Pass covers this route' },
+      'kyoto-osaka': { mode: 'Train', duration: '30m', tip: 'Easy day trip distance' },
+      'paris-london': { mode: 'Eurostar', duration: '2h 20m', tip: 'Book early for best fares' },
+      'rome-florence': { mode: 'High-speed train', duration: '1h 30m', tip: 'Frecce trains are fastest' },
+      'florence-venice': { mode: 'High-speed train', duration: '2h', tip: 'Beautiful scenic route' },
+      'barcelona-madrid': { mode: 'AVE train', duration: '2h 30m', tip: 'Very comfortable journey' },
+      'amsterdam-paris': { mode: 'Thalys', duration: '3h 15m', tip: 'Book in advance' },
+      'vienna-prague': { mode: 'Train', duration: '4h', tip: 'Scenic route through countryside' },
+    };
+
+    for (let i = 0; i < cities.length - 1; i++) {
+      const pair = `${cities[i]}-${cities[i + 1]}`;
+      const reversePair = `${cities[i + 1]}-${cities[i]}`;
+
+      const transit = transitMap[pair] || transitMap[reversePair];
+      if (transit) {
+        suggestions.push({
+          from: cities[i],
+          to: cities[i + 1],
+          mode: transit.mode,
+          duration: transit.duration,
+          tip: transit.tip,
+        });
+      } else {
+        suggestions.push({
+          from: cities[i],
+          to: cities[i + 1],
+          mode: 'Check local options',
+          duration: 'varies',
+        });
+      }
+    }
+
+    return suggestions;
+  }
+
+  // ============================================
+  // COMPANION/GROUP AWARENESS
+  // ============================================
+
+  /**
+   * Detect travel companion context from message
+   */
+  private detectTravelCompanion(message: string): TravelCompanion | null {
+    const lowerMessage = message.toLowerCase();
+
+    // Kids/Family detection
+    if (/\b(with\s+(kids?|children|family|toddler|baby)|family\s+trip|kid-?friendly|child-?friendly)\b/i.test(lowerMessage)) {
+      const companion: TravelCompanion = {
+        type: 'family',
+        hasKids: true,
+      };
+
+      // Try to extract ages
+      const ageMatch = lowerMessage.match(/(\d+)\s*(year|yr|yo)?s?\s*old/i);
+      if (ageMatch) {
+        companion.kidsAges = [parseInt(ageMatch[1])];
+      }
+
+      // Detect if toddler/baby
+      if (/\b(toddler|baby|infant)\b/i.test(lowerMessage)) {
+        companion.kidsAges = [2];  // Default young age
+      }
+
+      return companion;
+    }
+
+    // Couple/Romantic detection
+    if (/\b(romantic|date\s+night|anniversary|honeymoon|couple|with\s+(my\s+)?(partner|wife|husband|girlfriend|boyfriend))\b/i.test(lowerMessage)) {
+      return {
+        type: 'couple',
+        vibe: 'romantic',
+      };
+    }
+
+    // Friends/Group detection
+    if (/\b(with\s+friends|group\s+trip|bachelor|bachelorette|guys\s+trip|girls\s+trip)\b/i.test(lowerMessage)) {
+      const companion: TravelCompanion = {
+        type: 'friends',
+      };
+
+      // Party vibe detection
+      if (/\b(party|nightlife|bars|clubs|celebrate)\b/i.test(lowerMessage)) {
+        companion.vibe = 'party';
+      }
+
+      // Group size
+      const sizeMatch = lowerMessage.match(/(\d+)\s*(people|friends|of\s+us)/i);
+      if (sizeMatch) {
+        companion.groupSize = parseInt(sizeMatch[1]);
+      }
+
+      return companion;
+    }
+
+    // Business detection
+    if (/\b(business\s+trip|client|meeting|conference|work\s+trip|colleagues)\b/i.test(lowerMessage)) {
+      return {
+        type: 'business',
+        vibe: 'cultural',  // Usually prefer sophisticated options
+      };
+    }
+
+    // Solo detection
+    if (/\b(solo|alone|by\s+myself|traveling\s+alone)\b/i.test(lowerMessage)) {
+      return {
+        type: 'solo',
+      };
+    }
+
+    // Special needs detection
+    const specialNeeds: string[] = [];
+    if (/\b(vegetarian|vegan|plant-?based)\b/i.test(lowerMessage)) {
+      specialNeeds.push('vegetarian');
+    }
+    if (/\b(allerg(y|ies)|gluten-?free|celiac)\b/i.test(lowerMessage)) {
+      specialNeeds.push('allergies');
+    }
+    if (/\b(wheelchair|accessible|mobility)\b/i.test(lowerMessage)) {
+      specialNeeds.push('wheelchair');
+    }
+
+    if (specialNeeds.length > 0) {
+      return {
+        type: 'solo',  // Default, but with special needs
+        specialNeeds,
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Apply companion-aware filtering to results
+   */
+  private applyCompanionFilters(
+    destinations: any[],
+    companion: TravelCompanion
+  ): any[] {
+    return destinations.map(dest => {
+      let boost = 0;
+      let penalty = 0;
+
+      switch (companion.type) {
+        case 'family':
+          // Boost family-friendly places
+          if (dest.category?.toLowerCase() === 'museum') boost += 0.2;
+          if (dest.category?.toLowerCase() === 'cafe') boost += 0.1;
+          if (dest.vibe_tags?.includes('family-friendly')) boost += 0.3;
+          // Penalize bars and nightlife for families with kids
+          if (companion.hasKids) {
+            if (dest.category?.toLowerCase() === 'bar') penalty += 0.5;
+            if (dest.vibe_tags?.includes('nightlife')) penalty += 0.5;
+            // Penalize very expensive restaurants for families
+            if (dest.price_level >= 4) penalty += 0.2;
+          }
+          break;
+
+        case 'couple':
+          // Boost romantic places
+          if (dest.vibe_tags?.includes('romantic')) boost += 0.3;
+          if (dest.vibe_tags?.includes('intimate')) boost += 0.2;
+          if (dest.vibe_tags?.includes('rooftop')) boost += 0.15;
+          if (dest.category?.toLowerCase() === 'restaurant' && dest.price_level >= 3) boost += 0.2;
+          // Penalize loud/party places for romantic trips
+          if (dest.vibe_tags?.includes('lively') || dest.vibe_tags?.includes('party')) penalty += 0.2;
+          break;
+
+        case 'friends':
+          // Boost social/group-friendly places
+          if (dest.category?.toLowerCase() === 'bar') boost += 0.2;
+          if (dest.vibe_tags?.includes('lively')) boost += 0.2;
+          if (dest.vibe_tags?.includes('party') && companion.vibe === 'party') boost += 0.3;
+          // Group-friendly restaurants
+          if (dest.category?.toLowerCase() === 'restaurant') boost += 0.1;
+          break;
+
+        case 'business':
+          // Boost sophisticated/professional places
+          if (dest.michelin_stars > 0) boost += 0.3;
+          if (dest.vibe_tags?.includes('elegant')) boost += 0.2;
+          if (dest.vibe_tags?.includes('refined')) boost += 0.2;
+          if (dest.price_level >= 3) boost += 0.15;
+          // Penalize very casual places
+          if (dest.vibe_tags?.includes('casual')) penalty += 0.1;
+          break;
+
+        case 'solo':
+          // Boost solo-friendly (bar seating, communal tables)
+          if (dest.vibe_tags?.includes('counter-seating')) boost += 0.2;
+          if (dest.category?.toLowerCase() === 'cafe') boost += 0.15;
+          break;
+      }
+
+      // Apply special needs filters
+      if (companion.specialNeeds?.includes('vegetarian')) {
+        if (dest.tags?.includes('vegetarian-friendly') || dest.tags?.includes('vegan')) {
+          boost += 0.3;
+        }
+      }
+      if (companion.specialNeeds?.includes('wheelchair')) {
+        if (dest.tags?.includes('accessible') || dest.tags?.includes('wheelchair-accessible')) {
+          boost += 0.3;
+        }
+      }
+
+      dest._companionScore = (dest._smartScore || dest.rating || 0) + boost - penalty;
+      return dest;
+    }).sort((a, b) => (b._companionScore || 0) - (a._companionScore || 0));
+  }
+
+  /**
+   * Generate companion-aware response text
+   */
+  private generateCompanionAwareResponse(companion: TravelCompanion): string {
+    switch (companion.type) {
+      case 'family':
+        if (companion.hasKids) {
+          const ageNote = companion.kidsAges
+            ? ` (great for ages ${companion.kidsAges.join(', ')})`
+            : '';
+          return `I've selected family-friendly options${ageNote}. These places are welcoming to children and have a relaxed atmosphere.`;
+        }
+        return 'Here are some family-friendly options that work well for groups.';
+
+      case 'couple':
+        return 'I\'ve found some romantic spots perfect for a special outing. These places have intimate atmospheres and are great for quality time together.';
+
+      case 'friends':
+        if (companion.vibe === 'party') {
+          return 'Here are some lively spots perfect for a night out with friends!';
+        }
+        return 'These are great places to enjoy with friends - good vibes and social atmospheres.';
+
+      case 'business':
+        return 'I\'ve selected refined options suitable for business settings. These places offer excellent service and professional atmospheres.';
+
+      case 'solo':
+        return 'These are great solo-friendly spots with welcoming atmospheres, some with counter seating or communal tables.';
+
+      default:
+        return '';
+    }
+  }
+
+  // ============================================
+  // STREAMING SUPPORT
+  // ============================================
+
+  /**
+   * Process message with streaming support
+   * Returns an async generator for SSE streaming
+   */
+  async *processMessageStreaming(
+    sessionId: string | null,
+    userId: string | undefined,
+    message: string,
+    options?: {
+      includeProactiveActions?: boolean;
+      maxDestinations?: number;
+    }
+  ): AsyncGenerator<StreamChunk> {
+    const startTime = Date.now();
+
+    // Get or create session
+    const session = await this.getOrCreateSession(sessionId, userId);
+    const turnNumber = session.messages.length + 1;
+
+    // Add user message
+    const userMessage: ConversationMessage = {
+      id: `msg-${Date.now()}`,
+      role: 'user',
+      content: message,
+      timestamp: new Date(),
+    };
+    session.messages.push(userMessage);
+
+    // Yield session info immediately
+    yield {
+      type: 'session',
+      data: { sessionId: session.id, turnNumber },
+    };
+
+    // 1. Understand the query
+    yield { type: 'status', data: { status: 'understanding' } };
+    const intent = await this.understandQueryWithContext(message, session);
+
+    yield {
+      type: 'intent',
+      data: intent,
+    };
+
+    // 2. Check for companion context
+    const companion = this.detectTravelCompanion(message);
+    if (companion) {
+      session.context.travelCompanion = companion;
+      yield {
+        type: 'companion',
+        data: companion,
+      };
+    }
+
+    // 3. Check for multi-city
+    const multiCity = this.detectMultiCityRequest(message);
+    if (multiCity.isMultiCity) {
+      session.context.cities = multiCity.cities;
+      session.context.isMultiCity = true;
+      yield {
+        type: 'multicity',
+        data: multiCity,
+      };
+    }
+
+    // 4. Check for similar place request
+    const similarRequest = this.detectSimilarPlaceRequest(message);
+
+    // 5. Get intelligence context
+    yield { type: 'status', data: { status: 'personalizing' } };
+    let intelligenceContext: UnifiedContext | null = null;
+    if (userId) {
+      try {
+        const result = await unifiedIntelligenceCore.processIntelligentQuery(
+          message,
+          userId,
+          session.id,
+          { currentCity: intent.city || session.context.currentCity }
+        );
+        intelligenceContext = result.context;
+      } catch (error) {
+        console.error('Error getting intelligence context:', error);
+      }
+    }
+
+    // 6. Search for destinations
+    yield { type: 'status', data: { status: 'searching' } };
+    let searchResults: any[] = [];
+
+    if (similarRequest.isSimilarRequest && similarRequest.referencedPlace) {
+      // Similar place search
+      searchResults = await this.findSimilarPlaces(
+        similarRequest.referencedPlace,
+        session,
+        intelligenceContext,
+        options?.maxDestinations || 10
+      );
+    } else if (multiCity.isMultiCity) {
+      // Multi-city: get highlights from each city
+      for (const city of multiCity.cities) {
+        yield { type: 'status', data: { status: `Exploring ${city}...` } };
+        const cityResults = await this.intelligentSearch(
+          message,
+          { ...intent, city },
+          session,
+          intelligenceContext,
+          Math.floor((options?.maxDestinations || 10) / multiCity.cities.length)
+        );
+        searchResults.push(...cityResults);
+      }
+    } else {
+      // Standard search
+      searchResults = await this.intelligentSearch(
+        message,
+        intent,
+        session,
+        intelligenceContext,
+        options?.maxDestinations || 10
+      );
+    }
+
+    // 7. Apply companion filters if present
+    if (session.context.travelCompanion) {
+      searchResults = this.applyCompanionFilters(
+        searchResults,
+        session.context.travelCompanion
+      );
+    }
+
+    // 8. Stream destinations one by one
+    yield { type: 'status', data: { status: 'curating' } };
+
+    for (let i = 0; i < searchResults.length; i++) {
+      const dest = searchResults[i];
+      const reasoning = this.generateRecommendationReasoning(
+        dest.destination || dest,
+        session,
+        intelligenceContext,
+        intent
+      );
+
+      yield {
+        type: 'destination',
+        data: {
+          index: i,
+          total: searchResults.length,
+          destination: dest.destination || dest,
+          reasoning: dest.reasoning || reasoning,
+        },
+      };
+
+      // Small delay between destinations for UX
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+
+    // 9. Generate response text
+    yield { type: 'status', data: { status: 'composing' } };
+
+    // Stream response text word by word
+    const responseText = await this.generateSmartResponse(
+      message,
+      intent,
+      searchResults.map(r => r.destination || r),
+      session,
+      intelligenceContext
+    );
+
+    // Add companion-aware note if applicable
+    const companionNote = session.context.travelCompanion
+      ? '\n\n' + this.generateCompanionAwareResponse(session.context.travelCompanion)
+      : '';
+
+    const fullResponse = responseText + companionNote;
+    const words = fullResponse.split(/(\s+)/);
+
+    for (const word of words) {
+      yield {
+        type: 'text',
+        data: { text: word },
+      };
+      // Small delay for streaming effect
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+
+    // 10. Generate suggestions
+    const suggestions = await this.generateSmartSuggestions(
+      intent,
+      searchResults.map(r => r.destination || r),
+      session,
+      intelligenceContext
+    );
+
+    yield {
+      type: 'suggestions',
+      data: suggestions,
+    };
+
+    // 11. Update session and complete
+    this.updateSessionContext(session, intent, searchResults.map(r => r.destination || r));
+
+    const assistantMessage: ConversationMessage = {
+      id: `msg-${Date.now()}`,
+      role: 'assistant',
+      content: fullResponse,
+      timestamp: new Date(),
+      metadata: {
+        intent,
+        destinations: searchResults.map((d: any) => (d.destination || d).slug),
+        responseTime: Date.now() - startTime,
+      },
+    };
+    session.messages.push(assistantMessage);
+    session.lastActive = new Date();
+
+    await this.persistSession(session);
+
+    yield {
+      type: 'complete',
+      data: {
+        sessionId: session.id,
+        turnNumber,
+        responseTime: Date.now() - startTime,
+      },
+    };
+  }
 }
 
 // Itinerary types
@@ -2004,6 +2857,36 @@ export interface ItinerarySlot {
   activity: string;
   reasoning: RecommendationReasoning;
   walkingTimeFromPrevious?: number;
+}
+
+// Multi-city planning types
+export interface MultiCityPlan {
+  cities: CityPlan[];
+  totalDays: number;
+  route: string[];
+  suggestedTransit: TransitSuggestion[];
+}
+
+export interface CityPlan {
+  city: string;
+  days: number;
+  itinerary: ItineraryPlan;
+  highlights: string[];
+  transitTo: string | null;
+}
+
+export interface TransitSuggestion {
+  from: string;
+  to: string;
+  mode: string;
+  duration: string;
+  tip?: string;
+}
+
+// Streaming types
+export interface StreamChunk {
+  type: 'session' | 'status' | 'intent' | 'companion' | 'multicity' | 'destination' | 'text' | 'suggestions' | 'complete';
+  data: any;
 }
 
 // Export singleton instance
