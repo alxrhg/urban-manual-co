@@ -693,32 +693,63 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
         const day = item.day || 1;
         if (!daysMap.has(day)) daysMap.set(day, []);
 
-        const notes = item.notes ? JSON.parse(item.notes) : {};
+        // Parse notes for additional metadata
+        let notes: Record<string, any> = {};
+        try {
+          notes = item.notes ? JSON.parse(item.notes) : {};
+        } catch {
+          notes = {};
+        }
+
+        // Use enriched destination data from API, fallback to notes if needed
+        const destination = item.destination || {
+          slug: item.destination_slug,
+          name: item.title,
+          category: notes.category,
+          city: notes.city || data.destination,
+          image: notes.image,
+        };
 
         daysMap.get(day)!.push({
           id: item.id,
-          destination: {
-            slug: item.destination_slug,
-            name: item.title,
-            category: notes.category,
-            city: notes.city || data.destination,
-            image: notes.image,
-          } as Destination,
+          destination: destination as Destination,
           day,
           orderIndex: item.order_index,
           timeSlot: item.time,
-          duration: notes.duration || 60,
+          duration: notes.duration || getEstimatedDuration(destination.category),
+          notes: notes.raw || undefined,
+          isOutdoor: isOutdoorCategory(destination.category),
         });
       }
 
-      const maxDay = Math.max(...Array.from(daysMap.keys()), 1);
-      const days: TripDay[] = Array.from({ length: maxDay }, (_, i) => ({
-        dayNumber: i + 1,
-        items: sortItemsByTime(daysMap.get(i + 1) || []),
-        totalTime: 0,
-        totalTravel: 0,
-        isOverstuffed: false,
-      }));
+      // Calculate number of days from trip dates or items
+      const startDate = data.start_date ? new Date(data.start_date) : null;
+      const endDate = data.end_date ? new Date(data.end_date) : null;
+      let numDays = 1;
+
+      if (startDate && endDate) {
+        numDays = Math.ceil((endDate.getTime() - startDate.getTime()) / 86400000) + 1;
+      }
+
+      // Ensure we have at least as many days as items require
+      const maxItemDay = Math.max(...Array.from(daysMap.keys()), 0);
+      numDays = Math.max(numDays, maxItemDay);
+
+      const days: TripDay[] = Array.from({ length: numDays }, (_, i) => {
+        const dayNumber = i + 1;
+        const dayDate = startDate
+          ? new Date(startDate.getTime() + i * 86400000).toISOString().split('T')[0]
+          : undefined;
+
+        return {
+          dayNumber,
+          date: dayDate,
+          items: sortItemsByTime(daysMap.get(dayNumber) || []),
+          totalTime: 0,
+          totalTravel: 0,
+          isOverstuffed: false,
+        };
+      });
 
       setActiveTrip({
         id: data.id,
