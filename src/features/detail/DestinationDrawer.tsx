@@ -2,845 +2,500 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   X,
   MapPin,
+  ExternalLink,
+  Star,
   Bookmark,
-  Plus,
-  Loader2,
+  Share2,
+  Navigation,
+  ChevronRight,
   Check,
-  Edit,
+  Plus,
 } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { createClient } from '@/lib/supabase/client';
-import { htmlToPlainText } from '@/lib/sanitize';
-import { Drawer } from '@/components/ui/Drawer';
-import { SaveDestinationModal } from '@/components/SaveDestinationModal';
-import { VisitedModal } from '@/components/VisitedModal';
-import { RealtimeStatusBadge } from '@/components/RealtimeStatusBadge';
-import { NestedDestinations } from '@/components/NestedDestinations';
-import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
-import { getParentDestination, getNestedDestinations } from '@/lib/supabase/nested-destinations';
+import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 
-// Modular components
-import {
-  DestinationHero,
-  DestinationIdentity,
-  DestinationActions,
-  DestinationMeta,
-  DrawerRecommendations,
-} from './components';
-
-// Dynamically import the static map
-const GoogleStaticMap = dynamic(() => import('@/components/maps/GoogleStaticMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl">
-      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-    </div>
-  ),
-});
-
-// Dynamically import edit form (heavy component)
-const DestinationEditForm = dynamic(
-  () => import('./components/DestinationEditForm').then(mod => mod.DestinationEditForm),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="p-6 flex items-center justify-center">
-        <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-      </div>
-    ),
-  }
-);
+/**
+ * DestinationDrawer - Apple Design System
+ *
+ * A slide-over drawer for viewing destination details.
+ * Follows Apple's sheet/drawer patterns:
+ * - Slides in from right
+ * - Subtle backdrop blur
+ * - Smooth spring animations
+ * - Touch-friendly interactions
+ */
 
 interface DestinationDrawerProps {
   destination: Destination | null;
   isOpen: boolean;
   onClose: () => void;
+  /** Called when clicking a related destination. Receives the full Destination object. */
+  onDestinationClick?: (destination: Destination) => void;
+  relatedDestinations?: Destination[];
+  // Legacy callbacks for backward compatibility with other pages
   onSaveToggle?: (slug: string, saved: boolean) => void;
   onVisitToggle?: (slug: string, visited: boolean) => void;
-  onDestinationClick?: (slug: string) => void;
-  onEdit?: (destination: Destination) => void;
   onDestinationUpdate?: () => void;
-  renderMode?: 'drawer' | 'inline';
+  onEdit?: (destination: Destination) => void;
 }
 
-/**
- * DestinationDrawer - Refactored destination detail drawer
- *
- * A modular, clean implementation using extracted components.
- * Supports both drawer and inline render modes.
- */
 export function DestinationDrawer({
   destination,
   isOpen,
   onClose,
+  onDestinationClick,
+  relatedDestinations = [],
   onSaveToggle,
   onVisitToggle,
-  onDestinationClick,
-  onEdit,
-  onDestinationUpdate,
-  renderMode = 'drawer',
 }: DestinationDrawerProps) {
   const router = useRouter();
   const { user } = useAuth();
   const toast = useToast();
 
-  // Core state
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
-  const [isAddedToTrip, setIsAddedToTrip] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
+  const [savingState, setSavingState] = useState<'idle' | 'saving'>('idle');
 
-  // Modal state
-  const [showSaveModal, setShowSaveModal] = useState(false);
-  const [showVisitedModal, setShowVisitedModal] = useState(false);
-
-  // Data state
-  const [enrichedData, setEnrichedData] = useState<any>(null);
-  const [enhancedDestination, setEnhancedDestination] = useState<Destination | null>(destination);
-  const [parentDestination, setParentDestination] = useState<Destination | null>(null);
-  const [nestedDestinations, setNestedDestinations] = useState<Destination[]>([]);
-  const [loadingNested, setLoadingNested] = useState(false);
-  const [reviewSummary, setReviewSummary] = useState<string | null>(null);
-  const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
-
-  // Check admin status
-  useEffect(() => {
-    if (user) {
-      const role = (user as any).user_metadata?.role || (user as any).app_metadata?.role;
-      setIsAdmin(role === 'admin');
-    } else {
-      setIsAdmin(false);
-    }
-  }, [user]);
-
-  // Reset edit mode when drawer closes
-  useEffect(() => {
-    if (!isOpen) {
-      setIsEditMode(false);
-    }
-  }, [isOpen]);
-
-  // Update enhanced destination when prop changes
-  useEffect(() => {
-    setEnhancedDestination(destination);
-  }, [destination]);
-
-  // Load enriched data and saved/visited status
-  useEffect(() => {
-    async function loadDestinationData() {
-      if (!destination?.slug) {
-        setEnrichedData(null);
-        setEnhancedDestination(null);
-        setIsSaved(false);
-        setIsVisited(false);
-        setIsAddedToTrip(false);
-        setReviewSummary(null);
-        return;
-      }
-
-      setIsAddedToTrip(false);
-
-      try {
-        const supabase = createClient();
-
-        // Fetch enriched data
-        const { data, error } = await supabase
-          .from('destinations')
-          .select(`
-            formatted_address,
-            international_phone_number,
-            website,
-            rating,
-            user_ratings_total,
-            price_level,
-            opening_hours_json,
-            editorial_summary,
-            google_name,
-            utc_offset,
-            vicinity,
-            reviews_json,
-            timezone_id,
-            latitude,
-            longitude,
-            architect,
-            architectural_style,
-            design_period,
-            architect_info_json,
-            architect:architects!architect_id(id, name, slug, bio, birth_year, death_year, nationality, design_philosophy, image_url),
-            design_firm:design_firms(id, name, slug, description, founded_year, image_url),
-            interior_designer:architects!interior_designer_id(id, name, slug, bio, birth_year, death_year, nationality, image_url),
-            movement:design_movements(id, name, slug, description, period_start, period_end)
-          `)
-          .eq('slug', destination.slug)
-          .single();
-
-        if (!error && data) {
-          const enriched: any = { ...data };
-
-          // Parse JSON fields
-          if (data.opening_hours_json) {
-            try {
-              enriched.opening_hours = typeof data.opening_hours_json === 'string'
-                ? JSON.parse(data.opening_hours_json)
-                : data.opening_hours_json;
-            } catch (e) {
-              console.error('Error parsing opening_hours_json:', e);
-            }
-          }
-
-          if (data.reviews_json) {
-            try {
-              enriched.reviews = typeof data.reviews_json === 'string'
-                ? JSON.parse(data.reviews_json)
-                : data.reviews_json;
-
-              // Generate AI summary if reviews exist
-              if (Array.isArray(enriched.reviews) && enriched.reviews.length > 0) {
-                generateReviewSummary(enriched.reviews, destination.name);
-              }
-            } catch (e) {
-              console.error('Error parsing reviews_json:', e);
-            }
-          }
-
-          // Merge architect data
-          let updated = { ...destination };
-          const dataObj = data as any;
-
-          if (dataObj.architect) {
-            const architectObj = Array.isArray(dataObj.architect) ? dataObj.architect[0] : dataObj.architect;
-            if (architectObj?.name) {
-              updated = { ...updated, architect_id: architectObj.id, architect: updated.architect || architectObj.name };
-              (updated as any).architect_obj = architectObj;
-            }
-          }
-
-          if (dataObj.design_firm && typeof dataObj.design_firm === 'object' && dataObj.design_firm.name) {
-            (updated as any).design_firm_obj = dataObj.design_firm;
-          }
-
-          if (dataObj.interior_designer) {
-            const designerObj = Array.isArray(dataObj.interior_designer) ? dataObj.interior_designer[0] : dataObj.interior_designer;
-            if (designerObj?.name) {
-              (updated as any).interior_designer_obj = designerObj;
-            }
-          }
-
-          if (dataObj.movement) {
-            const movementObj = Array.isArray(dataObj.movement) ? dataObj.movement[0] : dataObj.movement;
-            if (movementObj?.name) {
-              (updated as any).movement_obj = movementObj;
-            }
-          }
-
-          setEnhancedDestination(updated);
-          setEnrichedData(enriched);
-        }
-      } catch (error) {
-        console.error('Error loading enriched data:', error);
-        setEnrichedData(null);
-      }
-
-      // Load saved and visited status
-      if (!user || !destination.slug) {
-        setIsSaved(false);
-        setIsVisited(false);
-        return;
-      }
-
-      try {
-        const supabase = createClient();
-
-        const [savedResult, visitedResult] = await Promise.all([
-          supabase.from('saved_places').select('id').eq('user_id', user.id).eq('destination_slug', destination.slug).maybeSingle(),
-          supabase.from('visited_places').select('id').eq('user_id', user.id).eq('destination_slug', destination.slug).maybeSingle(),
-        ]);
-
-        setIsSaved(!!savedResult.data);
-        setIsVisited(!!visitedResult.data);
-      } catch (error) {
-        console.error('Error loading saved/visited status:', error);
-      }
-    }
-
-    loadDestinationData();
-  }, [destination, user]);
-
-  // Load nested destinations
-  useEffect(() => {
-    async function loadNested() {
-      if (!destination?.id) {
-        setParentDestination(null);
-        setNestedDestinations([]);
-        return;
-      }
-
-      setLoadingNested(true);
-      try {
-        const supabase = createClient();
-        const [parent, nested] = await Promise.all([
-          getParentDestination(supabase, destination.id),
-          getNestedDestinations(supabase, destination.id),
-        ]);
-        setParentDestination(parent);
-        setNestedDestinations(nested);
-      } catch (error) {
-        console.error('Error loading nested destinations:', error);
-      } finally {
-        setLoadingNested(false);
-      }
-    }
-
-    loadNested();
-  }, [destination?.id]);
-
-  // Generate AI review summary
-  const generateReviewSummary = async (reviews: any[], destinationName: string) => {
-    if (!reviews || reviews.length === 0) return;
-
-    setLoadingReviewSummary(true);
-    try {
-      const response = await fetch('/api/reviews/summarize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviews, destinationName }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.summary) {
-          setReviewSummary(data.summary);
-        }
-      }
-    } catch (error) {
-      console.error('Error generating review summary:', error);
-    } finally {
-      setLoadingReviewSummary(false);
-    }
-  };
-
-  // Handle save
-  const handleSave = useCallback(async () => {
-    if (!user || !destination?.slug) {
-      router.push('/auth/login');
-      return;
-    }
-
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from('saved_places')
-        .upsert({ user_id: user.id, destination_slug: destination.slug });
-
-      if (!error) {
-        setIsSaved(true);
-        onSaveToggle?.(destination.slug, true);
-        setShowSaveModal(true);
-      } else {
-        toast.error('Failed to save. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error saving:', error);
-      toast.error('Failed to save. Please try again.');
-    }
-  }, [user, destination, router, onSaveToggle, toast]);
-
-  // Handle visit toggle
-  const handleVisitToggle = useCallback(async () => {
-    if (!user || !destination?.slug) return;
-
-    try {
-      const supabase = createClient();
-
-      if (isVisited) {
-        const { error } = await supabase
-          .from('visited_places')
-          .delete()
-          .eq('user_id', user.id)
-          .eq('destination_slug', destination.slug);
-
-        if (!error) {
-          setIsVisited(false);
-          onVisitToggle?.(destination.slug, false);
-        }
-      } else {
-        const { error } = await supabase
-          .from('visited_places')
-          .upsert({
-            user_id: user.id,
-            destination_slug: destination.slug,
-            visited_at: new Date().toISOString(),
-          }, { onConflict: 'user_id,destination_slug' });
-
-        if (!error) {
-          setIsVisited(true);
-          onVisitToggle?.(destination.slug, true);
-        }
-      }
-    } catch (error) {
-      console.error('Error toggling visit:', error);
-      toast.error('Failed to update visit status. Please try again.');
-    }
-  }, [user, destination, isVisited, onVisitToggle, toast]);
-
-  // Handle add to trip
-  const handleAddToTrip = useCallback(async () => {
-    if (!user || !destination?.slug) {
-      router.push('/auth/login');
-      return;
-    }
-
-    if (isAddedToTrip) return;
-
-    try {
-      const supabase = createClient();
-      const { data: trips } = await supabase
-        .from('trips')
-        .select('id, title')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (trips && trips.length === 1) {
-        // Add to the single trip
-        const { data: orderData } = await supabase.rpc('get_next_itinerary_order', { p_trip_id: trips[0].id });
-        const result = Array.isArray(orderData) ? orderData[0] : orderData;
-        const nextDay = result?.next_day ?? 1;
-        const nextOrder = result?.next_order ?? 0;
-
-        const { error } = await supabase.from('itinerary_items').insert({
-          trip_id: trips[0].id,
-          destination_slug: destination.slug,
-          day: nextDay,
-          order_index: nextOrder,
-          title: destination.name,
-        });
-
-        if (!error) {
-          setIsAddedToTrip(true);
-          toast.success(`Added to ${trips[0].title} · Day ${nextDay}`);
-        }
-      } else {
-        // Navigate to trips page
-        router.push(`/trips?prefill=${encodeURIComponent(destination.slug)}`);
-      }
-    } catch (error) {
-      console.error('Error adding to trip:', error);
-      toast.error('Failed to add to trip. Please try again.');
-    }
-  }, [user, destination, isAddedToTrip, router, toast]);
-
-  // Prevent body scroll
-  useEffect(() => {
-    if (isOpen) {
-      document.documentElement.style.overflow = 'hidden';
-    } else {
-      document.documentElement.style.overflow = '';
-    }
-    return () => {
-      document.documentElement.style.overflow = '';
-    };
-  }, [isOpen]);
-
-  // Close on escape
+  // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) onClose();
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
     };
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
-  // Loading state
-  if (!destination) {
-    return (
-      <Drawer
-        isOpen={isOpen}
-        onClose={onClose}
-        mobileVariant="side"
-        desktopSpacing="right-4 top-4 bottom-4"
-        desktopWidth="420px"
-        position="right"
-        style="glassy"
-        backdropOpacity="18"
-        headerContent={
-          <div className="flex items-center justify-between w-full">
-            <h2 className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Details</h2>
-          </div>
-        }
-      >
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="text-center">
-            <Loader2 className="h-6 w-6 animate-spin text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500 dark:text-gray-400">Loading destination...</p>
-          </div>
-        </div>
-      </Drawer>
-    );
-  }
+  // Load saved/visited status
+  useEffect(() => {
+    async function loadStatus() {
+      if (!user || !destination?.slug) {
+        setIsSaved(false);
+        setIsVisited(false);
+        return;
+      }
 
-  // Header content
-  const headerContent = (
-    <div className="flex items-center justify-between w-full gap-3">
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          aria-label="Close drawer"
-        >
-          <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
-        </button>
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-          {isEditMode ? 'Edit Destination' : destination.name}
-        </h2>
-      </div>
-      {user && (
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {isAdmin && (
-            <button
-              onClick={() => setIsEditMode(!isEditMode)}
-              className={`p-2 rounded-lg transition-colors ${
-                isEditMode ? 'bg-black dark:bg-white text-white dark:text-black' : 'hover:bg-gray-50 dark:hover:bg-white/5'
-              }`}
-              aria-label={isEditMode ? 'Exit edit mode' : 'Edit destination'}
-            >
-              <Edit className={`h-4 w-4 ${isEditMode ? '' : 'text-gray-900 dark:text-white/90'}`} strokeWidth={1.5} />
-            </button>
-          )}
-          <button
-            onClick={() => isSaved ? setShowSaveModal(true) : handleSave()}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label={isSaved ? 'Remove from saved' : 'Save destination'}
-          >
-            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}`} strokeWidth={1.5} />
-          </button>
-          <button
-            onClick={handleAddToTrip}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label="Add to trip"
-            disabled={isAddedToTrip}
-          >
-            {isAddedToTrip ? (
-              <Check className="h-4 w-4 text-green-600 dark:text-green-400" strokeWidth={1.5} />
-            ) : (
-              <Plus className="h-4 w-4 text-gray-500 dark:text-gray-400" strokeWidth={1.5} />
-            )}
-          </button>
-        </div>
-      )}
-    </div>
-  );
+      try {
+        const supabase = createClient();
+        const [savedResult, visitedResult] = await Promise.all([
+          supabase
+            .from('saved_places')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('destination_slug', destination.slug)
+            .maybeSingle(),
+          supabase
+            .from('visited_places')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('destination_slug', destination.slug)
+            .maybeSingle(),
+        ]);
 
-  // Footer content
-  const footerContent = (
-    <div className="px-6 py-4">
-      <div className="flex gap-3">
-        {destination.slug && (
-          <Link
-            href={`/destination/${destination.slug}`}
-            onClick={onClose}
-            className="flex-1 bg-black dark:bg-white text-white dark:text-black text-center py-3 px-4 rounded-xl font-medium text-sm transition-opacity hover:opacity-90"
-          >
-            View Full Details
-          </Link>
-        )}
-        <button
-          onClick={handleAddToTrip}
-          className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-colors ${
-            isAddedToTrip
-              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
-          }`}
-          disabled={isAddedToTrip}
-        >
-          {isAddedToTrip ? (
-            <>
-              <Check className="h-4 w-4" />
-              <span>Added</span>
-            </>
-          ) : (
-            <>
-              <Plus className="h-4 w-4" />
-              <span>Add to Trip</span>
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  );
+        setIsSaved(!!savedResult.data);
+        setIsVisited(!!visitedResult.data);
+      } catch (error) {
+        console.error('Error loading status:', error);
+      }
+    }
 
-  // Main content
-  const mainContent = (
-    <div className="p-6">
-      {isEditMode ? (
-        <DestinationEditForm
-          destination={destination}
-          onCancel={() => setIsEditMode(false)}
-          onSave={() => {
-            setIsEditMode(false);
-            onDestinationUpdate?.();
-          }}
-          onDelete={() => {
-            onClose();
-            onDestinationUpdate?.();
-          }}
-        />
-      ) : (
-        <div className="space-y-6">
-          {/* Hero Image */}
-          <DestinationHero destination={destination} className="mt-[18px]" />
+    loadStatus();
+  }, [user, destination?.slug]);
 
-          {/* Identity Block */}
-          <DestinationIdentity destination={destination} enrichedData={enrichedData} />
+  // Handle save toggle
+  const handleSaveToggle = useCallback(async () => {
+    if (!destination?.slug) return;
 
-          {/* Action Buttons */}
-          <DestinationActions
-            destination={destination}
-            isSaved={isSaved}
-            isVisited={isVisited}
-            onSaveClick={handleSave}
-            onVisitClick={handleVisitToggle}
-            onSaveToggle={onSaveToggle}
-            onShowSaveModal={() => setShowSaveModal(true)}
-            onShowVisitedModal={() => setShowVisitedModal(true)}
-            className="mt-4"
-          />
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
 
-          {/* Sign in prompt */}
-          {!user && (
-            <button
-              onClick={() => router.push('/auth/login')}
-              className="w-full px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl text-sm font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-            >
-              Sign in to save and track visits
-            </button>
-          )}
+    setSavingState('saving');
+    try {
+      const supabase = createClient();
 
-          <div className="border-t border-gray-200 dark:border-gray-800" />
+      if (isSaved) {
+        await supabase
+          .from('saved_places')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('destination_slug', destination.slug);
+        setIsSaved(false);
+        onSaveToggle?.(destination.slug, false);
+        toast.success('Removed from saved');
+      } else {
+        await supabase
+          .from('saved_places')
+          .upsert({ user_id: user.id, destination_slug: destination.slug });
+        setIsSaved(true);
+        onSaveToggle?.(destination.slug, true);
+        toast.success('Saved!');
+      }
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      toast.error('Something went wrong');
+    } finally {
+      setSavingState('idle');
+    }
+  }, [user, destination?.slug, isSaved, router, toast, onSaveToggle]);
 
-          {/* Parent Destination */}
-          {parentDestination && (
-            <button
-              onClick={() => parentDestination.slug && onDestinationClick?.(parentDestination.slug)}
-              className="w-full flex items-center gap-3 p-3 -mx-3 rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
-            >
-              <div className="relative w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                {parentDestination.image ? (
-                  <Image src={parentDestination.image} alt={parentDestination.name} fill className="object-cover" sizes="64px" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                    <MapPin className="h-6 w-6" />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-0.5">Located inside</p>
-                <p className="font-medium text-sm text-black dark:text-white truncate">{parentDestination.name}</p>
-                {parentDestination.category && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{parentDestination.category}</p>
-                )}
-              </div>
-            </button>
-          )}
+  // Handle visited toggle
+  const handleVisitedToggle = useCallback(async () => {
+    if (!destination?.slug) return;
 
-          {/* Real-Time Status */}
-          {destination.id && <RealtimeStatusBadge destinationId={destination.id} compact={false} showWaitTime showAvailability />}
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
 
-          {/* Meta Information */}
-          <DestinationMeta destination={destination} enrichedData={enrichedData} />
+    try {
+      const supabase = createClient();
 
-          {/* Nested Destinations */}
-          {(loadingNested || nestedDestinations.length > 0) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              {loadingNested ? (
-                <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Loading venues located here…
-                </div>
-              ) : (
-                <NestedDestinations
-                  destinations={nestedDestinations}
-                  parentName={destination.name}
-                  onDestinationClick={(nested) => nested.slug && onDestinationClick?.(nested.slug)}
-                />
-              )}
-            </div>
-          )}
+      if (isVisited) {
+        await supabase
+          .from('visited_places')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('destination_slug', destination.slug);
+        setIsVisited(false);
+        onVisitToggle?.(destination.slug, false);
+        toast.success('Removed from visited');
+      } else {
+        await supabase.from('visited_places').upsert({
+          user_id: user.id,
+          destination_slug: destination.slug,
+          visited_at: new Date().toISOString(),
+        });
+        setIsVisited(true);
+        onVisitToggle?.(destination.slug, true);
+        toast.success('Marked as visited!');
+      }
+    } catch (error) {
+      console.error('Error toggling visited:', error);
+      toast.error('Something went wrong');
+    }
+  }, [user, destination?.slug, isVisited, router, toast, onVisitToggle]);
 
-          {/* Description */}
-          {destination.description && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                {htmlToPlainText(destination.description)}
-              </div>
-            </div>
-          )}
+  // Handle share
+  const handleShare = useCallback(async () => {
+    if (!destination) return;
+    const url = `${window.location.origin}/destination/${destination.slug}`;
 
-          {/* Editorial Summary */}
-          {enrichedData?.editorial_summary && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">From Google</h3>
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                {htmlToPlainText(enrichedData.editorial_summary)}
-              </p>
-            </div>
-          )}
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: destination.name,
+          text: destination.micro_description || `Check out ${destination.name}`,
+          url,
+        });
+      } catch {
+        // User cancelled or error
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied!');
+    }
+  }, [destination, toast]);
 
-          {/* Architecture & Design */}
-          {enhancedDestination && <ArchitectDesignInfo destination={enhancedDestination} />}
+  // Handle directions
+  const handleDirections = useCallback(() => {
+    if (!destination?.latitude || !destination?.longitude) return;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${destination.latitude},${destination.longitude}`;
+    window.open(url, '_blank');
+  }, [destination]);
 
-          {/* AI Review Summary */}
-          {enrichedData?.reviews?.length > 0 && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">What Reviewers Say</h3>
-              {loadingReviewSummary ? (
-                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Summarizing reviews...</span>
-                </div>
-              ) : reviewSummary ? (
-                <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-4 bg-gray-50 dark:bg-gray-900/50">
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reviewSummary}</p>
-                </div>
-              ) : null}
-            </div>
-          )}
+  if (!destination) return null;
 
-          {/* Map */}
-          {(destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude) && (
-            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
-              <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">Location</h3>
-              <div className="w-full h-48 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
-                <GoogleStaticMap
-                  center={{
-                    lat: destination.latitude || enrichedData?.latitude || 0,
-                    lng: destination.longitude || enrichedData?.longitude || 0,
-                  }}
-                  zoom={15}
-                  height="192px"
-                  className="rounded-2xl"
-                  showPin
-                />
-              </div>
-            </div>
-          )}
+  const imageUrl = destination.image || destination.image_thumbnail;
 
-          {/* Recommendations */}
-          <DrawerRecommendations
-            destinationSlug={destination.slug}
-            isOpen={isOpen}
-            onDestinationClick={onDestinationClick}
-            className="mt-6"
-          />
-        </div>
-      )}
-    </div>
-  );
-
-  // Render based on mode
-  if (renderMode === 'inline') {
-    return (
-      <>
-        <div className="flex flex-col h-full bg-white dark:bg-gray-950">
-          <div className="flex-shrink-0 min-h-[3.5rem] px-6 flex items-center justify-between border-b border-black/5 dark:border-white/5">
-            {headerContent}
-          </div>
-          <div className="flex-1 overflow-y-auto">{mainContent}</div>
-          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800">{footerContent}</div>
-        </div>
-
-        {/* Modals */}
-        {destination?.id && (
-          <SaveDestinationModal
-            destinationId={destination.id}
-            destinationSlug={destination.slug}
-            isOpen={showSaveModal}
-            onClose={() => setShowSaveModal(false)}
-          />
-        )}
-        {destination && (
-          <VisitedModal
-            destinationSlug={destination.slug}
-            destinationName={destination.name}
-            isOpen={showVisitedModal}
-            onClose={() => setShowVisitedModal(false)}
-            onUpdate={() => {
-              setShowVisitedModal(false);
-              setIsVisited(true);
-              if (destination.slug) onVisitToggle?.(destination.slug, true);
-            }}
-          />
-        )}
-      </>
-    );
-  }
-
-  // Default drawer mode
   return (
     <>
-      <Drawer
-        isOpen={isOpen}
-        onClose={onClose}
-        mobileVariant="side"
-        desktopSpacing="right-4 top-4 bottom-4"
-        desktopWidth="420px"
-        position="right"
-        style="glassy"
-        backdropOpacity="18"
-        keepStateOnClose
-        zIndex={9999}
-        headerContent={headerContent}
-        footerContent={footerContent}
-      >
-        {mainContent}
-      </Drawer>
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+      />
 
-      {/* Modals */}
-      {destination?.id && (
-        <SaveDestinationModal
-          destinationId={destination.id}
-          destinationSlug={destination.slug}
-          isOpen={showSaveModal}
-          onClose={() => setShowSaveModal(false)}
-          onSave={async (collectionId) => {
-            if (collectionId === null && destination.slug && user) {
-              const supabase = createClient();
-              await supabase.from('saved_places').delete().eq('user_id', user.id).eq('destination_slug', destination.slug);
-              setIsSaved(false);
-              onSaveToggle?.(destination.slug, false);
-            } else if (collectionId !== null && destination.slug && user) {
-              const supabase = createClient();
-              await supabase.from('saved_places').upsert({ user_id: user.id, destination_slug: destination.slug });
-              setIsSaved(true);
-              onSaveToggle?.(destination.slug, true);
-            }
-          }}
-        />
-      )}
-      {destination && (
-        <VisitedModal
-          destinationSlug={destination.slug}
-          destinationName={destination.name}
-          isOpen={showVisitedModal}
-          onClose={() => setShowVisitedModal(false)}
-          onUpdate={() => {
-            setShowVisitedModal(false);
-            setIsVisited(true);
-            if (destination.slug) onVisitToggle?.(destination.slug, true);
-          }}
-        />
-      )}
+      {/* Drawer */}
+      <div
+        className={`fixed right-0 top-0 z-50 h-full w-full max-w-lg bg-white dark:bg-[#1c1c1e]
+                    shadow-2xl transform transition-transform duration-300 ease-out
+                    ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+      >
+        {/* Scroll container */}
+        <div className="h-full overflow-y-auto overscroll-contain">
+          {/* Header Image */}
+          <div className="relative aspect-[4/3] bg-gray-100 dark:bg-gray-800">
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt={destination.name}
+                fill
+                className="object-cover"
+                priority
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <MapPin className="w-16 h-16 text-gray-300 dark:text-gray-600" />
+              </div>
+            )}
+
+            {/* Close button */}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 w-10 h-10 rounded-full
+                         bg-black/40 backdrop-blur-md
+                         flex items-center justify-center
+                         hover:bg-black/60 transition-colors"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+
+            {/* Badges */}
+            <div className="absolute bottom-4 left-4 flex gap-2">
+              {destination.michelin_stars && destination.michelin_stars > 0 && (
+                <div
+                  className="px-3 py-1.5 rounded-full bg-white/90 dark:bg-black/70 backdrop-blur-md
+                                text-[12px] font-medium text-gray-800 dark:text-white
+                                flex items-center gap-1.5"
+                >
+                  <img src="/michelin-star.svg" alt="Michelin" className="w-3.5 h-3.5" />
+                  {destination.michelin_stars} Star{destination.michelin_stars > 1 ? 's' : ''}
+                </div>
+              )}
+              {destination.crown && (
+                <div
+                  className="px-3 py-1.5 rounded-full bg-amber-500/90 backdrop-blur-md
+                                text-[12px] font-medium text-white
+                                flex items-center gap-1.5"
+                >
+                  <Star className="w-3.5 h-3.5 fill-current" />
+                  Crown
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Content */}
+          <div className="p-6">
+            {/* Title & Category */}
+            <div className="mb-4">
+              <h2 className="text-[22px] font-semibold text-gray-900 dark:text-white tracking-tight mb-1">
+                {destination.name}
+              </h2>
+              <p className="text-[15px] text-gray-500 dark:text-gray-400">
+                {destination.category && capitalizeCategory(destination.category)}
+                {destination.category && destination.city && ' · '}
+                {destination.city && capitalizeCity(destination.city)}
+                {destination.neighborhood && `, ${destination.neighborhood}`}
+              </p>
+            </div>
+
+            {/* Action Buttons - Apple style row */}
+            <div className="flex gap-2 mb-6">
+              <button
+                onClick={handleSaveToggle}
+                disabled={savingState === 'saving'}
+                className={`flex-1 h-11 rounded-[12px] text-[14px] font-medium
+                            flex items-center justify-center gap-2 transition-all
+                            ${
+                              isSaved
+                                ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                                : 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20'
+                            }`}
+              >
+                <Bookmark className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+                {isSaved ? 'Saved' : 'Save'}
+              </button>
+              <button
+                onClick={handleShare}
+                className="flex-1 h-11 rounded-[12px] bg-gray-100 dark:bg-white/10
+                           text-[14px] font-medium text-gray-900 dark:text-white
+                           flex items-center justify-center gap-2
+                           hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+              >
+                <Share2 className="w-4 h-4" />
+                Share
+              </button>
+              {destination.latitude && destination.longitude && (
+                <button
+                  onClick={handleDirections}
+                  className="flex-1 h-11 rounded-[12px] bg-gray-100 dark:bg-white/10
+                             text-[14px] font-medium text-gray-900 dark:text-white
+                             flex items-center justify-center gap-2
+                             hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                >
+                  <Navigation className="w-4 h-4" />
+                  Directions
+                </button>
+              )}
+            </div>
+
+            {/* Visited Button */}
+            {user && (
+              <button
+                onClick={handleVisitedToggle}
+                className={`w-full h-11 rounded-[12px] text-[14px] font-medium mb-6
+                            flex items-center justify-center gap-2 transition-all
+                            ${
+                              isVisited
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                : 'bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10'
+                            }`}
+              >
+                {isVisited ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Visited
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    Mark as Visited
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Description */}
+            {(destination.micro_description || destination.description) && (
+              <div className="mb-6">
+                <p className="text-[15px] leading-relaxed text-gray-700 dark:text-gray-300">
+                  {destination.micro_description || destination.description}
+                </p>
+              </div>
+            )}
+
+            {/* Details List - Apple style */}
+            <div className="border-t border-gray-200 dark:border-white/10 pt-4 mb-6">
+              {/* Rating */}
+              {destination.rating && (
+                <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/5">
+                  <span className="text-[15px] text-gray-500 dark:text-gray-400">Rating</span>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                    <span className="text-[15px] font-medium text-gray-900 dark:text-white">
+                      {destination.rating.toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Price Level */}
+              {destination.price_level && (
+                <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/5">
+                  <span className="text-[15px] text-gray-500 dark:text-gray-400">Price</span>
+                  <span className="text-[15px] font-medium text-gray-900 dark:text-white">
+                    {'$'.repeat(destination.price_level)}
+                  </span>
+                </div>
+              )}
+
+              {/* Tags */}
+              {destination.tags && destination.tags.length > 0 && (
+                <div className="py-3">
+                  <span className="text-[15px] text-gray-500 dark:text-gray-400 block mb-2">
+                    Tags
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {destination.tags.slice(0, 5).map((tag, i) => (
+                      <span
+                        key={i}
+                        className="px-3 py-1 rounded-full bg-gray-100 dark:bg-white/10
+                                   text-[13px] text-gray-700 dark:text-gray-300"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* View Full Page Link */}
+            <Link
+              href={`/destination/${destination.slug}`}
+              className="flex items-center justify-between w-full py-4 px-4 -mx-4
+                         bg-gray-50 dark:bg-white/5 rounded-[12px]
+                         hover:bg-gray-100 dark:hover:bg-white/10 transition-colors mb-6"
+            >
+              <div className="flex items-center gap-3">
+                <ExternalLink className="w-5 h-5 text-gray-400" />
+                <span className="text-[15px] font-medium text-gray-900 dark:text-white">
+                  View full page
+                </span>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-400" />
+            </Link>
+
+            {/* Related Destinations */}
+            {relatedDestinations.length > 0 && (
+              <div>
+                <h3 className="text-[13px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                  More in {destination.city && capitalizeCity(destination.city)}
+                </h3>
+                <div className="space-y-3">
+                  {relatedDestinations.slice(0, 4).map((dest) => (
+                    <button
+                      key={dest.slug}
+                      onClick={() => onDestinationClick?.(dest)}
+                      className="flex items-center gap-3 w-full p-2 -mx-2 rounded-[12px]
+                                 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors text-left"
+                    >
+                      <div className="w-14 h-14 rounded-[10px] bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
+                        {(dest.image || dest.image_thumbnail) && (
+                          <Image
+                            src={dest.image_thumbnail || dest.image || ''}
+                            alt={dest.name}
+                            width={56}
+                            height={56}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                          {dest.name}
+                        </p>
+                        <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">
+                          {dest.category && capitalizeCategory(dest.category)}
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </>
   );
 }
+
+export default DestinationDrawer;

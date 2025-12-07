@@ -586,30 +586,9 @@ export default function CityPageClient({
           await new Promise(resolve => setTimeout(resolve, 200));
           await fetchDestinations();
         }}
-        onDestinationClick={async (slug: string) => {
-          try {
-            const supabaseClient = createClient();
-            if (!supabaseClient) {
-              console.error('Failed to create Supabase client');
-              return;
-            }
-            
-            const { data: destination, error } = await supabaseClient
-              .from('destinations')
-              .select('*')
-              .eq('slug', slug)
-              .single();
-            
-            if (error || !destination) {
-              console.error('Failed to fetch destination:', error);
-              return;
-            }
-            
-            setSelectedDestination(destination as Destination);
-            openDrawer('destination');
-          } catch (error) {
-            console.error('Error fetching destination:', error);
-          }
+        onDestinationClick={(dest: Destination) => {
+          setSelectedDestination(dest);
+          openDrawer('destination');
         }}
         />
       )}
