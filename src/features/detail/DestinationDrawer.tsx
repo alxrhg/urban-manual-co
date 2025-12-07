@@ -564,38 +564,49 @@ export function DestinationDrawer({
 
           {/* Actions */}
           <div className="flex gap-2 mt-4">
-            <button
-              onClick={() => isSaved ? setShowSaveModal(true) : handleSave()}
-              className={`flex-1 h-[38px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
-                isSaved ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
-              }`}
-            >
-              <Bookmark className={`h-[15px] w-[15px] ${isSaved ? 'fill-current' : ''}`} />
-              {isSaved ? 'Saved' : 'Save'}
-            </button>
-            <button
-              onClick={() => isVisited ? handleVisitToggle() : setShowVisitedModal(true)}
-              className={`flex-1 h-[38px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
-                isVisited ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
-              }`}
-            >
-              <Check className="h-[15px] w-[15px]" />
-              {isVisited ? 'Visited' : 'Been Here'}
-            </button>
+            {user ? (
+              <>
+                <button
+                  onClick={() => isSaved ? setShowSaveModal(true) : handleSave()}
+                  className={`flex-1 h-[38px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
+                    isSaved ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
+                  }`}
+                >
+                  <Bookmark className={`h-[15px] w-[15px] ${isSaved ? 'fill-current' : ''}`} />
+                  {isSaved ? 'Saved' : 'Save'}
+                </button>
+                <button
+                  onClick={() => isVisited ? handleVisitToggle() : setShowVisitedModal(true)}
+                  className={`flex-1 h-[38px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
+                    isVisited ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
+                  }`}
+                >
+                  <Check className="h-[15px] w-[15px]" />
+                  {isVisited ? 'Visited' : 'Been Here'}
+                </button>
+                <button
+                  onClick={handleAddToTrip}
+                  disabled={isAddedToTrip}
+                  className={`flex-1 h-[38px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
+                    isAddedToTrip ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
+                  }`}
+                >
+                  {isAddedToTrip ? <Check className="h-[15px] w-[15px]" /> : <Plus className="h-[15px] w-[15px]" />}
+                  {isAddedToTrip ? 'Added' : 'Trip'}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => router.push('/auth/login')}
+                className="flex-1 h-[38px] flex items-center justify-center gap-2 rounded-full border border-gray-200/80 dark:border-white/[0.12] text-[13px] font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors"
+              >
+                Sign in to save
+              </button>
+            )}
             <button onClick={handleShare} className="h-[38px] w-[38px] flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/[0.12] transition-all duration-200">
               <Share2 className="h-[15px] w-[15px]" />
             </button>
           </div>
-
-          {/* Sign in prompt */}
-          {!user && (
-            <button
-              onClick={() => router.push('/auth/login')}
-              className="w-full mt-4 h-[38px] border border-gray-200/80 dark:border-white/[0.12] rounded-full text-[13px] font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors"
-            >
-              Sign in to save and track visits
-            </button>
-          )}
 
           {/* Parent destination */}
           {parentDestination && (
