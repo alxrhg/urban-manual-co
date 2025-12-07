@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Sparkles, Send, Loader2 } from 'lucide-react';
+import { Sparkles, Send, Loader2, X, MapPin, ArrowRight, RefreshCw } from 'lucide-react';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHomepageData } from './HomepageDataProvider';
+import { Destination } from '@/types/destination';
+import Image from 'next/image';
 
 const FEATURED_CITIES = ['Taipei', 'Tokyo', 'New York', 'London'];
 
@@ -18,10 +20,41 @@ const AI_PLACEHOLDERS = [
   'Try: "budget hotels near me"',
 ];
 
+// Follow-up suggestions based on context
+const generateFollowUps = (query: string, destinations: Destination[]): string[] => {
+  const suggestions: string[] = [];
+
+  // If we found restaurants, suggest related queries
+  if (destinations.some(d => d.category === 'restaurant')) {
+    suggestions.push('Show me ones with outdoor seating');
+    suggestions.push('Which have the best views?');
+  }
+
+  // If we found hotels, suggest hotel-related queries
+  if (destinations.some(d => d.category === 'hotel')) {
+    suggestions.push('Which are most romantic?');
+    suggestions.push('Show budget-friendly options');
+  }
+
+  // City-based suggestions
+  const cities = [...new Set(destinations.map(d => d.city).filter(Boolean))];
+  if (cities.length === 1) {
+    suggestions.push(`What else is great in ${cities[0]}?`);
+  }
+
+  // Generic suggestions
+  if (suggestions.length < 3) {
+    suggestions.push('Show me more options');
+    suggestions.push('Find similar places nearby');
+  }
+
+  return suggestions.slice(0, 3);
+};
+
 /**
  * Interactive Hero Component - Apple Design System
  *
- * Clean, minimal hero with search and filters.
+ * Clean, minimal hero with search and inline AI chat.
  * Uses SF Pro-inspired typography and Apple's spacious layout principles.
  */
 export default function InteractiveHero() {
@@ -38,7 +71,7 @@ export default function InteractiveHero() {
     setSelectedCategory,
     setSearchTerm,
     filteredDestinations,
-    openAIChat,
+    openDestination,
   } = useHomepageData();
 
   const [localSearchTerm, setLocalSearchTerm] = useState('');
@@ -48,16 +81,24 @@ export default function InteractiveHero() {
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Inline chat state
+  const [chatResponse, setChatResponse] = useState('');
+  const [chatDestinations, setChatDestinations] = useState<Destination[]>([]);
+  const [followUpSuggestions, setFollowUpSuggestions] = useState<string[]>([]);
+  const [conversationHistory, setConversationHistory] = useState<Array<{ role: string; content: string }>>([]);
+  const [showChatResults, setShowChatResults] = useState(false);
+  const [lastQuery, setLastQuery] = useState('');
+
   // Rotate placeholders when input is empty and not focused
   useEffect(() => {
-    if (localSearchTerm.trim() || isFocused) return;
+    if (localSearchTerm.trim() || isFocused || showChatResults) return;
 
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % AI_PLACEHOLDERS.length);
     }, 3500);
 
     return () => clearInterval(interval);
-  }, [localSearchTerm, isFocused]);
+  }, [localSearchTerm, isFocused, showChatResults]);
 
   // Keyboard shortcut: Press '/' to focus search
   useEffect(() => {
@@ -66,10 +107,14 @@ export default function InteractiveHero() {
         e.preventDefault();
         inputRef.current?.focus();
       }
+      // Press Escape to close chat results
+      if (e.key === 'Escape' && showChatResults) {
+        handleCloseChatResults();
+      }
     };
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
+  }, [showChatResults]);
 
   // Get user's first name for greeting
   const userName = user?.user_metadata?.name?.split(' ')[0] ||
@@ -86,14 +131,72 @@ export default function InteractiveHero() {
     ? [...featuredCities, ...remainingCities]
     : featuredCities;
 
-  // Handle search submit - opens AI chat with query
-  const handleSearch = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (localSearchTerm.trim()) {
-      openAIChat(localSearchTerm.trim());
-      setLocalSearchTerm(''); // Clear input after opening chat
+  // Handle AI search
+  const handleSearch = useCallback(async (e?: React.FormEvent, queryOverride?: string) => {
+    if (e) e.preventDefault();
+    const query = queryOverride || localSearchTerm.trim();
+    if (!query) return;
+
+    setIsSearching(true);
+    setShowChatResults(true);
+    setLastQuery(query);
+    setChatResponse('');
+    setChatDestinations([]);
+    setFollowUpSuggestions([]);
+
+    try {
+      const response = await fetch('/api/search/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query,
+          conversationHistory,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Search failed');
+
+      const data = await response.json();
+
+      setChatResponse(data.response || 'Here are some results:');
+      setChatDestinations(data.destinations || []);
+
+      // Generate follow-up suggestions
+      const followUps = generateFollowUps(query, data.destinations || []);
+      setFollowUpSuggestions(followUps);
+
+      // Update conversation history
+      setConversationHistory(prev => [
+        ...prev,
+        { role: 'user', content: query },
+        { role: 'assistant', content: data.response || '' },
+      ]);
+
+      // Clear input after successful search
+      setLocalSearchTerm('');
+    } catch (error) {
+      console.error('AI search error:', error);
+      setChatResponse('Sorry, I had trouble searching. Please try again.');
+    } finally {
+      setIsSearching(false);
     }
-  }, [localSearchTerm, openAIChat]);
+  }, [localSearchTerm, conversationHistory]);
+
+  // Handle follow-up suggestion click
+  const handleFollowUp = useCallback((suggestion: string) => {
+    setLocalSearchTerm(suggestion);
+    handleSearch(undefined, suggestion);
+  }, [handleSearch]);
+
+  // Close chat results
+  const handleCloseChatResults = useCallback(() => {
+    setShowChatResults(false);
+    setChatResponse('');
+    setChatDestinations([]);
+    setFollowUpSuggestions([]);
+    setConversationHistory([]);
+    setLastQuery('');
+  }, []);
 
   // Handle city filter
   const handleCityClick = useCallback((city: string) => {
@@ -142,11 +245,11 @@ export default function InteractiveHero() {
           </p>
 
           {/* Search Input - Clean monochrome style */}
-          <form onSubmit={handleSearch} className="mb-10">
+          <form onSubmit={handleSearch} className="mb-6">
             <div className="relative max-w-xl">
               {/* AI indicator */}
               <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                <Sparkles className={`w-4 h-4 transition-colors ${isFocused ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
+                <Sparkles className={`w-4 h-4 transition-colors ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
               </div>
               <input
                 ref={inputRef}
@@ -155,7 +258,7 @@ export default function InteractiveHero() {
                 onChange={(e) => setLocalSearchTerm(e.target.value)}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
-                placeholder={AI_PLACEHOLDERS[placeholderIndex]}
+                placeholder={showChatResults ? 'Ask a follow-up question...' : AI_PLACEHOLDERS[placeholderIndex]}
                 className="w-full h-[56px] pl-11 pr-14 text-[15px] bg-gray-100/80 dark:bg-white/[0.08]
                            border-0 rounded-[16px] text-gray-900 dark:text-white
                            placeholder:text-gray-400 dark:placeholder:text-gray-500
@@ -165,7 +268,7 @@ export default function InteractiveHero() {
               />
               <button
                 type="submit"
-                disabled={isSearching}
+                disabled={isSearching || !localSearchTerm.trim()}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center
                            rounded-[12px] bg-gray-900 dark:bg-white
                            text-white dark:text-gray-900
@@ -180,90 +283,192 @@ export default function InteractiveHero() {
                 )}
               </button>
             </div>
-            <p className="mt-2 text-[12px] text-gray-400 dark:text-gray-500">
-              Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">/</kbd> to focus • Enter to search
-            </p>
+            {!showChatResults && (
+              <p className="mt-2 text-[12px] text-gray-400 dark:text-gray-500">
+                Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">/</kbd> to focus • Enter to search
+              </p>
+            )}
           </form>
-        </div>
-      </div>
 
-      {/* City Filters - Apple-style pill buttons */}
-      <div className="flex-1 flex items-end">
-        <div className="w-full pt-6">
-          <div className="mb-8">
-            <div className="flex flex-wrap gap-x-1 gap-y-2">
-              <button
-                onClick={() => setSelectedCity('')}
-                className={`px-3 py-1.5 text-[13px] font-medium rounded-full transition-all duration-200 ${
-                  !selectedCity
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
-                }`}
-              >
-                All Cities
-              </button>
-              {displayedCities.map((city) => (
+          {/* Inline Chat Results */}
+          {showChatResults && (
+            <div className="max-w-xl mb-8 animate-in fade-in slide-in-from-top-2 duration-300">
+              {/* Response header with close button */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2 text-[13px] text-gray-500 dark:text-gray-400">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>AI Response for "{lastQuery}"</span>
+                </div>
                 <button
-                  key={city}
-                  onClick={() => handleCityClick(city)}
-                  className={`px-3 py-1.5 text-[13px] font-medium rounded-full transition-all duration-200 ${
-                    selectedCity.toLowerCase() === city.toLowerCase()
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
-                  }`}
+                  onClick={handleCloseChatResults}
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
+                  aria-label="Close results"
                 >
-                  {capitalizeCity(city)}
+                  <X className="w-4 h-4 text-gray-400" />
                 </button>
-              ))}
-              {cities.length > displayedCities.length && !showAllCities && (
-                <button
-                  onClick={() => setShowAllCities(true)}
-                  className="px-3 py-1.5 text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                >
-                  +{cities.length - displayedCities.length} more
-                </button>
-              )}
-              {showAllCities && (
-                <button
-                  onClick={() => setShowAllCities(false)}
-                  className="px-3 py-1.5 text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                >
-                  Show less
-                </button>
-              )}
-            </div>
-          </div>
+              </div>
 
-          {/* Category Filters */}
-          {categories.length > 0 && (
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-[13px]">
-              <button
-                onClick={() => setSelectedCategory('')}
-                className={`transition-colors duration-200 ${
-                  !selectedCategory
-                    ? 'text-gray-900 dark:text-white font-medium'
-                    : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                }`}
-              >
-                All
-              </button>
-              {categories.slice(0, 8).map((category) => (
-                <button
-                  key={category}
-                  onClick={() => handleCategoryClick(category)}
-                  className={`transition-colors duration-200 ${
-                    selectedCategory.toLowerCase() === category.toLowerCase()
-                      ? 'text-gray-900 dark:text-white font-medium'
-                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                  }`}
-                >
-                  {capitalizeCategory(category)}
-                </button>
-              ))}
+              {/* AI Response text */}
+              {chatResponse && (
+                <p className="text-[15px] text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+                  {chatResponse}
+                </p>
+              )}
+
+              {/* Destination results - compact cards */}
+              {chatDestinations.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  {chatDestinations.slice(0, 4).map((dest) => (
+                    <button
+                      key={dest.id || dest.slug}
+                      onClick={() => openDestination(dest)}
+                      className="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-white/5
+                                 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left group"
+                    >
+                      {dest.image_thumbnail || dest.image ? (
+                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                          <Image
+                            src={dest.image_thumbnail || dest.image || ''}
+                            alt={dest.name}
+                            width={48}
+                            height={48}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                          <MapPin className="w-5 h-5 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200">
+                          {dest.name}
+                        </p>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                          {dest.city} • {capitalizeCategory(dest.category)}
+                        </p>
+                      </div>
+                      <ArrowRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 flex-shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Show more results link */}
+              {chatDestinations.length > 4 && (
+                <p className="text-[12px] text-gray-500 dark:text-gray-400 mb-4">
+                  +{chatDestinations.length - 4} more results
+                </p>
+              )}
+
+              {/* Follow-up suggestions */}
+              {followUpSuggestions.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {followUpSuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleFollowUp(suggestion)}
+                      className="px-3 py-1.5 text-[12px] font-medium text-gray-600 dark:text-gray-300
+                                 bg-gray-100 dark:bg-white/10 rounded-full
+                                 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                  <button
+                    onClick={handleCloseChatResults}
+                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500
+                               hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex items-center gap-1"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Start over
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
+
+      {/* City Filters - Apple-style pill buttons (hidden when chat results are shown) */}
+      {!showChatResults && (
+        <div className="flex-1 flex items-end">
+          <div className="w-full pt-6">
+            <div className="mb-8">
+              <div className="flex flex-wrap gap-x-1 gap-y-2">
+                <button
+                  onClick={() => setSelectedCity('')}
+                  className={`px-3 py-1.5 text-[13px] font-medium rounded-full transition-all duration-200 ${
+                    !selectedCity
+                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
+                  }`}
+                >
+                  All Cities
+                </button>
+                {displayedCities.map((city) => (
+                  <button
+                    key={city}
+                    onClick={() => handleCityClick(city)}
+                    className={`px-3 py-1.5 text-[13px] font-medium rounded-full transition-all duration-200 ${
+                      selectedCity.toLowerCase() === city.toLowerCase()
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
+                    }`}
+                  >
+                    {capitalizeCity(city)}
+                  </button>
+                ))}
+                {cities.length > displayedCities.length && !showAllCities && (
+                  <button
+                    onClick={() => setShowAllCities(true)}
+                    className="px-3 py-1.5 text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  >
+                    +{cities.length - displayedCities.length} more
+                  </button>
+                )}
+                {showAllCities && (
+                  <button
+                    onClick={() => setShowAllCities(false)}
+                    className="px-3 py-1.5 text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                  >
+                    Show less
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Category Filters */}
+            {categories.length > 0 && (
+              <div className="flex flex-wrap gap-x-4 gap-y-2 text-[13px]">
+                <button
+                  onClick={() => setSelectedCategory('')}
+                  className={`transition-colors duration-200 ${
+                    !selectedCategory
+                      ? 'text-gray-900 dark:text-white font-medium'
+                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  All
+                </button>
+                {categories.slice(0, 8).map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => handleCategoryClick(category)}
+                    className={`transition-colors duration-200 ${
+                      selectedCategory.toLowerCase() === category.toLowerCase()
+                        ? 'text-gray-900 dark:text-white font-medium'
+                        : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                    }`}
+                  >
+                    {capitalizeCategory(category)}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
