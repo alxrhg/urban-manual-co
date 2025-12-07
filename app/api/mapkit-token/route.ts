@@ -145,6 +145,11 @@ export async function GET(request: Request) {
     const token = jwt.sign(payload, privateKey, {
       algorithm: 'ES256',
       keyid: keyId,
+      header: {
+        alg: 'ES256',
+        typ: 'JWT',
+        kid: keyId,
+      },
     });
 
     // Decode and log token structure for debugging (without signature)
