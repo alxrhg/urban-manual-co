@@ -5,14 +5,14 @@ import withPWAInit from "@ducanh2912/next-pwa";
 const cspDirectives = [
   "default-src 'self'",
   // Inline scripts are occasionally required for Next.js hydration/runtime.
-  // Added external script sources: Google Ads, Google Analytics, Vercel Live
-  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live",
+  // Added external script sources: Google Ads, Google Analytics, Vercel Live, Apple MapKit
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live https://cdn.apple-mapkit.com",
   // More granular control for script elements (separate from inline scripts)
-  "script-src-elem 'self' 'unsafe-inline' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live",
+  "script-src-elem 'self' 'unsafe-inline' https://maps.googleapis.com https://cdn.amcharts.com https://*.supabase.co https://*.supabase.in https://pagead2.googlesyndication.com https://www.googletagmanager.com https://fundingchoicesmessages.google.com https://ep2.adtrafficquality.google https://vercel.live https://cdn.apple-mapkit.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https://*",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://cdn.jsdelivr.net https://googleads.g.doubleclick.net https://*.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://*.api.sanity.io https://*.sentry.io https://*.ingest.sentry.io",
+  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://cdn.jsdelivr.net https://googleads.g.doubleclick.net https://*.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://*.api.sanity.io https://*.sentry.io https://*.ingest.sentry.io https://*.apple-mapkit.com https://*.ls.apple.com https://*.apple.com https://cdn.apple-mapkit.com https://*.mzstatic.com https://*.geo.apple.com https://*.cdn-apple.com https://featureassets.org https://prodregistryv2.org",
   "worker-src 'self' blob:",
   "child-src 'none'",
   "frame-ancestors 'none'",
@@ -21,7 +21,7 @@ const cspDirectives = [
   "manifest-src 'self'",
   "media-src 'self' https:",
   "object-src 'none'",
-  "frame-src https://googleads.g.doubleclick.net https://*.doubleclick.net https://tpc.googlesyndication.com https://ep2.adtrafficquality.google https://www.google.com",
+  "frame-src https://googleads.g.doubleclick.net https://*.doubleclick.net https://tpc.googlesyndication.com https://ep2.adtrafficquality.google https://www.google.com https://vercel.live",
   'upgrade-insecure-requests',
 ]
 
