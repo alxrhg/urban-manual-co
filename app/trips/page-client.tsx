@@ -1,14 +1,18 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Plus, Loader2, Plane, Search, X } from 'lucide-react';
+import {
+  Plus, Loader2, Plane, Search, X, MapPin, Calendar,
+  Compass, ArrowRight, MoreHorizontal, ExternalLink, Pencil,
+} from 'lucide-react';
 import { formatTripDateRange, calculateTripDays } from '@/lib/utils';
 import { formatDestinationsFromField } from '@/types/trip';
 import { TripCoverImage } from '@/components/trips/TripCoverImage';
 import { TripStats } from '@/components/trips/TripStats';
+import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import {
   getTripState,
   getTimeLabel,
@@ -32,6 +36,7 @@ interface TripsPageClientProps {
 
 export default function TripsPageClient({ initialTrips, userId }: TripsPageClientProps) {
   const router = useRouter();
+  const { switchToTrip, openPanel } = useTripBuilder();
   const [trips, setTrips] = useState<TripWithStats[]>(initialTrips);
   const [creating, setCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -78,17 +83,14 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
     // Sort: Upcoming by startDate ascending, Past by endDate descending
     filtered.sort((a, b) => {
       if (a.state === 'past' && b.state === 'past') {
-        // Past: most recent first
         const dateA = a.trip.end_date ? new Date(a.trip.end_date).getTime() : 0;
         const dateB = b.trip.end_date ? new Date(b.trip.end_date).getTime() : 0;
         return dateB - dateA;
       } else if (a.state !== 'past' && b.state !== 'past') {
-        // Upcoming/Planning: soonest first
         const dateA = a.trip.start_date ? new Date(a.trip.start_date).getTime() : Infinity;
         const dateB = b.trip.start_date ? new Date(b.trip.start_date).getTime() : Infinity;
         return dateA - dateB;
       } else {
-        // Put upcoming before past
         return a.state === 'past' ? 1 : -1;
       }
     });
@@ -124,36 +126,55 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
     }
   };
 
+  // Quick edit - load into sidebar and stay on page
+  const handleQuickEdit = useCallback(async (tripId: string) => {
+    await switchToTrip(tripId);
+    openPanel();
+  }, [switchToTrip, openPanel]);
+
+  // Browse & Add - load trip and go to homepage
+  const handleBrowseAdd = useCallback(async (tripId: string) => {
+    await switchToTrip(tripId);
+    openPanel();
+    router.push('/');
+  }, [switchToTrip, openPanel, router]);
+
   return (
     <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950">
       <div className="max-w-5xl mx-auto">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <h1 className="text-xl sm:text-2xl font-medium text-gray-900 dark:text-white">
-              Trips
-            </h1>
-
-            <div className="hidden sm:block flex-1" />
-
-            {trips.length > 0 && (
-              <p className="text-xs text-gray-400 dark:text-gray-500 hidden sm:block">
-                {trips.length} trip{trips.length !== 1 ? 's' : ''}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-2">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white">
+                Your Trips
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Plan, organize, and discover places for your adventures
               </p>
-            )}
+            </div>
 
-            <button
-              onClick={createTrip}
-              disabled={creating}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs font-medium hover:opacity-80 transition-opacity disabled:opacity-50 min-h-[44px]"
-            >
-              {creating ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4" />
-              )}
-              New Trip
-            </button>
+            <div className="sm:ml-auto flex items-center gap-3">
+              <Link
+                href="/"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                <Compass className="w-4 h-4" />
+                Discover Places
+              </Link>
+              <button
+                onClick={createTrip}
+                disabled={creating}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
+              >
+                {creating ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Plus className="w-4 h-4" />
+                )}
+                New Trip
+              </button>
+            </div>
           </div>
         </div>
 
@@ -161,129 +182,117 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
         {trips.length > 0 && (
           <div className="mb-6">
             <div className="flex items-center justify-between gap-4">
-              <div className="flex gap-x-1 sm:gap-x-4 text-xs overflow-x-auto scrollbar-hide -mx-1 px-1">
+              <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-full">
                 {[
-                  { key: 'all' as FilterTab, label: 'All', count: tabCounts.all },
-                  { key: 'upcoming' as FilterTab, label: 'Upcoming', count: tabCounts.upcoming },
-                  { key: 'past' as FilterTab, label: 'Past', count: tabCounts.past },
-                ].map(({ key, label, count }) => (
+                  { key: 'all' as FilterTab, label: 'All' },
+                  { key: 'upcoming' as FilterTab, label: 'Upcoming' },
+                  { key: 'past' as FilterTab, label: 'Past' },
+                ].map(({ key, label }) => (
                   <button
                     key={key}
                     onClick={() => setActiveTab(key)}
                     className={`
-                      transition-colors flex items-center gap-1.5 whitespace-nowrap
-                      px-3 py-2 sm:px-2 sm:py-1 rounded-full sm:rounded-none
-                      min-h-[40px] sm:min-h-0
+                      px-4 py-2 text-sm font-medium rounded-full transition-all
                       ${activeTab === key
-                        ? 'font-medium text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-800 sm:bg-transparent sm:dark:bg-transparent'
-                        : 'font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+                        ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                       }
                     `}
                   >
-                    {count > 0 && (
-                      <span className={`
-                        w-4 h-4 rounded-full text-[10px] flex items-center justify-center
-                        ${activeTab === key
-                          ? 'bg-gray-200 dark:bg-gray-700'
-                          : 'bg-gray-100 dark:bg-gray-800'
-                        }
-                      `}>
-                        {count}
+                    {label}
+                    {tabCounts[key] > 0 && (
+                      <span className="ml-1.5 text-[11px] opacity-60">
+                        {tabCounts[key]}
                       </span>
                     )}
-                    {label}
                   </button>
                 ))}
               </div>
 
-              {/* Search Toggle */}
-              <button
-                onClick={() => setSearchQuery(searchQuery ? '' : ' ')}
-                className={`
-                  p-2 rounded-lg transition-colors min-h-[40px] min-w-[40px] flex items-center justify-center
-                  ${searchQuery
-                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                    : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 dark:text-gray-500'
-                  }
-                `}
-              >
-                <Search className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Search Input */}
-            {searchQuery !== '' && (
-              <div className="mt-4 relative">
+              {/* Search */}
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search trips..."
-                  value={searchQuery.trim()}
+                  placeholder="Search..."
+                  value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  autoFocus
-                  className="w-full pl-10 pr-10 py-3 bg-stone-100/80 dark:bg-gray-800/80 border border-stone-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:border-stone-400 dark:focus:border-gray-500 transition-all"
+                  className="w-48 pl-9 pr-3 py-2 bg-gray-100 dark:bg-gray-800 border-0 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-600"
                 />
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
-            )}
+            </div>
           </div>
         )}
 
         {/* Trip List */}
         {trips.length === 0 ? (
           /* Empty State */
-          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-700 bg-stone-50/50 dark:bg-gray-800/30">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-              <Plane className="w-7 h-7 text-gray-400" />
+          <div className="text-center py-20 px-6">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+              <Plane className="w-9 h-9 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              Plan your next adventure
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-8 max-w-sm mx-auto">
-              Create a trip to organize your itinerary, track flights and hotels, and discover great places.
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Start planning your next adventure
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-md mx-auto">
+              Create a trip to save places, plan your itinerary, and get personalized recommendations.
             </p>
-            <button
-              onClick={createTrip}
-              disabled={creating}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-black dark:bg-white text-white dark:text-black text-sm font-medium hover:opacity-80 transition-opacity disabled:opacity-50"
-            >
-              {creating ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Plus className="w-4 h-4" />
-              )}
-              Create Your First Trip
-            </button>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={createTrip}
+                disabled={creating}
+                className="flex items-center gap-2 px-6 py-3 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-medium hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors disabled:opacity-50"
+              >
+                {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                Create Trip
+              </button>
+              <Link
+                href="/"
+                className="flex items-center gap-2 px-6 py-3 rounded-full text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <Compass className="w-4 h-4" />
+                Browse Destinations
+              </Link>
+            </div>
           </div>
         ) : filteredTrips.length === 0 ? (
           /* No Results */
-          <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-stone-200 dark:border-gray-700 bg-stone-50/50 dark:bg-gray-800/30">
-            <div className="w-14 h-14 mx-auto mb-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <div className="text-center py-16">
+            <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <Search className="w-6 h-6 text-gray-400" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No matching trips
+              No trips found
             </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-              {searchQuery.trim() ? `No trips found for "${searchQuery.trim()}"` : `No ${activeTab} trips found`}
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              {searchQuery.trim() ? `No results for "${searchQuery.trim()}"` : `No ${activeTab} trips`}
             </p>
             <button
               onClick={() => { setSearchQuery(''); setActiveTab('all'); }}
-              className="text-sm font-medium text-gray-900 dark:text-white underline underline-offset-4 hover:opacity-70 transition-opacity"
+              className="text-sm font-medium text-gray-900 dark:text-white hover:underline"
             >
               Clear filters
             </button>
           </div>
         ) : (
-          /* Trip List */
-          <div className="space-y-3">
+          /* Trip Grid */
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredTrips.map(({ trip, state }) => (
-              <TripCard key={trip.id} trip={trip} state={state} />
+              <TripCard
+                key={trip.id}
+                trip={trip}
+                state={state}
+                onQuickEdit={() => handleQuickEdit(trip.id)}
+                onBrowseAdd={() => handleBrowseAdd(trip.id)}
+              />
             ))}
           </div>
         )}
@@ -293,91 +302,152 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
 }
 
 /**
- * Individual Trip Card Component
+ * Trip Card with unified actions
  */
 interface TripCardProps {
   trip: TripWithStats;
   state: TripState;
+  onQuickEdit: () => void;
+  onBrowseAdd: () => void;
 }
 
-function TripCard({ trip, state }: TripCardProps) {
+function TripCard({ trip, state, onQuickEdit, onBrowseAdd }: TripCardProps) {
+  const [showActions, setShowActions] = useState(false);
   const daysCount = calculateTripDays(trip.start_date, trip.end_date);
   const dateDisplay = formatTripDateRange(trip.start_date, trip.end_date);
+  const destinations = formatDestinationsFromField(trip.destination);
 
   const isPast = state === 'past';
   const isPlanning = state === 'planning';
   const totalItems = getTotalItems(trip.stats);
-
-  // Time label (countdown or relative time)
   const timeLabel = getTimeLabel(trip.start_date, trip.end_date, state);
 
-  // Action CTA for planning state
-  const actionCTA = isPlanning ? getActionCTA(trip.stats) : null;
-
-  // Build meta line: "Dec 14 – 16 · 3 days"
-  const metaParts: string[] = [];
-  if (dateDisplay) metaParts.push(dateDisplay);
-  if (daysCount && daysCount > 0) metaParts.push(`${daysCount} day${daysCount !== 1 ? 's' : ''}`);
-
   return (
-    <Link
-      href={`/trips/${trip.id}`}
+    <div
       className={`
-        group flex gap-4 p-4 rounded-2xl
+        group relative flex flex-col rounded-2xl overflow-hidden
         bg-white dark:bg-gray-900
-        border border-stone-200 dark:border-gray-700
-        hover:bg-stone-100/80 dark:hover:bg-gray-800/80
-        transition-all duration-200 ease-out cursor-pointer
-        ${isPast ? 'opacity-80' : ''}
+        border border-gray-200 dark:border-gray-800
+        hover:border-gray-300 dark:hover:border-gray-700
+        hover:shadow-lg
+        transition-all duration-200
+        ${isPast ? 'opacity-75' : ''}
       `}
     >
       {/* Cover Image */}
-      <TripCoverImage
-        coverImageUrl={trip.cover_image}
-        title={trip.title}
-        isPast={isPast}
-        className="w-16 h-16 sm:w-20 sm:h-20"
-      />
+      <div className="relative h-32 bg-gray-100 dark:bg-gray-800">
+        <TripCoverImage
+          coverImageUrl={trip.cover_image}
+          title={trip.title}
+          isPast={isPast}
+          className="w-full h-full"
+        />
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        {/* Title */}
-        <h3 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-          {trip.title}
-        </h3>
-
-        {/* Meta: dates, duration */}
-        {metaParts.length > 0 && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-0.5 truncate">
-            {metaParts.join(' · ')}
-          </p>
+        {/* Time badge */}
+        {timeLabel && (
+          <div className="absolute top-3 left-3 px-2 py-1 rounded-full bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium">
+            {timeLabel}
+          </div>
         )}
 
-        {/* Stats */}
-        <div className="mt-1">
-          {totalItems > 0 ? (
-            <TripStats stats={trip.stats} />
-          ) : (
-            <span className="text-sm text-gray-500 dark:text-gray-400">
-              No plans yet
-            </span>
-          )}
-        </div>
+        {/* Actions menu */}
+        <div className="absolute top-3 right-3">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              setShowActions(!showActions);
+            }}
+            className="p-2 rounded-full bg-black/40 backdrop-blur-sm text-white hover:bg-black/60 transition-colors"
+          >
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
 
-        {/* Time Label or Action CTA */}
-        <div className="mt-auto pt-1 flex items-center justify-end">
-          {actionCTA && !isPast && (
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {actionCTA}
-            </span>
-          )}
-          {timeLabel && !actionCTA && (
-            <span className="text-sm text-gray-400 dark:text-gray-500">
-              {timeLabel}
-            </span>
+          {showActions && (
+            <div className="absolute top-full right-0 mt-1 w-44 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-10 animate-in fade-in slide-in-from-top-2 duration-150">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  onQuickEdit();
+                  setShowActions(false);
+                }}
+                className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <Pencil className="w-4 h-4" />
+                Quick Edit
+              </button>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  onBrowseAdd();
+                  setShowActions(false);
+                }}
+                className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <Compass className="w-4 h-4" />
+                Browse & Add
+              </button>
+              <Link
+                href={`/trips/${trip.id}`}
+                className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+              >
+                <ExternalLink className="w-4 h-4" />
+                Full Editor
+              </Link>
+            </div>
           )}
         </div>
       </div>
-    </Link>
+
+      {/* Content */}
+      <div className="flex-1 p-4">
+        <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white mb-1 truncate">
+          {trip.title}
+        </h3>
+
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-3">
+          {destinations && (
+            <span className="flex items-center gap-1 truncate">
+              <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
+              {destinations}
+            </span>
+          )}
+          {dateDisplay && (
+            <>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                {dateDisplay}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Stats */}
+        {totalItems > 0 ? (
+          <TripStats stats={trip.stats} />
+        ) : (
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            {isPlanning ? 'Start adding places' : 'No places saved'}
+          </p>
+        )}
+      </div>
+
+      {/* Actions bar */}
+      <div className="px-4 pb-4 pt-0 flex gap-2">
+        <button
+          onClick={onBrowseAdd}
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+        >
+          <Compass className="w-4 h-4" />
+          Add Places
+        </button>
+        <Link
+          href={`/trips/${trip.id}`}
+          className="px-4 py-2.5 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        >
+          <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+    </div>
   );
 }
