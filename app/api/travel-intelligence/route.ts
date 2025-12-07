@@ -1082,100 +1082,123 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     // 7. Search destinations
     let results: any[] = [];
 
-    if (embedding) {
-      try {
-        let upstashFilter: string | undefined;
-        const filterParts: string[] = [];
+    // Try database search first (more reliable) and vector search in parallel
+    const [dbResults, vectorResults] = await Promise.all([
+      // Database search (primary)
+      (async () => {
+        try {
+          let dbQuery = supabase.from('destinations').select('*');
 
-        if (intent.filters.city) {
-          filterParts.push(`city = '${intent.filters.city}'`);
-        }
-        if (intent.filters.category) {
-          filterParts.push(`category = '${intent.filters.category}'`);
-        }
-        if (intent.filters.michelin) {
-          filterParts.push(`michelin_stars > 0`);
-        }
-
-        if (filterParts.length > 0) {
-          upstashFilter = filterParts.join(' AND ');
-        }
-
-        const vectorResults = await queryVectorIndex(embedding, {
-          topK: 50,
-          filter: upstashFilter,
-          includeMetadata: true,
-        });
-
-        if (vectorResults && vectorResults.length > 0) {
-          const ids = vectorResults.map((r: VectorSearchResult) => r.metadata.destination_id);
-          const { data: fullDests } = await supabase
-            .from('destinations')
-            .select('*')
-            .in('id', ids);
-
-          if (fullDests) {
-            results = fullDests.map(dest => {
-              const vectorResult = vectorResults.find((r: VectorSearchResult) => r.metadata.destination_id === dest.id);
-              return {
-                ...dest,
-                similarity: vectorResult?.score || 0,
-              };
-            });
+          // Apply filters - use ilike for case-insensitive matching
+          if (intent.filters.city) {
+            dbQuery = dbQuery.ilike('city', `%${intent.filters.city}%`);
           }
+          if (intent.filters.category) {
+            dbQuery = dbQuery.ilike('category', `%${intent.filters.category}%`);
+          }
+          if (intent.filters.michelin) {
+            dbQuery = dbQuery.gt('michelin_stars', 0);
+          }
+          if (intent.filters.priceMax) {
+            dbQuery = dbQuery.lte('price_level', intent.filters.priceMax);
+          }
+          if (intent.filters.priceMin) {
+            dbQuery = dbQuery.gte('price_level', intent.filters.priceMin);
+          }
+
+          dbQuery = dbQuery.limit(100);
+
+          const { data, error } = await dbQuery;
+
+          if (error) {
+            console.error('[Travel Intelligence] Database error:', error);
+            return [];
+          }
+
+          console.log('[Travel Intelligence] Database found', data?.length || 0, 'results for', intent.filters.city, intent.filters.category);
+          return data || [];
+        } catch (e) {
+          console.error('[Travel Intelligence] Database query failed:', e);
+          return [];
         }
-      } catch (vectorError) {
-        console.error('Vector search failed:', vectorError);
+      })(),
+
+      // Vector search (secondary, for semantic ranking)
+      (async () => {
+        if (!embedding) return [];
+
+        try {
+          // Query without filters first to get semantic matches
+          // Then filter in memory (more reliable than string matching in metadata)
+          const vectorHits = await queryVectorIndex(embedding, {
+            topK: 100,
+            includeMetadata: true,
+          });
+
+          if (vectorHits && vectorHits.length > 0) {
+            // Filter results by city/category in memory (case-insensitive)
+            let filteredHits = vectorHits;
+
+            if (intent.filters.city) {
+              const cityLower = intent.filters.city.toLowerCase();
+              filteredHits = filteredHits.filter(r =>
+                r.metadata.city?.toLowerCase().includes(cityLower)
+              );
+            }
+
+            if (intent.filters.category) {
+              const catLower = intent.filters.category.toLowerCase();
+              filteredHits = filteredHits.filter(r =>
+                r.metadata.category?.toLowerCase().includes(catLower)
+              );
+            }
+
+            console.log('[Travel Intelligence] Vector search found', filteredHits.length, 'filtered results');
+            return filteredHits;
+          }
+          return [];
+        } catch (vectorError) {
+          console.error('[Travel Intelligence] Vector search failed:', vectorError);
+          return [];
+        }
+      })(),
+    ]);
+
+    // Merge results: Use database results as base, boost with vector similarity
+    if (dbResults.length > 0) {
+      const vectorScoreMap = new Map(
+        vectorResults.map(v => [v.metadata.destination_id, v.score])
+      );
+
+      results = dbResults.map(dest => ({
+        ...dest,
+        similarity: vectorScoreMap.get(dest.id) || 0,
+      }));
+
+      // Sort by similarity if we have vector results
+      if (vectorResults.length > 0) {
+        results.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+      }
+    } else if (vectorResults.length > 0) {
+      // Fallback to vector results only if DB returned nothing
+      const ids = vectorResults.map(r => r.metadata.destination_id);
+      const { data: fullDests } = await supabase
+        .from('destinations')
+        .select('*')
+        .in('id', ids);
+
+      if (fullDests) {
+        results = fullDests.map(dest => {
+          const vectorResult = vectorResults.find(r => r.metadata.destination_id === dest.id);
+          return {
+            ...dest,
+            similarity: vectorResult?.score || 0,
+          };
+        });
       }
     }
 
-    // 8. Fallback to database search (always try if vector search returned nothing)
-    if (results.length === 0) {
-      console.log('[Travel Intelligence] Vector search returned 0, trying database fallback');
-      console.log('[Travel Intelligence] Filters:', JSON.stringify(intent.filters));
-
-      let dbQuery = supabase.from('destinations').select('*');
-
-      // Apply filters - use ilike for case-insensitive matching
-      if (intent.filters.city) {
-        dbQuery = dbQuery.ilike('city', `%${intent.filters.city}%`);
-      }
-      if (intent.filters.category) {
-        dbQuery = dbQuery.ilike('category', `%${intent.filters.category}%`);
-      }
-      if (intent.filters.michelin) {
-        dbQuery = dbQuery.gt('michelin_stars', 0);
-      }
-      if (intent.filters.priceMax) {
-        dbQuery = dbQuery.lte('price_level', intent.filters.priceMax);
-      }
-      if (intent.filters.priceMin) {
-        dbQuery = dbQuery.gte('price_level', intent.filters.priceMin);
-      }
-
-      const searchTerms = query.toLowerCase().split(' ')
-        .filter(t => t.length > 2 && !['the', 'and', 'for', 'with', 'in'].includes(t));
-
-      if (searchTerms.length > 0 && !intent.filters.city && !intent.filters.category) {
-        const searchPattern = searchTerms.join('%');
-        dbQuery = dbQuery.or(`name.ilike.%${searchPattern}%,description.ilike.%${searchPattern}%,micro_description.ilike.%${searchPattern}%`);
-      }
-
-      dbQuery = dbQuery.limit(100);
-
-      const { data: dbResults, error } = await dbQuery;
-
-      if (error) {
-        console.error('[Travel Intelligence] Database search error:', error);
-      } else if (dbResults) {
-        console.log('[Travel Intelligence] Database returned', dbResults.length, 'results');
-        results = dbResults;
-      } else {
-        console.log('[Travel Intelligence] Database returned null/undefined');
-      }
-    }
-
-    // 9. Apply vibe filtering and boost
+    // 8. Apply vibe filtering and boost
     if (intent.vibes.length > 0 && results.length > 0) {
       results = results.map(dest => {
         const destVibes = dest.vibe_tags || [];
@@ -1192,7 +1215,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       results.sort((a, b) => (b.vibeScore || 0) - (a.vibeScore || 0));
     }
 
-    // 10. Apply intelligent ranking
+    // 9. Apply intelligent ranking
     let rankedResults = results;
 
     try {
@@ -1216,10 +1239,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       console.error('Ranking failed:', rankError);
     }
 
-    // 11. Limit results
+    // 10. Limit results
     const finalResults = rankedResults.slice(0, resultLimit);
 
-    // 12. Generate LLM-powered response
+    // 11. Generate LLM-powered response
     const response = await generateLLMResponse(
       intent,
       finalResults,
@@ -1228,10 +1251,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       tasteProfile
     );
 
-    // 13. Generate follow-ups
+    // 12. Generate follow-ups
     const followUps = generateFollowUps(intent, finalResults, conversationHistory, tasteProfile);
 
-    // 14. Update taste profile
+    // 13. Update taste profile
     if (userId) {
       await updateTasteProfile(userId, intent, finalResults, supabase);
     }
