@@ -4,21 +4,12 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { MapPin, Loader2 } from 'lucide-react';
-
-interface Recommendation {
-  slug: string;
-  name: string;
-  city: string;
-  category: string;
-  image: string | null;
-  michelin_stars: number | null;
-  crown?: boolean;
-}
+import { Destination } from '@/types/destination';
 
 interface DrawerRecommendationsProps {
   destinationSlug: string;
   isOpen: boolean;
-  onDestinationClick?: (slug: string) => void;
+  onDestinationClick?: (destination: Destination) => void;
   className?: string;
 }
 
@@ -41,7 +32,7 @@ export function DrawerRecommendations({
   className = '',
 }: DrawerRecommendationsProps) {
   const router = useRouter();
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [recommendations, setRecommendations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -142,7 +133,7 @@ export function DrawerRecommendations({
               onClick={() => {
                 if (rec.slug && rec.slug.trim()) {
                   if (onDestinationClick) {
-                    onDestinationClick(rec.slug);
+                    onDestinationClick(rec);
                   } else {
                     router.push(`/destination/${rec.slug}`);
                   }
@@ -187,7 +178,7 @@ export function DrawerRecommendations({
                 {rec.name}
               </h4>
               <span className="text-xs text-gray-500 dark:text-gray-400">
-                {capitalizeCity(rec.city)}
+                {rec.city && capitalizeCity(rec.city)}
               </span>
             </button>
           ))}
