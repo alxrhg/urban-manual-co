@@ -86,11 +86,14 @@ export default function InteractiveHero() {
     ? [...featuredCities, ...remainingCities]
     : featuredCities;
 
-  // Handle search submit
+  // Handle search submit - opens AI chat with query
   const handleSearch = useCallback((e: React.FormEvent) => {
     e.preventDefault();
-    setSearchTerm(localSearchTerm);
-  }, [localSearchTerm, setSearchTerm]);
+    if (localSearchTerm.trim()) {
+      openAIChat(localSearchTerm.trim());
+      setLocalSearchTerm(''); // Clear input after opening chat
+    }
+  }, [localSearchTerm, openAIChat]);
 
   // Handle city filter
   const handleCityClick = useCallback((city: string) => {

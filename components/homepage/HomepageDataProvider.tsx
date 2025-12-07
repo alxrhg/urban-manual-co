@@ -41,6 +41,7 @@ interface HomepageDataContextType {
 
   // AI Chat state
   isAIChatOpen: boolean;
+  aiChatInitialQuery: string;
 
   // Advanced filters
   michelinOnly: boolean;
@@ -55,7 +56,7 @@ interface HomepageDataContextType {
   clearFilters: () => void;
   openDestination: (destination: Destination) => void;
   closeDrawer: () => void;
-  openAIChat: () => void;
+  openAIChat: (initialQuery?: string) => void;
   closeAIChat: () => void;
   setMichelinOnly: (value: boolean) => void;
   setCrownOnly: (value: boolean) => void;
@@ -131,6 +132,7 @@ function HomepageDataProviderInner({
 
   // AI Chat state
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [aiChatInitialQuery, setAIChatInitialQuery] = useState('');
 
   // Advanced filters
   const [michelinOnly, setMichelinOnly] = useState(false);
@@ -303,14 +305,19 @@ function HomepageDataProviderInner({
     setTimeout(() => setSelectedDestination(null), 300);
   }, []);
 
-  // Open AI chat
-  const openAIChat = useCallback(() => {
+  // Open AI chat with optional initial query
+  const openAIChat = useCallback((initialQuery?: string) => {
+    if (initialQuery) {
+      setAIChatInitialQuery(initialQuery);
+    }
     setIsAIChatOpen(true);
   }, []);
 
   // Close AI chat
   const closeAIChat = useCallback(() => {
     setIsAIChatOpen(false);
+    // Clear initial query after close animation
+    setTimeout(() => setAIChatInitialQuery(''), 300);
   }, []);
 
   const contextValue: HomepageDataContextType = {
@@ -329,6 +336,7 @@ function HomepageDataProviderInner({
     selectedDestination,
     isDrawerOpen,
     isAIChatOpen,
+    aiChatInitialQuery,
     michelinOnly,
     crownOnly,
     setCurrentPage,

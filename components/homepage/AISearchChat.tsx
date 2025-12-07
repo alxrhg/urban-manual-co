@@ -30,14 +30,16 @@ interface ChatMessage {
 interface AISearchChatProps {
   isOpen: boolean;
   onClose: () => void;
+  initialQuery?: string;
 }
 
-export function AISearchChat({ isOpen, onClose }: AISearchChatProps) {
+export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProps) {
   const { openDestination, destinations } = useHomepageData();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [hasProcessedInitialQuery, setHasProcessedInitialQuery] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -50,8 +52,27 @@ export function AISearchChat({ isOpen, onClose }: AISearchChatProps) {
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
+    } else {
+      // Reset state when closed
+      setHasProcessedInitialQuery(false);
     }
   }, [isOpen]);
+
+  // Handle initial query when chat opens
+  useEffect(() => {
+    if (isOpen && initialQuery && !hasProcessedInitialQuery && !isLoading) {
+      setHasProcessedInitialQuery(true);
+      setInput(initialQuery);
+      // Automatically send the initial query after a brief delay
+      setTimeout(() => {
+        const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
+        const form = inputRef.current?.closest('form');
+        if (form) {
+          form.dispatchEvent(submitEvent);
+        }
+      }, 200);
+    }
+  }, [isOpen, initialQuery, hasProcessedInitialQuery, isLoading]);
 
   // Handle keyboard escape
   useEffect(() => {

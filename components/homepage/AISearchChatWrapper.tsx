@@ -10,9 +10,15 @@ import { AISearchChat } from './AISearchChat';
  * Handles open/close state from the global context.
  */
 export function AISearchChatWrapper() {
-  const { isAIChatOpen, closeAIChat } = useHomepageData();
+  const { isAIChatOpen, closeAIChat, aiChatInitialQuery } = useHomepageData();
 
-  return <AISearchChat isOpen={isAIChatOpen} onClose={closeAIChat} />;
+  return (
+    <AISearchChat
+      isOpen={isAIChatOpen}
+      onClose={closeAIChat}
+      initialQuery={aiChatInitialQuery}
+    />
+  );
 }
 
 export default AISearchChatWrapper;
