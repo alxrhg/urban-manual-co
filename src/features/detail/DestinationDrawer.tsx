@@ -550,7 +550,8 @@ export function DestinationDrawer({
             {(enrichedData?.rating || destination.price_level) && (
               <div className="flex items-center gap-2 mt-2">
                 {enrichedData?.rating && (
-                  <span className="flex items-center gap-1 text-[13px]">
+                  <span className="flex items-center gap-1.5 text-[13px]">
+                    <img src="https://www.google.com/favicon.ico" alt="Google" className="h-3.5 w-3.5" />
                     <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
                     <span className="font-medium text-gray-900 dark:text-white">{enrichedData.rating.toFixed(1)}</span>
                     {enrichedData.user_ratings_total && <span className="text-gray-500">({enrichedData.user_ratings_total.toLocaleString()})</span>}
@@ -629,23 +630,35 @@ export function DestinationDrawer({
             </button>
           )}
 
-          {/* Tab Navigation - text link style */}
-          <div className="flex items-center gap-4 mt-6 text-[13px]">
+          {/* Tab Navigation - pill style */}
+          <div className="flex items-center gap-1.5 mt-6">
             <button
               onClick={() => setActiveTab('overview')}
-              className={`transition-colors duration-200 ${activeTab === 'overview' ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+              className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 ${
+                activeTab === 'overview'
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'bg-gray-100 dark:bg-white/[0.08] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
+              }`}
             >
               Overview
             </button>
             <button
               onClick={() => setActiveTab('details')}
-              className={`transition-colors duration-200 ${activeTab === 'details' ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+              className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 ${
+                activeTab === 'details'
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'bg-gray-100 dark:bg-white/[0.08] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
+              }`}
             >
               Details
             </button>
             <button
               onClick={() => setActiveTab('related')}
-              className={`transition-colors duration-200 ${activeTab === 'related' ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+              className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 ${
+                activeTab === 'related'
+                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                  : 'bg-gray-100 dark:bg-white/[0.08] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
+              }`}
             >
               Related
             </button>
