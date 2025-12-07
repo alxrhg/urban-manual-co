@@ -131,15 +131,18 @@ export async function GET(request: Request) {
 
     // Build JWT per Apple MapKit JS requirements
     // Required claims: iss (Team ID), iat, exp
-    // Note: Omitting origin claim to allow token to work across all Vercel preview deployments
+    // Always include origin - Apple may require it for tile authorization
     const payload: Record<string, unknown> = {
       iss: teamId,
       iat: now,
       exp: now + 60 * 60 * 24, // 24 hours - longer expiry for better UX
     };
-    // Only add origin for production domain to prevent origin mismatch on preview deployments
-    if (origin && origin.includes('urbanmanual.co')) {
+    // Always add origin if available - required for map tiles to load
+    if (origin) {
       payload.origin = origin;
+      console.log('[MapKit Token] Including origin in token:', origin);
+    } else {
+      console.warn('[MapKit Token] No origin available - tiles may not load');
     }
 
     const token = jwt.sign(payload, privateKey, {
