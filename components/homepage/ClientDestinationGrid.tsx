@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useCallback } from 'react';
 import { useHomepageData } from './HomepageDataProvider';
 import { InstantGridSkeleton } from './InstantGridSkeleton';
 import { ServerDestinationGrid } from './ServerDestinationGrid';
@@ -34,6 +35,74 @@ export function ClientDestinationGrid() {
   } = useHomepageData();
 
   const hasFilters = selectedCity || selectedCategory || searchTerm || michelinOnly || crownOnly;
+
+  // Reference for swipe detection
+  const containerRef = useRef<HTMLDivElement>(null);
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  // Handle page navigation
+  const goToNextPage = useCallback(() => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  }, [currentPage, totalPages, setCurrentPage]);
+
+  const goToPrevPage = useCallback(() => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  }, [currentPage, setCurrentPage]);
+
+  // Keyboard navigation: Left/Right arrow keys
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle if user is typing in an input
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goToPrevPage();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        goToNextPage();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [goToNextPage, goToPrevPage]);
+
+  // Swipe navigation for mobile
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchEndX.current = null;
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    touchEndX.current = e.touches[0].clientX;
+  }, []);
+
+  const handleTouchEnd = useCallback(() => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+
+    const swipeDistance = touchStartX.current - touchEndX.current;
+    const minSwipeDistance = 75; // Minimum swipe distance in pixels
+
+    if (swipeDistance > minSwipeDistance) {
+      // Swiped left -> next page
+      goToNextPage();
+    } else if (swipeDistance < -minSwipeDistance) {
+      // Swiped right -> previous page
+      goToPrevPage();
+    }
+
+    touchStartX.current = null;
+    touchEndX.current = null;
+  }, [goToNextPage, goToPrevPage]);
 
   // Show skeleton while loading
   if (isLoading) {
@@ -113,7 +182,12 @@ export function ClientDestinationGrid() {
   }
 
   return (
-    <div>
+    <div
+      ref={containerRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Grid */}
       <ClientGridWrapper
         destinations={displayedDestinations}
@@ -189,10 +263,16 @@ export function ClientDestinationGrid() {
         </div>
       )}
 
-      {/* Results count */}
+      {/* Results count & keyboard hint */}
       <div className="text-center text-[13px] text-gray-400 dark:text-gray-500 mb-8">
-        Showing {(currentPage - 1) * displayedDestinations.length + 1}-
-        {Math.min(currentPage * displayedDestinations.length, filteredDestinations.length)} of {filteredDestinations.length} destinations
+        <span>
+          Showing {(currentPage - 1) * displayedDestinations.length + 1}-
+          {Math.min(currentPage * displayedDestinations.length, filteredDestinations.length)} of {filteredDestinations.length} destinations
+        </span>
+        <span className="hidden md:inline ml-2">
+          • Use <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">←</kbd>{' '}
+          <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">→</kbd> to navigate
+        </span>
       </div>
     </div>
   );

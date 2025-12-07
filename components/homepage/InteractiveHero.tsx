@@ -113,6 +113,23 @@ export default function InteractiveHero() {
   const [lastQuery, setLastQuery] = useState('');
   const [lastFilters, setLastFilters] = useState<{ city?: string | null; category?: string | null }>({});
 
+  // Close chat results but keep grid filters
+  const handleCloseChatResults = useCallback((resetFilters = false) => {
+    setShowChatResults(false);
+    setChatResponse('');
+    setChatDestinations([]);
+    setFollowUpSuggestions([]);
+    setConversationHistory([]);
+    setLastQuery('');
+
+    // Optionally reset grid filters
+    if (resetFilters) {
+      setSelectedCity('');
+      setSelectedCategory('');
+      setLastFilters({});
+    }
+  }, [setSelectedCity, setSelectedCategory]);
+
   // Rotate placeholders when input is empty and not focused
   useEffect(() => {
     if (localSearchTerm.trim() || isFocused || showChatResults) return;
@@ -131,14 +148,14 @@ export default function InteractiveHero() {
         e.preventDefault();
         inputRef.current?.focus();
       }
-      // Press Escape to close chat results
+      // Press Escape to close chat results (keep filters)
       if (e.key === 'Escape' && showChatResults) {
-        handleCloseChatResults();
+        handleCloseChatResults(false);
       }
     };
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [showChatResults]);
+  }, [showChatResults, handleCloseChatResults]);
 
   // Get user's first name for greeting
   const userName = user?.user_metadata?.name?.split(' ')[0] ||
@@ -189,6 +206,15 @@ export default function InteractiveHero() {
       const filters = data.filters || {};
       setLastFilters(filters);
 
+      // Sync AI search filters with the grid
+      // This makes the grid show related results
+      if (filters.city) {
+        setSelectedCity(filters.city);
+      }
+      if (filters.category) {
+        setSelectedCategory(filters.category);
+      }
+
       // Generate contextual follow-up suggestions
       const followUps = generateFollowUps(query, data.destinations || [], filters);
       setFollowUpSuggestions(followUps);
@@ -216,17 +242,6 @@ export default function InteractiveHero() {
     setLocalSearchTerm(suggestion);
     handleSearch(undefined, suggestion);
   }, [handleSearch]);
-
-  // Close chat results
-  const handleCloseChatResults = useCallback(() => {
-    setShowChatResults(false);
-    setChatResponse('');
-    setChatDestinations([]);
-    setFollowUpSuggestions([]);
-    setConversationHistory([]);
-    setLastQuery('');
-    setLastFilters({});
-  }, []);
 
   // Handle city filter
   const handleCityClick = useCallback((city: string) => {
@@ -330,7 +345,7 @@ export default function InteractiveHero() {
                   <span>AI Response for "{lastQuery}"</span>
                 </div>
                 <button
-                  onClick={handleCloseChatResults}
+                  onClick={() => handleCloseChatResults(false)}
                   className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
                   aria-label="Close results"
                 >
@@ -384,11 +399,15 @@ export default function InteractiveHero() {
                 </div>
               )}
 
-              {/* Show more results link */}
-              {chatDestinations.length > 4 && (
-                <p className="text-[12px] text-gray-500 dark:text-gray-400 mb-4">
-                  +{chatDestinations.length - 4} more results
-                </p>
+              {/* See all in grid link */}
+              {(lastFilters.city || lastFilters.category) && filteredDestinations.length > 0 && (
+                <button
+                  onClick={() => handleCloseChatResults(false)}
+                  className="text-[13px] font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-1.5 hover:underline"
+                >
+                  See all {filteredDestinations.length} results in grid
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               )}
 
               {/* Follow-up suggestions */}
@@ -406,7 +425,7 @@ export default function InteractiveHero() {
                     </button>
                   ))}
                   <button
-                    onClick={handleCloseChatResults}
+                    onClick={() => handleCloseChatResults(true)}
                     className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500
                                hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex items-center gap-1"
                   >
