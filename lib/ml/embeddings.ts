@@ -110,13 +110,14 @@ export async function generateDestinationEmbedding(destination: {
 
 /**
  * Fallback: Generate embedding using OpenAI directly
- * Uses the same model as lib/llm.ts for consistency (text-embedding-3-large by default)
+ * Uses text-embedding-3-large with 1536 dimensions to match Upstash Vector index
  */
 async function generateTextEmbeddingOpenAI(text: string): Promise<EmbeddingResult> {
   const openai = getOpenAIClient();
   const response = await openai.embeddings.create({
     model: OPENAI_EMBEDDING_MODEL,
     input: text,
+    dimensions: 1536, // Match Upstash Vector index dimension
   });
 
   return {

@@ -1,13 +1,38 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { Sparkles, Send, Loader2, X, MapPin, ArrowRight, RefreshCw } from 'lucide-react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { Sparkles, Send, Loader2, X, MapPin, ArrowRight, RefreshCw, Search, Bookmark, CheckCircle, Map } from 'lucide-react';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHomepageData } from './HomepageDataProvider';
 import { Destination } from '@/types/destination';
 import Image from 'next/image';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
+import { useRouter } from 'next/navigation';
+
+// Instant search result type
+interface InstantResult {
+  type: 'destination' | 'saved' | 'visited' | 'trip' | 'suggestion';
+  id: string | number;
+  name: string;
+  subtitle: string;
+  city?: string;
+  category?: string;
+  slug?: string;
+  image?: string;
+  score?: number;
+  tripId?: string;
+}
+
+// Debounce hook
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 const FEATURED_CITIES = ['Taipei', 'Tokyo', 'New York', 'London'];
 
@@ -97,12 +122,22 @@ export default function InteractiveHero() {
     setMichelinOnly,
   } = useHomepageData();
 
+  const router = useRouter();
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [showAllCities, setShowAllCities] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Instant search state
+  const [instantResults, setInstantResults] = useState<InstantResult[]>([]);
+  const [instantSuggestions, setInstantSuggestions] = useState<string[]>([]);
+  const [isLoadingInstant, setIsLoadingInstant] = useState(false);
+  const [showInstantResults, setShowInstantResults] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const debouncedQuery = useDebounce(localSearchTerm, 150);
 
   // Inline chat state
   const [chatResponse, setChatResponse] = useState('');
@@ -158,10 +193,113 @@ export default function InteractiveHero() {
       if (e.key === 'Escape' && showChatResults) {
         handleCloseChatResults(false);
       }
+      // Press Escape to close instant results
+      if (e.key === 'Escape' && showInstantResults) {
+        setShowInstantResults(false);
+      }
     };
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [showChatResults, handleCloseChatResults]);
+  }, [showChatResults, showInstantResults, handleCloseChatResults]);
+
+  // Instant search effect - fetch as user types
+  useEffect(() => {
+    if (!debouncedQuery || debouncedQuery.length < 2 || showChatResults) {
+      setInstantResults([]);
+      setInstantSuggestions([]);
+      setShowInstantResults(false);
+      return;
+    }
+
+    const fetchInstantResults = async () => {
+      setIsLoadingInstant(true);
+      try {
+        const response = await fetch(`/api/search/instant?q=${encodeURIComponent(debouncedQuery)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setInstantResults(data.results || []);
+          setInstantSuggestions(data.suggestions || []);
+          setShowInstantResults(true);
+          setSelectedIndex(-1);
+        }
+      } catch (error) {
+        console.error('Instant search error:', error);
+      } finally {
+        setIsLoadingInstant(false);
+      }
+    };
+
+    fetchInstantResults();
+  }, [debouncedQuery, showChatResults]);
+
+  // Handle clicking outside to close instant results
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+          inputRef.current && !inputRef.current.contains(e.target as Node)) {
+        setShowInstantResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Handle keyboard navigation in instant results
+  const handleInputKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (!showInstantResults || instantResults.length === 0) return;
+
+    const totalItems = instantResults.length + instantSuggestions.length;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev + 1) % totalItems);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev - 1 + totalItems) % totalItems);
+    } else if (e.key === 'Enter' && selectedIndex >= 0) {
+      e.preventDefault();
+      if (selectedIndex < instantResults.length) {
+        handleInstantResultClick(instantResults[selectedIndex]);
+      } else {
+        const suggestionIndex = selectedIndex - instantResults.length;
+        setLocalSearchTerm(instantSuggestions[suggestionIndex]);
+        handleSearch(undefined, instantSuggestions[suggestionIndex]);
+      }
+    }
+  }, [showInstantResults, instantResults, instantSuggestions, selectedIndex]);
+
+  // Handle clicking an instant result
+  const handleInstantResultClick = useCallback((result: InstantResult) => {
+    setShowInstantResults(false);
+    setLocalSearchTerm('');
+
+    if (result.type === 'trip' && result.tripId) {
+      router.push(`/trips/${result.tripId}`);
+    } else if (result.slug) {
+      // Open destination drawer
+      const dest = destinations.find(d => d.slug === result.slug);
+      if (dest) {
+        openDestination(dest);
+      } else {
+        // Navigate to destination page if not in current data
+        router.push(`/destination/${result.slug}`);
+      }
+    }
+  }, [router, destinations, openDestination]);
+
+  // Get icon for instant result type
+  const getResultIcon = (type: InstantResult['type']) => {
+    switch (type) {
+      case 'saved':
+        return <Bookmark className="w-3.5 h-3.5 text-amber-500" />;
+      case 'visited':
+        return <CheckCircle className="w-3.5 h-3.5 text-green-500" />;
+      case 'trip':
+        return <Map className="w-3.5 h-3.5 text-blue-500" />;
+      default:
+        return <Search className="w-3.5 h-3.5 text-gray-400" />;
+    }
+  };
 
   // Get user's first name for greeting
   const userName = user?.user_metadata?.name?.split(' ')[0] ||
@@ -184,6 +322,8 @@ export default function InteractiveHero() {
     const query = queryOverride || localSearchTerm.trim();
     if (!query) return;
 
+    // Close instant results and start full AI search
+    setShowInstantResults(false);
     setIsSearching(true);
     setShowChatResults(true);
     setLastQuery(query);
@@ -321,7 +461,7 @@ export default function InteractiveHero() {
           <form onSubmit={handleSearch} className="mb-6">
             <div className="relative max-w-xl">
               {/* AI indicator */}
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10">
                 <Sparkles className={`w-4 h-4 transition-colors ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
               </div>
               <input
@@ -330,7 +470,8 @@ export default function InteractiveHero() {
                 value={localSearchTerm}
                 onChange={(e) => setLocalSearchTerm(e.target.value)}
                 onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
+                onBlur={() => setTimeout(() => setIsFocused(false), 150)}
+                onKeyDown={handleInputKeyDown}
                 placeholder={showChatResults ? 'Ask a follow-up question...' : AI_PLACEHOLDERS[placeholderIndex]}
                 className="w-full h-[56px] pl-11 pr-14 text-[15px] bg-gray-100/80 dark:bg-white/[0.08]
                            border-0 rounded-[16px] text-gray-900 dark:text-white
@@ -346,7 +487,7 @@ export default function InteractiveHero() {
                            rounded-[12px] bg-gray-900 dark:bg-white
                            text-white dark:text-gray-900
                            hover:bg-gray-800 dark:hover:bg-gray-100
-                           disabled:opacity-50 transition-all duration-200"
+                           disabled:opacity-50 transition-all duration-200 z-10"
                 aria-label="Search"
               >
                 {isSearching ? (
@@ -355,8 +496,201 @@ export default function InteractiveHero() {
                   <Send className="w-4 h-4" />
                 )}
               </button>
+
+              {/* Instant Search Dropdown */}
+              {showInstantResults && !showChatResults && (instantResults.length > 0 || instantSuggestions.length > 0) && (
+                <div
+                  ref={dropdownRef}
+                  className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-900
+                             rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700
+                             max-h-[400px] overflow-y-auto z-50 animate-in fade-in slide-in-from-top-2 duration-200"
+                >
+                  {/* Results */}
+                  {instantResults.length > 0 && (
+                    <div className="p-2">
+                      {/* Group results by type */}
+                      {instantResults.filter(r => r.type === 'saved' || r.type === 'visited').length > 0 && (
+                        <div className="mb-2">
+                          <p className="px-3 py-1 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                            Your Places
+                          </p>
+                          {instantResults
+                            .filter(r => r.type === 'saved' || r.type === 'visited')
+                            .map((result, idx) => {
+                              const actualIndex = instantResults.findIndex(r => r.id === result.id && r.type === result.type);
+                              return (
+                                <button
+                                  key={`${result.type}-${result.id}`}
+                                  onClick={() => handleInstantResultClick(result)}
+                                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left
+                                             transition-colors ${selectedIndex === actualIndex
+                                               ? 'bg-gray-100 dark:bg-white/10'
+                                               : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                                >
+                                  {result.image ? (
+                                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                                      <Image
+                                        src={result.image}
+                                        alt={result.name}
+                                        width={40}
+                                        height={40}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                      {getResultIcon(result.type)}
+                                    </div>
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                                      {result.name}
+                                    </p>
+                                    <p className="text-[12px] text-gray-500 dark:text-gray-400 truncate flex items-center gap-1.5">
+                                      {getResultIcon(result.type)}
+                                      {result.subtitle}
+                                    </p>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                        </div>
+                      )}
+
+                      {/* Trips */}
+                      {instantResults.filter(r => r.type === 'trip').length > 0 && (
+                        <div className="mb-2">
+                          <p className="px-3 py-1 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                            Your Trips
+                          </p>
+                          {instantResults
+                            .filter(r => r.type === 'trip')
+                            .map((result) => {
+                              const actualIndex = instantResults.findIndex(r => r.id === result.id && r.type === result.type);
+                              return (
+                                <button
+                                  key={`trip-${result.id}`}
+                                  onClick={() => handleInstantResultClick(result)}
+                                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left
+                                             transition-colors ${selectedIndex === actualIndex
+                                               ? 'bg-gray-100 dark:bg-white/10'
+                                               : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                                >
+                                  <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                                    <Map className="w-5 h-5 text-blue-500" />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                                      {result.name}
+                                    </p>
+                                    <p className="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+                                      {result.subtitle}
+                                    </p>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                        </div>
+                      )}
+
+                      {/* Search Results */}
+                      {instantResults.filter(r => r.type === 'destination').length > 0 && (
+                        <div>
+                          <p className="px-3 py-1 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                            Results
+                          </p>
+                          {instantResults
+                            .filter(r => r.type === 'destination')
+                            .map((result) => {
+                              const actualIndex = instantResults.findIndex(r => r.id === result.id && r.type === result.type);
+                              return (
+                                <button
+                                  key={`dest-${result.id}`}
+                                  onClick={() => handleInstantResultClick(result)}
+                                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left
+                                             transition-colors ${selectedIndex === actualIndex
+                                               ? 'bg-gray-100 dark:bg-white/10'
+                                               : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                                >
+                                  {result.image ? (
+                                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                                      <Image
+                                        src={result.image}
+                                        alt={result.name}
+                                        width={40}
+                                        height={40}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+                                      <MapPin className="w-5 h-5 text-gray-400" />
+                                    </div>
+                                  )}
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                                      {result.name}
+                                    </p>
+                                    <p className="text-[12px] text-gray-500 dark:text-gray-400 truncate">
+                                      {result.subtitle}
+                                    </p>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Suggestions */}
+                  {instantSuggestions.length > 0 && (
+                    <div className="border-t border-gray-100 dark:border-gray-800 p-2">
+                      <p className="px-3 py-1 text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                        Try searching for
+                      </p>
+                      {instantSuggestions.map((suggestion, idx) => {
+                        const actualIndex = instantResults.length + idx;
+                        return (
+                          <button
+                            key={suggestion}
+                            onClick={() => {
+                              setLocalSearchTerm(suggestion);
+                              handleSearch(undefined, suggestion);
+                            }}
+                            className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-left
+                                       transition-colors ${selectedIndex === actualIndex
+                                         ? 'bg-gray-100 dark:bg-white/10'
+                                         : 'hover:bg-gray-50 dark:hover:bg-white/5'}`}
+                          >
+                            <Sparkles className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span className="text-[14px] text-gray-700 dark:text-gray-300">{suggestion}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Loading indicator */}
+                  {isLoadingInstant && (
+                    <div className="absolute top-2 right-2">
+                      <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                    </div>
+                  )}
+
+                  {/* Press Enter hint */}
+                  <div className="border-t border-gray-100 dark:border-gray-800 px-3 py-2 flex items-center justify-between">
+                    <span className="text-[11px] text-gray-400">
+                      Press Enter for full AI search
+                    </span>
+                    <span className="text-[11px] text-gray-400">
+                      ↑↓ to navigate
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-            {!showChatResults && (
+            {!showChatResults && !showInstantResults && (
               <p className="mt-2 text-[12px] text-gray-400 dark:text-gray-500">
                 Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">/</kbd> to focus • Enter to search
               </p>
