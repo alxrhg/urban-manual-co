@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -15,12 +16,26 @@ import {
   ChevronRight,
   Check,
   Plus,
+  Clock,
+  Phone,
+  Globe,
+  Loader2,
 } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/useToast';
 import { createClient } from '@/lib/supabase/client';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
+
+// Dynamically import the static map
+const GoogleStaticMap = dynamic(() => import('@/components/maps/GoogleStaticMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-48 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-2xl">
+      <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+    </div>
+  ),
+});
 
 /**
  * DestinationDrawer - Apple Design System
@@ -63,6 +78,14 @@ export function DestinationDrawer({
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [savingState, setSavingState] = useState<'idle' | 'saving'>('idle');
+  const [enrichedData, setEnrichedData] = useState<{
+    formatted_address?: string;
+    international_phone_number?: string;
+    website?: string;
+    opening_hours?: { weekday_text?: string[] };
+    latitude?: number;
+    longitude?: number;
+  } | null>(null);
 
   // Handle escape key
   useEffect(() => {
@@ -86,6 +109,60 @@ export function DestinationDrawer({
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  // Load enriched data from database
+  useEffect(() => {
+    async function loadEnrichedData() {
+      if (!destination?.slug) {
+        setEnrichedData(null);
+        return;
+      }
+
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from('destinations')
+          .select(`
+            formatted_address,
+            international_phone_number,
+            website,
+            opening_hours_json,
+            latitude,
+            longitude
+          `)
+          .eq('slug', destination.slug)
+          .single();
+
+        if (!error && data) {
+          const enriched: typeof enrichedData = {
+            formatted_address: data.formatted_address,
+            international_phone_number: data.international_phone_number,
+            website: data.website,
+            latitude: data.latitude,
+            longitude: data.longitude,
+          };
+
+          // Parse opening hours JSON
+          if (data.opening_hours_json) {
+            try {
+              enriched.opening_hours =
+                typeof data.opening_hours_json === 'string'
+                  ? JSON.parse(data.opening_hours_json)
+                  : data.opening_hours_json;
+            } catch {
+              // Ignore parse errors
+            }
+          }
+
+          setEnrichedData(enriched);
+        }
+      } catch (error) {
+        console.error('Error loading enriched data:', error);
+      }
+    }
+
+    loadEnrichedData();
+  }, [destination?.slug]);
 
   // Load saved/visited status
   useEffect(() => {
@@ -435,6 +512,99 @@ export function DestinationDrawer({
                 </div>
               )}
             </div>
+
+            {/* Contact Info */}
+            {(enrichedData?.formatted_address ||
+              enrichedData?.international_phone_number ||
+              enrichedData?.website ||
+              enrichedData?.opening_hours?.weekday_text) && (
+              <div className="border-t border-gray-200 dark:border-white/10 pt-4 mb-6 space-y-3">
+                {/* Address */}
+                {enrichedData.formatted_address && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(enrichedData.formatted_address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-start gap-3 p-3 -mx-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                  >
+                    <MapPin className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <span className="text-[14px] text-gray-700 dark:text-gray-300">
+                      {enrichedData.formatted_address}
+                    </span>
+                  </a>
+                )}
+
+                {/* Phone */}
+                {enrichedData.international_phone_number && (
+                  <a
+                    href={`tel:${enrichedData.international_phone_number}`}
+                    className="flex items-center gap-3 p-3 -mx-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                  >
+                    <Phone className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <span className="text-[14px] text-gray-700 dark:text-gray-300">
+                      {enrichedData.international_phone_number}
+                    </span>
+                  </a>
+                )}
+
+                {/* Website */}
+                {enrichedData.website && (
+                  <a
+                    href={enrichedData.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 -mx-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                  >
+                    <Globe className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                    <span className="text-[14px] text-blue-600 dark:text-blue-400 truncate">
+                      {enrichedData.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                    </span>
+                  </a>
+                )}
+
+                {/* Opening Hours */}
+                {enrichedData.opening_hours?.weekday_text &&
+                  enrichedData.opening_hours.weekday_text.length > 0 && (
+                    <div className="p-3 -mx-3">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Clock className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                        <span className="text-[14px] font-medium text-gray-900 dark:text-white">
+                          Hours
+                        </span>
+                      </div>
+                      <div className="ml-8 space-y-1">
+                        {enrichedData.opening_hours.weekday_text.map((day, i) => (
+                          <p key={i} className="text-[13px] text-gray-600 dark:text-gray-400">
+                            {day}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+              </div>
+            )}
+
+            {/* Map */}
+            {(destination.latitude || enrichedData?.latitude) &&
+              (destination.longitude || enrichedData?.longitude) && (
+                <div className="mb-6">
+                  <h3 className="text-[13px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+                    Location
+                  </h3>
+                  <div className="w-full h-48 rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-800">
+                    <GoogleStaticMap
+                      center={{
+                        lat: destination.latitude || enrichedData?.latitude || 0,
+                        lng: destination.longitude || enrichedData?.longitude || 0,
+                      }}
+                      zoom={15}
+                      height="192px"
+                      className="rounded-2xl"
+                      showPin
+                    />
+                  </div>
+                </div>
+              )}
 
             {/* View Full Page Link */}
             <Link
