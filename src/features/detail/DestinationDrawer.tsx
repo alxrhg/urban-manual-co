@@ -71,10 +71,8 @@ interface DestinationDrawerProps {
 }
 
 /**
- * DestinationDrawer - Apple Design System
- *
- * Clean, minimal design matching the homepage aesthetic.
- * Continuous scroll layout with clear sections.
+ * DestinationDrawer - Clean card-based design
+ * Matches the reference design with outlined action buttons and list-style related
  */
 export function DestinationDrawer({
   destination,
@@ -93,7 +91,6 @@ export function DestinationDrawer({
   const toast = useToast();
 
   // State
-  const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'related'>('overview');
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [isAddedToTrip, setIsAddedToTrip] = useState(false);
@@ -127,13 +124,11 @@ export function DestinationDrawer({
   useEffect(() => {
     if (!isOpen) {
       setIsEditMode(false);
-      setActiveTab('overview');
     }
   }, [isOpen]);
 
   useEffect(() => {
     setEnhancedDestination(destination);
-    setActiveTab('overview');
   }, [destination]);
 
   // Load data
@@ -450,56 +445,38 @@ export function DestinationDrawer({
   // Architecture info
   const hasArchInfo = enhancedDestination && ((enhancedDestination as any).architect_obj || (enhancedDestination as any).design_firm_obj || (enhancedDestination as any).interior_designer_obj || (enhancedDestination as any).movement_obj || enhancedDestination.architectural_style);
 
-  // Header
+  // Related destinations to show
+  const relatedToShow = recommendations.length > 0 ? recommendations : relatedDestinations;
+
+  // Header - minimal with close and admin actions
   const headerContent = (
     <div className="flex items-center justify-between w-full gap-3">
-      <div className="flex items-center gap-2 flex-1 min-w-0">
-        <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors" aria-label="Close">
-          <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
-        </button>
-        <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white truncate">
-          {isEditMode ? 'Edit' : destination.name}
-        </h2>
-      </div>
-      {user && (
-        <div className="flex items-center gap-1">
-          {isAdmin && (
-            <button
-              onClick={() => setIsEditMode(!isEditMode)}
-              className={`p-2 rounded-full transition-colors ${isEditMode ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'hover:bg-gray-100 dark:hover:bg-white/10'}`}
-            >
-              <Edit className="h-4 w-4" strokeWidth={1.5} />
-            </button>
-          )}
-          <button onClick={() => isSaved ? setShowSaveModal(true) : handleSave()} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors">
-            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current text-gray-900 dark:text-white' : 'text-gray-500'}`} strokeWidth={1.5} />
+      <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors" aria-label="Close">
+        <X className="h-4 w-4 text-gray-900 dark:text-white" strokeWidth={1.5} />
+      </button>
+      <div className="flex items-center gap-1">
+        {isAdmin && (
+          <button
+            onClick={() => setIsEditMode(!isEditMode)}
+            className={`p-2 rounded-full transition-colors ${isEditMode ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'hover:bg-gray-100 dark:hover:bg-white/10'}`}
+          >
+            <Edit className="h-4 w-4" strokeWidth={1.5} />
           </button>
+        )}
+        {user && (
           <button onClick={handleAddToTrip} disabled={isAddedToTrip} className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors">
             {isAddedToTrip ? <Check className="h-4 w-4 text-green-600" /> : <Plus className="h-4 w-4 text-gray-500" />}
           </button>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 
-  // Footer
-  const footerContent = (
-    <div className="px-6 py-4">
-      <Link
-        href={`/destination/${destination.slug}`}
-        onClick={onClose}
-        className="flex items-center justify-center gap-2 w-full h-[44px] bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full text-[13px] font-medium hover:opacity-90 transition-opacity"
-      >
-        View Full Page <ExternalLink className="h-3.5 w-3.5" />
-      </Link>
-    </div>
-  );
-
-  // Main content
+  // Main content - continuous scroll, no tabs
   const mainContent = (
-    <div className="px-6 pb-6">
+    <div className="pb-8">
       {isEditMode ? (
-        <div className="pt-4">
+        <div className="px-6 pt-4">
           <DestinationEditForm
             destination={destination}
             onCancel={() => setIsEditMode(false)}
@@ -509,8 +486,8 @@ export function DestinationDrawer({
         </div>
       ) : (
         <>
-          {/* Hero */}
-          <div className="relative mt-4 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-[16/10]">
+          {/* Hero Image - full width */}
+          <div className="relative bg-gray-100 dark:bg-gray-800 aspect-[4/3]">
             {destination.image ? (
               <Image src={destination.image} alt={destination.name} fill className="object-cover" priority sizes="420px" />
             ) : (
@@ -539,356 +516,303 @@ export function DestinationDrawer({
             </div>
           </div>
 
-          {/* Title */}
-          <div className="mt-4">
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white tracking-tight">{destination.name}</h1>
-            <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-0.5">
-              {destination.category && capitalizeCategory(destination.category)}
-              {destination.city && ` · ${capitalizeCity(destination.city)}`}
-              {destination.neighborhood && ` · ${destination.neighborhood}`}
-            </p>
-            {(enrichedData?.rating || destination.price_level) && (
-              <div className="flex items-center gap-2 mt-2">
-                {enrichedData?.rating && (
-                  <span className="flex items-center gap-1.5 text-[13px]">
-                    <img src="https://www.google.com/favicon.ico" alt="Google" className="h-3.5 w-3.5" />
-                    <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
-                    <span className="font-medium text-gray-900 dark:text-white">{enrichedData.rating.toFixed(1)}</span>
-                    {enrichedData.user_ratings_total && <span className="text-gray-500">({enrichedData.user_ratings_total.toLocaleString()})</span>}
-                  </span>
-                )}
-                {destination.price_level && <span className="text-[13px] text-gray-500">{'$'.repeat(destination.price_level)}</span>}
-              </div>
-            )}
-            {destination.id && <div className="mt-2"><RealtimeStatusBadge destinationId={destination.id} compact showWaitTime showAvailability /></div>}
-          </div>
+          {/* Content area */}
+          <div className="px-6">
+            {/* Title & Category */}
+            <div className="pt-5">
+              <h1 className="text-[22px] font-semibold text-gray-900 dark:text-white tracking-tight leading-tight">{destination.name}</h1>
+              <p className="text-[14px] text-gray-500 dark:text-gray-400 mt-1">
+                {destination.category && capitalizeCategory(destination.category)}
+                {destination.city && ` · ${capitalizeCity(destination.city)}`}
+              </p>
+              {/* Rating */}
+              {enrichedData?.rating && (
+                <div className="flex items-center gap-1.5 mt-2">
+                  <img src="https://www.google.com/favicon.ico" alt="Google" className="h-3.5 w-3.5" />
+                  <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                  <span className="text-[13px] font-medium text-gray-900 dark:text-white">{enrichedData.rating.toFixed(1)}</span>
+                  {enrichedData.user_ratings_total && <span className="text-[13px] text-gray-500">({enrichedData.user_ratings_total.toLocaleString()})</span>}
+                </div>
+              )}
+              {destination.id && <div className="mt-2"><RealtimeStatusBadge destinationId={destination.id} compact showWaitTime showAvailability /></div>}
+            </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 mt-4">
-            {user ? (
-              <>
-                <button
-                  onClick={() => isSaved ? setShowSaveModal(true) : handleSave()}
-                  className={`flex-1 h-[38px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
-                    isSaved ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
-                  }`}
-                >
-                  <Bookmark className={`h-[15px] w-[15px] ${isSaved ? 'fill-current' : ''}`} />
-                  {isSaved ? 'Saved' : 'Save'}
-                </button>
-                <button
-                  onClick={() => isVisited ? handleVisitToggle() : setShowVisitedModal(true)}
-                  className={`flex-1 h-[38px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
-                    isVisited ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
-                  }`}
-                >
-                  <Check className="h-[15px] w-[15px]" />
-                  {isVisited ? 'Visited' : 'Been Here'}
-                </button>
-                <button
-                  onClick={handleAddToTrip}
-                  disabled={isAddedToTrip}
-                  className={`flex-1 h-[38px] flex items-center justify-center gap-2 rounded-full text-[13px] font-medium transition-all duration-200 ${
-                    isAddedToTrip ? 'bg-green-600 text-white' : 'bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
-                  }`}
-                >
-                  {isAddedToTrip ? <Check className="h-[15px] w-[15px]" /> : <Plus className="h-[15px] w-[15px]" />}
-                  {isAddedToTrip ? 'Added' : 'Trip'}
-                </button>
-              </>
-            ) : (
+            {/* Action buttons - outlined style matching reference */}
+            <div className="flex gap-2 mt-5">
               <button
-                onClick={() => router.push('/auth/login')}
-                className="flex-1 h-[38px] flex items-center justify-center gap-2 rounded-full border border-gray-200/80 dark:border-white/[0.12] text-[13px] font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors"
+                onClick={() => user ? (isSaved ? setShowSaveModal(true) : handleSave()) : router.push('/auth/login')}
+                className={`flex-1 h-[44px] flex items-center justify-center gap-2 rounded-xl border text-[14px] font-medium transition-all duration-200 ${
+                  isSaved
+                    ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06]'
+                }`}
               >
-                Sign in to save
+                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                Save
+              </button>
+              <button
+                onClick={handleShare}
+                className="flex-1 h-[44px] flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-white/20 text-[14px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-all duration-200"
+              >
+                <Share2 className="h-4 w-4" />
+                Share
+              </button>
+              <button
+                onClick={handleDirections}
+                className="flex-1 h-[44px] flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-white/20 text-[14px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-all duration-200"
+              >
+                <Navigation className="h-4 w-4" />
+                Directions
+              </button>
+            </div>
+
+            {/* Been Here button for logged in users */}
+            {user && (
+              <button
+                onClick={() => isVisited ? handleVisitToggle() : setShowVisitedModal(true)}
+                className={`w-full mt-2 h-[44px] flex items-center justify-center gap-2 rounded-xl border text-[14px] font-medium transition-all duration-200 ${
+                  isVisited
+                    ? 'border-green-600 bg-green-600 text-white'
+                    : 'border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06]'
+                }`}
+              >
+                <Check className="h-4 w-4" />
+                {isVisited ? 'Visited' : 'Been Here'}
               </button>
             )}
-            <button onClick={handleShare} className="h-[38px] w-[38px] flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-white/[0.12] transition-all duration-200">
-              <Share2 className="h-[15px] w-[15px]" />
-            </button>
-          </div>
 
-          {/* Parent destination */}
-          {parentDestination && (
-            <button
-              onClick={() => onDestinationClick?.(parentDestination)}
-              className="w-full flex items-center gap-3 mt-6 p-3 -mx-3 rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors text-left group"
-            >
-              <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                {parentDestination.image ? (
-                  <Image src={parentDestination.image} alt={parentDestination.name} width={48} height={48} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-gray-400" /></div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500">Located inside</p>
-                <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate group-hover:text-gray-600 dark:group-hover:text-gray-200">{parentDestination.name}</p>
-              </div>
-              <ArrowRight className="h-4 w-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 flex-shrink-0" />
-            </button>
-          )}
+            {/* Sign in prompt for non-authenticated users */}
+            {!user && (
+              <button
+                onClick={() => router.push('/auth/login')}
+                className="w-full mt-3 h-[40px] text-[13px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              >
+                Sign in to save and track visits
+              </button>
+            )}
 
-          {/* Tab Navigation - pill style */}
-          <div className="flex items-center gap-1.5 mt-6">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 ${
-                activeTab === 'overview'
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                  : 'bg-gray-100 dark:bg-white/[0.08] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
-              }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab('details')}
-              className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 ${
-                activeTab === 'details'
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                  : 'bg-gray-100 dark:bg-white/[0.08] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
-              }`}
-            >
-              Details
-            </button>
-            <button
-              onClick={() => setActiveTab('related')}
-              className={`px-3 py-1.5 rounded-full text-[13px] font-medium transition-all duration-200 ${
-                activeTab === 'related'
-                  ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                  : 'bg-gray-100 dark:bg-white/[0.08] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/[0.12]'
-              }`}
-            >
-              Related
-            </button>
-          </div>
-
-          {/* Tab Content */}
-          {activeTab === 'overview' && (
-            <>
-              {/* Description */}
-              {(destination.micro_description || destination.description) && (
-                <div className="mt-6">
-                  <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">About</p>
-                  <p className="text-[14px] text-gray-700 dark:text-gray-300 leading-relaxed">
-                    {destination.micro_description || htmlToPlainText(destination.description || '')}
-                  </p>
+            {/* Parent destination */}
+            {parentDestination && (
+              <button
+                onClick={() => onDestinationClick?.(parentDestination)}
+                className="w-full flex items-center gap-3 mt-6 py-3 border-t border-b border-gray-100 dark:border-white/10 text-left group"
+              >
+                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                  {parentDestination.image ? (
+                    <Image src={parentDestination.image} alt={parentDestination.name} width={48} height={48} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-gray-400" /></div>
+                  )}
                 </div>
-              )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500">Located inside</p>
+                  <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">{parentDestination.name}</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
+              </button>
+            )}
 
-              {/* Contact & Hours */}
-              {(todayHours || enrichedData?.formatted_address || enrichedData?.international_phone_number || enrichedData?.website) && (
-                <div className="mt-6">
-                  <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Contact & Hours</p>
-                  <div className="space-y-2.5">
-                    {todayHours && (
-                      <div className="flex items-start gap-3">
-                        <Clock className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-[13px] text-gray-700 dark:text-gray-300">{todayHours}</span>
+            {/* Description */}
+            {(destination.micro_description || destination.description) && (
+              <div className="mt-6">
+                <p className="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed">
+                  {destination.micro_description || htmlToPlainText(destination.description || '')}
+                </p>
+              </div>
+            )}
+
+            {/* Nested destinations */}
+            {nestedDestinations.length > 0 && (
+              <div className="mt-6">
+                <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Venues Inside</p>
+                <div className="space-y-1">
+                  {nestedDestinations.slice(0, 4).map((nested) => (
+                    <button
+                      key={nested.slug}
+                      onClick={() => onDestinationClick?.(nested)}
+                      className="w-full flex items-center gap-3 py-2 text-left group"
+                    >
+                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                        {nested.image ? (
+                          <Image src={nested.image} alt={nested.name} width={40} height={40} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center"><MapPin className="h-4 w-4 text-gray-400" /></div>
+                        )}
                       </div>
-                    )}
-                    {enrichedData?.formatted_address && (
-                      <button onClick={handleDirections} className="flex items-start gap-3 text-left hover:opacity-70 transition-opacity">
-                        <Navigation className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                        <span className="text-[13px] text-gray-700 dark:text-gray-300">{enrichedData.formatted_address}</span>
-                      </button>
-                    )}
-                    {enrichedData?.international_phone_number && (
-                      <a href={`tel:${enrichedData.international_phone_number}`} className="flex items-center gap-3 hover:opacity-70 transition-opacity">
-                        <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-[13px] text-gray-700 dark:text-gray-300">{enrichedData.international_phone_number}</span>
-                      </a>
-                    )}
-                    {enrichedData?.website && (
-                      <a href={enrichedData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-70 transition-opacity">
-                        <Globe className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-[13px] text-blue-600 dark:text-blue-400 truncate">{new URL(enrichedData.website).hostname.replace('www.', '')}</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Map */}
-              {(destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude) && (
-                <div className="mt-6">
-                  <div className="rounded-2xl overflow-hidden border border-gray-200/80 dark:border-white/[0.12]">
-                    <div className="h-36">
-                      <GoogleStaticMap
-                        center={{ lat: destination.latitude || enrichedData?.latitude || 0, lng: destination.longitude || enrichedData?.longitude || 0 }}
-                        zoom={15}
-                        height="144px"
-                        showPin
-                      />
-                    </div>
-                    <button onClick={handleDirections} className="w-full flex items-center justify-center gap-2 h-[38px] text-[13px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors">
-                      <Navigation className="h-3.5 w-3.5" /> Get Directions
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">{nested.name}</p>
+                        <p className="text-[12px] text-gray-500 truncate">{nested.category && capitalizeCategory(nested.category)}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
                     </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Tags */}
-              {destination.tags && destination.tags.length > 0 && (
-                <div className="mt-6 flex flex-wrap gap-1.5">
-                  {destination.tags.slice(0, 6).map((tag, i) => (
-                    <span key={i} className="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/[0.08] text-[11px] text-gray-600 dark:text-gray-400">{tag}</span>
                   ))}
                 </div>
-              )}
-            </>
-          )}
+              </div>
+            )}
 
-          {activeTab === 'details' && (
-            <>
-              {/* Nested destinations */}
-              {(loadingNested || nestedDestinations.length > 0) && (
-                <div className="mt-6">
-                  <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Venues Inside</p>
-                  {loadingNested ? (
-                    <div className="flex items-center gap-2 text-[13px] text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
-                  ) : (
-                    <div className="space-y-2">
-                      {nestedDestinations.slice(0, 4).map((nested) => (
-                        <button
-                          key={nested.slug}
-                          onClick={() => onDestinationClick?.(nested)}
-                          className="w-full flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors text-left group"
-                        >
-                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                            {nested.image ? (
-                              <Image src={nested.image} alt={nested.name} width={40} height={40} className="w-full h-full object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center"><MapPin className="h-4 w-4 text-gray-400" /></div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{nested.name}</p>
-                            <p className="text-[11px] text-gray-500 truncate">{nested.category && capitalizeCategory(nested.category)}</p>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 flex-shrink-0" />
-                        </button>
-                      ))}
+            {/* Architecture */}
+            {hasArchInfo && (
+              <div className="mt-6">
+                <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Design & Architecture</p>
+                <div className="space-y-1">
+                  {(enhancedDestination as any).architect_obj && (
+                    <Link href={`/architects/${(enhancedDestination as any).architect_obj.slug}`} className="flex items-center gap-3 py-2 group">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
+                        {(enhancedDestination as any).architect_obj.image_url ? (
+                          <Image src={(enhancedDestination as any).architect_obj.image_url} alt="" width={40} height={40} className="object-cover" />
+                        ) : (
+                          <span className="text-[14px] font-medium text-gray-500">{(enhancedDestination as any).architect_obj.name.charAt(0)}</span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] text-gray-400">Architect</p>
+                        <p className="text-[14px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">{(enhancedDestination as any).architect_obj.name}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
+                    </Link>
+                  )}
+                  {(enhancedDestination as any).interior_designer_obj && (
+                    <Link href={`/architects/${(enhancedDestination as any).interior_designer_obj.slug}`} className="flex items-center gap-3 py-2 group">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                        <span className="text-[14px] font-medium text-gray-500">{(enhancedDestination as any).interior_designer_obj.name.charAt(0)}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] text-gray-400">Interior Designer</p>
+                        <p className="text-[14px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">{(enhancedDestination as any).interior_designer_obj.name}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
+                    </Link>
+                  )}
+                  {enhancedDestination?.architectural_style && (
+                    <div className="flex items-center gap-3 py-2">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                        <span className="text-[12px] font-medium text-gray-500">S</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] text-gray-400">Style</p>
+                        <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">{enhancedDestination.architectural_style}</p>
+                      </div>
                     </div>
                   )}
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* Architecture */}
-              {hasArchInfo && (
-                <div className="mt-6">
-                  <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Design & Architecture</p>
+            {/* Contact & Hours */}
+            {(todayHours || enrichedData?.formatted_address || enrichedData?.international_phone_number || enrichedData?.website) && (
+              <div className="mt-6">
+                <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Contact & Hours</p>
+                <div className="space-y-3">
+                  {todayHours && (
+                    <div className="flex items-start gap-3">
+                      <Clock className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <span className="text-[14px] text-gray-700 dark:text-gray-300">{todayHours}</span>
+                    </div>
+                  )}
+                  {enrichedData?.formatted_address && (
+                    <button onClick={handleDirections} className="flex items-start gap-3 text-left hover:opacity-70 transition-opacity">
+                      <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                      <span className="text-[14px] text-gray-700 dark:text-gray-300">{enrichedData.formatted_address}</span>
+                    </button>
+                  )}
+                  {enrichedData?.international_phone_number && (
+                    <a href={`tel:${enrichedData.international_phone_number}`} className="flex items-center gap-3 hover:opacity-70 transition-opacity">
+                      <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-[14px] text-gray-700 dark:text-gray-300">{enrichedData.international_phone_number}</span>
+                    </a>
+                  )}
+                  {enrichedData?.website && (
+                    <a href={enrichedData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-70 transition-opacity">
+                      <Globe className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                      <span className="text-[14px] text-blue-600 dark:text-blue-400 truncate">{new URL(enrichedData.website).hostname.replace('www.', '')}</span>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Reviews */}
+            {enrichedData?.reviews?.length > 0 && (
+              <div className="mt-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" alt="Google" className="h-4" />
+                  <span className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500">Reviews</span>
+                </div>
+                {loadingReviewSummary ? (
+                  <div className="flex items-center gap-2 text-[13px] text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Summarizing...</div>
+                ) : reviewSummary ? (
+                  <p className="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed italic">"{reviewSummary}"</p>
+                ) : null}
+              </div>
+            )}
+
+            {/* Tags */}
+            {destination.tags && destination.tags.length > 0 && (
+              <div className="mt-6">
+                <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">Tags</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {destination.tags.slice(0, 8).map((tag, i) => (
+                    <span key={i} className="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/[0.08] text-[12px] text-gray-600 dark:text-gray-400">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* View full page link */}
+            <Link
+              href={`/destination/${destination.slug}`}
+              onClick={onClose}
+              className="flex items-center justify-between w-full mt-6 py-4 border-t border-gray-100 dark:border-white/10 group"
+            >
+              <span className="text-[15px] font-medium text-gray-900 dark:text-white">View full page</span>
+              <ExternalLink className="h-4 w-4 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-200" />
+            </Link>
+
+            {/* Related destinations - list style */}
+            {(loadingRecommendations || relatedToShow.length > 0) && (
+              <div className="mt-2">
+                <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">
+                  More in {destination.city ? capitalizeCity(destination.city) : 'this area'}
+                </p>
+                {loadingRecommendations ? (
                   <div className="space-y-2">
-                    {(enhancedDestination as any).architect_obj && (
-                      <Link href={`/architects/${(enhancedDestination as any).architect_obj.slug}`} className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
-                          {(enhancedDestination as any).architect_obj.image_url ? (
-                            <Image src={(enhancedDestination as any).architect_obj.image_url} alt="" width={40} height={40} className="object-cover" />
-                          ) : (
-                            <span className="text-[13px] font-medium text-gray-500">{(enhancedDestination as any).architect_obj.name.charAt(0)}</span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] text-gray-400">Architect</p>
-                          <p className="text-[13px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">{(enhancedDestination as any).architect_obj.name}</p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
-                      </Link>
-                    )}
-                    {(enhancedDestination as any).interior_designer_obj && (
-                      <Link href={`/architects/${(enhancedDestination as any).interior_designer_obj.slug}`} className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                          <span className="text-[13px] font-medium text-gray-500">{(enhancedDestination as any).interior_designer_obj.name.charAt(0)}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] text-gray-400">Interior Designer</p>
-                          <p className="text-[13px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">{(enhancedDestination as any).interior_designer_obj.name}</p>
-                        </div>
-                        <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
-                      </Link>
-                    )}
-                    {enhancedDestination?.architectural_style && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                          <span className="text-[11px] font-medium text-gray-500">S</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] text-gray-400">Style</p>
-                          <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{enhancedDestination.architectural_style}</p>
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="flex items-center gap-3 py-2">
+                        <div className="w-14 h-14 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded animate-pulse w-3/4" />
+                          <div className="h-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse w-1/2" />
                         </div>
                       </div>
-                    )}
+                    ))}
                   </div>
-                </div>
-              )}
-
-              {/* Reviews with Google logo */}
-              {enrichedData?.reviews?.length > 0 && (
-                <div className="mt-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" alt="Google" className="h-4" />
-                    <span className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500">Reviews</span>
-                  </div>
-                  {loadingReviewSummary ? (
-                    <div className="flex items-center gap-2 text-[13px] text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Summarizing...</div>
-                  ) : reviewSummary ? (
-                    <p className="text-[14px] text-gray-700 dark:text-gray-300 leading-relaxed italic">"{reviewSummary}"</p>
-                  ) : null}
-                </div>
-              )}
-
-              {/* No details fallback */}
-              {!loadingNested && nestedDestinations.length === 0 && !hasArchInfo && !enrichedData?.reviews?.length && (
-                <div className="mt-6 text-center py-8 text-gray-400 dark:text-gray-500">
-                  <p className="text-[13px]">No additional details available</p>
-                </div>
-              )}
-            </>
-          )}
-
-          {activeTab === 'related' && (
-            <>
-              {/* Related */}
-              {loadingRecommendations ? (
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  {[1, 2, 3, 4].map(i => <div key={i} className="aspect-square rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}
-                </div>
-              ) : (recommendations.length > 0 || relatedDestinations.length > 0) ? (
-                <div className="mt-6">
-                  <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">You Might Also Like</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {(recommendations.length > 0 ? recommendations : relatedDestinations).slice(0, 6).map((rec) => (
+                ) : (
+                  <div className="space-y-1">
+                    {relatedToShow.slice(0, 5).map((rec) => (
                       <button
                         key={rec.slug}
                         onClick={() => onDestinationClick ? onDestinationClick(rec) : router.push(`/destination/${rec.slug}`)}
-                        className="group text-left"
+                        className="w-full flex items-center gap-3 py-2 text-left group"
                       >
-                        <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                        <div className="w-14 h-14 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                           {rec.image ? (
-                            <Image src={rec.image} alt={rec.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="180px" />
+                            <Image src={rec.image} alt={rec.name} width={56} height={56} className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center"><MapPin className="h-6 w-6 text-gray-300 dark:text-gray-600" /></div>
-                          )}
-                          {rec.michelin_stars && rec.michelin_stars > 0 && (
-                            <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-sm text-[10px] font-medium flex items-center gap-0.5">
-                              <img src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg" alt="Michelin" className="h-3 w-3" /> {rec.michelin_stars}
-                            </div>
+                            <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-gray-300 dark:text-gray-600" /></div>
                           )}
                         </div>
-                        <p className="text-[13px] font-medium text-gray-900 dark:text-white mt-2 truncate group-hover:text-gray-600 dark:group-hover:text-gray-200">{rec.name}</p>
-                        <p className="text-[11px] text-gray-500 truncate">{rec.category && capitalizeCategory(rec.category)}{rec.city && ` · ${capitalizeCity(rec.city)}`}</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate group-hover:text-gray-600 dark:group-hover:text-gray-200">{rec.name}</p>
+                          <p className="text-[12px] text-gray-500 truncate">{rec.category && capitalizeCategory(rec.category)}</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600 flex-shrink-0" />
                       </button>
                     ))}
                   </div>
-                </div>
-              ) : (
-                <div className="mt-6 text-center py-8 text-gray-400 dark:text-gray-500">
-                  <p className="text-[13px]">No related destinations found</p>
-                </div>
-              )}
-            </>
-          )}
+                )}
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>
@@ -901,7 +825,6 @@ export function DestinationDrawer({
         <div className="flex flex-col h-full bg-white dark:bg-gray-950">
           <div className="flex-shrink-0 min-h-[3.5rem] px-6 flex items-center border-b border-black/5 dark:border-white/5">{headerContent}</div>
           <div className="flex-1 overflow-y-auto">{mainContent}</div>
-          <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-800">{footerContent}</div>
         </div>
         {destination?.id && <SaveDestinationModal destinationId={destination.id} destinationSlug={destination.slug} isOpen={showSaveModal} onClose={() => setShowSaveModal(false)} />}
         {destination && <VisitedModal destinationSlug={destination.slug} destinationName={destination.name} isOpen={showVisitedModal} onClose={() => setShowVisitedModal(false)} onUpdate={() => { setShowVisitedModal(false); setIsVisited(true); if (destination.slug) onVisitToggle?.(destination.slug, true); }} />}
@@ -911,7 +834,7 @@ export function DestinationDrawer({
 
   return (
     <>
-      <Drawer isOpen={isOpen} onClose={onClose} mobileVariant="side" desktopSpacing="right-4 top-4 bottom-4" desktopWidth="420px" position="right" style="glassy" backdropOpacity="18" keepStateOnClose zIndex={9999} headerContent={headerContent} footerContent={footerContent}>
+      <Drawer isOpen={isOpen} onClose={onClose} mobileVariant="side" desktopSpacing="right-4 top-4 bottom-4" desktopWidth="420px" position="right" style="glassy" backdropOpacity="18" keepStateOnClose zIndex={9999} headerContent={headerContent}>
         {mainContent}
       </Drawer>
       {destination?.id && (
