@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useHomepageData } from './HomepageDataProvider';
 import { Destination } from '@/types/destination';
 import Image from 'next/image';
+import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 
 const FEATURED_CITIES = ['Taipei', 'Tokyo', 'New York', 'London'];
 
@@ -72,6 +73,8 @@ export default function InteractiveHero() {
     setSearchTerm,
     filteredDestinations,
     openDestination,
+    michelinOnly,
+    setMichelinOnly,
   } = useHomepageData();
 
   const [localSearchTerm, setLocalSearchTerm] = useState('');
@@ -226,7 +229,7 @@ export default function InteractiveHero() {
 
   const destinationCount = destinations.length || '800';
   const filteredCount = filteredDestinations.length;
-  const hasFilters = selectedCity || selectedCategory || searchTerm;
+  const hasFilters = selectedCity || selectedCategory || searchTerm || michelinOnly;
 
   return (
     <div className="w-full md:w-1/2 md:ml-[calc(50%-2rem)] max-w-2xl flex flex-col h-full">
@@ -438,32 +441,54 @@ export default function InteractiveHero() {
               </div>
             </div>
 
-            {/* Category Filters */}
+            {/* Category Filters with Icons */}
             {categories.length > 0 && (
               <div className="flex flex-wrap gap-x-4 gap-y-2 text-[13px]">
                 <button
-                  onClick={() => setSelectedCategory('')}
-                  className={`transition-colors duration-200 ${
-                    !selectedCategory
+                  onClick={() => {
+                    setSelectedCategory('');
+                    setMichelinOnly(false);
+                  }}
+                  className={`transition-colors duration-200 font-medium ${
+                    !selectedCategory && !michelinOnly
+                      ? 'text-gray-900 dark:text-white'
+                      : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  All Categories
+                </button>
+                {/* Michelin filter with icon */}
+                <button
+                  onClick={() => setMichelinOnly(!michelinOnly)}
+                  className={`flex items-center gap-1.5 transition-colors duration-200 ${
+                    michelinOnly
                       ? 'text-gray-900 dark:text-white font-medium'
                       : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
                   }`}
                 >
-                  All
+                  <svg className="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                  </svg>
+                  Michelin
                 </button>
-                {categories.slice(0, 8).map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => handleCategoryClick(category)}
-                    className={`transition-colors duration-200 ${
-                      selectedCategory.toLowerCase() === category.toLowerCase()
-                        ? 'text-gray-900 dark:text-white font-medium'
-                        : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
-                    }`}
-                  >
-                    {capitalizeCategory(category)}
-                  </button>
-                ))}
+                {/* Category filters with icons */}
+                {categories.slice(0, 8).map((category) => {
+                  const IconComponent = getCategoryIconComponent(category);
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => handleCategoryClick(category)}
+                      className={`flex items-center gap-1.5 transition-colors duration-200 ${
+                        selectedCategory.toLowerCase() === category.toLowerCase()
+                          ? 'text-gray-900 dark:text-white font-medium'
+                          : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      {IconComponent && <IconComponent className="w-4 h-4" />}
+                      {capitalizeCategory(category)}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
