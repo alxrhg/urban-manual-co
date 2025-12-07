@@ -1,21 +1,21 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Loader2, Sparkles, X, MapPin, ChevronRight } from 'lucide-react';
+import { Send, Loader2, Sparkles, X, MapPin, ChevronRight, Bookmark, Plus, Brain } from 'lucide-react';
 import Image from 'next/image';
 import { Destination } from '@/types/destination';
 import { useHomepageData } from './HomepageDataProvider';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 
 /**
- * AI Search Chat - Apple Design System
+ * AI Search Chat - Smart Conversation Interface
  *
- * Natural language search with:
- * - Clean chat interface
- * - Streaming responses
- * - Intent extraction
- * - Follow-up suggestions
- * - Destination cards inline
+ * Features:
+ * - Persistent sessions (continues across page reloads)
+ * - Behavior tracking (learns from your clicks)
+ * - Proactive suggestions
+ * - Contextual hints
+ * - Trip-aware responses
  */
 
 interface ChatMessage {
@@ -23,8 +23,24 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   destinations?: Destination[];
-  suggestions?: string[];
+  suggestions?: SmartSuggestion[];
+  contextualHints?: string[];
+  proactiveActions?: ProactiveAction[];
   isStreaming?: boolean;
+}
+
+interface SmartSuggestion {
+  text: string;
+  type: 'refine' | 'expand' | 'related' | 'contrast' | 'trip' | 'saved';
+  icon?: string;
+  reasoning?: string;
+}
+
+interface ProactiveAction {
+  type: 'save' | 'add_to_trip' | 'compare' | 'show_map' | 'schedule';
+  label: string;
+  destinationSlug?: string;
+  reasoning: string;
 }
 
 interface AISearchChatProps {
@@ -33,6 +49,9 @@ interface AISearchChatProps {
   initialQuery?: string;
 }
 
+// Session storage key
+const SESSION_KEY = 'urbanmanual_chat_session';
+
 export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProps) {
   const { openDestination, destinations } = useHomepageData();
 
@@ -40,8 +59,77 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [hasProcessedInitialQuery, setHasProcessedInitialQuery] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [turnNumber, setTurnNumber] = useState(0);
+  const [isReturningUser, setIsReturningUser] = useState(false);
+  const [welcomeMessage, setWelcomeMessage] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load session from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem(SESSION_KEY);
+    if (stored) {
+      try {
+        const { sessionId: storedId, lastActive } = JSON.parse(stored);
+        // Only restore if session is less than 24 hours old
+        const hoursSinceLastActive = (Date.now() - lastActive) / (1000 * 60 * 60);
+        if (hoursSinceLastActive < 24) {
+          setSessionId(storedId);
+          setIsReturningUser(true);
+        }
+      } catch {
+        // Invalid stored data, start fresh
+      }
+    }
+  }, []);
+
+  // Save session to localStorage when it changes
+  useEffect(() => {
+    if (sessionId) {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({
+        sessionId,
+        lastActive: Date.now(),
+      }));
+    }
+  }, [sessionId]);
+
+  // Load previous conversation when opening (for returning users)
+  useEffect(() => {
+    if (isOpen && isReturningUser && sessionId && messages.length === 0) {
+      loadPreviousSession();
+    }
+  }, [isOpen, isReturningUser, sessionId, messages.length]);
+
+  const loadPreviousSession = async () => {
+    if (!sessionId) return;
+
+    try {
+      const response = await fetch(`/api/smart-chat?sessionId=${sessionId}`);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          // Restore messages
+          if (data.data.messages?.length > 0) {
+            setMessages(data.data.messages.map((m: any) => ({
+              id: m.id || `msg-${Date.now()}-${Math.random()}`,
+              role: m.role,
+              content: m.content,
+              destinations: m.metadata?.destinations,
+              isStreaming: false,
+            })));
+          }
+          // Set welcome back message
+          if (data.data.welcomeBack) {
+            setWelcomeMessage(data.data.welcomeBack);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading previous session:', error);
+    }
+  };
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -53,7 +141,6 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
     if (isOpen) {
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
-      // Reset state when closed
       setHasProcessedInitialQuery(false);
     }
   }, [isOpen]);
@@ -63,7 +150,6 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
     if (isOpen && initialQuery && !hasProcessedInitialQuery && !isLoading) {
       setHasProcessedInitialQuery(true);
       setInput(initialQuery);
-      // Automatically send the initial query after a brief delay
       setTimeout(() => {
         const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
         const form = inputRef.current?.closest('form');
@@ -85,6 +171,30 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
+  // Track behavior when user clicks a destination
+  const trackClick = useCallback(async (slug: string) => {
+    if (!sessionId) return;
+    try {
+      await fetch('/api/smart-chat/behavior', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sessionId,
+          type: 'click',
+          destinationSlug: slug,
+        }),
+      });
+    } catch {
+      // Silent fail - behavior tracking is best-effort
+    }
+  }, [sessionId]);
+
+  // Handle destination click
+  const handleDestinationClick = useCallback((dest: Destination) => {
+    trackClick(dest.slug);
+    openDestination(dest);
+  }, [trackClick, openDestination]);
+
   // Local search as fallback
   const localSearch = useCallback((query: string): Destination[] => {
     const term = query.toLowerCase();
@@ -100,30 +210,13 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
       .slice(0, 6);
   }, [destinations]);
 
-  // Generate follow-up suggestions based on results
-  const generateSuggestions = useCallback((query: string, results: Destination[]): string[] => {
-    const suggestions: string[] = [];
-
-    // Extract unique cities and categories from results
-    const cities = [...new Set(results.map(r => r.city).filter(Boolean))];
-    const categories = [...new Set(results.map(r => r.category).filter(Boolean))];
-
-    if (cities.length > 0) {
-      suggestions.push(`Show me more in ${cities[0]}`);
-    }
-    if (categories.length > 0 && categories[0]) {
-      suggestions.push(`Best ${categories[0]}s nearby`);
-    }
-    suggestions.push('What about Michelin star restaurants?');
-    suggestions.push('Show me on map');
-
-    return suggestions.slice(0, 4);
-  }, []);
-
-  // Send message
+  // Send message using smart chat API
   const sendMessage = useCallback(async () => {
     const query = input.trim();
     if (!query || isLoading) return;
+
+    // Clear welcome message when user sends a message
+    setWelcomeMessage(null);
 
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -145,58 +238,55 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
     }]);
 
     try {
-      // Try AI search first
-      const response = await fetch('/api/search/ai', {
+      // Use smart chat API
+      const response = await fetch('/api/smart-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query,
-          conversationHistory: messages.map(m => ({
-            role: m.role,
-            content: m.content,
-          })),
+          message: query,
+          sessionId,
+          includeProactiveActions: true,
+          maxDestinations: 10,
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
 
-        setMessages(prev => prev.map(m =>
-          m.id === assistantId
-            ? {
-                ...m,
-                content: data.response || 'Here are some recommendations for you:',
-                destinations: data.destinations || [],
-                suggestions: generateSuggestions(query, data.destinations || []),
-                isStreaming: false,
-              }
-            : m
-        ));
-      } else {
-        // Fallback to local search
-        const results = localSearch(query);
-        const responseText = results.length > 0
-          ? `I found ${results.length} place${results.length === 1 ? '' : 's'} matching "${query}":`
-          : `I couldn't find anything matching "${query}". Try a different search term.`;
+        if (data.success && data.data) {
+          // Update session ID if new
+          if (data.data.conversationId && data.data.conversationId !== sessionId) {
+            setSessionId(data.data.conversationId);
+          }
+          setTurnNumber(data.data.turnNumber || turnNumber + 1);
 
-        setMessages(prev => prev.map(m =>
-          m.id === assistantId
-            ? {
-                ...m,
-                content: responseText,
-                destinations: results,
-                suggestions: results.length > 0 ? generateSuggestions(query, results) : ['Show me restaurants in Tokyo', 'Best hotels in London'],
-                isStreaming: false,
-              }
-            : m
-        ));
+          setMessages(prev => prev.map(m =>
+            m.id === assistantId
+              ? {
+                  ...m,
+                  content: data.data.content || 'Here are some recommendations:',
+                  destinations: data.data.destinations || [],
+                  suggestions: data.data.suggestions || [],
+                  contextualHints: data.data.contextualHints || [],
+                  proactiveActions: data.data.proactiveActions || [],
+                  isStreaming: false,
+                }
+              : m
+          ));
+        } else {
+          throw new Error('Invalid response');
+        }
+      } else {
+        throw new Error('API error');
       }
-    } catch {
-      // Fallback to local search on error
+    } catch (error) {
+      console.error('Smart chat error:', error);
+
+      // Fallback to local search
       const results = localSearch(query);
       const responseText = results.length > 0
-        ? `Found ${results.length} result${results.length === 1 ? '' : 's'}:`
-        : `No results found for "${query}".`;
+        ? `I found ${results.length} place${results.length === 1 ? '' : 's'} matching "${query}":`
+        : `I couldn't find anything matching "${query}". Try a different search term.`;
 
       setMessages(prev => prev.map(m =>
         m.id === assistantId
@@ -204,7 +294,13 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
               ...m,
               content: responseText,
               destinations: results,
-              suggestions: ['Show me restaurants', 'Hotels in Paris'],
+              suggestions: results.length > 0 ? [
+                { text: `More in ${results[0]?.city || 'this area'}`, type: 'expand' as const },
+                { text: 'Something different', type: 'contrast' as const },
+              ] : [
+                { text: 'Restaurants in Tokyo', type: 'expand' as const },
+                { text: 'Hotels in London', type: 'expand' as const },
+              ],
               isStreaming: false,
             }
           : m
@@ -212,15 +308,24 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
     } finally {
       setIsLoading(false);
     }
-  }, [input, isLoading, messages, localSearch, generateSuggestions]);
+  }, [input, isLoading, sessionId, localSearch, turnNumber]);
 
   // Handle suggestion click
-  const handleSuggestionClick = useCallback((suggestion: string) => {
-    setInput(suggestion);
+  const handleSuggestionClick = useCallback((suggestion: SmartSuggestion) => {
+    setInput(suggestion.text);
     setTimeout(() => {
       sendMessage();
     }, 100);
   }, [sendMessage]);
+
+  // Get icon for suggestion type
+  const getSuggestionIcon = (type: SmartSuggestion['type']) => {
+    switch (type) {
+      case 'trip': return <Plus className="w-3 h-3" />;
+      case 'saved': return <Bookmark className="w-3 h-3" />;
+      default: return null;
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -242,14 +347,14 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500
                             flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
+              <Brain className="w-5 h-5 text-white" />
             </div>
             <div>
               <h2 className="text-[16px] font-semibold text-gray-900 dark:text-white">
-                AI Search
+                Smart Search
               </h2>
               <p className="text-[12px] text-gray-500 dark:text-gray-400">
-                Ask me anything about destinations
+                {turnNumber > 0 ? `Turn ${turnNumber} · Remembers your preferences` : 'I learn from our conversation'}
               </p>
             </div>
           </div>
@@ -264,7 +369,17 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          {messages.length === 0 && (
+          {/* Welcome back message */}
+          {welcomeMessage && messages.length === 0 && (
+            <div className="text-center py-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 text-[13px]">
+                <Sparkles className="w-4 h-4" />
+                {welcomeMessage}
+              </div>
+            </div>
+          )}
+
+          {messages.length === 0 && !welcomeMessage && (
             <div className="text-center py-8">
               <p className="text-[15px] text-gray-500 dark:text-gray-400 mb-4">
                 Try asking:
@@ -273,7 +388,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                 {['Best restaurants in Tokyo', 'Romantic hotels in Paris', 'Coffee shops in London'].map((s) => (
                   <button
                     key={s}
-                    onClick={() => handleSuggestionClick(s)}
+                    onClick={() => handleSuggestionClick({ text: s, type: 'expand' })}
                     className="px-4 py-2 rounded-full bg-gray-100 dark:bg-white/10
                                text-[13px] text-gray-700 dark:text-gray-300
                                hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
@@ -297,12 +412,24 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                   {message.isStreaming ? (
                     <div className="flex items-center gap-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-[14px]">Searching...</span>
+                      <span className="text-[14px]">Thinking...</span>
                     </div>
                   ) : (
                     <p className="text-[14px] leading-relaxed">{message.content}</p>
                   )}
                 </div>
+
+                {/* Contextual hints */}
+                {message.contextualHints && message.contextualHints.length > 0 && !message.isStreaming && (
+                  <div className="mt-2 px-1">
+                    {message.contextualHints.map((hint, i) => (
+                      <p key={i} className="text-[12px] text-purple-600 dark:text-purple-400 flex items-center gap-1">
+                        <Sparkles className="w-3 h-3" />
+                        {hint}
+                      </p>
+                    ))}
+                  </div>
+                )}
 
                 {/* Destination cards */}
                 {message.destinations && message.destinations.length > 0 && (
@@ -310,11 +437,11 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                     {message.destinations.map((dest) => (
                       <button
                         key={dest.slug}
-                        onClick={() => openDestination(dest)}
+                        onClick={() => handleDestinationClick(dest)}
                         className="w-full flex items-center gap-3 p-3 rounded-xl
                                    bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10
                                    hover:border-gray-300 dark:hover:border-white/20
-                                   transition-colors text-left"
+                                   transition-colors text-left group"
                       >
                         <div className="w-14 h-14 rounded-lg bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
                           {(dest.image_thumbnail || dest.image) ? (
@@ -339,15 +466,16 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                             {dest.category && capitalizeCategory(dest.category)}
                             {dest.category && dest.city && ' · '}
                             {dest.city && capitalizeCity(dest.city)}
+                            {dest.rating && ` · ⭐ ${dest.rating}`}
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
                       </button>
                     ))}
                   </div>
                 )}
 
-                {/* Suggestions */}
+                {/* Smart Suggestions */}
                 {message.suggestions && message.suggestions.length > 0 && !message.isStreaming && (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {message.suggestions.map((s, i) => (
@@ -356,9 +484,32 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                         onClick={() => handleSuggestionClick(s)}
                         className="px-3 py-1.5 rounded-full border border-gray-200 dark:border-white/10
                                    text-[12px] text-gray-600 dark:text-gray-400
-                                   hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                                   hover:bg-gray-100 dark:hover:bg-white/10 transition-colors
+                                   flex items-center gap-1.5"
+                        title={s.reasoning}
                       >
-                        {s}
+                        {getSuggestionIcon(s.type)}
+                        {s.text}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Proactive Actions */}
+                {message.proactiveActions && message.proactiveActions.length > 0 && !message.isStreaming && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {message.proactiveActions.map((action, i) => (
+                      <button
+                        key={i}
+                        className="px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-500/20
+                                   text-[12px] text-purple-700 dark:text-purple-300
+                                   hover:bg-purple-200 dark:hover:bg-purple-500/30 transition-colors
+                                   flex items-center gap-1.5"
+                        title={action.reasoning}
+                      >
+                        {action.type === 'save' && <Bookmark className="w-3 h-3" />}
+                        {action.type === 'add_to_trip' && <Plus className="w-3 h-3" />}
+                        {action.label}
                       </button>
                     ))}
                   </div>
