@@ -118,11 +118,23 @@ function fetchAuthorizationToken(done: (token: string) => void) {
       // Call done with the token
       console.log('[MapKit Client] Calling done() with token...');
       done(data.token);
-      console.log('[MapKit Client] done() called, checking mapkit.loaded:', window.mapkit?.loaded);
+
+      // Mark authorization as complete - MapKit should now be usable
+      // even if mapkit.loaded doesn't become true
+      authorizationComplete = true;
+      console.log('[MapKit Client] done() called, authorizationComplete set to true');
+      console.log('[MapKit Client] Current state:', {
+        mapkitLoaded: window.mapkit?.loaded,
+        hasMapConstructor: !!window.mapkit?.Map,
+        hasCoordinate: !!window.mapkit?.Coordinate,
+      });
 
       // Check again after a short delay
       setTimeout(() => {
-        console.log('[MapKit Client] After 500ms, mapkit.loaded:', window.mapkit?.loaded);
+        console.log('[MapKit Client] After 500ms:', {
+          mapkitLoaded: window.mapkit?.loaded,
+          hasMapConstructor: !!window.mapkit?.Map,
+        });
       }, 500);
     })
     .catch(error => {
@@ -142,6 +154,9 @@ export function didAuthorizationFail(): boolean {
   return authorizationFailed;
 }
 
+// Track when authorization completes successfully
+let authorizationComplete = false;
+
 function waitForMapkitReady(): Promise<void> {
   return new Promise((resolve, reject) => {
     if (typeof window === 'undefined') {
@@ -151,16 +166,21 @@ function waitForMapkitReady(): Promise<void> {
 
     // Reduced timeout - fail faster if authorization failed
     const timeout = window.setTimeout(() => {
-      console.log('[MapKit Client] Timeout reached. authorizationFailed:', authorizationFailed, 'mapkitError:', mapkitError);
+      console.log('[MapKit Client] Timeout reached.', {
+        authorizationFailed,
+        authorizationComplete,
+        mapkitError,
+        mapkitLoaded: window.mapkit?.loaded,
+      });
       if (authorizationFailed) {
         reject(new Error(`MapKit authorization failed - ${mapkitError || 'check credentials'}`));
       } else {
         reject(new Error('MapKit initialization timeout - the authorization token may be invalid or the network is slow'));
       }
-    }, 10000);
+    }, 15000); // Increased to 15 seconds
 
     let attempts = 0;
-    const maxAttempts = 200; // 10 seconds at ~50ms per check
+    const maxAttempts = 300; // 15 seconds at ~50ms per check
 
     const checkLoaded = () => {
       attempts++;
@@ -171,8 +191,10 @@ function waitForMapkitReady(): Promise<void> {
           attempts,
           mapkitExists: !!window.mapkit,
           mapkitLoaded: window.mapkit?.loaded,
+          authorizationComplete,
           authorizationFailed,
           mapkitError,
+          hasMapConstructor: !!window.mapkit?.Map,
         });
       }
 
@@ -184,9 +206,18 @@ function waitForMapkitReady(): Promise<void> {
         return;
       }
 
-      // Check if MapKit is loaded and initialized
+      // Check if MapKit is loaded and initialized (primary check)
       if (window.mapkit?.loaded) {
-        console.log('[MapKit Client] MapKit loaded successfully after', attempts, 'attempts');
+        console.log('[MapKit Client] MapKit loaded successfully after', attempts, 'attempts (via loaded property)');
+        window.clearTimeout(timeout);
+        resolve();
+        return;
+      }
+
+      // Alternative check: if authorization completed and Map constructor exists, consider it ready
+      // Some versions of MapKit JS don't set 'loaded' but are still functional
+      if (authorizationComplete && window.mapkit?.Map && window.mapkit?.Coordinate) {
+        console.log('[MapKit Client] MapKit ready after', attempts, 'attempts (via constructor check)');
         window.clearTimeout(timeout);
         resolve();
         return;
@@ -194,7 +225,12 @@ function waitForMapkitReady(): Promise<void> {
 
       // If we've exceeded max attempts, reject
       if (attempts >= maxAttempts) {
-        console.log('[MapKit Client] Max attempts exceeded:', { mapkitExists: !!window.mapkit, mapkitLoaded: window.mapkit?.loaded });
+        console.log('[MapKit Client] Max attempts exceeded:', {
+          mapkitExists: !!window.mapkit,
+          mapkitLoaded: window.mapkit?.loaded,
+          authorizationComplete,
+          hasMapConstructor: !!window.mapkit?.Map,
+        });
         window.clearTimeout(timeout);
         reject(new Error('MapKit initialization timeout - exceeded maximum attempts'));
         return;
@@ -209,6 +245,11 @@ function waitForMapkitReady(): Promise<void> {
       checkLoaded();
     }, 100);
   });
+}
+
+// Export function to mark authorization as complete (called from fetchAuthorizationToken)
+function markAuthorizationComplete() {
+  authorizationComplete = true;
 }
 
 export function ensureMapkitLoaded(): Promise<void> {
