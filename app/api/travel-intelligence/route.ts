@@ -59,7 +59,7 @@ interface TravelIntelligenceRequest {
 interface ParsedIntent {
   searchQuery: string;
   filters: SearchFilters;
-  intent: 'search' | 'recommendation' | 'discovery' | 'comparison' | 'more_like_this' | 'itinerary' | 'clarification_response' | 'group_recommendation';
+  intent: 'search' | 'recommendation' | 'discovery' | 'comparison' | 'more_like_this' | 'itinerary' | 'clarification_response' | 'group_recommendation' | 'serendipity' | 'experience_chain' | 'constraint_solve' | 'mood_based';
   occasion?: string;
   vibes: string[];
   timeContext?: 'breakfast' | 'lunch' | 'dinner' | 'late_night';
@@ -71,6 +71,40 @@ interface ParsedIntent {
   clarificationType?: 'city' | 'category' | 'occasion' | 'price';
   // Collaborative trip planning
   groupPreferences?: GroupPreference[];
+  // Advanced features
+  mood?: MoodContext;
+  chainFrom?: string; // "After X, where next?"
+  constraints?: ConstraintSet;
+  wantsSerendipity?: boolean;
+  realTimeContext?: RealTimeContext;
+}
+
+// Mood/Emotional context
+interface MoodContext {
+  energy: 'low' | 'medium' | 'high';
+  mood: 'relaxed' | 'adventurous' | 'celebratory' | 'romantic' | 'focused' | 'social' | 'contemplative';
+  need?: 'comfort' | 'excitement' | 'peace' | 'connection' | 'inspiration';
+}
+
+// Real-time context
+interface RealTimeContext {
+  timeOfDay: 'early_morning' | 'morning' | 'midday' | 'afternoon' | 'evening' | 'late_night';
+  dayOfWeek: 'weekday' | 'weekend';
+  season?: 'spring' | 'summer' | 'fall' | 'winter';
+  weather?: 'sunny' | 'rainy' | 'cold' | 'hot';
+  justArrived?: boolean;
+  limitedTime?: number; // minutes available
+}
+
+// Complex constraints for group/multi-variable optimization
+interface ConstraintSet {
+  dietary?: string[]; // vegetarian, vegan, gluten-free, halal, kosher
+  accessibility?: boolean;
+  budget?: { perPerson: number; currency: string };
+  mustHave?: string[]; // outdoor seating, reservations, etc.
+  mustAvoid?: string[]; // crowds, tourist traps, etc.
+  groupSize?: number;
+  languages?: string[];
 }
 
 interface GroupPreference {
@@ -147,6 +181,80 @@ const CUISINE_KEYWORDS: Record<string, string[]> = {
   'seafood': ['seafood', 'fish', 'oyster', 'lobster', 'crab', 'sashimi'],
   'vegetarian': ['vegetarian', 'vegan', 'plant-based', 'veggie'],
   'fusion': ['fusion', 'modern', 'contemporary', 'innovative'],
+};
+
+// Mood/Emotional keywords for understanding user state
+const MOOD_KEYWORDS: Record<string, { energy: MoodContext['energy']; mood: MoodContext['mood']; need?: MoodContext['need'] }> = {
+  // Low energy states
+  'exhausted': { energy: 'low', mood: 'relaxed', need: 'comfort' },
+  'tired': { energy: 'low', mood: 'relaxed', need: 'comfort' },
+  'jet-lagged': { energy: 'low', mood: 'relaxed', need: 'comfort' },
+  'overwhelmed': { energy: 'low', mood: 'contemplative', need: 'peace' },
+  'stressed': { energy: 'low', mood: 'relaxed', need: 'peace' },
+  'need a break': { energy: 'low', mood: 'relaxed', need: 'peace' },
+  'hungover': { energy: 'low', mood: 'relaxed', need: 'comfort' },
+  // Medium energy states
+  'relaxed': { energy: 'medium', mood: 'relaxed' },
+  'curious': { energy: 'medium', mood: 'adventurous', need: 'inspiration' },
+  'thoughtful': { energy: 'medium', mood: 'contemplative', need: 'inspiration' },
+  'romantic': { energy: 'medium', mood: 'romantic', need: 'connection' },
+  'nostalgic': { energy: 'medium', mood: 'contemplative', need: 'comfort' },
+  // High energy states
+  'excited': { energy: 'high', mood: 'adventurous', need: 'excitement' },
+  'celebrating': { energy: 'high', mood: 'celebratory', need: 'excitement' },
+  'adventurous': { energy: 'high', mood: 'adventurous', need: 'excitement' },
+  'energized': { energy: 'high', mood: 'social', need: 'excitement' },
+  'party': { energy: 'high', mood: 'social', need: 'excitement' },
+  'big win': { energy: 'high', mood: 'celebratory', need: 'excitement' },
+};
+
+// Serendipity triggers - words that indicate user wants to be surprised
+const SERENDIPITY_TRIGGERS = [
+  'surprise me', 'something different', 'something new', 'never tried',
+  'take me somewhere', 'you pick', 'your choice', 'dealer\'s choice',
+  'off the beaten path', 'unexpected', 'random', 'adventure',
+  'push my boundaries', 'outside my comfort zone', 'wild card',
+  'what would you recommend', 'trust you', 'your favorite',
+];
+
+// Experience chaining patterns
+const CHAIN_PATTERNS = [
+  /after\s+(?:visiting|eating at|drinks at|dinner at|lunch at)?\s*(.+?)(?:,|\s+where|\s+what)/i,
+  /(?:just (?:left|finished|had)|coming from)\s+(.+?)(?:,|\s+where|\s+what|\s+now)/i,
+  /post[- ](.+?)\s+(?:drinks|food|activity|spot)/i,
+  /following\s+(?:up on|my visit to)?\s*(.+)/i,
+  /what (?:goes well|pairs) with\s+(.+)/i,
+  /after\s+(.+?)\s*$/i,
+];
+
+// Constraint keywords
+const DIETARY_KEYWORDS: Record<string, string[]> = {
+  'vegetarian': ['vegetarian', 'veggie', 'no meat'],
+  'vegan': ['vegan', 'plant-based', 'plant based', 'no animal'],
+  'gluten-free': ['gluten-free', 'gluten free', 'celiac', 'no gluten'],
+  'halal': ['halal'],
+  'kosher': ['kosher'],
+  'dairy-free': ['dairy-free', 'dairy free', 'lactose', 'no dairy'],
+  'nut-free': ['nut-free', 'nut allergy', 'no nuts'],
+};
+
+const CONSTRAINT_KEYWORDS: Record<string, string[]> = {
+  'outdoor': ['outdoor', 'outside', 'terrace', 'patio', 'garden', 'rooftop', 'al fresco'],
+  'reservations': ['reservations', 'book ahead', 'need to book', 'hard to get'],
+  'walk-in': ['walk-in', 'no reservation', 'no reservations needed', 'just show up'],
+  'accessible': ['accessible', 'wheelchair', 'mobility', 'accessible entrance'],
+  'kid-friendly': ['kid-friendly', 'kids', 'children', 'family-friendly', 'child'],
+  'pet-friendly': ['pet-friendly', 'dog-friendly', 'dogs allowed', 'pets'],
+  'late-night': ['late night', 'open late', 'after midnight', '24 hour', 'all night'],
+  'early-morning': ['early morning', 'opens early', 'breakfast', 'before work'],
+};
+
+// Anti-patterns for serendipity - things users typically choose
+const ANTI_PATTERN_CATEGORIES: Record<string, string[]> = {
+  'always_picks_japanese': ['japanese', 'sushi', 'ramen', 'izakaya'],
+  'always_picks_italian': ['italian', 'pasta', 'pizza'],
+  'always_picks_upscale': ['fine dining', 'michelin', 'upscale', 'fancy'],
+  'always_picks_casual': ['casual', 'laid back', 'chill'],
 };
 
 /**
@@ -423,6 +531,161 @@ function parseQueryIntent(
     } else if (/\b(compare|vs|versus|better|difference)\b/i.test(lowerQuery)) {
       result.intent = 'comparison';
     }
+  }
+
+  // === ADVANCED FEATURES ===
+
+  // 1. Mood/Emotional Understanding
+  for (const [keyword, moodData] of Object.entries(MOOD_KEYWORDS)) {
+    if (lowerQuery.includes(keyword)) {
+      result.mood = moodData;
+      result.intent = 'mood_based';
+
+      // Map mood to appropriate vibes
+      if (moodData.mood === 'relaxed') {
+        result.vibes.push('quiet', 'casual');
+      } else if (moodData.mood === 'celebratory') {
+        result.vibes.push('lively', 'upscale');
+      } else if (moodData.mood === 'romantic') {
+        result.vibes.push('romantic', 'quiet');
+      } else if (moodData.mood === 'adventurous') {
+        result.vibes.push('trendy', 'hidden_gem');
+      }
+      break;
+    }
+  }
+
+  // 2. Serendipity Mode - "Surprise me"
+  if (SERENDIPITY_TRIGGERS.some(trigger => lowerQuery.includes(trigger))) {
+    result.intent = 'serendipity';
+    result.wantsSerendipity = true;
+  }
+
+  // 3. Experience Chaining - "After dinner at X, where for drinks?"
+  for (const pattern of CHAIN_PATTERNS) {
+    const chainMatch = query.match(pattern);
+    if (chainMatch) {
+      result.intent = 'experience_chain';
+      result.chainFrom = chainMatch[1].trim();
+
+      // Try to detect what they want next
+      if (/drink|bar|cocktail/i.test(lowerQuery)) {
+        result.filters.category = 'bar';
+      } else if (/coffee|cafe/i.test(lowerQuery)) {
+        result.filters.category = 'cafe';
+      } else if (/dessert|sweet/i.test(lowerQuery)) {
+        result.filters.category = 'cafe';
+      } else if (/walk|stroll|explore/i.test(lowerQuery)) {
+        result.filters.category = 'shop';
+      }
+      break;
+    }
+  }
+
+  // 4. Complex Constraint Detection
+  const constraints: ConstraintSet = {};
+
+  // Dietary constraints
+  for (const [diet, keywords] of Object.entries(DIETARY_KEYWORDS)) {
+    if (keywords.some(k => lowerQuery.includes(k))) {
+      constraints.dietary = constraints.dietary || [];
+      constraints.dietary.push(diet);
+    }
+  }
+
+  // Facility/feature constraints
+  for (const [constraint, keywords] of Object.entries(CONSTRAINT_KEYWORDS)) {
+    if (keywords.some(k => lowerQuery.includes(k))) {
+      constraints.mustHave = constraints.mustHave || [];
+      constraints.mustHave.push(constraint);
+    }
+  }
+
+  // Anti-constraints (things to avoid)
+  const avoidPatterns = [
+    /avoid\s+(.+?)(?:\.|,|$)/i,
+    /no\s+(.+?)(?:\.|,|$)/i,
+    /don't want\s+(.+?)(?:\.|,|$)/i,
+    /not\s+(?:too\s+)?(.+?)(?:\.|,|$)/i,
+  ];
+  for (const pattern of avoidPatterns) {
+    const avoidMatch = query.match(pattern);
+    if (avoidMatch) {
+      const avoidTerm = avoidMatch[1].toLowerCase().trim();
+      if (avoidTerm.includes('crowd') || avoidTerm.includes('busy') || avoidTerm.includes('tourist')) {
+        constraints.mustAvoid = constraints.mustAvoid || [];
+        constraints.mustAvoid.push('crowded', 'touristy');
+      }
+      if (avoidTerm.includes('expensive') || avoidTerm.includes('pricey')) {
+        result.priceContext = 'budget';
+      }
+    }
+  }
+
+  // Group size detection
+  const groupSizeMatch = query.match(/(\d+)\s*(?:people|persons|of us|guests|pax)/i);
+  if (groupSizeMatch) {
+    constraints.groupSize = parseInt(groupSizeMatch[1], 10);
+  }
+
+  // Budget detection
+  const budgetMatch = query.match(/\$(\d+)\s*(?:per person|pp|each|\/person)?/i);
+  if (budgetMatch) {
+    constraints.budget = {
+      perPerson: parseInt(budgetMatch[1], 10),
+      currency: 'USD',
+    };
+  }
+
+  // If we found constraints, set intent and attach them
+  if (Object.keys(constraints).length > 0) {
+    if (constraints.dietary && constraints.dietary.length > 0 || constraints.groupSize || constraints.budget) {
+      result.intent = 'constraint_solve';
+    }
+    result.constraints = constraints;
+  }
+
+  // 5. Real-Time Context Detection
+  const now = new Date();
+  const hour = now.getHours();
+  const dayOfWeek = now.getDay();
+
+  result.realTimeContext = {
+    timeOfDay: hour < 6 ? 'late_night' :
+               hour < 10 ? 'early_morning' :
+               hour < 12 ? 'morning' :
+               hour < 14 ? 'midday' :
+               hour < 17 ? 'afternoon' :
+               hour < 21 ? 'evening' : 'late_night',
+    dayOfWeek: dayOfWeek === 0 || dayOfWeek === 6 ? 'weekend' : 'weekday',
+  };
+
+  // Detect time-related queries
+  if (/just (?:landed|arrived)|at the airport|after (?:my |the )?flight/i.test(lowerQuery)) {
+    result.realTimeContext.justArrived = true;
+  }
+
+  // Detect limited time
+  const timeMatch = query.match(/(\d+)\s*(?:hours?|hrs?|minutes?|mins?)\s*(?:to kill|free|between|before)/i);
+  if (timeMatch) {
+    const amount = parseInt(timeMatch[1], 10);
+    const isMinutes = /min/i.test(timeMatch[0]);
+    result.realTimeContext.limitedTime = isMinutes ? amount : amount * 60;
+  }
+
+  // Season detection (basic - could be enhanced with actual date/location)
+  const month = now.getMonth();
+  result.realTimeContext.season = month >= 2 && month <= 4 ? 'spring' :
+                                   month >= 5 && month <= 7 ? 'summer' :
+                                   month >= 8 && month <= 10 ? 'fall' : 'winter';
+
+  // Weather mentions
+  if (/rain|rainy|raining|wet/i.test(lowerQuery)) {
+    result.realTimeContext.weather = 'rainy';
+  } else if (/hot|heat|humid/i.test(lowerQuery)) {
+    result.realTimeContext.weather = 'hot';
+  } else if (/cold|freezing|chilly/i.test(lowerQuery)) {
+    result.realTimeContext.weather = 'cold';
   }
 
   return result;
@@ -1015,7 +1278,416 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       });
     }
 
-    // 6. Handle "more like this" queries
+    // 6. Handle SERENDIPITY mode - "Surprise me"
+    if (intent.intent === 'serendipity' && intent.wantsSerendipity) {
+      // Get user's past patterns to intentionally diversify
+      let antiPatterns: string[] = [];
+      if (tasteProfile?.preferences?.categories) {
+        // Find what they usually pick
+        const topCategories = tasteProfile.preferences.categories
+          .slice(0, 2)
+          .map((c: any) => c.category);
+        antiPatterns = topCategories;
+      }
+
+      // Query for hidden gems and unusual picks, avoiding their usual choices
+      let serendipityQuery = supabase
+        .from('destinations')
+        .select('*')
+        .or('vibe_tags.cs.{hidden_gem},vibe_tags.cs.{authentic},rating.gte.4.0');
+
+      if (intent.filters.city) {
+        serendipityQuery = serendipityQuery.ilike('city', `%${intent.filters.city}%`);
+      }
+
+      // Avoid their usual picks if we know their patterns
+      if (antiPatterns.length > 0) {
+        // We'll filter in memory to avoid complex NOT queries
+      }
+
+      const { data: serendipityResults } = await serendipityQuery.limit(50);
+
+      let surpriseResults = serendipityResults || [];
+
+      // Filter out their usual picks and add randomness
+      if (antiPatterns.length > 0 && surpriseResults.length > 10) {
+        surpriseResults = surpriseResults.filter(dest => {
+          const category = dest.category?.toLowerCase() || '';
+          return !antiPatterns.some(p => category.includes(p.toLowerCase()));
+        });
+      }
+
+      // Shuffle and pick random subset for true serendipity
+      surpriseResults = surpriseResults
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 10);
+
+      const serendipityResponse = surpriseResults.length > 0
+        ? `I'm picking something different for you! ${surpriseResults.length} curated surprises that might push your boundaries a bit. Trust me on these.`
+        : `Let me surprise you with some unexpected gems${intent.filters.city ? ` in ${intent.filters.city}` : ''}.`;
+
+      const followUps = [
+        'More surprises',
+        'Something even more adventurous',
+        intent.filters.city ? `Hidden gems in ${intent.filters.city}` : 'Show me hidden gems',
+        'Back to my usual style',
+      ];
+
+      return NextResponse.json({
+        response: serendipityResponse,
+        destinations: surpriseResults,
+        filters: intent.filters,
+        followUps,
+        intent: 'serendipity',
+        meta: {
+          query,
+          totalResults: surpriseResults.length,
+          isSerendipity: true,
+          avoidedPatterns: antiPatterns,
+        },
+      });
+    }
+
+    // 7. Handle EXPERIENCE CHAINING - "After X, where next?"
+    if (intent.intent === 'experience_chain' && intent.chainFrom) {
+      // Find the reference destination
+      const { data: fromDest } = await supabase
+        .from('destinations')
+        .select('*')
+        .or(`name.ilike.%${intent.chainFrom}%,slug.ilike.%${intent.chainFrom}%`)
+        .limit(1)
+        .single();
+
+      let chainResults: any[] = [];
+      let chainResponse = '';
+
+      if (fromDest) {
+        // Determine what comes next logically
+        const fromCategory = fromDest.category?.toLowerCase() || '';
+        let nextCategory = intent.filters.category || '';
+
+        // Auto-determine next experience if not specified
+        if (!nextCategory) {
+          if (fromCategory.includes('restaurant')) {
+            nextCategory = 'bar'; // After dinner → drinks
+          } else if (fromCategory.includes('cafe')) {
+            nextCategory = 'shop'; // After coffee → explore shops
+          } else if (fromCategory.includes('bar')) {
+            nextCategory = 'restaurant'; // After drinks → late night food
+          } else {
+            nextCategory = 'cafe'; // Default to cafe
+          }
+        }
+
+        // Find nearby options in the same neighborhood/city
+        let chainQuery = supabase
+          .from('destinations')
+          .select('*')
+          .ilike('city', `%${fromDest.city}%`)
+          .ilike('category', `%${nextCategory}%`)
+          .neq('id', fromDest.id);
+
+        // Prefer same neighborhood if available
+        if (fromDest.neighborhood) {
+          // First try same neighborhood, then broader city
+        }
+
+        const { data: nearbyResults } = await chainQuery.limit(20);
+        chainResults = nearbyResults || [];
+
+        // Sort by proximity (would need lat/lng calculation in production)
+        // For now, prefer places with matching vibes
+        if (fromDest.vibe_tags && fromDest.vibe_tags.length > 0) {
+          chainResults = chainResults.map(dest => {
+            const matchingVibes = (dest.vibe_tags || []).filter((v: string) =>
+              fromDest.vibe_tags.includes(v)
+            ).length;
+            return { ...dest, vibeMatch: matchingVibes };
+          });
+          chainResults.sort((a, b) => (b.vibeMatch || 0) - (a.vibeMatch || 0));
+        }
+
+        chainResults = chainResults.slice(0, 10);
+
+        chainResponse = `After ${fromDest.name}, here are ${chainResults.length} perfect ${nextCategory}s nearby. They complement the vibe of your previous stop.`;
+      } else {
+        chainResponse = `I couldn't find "${intent.chainFrom}" in our curation, but here are some great options for what comes next.`;
+
+        // Fallback: just search for the next category in the city
+        if (intent.filters.city && intent.filters.category) {
+          const { data: fallbackResults } = await supabase
+            .from('destinations')
+            .select('*')
+            .ilike('city', `%${intent.filters.city}%`)
+            .ilike('category', `%${intent.filters.category}%`)
+            .limit(10);
+          chainResults = fallbackResults || [];
+        }
+      }
+
+      const followUps = [
+        fromDest ? `More like ${fromDest.name}` : 'Show me more options',
+        'Then where after this?',
+        'Plan my whole evening',
+        intent.filters.city ? `Other ${intent.filters.category || 'places'} in ${intent.filters.city}` : 'Back to search',
+      ];
+
+      return NextResponse.json({
+        response: chainResponse,
+        destinations: chainResults,
+        filters: intent.filters,
+        followUps,
+        intent: 'experience_chain',
+        chainFrom: fromDest ? { id: fromDest.id, name: fromDest.name, category: fromDest.category } : null,
+        meta: {
+          query,
+          totalResults: chainResults.length,
+          isExperienceChain: true,
+        },
+      });
+    }
+
+    // 8. Handle CONSTRAINT SOLVING - Complex multi-variable optimization
+    if (intent.intent === 'constraint_solve' && intent.constraints) {
+      const constraints = intent.constraints;
+
+      let constraintQuery = supabase.from('destinations').select('*');
+
+      if (intent.filters.city) {
+        constraintQuery = constraintQuery.ilike('city', `%${intent.filters.city}%`);
+      }
+      if (intent.filters.category) {
+        constraintQuery = constraintQuery.ilike('category', `%${intent.filters.category}%`);
+      }
+
+      const { data: candidates } = await constraintQuery.limit(200);
+      let constraintResults = candidates || [];
+
+      // Apply constraints as filters
+      constraintResults = constraintResults.filter(dest => {
+        let passes = true;
+        const desc = (dest.description || '').toLowerCase();
+        const tags = (dest.tags || []).map((t: string) => t.toLowerCase());
+        const allText = `${desc} ${tags.join(' ')}`;
+
+        // Dietary constraints
+        if (constraints.dietary && constraints.dietary.length > 0) {
+          const hasDietaryInfo = constraints.dietary.some(diet => {
+            const keywords = DIETARY_KEYWORDS[diet] || [diet];
+            return keywords.some(k => allText.includes(k));
+          });
+          // Don't strictly filter, but we'll boost matches
+        }
+
+        // Budget constraint
+        if (constraints.budget && dest.price_level) {
+          const avgPrice = constraints.budget.perPerson;
+          // Rough mapping: price_level 1 = $15, 2 = $30, 3 = $60, 4 = $100+
+          const priceMap: Record<number, number> = { 1: 15, 2: 30, 3: 60, 4: 100 };
+          const estimatedPrice = priceMap[dest.price_level] || 50;
+          if (estimatedPrice > avgPrice * 1.5) {
+            passes = false; // Too expensive
+          }
+        }
+
+        // Group size - skip places that are too small for large groups
+        if (constraints.groupSize && constraints.groupSize > 6) {
+          if (allText.includes('intimate') || allText.includes('tiny') || allText.includes('counter only')) {
+            passes = false;
+          }
+        }
+
+        // Must avoid
+        if (constraints.mustAvoid && constraints.mustAvoid.length > 0) {
+          for (const avoid of constraints.mustAvoid) {
+            if (avoid === 'crowded' && (allText.includes('busy') || allText.includes('crowded') || allText.includes('popular'))) {
+              passes = false;
+            }
+            if (avoid === 'touristy' && (allText.includes('tourist') || allText.includes('famous'))) {
+              passes = false;
+            }
+          }
+        }
+
+        return passes;
+      });
+
+      // Score remaining results by how well they match constraints
+      constraintResults = constraintResults.map(dest => {
+        let score = 0;
+        const desc = (dest.description || '').toLowerCase();
+        const tags = (dest.tags || []).map((t: string) => t.toLowerCase());
+        const allText = `${desc} ${tags.join(' ')}`;
+
+        // Dietary match bonus
+        if (constraints.dietary) {
+          for (const diet of constraints.dietary) {
+            const keywords = DIETARY_KEYWORDS[diet] || [diet];
+            if (keywords.some(k => allText.includes(k))) {
+              score += 2;
+            }
+          }
+        }
+
+        // Must-have match bonus
+        if (constraints.mustHave) {
+          for (const must of constraints.mustHave) {
+            const keywords = CONSTRAINT_KEYWORDS[must] || [must];
+            if (keywords.some(k => allText.includes(k))) {
+              score += 1;
+            }
+          }
+        }
+
+        // Higher rating bonus
+        if (dest.rating && dest.rating >= 4.5) score += 1;
+
+        return { ...dest, constraintScore: score };
+      });
+
+      // Sort by constraint match score
+      constraintResults.sort((a, b) => (b.constraintScore || 0) - (a.constraintScore || 0));
+      constraintResults = constraintResults.slice(0, 15);
+
+      // Build constraint summary for response
+      const constraintParts: string[] = [];
+      if (constraints.dietary?.length) constraintParts.push(constraints.dietary.join(', '));
+      if (constraints.groupSize) constraintParts.push(`${constraints.groupSize} people`);
+      if (constraints.budget) constraintParts.push(`$${constraints.budget.perPerson}/person`);
+      if (constraints.mustHave?.length) constraintParts.push(constraints.mustHave.join(', '));
+
+      const constraintResponse = constraintResults.length > 0
+        ? `Found ${constraintResults.length} places matching your requirements: ${constraintParts.join(', ')}. These all work for your group!`
+        : `I couldn't find perfect matches for all your constraints. Try relaxing some requirements?`;
+
+      const followUps = [
+        'Relax the budget',
+        'Show more options',
+        constraints.groupSize ? 'Good for large groups' : 'Good for groups',
+        'Book ahead options',
+      ];
+
+      return NextResponse.json({
+        response: constraintResponse,
+        destinations: constraintResults,
+        filters: intent.filters,
+        followUps,
+        intent: 'constraint_solve',
+        constraints: intent.constraints,
+        meta: {
+          query,
+          totalResults: constraintResults.length,
+          isConstraintSolve: true,
+          constraintsApplied: constraintParts,
+        },
+      });
+    }
+
+    // 9. Handle MOOD-BASED recommendations
+    if (intent.intent === 'mood_based' && intent.mood) {
+      const mood = intent.mood;
+
+      // Map mood to search strategy
+      let moodQuery = supabase.from('destinations').select('*');
+
+      if (intent.filters.city) {
+        moodQuery = moodQuery.ilike('city', `%${intent.filters.city}%`);
+      }
+
+      // Add category filter based on mood
+      if (mood.energy === 'low') {
+        // Low energy: cafes, quiet restaurants
+        if (!intent.filters.category) {
+          moodQuery = moodQuery.or('category.ilike.%cafe%,category.ilike.%restaurant%');
+        }
+      } else if (mood.energy === 'high') {
+        // High energy: bars, lively restaurants
+        if (!intent.filters.category) {
+          moodQuery = moodQuery.or('category.ilike.%bar%,category.ilike.%restaurant%');
+        }
+      }
+
+      const { data: moodCandidates } = await moodQuery.limit(100);
+      let moodResults = moodCandidates || [];
+
+      // Filter and score by mood match
+      moodResults = moodResults.map(dest => {
+        let moodScore = 0;
+        const vibes = dest.vibe_tags || [];
+        const desc = (dest.description || '').toLowerCase();
+
+        // Score based on mood needs
+        if (mood.need === 'comfort') {
+          if (vibes.some((v: string) => v.includes('cozy') || v.includes('comfort'))) moodScore += 2;
+          if (desc.includes('comfort') || desc.includes('warm') || desc.includes('homey')) moodScore += 1;
+        } else if (mood.need === 'peace') {
+          if (vibes.some((v: string) => v.includes('quiet') || v.includes('serene'))) moodScore += 2;
+          if (desc.includes('peaceful') || desc.includes('calm') || desc.includes('zen')) moodScore += 1;
+        } else if (mood.need === 'excitement') {
+          if (vibes.some((v: string) => v.includes('lively') || v.includes('energetic'))) moodScore += 2;
+          if (desc.includes('vibrant') || desc.includes('buzzy') || desc.includes('exciting')) moodScore += 1;
+        } else if (mood.need === 'connection') {
+          if (vibes.some((v: string) => v.includes('romantic') || v.includes('intimate'))) moodScore += 2;
+          if (desc.includes('romantic') || desc.includes('intimate') || desc.includes('cozy')) moodScore += 1;
+        } else if (mood.need === 'inspiration') {
+          if (vibes.some((v: string) => v.includes('design') || v.includes('artistic'))) moodScore += 2;
+          if (desc.includes('beautiful') || desc.includes('stunning') || desc.includes('architecture')) moodScore += 1;
+        }
+
+        // Energy level matching
+        if (mood.energy === 'low' && vibes.some((v: string) => v.includes('quiet') || v.includes('relaxed'))) {
+          moodScore += 1;
+        } else if (mood.energy === 'high' && vibes.some((v: string) => v.includes('lively') || v.includes('vibrant'))) {
+          moodScore += 1;
+        }
+
+        return { ...dest, moodScore };
+      });
+
+      // Sort by mood score
+      moodResults.sort((a, b) => (b.moodScore || 0) - (a.moodScore || 0));
+      moodResults = moodResults.slice(0, 15);
+
+      // Generate empathetic response based on mood
+      let moodResponse = '';
+      if (mood.energy === 'low' && mood.need === 'comfort') {
+        moodResponse = `I hear you - sounds like you need some TLC. Here are ${moodResults.length} cozy, comforting spots where you can recharge.`;
+      } else if (mood.energy === 'low' && mood.need === 'peace') {
+        moodResponse = `When you need calm, these ${moodResults.length} peaceful retreats are perfect for clearing your mind.`;
+      } else if (mood.energy === 'high' && mood.need === 'excitement') {
+        moodResponse = `Let's channel that energy! Here are ${moodResults.length} vibrant spots for an exciting time.`;
+      } else if (mood.mood === 'celebratory') {
+        moodResponse = `Time to celebrate! These ${moodResults.length} spots are perfect for marking the occasion.`;
+      } else if (mood.mood === 'romantic') {
+        moodResponse = `For a romantic time, these ${moodResults.length} intimate spots set the perfect mood.`;
+      } else {
+        moodResponse = `Based on how you're feeling, here are ${moodResults.length} places that should hit the spot.`;
+      }
+
+      const followUps = [
+        'Something more upbeat',
+        'Something quieter',
+        intent.filters.city ? `Best for a ${mood.mood} mood in ${intent.filters.city}` : 'More options',
+        'I changed my mind, surprise me',
+      ];
+
+      return NextResponse.json({
+        response: moodResponse,
+        destinations: moodResults,
+        filters: intent.filters,
+        followUps,
+        intent: 'mood_based',
+        mood: intent.mood,
+        meta: {
+          query,
+          totalResults: moodResults.length,
+          isMoodBased: true,
+          detectedMood: mood,
+        },
+      });
+    }
+
+    // 10. Handle "more like this" queries
     if (intent.intent === 'more_like_this' && intent.referenceDestination) {
       const { data: refDest } = await supabase
         .from('destinations')
