@@ -59,7 +59,7 @@ interface TravelIntelligenceRequest {
 interface ParsedIntent {
   searchQuery: string;
   filters: SearchFilters;
-  intent: 'search' | 'recommendation' | 'discovery' | 'comparison' | 'more_like_this' | 'itinerary' | 'clarification_response';
+  intent: 'search' | 'recommendation' | 'discovery' | 'comparison' | 'more_like_this' | 'itinerary' | 'clarification_response' | 'group_recommendation';
   occasion?: string;
   vibes: string[];
   timeContext?: 'breakfast' | 'lunch' | 'dinner' | 'late_night';
@@ -69,6 +69,15 @@ interface ParsedIntent {
   itineraryDuration?: 'half_day' | 'full_day' | 'multi_day';
   needsClarification?: boolean;
   clarificationType?: 'city' | 'category' | 'occasion' | 'price';
+  // Collaborative trip planning
+  groupPreferences?: GroupPreference[];
+}
+
+interface GroupPreference {
+  person: string; // 'me', 'friend', 'partner', etc.
+  cuisines?: string[];
+  vibes?: string[];
+  priceContext?: 'budget' | 'mid_range' | 'splurge';
 }
 
 interface ItinerarySlot {
@@ -121,6 +130,23 @@ const CATEGORY_VARIATIONS: Record<string, string[]> = {
   'bar': ['bar', 'bars', 'drinks', 'cocktails', 'cocktail bar', 'wine bar', 'speakeasy', 'nightlife', 'drinking'],
   'cafe': ['cafe', 'cafes', 'coffee', 'coffee shop', 'coffeehouse', 'espresso', 'specialty coffee'],
   'shop': ['shop', 'shopping', 'store', 'retail', 'boutique', 'buy'],
+};
+
+// Cuisine keywords for collaborative recommendations
+const CUISINE_KEYWORDS: Record<string, string[]> = {
+  'japanese': ['japanese', 'sushi', 'ramen', 'izakaya', 'omakase', 'kaiseki', 'tempura', 'udon', 'soba', 'yakitori', 'wagyu'],
+  'italian': ['italian', 'pasta', 'pizza', 'trattoria', 'osteria', 'risotto', 'gelato'],
+  'french': ['french', 'bistro', 'brasserie', 'patisserie', 'croissant', 'crepes'],
+  'chinese': ['chinese', 'dim sum', 'cantonese', 'szechuan', 'dumpling', 'peking'],
+  'korean': ['korean', 'bbq', 'bibimbap', 'kimchi', 'kbbq'],
+  'thai': ['thai', 'pad thai', 'curry', 'som tam'],
+  'mexican': ['mexican', 'tacos', 'taqueria', 'mezcal', 'margarita'],
+  'indian': ['indian', 'curry', 'tandoori', 'naan', 'biryani'],
+  'mediterranean': ['mediterranean', 'greek', 'hummus', 'falafel', 'mezze'],
+  'american': ['american', 'burger', 'bbq', 'steakhouse', 'diner'],
+  'seafood': ['seafood', 'fish', 'oyster', 'lobster', 'crab', 'sashimi'],
+  'vegetarian': ['vegetarian', 'vegan', 'plant-based', 'veggie'],
+  'fusion': ['fusion', 'modern', 'contemporary', 'innovative'],
 };
 
 /**
@@ -198,6 +224,59 @@ function parseQueryIntent(
     vibes: [],
   };
 
+  // Check for group/collaborative preferences
+  // Patterns like "my friend likes X, I like Y" or "one wants Italian, another wants Japanese"
+  const groupPatterns = [
+    /(?:my\s+)?(?:friend|partner|wife|husband|colleague|group)\s+(?:likes?|wants?|prefers?)\s+(\w+).*?(?:i|we|and\s+i)\s+(?:like|want|prefer)\s+(\w+)/i,
+    /(?:one\s+(?:of\s+us|person)?)\s+(?:likes?|wants?)\s+(\w+).*?(?:another|the\s+other|someone\s+else)\s+(?:likes?|wants?)\s+(\w+)/i,
+    /(\w+)\s+for\s+(?:my\s+)?(?:friend|partner|wife|husband).*?(\w+)\s+for\s+me/i,
+    /(?:we|us)\s+(?:both|all)\s+(?:like|want)\s+(?:different|mixed).*?(\w+)\s+and\s+(\w+)/i,
+  ];
+
+  for (const pattern of groupPatterns) {
+    const match = query.match(pattern);
+    if (match) {
+      result.intent = 'group_recommendation';
+      result.groupPreferences = [];
+
+      // Extract cuisines from the match groups
+      const preference1 = match[1].toLowerCase();
+      const preference2 = match[2].toLowerCase();
+
+      // Find cuisine matches
+      const findCuisine = (term: string): string | null => {
+        for (const [cuisine, keywords] of Object.entries(CUISINE_KEYWORDS)) {
+          if (keywords.some(k => k.includes(term) || term.includes(k))) {
+            return cuisine;
+          }
+        }
+        // Also check if the term itself is a cuisine name
+        if (CUISINE_KEYWORDS[term]) return term;
+        return null;
+      };
+
+      const cuisine1 = findCuisine(preference1);
+      const cuisine2 = findCuisine(preference2);
+
+      if (cuisine1) {
+        result.groupPreferences.push({
+          person: 'friend',
+          cuisines: [cuisine1],
+        });
+      }
+      if (cuisine2) {
+        result.groupPreferences.push({
+          person: 'me',
+          cuisines: [cuisine2],
+        });
+      }
+
+      // Default to restaurant category for group dining
+      result.filters.category = 'restaurant';
+      break;
+    }
+  }
+
   // Check for itinerary/day planning intent
   const itineraryPatterns = [
     /plan\s+(?:my|a|the)\s+(?:day|trip|itinerary)/i,
@@ -207,7 +286,7 @@ function parseQueryIntent(
     /how\s+(?:should|to)\s+spend\s+(?:a|my|the)\s+day/i,
   ];
 
-  if (itineraryPatterns.some(p => p.test(lowerQuery))) {
+  if (itineraryPatterns.some(p => p.test(lowerQuery)) && result.intent !== 'group_recommendation') {
     result.intent = 'itinerary';
     if (/half\s*day/i.test(lowerQuery)) {
       result.itineraryDuration = 'half_day';
@@ -818,7 +897,125 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       });
     }
 
-    // 5. Handle "more like this" queries
+    // 5. Handle group/collaborative recommendations
+    if (intent.intent === 'group_recommendation' && intent.groupPreferences && intent.groupPreferences.length > 0) {
+      // Get all unique cuisines from group preferences
+      const allCuisines = intent.groupPreferences.flatMap(p => p.cuisines || []);
+
+      // Build query for fusion/multi-cuisine restaurants or places that satisfy both
+      let results: any[] = [];
+
+      // Strategy 1: Find fusion restaurants that combine cuisines
+      let dbQuery = supabase
+        .from('destinations')
+        .select('*')
+        .ilike('category', '%restaurant%');
+
+      if (intent.filters.city) {
+        dbQuery = dbQuery.ilike('city', `%${intent.filters.city}%`);
+      }
+
+      // Search for places mentioning multiple cuisines or fusion
+      const cuisineSearchTerms = allCuisines.map(c => `%${c}%`).join('|');
+      dbQuery = dbQuery.or(
+        allCuisines.map(c => `description.ilike.%${c}%`).join(',') +
+        `,tags.cs.{${allCuisines.join(',')}}` +
+        `,micro_description.ilike.%fusion%`
+      );
+
+      const { data: multiCuisineResults } = await dbQuery.limit(30);
+      if (multiCuisineResults) {
+        // Score by how many cuisines they match
+        results = multiCuisineResults.map(dest => {
+          const desc = (dest.description || '').toLowerCase();
+          const micro = (dest.micro_description || '').toLowerCase();
+          const tags = (dest.tags || []).map((t: string) => t.toLowerCase());
+
+          let matchScore = 0;
+          for (const cuisine of allCuisines) {
+            const cuisineKeywords = CUISINE_KEYWORDS[cuisine] || [cuisine];
+            for (const keyword of cuisineKeywords) {
+              if (desc.includes(keyword) || micro.includes(keyword) || tags.some((t: string) => t.includes(keyword))) {
+                matchScore++;
+                break;
+              }
+            }
+          }
+
+          return {
+            ...dest,
+            groupMatchScore: matchScore,
+          };
+        });
+
+        // Sort by match score (places matching more cuisines first)
+        results.sort((a, b) => b.groupMatchScore - a.groupMatchScore);
+      }
+
+      // Strategy 2: If not enough fusion results, get top from each cuisine
+      if (results.length < 5) {
+        for (const cuisine of allCuisines) {
+          const cuisineKeywords = CUISINE_KEYWORDS[cuisine] || [cuisine];
+          const { data: cuisineResults } = await supabase
+            .from('destinations')
+            .select('*')
+            .ilike('category', '%restaurant%')
+            .or(cuisineKeywords.slice(0, 3).map(k => `description.ilike.%${k}%`).join(','))
+            .limit(5);
+
+          if (cuisineResults) {
+            for (const r of cuisineResults) {
+              if (!results.find(existing => existing.id === r.id)) {
+                results.push({
+                  ...r,
+                  cuisineType: cuisine,
+                  groupMatchScore: 1,
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // Generate personalized response for group
+      const cuisineList = allCuisines.join(' and ');
+      const fusionCount = results.filter(r => r.groupMatchScore >= 2).length;
+
+      let groupResponse = '';
+      if (fusionCount > 0) {
+        groupResponse = `Great news for your group! I found ${fusionCount} place${fusionCount > 1 ? 's' : ''} that blend ${cuisineList} cuisines. `;
+        if (results.length > fusionCount) {
+          groupResponse += `Plus ${results.length - fusionCount} more options for each preference.`;
+        }
+      } else {
+        groupResponse = `I've curated ${results.length} options for your group with ${cuisineList} preferences. You could alternate between cuisines or find a spot with a diverse menu.`;
+      }
+
+      const finalResults = results.slice(0, 20);
+      const followUps = [
+        `More ${allCuisines[0] || 'fusion'} options`,
+        `More ${allCuisines[1] || 'restaurants'}`,
+        intent.filters.city ? `Other cuisines in ${intent.filters.city}` : 'Plan a food tour',
+        'Find a fusion restaurant',
+      ];
+
+      return NextResponse.json({
+        response: groupResponse,
+        destinations: finalResults,
+        filters: intent.filters,
+        followUps,
+        intent: intent.intent,
+        groupPreferences: intent.groupPreferences,
+        meta: {
+          query,
+          totalResults: finalResults.length,
+          isGroupRecommendation: true,
+          cuisines: allCuisines,
+        },
+      });
+    }
+
+    // 6. Handle "more like this" queries
     if (intent.intent === 'more_like_this' && intent.referenceDestination) {
       const { data: refDest } = await supabase
         .from('destinations')
