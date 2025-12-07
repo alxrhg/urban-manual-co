@@ -14,16 +14,39 @@ import { ReactNode } from 'react';
 
 export type DrawerMode =
   | 'destination'    // Viewing a destination
-  | 'trip'           // Trip planner
+  | 'trip'           // Trip planner/editor
+  | 'trip-select'    // Trip selector
   | 'chat'           // AI conversation
   | 'similar'        // Similar places
   | 'why-this'       // Why this recommendation
+  | 'add-to-trip'    // Quick add to trip overlay
   | 'account'        // User account
   | 'settings'       // Settings
   | 'custom';        // Custom content
 
 export type DrawerSize = 'small' | 'medium' | 'large' | 'full';
 export type DrawerPosition = 'right' | 'bottom' | 'center';
+
+// ============================================
+// TRIP TYPES
+// ============================================
+
+export interface TripFitAnalysis {
+  score: number;       // 0-100 fit score
+  bestDay: number;     // Recommended day number
+  reason: string;      // "Perfect for afternoon" or "Fills dinner gap"
+  timeSlot?: string;   // Suggested time
+  category: 'perfect' | 'good' | 'possible' | 'conflict';
+}
+
+export interface TripContextInfo {
+  tripId: string;
+  tripTitle: string;
+  dayCount: number;
+  itemCount: number;
+  city?: string;
+  fitAnalysis?: TripFitAnalysis;
+}
 
 // ============================================
 // INTELLIGENCE TYPES
@@ -50,6 +73,11 @@ export interface DrawerContext {
   /** Trip context if applicable */
   tripDay?: number;
   tripFit?: string;
+  tripFitAnalysis?: TripFitAnalysis;
+  /** Active trip info for trip-aware features */
+  activeTripInfo?: TripContextInfo;
+  /** Trip ID to load (for trip mode) */
+  tripId?: string;
 }
 
 // ============================================

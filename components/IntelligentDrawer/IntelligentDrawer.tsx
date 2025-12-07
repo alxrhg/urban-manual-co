@@ -1,11 +1,15 @@
 'use client';
 
-import { useCallback, memo } from 'react';
+import { useCallback, memo, useMemo } from 'react';
 import { useIntelligentDrawer } from './IntelligentDrawerContext';
+import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import DrawerShell from './DrawerShell';
 import DestinationContent from './DestinationContent';
 import SimilarContent from './SimilarContent';
 import WhyThisContent from './WhyThisContent';
+import TripContent from './TripContent';
+import TripSelectorContent from './TripSelectorContent';
+import AddToTripContent from './AddToTripContent';
 import { DrawerMode, DrawerContext } from './types';
 
 /**
@@ -15,16 +19,20 @@ import { DrawerMode, DrawerContext } from './types';
  * - Destination details with trip integration
  * - Similar places discovery
  * - Why this explanations
- * - And extensible for more content types
+ * - Trip planner/editor
+ * - Trip selector
+ * - Add to trip overlay
  *
  * Features:
- * - Smooth navigation between modes
+ * - Smooth navigation between all modes
  * - History support (back button)
  * - Intelligent context awareness
- * - Trip builder integration
+ * - Full trip builder integration
+ * - Smart trip fit analysis
  */
 const IntelligentDrawer = memo(function IntelligentDrawer() {
-  const { state, close, back, navigate, canGoBack } = useIntelligentDrawer();
+  const { state, close, back, navigate, canGoBack, addToTripQuick } = useIntelligentDrawer();
+  const { activeTrip } = useTripBuilder();
   const { isOpen, mode, context, size } = state;
 
   // Handle navigation to different modes
@@ -60,39 +68,66 @@ const IntelligentDrawer = memo(function IntelligentDrawer() {
     }
   }, [handleNavigate, context.destination, context.whyThis]);
 
-  // Handle add to trip (placeholder - would integrate with TripBuilder)
-  const handleAddToTrip = useCallback((destination: any, day?: number) => {
-    // This would be handled by the content component using useTripBuilder
-    console.log('Add to trip:', destination.name, 'day:', day);
-  }, []);
+  // Handle add to trip
+  const handleAddToTrip = useCallback(
+    (destination: any, day?: number) => {
+      addToTripQuick(destination, day);
+    },
+    [addToTripQuick]
+  );
+
+  // Handle showing add to trip overlay
+  const handleShowAddToTrip = useCallback(() => {
+    if (context.destination) {
+      handleNavigate('add-to-trip', { destination: context.destination });
+    }
+  }, [handleNavigate, context.destination]);
 
   // Get title based on mode
-  const getTitle = () => {
+  const title = useMemo(() => {
     switch (mode) {
+      case 'destination':
+        return context.destination?.name || 'Destination';
       case 'similar':
         return 'Similar Places';
       case 'why-this':
         return 'Why This?';
-      case 'destination':
-        return context.destination?.name;
+      case 'trip':
+        return activeTrip?.title || 'Trip Planner';
+      case 'trip-select':
+        return 'Your Trips';
+      case 'add-to-trip':
+        return 'Add to Trip';
+      case 'chat':
+        return 'Travel Chat';
+      case 'account':
+        return 'Account';
+      case 'settings':
+        return 'Settings';
       default:
         return '';
     }
-  };
+  }, [mode, context.destination, activeTrip]);
 
   // Get subtitle based on mode
-  const getSubtitle = () => {
+  const subtitle = useMemo(() => {
     switch (mode) {
       case 'destination':
-        return context.destination?.city;
+        return context.destination?.city || '';
       case 'similar':
-        return `Places like ${context.destination?.name}`;
+        return context.destination ? `Places like ${context.destination.name}` : '';
       case 'why-this':
         return 'AI Recommendation';
+      case 'trip':
+        return activeTrip?.city || '';
+      case 'trip-select':
+        return 'Select or create a trip';
+      case 'add-to-trip':
+        return context.destination?.name || '';
       default:
         return '';
     }
-  };
+  }, [mode, context.destination, activeTrip]);
 
   // Render content based on mode
   const renderContent = () => {
@@ -105,8 +140,11 @@ const IntelligentDrawer = memo(function IntelligentDrawer() {
             related={context.related}
             whyThis={context.whyThis}
             tripContext={
-              context.tripDay
-                ? { day: context.tripDay, fit: context.tripFit }
+              context.tripFitAnalysis
+                ? {
+                    day: context.tripFitAnalysis.bestDay,
+                    fit: context.tripFitAnalysis.reason,
+                  }
                 : undefined
             }
             onOpenRelated={handleOpenRelated}
@@ -134,6 +172,36 @@ const IntelligentDrawer = memo(function IntelligentDrawer() {
           />
         );
 
+      case 'trip':
+        return <TripContent />;
+
+      case 'trip-select':
+        return <TripSelectorContent />;
+
+      case 'add-to-trip':
+        return <AddToTripContent />;
+
+      case 'chat':
+        return (
+          <div className="p-5 text-center text-gray-500">
+            Chat mode coming soon
+          </div>
+        );
+
+      case 'account':
+        return (
+          <div className="p-5 text-center text-gray-500">
+            Account mode coming soon
+          </div>
+        );
+
+      case 'settings':
+        return (
+          <div className="p-5 text-center text-gray-500">
+            Settings mode coming soon
+          </div>
+        );
+
       default:
         return (
           <div className="p-5 text-center text-gray-500">
@@ -143,16 +211,23 @@ const IntelligentDrawer = memo(function IntelligentDrawer() {
     }
   };
 
+  // Determine drawer size based on mode
+  const drawerSize = useMemo(() => {
+    if (mode === 'trip') return 'large';
+    if (mode === 'add-to-trip') return 'small';
+    return size;
+  }, [mode, size]);
+
   return (
     <DrawerShell
       isOpen={isOpen}
-      size={size}
+      size={drawerSize}
       position="right"
       onClose={close}
       onBack={canGoBack ? back : undefined}
       canGoBack={canGoBack}
-      title={getTitle()}
-      subtitle={getSubtitle()}
+      title={title}
+      subtitle={subtitle}
     >
       {renderContent()}
     </DrawerShell>

@@ -13,6 +13,7 @@ import { formatDestinationsFromField } from '@/types/trip';
 import { TripCoverImage } from '@/components/trips/TripCoverImage';
 import { TripStats } from '@/components/trips/TripStats';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
+import { useTripDrawer } from '@/components/IntelligentDrawer';
 import {
   getTripState,
   getTimeLabel,
@@ -37,6 +38,7 @@ interface TripsPageClientProps {
 export default function TripsPageClient({ initialTrips, userId }: TripsPageClientProps) {
   const router = useRouter();
   const { switchToTrip, openPanel } = useTripBuilder();
+  const { openTrip } = useTripDrawer();
   const [trips, setTrips] = useState<TripWithStats[]>(initialTrips);
   const [creating, setCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -126,11 +128,10 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
     }
   };
 
-  // Quick edit - load into sidebar and stay on page
+  // Quick edit - load trip into IntelligentDrawer
   const handleQuickEdit = useCallback(async (tripId: string) => {
-    await switchToTrip(tripId);
-    openPanel();
-  }, [switchToTrip, openPanel]);
+    await openTrip(tripId);
+  }, [openTrip]);
 
   // Browse & Add - load trip and go to homepage
   const handleBrowseAdd = useCallback(async (tripId: string) => {
