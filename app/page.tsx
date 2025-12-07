@@ -3,7 +3,7 @@ import { prefetchHomepageData } from '@/lib/data/fetch-destinations';
 import { generateOrganizationSchema, generateWebSiteSchema } from '@/lib/metadata';
 import { HomepageDataProvider } from '@/components/homepage/HomepageDataProvider';
 import { HomepageContent } from '@/components/homepage/HomepageContent';
-import { DestinationDrawer } from '@/components/homepage/DestinationDrawer';
+import { ResponsiveDrawerContainer } from '@/components/homepage/ResponsiveDrawerContainer';
 import { AISearchChatWrapper } from '@/components/homepage/AISearchChatWrapper';
 import InteractiveHero from '@/components/homepage/InteractiveHero';
 import NavigationBar from '@/components/homepage/NavigationBar';
@@ -78,32 +78,32 @@ export default async function HomePage() {
         serverCities={cities}
         serverCategories={categories}
       >
-        <main className="relative min-h-screen dark:text-white">
-          <h1 className="sr-only">
-            Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual
-          </h1>
+        {/* Responsive drawer container - shows inline split pane on desktop, overlay on mobile */}
+        <ResponsiveDrawerContainer>
+          <main className="relative min-h-screen dark:text-white">
+            <h1 className="sr-only">
+              Discover the World's Best Hotels, Restaurants & Travel Destinations - The Urban Manual
+            </h1>
 
-          {/* Hero Section - Apple-inspired spacious layout */}
-          <section className="min-h-[50vh] flex flex-col px-6 md:px-10 py-10 pb-6 md:pb-10">
-            <div className="w-full flex md:justify-start flex-1 items-center">
-              <InteractiveHero />
+            {/* Hero Section - Apple-inspired spacious layout */}
+            <section className="min-h-[50vh] flex flex-col px-6 md:px-10 py-10 pb-6 md:pb-10">
+              <div className="w-full flex md:justify-start flex-1 items-center">
+                <InteractiveHero />
+              </div>
+            </section>
+
+            {/* Content Section */}
+            <div className="w-full px-6 md:px-10 mt-8">
+              <div className="max-w-[1800px] mx-auto">
+                {/* Navigation bar */}
+                <NavigationBar />
+
+                {/* Grid or Map view - switches based on viewMode */}
+                <HomepageContent />
+              </div>
             </div>
-          </section>
-
-          {/* Content Section */}
-          <div className="w-full px-6 md:px-10 mt-8">
-            <div className="max-w-[1800px] mx-auto">
-              {/* Navigation bar */}
-              <NavigationBar />
-
-              {/* Grid or Map view - switches based on viewMode */}
-              <HomepageContent />
-            </div>
-          </div>
-        </main>
-
-        {/* Destination Drawer - slides in from right when a card is clicked */}
-        <DestinationDrawer />
+          </main>
+        </ResponsiveDrawerContainer>
 
         {/* AI Search Chat - modal chat interface */}
         <AISearchChatWrapper />
