@@ -16,19 +16,30 @@ export function ChristmasThemeProvider({ children }: { children: ReactNode }) {
   const [isChristmasMode, setIsChristmasMode] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
 
-  // Check if current month is December
-  const isDecember = new Date().getMonth() === 11;
+  // Check if current month is December and if it's Christmas Day
+  const now = new Date();
+  const isDecember = now.getMonth() === 11;
+  const isChristmasDay = isDecember && now.getDate() === 25;
 
   // Load preference from localStorage on mount (only in December)
   useEffect(() => {
     if (isDecember) {
       const stored = localStorage.getItem(CHRISTMAS_STORAGE_KEY);
-      if (stored === 'true') {
-        setIsChristmasMode(true);
+
+      if (isChristmasDay) {
+        // On Christmas Day, default to ON unless user explicitly turned it off
+        if (stored !== 'false') {
+          setIsChristmasMode(true);
+        }
+      } else {
+        // Other days in December: only enable if user explicitly turned it on
+        if (stored === 'true') {
+          setIsChristmasMode(true);
+        }
       }
     }
     setIsHydrated(true);
-  }, [isDecember]);
+  }, [isDecember, isChristmasDay]);
 
   // Update localStorage and body class when mode changes (only in December)
   useEffect(() => {
