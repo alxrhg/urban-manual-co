@@ -141,12 +141,12 @@ export default function InteractiveHero() {
                 : `${destinationCount}+ curated destinations worldwide`}
           </p>
 
-          {/* Search Input - Chat-style AI search */}
+          {/* Search Input - Clean monochrome style */}
           <form onSubmit={handleSearch} className="mb-10">
             <div className="relative max-w-xl">
               {/* AI indicator */}
               <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
-                <Sparkles className={`w-4 h-4 transition-colors ${isFocused ? 'text-purple-500' : 'text-gray-400'}`} />
+                <Sparkles className={`w-4 h-4 transition-colors ${isFocused ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
               </div>
               <input
                 ref={inputRef}
@@ -159,7 +159,7 @@ export default function InteractiveHero() {
                 className="w-full h-[56px] pl-11 pr-14 text-[15px] bg-gray-100/80 dark:bg-white/[0.08]
                            border-0 rounded-[16px] text-gray-900 dark:text-white
                            placeholder:text-gray-400 dark:placeholder:text-gray-500
-                           focus:outline-none focus:ring-2 focus:ring-purple-500/30 dark:focus:ring-purple-500/40
+                           focus:outline-none focus:ring-2 focus:ring-gray-900/20 dark:focus:ring-white/20
                            focus:bg-white dark:focus:bg-white/[0.12]
                            transition-all duration-200"
               />
@@ -167,9 +167,9 @@ export default function InteractiveHero() {
                 type="submit"
                 disabled={isSearching}
                 className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center
-                           rounded-[12px] bg-gradient-to-r from-purple-500 to-pink-500
-                           text-white shadow-lg shadow-purple-500/25
-                           hover:from-purple-600 hover:to-pink-600
+                           rounded-[12px] bg-gray-900 dark:bg-white
+                           text-white dark:text-gray-900
+                           hover:bg-gray-800 dark:hover:bg-gray-100
                            disabled:opacity-50 transition-all duration-200"
                 aria-label="Search"
               >
