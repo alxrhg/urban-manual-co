@@ -24,6 +24,7 @@ import { knowledgeGraphService } from '@/services/intelligence/knowledge-graph';
 import { generateText, generateJSON } from '@/lib/llm';
 import { tasteProfileEvolutionService } from '@/services/intelligence/taste-profile-evolution';
 import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
+import { unifiedIntelligenceCore, UnifiedContext, AutonomousAction } from '@/services/intelligence/unified-intelligence-core';
 
 // Types
 interface ConversationMessage {
@@ -855,6 +856,52 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       }
     }
 
+    // 3.5 Build unified intelligence context
+    const sessionId = request.headers.get('x-session-id') || `session-${Date.now()}`;
+    let unifiedContext: UnifiedContext | null = null;
+    let intelligenceActions: AutonomousAction[] = [];
+    let contextualHints: string[] = [];
+
+    try {
+      const intelligence = await unifiedIntelligenceCore.processIntelligentQuery(
+        query,
+        userId || null,
+        sessionId,
+        {
+          includeReasoning: true,
+          currentCity: intent.filters.city || undefined,
+        }
+      );
+
+      unifiedContext = intelligence.context;
+      intelligenceActions = intelligence.suggestedActions;
+      contextualHints = intelligence.contextualHints;
+
+      // Apply trip-aware context if user is planning a trip
+      if (unifiedContext?.activeTrip && !intent.filters.city) {
+        // Auto-set city from active trip if not specified
+        const tripDestinations = unifiedContext.activeTrip.destinations;
+        if (tripDestinations.length > 0) {
+          intent.filters.city = tripDestinations[0];
+        }
+      }
+
+      // Apply taste fingerprint to personalize
+      if (unifiedContext?.tasteFingerprint && unifiedContext.tasteFingerprint.confidence > 0.3) {
+        const fp = unifiedContext.tasteFingerprint;
+
+        // Boost vibes based on fingerprint
+        if (fp.adventurousness > 0.7 && !intent.vibes.includes('hidden_gem')) {
+          intent.vibes.push('hidden_gem');
+        }
+        if (fp.designSensitivity > 0.7 && !intent.vibes.includes('design')) {
+          intent.vibes.push('design');
+        }
+      }
+    } catch (error) {
+      console.error('Error building unified context:', error);
+    }
+
     // 4. Handle itinerary mode
     if (intent.intent === 'itinerary' && intent.filters.city) {
       const { itinerary, destinations } = await generateItinerary(
@@ -1266,12 +1313,37 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       followUps,
       intent: intent.intent,
       vibes: intent.vibes,
+      // Intelligence layer data
+      intelligence: {
+        // Contextual hints for UI
+        hints: contextualHints,
+        // Suggested actions the AI can take
+        actions: intelligenceActions,
+        // Active trip context
+        activeTrip: unifiedContext?.activeTrip ? {
+          id: unifiedContext.activeTrip.id,
+          name: unifiedContext.activeTrip.name,
+          destinations: unifiedContext.activeTrip.destinations,
+          gaps: unifiedContext.activeTrip.gaps.slice(0, 3), // First 3 gaps
+        } : null,
+        // Taste fingerprint summary
+        tasteFingerprint: unifiedContext?.tasteFingerprint ? {
+          adventurousness: unifiedContext.tasteFingerprint.adventurousness,
+          priceAffinity: unifiedContext.tasteFingerprint.priceAffinity,
+          designSensitivity: unifiedContext.tasteFingerprint.designSensitivity,
+          confidence: unifiedContext.tasteFingerprint.confidence,
+        } : null,
+        // Related from knowledge graph
+        relatedArchitects: unifiedContext?.relatedArchitects || [],
+        relatedMovements: unifiedContext?.relatedMovements || [],
+      },
       meta: {
         query,
         totalResults: finalResults.length,
         hasVectorSearch: !!embedding,
         ranked: true,
         personalized: !!tasteProfile,
+        hasUnifiedContext: !!unifiedContext,
       },
     });
   } catch (error: any) {
