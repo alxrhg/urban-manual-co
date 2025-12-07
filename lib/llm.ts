@@ -20,7 +20,7 @@ export async function generateText(
         model: OPENAI_MODEL,
         messages: [{ role: 'user', content: prompt }],
         temperature,
-        max_tokens: maxTokens,
+        max_completion_tokens: maxTokens,
       });
       return resp.choices?.[0]?.message?.content || null;
     } catch (error) {
@@ -70,10 +70,11 @@ export async function embedText(input: string): Promise<number[] | null> {
   const openai = getOpenAI();
   if (openai) {
     try {
-      // text-embedding-3-large default is 3072 dimensions, which now matches our database schema
+      // Request 1536 dimensions to match Upstash Vector index
       const emb = await openai.embeddings.create({
         model: OPENAI_EMBEDDING_MODEL,
-        input
+        input,
+        dimensions: 1536,
       });
       return emb.data?.[0]?.embedding || null;
     } catch (error: any) {
