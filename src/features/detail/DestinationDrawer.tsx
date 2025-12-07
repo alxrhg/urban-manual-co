@@ -93,6 +93,7 @@ export function DestinationDrawer({
   const toast = useToast();
 
   // State
+  const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'related'>('overview');
   const [isSaved, setIsSaved] = useState(false);
   const [isVisited, setIsVisited] = useState(false);
   const [isAddedToTrip, setIsAddedToTrip] = useState(false);
@@ -124,11 +125,15 @@ export function DestinationDrawer({
 
   // Reset on close
   useEffect(() => {
-    if (!isOpen) setIsEditMode(false);
+    if (!isOpen) {
+      setIsEditMode(false);
+      setActiveTab('overview');
+    }
   }, [isOpen]);
 
   useEffect(() => {
     setEnhancedDestination(destination);
+    setActiveTab('overview');
   }, [destination]);
 
   // Load data
@@ -517,8 +522,8 @@ export function DestinationDrawer({
             <div className="absolute bottom-3 left-3 flex flex-wrap gap-1.5">
               {destination.michelin_stars && destination.michelin_stars > 0 && (
                 <span className="px-2 py-0.5 rounded-full bg-white/95 dark:bg-black/80 backdrop-blur-sm text-[11px] font-medium flex items-center gap-1">
-                  <img src="/michelin-star.svg" alt="" className="h-3 w-3" />
-                  {destination.michelin_stars}
+                  <img src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg" alt="Michelin" className="h-3.5 w-3.5" />
+                  {destination.michelin_stars} Star{destination.michelin_stars > 1 ? 's' : ''}
                 </span>
               )}
               {destination.crown && (
@@ -613,205 +618,252 @@ export function DestinationDrawer({
             </button>
           )}
 
-          {/* Nested destinations */}
-          {(loadingNested || nestedDestinations.length > 0) && (
-            <div className="mt-6">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Venues Inside</p>
-              {loadingNested ? (
-                <div className="flex items-center gap-2 text-[13px] text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
-              ) : (
-                <div className="space-y-2">
-                  {nestedDestinations.slice(0, 4).map((nested) => (
-                    <button
-                      key={nested.slug}
-                      onClick={() => onDestinationClick?.(nested)}
-                      className="w-full flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors text-left group"
-                    >
-                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                        {nested.image ? (
-                          <Image src={nested.image} alt={nested.name} width={40} height={40} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center"><MapPin className="h-4 w-4 text-gray-400" /></div>
-                        )}
+          {/* Tab Navigation - text link style */}
+          <div className="flex items-center gap-4 mt-6 text-[13px]">
+            <button
+              onClick={() => setActiveTab('overview')}
+              className={`transition-colors duration-200 ${activeTab === 'overview' ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('details')}
+              className={`transition-colors duration-200 ${activeTab === 'details' ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+            >
+              Details
+            </button>
+            <button
+              onClick={() => setActiveTab('related')}
+              className={`transition-colors duration-200 ${activeTab === 'related' ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-white'}`}
+            >
+              Related
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'overview' && (
+            <>
+              {/* Description */}
+              {(destination.micro_description || destination.description) && (
+                <div className="mt-6">
+                  <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">About</p>
+                  <p className="text-[14px] text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {destination.micro_description || htmlToPlainText(destination.description || '')}
+                  </p>
+                </div>
+              )}
+
+              {/* Contact & Hours */}
+              {(todayHours || enrichedData?.formatted_address || enrichedData?.international_phone_number || enrichedData?.website) && (
+                <div className="mt-6">
+                  <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Contact & Hours</p>
+                  <div className="space-y-2.5">
+                    {todayHours && (
+                      <div className="flex items-start gap-3">
+                        <Clock className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-[13px] text-gray-700 dark:text-gray-300">{todayHours}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{nested.name}</p>
-                        <p className="text-[11px] text-gray-500 truncate">{nested.category && capitalizeCategory(nested.category)}</p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 flex-shrink-0" />
+                    )}
+                    {enrichedData?.formatted_address && (
+                      <button onClick={handleDirections} className="flex items-start gap-3 text-left hover:opacity-70 transition-opacity">
+                        <Navigation className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                        <span className="text-[13px] text-gray-700 dark:text-gray-300">{enrichedData.formatted_address}</span>
+                      </button>
+                    )}
+                    {enrichedData?.international_phone_number && (
+                      <a href={`tel:${enrichedData.international_phone_number}`} className="flex items-center gap-3 hover:opacity-70 transition-opacity">
+                        <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-[13px] text-gray-700 dark:text-gray-300">{enrichedData.international_phone_number}</span>
+                      </a>
+                    )}
+                    {enrichedData?.website && (
+                      <a href={enrichedData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-70 transition-opacity">
+                        <Globe className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-[13px] text-blue-600 dark:text-blue-400 truncate">{new URL(enrichedData.website).hostname.replace('www.', '')}</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Map */}
+              {(destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude) && (
+                <div className="mt-6">
+                  <div className="rounded-2xl overflow-hidden border border-gray-200/80 dark:border-white/[0.12]">
+                    <div className="h-36">
+                      <GoogleStaticMap
+                        center={{ lat: destination.latitude || enrichedData?.latitude || 0, lng: destination.longitude || enrichedData?.longitude || 0 }}
+                        zoom={15}
+                        height="144px"
+                        showPin
+                      />
+                    </div>
+                    <button onClick={handleDirections} className="w-full flex items-center justify-center gap-2 h-[38px] text-[13px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors">
+                      <Navigation className="h-3.5 w-3.5" /> Get Directions
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Tags */}
+              {destination.tags && destination.tags.length > 0 && (
+                <div className="mt-6 flex flex-wrap gap-1.5">
+                  {destination.tags.slice(0, 6).map((tag, i) => (
+                    <span key={i} className="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/[0.08] text-[11px] text-gray-600 dark:text-gray-400">{tag}</span>
                   ))}
                 </div>
               )}
-            </div>
+            </>
           )}
 
-          {/* Description */}
-          {(destination.micro_description || destination.description) && (
-            <div className="mt-6">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">About</p>
-              <p className="text-[14px] text-gray-700 dark:text-gray-300 leading-relaxed">
-                {destination.micro_description || htmlToPlainText(destination.description || '')}
-              </p>
-            </div>
-          )}
-
-          {/* Contact & Hours */}
-          {(todayHours || enrichedData?.formatted_address || enrichedData?.international_phone_number || enrichedData?.website) && (
-            <div className="mt-6">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Contact & Hours</p>
-              <div className="space-y-2.5">
-                {todayHours && (
-                  <div className="flex items-start gap-3">
-                    <Clock className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-[13px] text-gray-700 dark:text-gray-300">{todayHours}</span>
-                  </div>
-                )}
-                {enrichedData?.formatted_address && (
-                  <button onClick={handleDirections} className="flex items-start gap-3 text-left hover:opacity-70 transition-opacity">
-                    <Navigation className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                    <span className="text-[13px] text-gray-700 dark:text-gray-300">{enrichedData.formatted_address}</span>
-                  </button>
-                )}
-                {enrichedData?.international_phone_number && (
-                  <a href={`tel:${enrichedData.international_phone_number}`} className="flex items-center gap-3 hover:opacity-70 transition-opacity">
-                    <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    <span className="text-[13px] text-gray-700 dark:text-gray-300">{enrichedData.international_phone_number}</span>
-                  </a>
-                )}
-                {enrichedData?.website && (
-                  <a href={enrichedData.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:opacity-70 transition-opacity">
-                    <Globe className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                    <span className="text-[13px] text-blue-600 dark:text-blue-400 truncate">{new URL(enrichedData.website).hostname.replace('www.', '')}</span>
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Map */}
-          {(destination.latitude || enrichedData?.latitude) && (destination.longitude || enrichedData?.longitude) && (
-            <div className="mt-6">
-              <div className="rounded-2xl overflow-hidden border border-gray-200/80 dark:border-white/[0.12]">
-                <div className="h-36">
-                  <GoogleStaticMap
-                    center={{ lat: destination.latitude || enrichedData?.latitude || 0, lng: destination.longitude || enrichedData?.longitude || 0 }}
-                    zoom={15}
-                    height="144px"
-                    showPin
-                  />
-                </div>
-                <button onClick={handleDirections} className="w-full flex items-center justify-center gap-2 h-[38px] text-[13px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors">
-                  <Navigation className="h-3.5 w-3.5" /> Get Directions
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Architecture */}
-          {hasArchInfo && (
-            <div className="mt-6">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Design & Architecture</p>
-              <div className="space-y-2">
-                {(enhancedDestination as any).architect_obj && (
-                  <Link href={`/architects/${(enhancedDestination as any).architect_obj.slug}`} className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
-                      {(enhancedDestination as any).architect_obj.image_url ? (
-                        <Image src={(enhancedDestination as any).architect_obj.image_url} alt="" width={40} height={40} className="object-cover" />
-                      ) : (
-                        <span className="text-[13px] font-medium text-gray-500">{(enhancedDestination as any).architect_obj.name.charAt(0)}</span>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] text-gray-400">Architect</p>
-                      <p className="text-[13px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">{(enhancedDestination as any).architect_obj.name}</p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
-                  </Link>
-                )}
-                {(enhancedDestination as any).interior_designer_obj && (
-                  <Link href={`/architects/${(enhancedDestination as any).interior_designer_obj.slug}`} className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                      <span className="text-[13px] font-medium text-gray-500">{(enhancedDestination as any).interior_designer_obj.name.charAt(0)}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] text-gray-400">Interior Designer</p>
-                      <p className="text-[13px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">{(enhancedDestination as any).interior_designer_obj.name}</p>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
-                  </Link>
-                )}
-                {enhancedDestination?.architectural_style && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                      <span className="text-[11px] font-medium text-gray-500">S</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] text-gray-400">Style</p>
-                      <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{enhancedDestination.architectural_style}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Reviews */}
-          {enrichedData?.reviews?.length > 0 && (
-            <div className="mt-6">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">What People Say</p>
-              {loadingReviewSummary ? (
-                <div className="flex items-center gap-2 text-[13px] text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Summarizing...</div>
-              ) : reviewSummary ? (
-                <p className="text-[14px] text-gray-700 dark:text-gray-300 leading-relaxed italic">"{reviewSummary}"</p>
-              ) : null}
-            </div>
-          )}
-
-          {/* Tags */}
-          {destination.tags && destination.tags.length > 0 && (
-            <div className="mt-6 flex flex-wrap gap-1.5">
-              {destination.tags.slice(0, 6).map((tag, i) => (
-                <span key={i} className="px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/[0.08] text-[11px] text-gray-600 dark:text-gray-400">{tag}</span>
-              ))}
-            </div>
-          )}
-
-          {/* Related */}
-          {(loadingRecommendations || recommendations.length > 0 || relatedDestinations.length > 0) && (
-            <div className="mt-8">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">You Might Also Like</p>
-              {loadingRecommendations ? (
-                <div className="grid grid-cols-2 gap-3">
-                  {[1, 2].map(i => <div key={i} className="aspect-square rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
-                  {(recommendations.length > 0 ? recommendations : relatedDestinations).slice(0, 4).map((rec) => (
-                    <button
-                      key={rec.slug}
-                      onClick={() => onDestinationClick ? onDestinationClick(rec) : router.push(`/destination/${rec.slug}`)}
-                      className="group text-left"
-                    >
-                      <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
-                        {rec.image ? (
-                          <Image src={rec.image} alt={rec.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="180px" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center"><MapPin className="h-6 w-6 text-gray-300 dark:text-gray-600" /></div>
-                        )}
-                        {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-sm text-[10px] font-medium flex items-center gap-0.5">
-                            <img src="/michelin-star.svg" alt="" className="h-2.5 w-2.5" /> {rec.michelin_stars}
+          {activeTab === 'details' && (
+            <>
+              {/* Nested destinations */}
+              {(loadingNested || nestedDestinations.length > 0) && (
+                <div className="mt-6">
+                  <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Venues Inside</p>
+                  {loadingNested ? (
+                    <div className="flex items-center gap-2 text-[13px] text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Loading...</div>
+                  ) : (
+                    <div className="space-y-2">
+                      {nestedDestinations.slice(0, 4).map((nested) => (
+                        <button
+                          key={nested.slug}
+                          onClick={() => onDestinationClick?.(nested)}
+                          className="w-full flex items-center gap-3 p-2 -mx-2 rounded-xl hover:bg-gray-50 dark:hover:bg-white/[0.06] transition-colors text-left group"
+                        >
+                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                            {nested.image ? (
+                              <Image src={nested.image} alt={nested.name} width={40} height={40} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center"><MapPin className="h-4 w-4 text-gray-400" /></div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <p className="text-[13px] font-medium text-gray-900 dark:text-white mt-2 truncate group-hover:text-gray-600 dark:group-hover:text-gray-200">{rec.name}</p>
-                      <p className="text-[11px] text-gray-500 truncate">{rec.category && capitalizeCategory(rec.category)}{rec.city && ` · ${capitalizeCity(rec.city)}`}</p>
-                    </button>
-                  ))}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{nested.name}</p>
+                            <p className="text-[11px] text-gray-500 truncate">{nested.category && capitalizeCategory(nested.category)}</p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 flex-shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+
+              {/* Architecture */}
+              {hasArchInfo && (
+                <div className="mt-6">
+                  <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">Design & Architecture</p>
+                  <div className="space-y-2">
+                    {(enhancedDestination as any).architect_obj && (
+                      <Link href={`/architects/${(enhancedDestination as any).architect_obj.slug}`} className="flex items-center gap-3 group">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden">
+                          {(enhancedDestination as any).architect_obj.image_url ? (
+                            <Image src={(enhancedDestination as any).architect_obj.image_url} alt="" width={40} height={40} className="object-cover" />
+                          ) : (
+                            <span className="text-[13px] font-medium text-gray-500">{(enhancedDestination as any).architect_obj.name.charAt(0)}</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] text-gray-400">Architect</p>
+                          <p className="text-[13px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">{(enhancedDestination as any).architect_obj.name}</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
+                      </Link>
+                    )}
+                    {(enhancedDestination as any).interior_designer_obj && (
+                      <Link href={`/architects/${(enhancedDestination as any).interior_designer_obj.slug}`} className="flex items-center gap-3 group">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          <span className="text-[13px] font-medium text-gray-500">{(enhancedDestination as any).interior_designer_obj.name.charAt(0)}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] text-gray-400">Interior Designer</p>
+                          <p className="text-[13px] font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">{(enhancedDestination as any).interior_designer_obj.name}</p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 text-gray-300 dark:text-gray-600" />
+                      </Link>
+                    )}
+                    {enhancedDestination?.architectural_style && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                          <span className="text-[11px] font-medium text-gray-500">S</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] text-gray-400">Style</p>
+                          <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{enhancedDestination.architectural_style}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Reviews with Google logo */}
+              {enrichedData?.reviews?.length > 0 && (
+                <div className="mt-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png" alt="Google" className="h-4" />
+                    <span className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500">Reviews</span>
+                  </div>
+                  {loadingReviewSummary ? (
+                    <div className="flex items-center gap-2 text-[13px] text-gray-500"><Loader2 className="h-4 w-4 animate-spin" /> Summarizing...</div>
+                  ) : reviewSummary ? (
+                    <p className="text-[14px] text-gray-700 dark:text-gray-300 leading-relaxed italic">"{reviewSummary}"</p>
+                  ) : null}
+                </div>
+              )}
+
+              {/* No details fallback */}
+              {!loadingNested && nestedDestinations.length === 0 && !hasArchInfo && !enrichedData?.reviews?.length && (
+                <div className="mt-6 text-center py-8 text-gray-400 dark:text-gray-500">
+                  <p className="text-[13px]">No additional details available</p>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'related' && (
+            <>
+              {/* Related */}
+              {loadingRecommendations ? (
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  {[1, 2, 3, 4].map(i => <div key={i} className="aspect-square rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />)}
+                </div>
+              ) : (recommendations.length > 0 || relatedDestinations.length > 0) ? (
+                <div className="mt-6">
+                  <p className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-3">You Might Also Like</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {(recommendations.length > 0 ? recommendations : relatedDestinations).slice(0, 6).map((rec) => (
+                      <button
+                        key={rec.slug}
+                        onClick={() => onDestinationClick ? onDestinationClick(rec) : router.push(`/destination/${rec.slug}`)}
+                        className="group text-left"
+                      >
+                        <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800">
+                          {rec.image ? (
+                            <Image src={rec.image} alt={rec.name} fill className="object-cover group-hover:scale-105 transition-transform duration-300" sizes="180px" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center"><MapPin className="h-6 w-6 text-gray-300 dark:text-gray-600" /></div>
+                          )}
+                          {rec.michelin_stars && rec.michelin_stars > 0 && (
+                            <div className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-sm text-[10px] font-medium flex items-center gap-0.5">
+                              <img src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg" alt="Michelin" className="h-3 w-3" /> {rec.michelin_stars}
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-[13px] font-medium text-gray-900 dark:text-white mt-2 truncate group-hover:text-gray-600 dark:group-hover:text-gray-200">{rec.name}</p>
+                        <p className="text-[11px] text-gray-500 truncate">{rec.category && capitalizeCategory(rec.category)}{rec.city && ` · ${capitalizeCity(rec.city)}`}</p>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="mt-6 text-center py-8 text-gray-400 dark:text-gray-500">
+                  <p className="text-[13px]">No related destinations found</p>
+                </div>
+              )}
+            </>
           )}
         </>
       )}
