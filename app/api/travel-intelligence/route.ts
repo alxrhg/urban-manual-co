@@ -1,5 +1,5 @@
 /**
- * Travel Intelligence API
+ * Travel Intelligence API v2
  *
  * A unified, conversational travel search endpoint that combines:
  * - Semantic vector search (Upstash)
@@ -8,6 +8,10 @@
  * - Knowledge graph relationships
  * - Conversation memory
  * - Personalization
+ * - LLM-powered conversational responses
+ * - Itinerary planning mode
+ * - Multi-turn clarification
+ * - Taste profile learning
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -18,6 +22,7 @@ import { generateTextEmbedding } from '@/lib/ml/embeddings';
 import { searchRankingAlgorithm } from '@/services/intelligence/search-ranking';
 import { knowledgeGraphService } from '@/services/intelligence/knowledge-graph';
 import { generateText, generateJSON } from '@/lib/llm';
+import { tasteProfileEvolutionService } from '@/services/intelligence/taste-profile-evolution';
 import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
 
 // Types
@@ -25,6 +30,11 @@ interface ConversationMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp?: string;
+  metadata?: {
+    intent?: string;
+    filters?: SearchFilters;
+    destinationIds?: number[];
+  };
 }
 
 interface SearchFilters {
@@ -49,13 +59,23 @@ interface TravelIntelligenceRequest {
 interface ParsedIntent {
   searchQuery: string;
   filters: SearchFilters;
-  intent: 'search' | 'recommendation' | 'discovery' | 'comparison' | 'more_like_this';
+  intent: 'search' | 'recommendation' | 'discovery' | 'comparison' | 'more_like_this' | 'itinerary' | 'clarification_response';
   occasion?: string;
   vibes: string[];
   timeContext?: 'breakfast' | 'lunch' | 'dinner' | 'late_night';
   priceContext?: 'budget' | 'mid_range' | 'splurge';
   socialContext?: 'solo' | 'date' | 'group' | 'business' | 'family';
-  referenceDestination?: string; // For "more like X" queries
+  referenceDestination?: string;
+  itineraryDuration?: 'half_day' | 'full_day' | 'multi_day';
+  needsClarification?: boolean;
+  clarificationType?: 'city' | 'category' | 'occasion' | 'price';
+}
+
+interface ItinerarySlot {
+  timeSlot: 'morning' | 'lunch' | 'afternoon' | 'dinner' | 'evening';
+  label: string;
+  category: string;
+  destination?: any;
 }
 
 // Vibe keywords mapping
@@ -104,6 +124,66 @@ const CATEGORY_VARIATIONS: Record<string, string[]> = {
 };
 
 /**
+ * Check if query needs clarification
+ */
+function checkNeedsClarification(
+  query: string,
+  intent: ParsedIntent,
+  conversationHistory: ConversationMessage[]
+): { needsClarification: boolean; clarificationType?: string; clarificationQuestion?: string } {
+  const lowerQuery = query.toLowerCase();
+
+  // If it's a response to a clarification question, don't ask again
+  if (conversationHistory.length > 0) {
+    const lastAssistant = [...conversationHistory].reverse().find(m => m.role === 'assistant');
+    if (lastAssistant?.content.includes('Which city') || lastAssistant?.content.includes('What kind of')) {
+      return { needsClarification: false };
+    }
+  }
+
+  // Check for ambiguous queries that need city
+  const needsCityPatterns = [
+    /^(?:best|good|nice|great)\s+(?:restaurants?|hotels?|bars?|cafes?|coffee)/i,
+    /^(?:where|what)\s+(?:should|can|to)\s+(?:i|we)\s+(?:eat|stay|go|visit)/i,
+    /^(?:recommend|suggest)\s+(?:a|some|me)/i,
+  ];
+
+  const hasCity = !!intent.filters.city;
+  const hasCategory = !!intent.filters.category;
+
+  // If query matches a pattern but has no city
+  if (!hasCity && needsCityPatterns.some(p => p.test(lowerQuery))) {
+    // Check if city was mentioned in recent conversation
+    const recentCityMention = conversationHistory.slice(-4).some(m => {
+      const content = m.content.toLowerCase();
+      return Object.values(CITY_VARIATIONS).flat().some(v => content.includes(v));
+    });
+
+    if (!recentCityMention) {
+      return {
+        needsClarification: true,
+        clarificationType: 'city',
+        clarificationQuestion: `Which city are you looking for ${hasCategory ? intent.filters.category + 's' : 'places'} in? I cover Tokyo, Kyoto, New York, London, Paris, Taipei, and more.`,
+      };
+    }
+  }
+
+  // Generic query without any context
+  if (!hasCity && !hasCategory && lowerQuery.length < 20 && !intent.vibes.length) {
+    const genericPatterns = [/^show me/i, /^find me/i, /^i want/i, /^looking for/i];
+    if (genericPatterns.some(p => p.test(lowerQuery))) {
+      return {
+        needsClarification: true,
+        clarificationType: 'category',
+        clarificationQuestion: `What are you looking for? I can help you find restaurants, hotels, cafes, bars, or shops.`,
+      };
+    }
+  }
+
+  return { needsClarification: false };
+}
+
+/**
  * Parse natural language query to extract intent, filters, and context
  */
 function parseQueryIntent(
@@ -118,10 +198,30 @@ function parseQueryIntent(
     vibes: [],
   };
 
+  // Check for itinerary/day planning intent
+  const itineraryPatterns = [
+    /plan\s+(?:my|a|the)\s+(?:day|trip|itinerary)/i,
+    /(?:day|full day|half day)\s+(?:in|at|around)/i,
+    /what\s+(?:should|can)\s+(?:i|we)\s+do\s+(?:in|for)\s+a\s+day/i,
+    /(?:perfect|ideal)\s+day\s+in/i,
+    /how\s+(?:should|to)\s+spend\s+(?:a|my|the)\s+day/i,
+  ];
+
+  if (itineraryPatterns.some(p => p.test(lowerQuery))) {
+    result.intent = 'itinerary';
+    if (/half\s*day/i.test(lowerQuery)) {
+      result.itineraryDuration = 'half_day';
+    } else if (/multi|several|few\s*days?/i.test(lowerQuery)) {
+      result.itineraryDuration = 'multi_day';
+    } else {
+      result.itineraryDuration = 'full_day';
+    }
+  }
+
   // Check for "more like X" pattern
   const moreLikePattern = /(?:more like|similar to|like)\s+(.+?)(?:\s+in\s+|\s*$)/i;
   const moreLikeMatch = query.match(moreLikePattern);
-  if (moreLikeMatch) {
+  if (moreLikeMatch && result.intent !== 'itinerary') {
     result.intent = 'more_like_this';
     result.referenceDestination = moreLikeMatch[1].trim();
   }
@@ -131,7 +231,6 @@ function parseQueryIntent(
     for (const variation of variations) {
       const cityPattern = new RegExp(`\\b${variation}\\b`, 'i');
       if (cityPattern.test(lowerQuery)) {
-        // Use the canonical city name (capitalize first letter of each word)
         result.filters.city = city.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         break;
       }
@@ -236,8 +335,8 @@ function parseQueryIntent(
     result.filters.openNow = true;
   }
 
-  // Determine intent
-  if (result.intent !== 'more_like_this') {
+  // Determine intent (if not already set)
+  if (result.intent === 'search') {
     if (/\b(recommend|suggestion|what should|where should)\b/i.test(lowerQuery)) {
       result.intent = 'recommendation';
     } else if (/\b(discover|explore|surprise|hidden|secret)\b/i.test(lowerQuery)) {
@@ -276,16 +375,211 @@ function buildSemanticSearchText(intent: ParsedIntent): string {
 }
 
 /**
+ * Generate LLM-powered conversational response
+ */
+async function generateLLMResponse(
+  intent: ParsedIntent,
+  results: any[],
+  query: string,
+  conversationHistory: ConversationMessage[],
+  tasteProfile: any | null
+): Promise<string> {
+  const count = results.length;
+  const city = intent.filters.city;
+  const category = intent.filters.category;
+
+  // Build context for LLM
+  const topResults = results.slice(0, 5).map(r => ({
+    name: r.name,
+    category: r.category,
+    city: r.city,
+    michelin: r.michelin_stars || 0,
+    rating: r.rating,
+    vibes: r.vibe_tags?.slice(0, 3) || [],
+    price: r.price_level,
+  }));
+
+  const userPreferences = tasteProfile ? {
+    favoriteCategories: tasteProfile.preferences?.categories?.slice(0, 3).map((c: any) => c.category) || [],
+    favoriteCities: tasteProfile.preferences?.cities?.slice(0, 3).map((c: any) => c.city) || [],
+    pricePreference: tasteProfile.preferences?.priceRange || null,
+  } : null;
+
+  const prompt = `You are a knowledgeable travel concierge for Urban Manual, a curated travel guide.
+Generate a brief, helpful response (2-3 sentences max) for this search.
+
+User query: "${query}"
+Intent: ${intent.intent}
+City: ${city || 'not specified'}
+Category: ${category || 'not specified'}
+Vibes: ${intent.vibes.join(', ') || 'none'}
+Occasion: ${intent.occasion || 'not specified'}
+Results found: ${count}
+${userPreferences ? `User preferences: Likes ${userPreferences.favoriteCategories.join(', ')} in ${userPreferences.favoriteCities.join(', ')}` : ''}
+
+Top results:
+${topResults.map((r, i) => `${i + 1}. ${r.name} (${r.category} in ${r.city}${r.michelin ? `, ${r.michelin}⭐` : ''})`).join('\n')}
+
+Guidelines:
+- Be concise and warm, not robotic
+- If there are Michelin stars, mention them naturally
+- Reference the specific vibe/occasion if mentioned
+- Don't list all results, just give a helpful intro
+- If no results, suggest alternatives`;
+
+  try {
+    const llmResponse = await generateText(prompt, { maxTokens: 150, temperature: 0.7 });
+    if (llmResponse) {
+      return llmResponse;
+    }
+  } catch (error) {
+    console.error('LLM response generation failed:', error);
+  }
+
+  // Fallback to rule-based response
+  return generateFallbackResponse(intent, results, query);
+}
+
+/**
+ * Fallback response generator (non-LLM)
+ */
+function generateFallbackResponse(
+  intent: ParsedIntent,
+  results: any[],
+  query: string
+): string {
+  const count = results.length;
+  const city = intent.filters.city;
+  const category = intent.filters.category;
+
+  if (count === 0) {
+    if (city && category) {
+      return `I couldn't find any ${category}s in ${city} matching your criteria. Try broadening your search.`;
+    } else if (city) {
+      return `I couldn't find places in ${city} matching your search. Try a different query.`;
+    }
+    return `No results found. Try searching for a specific city or category.`;
+  }
+
+  const vibeText = intent.vibes.length > 0 ? intent.vibes.join(' and ') + ' ' : '';
+  const occasionText = intent.occasion ? `for ${intent.occasion} ` : '';
+
+  if (intent.intent === 'itinerary') {
+    return `Here's a curated day plan for ${city || 'your trip'}. I've selected the best spots for each part of your day.`;
+  } else if (intent.intent === 'more_like_this') {
+    return `Found ${count} similar ${category || 'place'}${count > 1 ? 's' : ''} ${city ? `in ${city}` : ''}.`;
+  } else if (intent.intent === 'discovery') {
+    return `Discovered ${count} ${vibeText}${category || 'place'}${count > 1 ? 's' : ''} ${city ? `in ${city}` : ''}. These are some hidden gems worth exploring.`;
+  } else if (intent.intent === 'recommendation') {
+    return `Here are ${count} recommended ${vibeText}${category || 'place'}${count > 1 ? 's' : ''} ${occasionText}${city ? `in ${city}` : ''}.`;
+  }
+
+  if (city && category) {
+    let response = `Found ${count} ${vibeText}${category}${count > 1 ? 's' : ''} in ${city}${occasionText ? ` ${occasionText}` : ''}.`;
+    const michelinCount = results.filter(r => r.michelin_stars > 0).length;
+    if (michelinCount > 0) {
+      response += ` Including ${michelinCount} Michelin-starred.`;
+    }
+    return response;
+  } else if (city) {
+    return `Found ${count} ${vibeText}place${count > 1 ? 's' : ''} in ${city}.`;
+  } else if (category) {
+    return `Found ${count} ${vibeText}${category}${count > 1 ? 's' : ''}.`;
+  }
+
+  return `Found ${count} result${count > 1 ? 's' : ''} for "${query}".`;
+}
+
+/**
+ * Generate itinerary for a day
+ */
+async function generateItinerary(
+  city: string,
+  duration: 'half_day' | 'full_day' | 'multi_day',
+  vibes: string[],
+  occasion: string | undefined,
+  supabase: any
+): Promise<{ itinerary: ItinerarySlot[]; destinations: any[] }> {
+  const slots: ItinerarySlot[] = [];
+  const allDestinations: any[] = [];
+
+  // Define time slots based on duration
+  const timeSlots: Array<{ slot: ItinerarySlot['timeSlot']; label: string; category: string }> = duration === 'half_day'
+    ? [
+        { slot: 'morning', label: '☕ Morning', category: 'cafe' },
+        { slot: 'lunch', label: '🍽️ Lunch', category: 'restaurant' },
+        { slot: 'afternoon', label: '🛍️ Afternoon', category: 'shop' },
+      ]
+    : [
+        { slot: 'morning', label: '☕ Morning Coffee', category: 'cafe' },
+        { slot: 'lunch', label: '🍽️ Lunch', category: 'restaurant' },
+        { slot: 'afternoon', label: '🛍️ Afternoon Explore', category: 'shop' },
+        { slot: 'dinner', label: '🍷 Dinner', category: 'restaurant' },
+        { slot: 'evening', label: '🍸 Evening Drinks', category: 'bar' },
+      ];
+
+  // Fetch destinations for each slot
+  for (const timeSlot of timeSlots) {
+    let query = supabase
+      .from('destinations')
+      .select('*')
+      .ilike('city', `%${city}%`)
+      .ilike('category', `%${timeSlot.category}%`);
+
+    // Apply vibe filtering if specified
+    if (vibes.length > 0) {
+      // Boost for matching vibes but don't require
+    }
+
+    // For dinner on special occasions, prefer Michelin or highly rated
+    if (timeSlot.slot === 'dinner' && occasion) {
+      query = query.or('michelin_stars.gt.0,rating.gte.4.5');
+    }
+
+    query = query.limit(10);
+
+    const { data: destinations } = await query;
+
+    if (destinations && destinations.length > 0) {
+      // Pick a random one from top results for variety
+      const selected = destinations[Math.floor(Math.random() * Math.min(3, destinations.length))];
+
+      slots.push({
+        timeSlot: timeSlot.slot,
+        label: timeSlot.label,
+        category: timeSlot.category,
+        destination: selected,
+      });
+
+      allDestinations.push(selected);
+    }
+  }
+
+  return { itinerary: slots, destinations: allDestinations };
+}
+
+/**
  * Generate intelligent follow-up suggestions
  */
 function generateFollowUps(
   intent: ParsedIntent,
   results: any[],
-  conversationHistory: ConversationMessage[]
+  conversationHistory: ConversationMessage[],
+  tasteProfile: any | null
 ): string[] {
   const suggestions: string[] = [];
   const city = intent.filters.city;
   const category = intent.filters.category;
+
+  // Itinerary-specific follow-ups
+  if (intent.intent === 'itinerary') {
+    if (city) {
+      suggestions.push(`More restaurants in ${city}`);
+      suggestions.push(`Hidden gems in ${city}`);
+      suggestions.push(`Bars in ${city}`);
+    }
+    return suggestions.slice(0, 4);
+  }
 
   // Based on current results
   if (results.length > 0) {
@@ -312,6 +606,9 @@ function generateFollowUps(
         suggestions.push(`Restaurants in ${city}`);
         suggestions.push(`Cafes in ${city}`);
       }
+
+      // Suggest itinerary
+      suggestions.push(`Plan my day in ${city}`);
     }
 
     // Suggest vibe-based refinement
@@ -323,6 +620,17 @@ function generateFollowUps(
     // Suggest Michelin if not already filtered
     if (!intent.filters.michelin && results.some(r => r.michelin_stars > 0)) {
       suggestions.push('Only Michelin starred');
+    }
+
+    // Personalized suggestions based on taste profile
+    if (tasteProfile?.preferences?.categories) {
+      const favCategories = tasteProfile.preferences.categories
+        .filter((c: any) => c.category !== category)
+        .slice(0, 1);
+
+      if (favCategories.length > 0 && city) {
+        suggestions.push(`${favCategories[0].category}s in ${city}`);
+      }
     }
 
     // Suggest price refinement
@@ -339,11 +647,11 @@ function generateFollowUps(
     } else {
       suggestions.push('Restaurants in Tokyo');
       suggestions.push('Hotels in Paris');
-      suggestions.push('Cafes in London');
+      suggestions.push('Plan my day in Tokyo');
     }
   }
 
-  // Add some variety based on history
+  // Add variety based on history
   if (conversationHistory.length > 2) {
     suggestions.push('Show me something different');
   }
@@ -352,60 +660,63 @@ function generateFollowUps(
 }
 
 /**
- * Generate AI response text
+ * Update user taste profile based on search
  */
-async function generateResponseText(
+async function updateTasteProfile(
+  userId: string,
   intent: ParsedIntent,
   results: any[],
-  query: string
-): Promise<string> {
-  const count = results.length;
-  const city = intent.filters.city;
-  const category = intent.filters.category;
+  supabase: any
+): Promise<void> {
+  try {
+    // Log the search interaction for taste learning
+    await supabase.from('user_interactions').insert({
+      interaction_type: 'search',
+      user_id: userId,
+      destination_id: null,
+      metadata: {
+        query: intent.searchQuery,
+        intent: intent.intent,
+        city: intent.filters.city,
+        category: intent.filters.category,
+        vibes: intent.vibes,
+        occasion: intent.occasion,
+        priceContext: intent.priceContext,
+        resultsCount: results.length,
+        topResultIds: results.slice(0, 5).map(r => r.id),
+        source: 'travel-intelligence',
+      },
+    });
 
-  // Build context-aware response
-  let response = '';
+    // If user clicked on specific vibes or occasions, record preference
+    if (intent.vibes.length > 0 || intent.occasion) {
+      const { data: existingPrefs } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
-  if (count === 0) {
-    if (city && category) {
-      response = `I couldn't find any ${category}s in ${city} matching your criteria. Try broadening your search.`;
-    } else if (city) {
-      response = `I couldn't find places in ${city} matching your search. Try a different query.`;
-    } else {
-      response = `No results found. Try searching for a specific city or category.`;
+      const currentVibes = existingPrefs?.preferred_vibes || [];
+      const currentOccasions = existingPrefs?.preferred_occasions || [];
+
+      const updatedVibes = [...new Set([...currentVibes, ...intent.vibes])];
+      const updatedOccasions = intent.occasion
+        ? [...new Set([...currentOccasions, intent.occasion])]
+        : currentOccasions;
+
+      await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: userId,
+          preferred_vibes: updatedVibes,
+          preferred_occasions: updatedOccasions,
+          updated_at: new Date().toISOString(),
+        });
     }
-  } else {
-    // Build response based on intent and vibes
-    const vibeText = intent.vibes.length > 0 ? intent.vibes.join(' and ') + ' ' : '';
-    const occasionText = intent.occasion ? `for ${intent.occasion} ` : '';
-
-    if (intent.intent === 'more_like_this') {
-      response = `Found ${count} similar ${category || 'place'}${count > 1 ? 's' : ''} ${city ? `in ${city}` : ''}.`;
-    } else if (intent.intent === 'discovery') {
-      response = `Discovered ${count} ${vibeText}${category || 'place'}${count > 1 ? 's' : ''} ${city ? `in ${city}` : ''}. These are some hidden gems worth exploring.`;
-    } else if (intent.intent === 'recommendation') {
-      response = `Here are ${count} recommended ${vibeText}${category || 'place'}${count > 1 ? 's' : ''} ${occasionText}${city ? `in ${city}` : ''}.`;
-    } else {
-      // Standard search
-      if (city && category) {
-        response = `Found ${count} ${vibeText}${category}${count > 1 ? 's' : ''} in ${city}${occasionText ? ` ${occasionText}` : ''}.`;
-      } else if (city) {
-        response = `Found ${count} ${vibeText}place${count > 1 ? 's' : ''} in ${city}.`;
-      } else if (category) {
-        response = `Found ${count} ${vibeText}${category}${count > 1 ? 's' : ''}.`;
-      } else {
-        response = `Found ${count} result${count > 1 ? 's' : ''} for "${query}".`;
-      }
-    }
-
-    // Add quality indicator
-    const michelinCount = results.filter(r => r.michelin_stars > 0).length;
-    if (michelinCount > 0) {
-      response += ` Including ${michelinCount} Michelin-starred.`;
-    }
+  } catch (error) {
+    // Best effort - don't fail the request
+    console.error('Error updating taste profile:', error);
   }
-
-  return response;
 }
 
 export const POST = withErrorHandling(async (request: NextRequest) => {
@@ -438,9 +749,77 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     if (explicitFilters.category) intent.filters.category = explicitFilters.category;
     if (explicitFilters.michelin) intent.filters.michelin = explicitFilters.michelin;
 
-    // 2. Handle "more like this" queries
+    // 2. Check if clarification is needed
+    const clarification = checkNeedsClarification(query, intent, conversationHistory);
+    if (clarification.needsClarification) {
+      return NextResponse.json({
+        response: clarification.clarificationQuestion,
+        destinations: [],
+        filters: intent.filters,
+        followUps: Object.keys(CITY_VARIATIONS).slice(0, 4).map(c =>
+          c.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+        ),
+        intent: 'clarification',
+        needsClarification: true,
+        clarificationType: clarification.clarificationType,
+        meta: { query },
+      });
+    }
+
+    // 3. Get user taste profile for personalization
+    let tasteProfile = null;
+    if (userId) {
+      try {
+        tasteProfile = await tasteProfileEvolutionService.getTasteProfile(userId);
+      } catch (error) {
+        console.error('Error fetching taste profile:', error);
+      }
+    }
+
+    // 4. Handle itinerary mode
+    if (intent.intent === 'itinerary' && intent.filters.city) {
+      const { itinerary, destinations } = await generateItinerary(
+        intent.filters.city,
+        intent.itineraryDuration || 'full_day',
+        intent.vibes,
+        intent.occasion,
+        supabase
+      );
+
+      const response = await generateLLMResponse(
+        intent,
+        destinations,
+        query,
+        conversationHistory,
+        tasteProfile
+      );
+
+      const followUps = generateFollowUps(intent, destinations, conversationHistory, tasteProfile);
+
+      // Update taste profile
+      if (userId) {
+        await updateTasteProfile(userId, intent, destinations, supabase);
+      }
+
+      return NextResponse.json({
+        response,
+        destinations,
+        itinerary,
+        filters: intent.filters,
+        followUps,
+        intent: intent.intent,
+        vibes: intent.vibes,
+        meta: {
+          query,
+          totalResults: destinations.length,
+          isItinerary: true,
+          duration: intent.itineraryDuration,
+        },
+      });
+    }
+
+    // 5. Handle "more like this" queries
     if (intent.intent === 'more_like_this' && intent.referenceDestination) {
-      // Find the reference destination
       const { data: refDest } = await supabase
         .from('destinations')
         .select('id, slug, name, city, category, tags, vibe_tags')
@@ -449,7 +828,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         .single();
 
       if (refDest) {
-        // Use knowledge graph to find similar
         const similar = await knowledgeGraphService.findSimilar(String(refDest.id), 10);
 
         if (similar.length > 0) {
@@ -460,8 +838,18 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
             .in('id', similarIds);
 
           if (similarDests && similarDests.length > 0) {
-            const response = await generateResponseText(intent, similarDests, query);
-            const followUps = generateFollowUps(intent, similarDests, conversationHistory);
+            const response = await generateLLMResponse(
+              intent,
+              similarDests,
+              query,
+              conversationHistory,
+              tasteProfile
+            );
+            const followUps = generateFollowUps(intent, similarDests, conversationHistory, tasteProfile);
+
+            if (userId) {
+              await updateTasteProfile(userId, intent, similarDests, supabase);
+            }
 
             return NextResponse.json({
               response,
@@ -474,7 +862,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
           }
         }
 
-        // Fallback: search by same city/category/tags
+        // Fallback
         intent.filters.city = refDest.city;
         intent.filters.category = refDest.category;
         if (refDest.vibe_tags && refDest.vibe_tags.length > 0) {
@@ -483,7 +871,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       }
     }
 
-    // 3. Generate embedding for semantic search
+    // 6. Generate embedding for semantic search
     const searchText = buildSemanticSearchText(intent);
     let embedding: number[] | null = null;
 
@@ -494,13 +882,11 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       console.error('Embedding generation failed:', embeddingError);
     }
 
-    // 4. Search destinations
+    // 7. Search destinations
     let results: any[] = [];
 
     if (embedding) {
-      // Try vector search first
       try {
-        // Build filter for Upstash
         let upstashFilter: string | undefined;
         const filterParts: string[] = [];
 
@@ -525,7 +911,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         });
 
         if (vectorResults && vectorResults.length > 0) {
-          // Get full destination data from Supabase
           const ids = vectorResults.map((r: VectorSearchResult) => r.metadata.destination_id);
           const { data: fullDests } = await supabase
             .from('destinations')
@@ -533,7 +918,6 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
             .in('id', ids);
 
           if (fullDests) {
-            // Preserve vector similarity score
             results = fullDests.map(dest => {
               const vectorResult = vectorResults.find((r: VectorSearchResult) => r.metadata.destination_id === dest.id);
               return {
@@ -548,11 +932,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       }
     }
 
-    // 5. Fallback to database search if vector search failed or returned no results
+    // 8. Fallback to database search
     if (results.length === 0) {
       let dbQuery = supabase.from('destinations').select('*');
 
-      // Apply filters
       if (intent.filters.city) {
         dbQuery = dbQuery.ilike('city', `%${intent.filters.city}%`);
       }
@@ -569,12 +952,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         dbQuery = dbQuery.gte('price_level', intent.filters.priceMin);
       }
 
-      // Text search on multiple fields
       const searchTerms = query.toLowerCase().split(' ')
         .filter(t => t.length > 2 && !['the', 'and', 'for', 'with', 'in'].includes(t));
 
       if (searchTerms.length > 0 && !intent.filters.city && !intent.filters.category) {
-        // Search across name, description, vibe_tags
         const searchPattern = searchTerms.join('%');
         dbQuery = dbQuery.or(`name.ilike.%${searchPattern}%,description.ilike.%${searchPattern}%,micro_description.ilike.%${searchPattern}%`);
       }
@@ -590,7 +971,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       }
     }
 
-    // 6. Apply vibe filtering
+    // 9. Apply vibe filtering and boost
     if (intent.vibes.length > 0 && results.length > 0) {
       results = results.map(dest => {
         const destVibes = dest.vibe_tags || [];
@@ -604,11 +985,10 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         };
       });
 
-      // Boost destinations with matching vibes
       results.sort((a, b) => (b.vibeScore || 0) - (a.vibeScore || 0));
     }
 
-    // 7. Apply intelligent ranking
+    // 10. Apply intelligent ranking
     let rankedResults = results;
 
     try {
@@ -630,33 +1010,26 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       }));
     } catch (rankError) {
       console.error('Ranking failed:', rankError);
-      // Continue with unranked results
     }
 
-    // 8. Limit results
+    // 11. Limit results
     const finalResults = rankedResults.slice(0, resultLimit);
 
-    // 9. Generate response and follow-ups
-    const response = await generateResponseText(intent, finalResults, query);
-    const followUps = generateFollowUps(intent, finalResults, conversationHistory);
+    // 12. Generate LLM-powered response
+    const response = await generateLLMResponse(
+      intent,
+      finalResults,
+      query,
+      conversationHistory,
+      tasteProfile
+    );
 
-    // 10. Log interaction
-    try {
-      await supabase.from('user_interactions').insert({
-        interaction_type: 'search',
-        user_id: userId || null,
-        destination_id: null,
-        metadata: {
-          query,
-          intent: intent.intent,
-          filters: intent.filters,
-          vibes: intent.vibes,
-          count: finalResults.length,
-          source: 'travel-intelligence',
-        },
-      });
-    } catch {
-      // Best effort logging
+    // 13. Generate follow-ups
+    const followUps = generateFollowUps(intent, finalResults, conversationHistory, tasteProfile);
+
+    // 14. Update taste profile
+    if (userId) {
+      await updateTasteProfile(userId, intent, finalResults, supabase);
     }
 
     return NextResponse.json({
@@ -671,6 +1044,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         totalResults: finalResults.length,
         hasVectorSearch: !!embedding,
         ranked: true,
+        personalized: !!tasteProfile,
       },
     });
   } catch (error: any) {
@@ -679,7 +1053,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       error: 'Search failed',
       response: 'Sorry, I had trouble with that search. Please try again.',
       destinations: [],
-      followUps: ['Restaurants in Tokyo', 'Hotels in Paris', 'Cafes in London'],
+      followUps: ['Restaurants in Tokyo', 'Hotels in Paris', 'Plan my day in Tokyo'],
     }, { status: 500 });
   }
 });

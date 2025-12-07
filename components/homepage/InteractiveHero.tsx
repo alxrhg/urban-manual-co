@@ -112,6 +112,9 @@ export default function InteractiveHero() {
   const [showChatResults, setShowChatResults] = useState(false);
   const [lastQuery, setLastQuery] = useState('');
   const [lastFilters, setLastFilters] = useState<{ city?: string | null; category?: string | null }>({});
+  const [itinerary, setItinerary] = useState<Array<{ timeSlot: string; label: string; destination?: Destination }>>([]);
+  const [isItinerary, setIsItinerary] = useState(false);
+  const [needsClarification, setNeedsClarification] = useState(false);
 
   // Close chat results but keep grid filters
   const handleCloseChatResults = useCallback((resetFilters = false) => {
@@ -121,6 +124,9 @@ export default function InteractiveHero() {
     setFollowUpSuggestions([]);
     setConversationHistory([]);
     setLastQuery('');
+    setItinerary([]);
+    setIsItinerary(false);
+    setNeedsClarification(false);
 
     // Optionally reset grid filters
     if (resetFilters) {
@@ -184,6 +190,9 @@ export default function InteractiveHero() {
     setChatResponse('');
     setChatDestinations([]);
     setFollowUpSuggestions([]);
+    setItinerary([]);
+    setIsItinerary(false);
+    setNeedsClarification(false);
 
     try {
       // Use the new Travel Intelligence endpoint
@@ -203,6 +212,21 @@ export default function InteractiveHero() {
 
       setChatResponse(data.response || 'Here are some results:');
       setChatDestinations(data.destinations || []);
+
+      // Handle clarification requests
+      if (data.needsClarification) {
+        setNeedsClarification(true);
+        // Follow-ups are city suggestions for clarification
+        setFollowUpSuggestions(data.followUps || []);
+        setLocalSearchTerm('');
+        return;
+      }
+
+      // Handle itinerary response
+      if (data.itinerary && data.itinerary.length > 0) {
+        setItinerary(data.itinerary);
+        setIsItinerary(true);
+      }
 
       // Store filters for contextual follow-ups
       const filters = data.filters || {};
@@ -235,7 +259,7 @@ export default function InteractiveHero() {
     } catch (error) {
       console.error('AI search error:', error);
       setChatResponse('Sorry, I had trouble searching. Please try again.');
-      setFollowUpSuggestions(['Restaurants in Tokyo', 'Hotels in Paris', 'Cafes in London']);
+      setFollowUpSuggestions(['Restaurants in Tokyo', 'Hotels in Paris', 'Plan my day in Tokyo']);
     } finally {
       setIsSearching(false);
     }
@@ -364,8 +388,57 @@ export default function InteractiveHero() {
                 </p>
               )}
 
-              {/* Destination results - compact cards */}
-              {chatDestinations.length > 0 && (
+              {/* Itinerary results - timeline view */}
+              {isItinerary && itinerary.length > 0 && (
+                <div className="space-y-3 mb-4">
+                  {itinerary.map((slot, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      {/* Time slot indicator */}
+                      <div className="flex-shrink-0 w-24">
+                        <span className="text-[13px] font-medium text-gray-900 dark:text-white">
+                          {slot.label}
+                        </span>
+                      </div>
+                      {/* Destination card */}
+                      {slot.destination && (
+                        <button
+                          onClick={() => openDestination(slot.destination as Destination)}
+                          className="flex-1 flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-white/5
+                                     hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left group"
+                        >
+                          {slot.destination.image_thumbnail || slot.destination.image ? (
+                            <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                              <Image
+                                src={slot.destination.image_thumbnail || slot.destination.image || ''}
+                                alt={slot.destination.name}
+                                width={40}
+                                height={40}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                              <MapPin className="w-4 h-4 text-gray-400" />
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">
+                              {slot.destination.name}
+                            </p>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                              {capitalizeCategory(slot.destination.category)}
+                            </p>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 flex-shrink-0" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Destination results - compact cards (non-itinerary) */}
+              {!isItinerary && chatDestinations.length > 0 && (
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   {chatDestinations.slice(0, 4).map((dest) => (
                     <button
