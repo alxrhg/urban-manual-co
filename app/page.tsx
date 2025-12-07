@@ -3,7 +3,7 @@ import { prefetchHomepageData } from '@/lib/data/fetch-destinations';
 import { generateOrganizationSchema, generateWebSiteSchema } from '@/lib/metadata';
 import { HomepageDataProvider } from '@/components/homepage/HomepageDataProvider';
 import { HomepageContent } from '@/components/homepage/HomepageContent';
-import { DestinationDrawer } from '@/components/homepage/DestinationDrawer';
+import { HomepageDestinationDrawer } from '@/components/homepage/HomepageDestinationDrawer';
 import { AISearchChatWrapper } from '@/components/homepage/AISearchChatWrapper';
 import InteractiveHero from '@/components/homepage/InteractiveHero';
 import NavigationBar from '@/components/homepage/NavigationBar';
@@ -103,7 +103,7 @@ export default async function HomePage() {
         </main>
 
         {/* Destination Drawer - slides in from right when a card is clicked */}
-        <DestinationDrawer />
+        <HomepageDestinationDrawer />
 
         {/* AI Search Chat - modal chat interface */}
         <AISearchChatWrapper />
