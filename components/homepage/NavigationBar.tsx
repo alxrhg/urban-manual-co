@@ -128,57 +128,60 @@ export default function NavigationBar() {
 
             {/* Filter Dropdown */}
             {showFilters && (
-              <div className="absolute right-0 top-full mt-2 w-72 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1c1c1e] shadow-xl z-50 overflow-hidden">
-                <div className="p-4">
-                  <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white mb-4">
-                    Filter Destinations
-                  </h3>
+              <div className="absolute right-0 top-full mt-2 w-80 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1c1c1e] shadow-xl z-50 overflow-hidden">
+                <div className="p-4 max-h-[70vh] overflow-y-auto">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[15px] font-semibold text-gray-900 dark:text-white">
+                      Filter Destinations
+                    </h3>
+                    {hasAdvancedFilters && (
+                      <button
+                        onClick={() => {
+                          setMichelinOnly(false);
+                          setCrownOnly(false);
+                        }}
+                        className="text-[12px] text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                  </div>
 
-                  {/* Michelin Stars */}
-                  <label className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/10 cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <Star className="h-4 w-4 text-amber-500" />
-                      <span className="text-[14px] text-gray-700 dark:text-gray-300">Michelin Starred</span>
+                  {/* Special Filters */}
+                  <div className="mb-4">
+                    <p className="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Special</p>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => setMichelinOnly(!michelinOnly)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-all ${
+                          michelinOnly
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                            : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                        }`}
+                      >
+                        <Star className="h-3.5 w-3.5" />
+                        Michelin
+                      </button>
+                      <button
+                        onClick={() => setCrownOnly(!crownOnly)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium transition-all ${
+                          crownOnly
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                            : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20'
+                        }`}
+                      >
+                        <span>👑</span>
+                        Editor's Pick
+                      </button>
                     </div>
-                    <input
-                      type="checkbox"
-                      checked={michelinOnly}
-                      onChange={(e) => setMichelinOnly(e.target.checked)}
-                      className="h-5 w-5 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
-                    />
-                  </label>
-
-                  {/* Crown */}
-                  <label className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-white/10 cursor-pointer">
-                    <div className="flex items-center gap-3">
-                      <span className="text-amber-500">👑</span>
-                      <span className="text-[14px] text-gray-700 dark:text-gray-300">Editor's Pick</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={crownOnly}
-                      onChange={(e) => setCrownOnly(e.target.checked)}
-                      className="h-5 w-5 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
-                    />
-                  </label>
+                  </div>
 
                   {/* Result count */}
-                  <p className="text-[13px] text-gray-500 dark:text-gray-400 mt-4">
-                    {filteredDestinations.length} destinations match
-                  </p>
-
-                  {/* Clear button */}
-                  {hasAdvancedFilters && (
-                    <button
-                      onClick={() => {
-                        setMichelinOnly(false);
-                        setCrownOnly(false);
-                      }}
-                      className="mt-3 w-full py-2 text-[13px] font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-                    >
-                      Clear filters
-                    </button>
-                  )}
+                  <div className="pt-3 border-t border-gray-100 dark:border-white/10">
+                    <p className="text-[13px] text-gray-500 dark:text-gray-400">
+                      {filteredDestinations.length} destinations match
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
