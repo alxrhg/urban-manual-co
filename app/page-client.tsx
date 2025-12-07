@@ -51,6 +51,7 @@ const DestinationDrawer = dynamic(
 import { useAuth } from "@/contexts/AuthContext";
 import { useDrawer } from "@/contexts/DrawerContext";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
+import { useDestinationDrawer } from "@/components/IntelligentDrawer";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -430,6 +431,7 @@ export default function HomePageClient({
   const [selectedDestination, setSelectedDestination] =
     useState<Destination | null>(null);
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const { openDestination: openIntelligentDestination } = useDestinationDrawer();
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [showTripPlanner, setShowTripPlanner] = useState(false);
   const [plannerPrefill, setPlannerPrefill] = useState<{
@@ -3088,8 +3090,8 @@ export default function HomePageClient({
               <div className="mb-12 md:mb-16">
                 <SmartRecommendations
                   onCardClick={destination => {
-                    setSelectedDestination(destination);
-                    openDrawer('destination');
+                    // Open in IntelligentDrawer with trip awareness
+                    openIntelligentDestination(destination);
 
                     // Track destination click
                     trackDestinationClick({
@@ -3355,8 +3357,7 @@ export default function HomePageClient({
                               key={destination.slug}
                               destination={destination}
                               onClick={() => {
-                                setSelectedDestination(destination);
-                                openDrawer('destination');
+                                openIntelligentDestination(destination);
                                 trackDestinationEngagement(
                                   destination,
                                   "grid",
@@ -3567,8 +3568,7 @@ export default function HomePageClient({
                   return;
                 }
                 
-                setSelectedDestination(destination as Destination);
-                openDrawer('destination');
+                openIntelligentDestination(destination as Destination);
               } catch (error) {
                 console.error('Error fetching destination:', error);
               }

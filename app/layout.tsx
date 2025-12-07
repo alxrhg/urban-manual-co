@@ -9,6 +9,7 @@ import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { TripBuilderProvider } from "@/contexts/TripBuilderContext";
 import TripBuilderPanel from "@/components/trip/TripBuilderPanel";
 import TripIndicator from "@/components/trip/TripIndicator";
+import { IntelligentDrawerProvider, IntelligentDrawer } from "@/components/IntelligentDrawer";
 import { DrawerProvider } from "@/contexts/DrawerContext";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
@@ -239,18 +240,21 @@ export default function RootLayout({
                       <AdminEditModeProvider>
                         <ItineraryProvider>
                           <TripBuilderProvider>
-                            <Header />
-                            <PanelLayout>
-                              <main id="main-content" className="min-h-screen page-transition" role="main">
-                                {children}
-                              </main>
-                              <Footer />
-                            </PanelLayout>
-                            <CookieConsent />
-                            <NotificationPrompt />
-                            <DrawerMount />
-                            <TripBuilderPanel />
-                            <TripIndicator />
+                            <IntelligentDrawerProvider>
+                              <Header />
+                              <PanelLayout>
+                                <main id="main-content" className="min-h-screen page-transition" role="main">
+                                  {children}
+                                </main>
+                                <Footer />
+                              </PanelLayout>
+                              <CookieConsent />
+                              <NotificationPrompt />
+                              <DrawerMount />
+                              <TripBuilderPanel />
+                              <TripIndicator />
+                              <IntelligentDrawer />
+                            </IntelligentDrawerProvider>
                           </TripBuilderProvider>
                         </ItineraryProvider>
                       </AdminEditModeProvider>
