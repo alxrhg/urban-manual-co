@@ -1,17 +1,47 @@
 'use client';
 
-import { MapPin, ChevronUp, X } from 'lucide-react';
+import { MapPin, ChevronUp, X, FolderOpen } from 'lucide-react';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 /**
  * Floating indicator that shows when a trip is being built
+ * Also shows "Continue planning" prompt for saved trips
  * Appears at bottom of screen, expands to show summary on hover/tap
  */
 export default function TripIndicator() {
-  const { activeTrip, isPanelOpen, totalItems, openPanel, clearTrip } = useTripBuilder();
+  const { user } = useAuth();
+  const { activeTrip, savedTrips, isPanelOpen, totalItems, openPanel, clearTrip } = useTripBuilder();
 
-  // Don't show if no trip or panel is already open
-  if (!activeTrip || totalItems === 0 || isPanelOpen) return null;
+  // Don't show if panel is already open
+  if (isPanelOpen) return null;
+
+  // Show "Continue planning" for saved trips when no active trip
+  if (!activeTrip && user && savedTrips.length > 0) {
+    const recentTrip = savedTrips[0];
+    return (
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <button
+          onClick={openPanel}
+          className="flex items-center gap-3 px-5 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group"
+        >
+          <FolderOpen className="w-5 h-5" />
+          <div className="text-left">
+            <p className="text-[13px] font-medium leading-tight">
+              Continue planning
+            </p>
+            <p className="text-[11px] opacity-70">
+              {recentTrip.title} • {recentTrip.itemCount} places
+            </p>
+          </div>
+          <ChevronUp className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
+        </button>
+      </div>
+    );
+  }
+
+  // Don't show if no active trip with items
+  if (!activeTrip || totalItems === 0) return null;
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300">

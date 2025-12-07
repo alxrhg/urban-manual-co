@@ -58,11 +58,25 @@ export interface ActiveTrip {
   lastSaved?: string;
 }
 
+export interface SavedTripSummary {
+  id: string;
+  title: string;
+  destination: string;
+  start_date?: string;
+  end_date?: string;
+  status: string;
+  cover_image?: string;
+  itemCount: number;
+  updated_at: string;
+}
+
 export interface TripBuilderContextType {
   // State
   activeTrip: ActiveTrip | null;
+  savedTrips: SavedTripSummary[];
   isPanelOpen: boolean;
   isBuilding: boolean;
+  isLoadingTrips: boolean;
 
   // Actions
   startTrip: (city: string, days?: number, startDate?: string) => void;
@@ -73,6 +87,8 @@ export interface TripBuilderContextType {
   clearTrip: () => void;
   saveTrip: () => Promise<string | null>;
   loadTrip: (tripId: string) => Promise<void>;
+  refreshSavedTrips: () => Promise<void>;
+  switchToTrip: (tripId: string) => Promise<void>;
 
   // Panel
   openPanel: () => void;
@@ -189,8 +205,36 @@ function calculateTripMetrics(days: TripDay[]): TripDay[] {
 export function TripBuilderProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [activeTrip, setActiveTrip] = useState<ActiveTrip | null>(null);
+  const [savedTrips, setSavedTrips] = useState<SavedTripSummary[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
+  const [isLoadingTrips, setIsLoadingTrips] = useState(false);
+
+  // Fetch saved trips from server
+  const refreshSavedTrips = useCallback(async () => {
+    if (!user) {
+      setSavedTrips([]);
+      return;
+    }
+
+    setIsLoadingTrips(true);
+    try {
+      const response = await fetch('/api/trips?limit=10');
+      if (response.ok) {
+        const data = await response.json();
+        setSavedTrips(data.trips || []);
+      }
+    } catch (error) {
+      console.error('Error fetching saved trips:', error);
+    } finally {
+      setIsLoadingTrips(false);
+    }
+  }, [user]);
+
+  // Fetch saved trips when user changes
+  useEffect(() => {
+    refreshSavedTrips();
+  }, [user, refreshSavedTrips]);
 
   // Load trip from localStorage on mount
   useEffect(() => {
@@ -675,6 +719,18 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     }
   }, [activeTrip]);
 
+  // Switch to an existing saved trip
+  const switchToTrip = useCallback(async (tripId: string) => {
+    // If there's an unsaved active trip, prompt to save
+    if (activeTrip?.isModified && activeTrip.id !== tripId) {
+      // For now, just clear - in future could prompt to save
+      localStorage.removeItem('urban-manual-active-trip');
+    }
+
+    // Load the new trip
+    await loadTrip(tripId);
+  }, [activeTrip, loadTrip]);
+
   // Panel controls
   const openPanel = useCallback(() => setIsPanelOpen(true), []);
   const closePanel = useCallback(() => setIsPanelOpen(false), []);
@@ -698,8 +754,10 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
 
   const value: TripBuilderContextType = {
     activeTrip,
+    savedTrips,
     isPanelOpen,
     isBuilding,
+    isLoadingTrips,
     startTrip,
     addToTrip,
     removeFromTrip,
@@ -708,6 +766,8 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     clearTrip,
     saveTrip,
     loadTrip,
+    refreshSavedTrips,
+    switchToTrip,
     openPanel,
     closePanel,
     togglePanel,

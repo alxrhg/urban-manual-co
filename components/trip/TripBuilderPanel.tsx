@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import {
   X, MapPin, Clock, Navigation, AlertTriangle, Sun, Cloud, CloudRain,
   Sparkles, MoreHorizontal, Trash2, ChevronDown, ChevronUp, Save,
-  Share2, Plus, Route, Calendar, Users, Loader2,
+  Share2, Plus, Route, Calendar, Users, Loader2, FolderOpen, ChevronRight,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useTripBuilder, TripItem, TripDay } from '@/contexts/TripBuilderContext';
@@ -248,19 +248,24 @@ export default function TripBuilderPanel() {
   const { user } = useAuth();
   const {
     activeTrip,
+    savedTrips,
     isPanelOpen,
     isBuilding,
+    isLoadingTrips,
     removeFromTrip,
     updateItemTime,
     clearTrip,
     saveTrip,
     closePanel,
     optimizeDay,
+    switchToTrip,
+    refreshSavedTrips,
     totalItems,
   } = useTripBuilder();
 
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([1]));
   const [isSaving, setIsSaving] = useState(false);
+  const [showTripSelector, setShowTripSelector] = useState(false);
 
   const toggleDay = useCallback((day: number) => {
     setExpandedDays(prev => {
@@ -282,8 +287,9 @@ export default function TripBuilderPanel() {
     }
     setIsSaving(true);
     await saveTrip();
+    await refreshSavedTrips(); // Refresh the list after saving
     setIsSaving(false);
-  }, [user, saveTrip]);
+  }, [user, saveTrip, refreshSavedTrips]);
 
   const handleShare = useCallback(() => {
     // TODO: Implement share functionality
@@ -302,7 +308,72 @@ export default function TripBuilderPanel() {
     window.dispatchEvent(event);
   }, []);
 
-  if (!isPanelOpen || !activeTrip) return null;
+  const handleSwitchTrip = useCallback(async (tripId: string) => {
+    setShowTripSelector(false);
+    await switchToTrip(tripId);
+  }, [switchToTrip]);
+
+  // Show trip selector when no active trip but user is logged in
+  if (!isPanelOpen) return null;
+
+  // Show trip selector if no active trip but panel is open
+  if (!activeTrip && user && savedTrips.length > 0) {
+    return (
+      <>
+        <div
+          className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 md:hidden"
+          onClick={closePanel}
+        />
+        <div className="fixed right-0 top-0 h-full w-full max-w-[380px] bg-white dark:bg-gray-900 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
+          <div className="flex-shrink-0 p-4 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between">
+              <h2 className="text-[18px] font-semibold text-gray-900 dark:text-white">
+                Your Trips
+              </h2>
+              <button
+                onClick={closePanel}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            {isLoadingTrips ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {savedTrips.map(trip => (
+                  <button
+                    key={trip.id}
+                    onClick={() => handleSwitchTrip(trip.id)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left"
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                      <MapPin className="w-5 h-5 text-gray-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                        {trip.title}
+                      </p>
+                      <p className="text-[12px] text-gray-500 truncate">
+                        {trip.destination} • {trip.itemCount} places
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  if (!activeTrip) return null;
 
   return (
     <>
@@ -317,10 +388,20 @@ export default function TripBuilderPanel() {
         {/* Header */}
         <div className="flex-shrink-0 p-4 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-start justify-between mb-3">
-            <div>
-              <h2 className="text-[18px] font-semibold text-gray-900 dark:text-white">
-                {activeTrip.title}
-              </h2>
+            <div className="relative">
+              <button
+                onClick={() => savedTrips.length > 0 && setShowTripSelector(!showTripSelector)}
+                className={`text-left ${savedTrips.length > 0 ? 'hover:opacity-80 cursor-pointer' : ''}`}
+              >
+                <div className="flex items-center gap-2">
+                  <h2 className="text-[18px] font-semibold text-gray-900 dark:text-white">
+                    {activeTrip.title}
+                  </h2>
+                  {savedTrips.length > 0 && (
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showTripSelector ? 'rotate-180' : ''}`} />
+                  )}
+                </div>
+              </button>
               <div className="flex items-center gap-3 mt-1 text-[12px] text-gray-500">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-3 h-3" />
@@ -337,6 +418,29 @@ export default function TripBuilderPanel() {
                   {activeTrip.travelers}
                 </span>
               </div>
+
+              {/* Trip selector dropdown */}
+              {showTripSelector && savedTrips.length > 0 && (
+                <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <p className="px-3 py-1 text-[11px] font-medium text-gray-400 uppercase">Switch Trip</p>
+                  {savedTrips
+                    .filter(t => t.id !== activeTrip.id)
+                    .slice(0, 5)
+                    .map(trip => (
+                      <button
+                        key={trip.id}
+                        onClick={() => handleSwitchTrip(trip.id)}
+                        className="w-full px-3 py-2 text-left text-[13px] hover:bg-gray-100 dark:hover:bg-white/10 flex items-center gap-2"
+                      >
+                        <FolderOpen className="w-4 h-4 text-gray-400" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-gray-900 dark:text-white truncate">{trip.title}</p>
+                          <p className="text-[11px] text-gray-500">{trip.itemCount} places</p>
+                        </div>
+                      </button>
+                    ))}
+                </div>
+              )}
             </div>
             <button
               onClick={closePanel}
