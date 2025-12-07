@@ -184,7 +184,8 @@ export default function NavigationBar() {
             )}
           </div>
 
-          {/* View Toggle - Apple-style segmented control look */}
+          {/* View Toggle - Temporarily disabled while MapKit is being debugged */}
+          {/* TODO: Re-enable when MapKit is working
           <button
             onClick={handleViewToggle}
             className="flex h-[38px] flex-shrink-0 items-center justify-center gap-2 rounded-full
@@ -205,6 +206,7 @@ export default function NavigationBar() {
               </>
             )}
           </button>
+          */}
 
           {/* Create Trip - Apple-style primary button */}
           <button
