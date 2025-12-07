@@ -624,38 +624,41 @@ export function DestinationDrawer({
 
             {/* Related Destinations */}
             {relatedDestinations.length > 0 && (
-              <div>
-                <h3 className="text-[13px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
+              <div className="border-t border-gray-200 dark:border-white/10 pt-6">
+                <h3 className="text-[13px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
                   More in {destination.city && capitalizeCity(destination.city)}
                 </h3>
-                <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   {relatedDestinations.slice(0, 4).map((dest) => (
                     <button
                       key={dest.slug}
                       onClick={() => onDestinationClick?.(dest)}
-                      className="flex items-center gap-3 w-full p-2 -mx-2 rounded-[12px]
-                                 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors text-left"
+                      className="group bg-gray-50 dark:bg-white/5 rounded-2xl overflow-hidden
+                                 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left"
                     >
-                      <div className="w-14 h-14 rounded-[10px] bg-gray-100 dark:bg-gray-800 overflow-hidden flex-shrink-0">
-                        {(dest.image || dest.image_thumbnail) && (
+                      <div className="aspect-[4/3] relative bg-gray-100 dark:bg-gray-800">
+                        {(dest.image || dest.image_thumbnail) ? (
                           <Image
                             src={dest.image_thumbnail || dest.image || ''}
                             alt={dest.name}
-                            width={56}
-                            height={56}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 50vw, 200px"
                           />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <MapPin className="w-6 h-6 text-gray-300 dark:text-gray-600" />
+                          </div>
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">
+                      <div className="p-3">
+                        <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">
                           {dest.name}
                         </p>
-                        <p className="text-[13px] text-gray-500 dark:text-gray-400 truncate">
+                        <p className="text-[12px] text-gray-500 dark:text-gray-400 truncate">
                           {dest.category && capitalizeCategory(dest.category)}
                         </p>
                       </div>
-                      <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     </button>
                   ))}
                 </div>
