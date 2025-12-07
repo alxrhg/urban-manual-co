@@ -1,0 +1,685 @@
+/**
+ * Travel Intelligence API
+ *
+ * A unified, conversational travel search endpoint that combines:
+ * - Semantic vector search (Upstash)
+ * - Natural language understanding
+ * - 8-factor intelligent ranking
+ * - Knowledge graph relationships
+ * - Conversation memory
+ * - Personalization
+ */
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createServerClient } from '@/lib/supabase-server';
+import { withErrorHandling } from '@/lib/errors';
+import { queryVectorIndex, VectorSearchResult } from '@/lib/upstash-vector';
+import { generateTextEmbedding } from '@/lib/ml/embeddings';
+import { searchRankingAlgorithm } from '@/services/intelligence/search-ranking';
+import { knowledgeGraphService } from '@/services/intelligence/knowledge-graph';
+import { generateText, generateJSON } from '@/lib/llm';
+import { searchRatelimit, memorySearchRatelimit, getIdentifier, createRateLimitResponse, isUpstashConfigured } from '@/lib/rate-limit';
+
+// Types
+interface ConversationMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: string;
+}
+
+interface SearchFilters {
+  city?: string | null;
+  category?: string | null;
+  neighborhood?: string | null;
+  priceMin?: number | null;
+  priceMax?: number | null;
+  michelin?: boolean;
+  occasion?: string | null;
+  vibe?: string[];
+  openNow?: boolean;
+}
+
+interface TravelIntelligenceRequest {
+  query: string;
+  conversationHistory?: ConversationMessage[];
+  filters?: SearchFilters;
+  limit?: number;
+}
+
+interface ParsedIntent {
+  searchQuery: string;
+  filters: SearchFilters;
+  intent: 'search' | 'recommendation' | 'discovery' | 'comparison' | 'more_like_this';
+  occasion?: string;
+  vibes: string[];
+  timeContext?: 'breakfast' | 'lunch' | 'dinner' | 'late_night';
+  priceContext?: 'budget' | 'mid_range' | 'splurge';
+  socialContext?: 'solo' | 'date' | 'group' | 'business' | 'family';
+  referenceDestination?: string; // For "more like X" queries
+}
+
+// Vibe keywords mapping
+const VIBE_KEYWORDS: Record<string, string[]> = {
+  romantic: ['romantic', 'intimate', 'cozy', 'date night', 'anniversary', 'special occasion'],
+  trendy: ['trendy', 'hip', 'cool', 'instagram', 'hot spot', 'buzzy', 'scene'],
+  hidden_gem: ['hidden gem', 'local', 'secret', 'off the beaten path', 'authentic', 'undiscovered'],
+  upscale: ['upscale', 'fancy', 'luxury', 'fine dining', 'elegant', 'high-end', 'splurge'],
+  casual: ['casual', 'relaxed', 'laid back', 'chill', 'easy going'],
+  lively: ['lively', 'energetic', 'fun', 'vibrant', 'bustling'],
+  quiet: ['quiet', 'peaceful', 'serene', 'calm', 'tranquil'],
+  design: ['design', 'architecture', 'beautiful space', 'aesthetic', 'minimalist', 'interior'],
+};
+
+// Occasion keywords
+const OCCASION_KEYWORDS: Record<string, string[]> = {
+  anniversary: ['anniversary', 'celebration', 'special occasion', 'milestone'],
+  birthday: ['birthday', 'celebration'],
+  business: ['business', 'client', 'meeting', 'work', 'professional'],
+  date: ['date', 'romantic', 'date night', 'first date'],
+  family: ['family', 'kids', 'children', 'parents'],
+  friends: ['friends', 'group', 'catch up', 'reunion'],
+};
+
+// City name variations
+const CITY_VARIATIONS: Record<string, string[]> = {
+  'tokyo': ['tokyo', 'tōkyō', 'shibuya', 'shinjuku', 'ginza', 'roppongi', 'harajuku', 'ebisu', 'nakameguro', 'aoyama', 'daikanyama'],
+  'kyoto': ['kyoto', 'kyōto', 'gion', 'arashiyama', 'higashiyama'],
+  'new york': ['new york', 'nyc', 'manhattan', 'brooklyn', 'soho', 'tribeca', 'williamsburg', 'greenwich village', 'east village', 'west village', 'lower east side', 'upper east side', 'upper west side', 'chelsea', 'flatiron', 'nolita', 'noho'],
+  'london': ['london', 'soho', 'shoreditch', 'mayfair', 'notting hill', 'covent garden', 'chelsea', 'kensington', 'fitzrovia', 'marylebone', 'hackney', 'brixton'],
+  'paris': ['paris', 'le marais', 'montmartre', 'saint-germain', 'bastille', 'belleville', 'pigalle', 'opera', 'chatelet'],
+  'taipei': ['taipei', 'da\'an', 'xinyi', 'zhongshan', 'songshan', 'wanhua', 'shilin', 'beitou'],
+  'los angeles': ['los angeles', 'la', 'silver lake', 'echo park', 'west hollywood', 'venice', 'santa monica', 'downtown la', 'dtla', 'highland park', 'los feliz', 'koreatown', 'beverly hills', 'culver city'],
+  'hong kong': ['hong kong', 'hk', 'central', 'wan chai', 'causeway bay', 'tsim sha tsui', 'mong kok', 'sheung wan'],
+  'singapore': ['singapore', 'orchard', 'marina bay', 'chinatown', 'little india', 'tiong bahru', 'kampong glam', 'dempsey'],
+  'bangkok': ['bangkok', 'sukhumvit', 'silom', 'sathorn', 'thonglor', 'ekkamai', 'ari', 'chinatown'],
+};
+
+// Category variations
+const CATEGORY_VARIATIONS: Record<string, string[]> = {
+  'restaurant': ['restaurant', 'restaurants', 'food', 'dining', 'eat', 'eating', 'dinner', 'lunch', 'breakfast', 'brunch', 'cuisine', 'kitchen'],
+  'hotel': ['hotel', 'hotels', 'stay', 'accommodation', 'lodging', 'sleep', 'boutique hotel', 'ryokan'],
+  'bar': ['bar', 'bars', 'drinks', 'cocktails', 'cocktail bar', 'wine bar', 'speakeasy', 'nightlife', 'drinking'],
+  'cafe': ['cafe', 'cafes', 'coffee', 'coffee shop', 'coffeehouse', 'espresso', 'specialty coffee'],
+  'shop': ['shop', 'shopping', 'store', 'retail', 'boutique', 'buy'],
+};
+
+/**
+ * Parse natural language query to extract intent, filters, and context
+ */
+function parseQueryIntent(
+  query: string,
+  conversationHistory: ConversationMessage[] = []
+): ParsedIntent {
+  const lowerQuery = query.toLowerCase();
+  const result: ParsedIntent = {
+    searchQuery: query,
+    filters: {},
+    intent: 'search',
+    vibes: [],
+  };
+
+  // Check for "more like X" pattern
+  const moreLikePattern = /(?:more like|similar to|like)\s+(.+?)(?:\s+in\s+|\s*$)/i;
+  const moreLikeMatch = query.match(moreLikePattern);
+  if (moreLikeMatch) {
+    result.intent = 'more_like_this';
+    result.referenceDestination = moreLikeMatch[1].trim();
+  }
+
+  // Extract city from query
+  for (const [city, variations] of Object.entries(CITY_VARIATIONS)) {
+    for (const variation of variations) {
+      const cityPattern = new RegExp(`\\b${variation}\\b`, 'i');
+      if (cityPattern.test(lowerQuery)) {
+        // Use the canonical city name (capitalize first letter of each word)
+        result.filters.city = city.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        break;
+      }
+    }
+    if (result.filters.city) break;
+  }
+
+  // Check conversation history for city context
+  if (!result.filters.city && conversationHistory.length > 0) {
+    for (const msg of [...conversationHistory].reverse()) {
+      for (const [city, variations] of Object.entries(CITY_VARIATIONS)) {
+        for (const variation of variations) {
+          if (msg.content.toLowerCase().includes(variation)) {
+            result.filters.city = city.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+            break;
+          }
+        }
+        if (result.filters.city) break;
+      }
+      if (result.filters.city) break;
+    }
+  }
+
+  // Extract category
+  for (const [category, variations] of Object.entries(CATEGORY_VARIATIONS)) {
+    for (const variation of variations) {
+      const catPattern = new RegExp(`\\b${variation}\\b`, 'i');
+      if (catPattern.test(lowerQuery)) {
+        result.filters.category = category;
+        break;
+      }
+    }
+    if (result.filters.category) break;
+  }
+
+  // Extract vibes
+  for (const [vibe, keywords] of Object.entries(VIBE_KEYWORDS)) {
+    for (const keyword of keywords) {
+      if (lowerQuery.includes(keyword)) {
+        result.vibes.push(vibe);
+        break;
+      }
+    }
+  }
+
+  // Extract occasion
+  for (const [occasion, keywords] of Object.entries(OCCASION_KEYWORDS)) {
+    for (const keyword of keywords) {
+      if (lowerQuery.includes(keyword)) {
+        result.occasion = occasion;
+        result.filters.occasion = occasion;
+        break;
+      }
+    }
+    if (result.occasion) break;
+  }
+
+  // Extract price context
+  if (/\b(cheap|budget|affordable|inexpensive|value)\b/i.test(lowerQuery)) {
+    result.priceContext = 'budget';
+    result.filters.priceMax = 2;
+  } else if (/\b(mid-range|moderate|reasonable)\b/i.test(lowerQuery)) {
+    result.priceContext = 'mid_range';
+    result.filters.priceMin = 2;
+    result.filters.priceMax = 3;
+  } else if (/\b(expensive|splurge|fancy|luxury|high-end|upscale|fine dining)\b/i.test(lowerQuery)) {
+    result.priceContext = 'splurge';
+    result.filters.priceMin = 3;
+  }
+
+  // Extract time context
+  if (/\b(breakfast|morning)\b/i.test(lowerQuery)) {
+    result.timeContext = 'breakfast';
+  } else if (/\b(lunch|midday)\b/i.test(lowerQuery)) {
+    result.timeContext = 'lunch';
+  } else if (/\b(dinner|evening)\b/i.test(lowerQuery)) {
+    result.timeContext = 'dinner';
+  } else if (/\b(late night|after hours|night)\b/i.test(lowerQuery)) {
+    result.timeContext = 'late_night';
+  }
+
+  // Extract social context
+  if (/\b(solo|alone|by myself)\b/i.test(lowerQuery)) {
+    result.socialContext = 'solo';
+  } else if (/\b(date|romantic|anniversary|couples?)\b/i.test(lowerQuery)) {
+    result.socialContext = 'date';
+  } else if (/\b(group|friends|party)\b/i.test(lowerQuery)) {
+    result.socialContext = 'group';
+  } else if (/\b(business|client|meeting|corporate)\b/i.test(lowerQuery)) {
+    result.socialContext = 'business';
+  } else if (/\b(family|kids|children)\b/i.test(lowerQuery)) {
+    result.socialContext = 'family';
+  }
+
+  // Check for Michelin
+  if (/\b(michelin|starred|stars?)\b/i.test(lowerQuery)) {
+    result.filters.michelin = true;
+  }
+
+  // Check for "open now"
+  if (/\b(open now|open right now|currently open)\b/i.test(lowerQuery)) {
+    result.filters.openNow = true;
+  }
+
+  // Determine intent
+  if (result.intent !== 'more_like_this') {
+    if (/\b(recommend|suggestion|what should|where should)\b/i.test(lowerQuery)) {
+      result.intent = 'recommendation';
+    } else if (/\b(discover|explore|surprise|hidden|secret)\b/i.test(lowerQuery)) {
+      result.intent = 'discovery';
+    } else if (/\b(compare|vs|versus|better|difference)\b/i.test(lowerQuery)) {
+      result.intent = 'comparison';
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Build a rich search text for embedding
+ */
+function buildSemanticSearchText(intent: ParsedIntent): string {
+  const parts: string[] = [intent.searchQuery];
+
+  if (intent.vibes.length > 0) {
+    parts.push(`vibe: ${intent.vibes.join(', ')}`);
+  }
+
+  if (intent.occasion) {
+    parts.push(`occasion: ${intent.occasion}`);
+  }
+
+  if (intent.socialContext) {
+    parts.push(`for: ${intent.socialContext}`);
+  }
+
+  if (intent.priceContext) {
+    parts.push(`price: ${intent.priceContext}`);
+  }
+
+  return parts.join(' | ');
+}
+
+/**
+ * Generate intelligent follow-up suggestions
+ */
+function generateFollowUps(
+  intent: ParsedIntent,
+  results: any[],
+  conversationHistory: ConversationMessage[]
+): string[] {
+  const suggestions: string[] = [];
+  const city = intent.filters.city;
+  const category = intent.filters.category;
+
+  // Based on current results
+  if (results.length > 0) {
+    const topResult = results[0];
+
+    // Suggest similar
+    if (topResult.name) {
+      suggestions.push(`More like ${topResult.name}`);
+    }
+
+    // Suggest different category in same city
+    if (city) {
+      if (category === 'restaurant') {
+        suggestions.push(`Best bars in ${city}`);
+        suggestions.push(`Coffee in ${city}`);
+      } else if (category === 'bar') {
+        suggestions.push(`Late night eats in ${city}`);
+        suggestions.push(`Restaurants in ${city}`);
+      } else if (category === 'cafe') {
+        suggestions.push(`Brunch spots in ${city}`);
+      } else if (category === 'hotel') {
+        suggestions.push(`Restaurants near ${topResult.name || city}`);
+      } else {
+        suggestions.push(`Restaurants in ${city}`);
+        suggestions.push(`Cafes in ${city}`);
+      }
+    }
+
+    // Suggest vibe-based refinement
+    if (intent.vibes.length === 0 && category === 'restaurant') {
+      suggestions.push('Show me romantic spots');
+      suggestions.push('Hidden gems only');
+    }
+
+    // Suggest Michelin if not already filtered
+    if (!intent.filters.michelin && results.some(r => r.michelin_stars > 0)) {
+      suggestions.push('Only Michelin starred');
+    }
+
+    // Suggest price refinement
+    if (!intent.priceContext) {
+      if (results.some(r => r.price_level >= 3)) {
+        suggestions.push('More affordable options');
+      }
+    }
+  } else {
+    // No results - suggest broader searches
+    if (city) {
+      suggestions.push(`All restaurants in ${city}`);
+      suggestions.push(`Best of ${city}`);
+    } else {
+      suggestions.push('Restaurants in Tokyo');
+      suggestions.push('Hotels in Paris');
+      suggestions.push('Cafes in London');
+    }
+  }
+
+  // Add some variety based on history
+  if (conversationHistory.length > 2) {
+    suggestions.push('Show me something different');
+  }
+
+  return suggestions.slice(0, 4);
+}
+
+/**
+ * Generate AI response text
+ */
+async function generateResponseText(
+  intent: ParsedIntent,
+  results: any[],
+  query: string
+): Promise<string> {
+  const count = results.length;
+  const city = intent.filters.city;
+  const category = intent.filters.category;
+
+  // Build context-aware response
+  let response = '';
+
+  if (count === 0) {
+    if (city && category) {
+      response = `I couldn't find any ${category}s in ${city} matching your criteria. Try broadening your search.`;
+    } else if (city) {
+      response = `I couldn't find places in ${city} matching your search. Try a different query.`;
+    } else {
+      response = `No results found. Try searching for a specific city or category.`;
+    }
+  } else {
+    // Build response based on intent and vibes
+    const vibeText = intent.vibes.length > 0 ? intent.vibes.join(' and ') + ' ' : '';
+    const occasionText = intent.occasion ? `for ${intent.occasion} ` : '';
+
+    if (intent.intent === 'more_like_this') {
+      response = `Found ${count} similar ${category || 'place'}${count > 1 ? 's' : ''} ${city ? `in ${city}` : ''}.`;
+    } else if (intent.intent === 'discovery') {
+      response = `Discovered ${count} ${vibeText}${category || 'place'}${count > 1 ? 's' : ''} ${city ? `in ${city}` : ''}. These are some hidden gems worth exploring.`;
+    } else if (intent.intent === 'recommendation') {
+      response = `Here are ${count} recommended ${vibeText}${category || 'place'}${count > 1 ? 's' : ''} ${occasionText}${city ? `in ${city}` : ''}.`;
+    } else {
+      // Standard search
+      if (city && category) {
+        response = `Found ${count} ${vibeText}${category}${count > 1 ? 's' : ''} in ${city}${occasionText ? ` ${occasionText}` : ''}.`;
+      } else if (city) {
+        response = `Found ${count} ${vibeText}place${count > 1 ? 's' : ''} in ${city}.`;
+      } else if (category) {
+        response = `Found ${count} ${vibeText}${category}${count > 1 ? 's' : ''}.`;
+      } else {
+        response = `Found ${count} result${count > 1 ? 's' : ''} for "${query}".`;
+      }
+    }
+
+    // Add quality indicator
+    const michelinCount = results.filter(r => r.michelin_stars > 0).length;
+    if (michelinCount > 0) {
+      response += ` Including ${michelinCount} Michelin-starred.`;
+    }
+  }
+
+  return response;
+}
+
+export const POST = withErrorHandling(async (request: NextRequest) => {
+  // Rate limiting
+  const identifier = getIdentifier(request);
+  const limiter = isUpstashConfigured() ? searchRatelimit : memorySearchRatelimit;
+  const { success, limit, remaining, reset } = await limiter.limit(identifier);
+
+  if (!success) {
+    return createRateLimitResponse('Rate limit exceeded. Please try again later.', limit, remaining, reset);
+  }
+
+  const body: TravelIntelligenceRequest = await request.json();
+  const { query, conversationHistory = [], filters: explicitFilters = {}, limit: resultLimit = 20 } = body;
+
+  if (!query || query.trim().length === 0) {
+    return NextResponse.json({ error: 'Query is required' }, { status: 400 });
+  }
+
+  const supabase = await createServerClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+
+  try {
+    // 1. Parse query intent
+    const intent = parseQueryIntent(query, conversationHistory);
+
+    // Merge explicit filters
+    if (explicitFilters.city) intent.filters.city = explicitFilters.city;
+    if (explicitFilters.category) intent.filters.category = explicitFilters.category;
+    if (explicitFilters.michelin) intent.filters.michelin = explicitFilters.michelin;
+
+    // 2. Handle "more like this" queries
+    if (intent.intent === 'more_like_this' && intent.referenceDestination) {
+      // Find the reference destination
+      const { data: refDest } = await supabase
+        .from('destinations')
+        .select('id, slug, name, city, category, tags, vibe_tags')
+        .or(`name.ilike.%${intent.referenceDestination}%,slug.ilike.%${intent.referenceDestination}%`)
+        .limit(1)
+        .single();
+
+      if (refDest) {
+        // Use knowledge graph to find similar
+        const similar = await knowledgeGraphService.findSimilar(String(refDest.id), 10);
+
+        if (similar.length > 0) {
+          const similarIds = similar.map(s => s.destination_id);
+          const { data: similarDests } = await supabase
+            .from('destinations')
+            .select('*')
+            .in('id', similarIds);
+
+          if (similarDests && similarDests.length > 0) {
+            const response = await generateResponseText(intent, similarDests, query);
+            const followUps = generateFollowUps(intent, similarDests, conversationHistory);
+
+            return NextResponse.json({
+              response,
+              destinations: similarDests,
+              filters: intent.filters,
+              followUps,
+              intent: intent.intent,
+              meta: { similarTo: refDest.name },
+            });
+          }
+        }
+
+        // Fallback: search by same city/category/tags
+        intent.filters.city = refDest.city;
+        intent.filters.category = refDest.category;
+        if (refDest.vibe_tags && refDest.vibe_tags.length > 0) {
+          intent.vibes = refDest.vibe_tags;
+        }
+      }
+    }
+
+    // 3. Generate embedding for semantic search
+    const searchText = buildSemanticSearchText(intent);
+    let embedding: number[] | null = null;
+
+    try {
+      const embeddingResult = await generateTextEmbedding(searchText);
+      embedding = embeddingResult.embedding;
+    } catch (embeddingError) {
+      console.error('Embedding generation failed:', embeddingError);
+    }
+
+    // 4. Search destinations
+    let results: any[] = [];
+
+    if (embedding) {
+      // Try vector search first
+      try {
+        // Build filter for Upstash
+        let upstashFilter: string | undefined;
+        const filterParts: string[] = [];
+
+        if (intent.filters.city) {
+          filterParts.push(`city = '${intent.filters.city}'`);
+        }
+        if (intent.filters.category) {
+          filterParts.push(`category = '${intent.filters.category}'`);
+        }
+        if (intent.filters.michelin) {
+          filterParts.push(`michelin_stars > 0`);
+        }
+
+        if (filterParts.length > 0) {
+          upstashFilter = filterParts.join(' AND ');
+        }
+
+        const vectorResults = await queryVectorIndex(embedding, {
+          topK: 50,
+          filter: upstashFilter,
+          includeMetadata: true,
+        });
+
+        if (vectorResults && vectorResults.length > 0) {
+          // Get full destination data from Supabase
+          const ids = vectorResults.map((r: VectorSearchResult) => r.metadata.destination_id);
+          const { data: fullDests } = await supabase
+            .from('destinations')
+            .select('*')
+            .in('id', ids);
+
+          if (fullDests) {
+            // Preserve vector similarity score
+            results = fullDests.map(dest => {
+              const vectorResult = vectorResults.find((r: VectorSearchResult) => r.metadata.destination_id === dest.id);
+              return {
+                ...dest,
+                similarity: vectorResult?.score || 0,
+              };
+            });
+          }
+        }
+      } catch (vectorError) {
+        console.error('Vector search failed:', vectorError);
+      }
+    }
+
+    // 5. Fallback to database search if vector search failed or returned no results
+    if (results.length === 0) {
+      let dbQuery = supabase.from('destinations').select('*');
+
+      // Apply filters
+      if (intent.filters.city) {
+        dbQuery = dbQuery.ilike('city', `%${intent.filters.city}%`);
+      }
+      if (intent.filters.category) {
+        dbQuery = dbQuery.ilike('category', `%${intent.filters.category}%`);
+      }
+      if (intent.filters.michelin) {
+        dbQuery = dbQuery.gt('michelin_stars', 0);
+      }
+      if (intent.filters.priceMax) {
+        dbQuery = dbQuery.lte('price_level', intent.filters.priceMax);
+      }
+      if (intent.filters.priceMin) {
+        dbQuery = dbQuery.gte('price_level', intent.filters.priceMin);
+      }
+
+      // Text search on multiple fields
+      const searchTerms = query.toLowerCase().split(' ')
+        .filter(t => t.length > 2 && !['the', 'and', 'for', 'with', 'in'].includes(t));
+
+      if (searchTerms.length > 0 && !intent.filters.city && !intent.filters.category) {
+        // Search across name, description, vibe_tags
+        const searchPattern = searchTerms.join('%');
+        dbQuery = dbQuery.or(`name.ilike.%${searchPattern}%,description.ilike.%${searchPattern}%,micro_description.ilike.%${searchPattern}%`);
+      }
+
+      dbQuery = dbQuery.limit(100);
+
+      const { data: dbResults, error } = await dbQuery;
+
+      if (error) {
+        console.error('Database search error:', error);
+      } else if (dbResults) {
+        results = dbResults;
+      }
+    }
+
+    // 6. Apply vibe filtering
+    if (intent.vibes.length > 0 && results.length > 0) {
+      results = results.map(dest => {
+        const destVibes = dest.vibe_tags || [];
+        const vibeMatch = intent.vibes.filter(v =>
+          destVibes.some((dv: string) => dv.toLowerCase().includes(v))
+        ).length;
+
+        return {
+          ...dest,
+          vibeScore: vibeMatch / intent.vibes.length,
+        };
+      });
+
+      // Boost destinations with matching vibes
+      results.sort((a, b) => (b.vibeScore || 0) - (a.vibeScore || 0));
+    }
+
+    // 7. Apply intelligent ranking
+    let rankedResults = results;
+
+    try {
+      const ranked = await searchRankingAlgorithm.rankResults(
+        results,
+        query,
+        userId,
+        {
+          city: intent.filters.city || undefined,
+          category: intent.filters.category || undefined,
+          modifiers: intent.vibes,
+        }
+      );
+
+      rankedResults = ranked.map(r => ({
+        ...r.destination,
+        rankScore: r.score,
+        rankExplanation: r.explanation,
+      }));
+    } catch (rankError) {
+      console.error('Ranking failed:', rankError);
+      // Continue with unranked results
+    }
+
+    // 8. Limit results
+    const finalResults = rankedResults.slice(0, resultLimit);
+
+    // 9. Generate response and follow-ups
+    const response = await generateResponseText(intent, finalResults, query);
+    const followUps = generateFollowUps(intent, finalResults, conversationHistory);
+
+    // 10. Log interaction
+    try {
+      await supabase.from('user_interactions').insert({
+        interaction_type: 'search',
+        user_id: userId || null,
+        destination_id: null,
+        metadata: {
+          query,
+          intent: intent.intent,
+          filters: intent.filters,
+          vibes: intent.vibes,
+          count: finalResults.length,
+          source: 'travel-intelligence',
+        },
+      });
+    } catch {
+      // Best effort logging
+    }
+
+    return NextResponse.json({
+      response,
+      destinations: finalResults,
+      filters: intent.filters,
+      followUps,
+      intent: intent.intent,
+      vibes: intent.vibes,
+      meta: {
+        query,
+        totalResults: finalResults.length,
+        hasVectorSearch: !!embedding,
+        ranked: true,
+      },
+    });
+  } catch (error: any) {
+    console.error('Travel intelligence error:', error);
+    return NextResponse.json({
+      error: 'Search failed',
+      response: 'Sorry, I had trouble with that search. Please try again.',
+      destinations: [],
+      followUps: ['Restaurants in Tokyo', 'Hotels in Paris', 'Cafes in London'],
+    }, { status: 500 });
+  }
+});

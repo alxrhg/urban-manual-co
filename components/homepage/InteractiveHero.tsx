@@ -186,12 +186,14 @@ export default function InteractiveHero() {
     setFollowUpSuggestions([]);
 
     try {
-      const response = await fetch('/api/search/ai', {
+      // Use the new Travel Intelligence endpoint
+      const response = await fetch('/api/travel-intelligence', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query,
           conversationHistory,
+          limit: 20,
         }),
       });
 
@@ -214,10 +216,12 @@ export default function InteractiveHero() {
       if (filters.category) {
         setSelectedCategory(filters.category);
       }
+      if (filters.michelin) {
+        setMichelinOnly(true);
+      }
 
-      // Generate contextual follow-up suggestions
-      const followUps = generateFollowUps(query, data.destinations || [], filters);
-      setFollowUpSuggestions(followUps);
+      // Use follow-ups from API (intelligent suggestions)
+      setFollowUpSuggestions(data.followUps || generateFollowUps(query, data.destinations || [], filters));
 
       // Update conversation history for context
       setConversationHistory(prev => [
@@ -235,7 +239,7 @@ export default function InteractiveHero() {
     } finally {
       setIsSearching(false);
     }
-  }, [localSearchTerm, conversationHistory]);
+  }, [localSearchTerm, conversationHistory, setSelectedCity, setSelectedCategory, setMichelinOnly]);
 
   // Handle follow-up suggestion click
   const handleFollowUp = useCallback((suggestion: string) => {
