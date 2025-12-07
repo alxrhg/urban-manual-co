@@ -106,7 +106,7 @@ export interface ConversationContext {
 
 export interface SmartResponse {
   content: string;
-  destinations: any[];
+  destinations: DestinationWithReasoning[];
   suggestions: SmartSuggestion[];
   contextualHints: string[];
   proactiveActions?: ProactiveAction[];
@@ -114,6 +114,38 @@ export interface SmartResponse {
   turnNumber: number;
   intent: QueryIntent;
   confidence: number;
+  // New: Smart disambiguation
+  needsClarification?: boolean;
+  clarificationQuestion?: string;
+  clarificationOptions?: ClarificationOption[];
+  // New: Conversation repair
+  isRepairResponse?: boolean;
+  repairContext?: string;
+}
+
+// "Why This?" - Each destination includes reasoning
+export interface DestinationWithReasoning {
+  destination: any;
+  reasoning: RecommendationReasoning;
+}
+
+export interface RecommendationReasoning {
+  primaryReason: string;  // Main reason shown prominently
+  factors: ReasoningFactor[];  // Detailed breakdown
+  matchScore: number;  // 0-1 how well it matches user
+}
+
+export interface ReasoningFactor {
+  type: 'taste' | 'behavior' | 'similar' | 'popular' | 'trip' | 'location' | 'price';
+  description: string;
+  strength: 'strong' | 'moderate' | 'weak';
+}
+
+// Smart disambiguation options
+export interface ClarificationOption {
+  text: string;
+  context: string;  // What this choice implies
+  icon?: string;
 }
 
 export interface SmartSuggestion {
@@ -1322,6 +1354,656 @@ Summary:`;
 
     return { session, welcomeBack, suggestions };
   }
+
+  // ============================================
+  // SMART DISAMBIGUATION
+  // ============================================
+
+  /**
+   * Detect if query is ambiguous and needs clarification
+   */
+  private detectAmbiguity(
+    message: string,
+    intent: QueryIntent,
+    session: ConversationSession
+  ): boolean {
+    const lowerMessage = message.toLowerCase();
+
+    // Very generic queries need clarification
+    const genericPatterns = [
+      /^(good|nice|best|great)\s+(place|spot|recommendation)s?\s*(in\s+\w+)?$/i,
+      /^(where|what)\s+(should|can)\s+i\s+(go|visit|eat|stay)/i,
+      /^(recommend|suggest)\s+(something|anything|a place)/i,
+      /^(help me|i need|looking for)\s+(find|choose)/i,
+    ];
+
+    const isGeneric = genericPatterns.some(p => p.test(lowerMessage));
+
+    // Low confidence from intent extraction
+    const lowConfidence = (intent.confidence || 0) < 0.5;
+
+    // Missing both city and category
+    const missingContext = !intent.city && !intent.category && !session.context.currentCity;
+
+    return isGeneric || lowConfidence || missingContext;
+  }
+
+  /**
+   * Generate smart, personalized clarification question
+   */
+  private async generateSmartClarification(
+    message: string,
+    session: ConversationSession,
+    intelligenceContext: UnifiedContext | null
+  ): Promise<{
+    question: string;
+    options: ClarificationOption[];
+  }> {
+    // Build personalized options based on user history
+    const options: ClarificationOption[] = [];
+
+    // Option based on recent liked places
+    if (session.context.likedDestinations.length > 0) {
+      const lastLiked = session.context.likedDestinations[session.context.likedDestinations.length - 1];
+      options.push({
+        text: `Something like ${lastLiked}`,
+        context: 'Based on places you\'ve liked',
+        icon: 'heart',
+      });
+    }
+
+    // Option based on taste fingerprint
+    if (intelligenceContext?.tasteFingerprint) {
+      const taste = intelligenceContext.tasteFingerprint;
+      if (taste.designSensitivity > 0.6) {
+        options.push({
+          text: 'Design-focused places',
+          context: 'Matches your appreciation for design',
+          icon: 'building',
+        });
+      }
+      if (taste.authenticitySeeker > 0.6) {
+        options.push({
+          text: 'Local hidden gems',
+          context: 'Authentic spots off the beaten path',
+          icon: 'compass',
+        });
+      }
+    }
+
+    // Option based on active trip
+    if (intelligenceContext?.activeTrip) {
+      options.push({
+        text: `For my ${intelligenceContext.activeTrip.name} trip`,
+        context: `Places in ${intelligenceContext.activeTrip.destinations[0] || 'your trip destinations'}`,
+        icon: 'calendar',
+      });
+    }
+
+    // Category options if no category specified
+    if (!session.context.currentCategory) {
+      options.push(
+        { text: 'Restaurants & dining', context: 'Food experiences', icon: 'utensils' },
+        { text: 'Hotels & stays', context: 'Accommodation', icon: 'bed' },
+        { text: 'Cafes & coffee', context: 'Coffee culture', icon: 'coffee' },
+      );
+    }
+
+    // Generate personalized question
+    let question = 'What are you looking for? ';
+
+    if (session.context.previousConversationInsights?.length) {
+      question = `Last time you were interested in ${session.context.previousConversationInsights[0]}. Looking for something similar, or exploring a different vibe?`;
+    } else if (session.context.likedDestinations.length > 0) {
+      question = 'Based on what you\'ve liked, I can suggest similar places. Or are you in the mood for something different?';
+    } else if (intelligenceContext?.tasteFingerprint && intelligenceContext.tasteFingerprint.designSensitivity > 0.6) {
+      question = 'I know you appreciate good design. Want me to focus on architecturally significant places, or explore other vibes?';
+    }
+
+    return {
+      question,
+      options: options.slice(0, 4),
+    };
+  }
+
+  // ============================================
+  // "WHY THIS?" EXPLANATIONS
+  // ============================================
+
+  /**
+   * Generate reasoning for why each destination was recommended
+   */
+  private generateRecommendationReasoning(
+    destination: any,
+    session: ConversationSession,
+    intelligenceContext: UnifiedContext | null,
+    intent: QueryIntent
+  ): RecommendationReasoning {
+    const factors: ReasoningFactor[] = [];
+    let matchScore = 0.5;  // Base score
+
+    // Check taste fingerprint matches
+    if (intelligenceContext?.tasteFingerprint) {
+      const taste = intelligenceContext.tasteFingerprint;
+
+      // Design match
+      if (destination.architect_name && taste.designSensitivity > 0.5) {
+        factors.push({
+          type: 'taste',
+          description: `Architecturally significant (designed by ${destination.architect_name})`,
+          strength: taste.designSensitivity > 0.7 ? 'strong' : 'moderate',
+        });
+        matchScore += 0.15;
+      }
+
+      // Price match
+      const destPrice = destination.price_level || 2;
+      const userPriceAffinity = taste.priceAffinity;
+      if ((destPrice >= 3 && userPriceAffinity > 0.6) || (destPrice <= 2 && userPriceAffinity < 0.4)) {
+        factors.push({
+          type: 'price',
+          description: destPrice >= 3 ? 'Matches your preference for upscale experiences' : 'Great value, fits your budget preference',
+          strength: 'moderate',
+        });
+        matchScore += 0.1;
+      }
+
+      // Authenticity match
+      if (!destination.michelin_stars && taste.authenticitySeeker > 0.6) {
+        factors.push({
+          type: 'taste',
+          description: 'Local favorite, authentic experience',
+          strength: 'moderate',
+        });
+        matchScore += 0.1;
+      }
+    }
+
+    // Check behavioral matches
+    if (session.context.likedDestinations.length > 0) {
+      // Check if similar category to liked places
+      factors.push({
+        type: 'behavior',
+        description: 'Similar to places you\'ve shown interest in',
+        strength: 'moderate',
+      });
+      matchScore += 0.1;
+    }
+
+    // Check trip context
+    if (intelligenceContext?.activeTrip) {
+      const tripDests = intelligenceContext.activeTrip.destinations || [];
+      if (tripDests.some(d => d.toLowerCase() === destination.city?.toLowerCase())) {
+        factors.push({
+          type: 'trip',
+          description: `Perfect for your ${intelligenceContext.activeTrip.name} trip`,
+          strength: 'strong',
+        });
+        matchScore += 0.15;
+      }
+    }
+
+    // Rating factor
+    if (destination.rating >= 4.5) {
+      factors.push({
+        type: 'popular',
+        description: `Highly rated (${destination.rating}★)`,
+        strength: 'strong',
+      });
+      matchScore += 0.1;
+    }
+
+    // Michelin factor
+    if (destination.michelin_stars > 0) {
+      factors.push({
+        type: 'popular',
+        description: `${destination.michelin_stars} Michelin star${destination.michelin_stars > 1 ? 's' : ''}`,
+        strength: 'strong',
+      });
+      matchScore += 0.1;
+    }
+
+    // Location match
+    if (intent.city && destination.city?.toLowerCase() === intent.city.toLowerCase()) {
+      factors.push({
+        type: 'location',
+        description: `Located in ${destination.city}`,
+        strength: 'moderate',
+      });
+    }
+
+    // Generate primary reason
+    let primaryReason = 'Recommended for you';
+    if (factors.length > 0) {
+      const strongFactor = factors.find(f => f.strength === 'strong');
+      primaryReason = strongFactor?.description || factors[0].description;
+    }
+
+    return {
+      primaryReason,
+      factors: factors.slice(0, 4),
+      matchScore: Math.min(1, matchScore),
+    };
+  }
+
+  /**
+   * Wrap destinations with reasoning
+   */
+  private wrapDestinationsWithReasoning(
+    destinations: any[],
+    session: ConversationSession,
+    intelligenceContext: UnifiedContext | null,
+    intent: QueryIntent
+  ): DestinationWithReasoning[] {
+    return destinations.map(dest => ({
+      destination: dest,
+      reasoning: this.generateRecommendationReasoning(dest, session, intelligenceContext, intent),
+    }));
+  }
+
+  // ============================================
+  // CONVERSATION REPAIR
+  // ============================================
+
+  /**
+   * Detect if user is rejecting/correcting previous results
+   */
+  private detectRejection(message: string): {
+    isRejection: boolean;
+    rejectionType?: 'price' | 'style' | 'location' | 'category' | 'general';
+    correction?: string;
+  } {
+    const lowerMessage = message.toLowerCase();
+
+    // Price rejection
+    if (/\b(too\s+expensive|too\s+pricey|can't\s+afford|out\s+of\s+budget|cheaper|budget)/i.test(lowerMessage)) {
+      return { isRejection: true, rejectionType: 'price', correction: 'budget' };
+    }
+    if (/\b(too\s+cheap|want\s+nicer|more\s+upscale|fancier|luxury)/i.test(lowerMessage)) {
+      return { isRejection: true, rejectionType: 'price', correction: 'luxury' };
+    }
+
+    // Style rejection
+    if (/\b(too\s+(modern|trendy|hipster|fancy|casual|formal))/i.test(lowerMessage)) {
+      return { isRejection: true, rejectionType: 'style' };
+    }
+
+    // Location rejection
+    if (/\b(too\s+far|not\s+in|wrong\s+(area|neighborhood|location))/i.test(lowerMessage)) {
+      return { isRejection: true, rejectionType: 'location' };
+    }
+
+    // Category rejection
+    if (/\b(not\s+(restaurants?|hotels?|cafes?|bars?)|don't\s+want\s+(food|stay|coffee))/i.test(lowerMessage)) {
+      return { isRejection: true, rejectionType: 'category' };
+    }
+
+    // General rejection
+    if (/\b(no|nope|not\s+(these|this|that|what|right)|wrong|different|don't\s+like)/i.test(lowerMessage)) {
+      return { isRejection: true, rejectionType: 'general' };
+    }
+
+    return { isRejection: false };
+  }
+
+  /**
+   * Handle conversation repair - adjust based on rejection
+   */
+  private async handleConversationRepair(
+    message: string,
+    rejection: { isRejection: boolean; rejectionType?: string; correction?: string },
+    session: ConversationSession,
+    intent: QueryIntent
+  ): Promise<{
+    adjustedIntent: QueryIntent;
+    repairMessage: string;
+  }> {
+    const adjustedIntent = { ...intent };
+    let repairMessage = 'Got it! ';
+
+    switch (rejection.rejectionType) {
+      case 'price':
+        if (rejection.correction === 'budget') {
+          adjustedIntent.filters = { ...adjustedIntent.filters, priceLevel: 2 };
+          repairMessage += 'Here are some more affordable options';
+          // Update inferred preferences
+          session.context.inferredPreferences.pricePreference = 'budget';
+        } else {
+          adjustedIntent.filters = { ...adjustedIntent.filters, priceLevel: 4 };
+          repairMessage += 'Let me show you some nicer options';
+          session.context.inferredPreferences.pricePreference = 'luxury';
+        }
+        break;
+
+      case 'style':
+        repairMessage += 'Let me find something with a different vibe';
+        // Mark shown destinations as disliked
+        session.context.dislikedDestinations.push(...session.context.shownDestinations.slice(-5));
+        break;
+
+      case 'location':
+        repairMessage += 'Let me look in a different area';
+        break;
+
+      case 'category':
+        repairMessage += 'What type of place would you prefer?';
+        adjustedIntent.category = undefined;
+        break;
+
+      default:
+        repairMessage += 'Let me try something different';
+        // Mark shown as disliked
+        session.context.dislikedDestinations.push(...session.context.shownDestinations.slice(-5));
+    }
+
+    // Carry forward city and category unless explicitly rejected
+    if (!adjustedIntent.city && session.context.currentCity) {
+      adjustedIntent.city = session.context.currentCity;
+    }
+    if (rejection.rejectionType !== 'category' && !adjustedIntent.category && session.context.currentCategory) {
+      adjustedIntent.category = session.context.currentCategory;
+    }
+
+    return { adjustedIntent, repairMessage };
+  }
+
+  // ============================================
+  // ITINERARY INTELLIGENCE
+  // ============================================
+
+  /**
+   * Detect if user wants an itinerary built
+   */
+  private detectItineraryRequest(message: string): {
+    isItinerary: boolean;
+    duration?: 'morning' | 'afternoon' | 'evening' | 'day' | 'weekend';
+    area?: string;
+  } {
+    const lowerMessage = message.toLowerCase();
+
+    const itineraryPatterns = [
+      /\b(build|create|plan|make)\s+(me\s+)?(a|an)?\s*(day|itinerary|schedule|route)/i,
+      /\b(day\s+in|afternoon\s+in|morning\s+in|evening\s+in)\s+(\w+)/i,
+      /\b(what\s+should\s+i\s+do|how\s+to\s+spend)\s+(a\s+)?(day|morning|afternoon)/i,
+      /\b(perfect|ideal|best)\s+(day|itinerary)\s+(in|for)/i,
+    ];
+
+    const isItinerary = itineraryPatterns.some(p => p.test(lowerMessage));
+
+    if (!isItinerary) return { isItinerary: false };
+
+    // Extract duration
+    let duration: 'morning' | 'afternoon' | 'evening' | 'day' | 'weekend' = 'day';
+    if (lowerMessage.includes('morning')) duration = 'morning';
+    else if (lowerMessage.includes('afternoon')) duration = 'afternoon';
+    else if (lowerMessage.includes('evening')) duration = 'evening';
+    else if (lowerMessage.includes('weekend')) duration = 'weekend';
+
+    // Extract area (neighborhood or city)
+    const areaMatch = lowerMessage.match(/\b(in|around|near)\s+(\w+(?:\s+\w+)?)/i);
+    const area = areaMatch ? areaMatch[2] : undefined;
+
+    return { isItinerary, duration, area };
+  }
+
+  /**
+   * Build intelligent itinerary with logical flow
+   */
+  async buildItinerary(
+    city: string,
+    duration: 'morning' | 'afternoon' | 'evening' | 'day' | 'weekend',
+    session: ConversationSession,
+    intelligenceContext: UnifiedContext | null,
+    neighborhood?: string
+  ): Promise<ItineraryPlan> {
+    if (!this.supabase) {
+      return { slots: [], totalDuration: 0, walkingTime: 0 };
+    }
+
+    // Define time slots based on duration
+    const slots = this.getTimeSlotsForDuration(duration);
+
+    // Fetch destinations for the city/neighborhood
+    let query = this.supabase
+      .from('destinations')
+      .select('*')
+      .ilike('city', `%${city}%`)
+      .is('parent_destination_id', null);
+
+    if (neighborhood) {
+      query = query.or(`neighborhood.ilike.%${neighborhood}%,name.ilike.%${neighborhood}%`);
+    }
+
+    const { data: destinations } = await query.limit(50);
+
+    if (!destinations || destinations.length === 0) {
+      return { slots: [], totalDuration: 0, walkingTime: 0 };
+    }
+
+    // Categorize destinations by type
+    const byCategory: Record<string, any[]> = {};
+    for (const dest of destinations) {
+      const cat = dest.category?.toLowerCase() || 'other';
+      if (!byCategory[cat]) byCategory[cat] = [];
+      byCategory[cat].push(dest);
+    }
+
+    // Build itinerary slots
+    const itinerarySlots: ItinerarySlot[] = [];
+
+    for (const slot of slots) {
+      const suitable = this.findSuitableForTimeSlot(slot, byCategory, session, intelligenceContext);
+      if (suitable) {
+        // Remove from available to avoid duplicates
+        const cat = suitable.category?.toLowerCase() || 'other';
+        byCategory[cat] = byCategory[cat]?.filter(d => d.slug !== suitable.slug) || [];
+
+        itinerarySlots.push({
+          time: slot.time,
+          timeLabel: slot.label,
+          destination: suitable,
+          duration: slot.duration,
+          activity: slot.activity,
+          reasoning: this.generateRecommendationReasoning(suitable, session, intelligenceContext, {} as QueryIntent),
+        });
+      }
+    }
+
+    // Calculate walking times between consecutive slots
+    let totalWalkingTime = 0;
+    for (let i = 1; i < itinerarySlots.length; i++) {
+      const prev = itinerarySlots[i - 1].destination;
+      const curr = itinerarySlots[i].destination;
+      if (prev.latitude && prev.longitude && curr.latitude && curr.longitude) {
+        const distance = this.calculateDistance(
+          prev.latitude, prev.longitude,
+          curr.latitude, curr.longitude
+        );
+        const walkingMinutes = Math.round(distance / 80); // ~80m per minute walking
+        itinerarySlots[i].walkingTimeFromPrevious = walkingMinutes;
+        totalWalkingTime += walkingMinutes;
+      }
+    }
+
+    return {
+      slots: itinerarySlots,
+      totalDuration: itinerarySlots.reduce((sum, s) => sum + s.duration, 0),
+      walkingTime: totalWalkingTime,
+      city,
+      neighborhood,
+    };
+  }
+
+  private getTimeSlotsForDuration(duration: string): Array<{
+    time: string;
+    label: string;
+    activity: string;
+    duration: number;
+    preferredCategories: string[];
+  }> {
+    switch (duration) {
+      case 'morning':
+        return [
+          { time: '09:00', label: 'Morning coffee', activity: 'coffee', duration: 45, preferredCategories: ['cafe', 'coffee'] },
+          { time: '10:00', label: 'Mid-morning', activity: 'explore', duration: 90, preferredCategories: ['museum', 'gallery', 'culture'] },
+          { time: '12:00', label: 'Lunch', activity: 'lunch', duration: 75, preferredCategories: ['restaurant'] },
+        ];
+      case 'afternoon':
+        return [
+          { time: '14:00', label: 'Afternoon', activity: 'explore', duration: 120, preferredCategories: ['museum', 'gallery', 'culture', 'shop'] },
+          { time: '16:30', label: 'Late afternoon', activity: 'coffee', duration: 45, preferredCategories: ['cafe', 'coffee', 'bar'] },
+          { time: '18:00', label: 'Early evening', activity: 'drinks', duration: 60, preferredCategories: ['bar', 'restaurant'] },
+        ];
+      case 'evening':
+        return [
+          { time: '18:00', label: 'Aperitivo', activity: 'drinks', duration: 60, preferredCategories: ['bar'] },
+          { time: '19:30', label: 'Dinner', activity: 'dinner', duration: 120, preferredCategories: ['restaurant'] },
+          { time: '22:00', label: 'Nightcap', activity: 'drinks', duration: 60, preferredCategories: ['bar'] },
+        ];
+      case 'weekend':
+        return [
+          { time: '10:00', label: 'Morning coffee', activity: 'coffee', duration: 45, preferredCategories: ['cafe', 'coffee'] },
+          { time: '11:00', label: 'Late morning', activity: 'explore', duration: 90, preferredCategories: ['museum', 'gallery'] },
+          { time: '13:00', label: 'Lunch', activity: 'lunch', duration: 90, preferredCategories: ['restaurant'] },
+          { time: '15:00', label: 'Afternoon', activity: 'explore', duration: 120, preferredCategories: ['culture', 'shop'] },
+          { time: '17:30', label: 'Aperitivo', activity: 'drinks', duration: 60, preferredCategories: ['bar', 'cafe'] },
+          { time: '19:00', label: 'Dinner', activity: 'dinner', duration: 120, preferredCategories: ['restaurant'] },
+        ];
+      default: // day
+        return [
+          { time: '09:00', label: 'Morning coffee', activity: 'coffee', duration: 45, preferredCategories: ['cafe', 'coffee'] },
+          { time: '10:00', label: 'Mid-morning', activity: 'explore', duration: 90, preferredCategories: ['museum', 'gallery', 'culture'] },
+          { time: '12:00', label: 'Lunch', activity: 'lunch', duration: 75, preferredCategories: ['restaurant'] },
+          { time: '14:00', label: 'Afternoon', activity: 'explore', duration: 90, preferredCategories: ['culture', 'shop', 'gallery'] },
+          { time: '16:00', label: 'Afternoon break', activity: 'coffee', duration: 45, preferredCategories: ['cafe', 'coffee'] },
+          { time: '18:00', label: 'Early evening', activity: 'drinks', duration: 60, preferredCategories: ['bar'] },
+          { time: '19:30', label: 'Dinner', activity: 'dinner', duration: 120, preferredCategories: ['restaurant'] },
+        ];
+    }
+  }
+
+  private findSuitableForTimeSlot(
+    slot: { preferredCategories: string[]; activity: string },
+    byCategory: Record<string, any[]>,
+    session: ConversationSession,
+    intelligenceContext: UnifiedContext | null
+  ): any | null {
+    // Try preferred categories first
+    for (const cat of slot.preferredCategories) {
+      const options = byCategory[cat];
+      if (options && options.length > 0) {
+        // Sort by taste match and rating
+        const sorted = options.sort((a, b) => {
+          let scoreA = a.rating || 0;
+          let scoreB = b.rating || 0;
+
+          // Boost for design if user likes design
+          if (intelligenceContext?.tasteFingerprint && intelligenceContext.tasteFingerprint.designSensitivity > 0.6) {
+            if (a.architect_name) scoreA += 1;
+            if (b.architect_name) scoreB += 1;
+          }
+
+          // Boost for liked destinations similarity
+          if (session.context.likedDestinations.includes(a.slug)) scoreA += 2;
+          if (session.context.likedDestinations.includes(b.slug)) scoreB += 2;
+
+          // Penalize disliked
+          if (session.context.dislikedDestinations.includes(a.slug)) scoreA -= 3;
+          if (session.context.dislikedDestinations.includes(b.slug)) scoreB -= 3;
+
+          return scoreB - scoreA;
+        });
+
+        return sorted[0];
+      }
+    }
+
+    return null;
+  }
+
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    // Haversine formula for distance in meters
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  /**
+   * Convert itinerary to actual trip
+   */
+  async convertItineraryToTrip(
+    itinerary: ItineraryPlan,
+    userId: string,
+    tripName?: string,
+    date?: string
+  ): Promise<{ tripId: string; success: boolean }> {
+    if (!this.supabase) {
+      return { tripId: '', success: false };
+    }
+
+    try {
+      // Create trip
+      const { data: trip, error: tripError } = await this.supabase
+        .from('trips')
+        .insert({
+          user_id: userId,
+          name: tripName || `${itinerary.city || 'My'} Trip`,
+          destination: itinerary.city,
+          status: 'planning',
+          start_date: date || new Date().toISOString().split('T')[0],
+        })
+        .select()
+        .single();
+
+      if (tripError || !trip) throw tripError;
+
+      // Add itinerary items
+      const itineraryItems = itinerary.slots.map((slot, index) => ({
+        trip_id: trip.id,
+        destination_slug: slot.destination.slug,
+        scheduled_date: date || new Date().toISOString().split('T')[0],
+        scheduled_time: slot.time,
+        duration_minutes: slot.duration,
+        order_index: index,
+        notes: `${slot.timeLabel}: ${slot.activity}`,
+      }));
+
+      const { error: itemsError } = await this.supabase
+        .from('trip_itinerary_items')
+        .insert(itineraryItems);
+
+      if (itemsError) throw itemsError;
+
+      return { tripId: trip.id, success: true };
+    } catch (error) {
+      console.error('Error converting itinerary to trip:', error);
+      return { tripId: '', success: false };
+    }
+  }
+}
+
+// Itinerary types
+export interface ItineraryPlan {
+  slots: ItinerarySlot[];
+  totalDuration: number;  // minutes
+  walkingTime: number;  // minutes
+  city?: string;
+  neighborhood?: string;
+}
+
+export interface ItinerarySlot {
+  time: string;
+  timeLabel: string;
+  destination: any;
+  duration: number;  // minutes
+  activity: string;
+  reasoning: RecommendationReasoning;
+  walkingTimeFromPrevious?: number;
 }
 
 // Export singleton instance
