@@ -37,17 +37,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { getCategoryIconComponent } from "@/lib/icons/category-icons";
-// Lazy load drawer (only when opened)
-const DestinationDrawer = dynamic(
-  () =>
-    import("@/src/features/detail/DestinationDrawer").then(mod => ({
-      default: mod.DestinationDrawer,
-    })),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
 import { useAuth } from "@/contexts/AuthContext";
 import { useDrawer } from "@/contexts/DrawerContext";
 import { useDrawerStore } from "@/lib/stores/drawer-store";
@@ -3495,86 +3484,7 @@ export default function HomePageClient({
               </div>
             </div>
 
-        {/* Destination Drawer - Only render when open and NOT in map view */}
-        {isDrawerOpen('destination') && selectedDestination && viewMode !== 'map' && (
-          <DestinationDrawer
-            destination={selectedDestination}
-            isOpen={true}
-            onClose={() => {
-              // Sort visited items to the back when closing
-              setFilteredDestinations(prev => {
-                const sorted = [...prev].sort((a, b) => {
-                  const aVisited = user && visitedSlugs.has(a.slug);
-                  const bVisited = user && visitedSlugs.has(b.slug);
-                  if (aVisited && !bVisited) return 1;
-                  if (!aVisited && bVisited) return -1;
-                  return 0;
-                });
-                return sorted;
-              });
-              closeDrawer();
-              setTimeout(() => setSelectedDestination(null), 300);
-            }}
-            onVisitToggle={(slug, visited) => {
-              // Update visited slugs
-              setVisitedSlugs(prev => {
-                const newSet = new Set(prev);
-                if (visited) {
-                  newSet.add(slug);
-                } else {
-                  newSet.delete(slug);
-                }
-                return newSet;
-              });
-
-              // Sort visited items to the back
-              setFilteredDestinations(prev => {
-                const sorted = [...prev].sort((a, b) => {
-                  const aVisited =
-                    user &&
-                    (visitedSlugs.has(a.slug) || (visited && a.slug === slug));
-                  const bVisited =
-                    user &&
-                    (visitedSlugs.has(b.slug) || (visited && b.slug === slug));
-                  if (aVisited && !bVisited) return 1;
-                  if (!aVisited && bVisited) return -1;
-                  return 0;
-                });
-                return sorted;
-              });
-            }}
-            onDestinationUpdate={async () => {
-              await new Promise(resolve => setTimeout(resolve, 200));
-              await fetchDestinations();
-              setCurrentPage(1);
-            }}
-            onDestinationClick={async (slug: string) => {
-              try {
-                // Fetch destination by slug using Supabase client
-                const supabaseClient = createClient();
-                if (!supabaseClient) {
-                  console.error('Failed to create Supabase client');
-                  return;
-                }
-                
-                const { data: destination, error } = await supabaseClient
-                  .from('destinations')
-                  .select('*')
-                  .eq('slug', slug)
-                  .single();
-                
-                if (error || !destination) {
-                  console.error('Failed to fetch destination:', error);
-                  return;
-                }
-                
-                openIntelligentDestination(destination as Destination);
-              } catch (error) {
-                console.error('Error fetching destination:', error);
-              }
-            }}
-          />
-        )}
+        {/* Destinations now use IntelligentDrawer - rendered in app/layout.tsx */}
         <AIAssistant />
         <ScrollToTop threshold={400} />
       </main>
