@@ -1,11 +1,12 @@
 /**
  * Generate contextual follow-up suggestions based on conversation history and results
+ * Includes creative/outside-the-box suggestions for discovery
  */
 
 interface FollowUpSuggestion {
   text: string;
-  icon?: 'location' | 'time' | 'price' | 'rating' | 'default';
-  type?: 'refine' | 'expand' | 'related';
+  icon?: 'location' | 'time' | 'price' | 'rating' | 'default' | 'sparkle' | 'compass' | 'story' | 'mood';
+  type?: 'refine' | 'expand' | 'related' | 'creative' | 'serendipity' | 'contrarian';
 }
 
 interface GenerateSuggestionsParams {
@@ -23,11 +24,19 @@ interface GenerateSuggestionsParams {
     category?: string;
     michelin_stars?: number;
     rating?: number;
+    tags?: string[];
   }>;
   conversationHistory?: Array<{ role: string; content: string }>;
   userContext?: {
     favoriteCities?: string[];
     favoriteCategories?: string[];
+    preferredStyles?: string[];
+    visitedCount?: number;
+  };
+  creativeMode?: {
+    enabled: boolean;
+    type?: string;
+    intensity?: number;
   };
 }
 
@@ -37,8 +46,10 @@ export function generateFollowUpSuggestions({
   destinations = [],
   conversationHistory = [],
   userContext,
+  creativeMode,
 }: GenerateSuggestionsParams): FollowUpSuggestion[] {
   const suggestions: FollowUpSuggestion[] = [];
+  const creativeSuggestions: FollowUpSuggestion[] = [];
   const queryLower = query.toLowerCase();
 
   // Extract context from conversation history for better suggestions
@@ -219,16 +230,126 @@ export function generateFollowUpSuggestions({
     }
   }
 
+  // === CREATIVE / OUTSIDE-THE-BOX SUGGESTIONS ===
+
+  // Always offer at least one creative option to encourage exploration
+  const hasCreativeQuery = queryLower.match(/\b(surprise|unexpected|different|random|wild card|dealer's choice|feeling lucky)\b/i);
+  const hasExploredEnough = (userContext?.visitedCount || 0) > 10; // User has explored a bit
+  const isStandardSearch = !hasCreativeQuery && !creativeMode?.enabled;
+
+  // Serendipity suggestions
+  if (isStandardSearch && !hasCreativeQuery) {
+    creativeSuggestions.push({
+      text: 'Surprise me with something unexpected',
+      icon: 'sparkle',
+      type: 'serendipity',
+    });
+  }
+
+  // Contrarian suggestions (if user has preferences established)
+  if (hasExploredEnough && userContext?.preferredStyles?.length) {
+    creativeSuggestions.push({
+      text: 'Challenge my usual taste',
+      icon: 'compass',
+      type: 'contrarian',
+    });
+  }
+
+  // Story-based discovery
+  if (hasCity && !queryLower.includes('history') && !queryLower.includes('story')) {
+    creativeSuggestions.push({
+      text: 'Find places with fascinating backstories',
+      icon: 'story',
+      type: 'creative',
+    });
+  }
+
+  // Cross-domain inspiration
+  if (hasCategory) {
+    const category = intent?.category?.toLowerCase() || resultCategories[0]?.toLowerCase();
+    if (category === 'restaurant') {
+      creativeSuggestions.push({
+        text: 'Restaurants that feel like art galleries',
+        icon: 'sparkle',
+        type: 'creative',
+      });
+    } else if (category === 'hotel') {
+      creativeSuggestions.push({
+        text: 'Hotels with bookstore vibes',
+        icon: 'sparkle',
+        type: 'creative',
+      });
+    } else if (category === 'cafe') {
+      creativeSuggestions.push({
+        text: "Cafes that feel like someone's living room",
+        icon: 'sparkle',
+        type: 'creative',
+      });
+    } else if (category === 'bar') {
+      creativeSuggestions.push({
+        text: 'Bars with museum energy',
+        icon: 'sparkle',
+        type: 'creative',
+      });
+    }
+  }
+
+  // Mood-based suggestions
+  if (isStandardSearch) {
+    creativeSuggestions.push({
+      text: 'I need somewhere calming',
+      icon: 'mood',
+      type: 'creative',
+    });
+  }
+
+  // Future trends
+  if (hasCity) {
+    creativeSuggestions.push({
+      text: "What's about to blow up here?",
+      icon: 'sparkle',
+      type: 'creative',
+    });
+  }
+
+  // Cultural reference suggestions (rotate these)
+  const culturalSuggestions = [
+    { text: 'Where would Wes Anderson eat?', icon: 'sparkle' as const, type: 'creative' as const },
+    { text: 'Places Anthony Bourdain would love', icon: 'sparkle' as const, type: 'creative' as const },
+    { text: 'The opposite of a chain restaurant', icon: 'compass' as const, type: 'contrarian' as const },
+  ];
+
+  // Pick one cultural suggestion based on query hash for variety
+  const culturalIndex = query.length % culturalSuggestions.length;
+  if (hasCategory && creativeSuggestions.length < 3) {
+    creativeSuggestions.push(culturalSuggestions[culturalIndex]);
+  }
+
+  // "What am I missing" for experienced users
+  if (hasExploredEnough && hasCity) {
+    creativeSuggestions.push({
+      text: 'What am I missing in this city?',
+      icon: 'compass',
+      type: 'contrarian',
+    });
+  }
+
   // Limit to 3-4 suggestions and prioritize by type
-  const prioritized = [
+  // Mix in 1 creative suggestion with regular suggestions
+  const regularPrioritized = [
     ...suggestions.filter(s => s.type === 'refine'),
     ...suggestions.filter(s => s.type === 'expand'),
     ...suggestions.filter(s => s.type === 'related'),
-  ].slice(0, 4);
+  ].slice(0, 3);
 
-  return prioritized.length > 0 ? prioritized : [
+  // Add one creative suggestion if we have regular ones
+  const topCreative = creativeSuggestions.slice(0, 1);
+
+  const finalSuggestions = [...regularPrioritized, ...topCreative].slice(0, 4);
+
+  return finalSuggestions.length > 0 ? finalSuggestions : [
     { text: 'Show me more options', icon: 'default', type: 'expand' },
-    { text: 'What else is good here?', icon: 'default', type: 'related' },
+    { text: 'Surprise me with something unexpected', icon: 'sparkle', type: 'serendipity' },
   ];
 }
 
