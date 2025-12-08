@@ -87,6 +87,34 @@ function getCategoryType(category?: string): CategoryType {
 }
 
 // ============================================
+// LOCAL TIME HELPER
+// ============================================
+
+/**
+ * Get local time at destination for context
+ * Returns formatted time string like "10:30 AM local"
+ */
+function getLocalTimeAtDestination(utcOffsetMinutes: number | null | undefined): string | null {
+  if (utcOffsetMinutes == null) return null;
+
+  // Get current UTC time
+  const now = new Date();
+  const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+
+  // Apply destination's UTC offset
+  const localTime = new Date(utcTime + (utcOffsetMinutes * 60000));
+
+  // Format as 12-hour time
+  const hours = localTime.getHours();
+  const minutes = localTime.getMinutes();
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 || 12;
+  const minuteStr = minutes.toString().padStart(2, '0');
+
+  return `${hour12}:${minuteStr} ${ampm}`;
+}
+
+// ============================================
 // SUBTLE INTELLIGENCE - Works automatically
 // ============================================
 
@@ -414,6 +442,7 @@ interface EnrichedData {
   user_ratings_total?: number;
   price_level?: number;
   opening_hours?: { weekday_text?: string[] };
+  utc_offset?: number | null; // Minutes offset from UTC for local time display
   architect_obj?: { id: string; name: string; slug: string; image_url?: string };
   interior_designer_obj?: { id: string; name: string; slug: string };
   design_firm_obj?: { id: string; name: string; slug: string };
@@ -481,6 +510,7 @@ const DestinationContent = memo(function DestinationContent({
             user_ratings_total,
             price_level,
             opening_hours_json,
+            utc_offset,
             architectural_style,
             architect:architects!architect_id(id, name, slug, image_url),
             design_firm:design_firms(id, name, slug),
@@ -498,6 +528,7 @@ const DestinationContent = memo(function DestinationContent({
             rating: data.rating,
             user_ratings_total: data.user_ratings_total,
             price_level: data.price_level,
+            utc_offset: data.utc_offset,
             architectural_style: data.architectural_style,
           };
 
@@ -714,8 +745,8 @@ const DestinationContent = memo(function DestinationContent({
   const subtleContext = useMemo(() => getSubtleContext(
     categoryType,
     enrichedData?.price_level,
-    rating,
-    reviewCount,
+    rating ?? undefined,
+    reviewCount ?? undefined,
     isOpenNow
   ), [categoryType, enrichedData?.price_level, rating, reviewCount, isOpenNow]);
 
@@ -849,12 +880,20 @@ const DestinationContent = memo(function DestinationContent({
         );
 
       case 'hours':
+        const localTimeStr = getLocalTimeAtDestination(enrichedData?.utc_offset);
         return (
           <div key="hours" className="mt-6">
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[11px] uppercase tracking-wider text-gray-400">
-                {categoryType === 'dining' || categoryType === 'nightlife' ? 'Hours & Contact' : 'Contact & Hours'}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-[11px] uppercase tracking-wider text-gray-400">
+                  {categoryType === 'dining' || categoryType === 'nightlife' ? 'Hours & Contact' : 'Contact & Hours'}
+                </p>
+                {localTimeStr && (
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                    · {localTimeStr} local
+                  </span>
+                )}
+              </div>
               {bestTimeHint && (
                 <span className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">{bestTimeHint}</span>
               )}
