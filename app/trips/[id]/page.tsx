@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -758,13 +758,17 @@ function DaySection({
     <div>
       {/* Day header */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
-            Day {dayNumber}
-          </span>
-          {dateDisplay && (
-            <span className="text-[11px] text-gray-300 dark:text-gray-600">{dateDisplay}</span>
-          )}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+              Day {dayNumber}
+            </span>
+            {dateDisplay && (
+              <span className="text-[11px] text-gray-300 dark:text-gray-600">{dateDisplay}</span>
+            )}
+          </div>
+          {/* Day pacing indicator */}
+          <DayPacing items={items} />
         </div>
 
         <div className="flex items-center gap-2">
@@ -856,12 +860,22 @@ function DaySection({
                 onDragEnd={handleReorderComplete}
               />
               {index < orderedItems.length - 1 && (
-                <WalkingTime from={item} to={orderedItems[index + 1]} />
+                <>
+                  <TravelTime from={item} to={orderedItems[index + 1]} />
+                  <GapSuggestion
+                    fromItem={item}
+                    toItem={orderedItems[index + 1]}
+                    city={city}
+                  />
+                </>
               )}
             </div>
           ))}
         </Reorder.Group>
       )}
+
+      {/* Smart suggestions for the day */}
+      <SmartSuggestions items={items} city={city} />
 
       {/* Search panel (shown when triggered from plus menu) */}
       <AnimatePresence>
@@ -1029,17 +1043,20 @@ function TransportForm({
   const [name, setName] = useState('');
   const [departureTime, setDepartureTime] = useState('');
   const [arrivalTime, setArrivalTime] = useState('');
+  const [airline, setAirline] = useState('');
+  const [flightNumber, setFlightNumber] = useState('');
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [breakfast, setBreakfast] = useState('');
+  const [confirmation, setConfirmation] = useState('');
 
   const handleSubmit = () => {
     if (type === 'flight') {
-      onSubmit({ from, to, departureTime, arrivalTime });
+      onSubmit({ from, to, departureTime, arrivalTime, airline, flightNumber });
     } else if (type === 'train') {
       onSubmit({ from, to, departureTime, arrivalTime });
     } else {
-      onSubmit({ name, checkInTime: checkIn, checkOutTime: checkOut, breakfastTime: breakfast });
+      onSubmit({ name, checkInTime: checkIn, checkOutTime: checkOut, breakfastTime: breakfast, confirmation });
     }
   };
 
@@ -1086,15 +1103,27 @@ function TransportForm({
               />
             </div>
           </div>
-          <div>
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Breakfast</label>
-            <input
-              type="text"
-              value={breakfast}
-              onChange={(e) => setBreakfast(e.target.value)}
-              placeholder="e.g. 7:00-10:00"
-              className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
-            />
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Breakfast</label>
+              <input
+                type="text"
+                value={breakfast}
+                onChange={(e) => setBreakfast(e.target.value)}
+                placeholder="e.g. 7:00-10:00"
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Confirmation</label>
+              <input
+                type="text"
+                value={confirmation}
+                onChange={(e) => setConfirmation(e.target.value)}
+                placeholder="Booking ref"
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              />
+            </div>
           </div>
         </>
       ) : (
@@ -1116,6 +1145,24 @@ function TransportForm({
               className="flex-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
             />
           </div>
+          {type === 'flight' && (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={airline}
+                onChange={(e) => setAirline(e.target.value)}
+                placeholder="Airline (e.g. BA)"
+                className="flex-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              />
+              <input
+                type="text"
+                value={flightNumber}
+                onChange={(e) => setFlightNumber(e.target.value)}
+                placeholder="Flight # (e.g. 123)"
+                className="flex-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              />
+            </div>
+          )}
           <div className="flex gap-2">
             <div className="flex-1">
               <label className="text-[10px] text-gray-400 uppercase tracking-wide">Departure</label>
@@ -1237,18 +1284,32 @@ function ItemRow({
 
     // Regular place
     const time = item.time ? formatTime(item.time) : '';
+    const duration = item.parsedNotes?.duration || item.duration;
     const category = item.destination?.category || item.parsedNotes?.category || '';
+
+    // Build time display with duration
+    const timeWithDuration = [
+      time,
+      duration && `${duration}h`
+    ].filter(Boolean).join(' · ');
 
     return {
       icon: '',
       title: item.title || item.destination?.name || 'Place',
-      inlineTimes: time || undefined,
+      inlineTimes: timeWithDuration || undefined,
       subtitle: category || undefined
     };
   };
 
   const { icon, title, inlineTimes, subtitle } = getItemDisplay();
   const image = item.destination?.image_thumbnail || item.destination?.image;
+  const destination = item.destination;
+
+  // Quick actions data
+  const phone = destination?.phone || item.parsedNotes?.phone;
+  const website = destination?.website || item.parsedNotes?.website;
+  const hasLocation = (destination?.latitude && destination?.longitude) ||
+                      (item.parsedNotes?.latitude && item.parsedNotes?.longitude);
 
   return (
     <Reorder.Item
@@ -1279,6 +1340,44 @@ function ItemRow({
             </div>
             {inlineTimes && (
               <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{inlineTimes}</p>
+            )}
+          </div>
+
+          {/* Quick actions - visible on hover */}
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {phone && (
+              <a
+                href={`tel:${phone}`}
+                onClick={(e) => e.stopPropagation()}
+                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title="Call"
+              >
+                <Phone className="w-3 h-3 text-gray-400" />
+              </a>
+            )}
+            {website && (
+              <a
+                href={website.startsWith('http') ? website : `https://${website}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title="Website"
+              >
+                <ExternalLink className="w-3 h-3 text-gray-400" />
+              </a>
+            )}
+            {hasLocation && (
+              <a
+                href={`https://maps.apple.com/?q=${destination?.latitude || item.parsedNotes?.latitude},${destination?.longitude || item.parsedNotes?.longitude}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                title="Directions"
+              >
+                <Navigation className="w-3 h-3 text-gray-400" />
+              </a>
             )}
           </div>
 
@@ -1339,12 +1438,15 @@ function ItemDetails({
   onClose: () => void;
 }) {
   const [time, setTime] = useState(item.time || '');
+  const [duration, setDuration] = useState(item.parsedNotes?.duration || item.duration || '');
   const [notes, setNotes] = useState(item.parsedNotes?.notes || '');
   const [checkInTime, setCheckInTime] = useState(item.parsedNotes?.checkInTime || '');
   const [checkOutTime, setCheckOutTime] = useState(item.parsedNotes?.checkOutTime || '');
   const [breakfastTime, setBreakfastTime] = useState(item.parsedNotes?.breakfastTime || '');
   const [departureTime, setDepartureTime] = useState(item.parsedNotes?.departureTime || '');
   const [arrivalTime, setArrivalTime] = useState(item.parsedNotes?.arrivalTime || '');
+  const [airline, setAirline] = useState(item.parsedNotes?.airline || '');
+  const [flightNumber, setFlightNumber] = useState(item.parsedNotes?.flightNumber || '');
   const [hasChanges, setHasChanges] = useState(false);
 
   const handleSave = () => {
@@ -1357,8 +1459,13 @@ function ItemDetails({
     } else if (itemType === 'flight' || itemType === 'train') {
       if (departureTime !== (item.parsedNotes?.departureTime || '')) updates.departureTime = departureTime;
       if (arrivalTime !== (item.parsedNotes?.arrivalTime || '')) updates.arrivalTime = arrivalTime;
-    } else if (time !== item.time) {
-      onUpdateTime(item.id, time);
+      if (itemType === 'flight') {
+        if (airline !== (item.parsedNotes?.airline || '')) updates.airline = airline;
+        if (flightNumber !== (item.parsedNotes?.flightNumber || '')) updates.flightNumber = flightNumber;
+      }
+    } else {
+      if (time !== item.time) onUpdateTime(item.id, time);
+      if (duration !== (item.parsedNotes?.duration || item.duration || '')) updates.duration = duration;
     }
 
     if (notes !== (item.parsedNotes?.notes || '')) updates.notes = notes;
@@ -1412,38 +1519,82 @@ function ItemDetails({
 
       {/* Flight/Train times */}
       {(itemType === 'flight' || itemType === 'train') && (
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Departure</label>
-            <input
-              type="time"
-              value={departureTime}
-              onChange={(e) => { setDepartureTime(e.target.value); setHasChanges(true); }}
-              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-            />
+        <>
+          {itemType === 'flight' && (
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <label className="text-[10px] text-gray-400 uppercase tracking-wide">Airline</label>
+                <input
+                  type="text"
+                  value={airline}
+                  onChange={(e) => { setAirline(e.target.value); setHasChanges(true); }}
+                  placeholder="e.g. BA"
+                  className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-[10px] text-gray-400 uppercase tracking-wide">Flight #</label>
+                <input
+                  type="text"
+                  value={flightNumber}
+                  onChange={(e) => { setFlightNumber(e.target.value); setHasChanges(true); }}
+                  placeholder="e.g. 123"
+                  className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+                />
+              </div>
+            </div>
+          )}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Departure</label>
+              <input
+                type="time"
+                value={departureTime}
+                onChange={(e) => { setDepartureTime(e.target.value); setHasChanges(true); }}
+                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Arrival</label>
+              <input
+                type="time"
+                value={arrivalTime}
+                onChange={(e) => { setArrivalTime(e.target.value); setHasChanges(true); }}
+                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+              />
+            </div>
           </div>
-          <div className="flex-1">
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Arrival</label>
-            <input
-              type="time"
-              value={arrivalTime}
-              onChange={(e) => { setArrivalTime(e.target.value); setHasChanges(true); }}
-              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-            />
-          </div>
-        </div>
+        </>
       )}
 
-      {/* Regular place time */}
+      {/* Regular place time + duration */}
       {itemType !== 'hotel' && itemType !== 'flight' && itemType !== 'train' && (
-        <div>
-          <label className="text-[10px] text-gray-400 uppercase tracking-wide">Time</label>
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => { setTime(e.target.value); setHasChanges(true); }}
-            className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-          />
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Time</label>
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => { setTime(e.target.value); setHasChanges(true); }}
+              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+            />
+          </div>
+          <div className="w-20">
+            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Duration</label>
+            <div className="relative mt-1">
+              <input
+                type="number"
+                step="0.5"
+                min="0.5"
+                max="12"
+                value={duration}
+                onChange={(e) => { setDuration(e.target.value); setHasChanges(true); }}
+                placeholder="1.5"
+                className="w-full px-2 py-1.5 pr-6 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+              />
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-400">h</span>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1605,4 +1756,189 @@ function formatTime(time: string): string {
   } catch {
     return time;
   }
+}
+
+/**
+ * Day pacing meter - shows if day is packed/sparse
+ */
+function DayPacing({ items }: { items: EnrichedItineraryItem[] }) {
+  // Calculate total hours planned
+  const totalDuration = items.reduce((sum, item) => {
+    const d = item.parsedNotes?.duration || item.duration;
+    return sum + (d ? parseFloat(String(d)) : 1.5); // Default 1.5h if not set
+  }, 0);
+
+  // Estimate travel time between items
+  const travelMinutes = (items.length - 1) * 15; // Rough estimate
+  const totalHours = totalDuration + travelMinutes / 60;
+
+  // Determine pacing
+  const getPacing = () => {
+    if (items.length === 0) return { label: 'Empty', color: 'text-gray-400', hint: 'Add some activities' };
+    if (totalHours < 4) return { label: 'Light', color: 'text-blue-500', hint: 'Room for more' };
+    if (totalHours <= 8) return { label: 'Balanced', color: 'text-green-500', hint: '' };
+    if (totalHours <= 10) return { label: 'Full', color: 'text-amber-500', hint: 'Consider pacing' };
+    return { label: 'Packed', color: 'text-red-500', hint: 'May be too much' };
+  };
+
+  const pacing = getPacing();
+  if (!pacing.hint) return null;
+
+  return (
+    <div className="flex items-center gap-1.5 text-[10px]">
+      <div className={`w-1.5 h-1.5 rounded-full ${pacing.color.replace('text-', 'bg-')}`} />
+      <span className={pacing.color}>{pacing.label}</span>
+      {pacing.hint && <span className="text-gray-400">· {pacing.hint}</span>}
+    </div>
+  );
+}
+
+/**
+ * Gap suggestion - shows between items when there's a time gap
+ */
+function GapSuggestion({
+  fromItem,
+  toItem,
+  city,
+  onAddPlace,
+}: {
+  fromItem: EnrichedItineraryItem;
+  toItem: EnrichedItineraryItem;
+  city: string;
+  onAddPlace?: (type: 'coffee' | 'lunch' | 'dinner' | 'walk') => void;
+}) {
+  const fromTime = fromItem.time || fromItem.parsedNotes?.departureTime || fromItem.parsedNotes?.checkOutTime;
+  const toTime = toItem.time || toItem.parsedNotes?.departureTime || toItem.parsedNotes?.checkInTime;
+  const fromDuration = fromItem.parsedNotes?.duration || fromItem.duration || 1.5;
+
+  if (!fromTime || !toTime) return null;
+
+  // Calculate gap in minutes
+  const [fromH, fromM] = fromTime.split(':').map(Number);
+  const [toH, toM] = toTime.split(':').map(Number);
+  const fromMins = fromH * 60 + fromM + (parseFloat(String(fromDuration)) * 60);
+  const toMins = toH * 60 + toM;
+  const gapMins = toMins - fromMins;
+
+  // Only show suggestion for gaps > 2 hours
+  if (gapMins < 120) return null;
+
+  // Suggest based on time of day
+  const midTime = fromMins + gapMins / 2;
+  const hour = Math.floor(midTime / 60);
+
+  const getSuggestion = () => {
+    if (hour >= 7 && hour < 10) return { type: 'coffee' as const, label: 'Coffee break?' };
+    if (hour >= 11 && hour < 14) return { type: 'lunch' as const, label: 'Lunch spot?' };
+    if (hour >= 14 && hour < 17) return { type: 'walk' as const, label: 'Explore nearby?' };
+    if (hour >= 18 && hour < 21) return { type: 'dinner' as const, label: 'Dinner?' };
+    return null;
+  };
+
+  const suggestion = getSuggestion();
+  if (!suggestion) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="flex justify-center py-1"
+    >
+      <button
+        onClick={() => onAddPlace?.(suggestion.type)}
+        className="flex items-center gap-1.5 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+      >
+        <Sparkles className="w-3 h-3" />
+        <span>{Math.round(gapMins / 60)}h gap · {suggestion.label}</span>
+      </button>
+    </motion.div>
+  );
+}
+
+/**
+ * Smart suggestions - shows at end of day based on what's missing
+ */
+function SmartSuggestions({
+  items,
+  city,
+  onAddSuggestion,
+}: {
+  items: EnrichedItineraryItem[];
+  city: string;
+  onAddSuggestion?: (type: string) => void;
+}) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Analyze what's in the day
+  const hasBreakfast = items.some(i =>
+    i.parsedNotes?.type === 'hotel' ||
+    i.destination?.category?.toLowerCase().includes('cafe') ||
+    i.destination?.category?.toLowerCase().includes('breakfast')
+  );
+  const hasLunch = items.some(i =>
+    i.destination?.category?.toLowerCase().includes('restaurant') &&
+    i.time && parseInt(i.time.split(':')[0]) >= 11 && parseInt(i.time.split(':')[0]) <= 14
+  );
+  const hasDinner = items.some(i =>
+    i.destination?.category?.toLowerCase().includes('restaurant') &&
+    i.time && parseInt(i.time.split(':')[0]) >= 18
+  );
+
+  // Build suggestions based on what's missing
+  const missingItems = [];
+  if (!hasBreakfast && items.length > 0) missingItems.push('breakfast');
+  if (!hasLunch && items.length > 0) missingItems.push('lunch');
+  if (!hasDinner && items.length > 1) missingItems.push('dinner');
+
+  if (missingItems.length === 0 || items.length === 0) return null;
+
+  return (
+    <div className="mt-2 flex items-center gap-2 flex-wrap">
+      <span className="text-[10px] text-gray-400">Missing:</span>
+      {missingItems.map((item) => (
+        <button
+          key={item}
+          onClick={() => onAddSuggestion?.(item)}
+          className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+        >
+          + {item}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Weather warning for outdoor activities
+ */
+function WeatherWarning({ item, date }: { item: EnrichedItineraryItem; date?: string }) {
+  // Only show for outdoor categories
+  const category = item.destination?.category?.toLowerCase() || '';
+  const isOutdoor = ['park', 'garden', 'beach', 'outdoor', 'walk', 'hike', 'tour'].some(
+    c => category.includes(c)
+  );
+
+  if (!isOutdoor) return null;
+
+  // In a real implementation, this would fetch from weather API
+  // For now, just show a placeholder for demonstration
+  const [weather, setWeather] = useState<{ rain: boolean; temp?: number } | null>(null);
+
+  // Mock weather check (in production, call weather API)
+  useEffect(() => {
+    // Only show warning sometimes for demo purposes
+    if (Math.random() > 0.7) {
+      setWeather({ rain: true, temp: 15 });
+    }
+  }, []);
+
+  if (!weather?.rain) return null;
+
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] text-amber-500 ml-2">
+      <CloudRain className="w-3 h-3" />
+      <span>Rain expected</span>
+    </span>
+  );
 }

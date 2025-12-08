@@ -592,6 +592,7 @@ export interface ItineraryItemNotes {
   // Location data
   latitude?: number;
   longitude?: number;
+  googlePlaceId?: string; // Google Places API place_id
   // Flight-specific fields
   from?: string;
   to?: string;
@@ -611,11 +612,13 @@ export interface ItineraryItemNotes {
   // Hotel-specific fields
   isHotel?: boolean; // Marks this as the hotel for the night
   breakfastIncluded?: boolean; // If true, shows breakfast at top of next day
+  breakfastTime?: string; // e.g. "7:00-10:00"
   checkInTime?: string;
   checkOutTime?: string;
   checkInDate?: string;
   checkOutDate?: string;
   hotelConfirmation?: string;
+  confirmation?: string; // Booking reference
   roomType?: string;
   // Lodging details
   name?: string;
