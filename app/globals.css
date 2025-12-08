@@ -1492,3 +1492,295 @@ html.christmas-mode.dark::before,
     opacity: 0.5;
   }
 }
+
+/* ============================================
+   SNOW ACCUMULATION EFFECT
+   Realistic snow piling on elements
+   ============================================ */
+
+/* Base snow accumulation mixin using ::after pseudo-element */
+.christmas-mode .snow-accumulate {
+  position: relative;
+  overflow: visible;
+}
+
+.christmas-mode .snow-accumulate::after {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: -4px;
+  right: -4px;
+  height: 12px;
+  background:
+    radial-gradient(ellipse 8px 6px at 10% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 12px 8px at 25% 100%, #f8fafc 70%, transparent 70%),
+    radial-gradient(ellipse 10px 7px at 40% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 14px 9px at 55% 100%, #f1f5f9 70%, transparent 70%),
+    radial-gradient(ellipse 9px 6px at 70% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 11px 7px at 85% 100%, #f8fafc 70%, transparent 70%),
+    radial-gradient(ellipse 8px 5px at 95% 100%, white 70%, transparent 70%);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Snow accumulation on header */
+.christmas-mode header {
+  position: relative;
+  overflow: visible;
+}
+
+.christmas-mode header::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background:
+    radial-gradient(ellipse 20px 10px at 5% 0%, white 70%, transparent 70%),
+    radial-gradient(ellipse 30px 12px at 15% 0%, #f8fafc 70%, transparent 70%),
+    radial-gradient(ellipse 25px 11px at 28% 0%, white 70%, transparent 70%),
+    radial-gradient(ellipse 35px 13px at 42% 0%, #f1f5f9 70%, transparent 70%),
+    radial-gradient(ellipse 22px 10px at 55% 0%, white 70%, transparent 70%),
+    radial-gradient(ellipse 28px 11px at 68% 0%, #f8fafc 70%, transparent 70%),
+    radial-gradient(ellipse 32px 12px at 82% 0%, white 70%, transparent 70%),
+    radial-gradient(ellipse 24px 10px at 95% 0%, #f1f5f9 70%, transparent 70%);
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.08));
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Snow on cards and rounded containers */
+.christmas-mode [class*="rounded-lg"],
+.christmas-mode [class*="rounded-xl"],
+.christmas-mode [class*="rounded-2xl"] {
+  position: relative;
+}
+
+.christmas-mode [class*="rounded-lg"]::before,
+.christmas-mode [class*="rounded-xl"]::before,
+.christmas-mode [class*="rounded-2xl"]::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 8px;
+  right: 8px;
+  height: 10px;
+  background:
+    radial-gradient(ellipse 10px 6px at 15% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 14px 8px at 35% 100%, #f8fafc 70%, transparent 70%),
+    radial-gradient(ellipse 12px 7px at 55% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 16px 9px at 75% 100%, #f1f5f9 70%, transparent 70%),
+    radial-gradient(ellipse 10px 6px at 90% 100%, white 70%, transparent 70%);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.05));
+  pointer-events: none;
+  z-index: 5;
+  border-radius: inherit;
+}
+
+/* Snow on buttons */
+.christmas-mode button[class*="rounded"],
+.christmas-mode a[class*="rounded"][class*="bg-"] {
+  position: relative;
+  overflow: visible;
+}
+
+.christmas-mode button[class*="rounded"]::before,
+.christmas-mode a[class*="rounded"][class*="bg-"]::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 4px;
+  right: 4px;
+  height: 8px;
+  background:
+    radial-gradient(ellipse 6px 5px at 20% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 8px 6px at 50% 100%, #f8fafc 70%, transparent 70%),
+    radial-gradient(ellipse 6px 5px at 80% 100%, white 70%, transparent 70%);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Snow on footer */
+.christmas-mode footer {
+  position: relative;
+  overflow: visible;
+}
+
+.christmas-mode footer::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background:
+    radial-gradient(ellipse 25px 12px at 8% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 35px 14px at 22% 100%, #f8fafc 70%, transparent 70%),
+    radial-gradient(ellipse 28px 11px at 36% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 40px 15px at 50% 100%, #f1f5f9 70%, transparent 70%),
+    radial-gradient(ellipse 30px 12px at 64% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 32px 13px at 78% 100%, #f8fafc 70%, transparent 70%),
+    radial-gradient(ellipse 26px 11px at 92% 100%, white 70%, transparent 70%);
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.1));
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Snow on image containers */
+.christmas-mode figure,
+.christmas-mode [class*="aspect-"] {
+  position: relative;
+  overflow: visible;
+}
+
+.christmas-mode figure::after,
+.christmas-mode [class*="aspect-"]::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 2px;
+  right: 2px;
+  height: 8px;
+  background:
+    radial-gradient(ellipse 8px 5px at 10% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 12px 7px at 30% 100%, #f8fafc 70%, transparent 70%),
+    radial-gradient(ellipse 10px 6px at 50% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 14px 8px at 70% 100%, #f1f5f9 70%, transparent 70%),
+    radial-gradient(ellipse 9px 5px at 90% 100%, white 70%, transparent 70%);
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.08));
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Snow on dialog/modal boxes */
+.christmas-mode [role="dialog"],
+.christmas-mode [class*="modal"],
+.christmas-mode [class*="drawer"] {
+  position: relative;
+  overflow: visible;
+}
+
+.christmas-mode [role="dialog"]::before,
+.christmas-mode [class*="modal"]::before,
+.christmas-mode [class*="drawer"]::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 10px;
+  right: 10px;
+  height: 14px;
+  background:
+    radial-gradient(ellipse 15px 9px at 12% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 20px 11px at 30% 100%, #f8fafc 70%, transparent 70%),
+    radial-gradient(ellipse 18px 10px at 50% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 22px 12px at 70% 100%, #f1f5f9 70%, transparent 70%),
+    radial-gradient(ellipse 16px 9px at 88% 100%, white 70%, transparent 70%);
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.1));
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Snow on input fields */
+.christmas-mode input[type="text"],
+.christmas-mode input[type="search"],
+.christmas-mode input[type="email"],
+.christmas-mode textarea {
+  position: relative;
+}
+
+/* Snow pile on navigation items */
+.christmas-mode nav > a,
+.christmas-mode nav > button {
+  position: relative;
+}
+
+.christmas-mode nav > a::after,
+.christmas-mode nav > button::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 2px;
+  right: 2px;
+  height: 6px;
+  background:
+    radial-gradient(ellipse 5px 4px at 25% 100%, white 70%, transparent 70%),
+    radial-gradient(ellipse 7px 5px at 50% 100%, #f8fafc 70%, transparent 70%),
+    radial-gradient(ellipse 5px 4px at 75% 100%, white 70%, transparent 70%);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.08));
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Subtle snow accumulation animation - gradual build-up illusion */
+@keyframes snow-settle {
+  0% {
+    transform: scaleY(0.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.christmas-mode header::after,
+.christmas-mode footer::before,
+.christmas-mode [class*="rounded-lg"]::before,
+.christmas-mode [class*="rounded-xl"]::before,
+.christmas-mode [class*="rounded-2xl"]::before {
+  animation: snow-settle 1.5s ease-out forwards;
+  transform-origin: bottom center;
+}
+
+/* Dark mode adjustments for snow - slightly bluish tint */
+.christmas-mode.dark header::after,
+.christmas-mode.dark footer::before,
+.christmas-mode.dark [class*="rounded"]::before,
+.christmas-mode.dark button::before,
+.christmas-mode.dark figure::after,
+.christmas-mode.dark [class*="aspect-"]::after,
+.christmas-mode.dark [role="dialog"]::before,
+.christmas-mode.dark nav > a::after,
+.christmas-mode.dark nav > button::after,
+.christmas-mode.dark .snow-accumulate::after {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3));
+  background-blend-mode: screen;
+}
+
+/* Disable snow accumulation for specific elements that shouldn't have it */
+.christmas-mode .no-snow::before,
+.christmas-mode .no-snow::after,
+.christmas-mode svg::before,
+.christmas-mode svg::after,
+.christmas-mode img::before,
+.christmas-mode img::after,
+.christmas-mode input::before,
+.christmas-mode input::after,
+.christmas-mode [class*="icon"]::before,
+.christmas-mode [class*="icon"]::after {
+  display: none !important;
+}
+
+/* Prevent snow on very small buttons and icons */
+.christmas-mode button[class*="p-1"]::before,
+.christmas-mode button[class*="p-0"]::before,
+.christmas-mode button[class*="w-6"]::before,
+.christmas-mode button[class*="w-8"]::before,
+.christmas-mode button[class*="h-6"]::before,
+.christmas-mode button[class*="h-8"]::before {
+  display: none !important;
+}
+
+/* Respect reduced motion preference for snow accumulation */
+@media (prefers-reduced-motion: reduce) {
+  .christmas-mode header::after,
+  .christmas-mode footer::before,
+  .christmas-mode [class*="rounded-lg"]::before,
+  .christmas-mode [class*="rounded-xl"]::before,
+  .christmas-mode [class*="rounded-2xl"]::before {
+    animation: none;
+  }
+}
