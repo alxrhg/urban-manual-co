@@ -872,7 +872,11 @@ function DaySection({
       setIsSearching(true);
       try {
         if (searchSource === 'curated') {
-          const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&city=${encodeURIComponent(city)}&limit=5`);
+          const response = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: `${searchQuery} ${city}` }),
+          });
           if (response.ok) {
             const data = await response.json();
             setSearchResults(data.results || data.destinations || []);
@@ -921,7 +925,7 @@ function DaySection({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          destination_id: destination.id,
+          destination_slug: destination.slug,
           day_number: dayNumber,
           time: suggestedTime,
           title: destination.name,
