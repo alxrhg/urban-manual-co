@@ -1664,6 +1664,8 @@ function ItemDetails({
   const [arrivalTime, setArrivalTime] = useState(item.parsedNotes?.arrivalTime || '');
   const [airline, setAirline] = useState(item.parsedNotes?.airline || '');
   const [flightNumber, setFlightNumber] = useState(item.parsedNotes?.flightNumber || '');
+  const [fromAirport, setFromAirport] = useState(item.parsedNotes?.from || '');
+  const [toAirport, setToAirport] = useState(item.parsedNotes?.to || '');
   const [hasChanges, setHasChanges] = useState(false);
 
   const handleSave = () => {
@@ -1674,6 +1676,8 @@ function ItemDetails({
       if (checkOutTime !== (item.parsedNotes?.checkOutTime || '')) updates.checkOutTime = checkOutTime;
       if (breakfastTime !== (item.parsedNotes?.breakfastTime || '')) updates.breakfastTime = breakfastTime;
     } else if (itemType === 'flight' || itemType === 'train') {
+      if (fromAirport !== (item.parsedNotes?.from || '')) updates.from = fromAirport;
+      if (toAirport !== (item.parsedNotes?.to || '')) updates.to = toAirport;
       if (departureTime !== (item.parsedNotes?.departureTime || '')) updates.departureTime = departureTime;
       if (arrivalTime !== (item.parsedNotes?.arrivalTime || '')) updates.arrivalTime = arrivalTime;
       if (itemType === 'flight') {
@@ -1737,6 +1741,29 @@ function ItemDetails({
       {/* Flight/Train times */}
       {(itemType === 'flight' || itemType === 'train') && (
         <>
+          {/* From/To airports */}
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">From</label>
+              <input
+                type="text"
+                value={fromAirport}
+                onChange={(e) => { setFromAirport(e.target.value); setHasChanges(true); }}
+                placeholder={itemType === 'flight' ? 'e.g. LHR' : 'e.g. London'}
+                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">To</label>
+              <input
+                type="text"
+                value={toAirport}
+                onChange={(e) => { setToAirport(e.target.value); setHasChanges(true); }}
+                placeholder={itemType === 'flight' ? 'e.g. CDG' : 'e.g. Paris'}
+                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+              />
+            </div>
+          </div>
           {itemType === 'flight' && (
             <div className="flex gap-2">
               <div className="flex-1">
@@ -1866,13 +1893,12 @@ function TravelTime({
   onUpdateTravelMode?: (itemId: string, mode: 'walking' | 'driving' | 'transit') => void;
 }) {
   const [mode, setMode] = useState<'walking' | 'driving' | 'transit'>(
-    (from.parsedNotes?.travelModeToNext as 'walking' | 'driving' | 'transit') || 'walking'
+    (from.parsedNotes?.travelModeToNext as 'walking' | 'driving' | 'transit') || 'driving'
   );
 
-  // Skip when FROM a flight/train (you're in the air/on rail)
-  // But show when going TO a flight/train (travel to airport/station)
+  // Check item types for special labels
   const fromType = from.parsedNotes?.type;
-  if (fromType === 'flight' || fromType === 'train') return null;
+  const toType = to.parsedNotes?.type;
 
   // Get coordinates
   const fromLat = from.destination?.latitude || from.parsedNotes?.latitude;
@@ -1942,9 +1968,18 @@ function TravelTime({
     }
   };
 
-  // Check if going to airport/station
-  const toType = to.parsedNotes?.type;
-  const destinationLabel = toType === 'flight' ? 'to airport' : toType === 'train' ? 'to station' : getModeLabel();
+  // Determine label based on from/to types
+  const getLabel = () => {
+    // Coming FROM airport/station
+    if (fromType === 'flight') return 'from airport';
+    if (fromType === 'train') return 'from station';
+    // Going TO airport/station
+    if (toType === 'flight') return 'to airport';
+    if (toType === 'train') return 'to station';
+    // Default mode label
+    return getModeLabel();
+  };
+  const destinationLabel = getLabel();
 
   // Show even without distance estimate (for non-geolocated items)
   return (
