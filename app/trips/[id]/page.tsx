@@ -1426,7 +1426,7 @@ function ItemRow({
 
     // Regular place
     const time = item.time ? formatTime(item.time) : '';
-    const duration = item.parsedNotes?.duration || item.duration;
+    const duration = item.parsedNotes?.duration;
     const category = item.destination?.category || item.parsedNotes?.category || '';
 
     // Build time display with duration
@@ -1580,7 +1580,7 @@ function ItemDetails({
   onClose: () => void;
 }) {
   const [time, setTime] = useState(item.time || '');
-  const [duration, setDuration] = useState(item.parsedNotes?.duration || item.duration || '');
+  const [duration, setDuration] = useState(item.parsedNotes?.duration || '');
   const [notes, setNotes] = useState(item.parsedNotes?.notes || '');
   const [checkInTime, setCheckInTime] = useState(item.parsedNotes?.checkInTime || '');
   const [checkOutTime, setCheckOutTime] = useState(item.parsedNotes?.checkOutTime || '');
@@ -1607,7 +1607,7 @@ function ItemDetails({
       }
     } else {
       if (time !== item.time) onUpdateTime(item.id, time);
-      if (duration !== (item.parsedNotes?.duration || item.duration || '')) updates.duration = duration;
+      if (duration !== (item.parsedNotes?.duration || '')) updates.duration = duration;
     }
 
     if (notes !== (item.parsedNotes?.notes || '')) updates.notes = notes;
@@ -1906,7 +1906,7 @@ function formatTime(time: string): string {
 function DayPacing({ items }: { items: EnrichedItineraryItem[] }) {
   // Calculate total hours planned
   const totalDuration = items.reduce((sum, item) => {
-    const d = item.parsedNotes?.duration || item.duration;
+    const d = item.parsedNotes?.duration;
     return sum + (d ? parseFloat(String(d)) : 1.5); // Default 1.5h if not set
   }, 0);
 
