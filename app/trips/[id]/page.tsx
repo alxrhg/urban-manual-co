@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -775,17 +775,66 @@ function DaySection({
   const addTransport = async (type: 'flight' | 'hotel' | 'train', data: Record<string, string>) => {
     setIsAdding(true);
     try {
-      const notes = JSON.stringify({ type, ...data });
+      if (type === 'hotel') {
+        // Create separate cards for check-in, breakfast, and checkout
+        const hotelName = data.name || 'Hotel';
+        const baseNotes = { type: 'hotel', name: hotelName };
 
-      await fetch(`/api/trips/${tripId}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          day_number: dayNumber,
-          title: type === 'flight' ? `${data.from} → ${data.to}` : type === 'train' ? `${data.from} → ${data.to}` : data.name || 'Hotel',
-          notes,
-        }),
-      });
+        // Check-in card
+        if (data.checkInTime) {
+          await fetch(`/api/trips/${tripId}/items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              day_number: dayNumber,
+              title: hotelName,
+              time: data.checkInTime,
+              notes: JSON.stringify({ ...baseNotes, hotelItemType: 'check_in', checkInTime: data.checkInTime, confirmation: data.confirmation }),
+            }),
+          });
+        }
+
+        // Breakfast card (typically next day, but add to same day for now - user can move)
+        if (data.breakfastTime) {
+          await fetch(`/api/trips/${tripId}/items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              day_number: dayNumber + 1, // Next day
+              title: hotelName,
+              time: data.breakfastTime.split('-')[0], // Use start of breakfast range
+              notes: JSON.stringify({ ...baseNotes, hotelItemType: 'breakfast', breakfastTime: data.breakfastTime }),
+            }),
+          });
+        }
+
+        // Checkout card
+        if (data.checkOutTime) {
+          await fetch(`/api/trips/${tripId}/items`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              day_number: dayNumber + 1, // Next day
+              title: hotelName,
+              time: data.checkOutTime,
+              notes: JSON.stringify({ ...baseNotes, hotelItemType: 'checkout', checkOutTime: data.checkOutTime }),
+            }),
+          });
+        }
+      } else {
+        // Flight or train - single card
+        const notes = JSON.stringify({ type, ...data });
+        await fetch(`/api/trips/${tripId}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            day_number: dayNumber,
+            title: `${data.from} → ${data.to}`,
+            time: data.departureTime,
+            notes,
+          }),
+        });
+      }
 
       setShowTransportForm(null);
       setShowAddMenu(false);
@@ -1361,11 +1410,40 @@ function ItemRow({
     }
 
     if (itemType === 'hotel') {
+      const hotelItemType = item.parsedNotes?.hotelItemType;
       const checkIn = item.parsedNotes?.checkInTime;
       const checkOut = item.parsedNotes?.checkOutTime;
       const breakfast = item.parsedNotes?.breakfastTime;
 
-      // Inline times: "check-in 15:00 · checkout 11:00 · breakfast 7:00-10:00"
+      // Handle specific hotel activity types
+      if (hotelItemType === 'check_in') {
+        return {
+          iconType: 'checkin' as const,
+          title: `Check in · ${item.title || 'Hotel'}`,
+          inlineTimes: checkIn ? formatTime(checkIn) : undefined,
+          subtitle: undefined
+        };
+      }
+
+      if (hotelItemType === 'checkout') {
+        return {
+          iconType: 'checkout' as const,
+          title: `Check out · ${item.title || 'Hotel'}`,
+          inlineTimes: checkOut ? formatTime(checkOut) : undefined,
+          subtitle: undefined
+        };
+      }
+
+      if (hotelItemType === 'breakfast') {
+        return {
+          iconType: 'breakfast' as const,
+          title: `Breakfast · ${item.title || 'Hotel'}`,
+          inlineTimes: breakfast || undefined,
+          subtitle: undefined
+        };
+      }
+
+      // Default hotel card (overnight stay)
       const times = [
         checkIn && `check-in ${formatTime(checkIn)}`,
         checkOut && `checkout ${formatTime(checkOut)}`,
@@ -1440,16 +1518,28 @@ function ItemRow({
         <div className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 rounded-lg group">
           {/* Icon or image */}
           {iconType === 'flight' ? (
-            <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-              <Plane className="w-3.5 h-3.5 text-blue-500" />
+            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <Plane className="w-3.5 h-3.5 text-gray-500" />
             </div>
           ) : iconType === 'hotel' ? (
-            <div className="w-6 h-6 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
-              <Hotel className="w-3.5 h-3.5 text-amber-600" />
+            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <Hotel className="w-3.5 h-3.5 text-gray-500" />
+            </div>
+          ) : iconType === 'checkin' ? (
+            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <DoorOpen className="w-3.5 h-3.5 text-gray-500" />
+            </div>
+          ) : iconType === 'checkout' ? (
+            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <LogOut className="w-3.5 h-3.5 text-gray-500" />
+            </div>
+          ) : iconType === 'breakfast' ? (
+            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <UtensilsCrossed className="w-3.5 h-3.5 text-gray-500" />
             </div>
           ) : iconType === 'train' ? (
-            <div className="w-6 h-6 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
-              <TrainIcon className="w-3.5 h-3.5 text-green-600" />
+            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              <TrainIcon className="w-3.5 h-3.5 text-gray-500" />
             </div>
           ) : image ? (
             <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0">
