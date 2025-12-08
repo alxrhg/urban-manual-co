@@ -13,7 +13,7 @@
  * - Taste fingerprint integration
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { unifiedIntelligenceCore, UnifiedContext, TasteFingerprint } from './unified-intelligence-core';
 import { extendedConversationMemoryService } from './conversation-memory';
 import { GoogleGenerativeAI } from '@google/generative-ai';
