@@ -1448,8 +1448,8 @@ function ItemRow({
   const destination = item.destination;
 
   // Quick actions data
-  const phone = destination?.phone || item.parsedNotes?.phone;
-  const website = destination?.website || item.parsedNotes?.website;
+  const phone = item.parsedNotes?.phone;
+  const website = item.parsedNotes?.website;
   const hasLocation = (destination?.latitude && destination?.longitude) ||
                       (item.parsedNotes?.latitude && item.parsedNotes?.longitude);
 
