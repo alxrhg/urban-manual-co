@@ -86,6 +86,123 @@ function getCategoryType(category?: string): CategoryType {
   return 'general';
 }
 
+// ============================================
+// SUBTLE INTELLIGENCE - Works automatically
+// ============================================
+
+interface SubtleContext {
+  timeSignal?: string;      // "Perfect for dinner right now"
+  priceSignal?: string;     // "Above average for the area"
+  availabilityHint?: string; // "Usually busy on weekends"
+  proximityHint?: string;   // "5 min walk" (if we have location)
+  mealContext?: 'breakfast' | 'lunch' | 'dinner' | 'late-night' | null;
+  urgencyLevel?: 'low' | 'medium' | 'high';
+}
+
+/**
+ * Analyze context subtly based on time, category, and data
+ * No user interaction required - just works
+ */
+function getSubtleContext(
+  categoryType: CategoryType,
+  priceLevel?: number,
+  rating?: number,
+  reviewCount?: number,
+  isOpen?: boolean | null
+): SubtleContext {
+  const hour = new Date().getHours();
+  const dayOfWeek = new Date().getDay();
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  const context: SubtleContext = {};
+
+  // Determine meal context based on time
+  if (hour >= 6 && hour < 11) context.mealContext = 'breakfast';
+  else if (hour >= 11 && hour < 15) context.mealContext = 'lunch';
+  else if (hour >= 17 && hour < 22) context.mealContext = 'dinner';
+  else if (hour >= 22 || hour < 4) context.mealContext = 'late-night';
+
+  // Time-aware signals for dining
+  if (categoryType === 'dining') {
+    if (context.mealContext === 'dinner' && isOpen) {
+      context.timeSignal = 'Great timing for dinner';
+    } else if (context.mealContext === 'lunch' && isOpen) {
+      context.timeSignal = 'Good for lunch';
+    } else if (context.mealContext === 'breakfast' && isOpen) {
+      context.timeSignal = 'Open for breakfast';
+    }
+
+    // Availability hints based on rating/reviews
+    if (reviewCount && reviewCount > 500 && rating && rating >= 4.5) {
+      context.availabilityHint = 'Popular spot';
+      context.urgencyLevel = 'high';
+    } else if (reviewCount && reviewCount > 200) {
+      context.availabilityHint = isWeekend ? 'Busy on weekends' : undefined;
+    }
+  }
+
+  // Nightlife time signals
+  if (categoryType === 'nightlife') {
+    if (hour >= 17 && hour < 20) {
+      context.timeSignal = 'Happy hour';
+    } else if (hour >= 21 && hour < 24) {
+      context.timeSignal = 'Prime time';
+    } else if (hour >= 0 && hour < 3) {
+      context.timeSignal = 'Late night';
+    }
+  }
+
+  // Culture/museum signals
+  if (categoryType === 'culture') {
+    if (hour >= 9 && hour < 11 && !isWeekend) {
+      context.timeSignal = 'Quiet hours';
+    } else if (isWeekend && hour >= 11 && hour < 16) {
+      context.availabilityHint = 'Peak visitor hours';
+    }
+  }
+
+  // Price context (subtle, relative)
+  if (priceLevel) {
+    if (priceLevel >= 4) {
+      context.priceSignal = 'Splurge-worthy';
+    } else if (priceLevel === 1) {
+      context.priceSignal = 'Budget-friendly';
+    }
+    // Don't show anything for average prices - that's the default expectation
+  }
+
+  return context;
+}
+
+/**
+ * Get a subtle recommendation reason based on context
+ * Returns null if nothing notable - silence is golden
+ */
+function getSubtleRecommendation(
+  categoryType: CategoryType,
+  destination: Destination,
+  userVisitedCount?: number,
+  hasArchitect?: boolean
+): string | null {
+  // Only show if there's something genuinely notable
+  if (destination.michelin_stars && destination.michelin_stars > 0) {
+    return null; // Michelin badge already shows this
+  }
+
+  if (destination.crown) {
+    return 'Editor\'s pick';
+  }
+
+  if (hasArchitect && categoryType === 'architecture') {
+    return null; // Architecture section already highlights this
+  }
+
+  if (userVisitedCount && userVisitedCount >= 5 && categoryType === 'dining') {
+    return 'Matches your taste';
+  }
+
+  return null;
+}
+
 // Section priority by category type (lower = higher priority)
 const SECTION_PRIORITIES: Record<CategoryType, Record<string, number>> = {
   dining: {
@@ -591,6 +708,25 @@ const DestinationContent = memo(function DestinationContent({
   const reviewCount = enrichedData?.user_ratings_total;
 
   // ============================================
+  // SUBTLE INTELLIGENCE (automatic, no interaction)
+  // ============================================
+
+  const subtleContext = useMemo(() => getSubtleContext(
+    categoryType,
+    enrichedData?.price_level,
+    rating,
+    reviewCount,
+    isOpenNow
+  ), [categoryType, enrichedData?.price_level, rating, reviewCount, isOpenNow]);
+
+  const subtleRecommendation = useMemo(() => getSubtleRecommendation(
+    categoryType,
+    destination,
+    undefined, // Would come from user's visit history
+    !!hasArchInfo
+  ), [categoryType, destination, hasArchInfo]);
+
+  // ============================================
   // SMART SECTION AVAILABILITY
   // ============================================
 
@@ -1017,6 +1153,31 @@ const DestinationContent = memo(function DestinationContent({
               )}
               {enrichedData?.price_level && (
                 <span className="text-[13px] text-gray-500 ml-2">{'$'.repeat(enrichedData.price_level)}</span>
+              )}
+              {/* Subtle context signals - appear naturally, no interaction */}
+              {subtleContext.priceSignal && (
+                <span className="text-[11px] text-gray-400 ml-1">· {subtleContext.priceSignal}</span>
+              )}
+            </div>
+          )}
+
+          {/* Subtle signals row - only show if there's something genuinely useful */}
+          {(subtleContext.timeSignal || subtleContext.availabilityHint || subtleRecommendation) && (
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {subtleContext.timeSignal && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400">
+                  {subtleContext.timeSignal}
+                </span>
+              )}
+              {subtleContext.availabilityHint && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400">
+                  {subtleContext.availabilityHint}
+                </span>
+              )}
+              {subtleRecommendation && (
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400">
+                  {subtleRecommendation}
+                </span>
               )}
             </div>
           )}

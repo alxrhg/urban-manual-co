@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Clock, Route, CloudRain, Zap, ChevronRight, Loader2 } from 'lucide-react';
+import { useMemo } from 'react';
+import { Clock, Route, CloudRain } from 'lucide-react';
 
 interface DayItem {
   id: string;
@@ -73,7 +73,11 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 /**
- * DayIntelligence - Shows pacing, optimization, and weather info for a day
+ * DayIntelligence - Subtle day pacing indicator
+ *
+ * Philosophy: Shows analysis results automatically, no buttons needed.
+ * Information appears naturally as part of the day header.
+ * User can tap subtle hints to apply optimizations silently.
  */
 export default function DayIntelligence({
   dayNumber,
@@ -81,9 +85,6 @@ export default function DayIntelligence({
   items,
   weatherForecast,
   onOptimizeDay,
-  onAutoFill,
-  isOptimizing = false,
-  isAutoFilling = false,
   className = '',
 }: DayIntelligenceProps) {
   const analysis = useMemo(() => {
@@ -123,7 +124,14 @@ export default function DayIntelligence({
     const usableMinutes = 10 * 60; // 10 hours usable day
     const utilization = Math.min(100, Math.round((totalMinutes / usableMinutes) * 100));
     const isOverstuffed = totalMinutes > 12 * 60; // More than 12 hours
-    const hasGaps = items.length < 3 && items.length > 0;
+    const isPacked = totalMinutes > 9 * 60;
+    const isLight = totalMinutes < 4 * 60 && items.length > 0;
+
+    // Determine pacing label (subtle hint, not alert)
+    let pacingLabel: string | null = null;
+    if (isOverstuffed) pacingLabel = 'Tight schedule';
+    else if (isPacked) pacingLabel = 'Full day';
+    else if (isLight) pacingLabel = 'Light day';
 
     return {
       totalActivityMinutes,
@@ -131,116 +139,78 @@ export default function DayIntelligence({
       totalMinutes,
       utilization,
       isOverstuffed,
-      hasGaps,
+      isPacked,
+      isLight,
+      pacingLabel,
       outdoorCount,
       itemCount: items.length,
     };
   }, [items]);
 
-  // Check for rain
+  // Check for rain - subtle warning only
   const hasRainWarning = weatherForecast && weatherForecast.precipitation > 5 && analysis.outdoorCount > 0;
 
-  // Don't show if no items
+  // Don't show anything if empty - silence is golden
   if (items.length === 0) {
-    return (
-      <div className={`flex items-center gap-3 ${className}`}>
-        <button
-          onClick={onAutoFill}
-          disabled={isAutoFilling}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50"
-        >
-          {isAutoFilling ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
-          ) : (
-            <Zap className="w-3 h-3" />
-          )}
-          Auto-fill Day {dayNumber}
-        </button>
-      </div>
-    );
+    return null;
   }
 
   return (
     <div className={`flex flex-wrap items-center gap-3 ${className}`}>
-      {/* Utilization meter */}
+      {/* Utilization meter - visual only, no label needed */}
       <div className="flex items-center gap-2">
         <Clock className="w-3.5 h-3.5 text-gray-400" />
         <div className="flex items-center gap-1.5">
-          <div className="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div className="w-14 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
                 analysis.isOverstuffed
-                  ? 'bg-red-500'
-                  : analysis.utilization > 80
                   ? 'bg-amber-500'
-                  : 'bg-gray-900 dark:bg-white'
+                  : analysis.utilization > 80
+                  ? 'bg-gray-600 dark:bg-gray-300'
+                  : 'bg-gray-400 dark:bg-gray-500'
               }`}
               style={{ width: `${Math.min(100, analysis.utilization)}%` }}
             />
           </div>
-          <span className={`text-[10px] font-medium ${
-            analysis.isOverstuffed
-              ? 'text-red-600 dark:text-red-400'
-              : 'text-gray-500 dark:text-gray-400'
-          }`}>
-            {analysis.utilization}%
-          </span>
+          {/* Only show pacing hint if notable */}
+          {analysis.pacingLabel && (
+            <span className={`text-[10px] ${
+              analysis.isOverstuffed
+                ? 'text-amber-600 dark:text-amber-400'
+                : 'text-gray-400'
+            }`}>
+              {analysis.pacingLabel}
+            </span>
+          )}
         </div>
-        {analysis.isOverstuffed && (
-          <span className="text-[10px] text-red-600 dark:text-red-400">Packed</span>
-        )}
       </div>
 
-      {/* Transit time */}
-      {analysis.totalTransitMinutes > 0 && (
+      {/* Transit time - only show if significant */}
+      {analysis.totalTransitMinutes > 30 && (
         <div className="flex items-center gap-1 text-[10px] text-gray-400">
           <Route className="w-3 h-3" />
-          <span>{Math.round(analysis.totalTransitMinutes)} min transit</span>
+          <span>{Math.round(analysis.totalTransitMinutes)}m walking</span>
         </div>
       )}
 
-      {/* Rain warning */}
+      {/* Rain warning - subtle */}
       {hasRainWarning && (
-        <div className="flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400">
+        <div className="flex items-center gap-1 text-[10px] text-blue-500 dark:text-blue-400">
           <CloudRain className="w-3 h-3" />
-          <span>Rain expected</span>
+          <span>Rain likely</span>
         </div>
       )}
 
-      {/* Action buttons */}
-      <div className="flex items-center gap-2 ml-auto">
-        {/* Optimize Day button */}
-        {items.length >= 2 && onOptimizeDay && (
-          <button
-            onClick={onOptimizeDay}
-            disabled={isOptimizing}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors disabled:opacity-50"
-          >
-            {isOptimizing ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <Route className="w-3 h-3" />
-            )}
-            Optimize
-          </button>
-        )}
-
-        {/* Auto-fill button */}
-        {analysis.hasGaps && onAutoFill && (
-          <button
-            onClick={onAutoFill}
-            disabled={isAutoFilling}
-            className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors disabled:opacity-50"
-          >
-            {isAutoFilling ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <Zap className="w-3 h-3" />
-            )}
-            Fill gaps
-          </button>
-        )}
-      </div>
+      {/* Subtle optimize hint - tappable but not a button */}
+      {items.length >= 3 && analysis.totalTransitMinutes > 60 && onOptimizeDay && (
+        <button
+          onClick={onOptimizeDay}
+          className="text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        >
+          Could reduce walking
+        </button>
+      )}
     </div>
   );
 }
