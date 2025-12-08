@@ -12,7 +12,7 @@
  * - Taste Fingerprint (J): Multi-dimensional taste profile
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { generateText, generateJSON } from '@/lib/llm';
 import { extendedConversationMemoryService } from './conversation-memory';
 import { tasteProfileEvolutionService, TasteProfile } from './taste-profile-evolution';
