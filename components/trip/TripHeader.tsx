@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, Settings, Sparkles, Plus, Pencil, Loader2, Map, ChevronDown, Utensils, Coffee, Building2, Plane, Hotel, Car, Waves, FileText } from 'lucide-react';
+import { ArrowLeft, Settings, Plus, Pencil, Loader2, Map, ChevronDown, Utensils, Coffee, Building2, Plane, Hotel, Car, Waves, FileText, Calendar } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -155,9 +155,9 @@ export default function TripHeader({
               {isPlanning ? (
                 <Loader2 className="w-3.5 h-3.5 animate-spin" />
               ) : (
-                <Sparkles className="w-3.5 h-3.5" />
+                <Calendar className="w-3.5 h-3.5" />
               )}
-              {isPlanning ? 'Planning...' : 'Auto-plan'}
+              {isPlanning ? 'Planning...' : 'Schedule'}
             </button>
 
             {/* Add Dropdown */}

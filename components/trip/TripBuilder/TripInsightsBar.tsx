@@ -7,7 +7,7 @@ import {
   Users,
   CloudRain,
   Utensils,
-  Sparkles,
+  Layers,
   Info,
   AlertTriangle,
   CheckCircle,
@@ -34,7 +34,7 @@ function InsightIcon({ icon }: { icon: DayInsight['icon'] }): ReactNode {
     case 'food':
       return <Utensils className={className} />;
     case 'category':
-      return <Sparkles className={className} />;
+      return <Layers className={className} />;
     default:
       return <Info className={className} />;
   }

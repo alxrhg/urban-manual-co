@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { format, parseISO } from 'date-fns';
-import { MoreHorizontal, Sparkles, Loader2 } from 'lucide-react';
+import { MoreHorizontal, Route, Loader2 } from 'lucide-react';
 
 interface DayHeaderProps {
   dayNumber: number;
@@ -98,7 +98,7 @@ export default function DayHeader({
             {isOptimizing ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Sparkles className="w-3.5 h-3.5" />
+              <Route className="w-3.5 h-3.5" />
             )}
           </button>
         )}

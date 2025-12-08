@@ -1,7 +1,7 @@
 'use client';
 
 import { memo, useMemo } from 'react';
-import { Sparkles, Clock, MapPin, Route } from 'lucide-react';
+import { Lightbulb, Clock, MapPin, Route } from 'lucide-react';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import { Destination } from '@/types/destination';
 
@@ -153,7 +153,7 @@ const TripContextBadge = memo(function TripContextBadge({
       case 'meal':
         return <Clock className="w-2.5 h-2.5" />;
       case 'variety':
-        return <Sparkles className="w-2.5 h-2.5" />;
+        return <Lightbulb className="w-2.5 h-2.5" />;
       case 'time':
       default:
         return <Route className="w-2.5 h-2.5" />;
