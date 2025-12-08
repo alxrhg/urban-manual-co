@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -929,15 +929,15 @@ function DaySection({
           {/* Plus button */}
           <div className="relative">
             <button
-              onClick={() => setShowAddMenu(!showAddMenu)}
+              onClick={() => { setShowAddMenu(!showAddMenu); setShowSearch(false); setShowTransportForm(null); }}
               className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
-              <Plus className={`w-3.5 h-3.5 text-gray-500 transition-transform ${showAddMenu ? 'rotate-45' : ''}`} />
+              <Plus className={`w-3.5 h-3.5 text-gray-500 transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
             </button>
 
             {/* Add menu dropdown */}
             <AnimatePresence>
-              {showAddMenu && (
+              {showAddMenu && !showSearch && !showTransportForm && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -945,14 +945,14 @@ function DaySection({
                   className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20"
                 >
                   <button
-                    onClick={() => { setShowSearch(true); setShowAddMenu(false); setSearchSource('curated'); }}
+                    onClick={() => { setShowSearch(true); setSearchSource('curated'); }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                   >
                     <Search className="w-3.5 h-3.5" />
                     From curation
                   </button>
                   <button
-                    onClick={() => { setShowSearch(true); setShowAddMenu(false); setSearchSource('google'); }}
+                    onClick={() => { setShowSearch(true); setSearchSource('google'); }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                   >
                     <Globe className="w-3.5 h-3.5" />
@@ -960,26 +960,148 @@ function DaySection({
                   </button>
                   <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
                   <button
-                    onClick={() => { setShowTransportForm('flight'); setShowAddMenu(false); }}
+                    onClick={() => setShowTransportForm('flight')}
                     className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                   >
-                    <span className="text-sm">✈️</span>
+                    <Plane className="w-3.5 h-3.5" />
                     Flight
                   </button>
                   <button
-                    onClick={() => { setShowTransportForm('hotel'); setShowAddMenu(false); }}
+                    onClick={() => setShowTransportForm('hotel')}
                     className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                   >
-                    <span className="text-sm">🏨</span>
+                    <Hotel className="w-3.5 h-3.5" />
                     Hotel
                   </button>
                   <button
-                    onClick={() => { setShowTransportForm('train'); setShowAddMenu(false); }}
+                    onClick={() => setShowTransportForm('train')}
                     className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                   >
-                    <span className="text-sm">🚂</span>
+                    <TrainIcon className="w-3.5 h-3.5" />
                     Train
                   </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Inline search panel */}
+            <AnimatePresence>
+              {showSearch && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  className="absolute right-0 top-full mt-1 w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3"
+                >
+                  {/* Source toggle */}
+                  <div className="flex items-center gap-1 mb-2">
+                    <button
+                      onClick={() => { setSearchSource('curated'); setSearchQuery(''); setSearchResults([]); setGoogleResults([]); }}
+                      className={`px-2.5 py-1 text-[11px] rounded-full transition-colors ${
+                        searchSource === 'curated'
+                          ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                          : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      Curated
+                    </button>
+                    <button
+                      onClick={() => { setSearchSource('google'); setSearchQuery(''); setSearchResults([]); setGoogleResults([]); }}
+                      className={`px-2.5 py-1 text-[11px] rounded-full transition-colors ${
+                        searchSource === 'google'
+                          ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                          : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                      }`}
+                    >
+                      Google
+                    </button>
+                    <div className="flex-1" />
+                    <button onClick={closeAllMenus}>
+                      <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    {isSearching || isAdding ? (
+                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                    ) : searchSource === 'google' ? (
+                      <Globe className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <Search className="w-4 h-4 text-gray-400" />
+                    )}
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={searchSource === 'google' ? 'Search Google...' : 'Search curated...'}
+                      className="flex-1 bg-transparent text-[13px] text-gray-900 dark:text-white placeholder-gray-400 outline-none"
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* Search results */}
+                  {(searchResults.length > 0 || googleResults.length > 0) && (
+                    <div className="mt-2 max-h-60 overflow-y-auto">
+                      {searchResults.map((destination) => (
+                        <button
+                          key={destination.id}
+                          onClick={() => addDestination(destination)}
+                          disabled={isAdding}
+                          className="w-full flex items-center gap-3 px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
+                        >
+                          <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                            {destination.image_thumbnail || destination.image ? (
+                              <Image src={destination.image_thumbnail || destination.image || ''} alt="" width={32} height={32} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <MapPin className="w-3 h-3 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{destination.name}</p>
+                            <p className="text-[11px] text-gray-400 truncate">{destination.category}</p>
+                          </div>
+                        </button>
+                      ))}
+                      {googleResults.map((place) => (
+                        <button
+                          key={place.place_id}
+                          onClick={() => addGooglePlace(place)}
+                          disabled={isAdding}
+                          className="w-full flex items-center gap-3 px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
+                        >
+                          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                            <Globe className="w-4 h-4 text-blue-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{place.name}</p>
+                            <p className="text-[11px] text-gray-400 truncate">{place.formatted_address}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Inline transport form */}
+            <AnimatePresence>
+              {showTransportForm && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  className="absolute right-0 top-full mt-1 w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3"
+                >
+                  <TransportForm
+                    type={showTransportForm}
+                    onSubmit={(data) => addTransport(showTransportForm, data)}
+                    onCancel={closeAllMenus}
+                    isAdding={isAdding}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1015,153 +1137,6 @@ function DaySection({
           ))}
         </Reorder.Group>
       )}
-
-      {/* Smart suggestions for the day */}
-      <SmartSuggestions items={items} city={city} />
-
-      {/* Search panel (shown when triggered from plus menu) */}
-      <AnimatePresence>
-        {showSearch && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-3 overflow-hidden"
-          >
-            <div className="relative">
-              {/* Source toggle */}
-              <div className="flex items-center gap-1 mb-2">
-                <button
-                  onClick={() => { setSearchSource('curated'); setSearchQuery(''); setSearchResults([]); setGoogleResults([]); }}
-                  className={`px-2.5 py-1 text-[11px] rounded-full transition-colors ${
-                    searchSource === 'curated'
-                      ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                >
-                  Curated
-                </button>
-                <button
-                  onClick={() => { setSearchSource('google'); setSearchQuery(''); setSearchResults([]); setGoogleResults([]); }}
-                  className={`px-2.5 py-1 text-[11px] rounded-full transition-colors ${
-                    searchSource === 'google'
-                      ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                >
-                  Google
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
-                {isSearching || isAdding ? (
-                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-                ) : searchSource === 'google' ? (
-                  <Globe className="w-4 h-4 text-gray-400" />
-                ) : (
-                  <Search className="w-4 h-4 text-gray-400" />
-                )}
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={searchSource === 'google' ? 'Search Google Places...' : 'Search curated places...'}
-                  className="flex-1 bg-transparent text-[13px] text-gray-900 dark:text-white placeholder-gray-400 outline-none"
-                />
-                <button onClick={closeAllMenus}>
-                  <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-                </button>
-              </div>
-
-              {/* Curated search results */}
-              <AnimatePresence>
-                {searchResults.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-10"
-                  >
-                    {searchResults.map((destination) => (
-                      <button
-                        key={destination.id}
-                        onClick={() => addDestination(destination)}
-                        disabled={isAdding}
-                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
-                      >
-                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                          {destination.image_thumbnail || destination.image ? (
-                            <Image src={destination.image_thumbnail || destination.image || ''} alt="" width={32} height={32} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <MapPin className="w-3 h-3 text-gray-400" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{destination.name}</p>
-                          <p className="text-[11px] text-gray-400 truncate">{destination.category} {destination.neighborhood && `· ${destination.neighborhood}`}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Google search results */}
-              <AnimatePresence>
-                {googleResults.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-10"
-                  >
-                    {googleResults.map((place) => (
-                      <button
-                        key={place.place_id}
-                        onClick={() => addGooglePlace(place)}
-                        disabled={isAdding}
-                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-                          <Globe className="w-4 h-4 text-blue-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{place.name}</p>
-                          <p className="text-[11px] text-gray-400 truncate">{place.formatted_address}</p>
-                        </div>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Transport form (shown when triggered from plus menu) */}
-      <AnimatePresence>
-        {showTransportForm && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mt-3 overflow-hidden"
-          >
-            <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
-              <TransportForm
-                type={showTransportForm}
-                onSubmit={(data) => addTransport(showTransportForm, data)}
-                onCancel={closeAllMenus}
-                isAdding={isAdding}
-              />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
@@ -1378,7 +1353,7 @@ function ItemRow({
       ].filter(Boolean).join(' → ');
 
       return {
-        icon: '✈️',
+        iconType: 'flight' as const,
         title: `${from} → ${to}`,
         inlineTimes: timeDisplay,
         subtitle: airline || undefined
@@ -1398,7 +1373,7 @@ function ItemRow({
       ].filter(Boolean).join(' · ');
 
       return {
-        icon: '🏨',
+        iconType: 'hotel' as const,
         title: item.title || 'Hotel',
         inlineTimes: times || undefined,
         subtitle: undefined
@@ -1417,7 +1392,7 @@ function ItemRow({
       ].filter(Boolean).join(' → ');
 
       return {
-        icon: '🚂',
+        iconType: 'train' as const,
         title: `${from} → ${to}`,
         inlineTimes: timeDisplay,
         subtitle: undefined
@@ -1436,14 +1411,14 @@ function ItemRow({
     ].filter(Boolean).join(' · ');
 
     return {
-      icon: '',
+      iconType: 'place' as const,
       title: item.title || item.destination?.name || 'Place',
       inlineTimes: timeWithDuration || undefined,
       subtitle: category || undefined
     };
   };
 
-  const { icon, title, inlineTimes, subtitle } = getItemDisplay();
+  const { iconType, title, inlineTimes, subtitle } = getItemDisplay();
   const image = item.destination?.image_thumbnail || item.destination?.image;
   const destination = item.destination;
 
@@ -1464,8 +1439,18 @@ function ItemRow({
         {/* Main row - NOT clickable for expansion */}
         <div className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 rounded-lg group">
           {/* Icon or image */}
-          {icon ? (
-            <span className="text-base w-6 text-center flex-shrink-0">{icon}</span>
+          {iconType === 'flight' ? (
+            <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+              <Plane className="w-3.5 h-3.5 text-blue-500" />
+            </div>
+          ) : iconType === 'hotel' ? (
+            <div className="w-6 h-6 rounded-full bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+              <Hotel className="w-3.5 h-3.5 text-amber-600" />
+            </div>
+          ) : iconType === 'train' ? (
+            <div className="w-6 h-6 rounded-full bg-green-50 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+              <TrainIcon className="w-3.5 h-3.5 text-green-600" />
+            </div>
           ) : image ? (
             <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0">
               <Image src={image} alt="" width={24} height={24} className="w-full h-full object-cover" />
@@ -1794,11 +1779,10 @@ function TravelTime({
     (from.parsedNotes?.travelModeToNext as 'walking' | 'driving' | 'transit') || 'walking'
   );
 
-  // Skip for flights and trains
+  // Skip when FROM a flight/train (you're in the air/on rail)
+  // But show when going TO a flight/train (travel to airport/station)
   const fromType = from.parsedNotes?.type;
-  const toType = to.parsedNotes?.type;
-  if (fromType === 'flight' || toType === 'flight') return null;
-  if (fromType === 'train' || toType === 'train') return null;
+  if (fromType === 'flight' || fromType === 'train') return null;
 
   // Get coordinates
   const fromLat = from.destination?.latitude || from.parsedNotes?.latitude;
@@ -1868,6 +1852,10 @@ function TravelTime({
     }
   };
 
+  // Check if going to airport/station
+  const toType = to.parsedNotes?.type;
+  const destinationLabel = toType === 'flight' ? 'to airport' : toType === 'train' ? 'to station' : getModeLabel();
+
   // Show even without distance estimate (for non-geolocated items)
   return (
     <div className="flex justify-center py-1">
@@ -1878,9 +1866,9 @@ function TravelTime({
       >
         {getModeIcon()}
         {minutes ? (
-          <span>{minutes} min {getModeLabel()}</span>
+          <span>{minutes} min {destinationLabel}</span>
         ) : (
-          <span>{getModeLabel()}</span>
+          <span>{destinationLabel}</span>
         )}
       </button>
     </div>
