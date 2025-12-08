@@ -2037,7 +2037,7 @@ function ItemDetails({
 }
 
 /**
- * Travel time between items - clickable to change mode
+ * Travel time between items - shows spare time, travel info, and suggestions
  */
 function TravelTime({
   from,
@@ -2051,6 +2051,7 @@ function TravelTime({
   const [mode, setMode] = useState<'walking' | 'driving' | 'transit'>(
     (from.parsedNotes?.travelModeToNext as 'walking' | 'driving' | 'transit') || 'driving'
   );
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Check item types for special labels
   const fromType = from.parsedNotes?.type;
@@ -2075,29 +2076,57 @@ function TravelTime({
     distanceKm = R * c;
   }
 
-  // Estimate time based on mode
-  const getTimeEstimate = () => {
-    if (distanceKm === 0) return null;
-
+  // Estimate travel time based on mode
+  const getTravelMinutes = () => {
+    if (distanceKm === 0) return 15; // Default 15 min if no coords
     switch (mode) {
-      case 'walking':
-        // ~5 km/h walking speed
-        return Math.round(distanceKm * 12);
-      case 'driving':
-        // ~30 km/h city driving average
-        return Math.round(distanceKm * 2);
-      case 'transit':
-        // ~20 km/h transit average (includes wait time)
-        return Math.round(distanceKm * 3);
-      default:
-        return Math.round(distanceKm * 12);
+      case 'walking': return Math.round(distanceKm * 12); // ~5 km/h
+      case 'driving': return Math.round(distanceKm * 2);  // ~30 km/h
+      case 'transit': return Math.round(distanceKm * 3);  // ~20 km/h
+      default: return Math.round(distanceKm * 12);
     }
   };
 
-  const minutes = getTimeEstimate();
+  const travelMinutes = getTravelMinutes();
+
+  // Calculate spare time between activities
+  const calculateSpareTime = () => {
+    // Get end time of 'from' activity
+    const fromTime = from.time || from.parsedNotes?.departureTime || from.parsedNotes?.checkOutTime;
+    const fromDuration = from.parsedNotes?.duration ? parseFloat(String(from.parsedNotes.duration)) * 60 : 90; // Default 1.5h
+
+    // Get start time of 'to' activity
+    const toTime = to.time || to.parsedNotes?.departureTime || to.parsedNotes?.checkInTime;
+
+    if (!fromTime || !toTime) return null;
+
+    try {
+      const [fromH, fromM] = fromTime.split(':').map(Number);
+      const [toH, toM] = toTime.split(':').map(Number);
+
+      const fromEndMinutes = fromH * 60 + fromM + fromDuration;
+      const toStartMinutes = toH * 60 + toM;
+
+      const gapMinutes = toStartMinutes - fromEndMinutes - travelMinutes;
+      return gapMinutes > 0 ? gapMinutes : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const spareMinutes = calculateSpareTime();
+
+  // Format time
+  const formatDuration = (mins: number) => {
+    if (mins < 60) return `${mins} min`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  };
 
   // Cycle through modes
-  const cycleMode = () => {
+  const cycleMode = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const modes: Array<'walking' | 'driving' | 'transit'> = ['walking', 'driving', 'transit'];
     const currentIndex = modes.indexOf(mode);
     const nextMode = modes[(currentIndex + 1) % modes.length];
@@ -2107,12 +2136,9 @@ function TravelTime({
 
   const getModeIcon = () => {
     switch (mode) {
-      case 'walking':
-        return <Footprints className="w-3 h-3" />;
-      case 'driving':
-        return <Car className="w-3 h-3" />;
-      case 'transit':
-        return <TrainIcon className="w-3 h-3" />;
+      case 'walking': return <Footprints className="w-3 h-3" />;
+      case 'driving': return <Car className="w-3 h-3" />;
+      case 'transit': return <TrainIcon className="w-3 h-3" />;
     }
   };
 
@@ -2124,34 +2150,100 @@ function TravelTime({
     }
   };
 
-  // Determine label based on from/to types
-  const getLabel = () => {
-    // Coming FROM airport/station
+  // Get destination name
+  const toName = to.title || to.destination?.name || 'next stop';
+
+  // Determine special label based on from/to types
+  const getSpecialLabel = () => {
     if (fromType === 'flight') return 'from airport';
     if (fromType === 'train') return 'from station';
-    // Going TO airport/station
     if (toType === 'flight') return 'to airport';
     if (toType === 'train') return 'to station';
-    // Default mode label
-    return getModeLabel();
+    return null;
   };
-  const destinationLabel = getLabel();
+  const specialLabel = getSpecialLabel();
 
-  // Show even without distance estimate (for non-geolocated items)
+  // Suggestions for spare time
+  const suggestions = [
+    { emoji: '☕', label: 'Coffee break' },
+    { emoji: '📸', label: 'Photo walk' },
+    { emoji: '🛍️', label: 'Quick shopping' },
+    { emoji: '🌳', label: 'Explore nearby' },
+  ];
+
+  // Show compact view if no significant spare time
+  if (!spareMinutes || spareMinutes < 30) {
+    return (
+      <div className="flex justify-center py-1.5">
+        <button
+          onClick={cycleMode}
+          className="flex items-center gap-1.5 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+          title="Click to change travel mode"
+        >
+          {getModeIcon()}
+          <span>{travelMinutes} min {specialLabel || getModeLabel()}</span>
+        </button>
+      </div>
+    );
+  }
+
+  // Show expanded view with spare time info
   return (
-    <div className="flex justify-center py-1">
-      <button
-        onClick={cycleMode}
-        className="flex items-center gap-1.5 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-        title="Click to change travel mode"
-      >
-        {getModeIcon()}
-        {minutes ? (
-          <span>{minutes} min {destinationLabel}</span>
-        ) : (
-          <span>{destinationLabel}</span>
+    <div className="py-2">
+      {/* Main connector line */}
+      <div className="flex items-center justify-center gap-2">
+        <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
+
+        {/* Spare time pill - clickable to expand */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        >
+          <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300">
+            {formatDuration(spareMinutes)} free
+          </span>
+          <span className="text-gray-300 dark:text-gray-600">·</span>
+          <button
+            onClick={cycleMode}
+            className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            {getModeIcon()}
+            <span>{travelMinutes}m to {toName.length > 15 ? toName.slice(0, 15) + '...' : toName}</span>
+          </button>
+          <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+        </button>
+
+        <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
+      </div>
+
+      {/* Expanded suggestions */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-3 pb-1">
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 text-center mb-2">
+                You have {formatDuration(spareMinutes)} before {toName}
+              </p>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {suggestions.map((s, i) => (
+                  <button
+                    key={i}
+                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-[10px]"
+                  >
+                    <span>{s.emoji}</span>
+                    <span className="text-gray-600 dark:text-gray-300">{s.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
         )}
-      </button>
+      </AnimatePresence>
     </div>
   );
 }
