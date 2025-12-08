@@ -19,6 +19,7 @@ import {
   Check,
   Plus,
   Loader2,
+  Edit,
 } from 'lucide-react';
 import { Destination } from '@/types/destination';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
@@ -114,6 +115,28 @@ function getLocalTimeAtDestination(utcOffsetMinutes: number | null | undefined):
   return `${hour12}:${minuteStr} ${ampm}`;
 }
 
+/**
+ * Get destination local hour and day of week
+ * If utc_offset not available, falls back to user's local time
+ */
+function getDestinationLocalTime(utcOffsetMinutes: number | null | undefined): { hour: number; dayOfWeek: number; isWeekend: boolean } {
+  const now = new Date();
+
+  if (utcOffsetMinutes != null) {
+    // Calculate destination's local time
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const localTime = new Date(utcTime + (utcOffsetMinutes * 60000));
+    const hour = localTime.getHours();
+    const dayOfWeek = localTime.getDay();
+    return { hour, dayOfWeek, isWeekend: dayOfWeek === 0 || dayOfWeek === 6 };
+  }
+
+  // Fallback to user's local time
+  const hour = now.getHours();
+  const dayOfWeek = now.getDay();
+  return { hour, dayOfWeek, isWeekend: dayOfWeek === 0 || dayOfWeek === 6 };
+}
+
 // ============================================
 // SUBTLE INTELLIGENCE - Works automatically
 // ============================================
@@ -130,17 +153,18 @@ interface SubtleContext {
 /**
  * Analyze context subtly based on time, category, and data
  * No user interaction required - just works
+ * Uses destination's local time when utcOffsetMinutes is available
  */
 function getSubtleContext(
   categoryType: CategoryType,
   priceLevel?: number,
   rating?: number,
   reviewCount?: number,
-  isOpen?: boolean | null
+  isOpen?: boolean | null,
+  utcOffsetMinutes?: number | null
 ): SubtleContext {
-  const hour = new Date().getHours();
-  const dayOfWeek = new Date().getDay();
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  // Use destination's local time, not user's
+  const { hour, isWeekend } = getDestinationLocalTime(utcOffsetMinutes);
   const context: SubtleContext = {};
 
   // Determine meal context based on time
@@ -488,6 +512,29 @@ const DestinationContent = memo(function DestinationContent({
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [userRelatedContext, setUserRelatedContext] = useState<string | null>(null);
 
+  // Admin edit mode state
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: destination.name || '',
+    city: destination.city || '',
+    category: destination.category || '',
+    micro_description: destination.micro_description || '',
+    description: destination.description || '',
+  });
+
+  // Update form when destination changes
+  useEffect(() => {
+    setEditForm({
+      name: destination.name || '',
+      city: destination.city || '',
+      category: destination.category || '',
+      micro_description: destination.micro_description || '',
+      description: destination.description || '',
+    });
+  }, [destination.name, destination.city, destination.category, destination.micro_description, destination.description]);
+
   const imageUrl = destination.image || destination.image_thumbnail;
 
   // Load enriched data
@@ -500,9 +547,12 @@ const DestinationContent = memo(function DestinationContent({
         const supabase = createClient();
 
         // Fetch enriched destination data with relations
+        // Include id and parent_destination_id for nested/parent loading
         const { data } = await supabase
           .from('destinations')
           .select(`
+            id,
+            parent_destination_id,
             formatted_address,
             international_phone_number,
             website,
@@ -570,23 +620,27 @@ const DestinationContent = memo(function DestinationContent({
           setIsVisited(!!visitedRes.data);
         }
 
-        // Load parent destination
-        if (destination.parent_destination_id) {
+        // Use fetched data for parent/nested loading (more reliable than prop data)
+        const destinationId = data?.id || destination.id;
+        const parentId = data?.parent_destination_id || destination.parent_destination_id;
+
+        // Load parent destination (where this destination is nested inside)
+        if (parentId) {
           const { data: parent } = await supabase
             .from('destinations')
             .select('id, slug, name, category, image, image_thumbnail')
-            .eq('id', destination.parent_destination_id)
+            .eq('id', parentId)
             .single();
           if (parent) setParentDestination(parent as Destination);
         }
 
-        // Load nested destinations
-        if (destination.id) {
+        // Load nested destinations (venues inside this destination)
+        if (destinationId) {
           const { data: nested } = await supabase
             .from('destinations')
             .select('id, slug, name, category, image, image_thumbnail')
-            .eq('parent_destination_id', destination.id)
-            .limit(5);
+            .eq('parent_destination_id', destinationId)
+            .limit(10);
           if (nested) setNestedDestinations(nested as Destination[]);
         }
 
@@ -598,7 +652,7 @@ const DestinationContent = memo(function DestinationContent({
     }
 
     loadData();
-  }, [destination?.slug, destination?.id, destination?.parent_destination_id, user]);
+  }, [destination?.slug, user]);
 
   // Fetch similar places
   useEffect(() => {
@@ -608,6 +662,28 @@ const DestinationContent = memo(function DestinationContent({
         .then(data => setSimilarPlaces(data.similar || []))
         .catch(() => setSimilarPlaces([]));
     }
+  }, [destination.slug]);
+
+  // Check admin status
+  useEffect(() => {
+    async function checkAdmin() {
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const role = (session.user.app_metadata as Record<string, unknown> | null)?.role;
+        setIsAdmin(role === 'admin');
+      }
+    }
+    checkAdmin();
+  }, [user]);
+
+  // Reset edit mode when destination changes
+  useEffect(() => {
+    setIsEditMode(false);
   }, [destination.slug]);
 
   // Progressive reveal effect - stagger sections for smooth appearance
@@ -680,11 +756,40 @@ const DestinationContent = memo(function DestinationContent({
   const todayHours = getTodayHours(openingHours);
   const hoursAnalysis = analyzeHours(openingHours);
   const isOpenNow = hoursAnalysis.isOpen;
-  const bestTimeHint = getBestTimeHint(categoryType, openingHours);
+  const bestTimeHint = getBestTimeHint(categoryType, openingHours, enrichedData?.utc_offset);
 
   // Has architecture info
   const hasArchInfo = enrichedData?.architect_obj || enrichedData?.interior_designer_obj ||
                       enrichedData?.architectural_style || destination.architect;
+
+  // Admin edit handler
+  const handleSaveEdit = useCallback(async () => {
+    if (!isAdmin) return;
+    setIsSaving(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('destinations')
+        .update({
+          name: editForm.name,
+          city: editForm.city,
+          category: editForm.category,
+          micro_description: editForm.micro_description,
+          description: editForm.description,
+        })
+        .eq('slug', destination.slug);
+
+      if (error) throw error;
+      setIsEditMode(false);
+      // Reload to show updated data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error saving:', error);
+      alert('Failed to save changes');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [isAdmin, editForm, destination.slug]);
 
   // Handlers
   const handleShare = useCallback(async () => {
@@ -747,8 +852,9 @@ const DestinationContent = memo(function DestinationContent({
     enrichedData?.price_level,
     rating ?? undefined,
     reviewCount ?? undefined,
-    isOpenNow
-  ), [categoryType, enrichedData?.price_level, rating, reviewCount, isOpenNow]);
+    isOpenNow,
+    enrichedData?.utc_offset
+  ), [categoryType, enrichedData?.price_level, rating, reviewCount, isOpenNow, enrichedData?.utc_offset]);
 
   const subtleRecommendation = useMemo(() => getSubtleRecommendation(
     categoryType,
@@ -1134,6 +1240,86 @@ const DestinationContent = memo(function DestinationContent({
     }
   };
 
+  // Render edit form when in edit mode
+  if (isEditMode && isAdmin) {
+    return (
+      <div className="pb-8 px-5 pt-5">
+        <h2 className="text-[18px] font-semibold text-gray-900 dark:text-white mb-6">Edit Destination</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[12px] font-medium text-gray-500 mb-1.5">Name</label>
+            <input
+              type="text"
+              value={editForm.name}
+              onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[12px] font-medium text-gray-500 mb-1.5">City</label>
+              <input
+                type="text"
+                value={editForm.city}
+                onChange={(e) => setEditForm(prev => ({ ...prev, city: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
+              />
+            </div>
+            <div>
+              <label className="block text-[12px] font-medium text-gray-500 mb-1.5">Category</label>
+              <input
+                type="text"
+                value={editForm.category}
+                onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[12px] font-medium text-gray-500 mb-1.5">Micro Description</label>
+            <textarea
+              value={editForm.micro_description}
+              onChange={(e) => setEditForm(prev => ({ ...prev, micro_description: e.target.value }))}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-[12px] font-medium text-gray-500 mb-1.5">Description</label>
+            <textarea
+              value={editForm.description}
+              onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white resize-none"
+            />
+          </div>
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={() => setIsEditMode(false)}
+              className="flex-1 h-11 rounded-xl border border-gray-200 dark:border-gray-700 text-[14px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSaveEdit}
+              disabled={isSaving}
+              className="flex-1 h-11 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-[14px] font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="pb-8">
       {/* Hero Image */}
@@ -1288,6 +1474,20 @@ const DestinationContent = memo(function DestinationContent({
               >
                 <Share2 className="h-4 w-4" />
               </button>
+              {/* Admin Edit Button */}
+              {isAdmin && (
+                <button
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className={`h-11 w-11 flex items-center justify-center rounded-xl border transition-all ${
+                    isEditMode
+                      ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5'
+                  }`}
+                  title={isEditMode ? 'Exit edit mode' : 'Edit destination (Admin)'}
+                >
+                  <Edit className="h-4 w-4" />
+                </button>
+              )}
               {!isPrimaryGo && (
                 <button
                   onClick={handleDirections}
@@ -1512,8 +1712,9 @@ function analyzeHours(hours: string[]): SmartHoursResult {
 
 /**
  * Get best time hint based on category
+ * Uses destination's local time when utcOffsetMinutes is available
  */
-function getBestTimeHint(categoryType: CategoryType, hours: string[]): string | null {
+function getBestTimeHint(categoryType: CategoryType, hours: string[], utcOffsetMinutes?: number | null): string | null {
   const hints: Record<CategoryType, string[]> = {
     dining: ['Best for dinner: 7-9 PM', 'Lunch crowds: 12-1:30 PM', 'Quietest: 3-5 PM'],
     nightlife: ['Peak hours: 10 PM - 1 AM', 'Happy hour vibes: 5-7 PM'],
@@ -1528,8 +1729,8 @@ function getBestTimeHint(categoryType: CategoryType, hours: string[]): string | 
   const categoryHints = hints[categoryType];
   if (!categoryHints.length) return null;
 
-  // Return a contextual hint based on time of day
-  const hour = new Date().getHours();
+  // Return a contextual hint based on destination's local time
+  const { hour } = getDestinationLocalTime(utcOffsetMinutes);
 
   if (categoryType === 'dining') {
     if (hour >= 10 && hour < 14) return 'Currently: lunch rush';
