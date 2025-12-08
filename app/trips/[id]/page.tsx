@@ -174,16 +174,27 @@ export default function TripPage() {
         });
         if (response.ok) {
           const data = await response.json();
-          if (data.suggestions) {
-            setAiSuggestions(data.suggestions.slice(0, 3).map((s: any, i: number) => ({
-              id: `suggestion-${i}`,
-              text: s.name || s.text || s,
-              type: s.category || 'suggestion',
-            })));
+          if (data.suggestions && Array.isArray(data.suggestions)) {
+            const parsed = data.suggestions.slice(0, 3).map((s: any, i: number) => {
+              // Handle various response formats
+              let text = '';
+              if (typeof s === 'string') {
+                text = s;
+              } else if (s && typeof s === 'object') {
+                text = s.name || s.text || s.destination || s.title || JSON.stringify(s);
+              }
+              return {
+                id: `suggestion-${i}`,
+                text: String(text).slice(0, 50), // Ensure it's a string and limit length
+                type: (s && typeof s === 'object' && s.category) ? String(s.category) : 'suggestion',
+              };
+            }).filter((s: any) => s.text && s.text.length > 0);
+            setAiSuggestions(parsed);
           }
         }
       } catch (err) {
         // Silently fail - suggestions are optional
+        console.error('Suggestions fetch error:', err);
       } finally {
         setSuggestionsLoading(false);
       }

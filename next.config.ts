@@ -12,7 +12,7 @@ const cspDirectives = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https://*",
   "font-src 'self' data: https://fonts.gstatic.com",
-  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://cdn.jsdelivr.net https://googleads.g.doubleclick.net https://*.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://*.api.sanity.io https://*.sentry.io https://*.ingest.sentry.io https://*.apple-mapkit.com https://*.ls.apple.com https://*.apple.com https://cdn.apple-mapkit.com https://*.mzstatic.com https://*.geo.apple.com https://*.cdn-apple.com https://featureassets.org https://prodregistryv2.org",
+  "connect-src 'self' https://*.supabase.co https://*.supabase.in https://maps.googleapis.com https://api.openai.com https://*.upstash.io https://*.googleapis.com https://cdn.jsdelivr.net https://googleads.g.doubleclick.net https://*.doubleclick.net https://ep1.adtrafficquality.google https://ep2.adtrafficquality.google https://fundingchoicesmessages.google.com https://*.api.sanity.io https://*.sentry.io https://*.ingest.sentry.io https://*.apple-mapkit.com https://*.ls.apple.com https://*.apple.com https://cdn.apple-mapkit.com https://*.mzstatic.com https://*.geo.apple.com https://*.cdn-apple.com https://featureassets.org https://prodregistryv2.org https://api.open-meteo.com https://geocoding-api.open-meteo.com",
   "worker-src 'self' blob:",
   "child-src 'none'",
   "frame-ancestors 'none'",
