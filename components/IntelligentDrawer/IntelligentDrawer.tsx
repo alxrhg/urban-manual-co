@@ -10,6 +10,8 @@ import WhyThisContent from './WhyThisContent';
 import TripContent from './TripContent';
 import TripSelectorContent from './TripSelectorContent';
 import AddToTripContent from './AddToTripContent';
+import AccountContent from './AccountContent';
+import AuthContent from './AuthContent';
 import { DrawerMode, DrawerContext } from './types';
 
 /**
@@ -102,6 +104,8 @@ const IntelligentDrawer = memo(function IntelligentDrawer() {
         return 'Travel Chat';
       case 'account':
         return 'Account';
+      case 'auth':
+        return 'Sign In';
       case 'settings':
         return 'Settings';
       default:
@@ -124,6 +128,10 @@ const IntelligentDrawer = memo(function IntelligentDrawer() {
         return 'Select or create a trip';
       case 'add-to-trip':
         return context.destination?.name || '';
+      case 'account':
+        return 'Your profile';
+      case 'auth':
+        return 'Welcome to Urban Manual';
       default:
         return '';
     }
@@ -189,11 +197,10 @@ const IntelligentDrawer = memo(function IntelligentDrawer() {
         );
 
       case 'account':
-        return (
-          <div className="p-5 text-center text-gray-500">
-            Account mode coming soon
-          </div>
-        );
+        return <AccountContent />;
+
+      case 'auth':
+        return <AuthContent />;
 
       case 'settings':
         return (

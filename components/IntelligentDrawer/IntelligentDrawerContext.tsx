@@ -49,6 +49,9 @@ interface ExtendedContextType extends IntelligentDrawerContextType {
   activeTripInfo: TripContextInfo | null;
   addToTripAndClose: (destination: Destination, day?: number) => void;
   addToTripQuick: (destination: Destination, day?: number) => void;
+  // Account/Auth helpers
+  openAccount: () => void;
+  openAuth: () => void;
 }
 
 const IntelligentDrawerContext = createContext<ExtendedContextType | null>(null);
@@ -343,6 +346,14 @@ export function IntelligentDrawerProvider({ children }: { children: ReactNode })
     open('trip-select', {}, 'medium');
   }, [open]);
 
+  const openAccount = useCallback(() => {
+    open('account', {}, 'medium');
+  }, [open]);
+
+  const openAuth = useCallback(() => {
+    open('auth', {}, 'medium');
+  }, [open]);
+
   const showAddToTrip = useCallback(
     (destination: Destination) => {
       const fitAnalysis = tripBuilder.activeTrip
@@ -398,6 +409,8 @@ export function IntelligentDrawerProvider({ children }: { children: ReactNode })
       activeTripInfo,
       addToTripAndClose,
       addToTripQuick,
+      openAccount,
+      openAuth,
     }),
     [
       state,
@@ -415,6 +428,8 @@ export function IntelligentDrawerProvider({ children }: { children: ReactNode })
       activeTripInfo,
       addToTripAndClose,
       addToTripQuick,
+      openAccount,
+      openAuth,
     ]
   );
 
@@ -496,6 +511,32 @@ export function useTripDrawer() {
     isOpen,
     close,
     switchToDestination,
+  };
+}
+
+/**
+ * Hook for account/auth drawer operations
+ */
+export function useAccountDrawer() {
+  const { openAccount, openAuth, state, close, navigate } = useIntelligentDrawer();
+
+  const isOpen = state.isOpen && (state.mode === 'account' || state.mode === 'auth');
+
+  const showAuth = useCallback(() => {
+    navigate('auth', {});
+  }, [navigate]);
+
+  const showAccount = useCallback(() => {
+    navigate('account', {});
+  }, [navigate]);
+
+  return {
+    openAccount,
+    openAuth,
+    showAuth,
+    showAccount,
+    isOpen,
+    close,
   };
 }
 

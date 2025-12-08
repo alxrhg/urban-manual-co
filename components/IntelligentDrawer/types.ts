@@ -21,6 +21,7 @@ export type DrawerMode =
   | 'why-this'       // Why this recommendation
   | 'add-to-trip'    // Quick add to trip overlay
   | 'account'        // User account
+  | 'auth'           // Login/signup
   | 'settings'       // Settings
   | 'custom';        // Custom content
 
