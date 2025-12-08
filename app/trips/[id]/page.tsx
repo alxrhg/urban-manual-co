@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, Lightbulb } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -13,6 +13,16 @@ import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 import { PageLoader } from '@/components/LoadingStates';
 import { createClient } from '@/lib/supabase/client';
 import type { Destination } from '@/types/destination';
+
+// Weather type
+interface DayWeather {
+  date: string;
+  tempMax: number;
+  tempMin: number;
+  weatherCode: number;
+  description: string;
+  precipProbability: number;
+}
 
 /**
  * TripPage - Completely rethought
@@ -51,6 +61,14 @@ export default function TripPage() {
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [showTripNotes, setShowTripNotes] = useState(false);
 
+  // Weather state
+  const [weatherByDate, setWeatherByDate] = useState<Record<string, DayWeather>>({});
+  const [weatherLoading, setWeatherLoading] = useState(false);
+
+  // AI suggestions state
+  const [aiSuggestions, setAiSuggestions] = useState<Array<{ id: string; text: string; type: string }>>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+
   // Parse destinations
   const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
   const primaryCity = destinations[0] || '';
@@ -80,6 +98,101 @@ export default function TripPage() {
     }
     hasAutoFixed.current = true;
   }, [loading, trip?.start_date, trip?.end_date, days, moveItemToDay]);
+
+  // Fetch weather for trip dates
+  useEffect(() => {
+    if (!trip?.start_date || !primaryCity || weatherLoading) return;
+    if (Object.keys(weatherByDate).length > 0) return; // Already fetched
+
+    const fetchWeather = async () => {
+      setWeatherLoading(true);
+      try {
+        // Get city coordinates (simplified - could use geocoding API)
+        const geoResponse = await fetch(
+          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(primaryCity)}&count=1`
+        );
+        const geoData = await geoResponse.json();
+        if (!geoData.results?.[0]) return;
+
+        const { latitude, longitude } = geoData.results[0];
+
+        // Fetch weather forecast
+        const weatherResponse = await fetch(
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&timezone=auto&forecast_days=14`
+        );
+        const weatherData = await weatherResponse.json();
+
+        if (weatherData.daily) {
+          const weatherMap: Record<string, DayWeather> = {};
+          const getDescription = (code: number) => {
+            const codes: Record<number, string> = {
+              0: 'Clear', 1: 'Mostly clear', 2: 'Partly cloudy', 3: 'Overcast',
+              45: 'Foggy', 51: 'Light drizzle', 61: 'Light rain', 63: 'Rain',
+              65: 'Heavy rain', 71: 'Light snow', 73: 'Snow', 80: 'Rain showers',
+              95: 'Thunderstorm'
+            };
+            return codes[code] || 'Unknown';
+          };
+
+          weatherData.daily.time.forEach((date: string, i: number) => {
+            weatherMap[date] = {
+              date,
+              tempMax: Math.round(weatherData.daily.temperature_2m_max[i]),
+              tempMin: Math.round(weatherData.daily.temperature_2m_min[i]),
+              weatherCode: weatherData.daily.weather_code[i],
+              description: getDescription(weatherData.daily.weather_code[i]),
+              precipProbability: weatherData.daily.precipitation_probability_max[i] || 0,
+            };
+          });
+          setWeatherByDate(weatherMap);
+        }
+      } catch (err) {
+        console.error('Weather fetch error:', err);
+      } finally {
+        setWeatherLoading(false);
+      }
+    };
+
+    fetchWeather();
+  }, [trip?.start_date, primaryCity, weatherLoading, weatherByDate]);
+
+  // Fetch AI suggestions
+  useEffect(() => {
+    if (!trip || !primaryCity || suggestionsLoading || aiSuggestions.length > 0) return;
+
+    const fetchSuggestions = async () => {
+      setSuggestionsLoading(true);
+      try {
+        const response = await fetch('/api/intelligence/smart-fill', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            city: primaryCity,
+            existingItems: days.flatMap(d => d.items.map(i => i.title)),
+            tripDays: days.length,
+          }),
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.suggestions) {
+            setAiSuggestions(data.suggestions.slice(0, 3).map((s: any, i: number) => ({
+              id: `suggestion-${i}`,
+              text: s.name || s.text || s,
+              type: s.category || 'suggestion',
+            })));
+          }
+        }
+      } catch (err) {
+        // Silently fail - suggestions are optional
+      } finally {
+        setSuggestionsLoading(false);
+      }
+    };
+
+    // Delay to avoid too many requests
+    const timer = setTimeout(fetchSuggestions, 1000);
+    return () => clearTimeout(timer);
+  }, [trip, primaryCity, days, suggestionsLoading, aiSuggestions.length]);
 
   // Toggle item expansion
   const toggleItem = useCallback((itemId: string) => {
@@ -174,27 +287,53 @@ export default function TripPage() {
           </AnimatePresence>
         </div>
 
+        {/* AI Suggestions Section */}
+        {aiSuggestions.length > 0 && (
+          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
+            <div className="flex items-center gap-2 mb-3">
+              <Lightbulb className="w-4 h-4 text-gray-400" />
+              <span className="text-[13px] font-medium text-gray-600 dark:text-gray-300">Suggestions for your trip</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {aiSuggestions.map((suggestion) => (
+                <button
+                  key={suggestion.id}
+                  className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-left"
+                >
+                  <span className="text-[13px] text-gray-700 dark:text-gray-200">{suggestion.text}</span>
+                  <Plus className="w-3.5 h-3.5 text-gray-400" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Days */}
         <div className="mt-8 space-y-8">
-          {days.map((day) => (
-            <DaySection
-              key={day.dayNumber}
-              tripId={tripId}
-              dayNumber={day.dayNumber}
-              date={day.date ?? undefined}
-              items={day.items}
-              city={primaryCity}
-              tripStartDate={trip.start_date}
-              tripEndDate={trip.end_date}
-              expandedItemId={expandedItemId}
-              onToggleItem={toggleItem}
-              onReorder={(items) => reorderItems(day.dayNumber, items)}
-              onRemove={removeItem}
-              onUpdateItem={updateItem}
-              onUpdateTime={updateItemTime}
-              onRefresh={refresh}
-            />
-          ))}
+          {days.map((day) => {
+            const dayDate = day.date;
+            const weather = dayDate ? weatherByDate[dayDate] : undefined;
+            return (
+              <DaySection
+                key={day.dayNumber}
+                tripId={tripId}
+                dayNumber={day.dayNumber}
+                date={day.date ?? undefined}
+                items={day.items}
+                city={primaryCity}
+                tripStartDate={trip.start_date}
+                tripEndDate={trip.end_date}
+                expandedItemId={expandedItemId}
+                onToggleItem={toggleItem}
+                onReorder={(items) => reorderItems(day.dayNumber, items)}
+                onRemove={removeItem}
+                onUpdateItem={updateItem}
+                onUpdateTime={updateItemTime}
+                onRefresh={refresh}
+                weather={weather}
+              />
+            );
+          })}
         </div>
 
         {/* Empty state */}
@@ -643,6 +782,7 @@ function DaySection({
   onUpdateItem,
   onUpdateTime,
   onRefresh,
+  weather,
 }: {
   tripId: string;
   dayNumber: number;
@@ -658,6 +798,7 @@ function DaySection({
   onUpdateItem: (id: string, updates: Record<string, unknown>) => void;
   onUpdateTime: (id: string, time: string) => void;
   onRefresh: () => void;
+  weather?: DayWeather;
 }) {
   const [orderedItems, setOrderedItems] = useState(items);
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -958,6 +1099,21 @@ function DaySection({
               <span className="text-[11px] text-gray-300 dark:text-gray-600">{dateDisplay}</span>
             )}
           </div>
+          {/* Weather display */}
+          {weather && (
+            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 dark:bg-gray-800 rounded-full">
+              <WeatherIcon code={weather.weatherCode} className="w-3.5 h-3.5" />
+              <span className="text-[11px] text-gray-600 dark:text-gray-300">
+                {weather.tempMax}°
+              </span>
+              {weather.precipProbability > 30 && (
+                <span className="text-[10px] text-blue-500 flex items-center gap-0.5">
+                  <Umbrella className="w-3 h-3" />
+                  {weather.precipProbability}%
+                </span>
+              )}
+            </div>
+          )}
           {/* Day pacing indicator */}
           <DayPacing items={items} />
         </div>
@@ -2011,6 +2167,22 @@ function formatTime(time: string): string {
   } catch {
     return time;
   }
+}
+
+/**
+ * Weather icon based on weather code
+ */
+function WeatherIcon({ code, className = '' }: { code: number; className?: string }) {
+  // Weather code to icon mapping
+  if (code === 0) return <Sun className={`text-amber-400 ${className}`} />;
+  if (code <= 2) return <CloudSun className={`text-amber-300 ${className}`} />;
+  if (code === 3) return <Cloud className={`text-gray-400 ${className}`} />;
+  if (code >= 45 && code <= 48) return <Cloud className={`text-gray-400 ${className}`} />; // Fog
+  if (code >= 51 && code <= 67) return <CloudRain className={`text-blue-400 ${className}`} />; // Rain
+  if (code >= 71 && code <= 77) return <Cloud className={`text-blue-200 ${className}`} />; // Snow
+  if (code >= 80 && code <= 82) return <CloudRain className={`text-blue-500 ${className}`} />; // Showers
+  if (code >= 95) return <CloudRain className={`text-purple-400 ${className}`} />; // Thunderstorm
+  return <Sun className={`text-gray-400 ${className}`} />;
 }
 
 /**
