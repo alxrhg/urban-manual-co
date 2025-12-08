@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -518,17 +518,29 @@ function DaySection({
   onRefresh: () => void;
 }) {
   const [orderedItems, setOrderedItems] = useState(items);
+  const [showAddMenu, setShowAddMenu] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchSource, setSearchSource] = useState<'curated' | 'google'>('curated');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Destination[]>([]);
+  const [googleResults, setGoogleResults] = useState<Array<{ place_id: string; name: string; formatted_address: string; types: string[] }>>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [showTransportForm, setShowTransportForm] = useState<'flight' | 'hotel' | 'train' | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setOrderedItems(items);
   }, [items]);
+
+  // Focus search input when shown
+  useEffect(() => {
+    if (showSearch && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showSearch]);
 
   // Check if route could be optimized (items with coords not in optimal order)
   const canOptimize = useMemo(() => {
@@ -540,31 +552,11 @@ function DaySection({
     return withCoords.length >= 3;
   }, [items]);
 
-  // Smart search - detect transport keywords
+  // Search destinations (curated or Google)
   useEffect(() => {
-    const q = searchQuery.trim().toLowerCase();
-
-    // Check for transport keywords
-    if (q === 'flight' || q === 'add flight' || q === '+flight') {
-      setShowTransportForm('flight');
+    if (!searchQuery.trim()) {
       setSearchResults([]);
-      return;
-    }
-    if (q === 'hotel' || q === 'add hotel' || q === '+hotel') {
-      setShowTransportForm('hotel');
-      setSearchResults([]);
-      return;
-    }
-    if (q === 'train' || q === 'add train' || q === '+train') {
-      setShowTransportForm('train');
-      setSearchResults([]);
-      return;
-    }
-
-    setShowTransportForm(null);
-
-    if (!q) {
-      setSearchResults([]);
+      setGoogleResults([]);
       return;
     }
 
@@ -573,10 +565,21 @@ function DaySection({
     searchTimeout.current = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&city=${encodeURIComponent(city)}&limit=5`);
-        if (response.ok) {
-          const data = await response.json();
-          setSearchResults(data.results || data.destinations || []);
+        if (searchSource === 'curated') {
+          const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&city=${encodeURIComponent(city)}&limit=5`);
+          if (response.ok) {
+            const data = await response.json();
+            setSearchResults(data.results || data.destinations || []);
+            setGoogleResults([]);
+          }
+        } else {
+          // Google Places search
+          const response = await fetch(`/api/places/search?query=${encodeURIComponent(searchQuery)}&city=${encodeURIComponent(city)}`);
+          if (response.ok) {
+            const data = await response.json();
+            setGoogleResults(data.results || []);
+            setSearchResults([]);
+          }
         }
       } catch (err) {
         console.error('Search error:', err);
@@ -588,7 +591,7 @@ function DaySection({
     return () => {
       if (searchTimeout.current) clearTimeout(searchTimeout.current);
     };
-  }, [searchQuery, city]);
+  }, [searchQuery, city, searchSource]);
 
   // Add destination
   const addDestination = async (destination: Destination) => {
@@ -617,6 +620,7 @@ function DaySection({
 
       setSearchQuery('');
       setSearchResults([]);
+      setShowSearch(false);
       onRefresh();
     } catch (err) {
       console.error('Add error:', err);
@@ -641,8 +645,8 @@ function DaySection({
         }),
       });
 
-      setSearchQuery('');
       setShowTransportForm(null);
+      setShowAddMenu(false);
       onRefresh();
     } catch (err) {
       console.error('Add error:', err);
@@ -692,6 +696,60 @@ function DaySection({
     }
   }, [orderedItems, items, onReorder]);
 
+  // Add Google Place to trip
+  const addGooglePlace = async (place: { place_id: string; name: string; formatted_address: string }) => {
+    setIsAdding(true);
+    try {
+      const existingTimes = items.map(i => i.time).filter(Boolean).sort();
+      let suggestedTime = '12:00';
+
+      if (existingTimes.length > 0) {
+        const lastTime = existingTimes[existingTimes.length - 1]!;
+        const [h, m] = lastTime.split(':').map(Number);
+        const newHour = Math.min(h + 2, 22);
+        suggestedTime = `${String(newHour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      }
+
+      // Create item with Google place data stored in notes
+      const notes = JSON.stringify({
+        type: 'place',
+        googlePlaceId: place.place_id,
+        address: place.formatted_address,
+      });
+
+      await fetch(`/api/trips/${tripId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          day_number: dayNumber,
+          time: suggestedTime,
+          title: place.name,
+          notes,
+        }),
+      });
+
+      setSearchQuery('');
+      setSearchResults([]);
+      setGoogleResults([]);
+      setShowSearch(false);
+      onRefresh();
+    } catch (err) {
+      console.error('Add error:', err);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const closeAllMenus = () => {
+    setShowAddMenu(false);
+    setShowSearch(false);
+    setShowTransportForm(null);
+    setSearchQuery('');
+    setSearchResults([]);
+    setGoogleResults([]);
+    setSearchSource('curated');
+  };
+
   const dateDisplay = date
     ? new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     : null;
@@ -709,17 +767,78 @@ function DaySection({
           )}
         </div>
 
-        {/* Optimize prompt */}
-        {canOptimize && (
-          <button
-            onClick={optimizeRoute}
-            disabled={isOptimizing}
-            className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          >
-            {isOptimizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Route className="w-3 h-3" />}
-            Optimize route
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {/* Optimize prompt */}
+          {canOptimize && (
+            <button
+              onClick={optimizeRoute}
+              disabled={isOptimizing}
+              className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            >
+              {isOptimizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Route className="w-3 h-3" />}
+              Optimize
+            </button>
+          )}
+
+          {/* Plus button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowAddMenu(!showAddMenu)}
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              <Plus className={`w-3.5 h-3.5 text-gray-500 transition-transform ${showAddMenu ? 'rotate-45' : ''}`} />
+            </button>
+
+            {/* Add menu dropdown */}
+            <AnimatePresence>
+              {showAddMenu && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20"
+                >
+                  <button
+                    onClick={() => { setShowSearch(true); setShowAddMenu(false); setSearchSource('curated'); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    From curation
+                  </button>
+                  <button
+                    onClick={() => { setShowSearch(true); setShowAddMenu(false); setSearchSource('google'); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    From Google
+                  </button>
+                  <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
+                  <button
+                    onClick={() => { setShowTransportForm('flight'); setShowAddMenu(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <span className="text-sm">✈️</span>
+                    Flight
+                  </button>
+                  <button
+                    onClick={() => { setShowTransportForm('hotel'); setShowAddMenu(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <span className="text-sm">🏨</span>
+                    Hotel
+                  </button>
+                  <button
+                    onClick={() => { setShowTransportForm('train'); setShowAddMenu(false); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <span className="text-sm">🚂</span>
+                    Train
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
 
       {/* Items */}
@@ -744,82 +863,149 @@ function DaySection({
         </Reorder.Group>
       )}
 
-      {/* Search / Add */}
-      <div className="mt-3 relative">
-        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-          {isSearching || isAdding ? (
-            <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
-          ) : (
-            <Search className="w-4 h-4 text-gray-400" />
-          )}
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search or type: flight, hotel, train"
-            className="flex-1 bg-transparent text-[13px] text-gray-900 dark:text-white placeholder-gray-400 outline-none"
-          />
-          {searchQuery && (
-            <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowTransportForm(null); }}>
-              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
-            </button>
-          )}
-        </div>
+      {/* Search panel (shown when triggered from plus menu) */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-3 overflow-hidden"
+          >
+            <div className="relative">
+              {/* Source toggle */}
+              <div className="flex items-center gap-1 mb-2">
+                <button
+                  onClick={() => { setSearchSource('curated'); setSearchQuery(''); setSearchResults([]); setGoogleResults([]); }}
+                  className={`px-2.5 py-1 text-[11px] rounded-full transition-colors ${
+                    searchSource === 'curated'
+                      ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Curated
+                </button>
+                <button
+                  onClick={() => { setSearchSource('google'); setSearchQuery(''); setSearchResults([]); setGoogleResults([]); }}
+                  className={`px-2.5 py-1 text-[11px] rounded-full transition-colors ${
+                    searchSource === 'google'
+                      ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                  }`}
+                >
+                  Google
+                </button>
+              </div>
 
-        {/* Transport form */}
-        <AnimatePresence>
-          {showTransportForm && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-3 z-10"
-            >
+              <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                {isSearching || isAdding ? (
+                  <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                ) : searchSource === 'google' ? (
+                  <Globe className="w-4 h-4 text-gray-400" />
+                ) : (
+                  <Search className="w-4 h-4 text-gray-400" />
+                )}
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={searchSource === 'google' ? 'Search Google Places...' : 'Search curated places...'}
+                  className="flex-1 bg-transparent text-[13px] text-gray-900 dark:text-white placeholder-gray-400 outline-none"
+                />
+                <button onClick={closeAllMenus}>
+                  <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                </button>
+              </div>
+
+              {/* Curated search results */}
+              <AnimatePresence>
+                {searchResults.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-10"
+                  >
+                    {searchResults.map((destination) => (
+                      <button
+                        key={destination.id}
+                        onClick={() => addDestination(destination)}
+                        disabled={isAdding}
+                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                      >
+                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                          {destination.image_thumbnail || destination.image ? (
+                            <Image src={destination.image_thumbnail || destination.image || ''} alt="" width={32} height={32} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <MapPin className="w-3 h-3 text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{destination.name}</p>
+                          <p className="text-[11px] text-gray-400 truncate">{destination.category} {destination.neighborhood && `· ${destination.neighborhood}`}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Google search results */}
+              <AnimatePresence>
+                {googleResults.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-10"
+                  >
+                    {googleResults.map((place) => (
+                      <button
+                        key={place.place_id}
+                        onClick={() => addGooglePlace(place)}
+                        disabled={isAdding}
+                        className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                          <Globe className="w-4 h-4 text-blue-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{place.name}</p>
+                          <p className="text-[11px] text-gray-400 truncate">{place.formatted_address}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Transport form (shown when triggered from plus menu) */}
+      <AnimatePresence>
+        {showTransportForm && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mt-3 overflow-hidden"
+          >
+            <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
               <TransportForm
                 type={showTransportForm}
                 onSubmit={(data) => addTransport(showTransportForm, data)}
-                onCancel={() => { setShowTransportForm(null); setSearchQuery(''); }}
+                onCancel={closeAllMenus}
                 isAdding={isAdding}
               />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Search results */}
-        <AnimatePresence>
-          {searchResults.length > 0 && !showTransportForm && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-10"
-            >
-              {searchResults.map((destination) => (
-                <button
-                  key={destination.id}
-                  onClick={() => addDestination(destination)}
-                  disabled={isAdding}
-                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
-                >
-                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                    {destination.image_thumbnail || destination.image ? (
-                      <Image src={destination.image_thumbnail || destination.image || ''} alt="" width={32} height={32} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <MapPin className="w-3 h-3 text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{destination.name}</p>
-                    <p className="text-[11px] text-gray-400 truncate">{destination.category} {destination.neighborhood && `· ${destination.neighborhood}`}</p>
-                  </div>
-                </button>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -841,17 +1027,19 @@ function TransportForm({
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
   const [name, setName] = useState('');
-  const [time, setTime] = useState('');
+  const [departureTime, setDepartureTime] = useState('');
+  const [arrivalTime, setArrivalTime] = useState('');
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
+  const [breakfast, setBreakfast] = useState('');
 
   const handleSubmit = () => {
     if (type === 'flight') {
-      onSubmit({ from, to, departureTime: time });
+      onSubmit({ from, to, departureTime, arrivalTime });
     } else if (type === 'train') {
-      onSubmit({ from, to, departureTime: time });
+      onSubmit({ from, to, departureTime, arrivalTime });
     } else {
-      onSubmit({ name, checkInTime: checkIn, checkOutTime: checkOut });
+      onSubmit({ name, checkInTime: checkIn, checkOutTime: checkOut, breakfastTime: breakfast });
     }
   };
 
@@ -875,23 +1063,37 @@ function TransportForm({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Hotel name"
-            className="w-full px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+            className="w-full px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
             autoFocus
           />
           <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-in</label>
+              <input
+                type="time"
+                value={checkIn}
+                onChange={(e) => setCheckIn(e.target.value)}
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-out</label>
+              <input
+                type="time"
+                value={checkOut}
+                onChange={(e) => setCheckOut(e.target.value)}
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Breakfast</label>
             <input
-              type="time"
-              value={checkIn}
-              onChange={(e) => setCheckIn(e.target.value)}
-              placeholder="Check-in"
-              className="flex-1 px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
-            />
-            <input
-              type="time"
-              value={checkOut}
-              onChange={(e) => setCheckOut(e.target.value)}
-              placeholder="Check-out"
-              className="flex-1 px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              type="text"
+              value={breakfast}
+              onChange={(e) => setBreakfast(e.target.value)}
+              placeholder="e.g. 7:00-10:00"
+              className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
             />
           </div>
         </>
@@ -902,25 +1104,38 @@ function TransportForm({
               type="text"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
-              placeholder="From"
-              className="flex-1 px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              placeholder="From (e.g. LHR)"
+              className="flex-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
               autoFocus
             />
             <input
               type="text"
               value={to}
               onChange={(e) => setTo(e.target.value)}
-              placeholder="To"
-              className="flex-1 px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              placeholder="To (e.g. CDG)"
+              className="flex-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
             />
           </div>
-          <input
-            type="time"
-            value={time}
-            onChange={(e) => setTime(e.target.value)}
-            placeholder="Departure time"
-            className="w-full px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
-          />
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Departure</label>
+              <input
+                type="time"
+                value={departureTime}
+                onChange={(e) => setDepartureTime(e.target.value)}
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Arrival</label>
+              <input
+                type="time"
+                value={arrivalTime}
+                onChange={(e) => setArrivalTime(e.target.value)}
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              />
+            </div>
+          </div>
         </>
       )}
 
@@ -936,7 +1151,7 @@ function TransportForm({
 }
 
 /**
- * Item row
+ * Item row - with inline times and edit button
  */
 function ItemRow({
   item,
@@ -958,31 +1173,81 @@ function ItemRow({
   const [isDragging, setIsDragging] = useState(false);
   const itemType = item.parsedNotes?.type || 'place';
 
-  const getItemText = () => {
+  // Build inline display with all relevant times
+  const getItemDisplay = () => {
     if (itemType === 'flight') {
       const from = item.parsedNotes?.from || '?';
       const to = item.parsedNotes?.to || '?';
-      const time = item.parsedNotes?.departureTime || '';
-      return { icon: '✈️', main: `${from} → ${to}`, sub: time };
+      const depTime = item.parsedNotes?.departureTime;
+      const arrTime = item.parsedNotes?.arrivalTime;
+      const airline = [item.parsedNotes?.airline, item.parsedNotes?.flightNumber].filter(Boolean).join(' ');
+
+      // Inline times: "10:30 dep → 14:45 arr"
+      const timeDisplay = [
+        depTime && `${formatTime(depTime)} dep`,
+        arrTime && `${formatTime(arrTime)} arr`
+      ].filter(Boolean).join(' → ');
+
+      return {
+        icon: '✈️',
+        title: `${from} → ${to}`,
+        inlineTimes: timeDisplay,
+        subtitle: airline || undefined
+      };
     }
+
     if (itemType === 'hotel') {
       const checkIn = item.parsedNotes?.checkInTime;
       const checkOut = item.parsedNotes?.checkOutTime;
-      const times = [checkIn && `in ${checkIn}`, checkOut && `out ${checkOut}`].filter(Boolean).join(', ');
-      return { icon: '🏨', main: item.title || 'Hotel', sub: times || '' };
+      const breakfast = item.parsedNotes?.breakfastTime;
+
+      // Inline times: "check-in 15:00 · checkout 11:00 · breakfast 7:00-10:00"
+      const times = [
+        checkIn && `check-in ${formatTime(checkIn)}`,
+        checkOut && `checkout ${formatTime(checkOut)}`,
+        breakfast && `breakfast ${breakfast}`
+      ].filter(Boolean).join(' · ');
+
+      return {
+        icon: '🏨',
+        title: item.title || 'Hotel',
+        inlineTimes: times || undefined,
+        subtitle: undefined
+      };
     }
+
     if (itemType === 'train') {
       const from = item.parsedNotes?.from || '?';
       const to = item.parsedNotes?.to || '?';
-      const time = item.parsedNotes?.departureTime || '';
-      return { icon: '🚂', main: `${from} → ${to}`, sub: time };
+      const depTime = item.parsedNotes?.departureTime;
+      const arrTime = item.parsedNotes?.arrivalTime;
+
+      const timeDisplay = [
+        depTime && `${formatTime(depTime)} dep`,
+        arrTime && `${formatTime(arrTime)} arr`
+      ].filter(Boolean).join(' → ');
+
+      return {
+        icon: '🚂',
+        title: `${from} → ${to}`,
+        inlineTimes: timeDisplay,
+        subtitle: undefined
+      };
     }
+
+    // Regular place
     const time = item.time ? formatTime(item.time) : '';
     const category = item.destination?.category || item.parsedNotes?.category || '';
-    return { icon: '', main: item.title || item.destination?.name || 'Place', sub: [time, category].filter(Boolean).join(' · ') };
+
+    return {
+      icon: '',
+      title: item.title || item.destination?.name || 'Place',
+      inlineTimes: time || undefined,
+      subtitle: category || undefined
+    };
   };
 
-  const { icon, main, sub } = getItemText();
+  const { icon, title, inlineTimes, subtitle } = getItemDisplay();
   const image = item.destination?.image_thumbnail || item.destination?.image;
 
   return (
@@ -993,10 +1258,9 @@ function ItemRow({
       className={`cursor-grab active:cursor-grabbing ${isDragging ? 'z-10' : ''}`}
     >
       <div className={`rounded-lg transition-all ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}>
-        <div
-          onClick={onToggle}
-          className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 rounded-lg cursor-pointer group"
-        >
+        {/* Main row - NOT clickable for expansion */}
+        <div className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 rounded-lg group">
+          {/* Icon or image */}
           {icon ? (
             <span className="text-base w-6 text-center flex-shrink-0">{icon}</span>
           ) : image ? (
@@ -1007,14 +1271,31 @@ function ItemRow({
             <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
           )}
 
+          {/* Content */}
           <div className="flex-1 min-w-0">
-            <span className="text-[13px] text-gray-900 dark:text-white">{main}</span>
-            {sub && <span className="text-[11px] text-gray-400 ml-2">{sub}</span>}
+            <div className="flex items-baseline gap-2">
+              <span className="text-[13px] font-medium text-gray-900 dark:text-white">{title}</span>
+              {subtitle && <span className="text-[11px] text-gray-400">{subtitle}</span>}
+            </div>
+            {inlineTimes && (
+              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{inlineTimes}</p>
+            )}
           </div>
 
-          <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+          {/* Edit button */}
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggle(); }}
+            className={`w-6 h-6 flex items-center justify-center rounded-full transition-colors ${
+              isExpanded
+                ? 'bg-gray-900 dark:bg-white'
+                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Pencil className={`w-3 h-3 ${isExpanded ? 'text-white dark:text-gray-900' : 'text-gray-500'}`} />
+          </button>
         </div>
 
+        {/* Expanded edit form */}
         <AnimatePresence>
           {isExpanded && (
             <motion.div
@@ -1029,6 +1310,7 @@ function ItemRow({
                 onUpdateItem={onUpdateItem}
                 onUpdateTime={onUpdateTime}
                 onRemove={onRemove}
+                onClose={onToggle}
               />
             </motion.div>
           )}
@@ -1039,7 +1321,7 @@ function ItemRow({
 }
 
 /**
- * Item details
+ * Item details - edit form (no image)
  */
 function ItemDetails({
   item,
@@ -1047,74 +1329,125 @@ function ItemDetails({
   onUpdateItem,
   onUpdateTime,
   onRemove,
+  onClose,
 }: {
   item: EnrichedItineraryItem;
   itemType: string;
   onUpdateItem: (id: string, updates: Record<string, unknown>) => void;
   onUpdateTime: (id: string, time: string) => void;
   onRemove: () => void;
+  onClose: () => void;
 }) {
   const [time, setTime] = useState(item.time || '');
   const [notes, setNotes] = useState(item.parsedNotes?.notes || '');
   const [checkInTime, setCheckInTime] = useState(item.parsedNotes?.checkInTime || '');
   const [checkOutTime, setCheckOutTime] = useState(item.parsedNotes?.checkOutTime || '');
+  const [breakfastTime, setBreakfastTime] = useState(item.parsedNotes?.breakfastTime || '');
+  const [departureTime, setDepartureTime] = useState(item.parsedNotes?.departureTime || '');
+  const [arrivalTime, setArrivalTime] = useState(item.parsedNotes?.arrivalTime || '');
   const [hasChanges, setHasChanges] = useState(false);
 
   const handleSave = () => {
+    const updates: Record<string, unknown> = {};
+
     if (itemType === 'hotel') {
-      onUpdateItem(item.id, { checkInTime, checkOutTime, notes });
+      if (checkInTime !== (item.parsedNotes?.checkInTime || '')) updates.checkInTime = checkInTime;
+      if (checkOutTime !== (item.parsedNotes?.checkOutTime || '')) updates.checkOutTime = checkOutTime;
+      if (breakfastTime !== (item.parsedNotes?.breakfastTime || '')) updates.breakfastTime = breakfastTime;
+    } else if (itemType === 'flight' || itemType === 'train') {
+      if (departureTime !== (item.parsedNotes?.departureTime || '')) updates.departureTime = departureTime;
+      if (arrivalTime !== (item.parsedNotes?.arrivalTime || '')) updates.arrivalTime = arrivalTime;
     } else if (time !== item.time) {
       onUpdateTime(item.id, time);
     }
-    if (notes !== (item.parsedNotes?.notes || '')) {
-      onUpdateItem(item.id, { notes });
+
+    if (notes !== (item.parsedNotes?.notes || '')) updates.notes = notes;
+
+    if (Object.keys(updates).length > 0) {
+      onUpdateItem(item.id, updates);
     }
     setHasChanges(false);
+    onClose();
   };
 
   const destination = item.destination;
 
   return (
-    <div className="px-3 pb-3 pt-1 space-y-3">
-      {destination?.image && itemType === 'place' && (
-        <div className="aspect-[2/1] rounded-lg overflow-hidden">
-          <Image src={destination.image} alt="" width={400} height={200} className="w-full h-full object-cover" />
+    <div className="px-3 pb-3 pt-1 space-y-3 bg-gray-50/50 dark:bg-gray-900/30 rounded-b-lg mx-3 mb-2">
+      {/* Hotel times */}
+      {itemType === 'hotel' && (
+        <>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-in</label>
+              <input
+                type="time"
+                value={checkInTime}
+                onChange={(e) => { setCheckInTime(e.target.value); setHasChanges(true); }}
+                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-out</label>
+              <input
+                type="time"
+                value={checkOutTime}
+                onChange={(e) => { setCheckOutTime(e.target.value); setHasChanges(true); }}
+                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Breakfast</label>
+            <input
+              type="text"
+              value={breakfastTime}
+              onChange={(e) => { setBreakfastTime(e.target.value); setHasChanges(true); }}
+              placeholder="e.g. 7:00-10:00"
+              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+            />
+          </div>
+        </>
+      )}
+
+      {/* Flight/Train times */}
+      {(itemType === 'flight' || itemType === 'train') && (
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Departure</label>
+            <input
+              type="time"
+              value={departureTime}
+              onChange={(e) => { setDepartureTime(e.target.value); setHasChanges(true); }}
+              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Arrival</label>
+            <input
+              type="time"
+              value={arrivalTime}
+              onChange={(e) => { setArrivalTime(e.target.value); setHasChanges(true); }}
+              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+            />
+          </div>
         </div>
       )}
 
-      {itemType === 'hotel' ? (
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-in</label>
-            <input
-              type="time"
-              value={checkInTime}
-              onChange={(e) => { setCheckInTime(e.target.value); setHasChanges(true); }}
-              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-out</label>
-            <input
-              type="time"
-              value={checkOutTime}
-              onChange={(e) => { setCheckOutTime(e.target.value); setHasChanges(true); }}
-              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-            />
-          </div>
-        </div>
-      ) : itemType !== 'flight' && itemType !== 'train' ? (
+      {/* Regular place time */}
+      {itemType !== 'hotel' && itemType !== 'flight' && itemType !== 'train' && (
         <div>
           <label className="text-[10px] text-gray-400 uppercase tracking-wide">Time</label>
           <input
             type="time"
             value={time}
             onChange={(e) => { setTime(e.target.value); setHasChanges(true); }}
-            className="w-full mt-1 px-2 py-1.5 text-[13px] bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+            className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
           />
         </div>
-      ) : null}
+      )}
 
+      {/* Notes */}
       <div>
         <label className="text-[10px] text-gray-400 uppercase tracking-wide">Notes</label>
         <textarea
@@ -1122,58 +1455,148 @@ function ItemDetails({
           onChange={(e) => { setNotes(e.target.value); setHasChanges(true); }}
           placeholder="Add a note..."
           rows={2}
-          className="w-full mt-1 px-2 py-1.5 text-[13px] bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none resize-none"
+          className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none resize-none"
         />
       </div>
 
+      {/* Address */}
+      {destination?.formatted_address && (
+        <p className="text-[11px] text-gray-400 leading-relaxed">{destination.formatted_address}</p>
+      )}
+
+      {/* Actions */}
       <div className="flex items-center justify-between pt-1">
         <button onClick={onRemove} className="text-[11px] text-gray-400 hover:text-red-500 transition-colors">
           Remove
         </button>
-        {hasChanges && (
-          <button onClick={handleSave} className="flex items-center gap-1 text-[11px] font-medium text-gray-900 dark:text-white">
+        <div className="flex items-center gap-2">
+          <button onClick={onClose} className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            className="flex items-center gap-1 text-[11px] font-medium text-white dark:text-gray-900 bg-gray-900 dark:bg-white px-2.5 py-1 rounded-full"
+          >
             <Check className="w-3 h-3" /> Save
           </button>
-        )}
+        </div>
       </div>
-
-      {destination?.formatted_address && (
-        <p className="text-[11px] text-gray-400 leading-relaxed">{destination.formatted_address}</p>
-      )}
     </div>
   );
 }
 
 /**
- * Walking time
+ * Travel time between items - clickable to change mode
  */
-function WalkingTime({ from, to }: { from: EnrichedItineraryItem; to: EnrichedItineraryItem }) {
+function TravelTime({
+  from,
+  to,
+  onUpdateTravelMode,
+}: {
+  from: EnrichedItineraryItem;
+  to: EnrichedItineraryItem;
+  onUpdateTravelMode?: (itemId: string, mode: 'walking' | 'driving' | 'transit') => void;
+}) {
+  const [mode, setMode] = useState<'walking' | 'driving' | 'transit'>(
+    (from.parsedNotes?.travelModeToNext as 'walking' | 'driving' | 'transit') || 'walking'
+  );
+
+  // Skip for flights and trains
+  const fromType = from.parsedNotes?.type;
+  const toType = to.parsedNotes?.type;
+  if (fromType === 'flight' || toType === 'flight') return null;
+  if (fromType === 'train' || toType === 'train') return null;
+
+  // Get coordinates
   const fromLat = from.destination?.latitude || from.parsedNotes?.latitude;
   const fromLng = from.destination?.longitude || from.parsedNotes?.longitude;
   const toLat = to.destination?.latitude || to.parsedNotes?.latitude;
   const toLng = to.destination?.longitude || to.parsedNotes?.longitude;
 
-  if (!fromLat || !fromLng || !toLat || !toLng) return null;
-  if (from.parsedNotes?.type === 'flight' || to.parsedNotes?.type === 'flight') return null;
-  if (from.parsedNotes?.type === 'train' || to.parsedNotes?.type === 'train') return null;
+  // Calculate distance (Haversine)
+  let distanceKm = 0;
+  if (fromLat && fromLng && toLat && toLng) {
+    const R = 6371;
+    const dLat = (toLat - fromLat) * Math.PI / 180;
+    const dLng = (toLng - fromLng) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    distanceKm = R * c;
+  }
 
-  const R = 6371;
-  const dLat = (toLat - fromLat) * Math.PI / 180;
-  const dLng = (toLng - fromLng) * Math.PI / 180;
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
-            Math.sin(dLng/2) * Math.sin(dLng/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  const distance = R * c;
-  const walkingMinutes = Math.round(distance * 12);
+  // Estimate time based on mode
+  const getTimeEstimate = () => {
+    if (distanceKm === 0) return null;
 
-  if (walkingMinutes > 20 || walkingMinutes < 1) return null;
+    switch (mode) {
+      case 'walking':
+        // ~5 km/h walking speed
+        return Math.round(distanceKm * 12);
+      case 'driving':
+        // ~30 km/h city driving average
+        return Math.round(distanceKm * 2);
+      case 'transit':
+        // ~20 km/h transit average (includes wait time)
+        return Math.round(distanceKm * 3);
+      default:
+        return Math.round(distanceKm * 12);
+    }
+  };
 
+  const minutes = getTimeEstimate();
+
+  // Cycle through modes
+  const cycleMode = () => {
+    const modes: Array<'walking' | 'driving' | 'transit'> = ['walking', 'driving', 'transit'];
+    const currentIndex = modes.indexOf(mode);
+    const nextMode = modes[(currentIndex + 1) % modes.length];
+    setMode(nextMode);
+    onUpdateTravelMode?.(from.id, nextMode);
+  };
+
+  const getModeIcon = () => {
+    switch (mode) {
+      case 'walking':
+        return <Footprints className="w-3 h-3" />;
+      case 'driving':
+        return <Car className="w-3 h-3" />;
+      case 'transit':
+        return <TrainIcon className="w-3 h-3" />;
+    }
+  };
+
+  const getModeLabel = () => {
+    switch (mode) {
+      case 'walking': return 'walk';
+      case 'driving': return 'drive';
+      case 'transit': return 'transit';
+    }
+  };
+
+  // Show even without distance estimate (for non-geolocated items)
   return (
-    <div className="flex justify-center py-0.5">
-      <span className="text-[10px] text-gray-300 dark:text-gray-600">{walkingMinutes} min walk</span>
+    <div className="flex justify-center py-1">
+      <button
+        onClick={cycleMode}
+        className="flex items-center gap-1.5 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
+        title="Click to change travel mode"
+      >
+        {getModeIcon()}
+        {minutes ? (
+          <span>{minutes} min {getModeLabel()}</span>
+        ) : (
+          <span>{getModeLabel()}</span>
+        )}
+      </button>
     </div>
   );
+}
+
+// Keep WalkingTime as alias for backwards compatibility
+function WalkingTime({ from, to }: { from: EnrichedItineraryItem; to: EnrichedItineraryItem }) {
+  return <TravelTime from={from} to={to} />;
 }
 
 function formatTime(time: string): string {
