@@ -1495,8 +1495,13 @@ html.christmas-mode.dark::before,
 
 /* ============================================
    SNOW ACCUMULATION EFFECT
-   Realistic snow piling on elements
+   Realistic snow piling on elements as snowfall lands
    ============================================ */
+
+/* Snow accumulation variable - controlled by JavaScript */
+.christmas-mode {
+  --snow-accumulation: 0;
+}
 
 /* Base snow accumulation mixin using ::after pseudo-element */
 .christmas-mode .snow-accumulate {
@@ -1522,6 +1527,10 @@ html.christmas-mode.dark::before,
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
   pointer-events: none;
   z-index: 10;
+  transform: scaleY(var(--snow-accumulation));
+  transform-origin: bottom center;
+  opacity: var(--snow-accumulation);
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
 }
 
 /* Snow accumulation on header */
@@ -1549,6 +1558,10 @@ html.christmas-mode.dark::before,
   filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.08));
   pointer-events: none;
   z-index: 50;
+  transform: scaleY(var(--snow-accumulation));
+  transform-origin: top center;
+  opacity: var(--snow-accumulation);
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
 }
 
 /* Snow on cards and rounded containers */
@@ -1577,6 +1590,10 @@ html.christmas-mode.dark::before,
   pointer-events: none;
   z-index: 5;
   border-radius: inherit;
+  transform: scaleY(var(--snow-accumulation));
+  transform-origin: bottom center;
+  opacity: var(--snow-accumulation);
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
 }
 
 /* Snow on buttons */
@@ -1601,6 +1618,10 @@ html.christmas-mode.dark::before,
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
   pointer-events: none;
   z-index: 5;
+  transform: scaleY(var(--snow-accumulation));
+  transform-origin: bottom center;
+  opacity: var(--snow-accumulation);
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
 }
 
 /* Snow on footer */
@@ -1627,6 +1648,10 @@ html.christmas-mode.dark::before,
   filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.1));
   pointer-events: none;
   z-index: 10;
+  transform: scaleY(var(--snow-accumulation));
+  transform-origin: bottom center;
+  opacity: var(--snow-accumulation);
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
 }
 
 /* Snow on image containers */
@@ -1653,6 +1678,10 @@ html.christmas-mode.dark::before,
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.08));
   pointer-events: none;
   z-index: 5;
+  transform: scaleY(var(--snow-accumulation));
+  transform-origin: bottom center;
+  opacity: var(--snow-accumulation);
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
 }
 
 /* Snow on dialog/modal boxes */
@@ -1681,6 +1710,10 @@ html.christmas-mode.dark::before,
   filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.1));
   pointer-events: none;
   z-index: 100;
+  transform: scaleY(var(--snow-accumulation));
+  transform-origin: bottom center;
+  opacity: var(--snow-accumulation);
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
 }
 
 /* Snow on input fields */
@@ -1712,27 +1745,10 @@ html.christmas-mode.dark::before,
   filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.08));
   pointer-events: none;
   z-index: 5;
-}
-
-/* Subtle snow accumulation animation - gradual build-up illusion */
-@keyframes snow-settle {
-  0% {
-    transform: scaleY(0.3);
-    opacity: 0;
-  }
-  100% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
-.christmas-mode header::after,
-.christmas-mode footer::before,
-.christmas-mode [class*="rounded-lg"]::before,
-.christmas-mode [class*="rounded-xl"]::before,
-.christmas-mode [class*="rounded-2xl"]::before {
-  animation: snow-settle 1.5s ease-out forwards;
+  transform: scaleY(var(--snow-accumulation));
   transform-origin: bottom center;
+  opacity: var(--snow-accumulation);
+  transition: transform 0.5s ease-out, opacity 0.5s ease-out;
 }
 
 /* Dark mode adjustments for snow - slightly bluish tint */
@@ -1780,7 +1796,17 @@ html.christmas-mode.dark::before,
   .christmas-mode footer::before,
   .christmas-mode [class*="rounded-lg"]::before,
   .christmas-mode [class*="rounded-xl"]::before,
-  .christmas-mode [class*="rounded-2xl"]::before {
-    animation: none;
+  .christmas-mode [class*="rounded-2xl"]::before,
+  .christmas-mode button[class*="rounded"]::before,
+  .christmas-mode a[class*="rounded"][class*="bg-"]::before,
+  .christmas-mode figure::after,
+  .christmas-mode [class*="aspect-"]::after,
+  .christmas-mode [role="dialog"]::before,
+  .christmas-mode [class*="modal"]::before,
+  .christmas-mode [class*="drawer"]::before,
+  .christmas-mode nav > a::after,
+  .christmas-mode nav > button::after,
+  .christmas-mode .snow-accumulate::after {
+    transition: none;
   }
 }

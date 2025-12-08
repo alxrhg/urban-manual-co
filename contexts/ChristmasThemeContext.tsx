@@ -1,20 +1,27 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 
 interface ChristmasThemeContextType {
   isChristmasMode: boolean;
   toggleChristmasMode: () => void;
   setChristmasMode: (enabled: boolean) => void;
+  snowAccumulation: number;
 }
 
 const ChristmasThemeContext = createContext<ChristmasThemeContextType | undefined>(undefined);
 
 const CHRISTMAS_STORAGE_KEY = 'urban-manual-christmas-mode';
 
+// Snow accumulation settings
+const ACCUMULATION_DURATION = 60000; // 60 seconds to full accumulation
+const ACCUMULATION_INTERVAL = 500; // Update every 500ms
+
 export function ChristmasThemeProvider({ children }: { children: ReactNode }) {
   const [isChristmasMode, setIsChristmasMode] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
+  const [snowAccumulation, setSnowAccumulation] = useState(0);
+  const accumulationStartTime = useRef<number | null>(null);
 
   // Check if current month is December and if it's Christmas Day
   const now = new Date();
@@ -61,7 +68,52 @@ export function ChristmasThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [isChristmasMode, isHydrated, isDecember]);
 
+  // Snow accumulation effect - gradually builds up over time
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const shouldAccumulate = isChristmasMode && isDecember;
+
+    if (shouldAccumulate) {
+      // Start accumulation timer
+      accumulationStartTime.current = Date.now();
+
+      const updateAccumulation = () => {
+        if (accumulationStartTime.current === null) return;
+
+        const elapsed = Date.now() - accumulationStartTime.current;
+        const progress = Math.min(elapsed / ACCUMULATION_DURATION, 1);
+
+        // Use easeOutQuad for natural settling effect
+        const eased = 1 - (1 - progress) * (1 - progress);
+
+        setSnowAccumulation(eased);
+
+        // Update CSS variable for the snow accumulation
+        document.documentElement.style.setProperty('--snow-accumulation', String(eased));
+      };
+
+      // Initial update
+      updateAccumulation();
+
+      // Set interval to update accumulation
+      const intervalId = setInterval(updateAccumulation, ACCUMULATION_INTERVAL);
+
+      return () => {
+        clearInterval(intervalId);
+      };
+    } else {
+      // Reset accumulation when Christmas mode is disabled
+      accumulationStartTime.current = null;
+      setSnowAccumulation(0);
+      document.documentElement.style.setProperty('--snow-accumulation', '0');
+    }
+  }, [isChristmasMode, isHydrated, isDecember]);
+
   const toggleChristmasMode = useCallback(() => {
+    // Reset accumulation when toggling
+    accumulationStartTime.current = null;
+    setSnowAccumulation(0);
     setIsChristmasMode((prev: boolean) => !prev);
   }, []);
 
@@ -74,7 +126,8 @@ export function ChristmasThemeProvider({ children }: { children: ReactNode }) {
       value={{
         isChristmasMode,
         toggleChristmasMode,
-        setChristmasMode
+        setChristmasMode,
+        snowAccumulation
       }}
     >
       {children}
