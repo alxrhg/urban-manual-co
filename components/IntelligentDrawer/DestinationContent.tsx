@@ -260,26 +260,27 @@ const DestinationContent = memo(function DestinationContent({
           )}
         </div>
 
-        {/* Map Preview */}
+        {/* Map Preview - Simple styled link */}
         {destination.latitude && destination.longitude && (
           <div className="py-4 border-b border-gray-100 dark:border-white/10">
             <a
-              href={destination.google_maps_url || `https://www.google.com/maps?q=${destination.latitude},${destination.longitude}`}
+              href={destination.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="block relative aspect-[2/1] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800"
+              className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
             >
-              <Image
-                src={`https://api.mapbox.com/styles/v1/mapbox/light-v11/static/pin-s+000(${destination.longitude},${destination.latitude})/${destination.longitude},${destination.latitude},14,0/400x200@2x?access_token=${process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || 'pk.placeholder'}`}
-                alt="Map"
-                fill
-                className="object-cover"
-              />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 transition-colors">
-                <span className="px-3 py-1.5 rounded-full bg-white/95 text-[12px] font-medium text-gray-800 shadow-sm">
-                  Open in Maps
-                </span>
+              <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                <MapPin className="w-6 h-6 text-blue-600 dark:text-blue-400" />
               </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-medium text-gray-900 dark:text-white">
+                  View on Map
+                </p>
+                <p className="text-[12px] text-gray-500">
+                  {destination.neighborhood || destination.city || 'Get directions'}
+                </p>
+              </div>
+              <Navigation className="w-5 h-5 text-gray-400" />
             </a>
           </div>
         )}
