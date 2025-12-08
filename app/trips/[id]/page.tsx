@@ -66,7 +66,7 @@ export default function TripPage() {
   const [weatherLoading, setWeatherLoading] = useState(false);
 
   // AI suggestions state
-  const [aiSuggestions, setAiSuggestions] = useState<Array<{ id: string; text: string; type: string }>>([]);
+  const [aiSuggestions, setAiSuggestions] = useState<Array<{ id: string; text: string; type: string; destinationId?: number }>>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   // Parse destinations
@@ -176,17 +176,29 @@ export default function TripPage() {
           const data = await response.json();
           if (data.suggestions && Array.isArray(data.suggestions)) {
             const parsed = data.suggestions.slice(0, 3).map((s: any, i: number) => {
-              // Handle various response formats
+              // Handle smart-fill API format: { destination: { name, ... }, reason, timeSlot }
               let text = '';
+              let category = 'suggestion';
+
               if (typeof s === 'string') {
                 text = s;
               } else if (s && typeof s === 'object') {
-                text = s.name || s.text || s.destination || s.title || JSON.stringify(s);
+                // Check for nested destination object (smart-fill format)
+                if (s.destination && typeof s.destination === 'object') {
+                  text = s.destination.name || '';
+                  category = s.destination.category || s.timeSlot || 'suggestion';
+                } else {
+                  // Flat format fallback
+                  text = s.name || s.text || s.title || '';
+                  category = s.category || 'suggestion';
+                }
               }
+
               return {
                 id: `suggestion-${i}`,
-                text: String(text).slice(0, 50), // Ensure it's a string and limit length
-                type: (s && typeof s === 'object' && s.category) ? String(s.category) : 'suggestion',
+                text: String(text).slice(0, 40),
+                type: String(category).toLowerCase(),
+                destinationId: s?.destination?.id,
               };
             }).filter((s: any) => s.text && s.text.length > 0);
             setAiSuggestions(parsed);
@@ -817,7 +829,7 @@ function DaySection({
   const [searchSource, setSearchSource] = useState<'curated' | 'google'>('curated');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Destination[]>([]);
-  const [googleResults, setGoogleResults] = useState<Array<{ place_id: string; name: string; formatted_address: string; types: string[] }>>([]);
+  const [googleResults, setGoogleResults] = useState<Array<{ id: string; name: string; formatted_address: string; latitude?: number; longitude?: number; category?: string; image?: string; rating?: number }>>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [showTransportForm, setShowTransportForm] = useState<'flight' | 'hotel' | 'train' | null>(null);
@@ -868,10 +880,14 @@ function DaySection({
           }
         } else {
           // Google Places search
-          const response = await fetch(`/api/places/search?query=${encodeURIComponent(searchQuery)}&city=${encodeURIComponent(city)}`);
+          const response = await fetch('/api/google-places-search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: `${searchQuery} ${city}` }),
+          });
           if (response.ok) {
             const data = await response.json();
-            setGoogleResults(data.results || []);
+            setGoogleResults(data.places || []);
             setSearchResults([]);
           }
         }
@@ -1040,7 +1056,7 @@ function DaySection({
   }, [orderedItems, items, onReorder]);
 
   // Add Google Place to trip
-  const addGooglePlace = async (place: { place_id: string; name: string; formatted_address: string }) => {
+  const addGooglePlace = async (place: { id: string; name: string; formatted_address: string; latitude?: number; longitude?: number; category?: string; image?: string }) => {
     setIsAdding(true);
     try {
       const existingTimes = items.map(i => i.time).filter(Boolean).sort();
@@ -1056,8 +1072,12 @@ function DaySection({
       // Create item with Google place data stored in notes
       const notes = JSON.stringify({
         type: 'place',
-        googlePlaceId: place.place_id,
+        googlePlaceId: place.id,
         address: place.formatted_address,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        category: place.category,
+        image: place.image,
       });
 
       await fetch(`/api/trips/${tripId}/items`, {
@@ -1283,17 +1303,21 @@ function DaySection({
                       ))}
                       {googleResults.map((place) => (
                         <button
-                          key={place.place_id}
+                          key={place.id}
                           onClick={() => addGooglePlace(place)}
                           disabled={isAdding}
                           className="w-full flex items-center gap-3 px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-                            <Globe className="w-4 h-4 text-blue-500" />
+                          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {place.image ? (
+                              <Image src={place.image} alt="" width={32} height={32} className="w-full h-full object-cover" />
+                            ) : (
+                              <Globe className="w-4 h-4 text-gray-400" />
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{place.name}</p>
-                            <p className="text-[11px] text-gray-400 truncate">{place.formatted_address}</p>
+                            <p className="text-[11px] text-gray-400 truncate">{place.category || place.formatted_address}</p>
                           </div>
                         </button>
                       ))}
