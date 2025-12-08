@@ -723,10 +723,10 @@ const DestinationContent = memo(function DestinationContent({
     setIsEditMode(false);
   }, [destination.slug]);
 
-  // Auto-suggest parent based on address/vicinity
+  // Auto-detect and set parent based on address (no confirmation needed)
   useEffect(() => {
-    async function detectParentFromAddress() {
-      // Only suggest if no parent is already set
+    async function autoSetParentFromAddress() {
+      // Only if no parent is already set
       if (parentDestination) {
         setSuggestedParent(null);
         return;
@@ -734,7 +734,7 @@ const DestinationContent = memo(function DestinationContent({
 
       // Need address info to detect
       const addressText = enrichedData?.formatted_address || '';
-      if (!addressText || !destination.city) {
+      if (!addressText || !destination.city || !destination.slug) {
         setSuggestedParent(null);
         return;
       }
@@ -759,20 +759,38 @@ const DestinationContent = memo(function DestinationContent({
 
         // Check if any potential parent's name appears in the address
         const addressLower = addressText.toLowerCase();
+        let detectedParent: Destination | null = null;
+
         for (const parent of potentialParents) {
           const parentNameLower = parent.name.toLowerCase();
           // Match if address contains the parent name (at least 4 chars to avoid false positives)
           if (parentNameLower.length >= 4 && addressLower.includes(parentNameLower)) {
-            setSuggestedParent(parent as Destination);
-            return;
+            detectedParent = parent as Destination;
+            break;
           }
           // Also try without common suffixes
           const nameWithoutSuffix = parentNameLower
             .replace(/\s*(hotel|tokyo|kyoto|osaka|london|paris|new york)$/i, '')
             .trim();
           if (nameWithoutSuffix.length >= 4 && addressLower.includes(nameWithoutSuffix)) {
-            setSuggestedParent(parent as Destination);
-            return;
+            detectedParent = parent as Destination;
+            break;
+          }
+        }
+
+        if (detectedParent) {
+          // Auto-set the parent - no confirmation needed when name is in address
+          console.log(`[AutoParent] Setting ${destination.name} parent to ${detectedParent.name} (detected from address)`);
+
+          const { error } = await supabase
+            .from('destinations')
+            .update({ parent_destination_id: detectedParent.id })
+            .eq('slug', destination.slug);
+
+          if (!error) {
+            setParentDestination(detectedParent);
+          } else {
+            console.error('Error auto-setting parent:', error);
           }
         }
 
@@ -783,8 +801,8 @@ const DestinationContent = memo(function DestinationContent({
       }
     }
 
-    detectParentFromAddress();
-  }, [enrichedData?.formatted_address, destination.city, destination.slug, parentDestination]);
+    autoSetParentFromAddress();
+  }, [enrichedData?.formatted_address, destination.city, destination.slug, destination.name, parentDestination]);
 
   // Progressive reveal effect - stagger sections for smooth appearance
   useEffect(() => {
@@ -988,7 +1006,7 @@ const DestinationContent = memo(function DestinationContent({
   const hasContact = !!(enrichedData?.formatted_address || enrichedData?.international_phone_number || enrichedData?.website);
   const hasMap = !!(destination.latitude && destination.longitude);
   const hasNested = nestedDestinations.length > 0;
-  const hasParent = !!parentDestination || (!!suggestedParent && isAdmin);
+  const hasParent = !!parentDestination;
   const hasSimilar = similarPlaces.length > 0;
   const hasRelated = related.length > 0;
   const hasTrip = !!activeTrip;
@@ -1050,70 +1068,28 @@ const DestinationContent = memo(function DestinationContent({
         );
 
       case 'parent':
-        // Show confirmed parent
-        if (parentDestination) {
-          return (
-            <button
-              key="parent"
-              onClick={() => onOpenRelated(parentDestination)}
-              className="w-full flex items-center gap-3 mt-5 py-3 border-t border-b border-gray-100 dark:border-white/10 text-left"
-            >
-              <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                {parentDestination.image ? (
-                  <Image src={parentDestination.image} alt="" width={48} height={48} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-gray-400" /></div>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] uppercase tracking-wider text-gray-400">Located inside</p>
-                <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">{parentDestination.name}</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-gray-300" />
-            </button>
-          );
-        }
-        // Show suggested parent (admin only) - detected from address
-        if (suggestedParent && isAdmin) {
-          const handleSetParent = async () => {
-            try {
-              const supabase = createClient();
-              await supabase
-                .from('destinations')
-                .update({ parent_destination_id: suggestedParent.id })
-                .eq('slug', destination.slug);
-              // Refresh - set the parent
-              setParentDestination(suggestedParent);
-              setSuggestedParent(null);
-            } catch (error) {
-              console.error('Error setting parent:', error);
-            }
-          };
-          return (
-            <div key="parent-suggestion" className="mt-5 py-3 border-t border-b border-amber-200 dark:border-amber-800/30 bg-amber-50/50 dark:bg-amber-900/10 -mx-5 px-5">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                  {suggestedParent.image ? (
-                    <Image src={suggestedParent.image} alt="" width={48} height={48} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-gray-400" /></div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] uppercase tracking-wider text-amber-600 dark:text-amber-400">Detected from address</p>
-                  <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">Located in {suggestedParent.name}?</p>
-                </div>
-                <button
-                  onClick={handleSetParent}
-                  className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-[12px] font-medium hover:bg-amber-600 transition-colors"
-                >
-                  Confirm
-                </button>
-              </div>
+        // Parent is auto-set from address, just show if exists
+        if (!parentDestination) return null;
+        return (
+          <button
+            key="parent"
+            onClick={() => onOpenRelated(parentDestination)}
+            className="w-full flex items-center gap-3 mt-5 py-3 border-t border-b border-gray-100 dark:border-white/10 text-left"
+          >
+            <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+              {parentDestination.image ? (
+                <Image src={parentDestination.image} alt="" width={48} height={48} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center"><MapPin className="h-5 w-5 text-gray-400" /></div>
+              )}
             </div>
-          );
-        }
-        return null;
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] uppercase tracking-wider text-gray-400">Located inside</p>
+              <p className="text-[14px] font-medium text-gray-900 dark:text-white truncate">{parentDestination.name}</p>
+            </div>
+            <ChevronRight className="h-4 w-4 text-gray-300" />
+          </button>
+        );
 
       case 'nested':
         return (
@@ -1517,37 +1493,12 @@ const DestinationContent = memo(function DestinationContent({
           </div>
 
           {/* Parent/Nested Info */}
-          {(parentDestination || nestedDestinations.length > 0 || suggestedParent) && (
+          {(parentDestination || nestedDestinations.length > 0) && (
             <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
               <p className="text-[11px] uppercase tracking-wider text-gray-400">Location Nesting</p>
               {parentDestination && (
                 <div className="text-[13px] text-gray-600 dark:text-gray-400">
                   <span className="text-gray-400">Located inside:</span> {parentDestination.name}
-                </div>
-              )}
-              {!parentDestination && suggestedParent && (
-                <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30">
-                  <p className="text-[11px] uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-2">Detected from address</p>
-                  <div className="flex items-center justify-between">
-                    <p className="text-[13px] text-gray-700 dark:text-gray-300">
-                      Located in <span className="font-medium">{suggestedParent.name}</span>?
-                    </p>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        const supabase = createClient();
-                        await supabase
-                          .from('destinations')
-                          .update({ parent_destination_id: suggestedParent.id })
-                          .eq('slug', destination.slug);
-                        setParentDestination(suggestedParent);
-                        setSuggestedParent(null);
-                      }}
-                      className="px-3 py-1 rounded-md bg-amber-500 text-white text-[12px] font-medium hover:bg-amber-600 transition-colors"
-                    >
-                      Set Parent
-                    </button>
-                  </div>
                 </div>
               )}
               {nestedDestinations.length > 0 && (
