@@ -2,7 +2,7 @@
  * Agent Tools - Functions that agents can use autonomously
  */
 
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { Tool } from '../base-agent';
 
 /**

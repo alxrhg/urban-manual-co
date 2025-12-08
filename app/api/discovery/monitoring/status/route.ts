@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPerformanceMonitor } from '@/lib/discovery-engine/performance';
 import { getDiscoveryEngineCache } from '@/lib/discovery-engine/cache';
 import { getFeatureFlags, getABTestAssignment } from '@/lib/discovery-engine/feature-flags';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/errors';
 
 /**

@@ -3,7 +3,7 @@
  * Aggregates and provides real-time contextual data
  */
 
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 
 const getSupabase = async () => await createServerClient();
 

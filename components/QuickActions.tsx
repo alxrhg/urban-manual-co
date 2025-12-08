@@ -54,7 +54,7 @@ export const QuickActions = memo(function QuickActions({
     if (requiresAuth) {
       setShowLoginToast(true);
       setTimeout(() => setShowLoginToast(false), 2000);
-      openDrawer('login');
+      openDrawer('login-modal');
       return;
     }
 
@@ -68,7 +68,7 @@ export const QuickActions = memo(function QuickActions({
     if (requiresAuth) {
       setShowLoginToast(true);
       setTimeout(() => setShowLoginToast(false), 2000);
-      openDrawer('login');
+      openDrawer('login-modal');
       return;
     }
 
@@ -82,7 +82,7 @@ export const QuickActions = memo(function QuickActions({
     if (requiresAuth) {
       setShowLoginToast(true);
       setTimeout(() => setShowLoginToast(false), 2000);
-      openDrawer('login');
+      openDrawer('login-modal');
       return;
     }
 

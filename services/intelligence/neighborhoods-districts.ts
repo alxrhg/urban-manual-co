@@ -3,7 +3,7 @@
  * Handles neighborhood/district filtering, search, and discovery
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 export interface Neighborhood {
   name: string;

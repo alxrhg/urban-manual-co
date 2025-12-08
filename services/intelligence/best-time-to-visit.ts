@@ -3,7 +3,7 @@
  * Combines weather, crowd levels, and price forecasts to recommend optimal visit windows
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { forecastingService } from './forecasting';
 
 export interface TimeWindow {

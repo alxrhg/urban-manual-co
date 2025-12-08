@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { withErrorHandling } from '@/lib/errors';
 import { queryVectorIndex, VectorSearchResult } from '@/lib/upstash-vector';
 import { generateTextEmbedding } from '@/lib/ml/embeddings';

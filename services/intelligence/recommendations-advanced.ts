@@ -3,7 +3,7 @@
  * Hybrid approach: Collaborative Filtering + Content-Based + AI
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface RecommendationResult {

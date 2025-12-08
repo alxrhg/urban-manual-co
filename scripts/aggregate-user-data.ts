@@ -10,7 +10,7 @@
  *   tsx scripts/aggregate-user-data.ts
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 async function aggregateUserInteractions() {
   console.log('Starting user data aggregation...');

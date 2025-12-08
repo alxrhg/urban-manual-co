@@ -8,6 +8,7 @@ import React, { createContext, useContext, useState, useCallback, ReactNode, use
 export type DrawerType =
   | 'account'
   | 'login'
+  | 'login-modal'
   | 'chat'
   | 'destination'
   | 'trips'

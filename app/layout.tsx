@@ -11,6 +11,7 @@ import TripBuilderPanel from "@/components/trip/TripBuilderPanel";
 import TripIndicator from "@/components/trip/TripIndicator";
 import { IntelligentDrawerProvider, IntelligentDrawer } from "@/components/IntelligentDrawer";
 import { DrawerProvider } from "@/contexts/DrawerContext";
+import { ChristmasThemeProvider } from "@/contexts/ChristmasThemeContext";
 import { TRPCProvider } from "@/lib/trpc/provider";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { Toaster } from "@/components/ui/sonner";
@@ -118,6 +119,11 @@ export default function RootLayout({
         {/* Code font - only needed in admin/code sections */}
         <link
           href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+          rel="stylesheet"
+        />
+        {/* Gaegu font for Christmas theme */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Gaegu:wght@300;400;700&display=swap"
           rel="stylesheet"
         />
         
@@ -230,6 +236,7 @@ export default function RootLayout({
             enableSystem={true}
             storageKey="urban-manual-theme"
           >
+            <ChristmasThemeProvider>
             <SkipNavigation />
             <SplashScreen />
             <TooltipProvider>
@@ -267,6 +274,7 @@ export default function RootLayout({
             <GoogleAnalytics />
             <Analytics />
             <SpeedInsights />
+            </ChristmasThemeProvider>
           </ThemeProvider>
         </MyStatsig>
       </body>

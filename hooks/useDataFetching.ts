@@ -1,35 +1,29 @@
 /**
  * Data Fetching Hook
  *
- * Provides consistent data fetching patterns with:
- * - Loading states
- * - Error handling
- * - Caching
- * - Refetch capability
- * - Optimistic updates
+ * @deprecated This hook is deprecated. Use useQueryFetching from '@/hooks/useQueryFetching' instead,
+ * which provides the same functionality using TanStack Query for better stability, caching,
+ * and request deduplication.
+ *
+ * Migration example:
+ * ```tsx
+ * // Before (deprecated)
+ * import { useDataFetching, LoadingState } from '@/hooks/useDataFetching';
+ * const { data, isLoading } = useDataFetching(fetcher, { cacheKey: 'my-data' });
+ *
+ * // After (recommended)
+ * import { useQueryFetching } from '@/hooks/useQueryFetching';
+ * const { data, isLoading } = useQueryFetching(fetcher, { queryKey: ['my-data'] });
+ * ```
  */
 
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 
-/**
- * Loading state enum for consistent loading indicators
- */
-export enum LoadingState {
-  /** Initial state, no data fetched yet */
-  Idle = 'idle',
-  /** Currently fetching data */
-  Loading = 'loading',
-  /** Data successfully loaded */
-  Success = 'success',
-  /** Error occurred during fetch */
-  Error = 'error',
-  /** Refreshing data (already have stale data) */
-  Refreshing = 'refreshing',
-  /** Revalidating in background */
-  Revalidating = 'revalidating',
-}
+// Re-export LoadingState from loading-states for backward compatibility
+export { LoadingState } from '@/components/ui/loading-states';
+import { LoadingState } from '@/components/ui/loading-states';
 
 interface UseDataFetchingOptions<T> {
   /** Initial data */
@@ -79,14 +73,19 @@ interface UseDataFetchingResult<T> {
   reset: () => void;
 }
 
-// Simple in-memory cache
+// Simple in-memory cache (deprecated - TanStack Query handles caching automatically)
 const cache = new Map<string, { data: unknown; timestamp: number }>();
 
 /**
  * Hook for data fetching with consistent patterns
  *
+ * @deprecated Use useQueryFetching from '@/hooks/useQueryFetching' instead.
+ * This hook uses a custom in-memory cache that doesn't scale across distributed servers
+ * and lacks request deduplication. TanStack Query provides these features out of the box.
+ *
  * @example
  * ```tsx
+ * // DEPRECATED - use useQueryFetching instead
  * const { data, isLoading, error, fetch, refresh } = useDataFetching(
  *   async () => {
  *     const response = await fetch('/api/destinations');
@@ -250,6 +249,7 @@ export function useDataFetching<T>(
 
 /**
  * Helper to clear cache
+ * @deprecated Use queryClient.invalidateQueries() from TanStack Query instead
  */
 export function clearCache(key?: string) {
   if (key) {
@@ -261,6 +261,7 @@ export function clearCache(key?: string) {
 
 /**
  * Helper to get cache size
+ * @deprecated TanStack Query manages cache size automatically
  */
 export function getCacheSize(): number {
   return cache.size;

@@ -35,7 +35,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Destination } from '@/types/destination';
 import type { ItineraryItemNotes } from '@/types/trip';
 import { useAuth } from '@/contexts/AuthContext';
-import { stripHtmlTags } from '@/lib/stripHtmlTags';
+import { htmlToPlainText } from '@/lib/sanitize';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
 import { trackEvent } from '@/lib/analytics/track';
@@ -2603,7 +2603,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {destination.description && (
             <div>
               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                {stripHtmlTags(destination.description)}
+                {htmlToPlainText(destination.description)}
               </div>
             </div>
           )}
@@ -2613,7 +2613,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">From Google</h3>
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                {stripHtmlTags(enrichedData.editorial_summary)}
+                {htmlToPlainText(enrichedData.editorial_summary)}
               </p>
             </div>
           )}
@@ -3368,7 +3368,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
           {destination.description && (
             <div>
               <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                {stripHtmlTags(destination.description)}
+                {htmlToPlainText(destination.description)}
               </div>
             </div>
           )}
@@ -3378,7 +3378,7 @@ export function DestinationDrawer({ destination, isOpen, onClose, onSaveToggle, 
             <div className="border-t border-gray-200 dark:border-gray-800 pt-6 mt-6">
               <h3 className="text-xs font-bold uppercase mb-3 text-gray-500 dark:text-gray-400">From Google</h3>
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                {stripHtmlTags(enrichedData.editorial_summary)}
+                {htmlToPlainText(enrichedData.editorial_summary)}
               </p>
             </div>
           )}

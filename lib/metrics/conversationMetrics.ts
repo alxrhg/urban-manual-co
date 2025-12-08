@@ -3,7 +3,7 @@
  * Tracks conversation quality, clarifying questions, and suggestion acceptance
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 export interface ConversationMetric {
   userId?: string;

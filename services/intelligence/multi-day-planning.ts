@@ -3,7 +3,7 @@
  * Enhanced multi-day planning with route optimization and budget awareness
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { itineraryIntelligenceService, Itinerary } from '@/services/intelligence/itinerary';
 import { realtimeIntelligenceService } from '@/services/realtime/realtime-intelligence';
 

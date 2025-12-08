@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { fetchRedditTrends } from '@/lib/reddit-trends';
 import { fetchNewsTrends, fetchGNewsTrends } from '@/lib/news-trends';
 import { fetchEventbriteTrends } from '@/lib/eventbrite-trends';

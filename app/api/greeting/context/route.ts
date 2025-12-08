@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { fetchGreetingContext } from '@/lib/greetings/context-fetcher';
 
 // Mark route as dynamic since it uses searchParams

@@ -3,7 +3,7 @@
  * Manages destination relationships and similarity networks
  */
 
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface DestinationRelationship {

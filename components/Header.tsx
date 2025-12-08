@@ -8,17 +8,21 @@ import { createClient } from "@/lib/supabase/client";
 import { useDrawer } from "@/contexts/DrawerContext";
 import { ChatDrawer } from "@/components/ChatDrawer";
 import { LoginDrawer } from "@/components/LoginDrawer";
+import { LoginModal } from "@/components/LoginModal";
 import { CommandPalette } from "@/components/CommandPalette";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { ChristmasTree } from "@/components/ChristmasTree";
+import { useChristmasTheme } from "@/contexts/ChristmasThemeContext";
 
 export function Header() {
   const router = useRouter();
   const { user } = useAuth();
   const { openDrawer, isDrawerOpen, closeDrawer } = useDrawer();
+  const { isChristmasMode } = useChristmasTheme();
   const [buildVersion, setBuildVersion] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
@@ -137,15 +141,48 @@ export function Header() {
               aria-label="Open account drawer"
             >
               {avatarUrl ? (
-                <span className="w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                <span className="relative w-6 h-6 rounded-full border border-white/20 dark:border-black/10 bg-gray-100 dark:bg-gray-800 overflow-visible">
                   <img
                     src={avatarUrl}
                     alt="Profile"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover rounded-full"
                   />
+                  {isChristmasMode && (
+                    <svg
+                      className="absolute -top-3 -left-1 w-5 h-5 -rotate-12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 2L4 14H20L12 2Z" fill="#C41E3A" />
+                      <path d="M12 2L4 14H20L12 2Z" fill="url(#hat-gradient)" />
+                      <ellipse cx="12" cy="14" rx="9" ry="2" fill="#FFFFFF" />
+                      <circle cx="12" cy="2" r="2" fill="#FFFFFF" />
+                      <defs>
+                        <linearGradient id="hat-gradient" x1="12" y1="2" x2="12" y2="14" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#E63946" />
+                          <stop offset="1" stopColor="#9A1C2B" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  )}
                 </span>
               ) : (
-                <User className="w-4 h-4" />
+                <span className="relative">
+                  <User className="w-4 h-4" />
+                  {isChristmasMode && (
+                    <svg
+                      className="absolute -top-3 -left-2 w-4 h-4 -rotate-12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 2L4 14H20L12 2Z" fill="#C41E3A" />
+                      <ellipse cx="12" cy="14" rx="9" ry="2" fill="#FFFFFF" />
+                      <circle cx="12" cy="2" r="2" fill="#FFFFFF" />
+                    </svg>
+                  )}
+                </span>
               )}
               <span>Account</span>
             </button>
@@ -194,6 +231,7 @@ export function Header() {
           </button>
 
           <div className="flex items-center gap-2">
+            <ChristmasTree />
             <CommandPalette />
             {actionButtons}
           </div>
@@ -210,6 +248,14 @@ export function Header() {
       {/* Login Drawer - Only render when open */}
       {isDrawerOpen('login') && (
         <LoginDrawer
+          isOpen={true}
+          onClose={closeDrawer}
+        />
+      )}
+
+      {/* Login Modal - Centered on-page modal for auth prompts */}
+      {isDrawerOpen('login-modal') && (
+        <LoginModal
           isOpen={true}
           onClose={closeDrawer}
         />

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { multiDayTripPlanningService } from '@/services/intelligence/multi-day-planning';
 import { withErrorHandling, createValidationError } from '@/lib/errors';
 

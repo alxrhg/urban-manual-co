@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { Destination } from '@/types/destination';
 
 export interface UserBehaviorProfile {
