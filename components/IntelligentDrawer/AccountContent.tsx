@@ -288,7 +288,7 @@ function DarkModeToggle() {
 const AccountContent = memo(function AccountContent() {
   const router = useRouter();
   const { user, signOut } = useAuth();
-  const { close, navigate, openDestinationWithTrip } = useIntelligentDrawer();
+  const { close, navigate, openDestinationWithTrip, openTripSelector, openTrip } = useIntelligentDrawer();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [stats, setStats] = useState<UserStats>({
@@ -449,9 +449,9 @@ const AccountContent = memo(function AccountContent() {
 
   const handleOpenTrip = useCallback(() => {
     if (upcomingTrip?.id) {
-      handleNavigate(`/trips/${upcomingTrip.id}`);
+      openTrip(upcomingTrip.id);
     }
-  }, [upcomingTrip, handleNavigate]);
+  }, [upcomingTrip, openTrip]);
 
   const displayUsername = username || user?.email?.split('@')[0] || 'User';
 
@@ -602,7 +602,7 @@ const AccountContent = memo(function AccountContent() {
             icon={Compass}
             count={stats.trips}
             label="Trips"
-            onClick={() => handleNavigate('/trips')}
+            onClick={openTripSelector}
           />
         </div>
       </div>

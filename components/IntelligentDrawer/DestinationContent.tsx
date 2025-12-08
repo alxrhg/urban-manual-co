@@ -225,11 +225,9 @@ const DestinationContent = memo(function DestinationContent({
   }, [destination]);
 
   const handleDirections = useCallback(() => {
-    if (!destination.latitude || !destination.longitude) return;
-    window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${destination.latitude},${destination.longitude}`,
-      '_blank'
-    );
+    // Use Apple Maps for directions
+    const query = encodeURIComponent(`${destination.name} ${destination.city || ''}`);
+    window.open(`https://maps.apple.com/?q=${query}`, '_blank');
   }, [destination]);
 
   const handleSave = useCallback(async () => {
@@ -531,7 +529,7 @@ const DestinationContent = memo(function DestinationContent({
         {destination.latitude && destination.longitude && (
           <div className="mt-6">
             <a
-              href={destination.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
+              href={`https://maps.apple.com/?q=${encodeURIComponent(destination.name + ' ' + (destination.city || ''))}`}
               target="_blank"
               rel="noopener noreferrer"
               className="block relative aspect-[2/1] rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800"
