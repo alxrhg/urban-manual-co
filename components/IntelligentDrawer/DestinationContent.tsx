@@ -786,10 +786,10 @@ const DestinationContent = memo(function DestinationContent({
     loadUserContext();
   }, [user, destination?.slug, enrichedData?.architect_obj]);
 
-  // Parse opening hours with smart analysis
+  // Parse opening hours with smart analysis - use destination's local time
   const openingHours = enrichedData?.opening_hours?.weekday_text || [];
-  const todayHours = getTodayHours(openingHours);
-  const hoursAnalysis = analyzeHours(openingHours);
+  const todayHours = getTodayHours(openingHours, enrichedData?.utc_offset);
+  const hoursAnalysis = analyzeHours(openingHours, enrichedData?.utc_offset);
   const isOpenNow = hoursAnalysis.isOpen;
   const bestTimeHint = getBestTimeHint(categoryType, openingHours, enrichedData?.utc_offset);
 
@@ -1687,12 +1687,15 @@ const DestinationContent = memo(function DestinationContent({
 });
 
 /**
- * Get today's hours string
+ * Get today's hours string - uses destination's local time
  */
-function getTodayHours(hours: string[]): string | null {
+function getTodayHours(hours: string[], utcOffsetMinutes?: number | null): string | null {
   if (!hours || hours.length === 0) return null;
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const today = dayNames[new Date().getDay()];
+
+  // Use destination's local day, not user's
+  const { dayOfWeek } = getDestinationLocalTime(utcOffsetMinutes);
+  const today = dayNames[dayOfWeek];
   return hours.find(h => h.startsWith(today)) || null;
 }
 
@@ -1738,8 +1741,9 @@ interface SmartHoursResult {
 
 /**
  * Smart hours analysis - returns human-friendly status
+ * Uses destination's local time when utcOffsetMinutes is provided
  */
-function analyzeHours(hours: string[]): SmartHoursResult {
+function analyzeHours(hours: string[], utcOffsetMinutes?: number | null): SmartHoursResult {
   const defaultResult: SmartHoursResult = {
     isOpen: null,
     status: '',
@@ -1749,14 +1753,14 @@ function analyzeHours(hours: string[]): SmartHoursResult {
 
   if (!hours || hours.length === 0) return defaultResult;
 
-  const todayHours = getTodayHours(hours);
+  const todayHours = getTodayHours(hours, utcOffsetMinutes);
   if (!todayHours) return defaultResult;
 
   // Check if closed today
   if (todayHours.toLowerCase().includes('closed')) {
     // Find next open day
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const todayIndex = new Date().getDay();
+    const { dayOfWeek: todayIndex } = getDestinationLocalTime(utcOffsetMinutes);
 
     for (let i = 1; i <= 7; i++) {
       const nextDayIndex = (todayIndex + i) % 7;
@@ -1778,8 +1782,16 @@ function analyzeHours(hours: string[]): SmartHoursResult {
   const range = parseHoursRange(todayHours);
   if (!range) return { ...defaultResult, isOpen: true, status: 'Open', category: 'open' };
 
+  // Use destination's local time, not user's
   const now = new Date();
-  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  let currentMinutes: number;
+  if (utcOffsetMinutes != null) {
+    const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+    const localTime = new Date(utcTime + (utcOffsetMinutes * 60000));
+    currentMinutes = localTime.getHours() * 60 + localTime.getMinutes();
+  } else {
+    currentMinutes = now.getHours() * 60 + now.getMinutes();
+  }
 
   // Check if currently open
   if (currentMinutes >= range.open && currentMinutes < range.close) {
