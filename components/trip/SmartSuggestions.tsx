@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import { Sparkles, Loader2, RefreshCw, Plus, Send } from 'lucide-react';
+import { Plus, MapPin, Loader2 } from 'lucide-react';
 
 interface TripDay {
   dayNumber: number;
@@ -25,6 +25,7 @@ interface TripDay {
 interface LocalSuggestion {
   id: string;
   text: string;
+  subtext?: string;
   priority: number;
   action?: {
     type: 'add_place' | 'add_category';
@@ -71,8 +72,10 @@ function getTimeSlot(time: string | null | undefined): TimeSlot | null {
 }
 
 /**
- * SmartSuggestions - Unified suggestions for improving a trip
- * Combines local analysis with AI-powered recommendations
+ * SmartSuggestions - Subtle inline suggestions for trip gaps
+ *
+ * Philosophy: Intelligence works automatically and appears naturally.
+ * No AI branding, no explicit prompts - just helpful hints that feel native.
  */
 export default function SmartSuggestions({
   days,
@@ -80,23 +83,17 @@ export default function SmartSuggestions({
   selectedDayNumber = 1,
   onAddPlace,
   onAddAISuggestion,
-  onAddFromNL,
   className = '',
 }: SmartSuggestionsProps) {
   const [aiSuggestions, setAISuggestions] = useState<AISuggestion[]>([]);
-  const [isLoadingAI, setIsLoadingAI] = useState(false);
-  const [hasLoadedAI, setHasLoadedAI] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
-  // Natural language input state
-  const [nlInput, setNlInput] = useState('');
-  const [isProcessingNL, setIsProcessingNL] = useState(false);
-  const [nlResult, setNlResult] = useState<string | null>(null);
-
-  // Fetch AI suggestions automatically when destination is set
-  const fetchAISuggestions = useCallback(async () => {
+  // Silently fetch suggestions in background when destination is set
+  const fetchSuggestions = useCallback(async () => {
     if (!destination || days.length === 0) return;
 
-    setIsLoadingAI(true);
+    setIsLoading(true);
     try {
       const allItems = days.flatMap(d => d.items);
       const existingItemsForAPI = allItems.map(item => ({
@@ -119,77 +116,25 @@ export default function SmartSuggestions({
 
       if (response.ok) {
         const result = await response.json();
-        setAISuggestions(result.suggestions?.slice(0, 4) || []);
-        setHasLoadedAI(true);
+        // Only show top 2 - subtle, not overwhelming
+        setAISuggestions(result.suggestions?.slice(0, 2) || []);
+        setHasLoaded(true);
       }
-    } catch (error) {
-      console.error('Failed to fetch AI suggestions:', error);
+    } catch {
+      // Fail silently - suggestions are optional
     } finally {
-      setIsLoadingAI(false);
+      setIsLoading(false);
     }
   }, [destination, days]);
 
-  // Auto-fetch on mount if destination exists
+  // Auto-fetch once on mount (silent, no user action needed)
   useEffect(() => {
-    if (destination && days.length > 0 && !hasLoadedAI) {
-      fetchAISuggestions();
+    if (destination && days.length > 0 && !hasLoaded) {
+      fetchSuggestions();
     }
-  }, [destination, days.length, hasLoadedAI, fetchAISuggestions]);
+  }, [destination, days.length, hasLoaded, fetchSuggestions]);
 
-  // Process natural language input
-  const processNLInput = useCallback(async () => {
-    if (!nlInput.trim() || !destination) return;
-
-    setIsProcessingNL(true);
-    setNlResult(null);
-
-    try {
-      const response = await fetch('/api/intelligence/natural-language', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: nlInput,
-          city: destination,
-          tripDays: days.length,
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-
-        if (result.destination && onAddFromNL) {
-          setNlResult(`Adding: ${result.destination.name}`);
-          await onAddFromNL(
-            result.destination,
-            result.dayNumber || selectedDayNumber,
-            result.time
-          );
-          setNlInput('');
-          setNlResult(null);
-        } else if (result.message) {
-          setNlResult(result.message);
-        } else {
-          setNlResult('No results found');
-        }
-      } else {
-        setNlResult('Failed to process');
-      }
-    } catch (error) {
-      console.error('NL processing error:', error);
-      setNlResult('Something went wrong');
-    } finally {
-      setIsProcessingNL(false);
-    }
-  }, [nlInput, destination, days.length, selectedDayNumber, onAddFromNL]);
-
-  const handleNLKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      processNLInput();
-    }
-  };
-
-  // Local suggestions (fast, no API)
+  // Local analysis (instant, no API)
   const localSuggestions = useMemo(() => {
     const result: LocalSuggestion[] = [];
     const allItems = days.flatMap(d => d.items);
@@ -228,11 +173,12 @@ export default function SmartSuggestions({
       cat.includes('bar') || cat.includes('cocktail') || cat.includes('pub') || cat.includes('nightlife')
     );
 
-    // Suggestions based on analysis
-    if (!hasBreakfast) {
+    // Only add genuinely useful suggestions (silence is golden)
+    if (!hasBreakfast && allItems.length >= 2) {
       result.push({
         id: 'breakfast',
-        text: 'Add a morning cafe',
+        text: 'Morning cafe',
+        subtext: 'Starts the day right',
         priority: 10,
         action: { type: 'add_category', dayNumber: 1, category: 'cafe' },
       });
@@ -243,7 +189,8 @@ export default function SmartSuggestions({
       if (day.items.length > 0 && !slots.has('afternoon') && !hasMuseum) {
         result.push({
           id: `museum-day-${day.dayNumber}`,
-          text: `Add museum for Day ${day.dayNumber}`,
+          text: 'Afternoon activity',
+          subtext: `Day ${day.dayNumber} has a gap`,
           priority: 8,
           action: { type: 'add_category', dayNumber: day.dayNumber, category: 'museum' },
         });
@@ -251,181 +198,113 @@ export default function SmartSuggestions({
       }
     }
 
-    if (!hasDinner && allItems.length >= 2) {
+    if (!hasDinner && allItems.length >= 3) {
       result.push({
         id: 'dinner',
-        text: 'Add dinner reservation',
+        text: 'Dinner spot',
+        subtext: 'Evening open',
         priority: 9,
         action: { type: 'add_category', dayNumber: 1, category: 'restaurant' },
       });
     }
 
-    if (hasDinner && !hasBars && allItems.length >= 3) {
+    if (hasDinner && !hasBars && allItems.length >= 4) {
       result.push({
         id: 'nightlife',
-        text: 'Add a cocktail bar',
+        text: 'After dinner',
+        subtext: 'Cocktail bar nearby',
         priority: 5,
         action: { type: 'add_category', category: 'bar' },
       });
     }
 
-    for (const day of days) {
-      if (day.items.length === 1) {
-        result.push({
-          id: `sparse-day-${day.dayNumber}`,
-          text: `Day ${day.dayNumber} needs more`,
-          priority: 7,
-          action: { type: 'add_place', dayNumber: day.dayNumber },
-        });
-        break;
-      }
-    }
-
     return result
       .sort((a, b) => b.priority - a.priority)
-      .slice(0, 3);
+      .slice(0, 2); // Max 2 local suggestions - keep it subtle
   }, [days]);
 
-  // Don't render if nothing to show
-  const hasContent = localSuggestions.length > 0 || aiSuggestions.length > 0 || isLoadingAI || destination;
-  if (!hasContent) {
+  // Calculate what to show
+  const hasSuggestions = localSuggestions.length > 0 || aiSuggestions.length > 0;
+
+  // Don't render anything if no suggestions and not loading
+  // Silence is golden - don't show empty states
+  if (!hasSuggestions && !isLoading) {
+    return null;
+  }
+
+  // While loading initially, show nothing (silent background load)
+  if (isLoading && !hasLoaded) {
     return null;
   }
 
   return (
-    <div className={`border border-gray-200 dark:border-gray-800 rounded-2xl p-5 ${className}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-medium text-[15px] text-gray-900 dark:text-white flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-gray-400" />
-          Ask AI
-        </h3>
-        {destination && hasLoadedAI && (
+    <div className={`${className}`}>
+      {/* Subtle inline suggestions - no headers, no AI branding */}
+      <div className="flex flex-wrap gap-2">
+        {/* Local gap suggestions as subtle pills */}
+        {localSuggestions.map((suggestion) => (
           <button
-            onClick={fetchAISuggestions}
-            disabled={isLoadingAI}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors disabled:opacity-50"
+            key={suggestion.id}
+            onClick={() => {
+              if (onAddPlace && suggestion.action) {
+                onAddPlace(
+                  suggestion.action.dayNumber || 1,
+                  suggestion.action.category
+                );
+              }
+            }}
+            className="group flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-gray-800 transition-all"
           >
-            {isLoadingAI ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
-            ) : (
-              <RefreshCw className="w-3 h-3" />
+            <Plus className="w-3 h-3 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300" />
+            <span className="text-[12px] text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white">
+              {suggestion.text}
+            </span>
+            {suggestion.subtext && (
+              <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                {suggestion.subtext}
+              </span>
             )}
           </button>
+        ))}
+
+        {/* Place suggestions appear as natural destination cards */}
+        {aiSuggestions.map((suggestion, index) => (
+          <button
+            key={`${suggestion.destination.slug}-${index}`}
+            onClick={() => onAddAISuggestion?.(suggestion)}
+            className="group flex items-center gap-2 px-2 py-1.5 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 border border-gray-200 dark:border-gray-800 transition-all"
+          >
+            {suggestion.destination.image_thumbnail ? (
+              <div className="w-6 h-6 rounded-md overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                <img
+                  src={suggestion.destination.image_thumbnail}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-6 h-6 rounded-md flex-shrink-0 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                <MapPin className="w-3 h-3 text-gray-400" />
+              </div>
+            )}
+            <div className="text-left">
+              <span className="text-[12px] text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                {suggestion.destination.name}
+              </span>
+              <span className="text-[10px] text-gray-400 dark:text-gray-500 ml-1.5">
+                Day {suggestion.day}
+              </span>
+            </div>
+          </button>
+        ))}
+
+        {/* Loading indicator - very subtle */}
+        {isLoading && (
+          <div className="flex items-center gap-1.5 px-3 py-1.5">
+            <Loader2 className="w-3 h-3 animate-spin text-gray-300" />
+          </div>
         )}
       </div>
-
-      {/* Natural Language Input */}
-      {destination && (
-        <div className="mb-4">
-          <div className="relative">
-            <input
-              type="text"
-              value={nlInput}
-              onChange={(e) => setNlInput(e.target.value)}
-              onKeyDown={handleNLKeyDown}
-              placeholder={`"Add dinner near the Eiffel Tower..."`}
-              disabled={isProcessingNL}
-              className="w-full px-3 py-2.5 pr-10 text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 dark:focus:ring-gray-700 disabled:opacity-50"
-            />
-            <button
-              onClick={processNLInput}
-              disabled={!nlInput.trim() || isProcessingNL}
-              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isProcessingNL ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-            </button>
-          </div>
-          {nlResult && (
-            <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-              {nlResult}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Loading state */}
-      {isLoadingAI && aiSuggestions.length === 0 && (
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
-          <span className="ml-2 text-xs text-gray-500">Analyzing your trip...</span>
-        </div>
-      )}
-
-      {/* Suggestions list */}
-      {!isLoadingAI || aiSuggestions.length > 0 ? (
-        <div className="space-y-2">
-          {/* Quick text suggestions (local) */}
-          {localSuggestions.map((suggestion) => (
-            <button
-              key={suggestion.id}
-              onClick={() => {
-                if (onAddPlace && suggestion.action) {
-                  onAddPlace(
-                    suggestion.action.dayNumber || 1,
-                    suggestion.action.category
-                  );
-                }
-              }}
-              className="w-full flex items-center gap-3 text-left group hover:bg-gray-50 dark:hover:bg-gray-800/50 px-2 py-2 -mx-2 rounded-lg transition-colors"
-            >
-              <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-                <Plus className="w-4 h-4 text-gray-400" />
-              </div>
-              <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">
-                {suggestion.text}
-              </span>
-            </button>
-          ))}
-
-          {/* AI place suggestions */}
-          {aiSuggestions.map((suggestion, index) => (
-            <button
-              key={`${suggestion.destination.slug}-${index}`}
-              onClick={() => onAddAISuggestion?.(suggestion)}
-              className="w-full flex items-center gap-3 text-left group hover:bg-gray-50 dark:hover:bg-gray-800/50 px-2 py-2 -mx-2 rounded-lg transition-colors"
-            >
-              {suggestion.destination.image_thumbnail ? (
-                <div className="w-8 h-8 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">
-                  <img
-                    src={suggestion.destination.image_thumbnail}
-                    alt={suggestion.destination.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-8 h-8 rounded-lg flex-shrink-0 bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                  <Sparkles className="w-3.5 h-3.5 text-gray-400" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-900 dark:text-white truncate group-hover:text-gray-900 dark:group-hover:text-white">
-                    {suggestion.destination.name}
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded flex-shrink-0">
-                    Day {suggestion.day}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
-                  {suggestion.destination.category} · {suggestion.startTime}
-                </p>
-              </div>
-            </button>
-          ))}
-
-          {/* Empty state */}
-          {localSuggestions.length === 0 && aiSuggestions.length === 0 && !isLoadingAI && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 py-2 text-center">
-              Your trip looks well-planned
-            </p>
-          )}
-        </div>
-      ) : null}
     </div>
   );
 }

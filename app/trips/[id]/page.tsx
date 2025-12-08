@@ -2,30 +2,26 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route } from 'lucide-react';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
-import { parseDestinations, parseTripNotes, stringifyTripNotes, type TripNotes } from '@/types/trip';
+import { parseDestinations, stringifyDestinations } from '@/types/trip';
 import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
+import { PageLoader } from '@/components/LoadingStates';
+import { createClient } from '@/lib/supabase/client';
 import type { Destination } from '@/types/destination';
 
-// Trip components
-import TripHeader, { type AddItemType } from '@/components/trip/TripHeader';
-import { ItineraryViewRedesign } from '@/components/trip/itinerary';
-import TravelAISidebar from '@/components/trip/TravelAISidebar';
-import MapSidebarCard from '@/components/trip/MapSidebarCard';
-import FullscreenMapOverlay from '@/components/trip/FullscreenMapOverlay';
-import TripMapView from '@/components/trips/TripMapView';
-
-// Existing components
-import { PageLoader } from '@/components/LoadingStates';
-import AddPlaceBox from '@/components/trip/AddPlaceBox';
-import TripSettingsBox from '@/components/trip/TripSettingsBox';
-import DestinationBox from '@/components/trip/DestinationBox';
-import CompanionPanel from '@/components/trip/CompanionPanel';
-import TripNotesEditor from '@/components/trips/TripNotesEditor';
-
 /**
- * TripPage - Trip detail page with itinerary view
+ * TripPage - Completely rethought
+ *
+ * Philosophy:
+ * - No sidebars - everything inline
+ * - No buttons - things just work
+ * - No forms - just type and select
+ * - No modes - edit is default
  */
 export default function TripPage() {
   const params = useParams();
@@ -33,22 +29,14 @@ export default function TripPage() {
   const tripId = params?.id as string;
   const { user } = useAuth();
 
-  // Trip Editor Hook
   const {
     trip,
     days,
     loading,
-    saving,
     updateTrip,
     reorderItems,
-    addPlace,
-    addFlight,
-    addTrain,
-    addHotel,
-    addActivity,
     removeItem,
     updateItemTime,
-    updateItemDuration,
     updateItemNotes,
     updateItem,
     moveItemToDay,
@@ -59,39 +47,29 @@ export default function TripPage() {
     onError: (error) => console.error('Trip editor error:', error),
   });
 
+  // Expanded states
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
+  const [showTripNotes, setShowTripNotes] = useState(false);
+
   // Parse destinations
   const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
   const primaryCity = destinations[0] || '';
 
-  // UI State
-  const [activeContentTab, setActiveContentTab] = useState<'itinerary' | 'flights' | 'hotels' | 'notes'>('itinerary');
-  const [selectedDayNumber, setSelectedDayNumber] = useState(1);
-  const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
-  const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
-  const [showTripSettings, setShowTripSettings] = useState(false);
-  const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [showMapView, setShowMapView] = useState(false);
-  const [showFullscreenMap, setShowFullscreenMap] = useState(false);
-  const [showCompanionPanel, setShowCompanionPanel] = useState(false);
+  // Count total items
+  const totalItems = useMemo(() => {
+    return days.reduce((sum, day) => sum + day.items.length, 0);
+  }, [days]);
 
-  // Auto-fix items on wrong days based on their dates
+  // Auto-fix items on wrong days
   const hasAutoFixed = useRef(false);
   useEffect(() => {
-    // Wait for data to load and only run once
     if (loading || !trip?.start_date || days.length === 0 || hasAutoFixed.current) return;
+    const total = days.reduce((sum, day) => sum + day.items.length, 0);
+    if (total === 0) return;
 
-    // Count items to ensure we have data
-    const totalItems = days.reduce((sum, day) => sum + day.items.length, 0);
-    if (totalItems === 0) return;
-
-    // Check all items and move any that are on the wrong day
     for (const day of days) {
       for (const item of day.items) {
-        const checkInDate = item.parsedNotes?.checkInDate;
-        const departureDate = item.parsedNotes?.departureDate;
-        const dateToCheck = checkInDate || departureDate;
-
+        const dateToCheck = item.parsedNotes?.checkInDate || item.parsedNotes?.departureDate;
         if (dateToCheck) {
           const targetDay = calculateDayNumberFromDate(trip.start_date, trip.end_date, dateToCheck);
           if (targetDay !== null && targetDay !== day.dayNumber) {
@@ -103,63 +81,586 @@ export default function TripPage() {
     hasAutoFixed.current = true;
   }, [loading, trip?.start_date, trip?.end_date, days, moveItemToDay]);
 
-  // Calculate flight and hotel counts
-  const { flightCount, hotelCount } = useMemo(() => {
-    let flights = 0;
-    let hotels = 0;
-    for (const day of days) {
-      for (const item of day.items) {
-        if (item.parsedNotes?.type === 'flight') flights++;
-        if (item.parsedNotes?.type === 'hotel') hotels++;
-      }
-    }
-    return { flightCount: flights, hotelCount: hotels };
-  }, [days]);
-
-  // Get all flights for flights tab
-  const allFlights = useMemo(() => {
-    const flights: EnrichedItineraryItem[] = [];
-    for (const day of days) {
-      for (const item of day.items) {
-        if (item.parsedNotes?.type === 'flight') {
-          flights.push(item);
-        }
-      }
-    }
-    return flights;
-  }, [days]);
-
-  // Get all hotels for hotels tab
-  const allHotels = useMemo(() => {
-    const hotels: EnrichedItineraryItem[] = [];
-    for (const day of days) {
-      for (const item of day.items) {
-        if (item.parsedNotes?.type === 'hotel') {
-          hotels.push(item);
-        }
-      }
-    }
-    return hotels;
-  }, [days]);
-
-  // Handlers
-  const handleEditItem = useCallback((item: EnrichedItineraryItem) => {
-    setSelectedItem(item);
-    setShowAddPlaceBox(false);
-    setShowTripSettings(false);
+  // Toggle item expansion
+  const toggleItem = useCallback((itemId: string) => {
+    setExpandedItemId(prev => prev === itemId ? null : itemId);
   }, []);
 
-  const handleOptimizeDay = useCallback(async (dayNumber: number) => {
-    const day = days.find(d => d.dayNumber === dayNumber);
-    if (!day || day.items.length < 2) return;
+  // Handle trip deletion
+  const handleDelete = useCallback(async () => {
+    if (!user || !trip) return;
+    const supabase = createClient();
+    if (!supabase) return;
 
-    setOptimizingDay(dayNumber);
+    const { error } = await supabase
+      .from('trips')
+      .delete()
+      .eq('id', trip.id)
+      .eq('user_id', user.id);
+
+    if (!error) {
+      router.push('/trips');
+    }
+  }, [user, trip, router]);
+
+  if (loading) {
+    return (
+      <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950">
+        <div className="max-w-xl mx-auto"><PageLoader /></div>
+      </main>
+    );
+  }
+
+  if (!trip) {
+    return (
+      <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Trip not found</p>
+          <Link href="/trips" className="text-gray-900 dark:text-white hover:opacity-70">Back to trips</Link>
+        </div>
+      </main>
+    );
+  }
+
+  // Parse trip notes
+  const tripNotes = trip.notes || '';
+
+  return (
+    <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950">
+      <div className="max-w-xl mx-auto">
+        {/* Back link */}
+        <Link
+          href="/trips"
+          className="inline-flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-6"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Trips
+        </Link>
+
+        {/* Header - tap to edit */}
+        <TripHeader
+          trip={trip}
+          primaryCity={primaryCity}
+          totalItems={totalItems}
+          userId={user?.id}
+          onUpdate={updateTrip}
+          onDelete={handleDelete}
+        />
+
+        {/* Trip Notes - expandable */}
+        <div className="mt-4">
+          <button
+            onClick={() => setShowTripNotes(!showTripNotes)}
+            className="text-[12px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            {tripNotes ? 'View notes' : 'Add trip notes'}
+            <ChevronDown className={`inline w-3 h-3 ml-1 transition-transform ${showTripNotes ? 'rotate-180' : ''}`} />
+          </button>
+
+          <AnimatePresence>
+            {showTripNotes && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <TripNotesInline
+                  notes={tripNotes}
+                  onSave={(notes) => updateTrip({ notes })}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Days */}
+        <div className="mt-8 space-y-8">
+          {days.map((day) => (
+            <DaySection
+              key={day.dayNumber}
+              tripId={tripId}
+              dayNumber={day.dayNumber}
+              date={day.date ?? undefined}
+              items={day.items}
+              city={primaryCity}
+              tripStartDate={trip.start_date}
+              tripEndDate={trip.end_date}
+              expandedItemId={expandedItemId}
+              onToggleItem={toggleItem}
+              onReorder={(items) => reorderItems(day.dayNumber, items)}
+              onRemove={removeItem}
+              onUpdateItem={updateItem}
+              onUpdateTime={updateItemTime}
+              onRefresh={refresh}
+            />
+          ))}
+        </div>
+
+        {/* Empty state */}
+        {totalItems === 0 && days.length > 0 && (
+          <p className="text-center text-[13px] text-gray-400 mt-8">
+            Type in any day to add places, flights, hotels, or trains
+          </p>
+        )}
+      </div>
+    </main>
+  );
+}
+
+/**
+ * Trip header with inline editing - includes cover, destination, delete
+ */
+function TripHeader({
+  trip,
+  primaryCity,
+  totalItems,
+  userId,
+  onUpdate,
+  onDelete,
+}: {
+  trip: { id: string; title: string; start_date?: string | null; end_date?: string | null; destination?: string | null; cover_image?: string | null };
+  primaryCity: string;
+  totalItems: number;
+  userId?: string;
+  onUpdate: (updates: Record<string, unknown>) => void;
+  onDelete: () => void;
+}) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [title, setTitle] = useState(trip.title);
+  const [startDate, setStartDate] = useState(trip.start_date || '');
+  const [endDate, setEndDate] = useState(trip.end_date || '');
+  const [destination, setDestination] = useState(primaryCity);
+  const [coverImage, setCoverImage] = useState(trip.cover_image || '');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing && titleRef.current) {
+      titleRef.current.focus();
+      titleRef.current.select();
+    }
+  }, [isEditing]);
+
+  const handleSave = () => {
+    onUpdate({
+      title,
+      start_date: startDate || null,
+      end_date: endDate || null,
+      destination: destination || null,
+      cover_image: coverImage || null,
+    });
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) handleSave();
+    if (e.key === 'Escape') {
+      setTitle(trip.title);
+      setStartDate(trip.start_date || '');
+      setEndDate(trip.end_date || '');
+      setDestination(primaryCity);
+      setCoverImage(trip.cover_image || '');
+      setIsEditing(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+
+    if (!file.type.startsWith('image/')) return;
+    if (file.size > 5 * 1024 * 1024) return;
+
+    try {
+      setUploadingImage(true);
+      const supabase = createClient();
+      if (!supabase) return;
+
+      const ext = file.name.split('.').pop();
+      const filename = `${trip.id}-${Date.now()}.${ext}`;
+      const filePath = `trip-covers/${userId}/${filename}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('public')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('public')
+        .getPublicUrl(filePath);
+
+      if (urlData?.publicUrl) {
+        setCoverImage(urlData.publicUrl);
+      }
+    } catch (err) {
+      console.error('Upload error:', err);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // Format date display
+  const dateDisplay = useMemo(() => {
+    if (!trip.start_date) return 'No dates';
+    const start = new Date(trip.start_date);
+    const end = trip.end_date ? new Date(trip.end_date) : start;
+    return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+  }, [trip.start_date, trip.end_date]);
+
+  if (isEditing) {
+    return (
+      <div className="space-y-4">
+        {/* Cover image */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
+        {coverImage ? (
+          <div className="relative aspect-[3/1] rounded-xl overflow-hidden group">
+            <Image src={coverImage} alt="" fill className="object-cover" />
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3 py-1.5 bg-white/90 text-gray-900 text-xs font-medium rounded-full"
+              >
+                Change
+              </button>
+              <button
+                onClick={() => setCoverImage('')}
+                className="px-3 py-1.5 bg-gray-900/90 text-white text-xs font-medium rounded-full"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingImage}
+            className="w-full aspect-[4/1] border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl flex items-center justify-center gap-2 text-gray-400 hover:border-gray-300 hover:text-gray-500 transition-colors"
+          >
+            {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
+            <span className="text-xs">Add cover</span>
+          </button>
+        )}
+
+        {/* Title */}
+        <input
+          ref={titleRef}
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="w-full text-[22px] font-semibold text-gray-900 dark:text-white bg-transparent border-b border-gray-200 dark:border-gray-700 focus:border-gray-900 dark:focus:border-white outline-none pb-1"
+          placeholder="Trip name"
+        />
+
+        {/* Destination */}
+        <input
+          type="text"
+          value={destination}
+          onChange={(e) => setDestination(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="w-full text-[14px] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 outline-none"
+          placeholder="Destination city"
+        />
+
+        {/* Dates */}
+        <div className="flex gap-3">
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="flex-1 text-[13px] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 outline-none"
+          />
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            onKeyDown={handleKeyDown}
+            min={startDate}
+            className="flex-1 text-[13px] text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2 outline-none"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-2">
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 text-[13px] font-medium text-white dark:text-gray-900 bg-gray-900 dark:bg-white rounded-lg hover:opacity-90 transition-opacity"
+            >
+              Save
+            </button>
+            <button
+              onClick={() => {
+                setTitle(trip.title);
+                setStartDate(trip.start_date || '');
+                setEndDate(trip.end_date || '');
+                setDestination(primaryCity);
+                setCoverImage(trip.cover_image || '');
+                setIsEditing(false);
+                setShowDeleteConfirm(false);
+              }}
+              className="px-4 py-2 text-[13px] text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+
+          {/* Delete */}
+          {showDeleteConfirm ? (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-400">Delete trip?</span>
+              <button onClick={onDelete} className="text-[11px] text-red-500 font-medium">Yes</button>
+              <button onClick={() => setShowDeleteConfirm(false)} className="text-[11px] text-gray-500">No</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="text-[11px] text-gray-400 hover:text-red-500 transition-colors"
+            >
+              Delete trip
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div onClick={() => setIsEditing(true)} className="cursor-pointer group">
+      {/* Cover image */}
+      {trip.cover_image && (
+        <div className="aspect-[3/1] rounded-xl overflow-hidden mb-4 group-hover:opacity-90 transition-opacity">
+          <Image src={trip.cover_image} alt="" width={600} height={200} className="w-full h-full object-cover" />
+        </div>
+      )}
+
+      <h1 className="text-[22px] font-semibold text-gray-900 dark:text-white group-hover:opacity-70 transition-opacity">
+        {trip.title}
+      </h1>
+      <p className="text-[13px] text-gray-400 group-hover:opacity-70 transition-opacity">
+        {[primaryCity, dateDisplay, `${totalItems} ${totalItems === 1 ? 'place' : 'places'}`].filter(Boolean).join(' · ')}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Inline trip notes editor
+ */
+function TripNotesInline({ notes, onSave }: { notes: string; onSave: (notes: string) => void }) {
+  const [value, setValue] = useState(notes);
+  const [hasChanges, setHasChanges] = useState(false);
+
+  return (
+    <div className="mt-2 space-y-2">
+      <textarea
+        value={value}
+        onChange={(e) => { setValue(e.target.value); setHasChanges(e.target.value !== notes); }}
+        placeholder="Add notes about your trip..."
+        rows={3}
+        className="w-full px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg outline-none resize-none"
+      />
+      {hasChanges && (
+        <button
+          onClick={() => { onSave(value); setHasChanges(false); }}
+          className="text-[11px] font-medium text-gray-900 dark:text-white flex items-center gap-1"
+        >
+          <Check className="w-3 h-3" /> Save notes
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Day section with items and smart search
+ */
+function DaySection({
+  tripId,
+  dayNumber,
+  date,
+  items,
+  city,
+  tripStartDate,
+  tripEndDate,
+  expandedItemId,
+  onToggleItem,
+  onReorder,
+  onRemove,
+  onUpdateItem,
+  onUpdateTime,
+  onRefresh,
+}: {
+  tripId: string;
+  dayNumber: number;
+  date?: string;
+  items: EnrichedItineraryItem[];
+  city: string;
+  tripStartDate?: string | null;
+  tripEndDate?: string | null;
+  expandedItemId: string | null;
+  onToggleItem: (id: string) => void;
+  onReorder: (items: EnrichedItineraryItem[]) => void;
+  onRemove: (id: string) => void;
+  onUpdateItem: (id: string, updates: Record<string, unknown>) => void;
+  onUpdateTime: (id: string, time: string) => void;
+  onRefresh: () => void;
+}) {
+  const [orderedItems, setOrderedItems] = useState(items);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<Destination[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+  const [showTransportForm, setShowTransportForm] = useState<'flight' | 'hotel' | 'train' | null>(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    setOrderedItems(items);
+  }, [items]);
+
+  // Check if route could be optimized (items with coords not in optimal order)
+  const canOptimize = useMemo(() => {
+    if (items.length < 3) return false;
+    const withCoords = items.filter(i =>
+      (i.destination?.latitude && i.destination?.longitude) ||
+      (i.parsedNotes?.latitude && i.parsedNotes?.longitude)
+    );
+    return withCoords.length >= 3;
+  }, [items]);
+
+  // Smart search - detect transport keywords
+  useEffect(() => {
+    const q = searchQuery.trim().toLowerCase();
+
+    // Check for transport keywords
+    if (q === 'flight' || q === 'add flight' || q === '+flight') {
+      setShowTransportForm('flight');
+      setSearchResults([]);
+      return;
+    }
+    if (q === 'hotel' || q === 'add hotel' || q === '+hotel') {
+      setShowTransportForm('hotel');
+      setSearchResults([]);
+      return;
+    }
+    if (q === 'train' || q === 'add train' || q === '+train') {
+      setShowTransportForm('train');
+      setSearchResults([]);
+      return;
+    }
+
+    setShowTransportForm(null);
+
+    if (!q) {
+      setSearchResults([]);
+      return;
+    }
+
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+    searchTimeout.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}&city=${encodeURIComponent(city)}&limit=5`);
+        if (response.ok) {
+          const data = await response.json();
+          setSearchResults(data.results || data.destinations || []);
+        }
+      } catch (err) {
+        console.error('Search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    };
+  }, [searchQuery, city]);
+
+  // Add destination
+  const addDestination = async (destination: Destination) => {
+    setIsAdding(true);
+    try {
+      const existingTimes = items.map(i => i.time).filter(Boolean).sort();
+      let suggestedTime = '12:00';
+
+      if (existingTimes.length > 0) {
+        const lastTime = existingTimes[existingTimes.length - 1]!;
+        const [h, m] = lastTime.split(':').map(Number);
+        const newHour = Math.min(h + 2, 22);
+        suggestedTime = `${String(newHour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      }
+
+      await fetch(`/api/trips/${tripId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          destination_id: destination.id,
+          day_number: dayNumber,
+          time: suggestedTime,
+          title: destination.name,
+        }),
+      });
+
+      setSearchQuery('');
+      setSearchResults([]);
+      onRefresh();
+    } catch (err) {
+      console.error('Add error:', err);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  // Add transport/hotel
+  const addTransport = async (type: 'flight' | 'hotel' | 'train', data: Record<string, string>) => {
+    setIsAdding(true);
+    try {
+      const notes = JSON.stringify({ type, ...data });
+
+      await fetch(`/api/trips/${tripId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          day_number: dayNumber,
+          title: type === 'flight' ? `${data.from} → ${data.to}` : type === 'train' ? `${data.from} → ${data.to}` : data.name || 'Hotel',
+          notes,
+        }),
+      });
+
+      setSearchQuery('');
+      setShowTransportForm(null);
+      onRefresh();
+    } catch (err) {
+      console.error('Add error:', err);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  // Optimize route
+  const optimizeRoute = async () => {
+    if (!canOptimize) return;
+    setIsOptimizing(true);
     try {
       const response = await fetch('/api/intelligence/route-optimizer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: day.items.map(item => ({
+          items: items.map(item => ({
             id: item.id,
             title: item.title,
             latitude: item.destination?.latitude ?? item.parsedNotes?.latitude,
@@ -171,498 +672,514 @@ export default function TripPage() {
 
       if (response.ok) {
         const result = await response.json();
-        if (result.optimizedOrder && Array.isArray(result.optimizedOrder)) {
+        if (result.optimizedOrder?.length === items.length) {
           const orderedItems = result.optimizedOrder
-            .map((id: string) => day.items.find(item => item.id === id))
+            .map((id: string) => items.find(item => item.id === id))
             .filter(Boolean);
-          if (orderedItems.length === day.items.length) {
-            reorderItems(dayNumber, orderedItems);
-          }
+          onReorder(orderedItems);
         }
       }
     } catch (err) {
-      console.error('Failed to optimize day:', err);
+      console.error('Optimize error:', err);
     } finally {
-      setOptimizingDay(null);
+      setIsOptimizing(false);
     }
-  }, [days, reorderItems]);
+  };
 
-  const handleAddSuggestion = useCallback(async (suggestion: { category?: string; dayNumber?: number }) => {
-    if (!trip?.destination) return;
-
-    try {
-      const response = await fetch('/api/intelligence/smart-fill', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          city: primaryCity,
-          existingItems: [],
-          tripDays: days.length,
-          targetDay: suggestion.dayNumber || selectedDayNumber,
-          category: suggestion.category,
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        for (const s of result.suggestions || []) {
-          if (s.destination) {
-            await addPlace(s.destination, s.day || selectedDayNumber, s.startTime);
-          }
-        }
-        await refresh();
-      }
-    } catch (err) {
-      console.error('Failed to add suggestion:', err);
+  const handleReorderComplete = useCallback(() => {
+    if (JSON.stringify(orderedItems.map(i => i.id)) !== JSON.stringify(items.map(i => i.id))) {
+      onReorder(orderedItems);
     }
-  }, [primaryCity, days, selectedDayNumber, addPlace, refresh, trip?.destination]);
+  }, [orderedItems, items, onReorder]);
 
-  const handleAutoplan = useCallback(async () => {
-    await handleAddSuggestion({ dayNumber: selectedDayNumber });
-  }, [handleAddSuggestion, selectedDayNumber]);
-
-  // Handle adding a place from map search
-  const handleAddPlaceFromMap = useCallback(async (place: Partial<Destination>, dayNumber: number) => {
-    if (!place.name) return;
-
-    // Create a destination-like object from the map search result
-    const destination: Destination = {
-      slug: place.name.toLowerCase().replace(/\s+/g, '-'),
-      name: place.name,
-      city: place.city || primaryCity,
-      country: place.country,
-      category: place.category || 'attraction',
-      latitude: place.latitude,
-      longitude: place.longitude,
-    };
-
-    await addPlace(destination, dayNumber);
-  }, [addPlace, primaryCity]);
-
-  // Memoized lookup map for efficient marker click handling
-  // Maps both regular item IDs and flight compound IDs (item.id-departure, item.id-arrival)
-  const itemMap = useMemo(() => {
-    const map = new Map<string, { item: EnrichedItineraryItem; dayNumber: number }>();
-    for (const day of days) {
-      for (const item of day.items) {
-        if (item.parsedNotes?.type === 'flight') {
-          map.set(`${item.id}-departure`, { item, dayNumber: day.dayNumber });
-          map.set(`${item.id}-arrival`, { item, dayNumber: day.dayNumber });
-        } else {
-          map.set(item.id, { item, dayNumber: day.dayNumber });
-        }
-      }
-    }
-    return map;
-  }, [days]);
-
-  // Handle marker click from map - O(1) lookup using itemMap
-  const handleMapMarkerClick = useCallback((itemId: string) => {
-    const lookup = itemMap.get(itemId);
-    if (lookup) {
-      setSelectedDayNumber(lookup.dayNumber);
-      setSelectedItem(lookup.item);
-    }
-  }, [itemMap]);
-
-  // Handle add item from dropdown menu
-  const handleAddItemClick = useCallback((type: AddItemType) => {
-    setShowAddPlaceBox(true);
-    // The AddPlaceBox component will handle the different item types
-    // based on its UI - user can switch between tabs for different types
-  }, []);
-
-  // Handle item updates with automatic day move when dates change
-  const handleItemUpdate = useCallback((itemId: string, updates: Record<string, unknown>) => {
-    // Update the item notes
-    updateItem(itemId, updates);
-
-    // Find the item to get its current/new date
-    let item: EnrichedItineraryItem | undefined;
-    for (const day of days) {
-      item = day.items.find(i => i.id === itemId);
-      if (item) break;
-    }
-
-    // Get the date to check - prefer new value from updates, fall back to existing
-    const checkInDate = (updates.checkInDate as string | undefined) || item?.parsedNotes?.checkInDate;
-    const departureDate = (updates.departureDate as string | undefined) || item?.parsedNotes?.departureDate;
-    const dateToCheck = checkInDate || departureDate;
-
-    if (dateToCheck && trip?.start_date) {
-      const targetDay = calculateDayNumberFromDate(trip.start_date, trip.end_date, dateToCheck);
-      if (targetDay !== null) {
-        moveItemToDay(itemId, targetDay);
-      }
-    }
-  }, [updateItem, moveItemToDay, trip?.start_date, trip?.end_date, days]);
-
-  // Handle travel mode change between items
-  const handleUpdateTravelMode = useCallback((itemId: string, mode: 'walking' | 'driving' | 'transit') => {
-    updateItem(itemId, { travelModeToNext: mode });
-  }, [updateItem]);
-
-  // Loading state
-  if (loading) {
-    return (
-      <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950">
-        <div className="max-w-5xl mx-auto">
-          <PageLoader />
-        </div>
-      </main>
-    );
-  }
-
-  // Not found
-  if (!trip) {
-    return (
-      <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500 dark:text-gray-400 mb-4">Trip not found</p>
-          <button
-            onClick={() => router.push('/trips')}
-            className="text-gray-900 dark:text-white hover:opacity-70 transition-opacity"
-          >
-            Back to trips
-          </button>
-        </div>
-      </main>
-    );
-  }
+  const dateDisplay = date
+    ? new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    : null;
 
   return (
-    <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950">
-      <div className="max-w-5xl mx-auto">
-        {/* Header with Tabs */}
-        <TripHeader
-          title={trip.title}
-          trip={trip}
-          heroImage={trip.cover_image || undefined}
-          activeContentTab={activeContentTab}
-          onContentTabChange={setActiveContentTab}
-          flightCount={flightCount}
-          hotelCount={hotelCount}
-          days={days}
-          selectedDayNumber={selectedDayNumber}
-          onSelectDay={setSelectedDayNumber}
-          onSettingsClick={() => setShowTripSettings(true)}
-          onAutoplanClick={handleAutoplan}
-          onAddClick={() => setShowAddPlaceBox(true)}
-          onAddItemClick={handleAddItemClick}
-          onEditClick={() => setIsEditMode(!isEditMode)}
-          isEditMode={isEditMode}
-          onMapClick={() => setShowFullscreenMap(true)}
-        />
-
-        {/* Main Content */}
-        <div className="lg:flex lg:gap-6">
-          {/* Left Column - Content */}
-          <div className="flex-1 min-w-0">
-            {activeContentTab === 'itinerary' && (
-              <>
-                {/* Map View (shown when map button clicked) */}
-                {showMapView && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">Day {selectedDayNumber} Map</h3>
-                      <button
-                        onClick={() => setShowMapView(false)}
-                        className="text-xs text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                      >
-                        Hide map
-                      </button>
-                    </div>
-                    <TripMapView
-                      places={(days.find(d => d.dayNumber === selectedDayNumber)?.items || [])
-                        .filter((item) => item.parsedNotes?.type !== 'flight')
-                        .map((item, index) => ({
-                          id: item.id,
-                          name: item.title || 'Place',
-                          latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
-                          longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
-                          category: item.destination?.category || item.parsedNotes?.category,
-                          order: index + 1,
-                        }))}
-                      className="h-[300px] rounded-2xl"
-                    />
-                  </div>
-                )}
-
-                {/* Itinerary List - New Design with Visual Cards */}
-                <ItineraryViewRedesign
-                  days={days}
-                  selectedDayNumber={selectedDayNumber}
-                  onSelectDay={setSelectedDayNumber}
-                  onEditItem={handleEditItem}
-                  onAddItem={(dayNumber) => {
-                    setSelectedDayNumber(dayNumber);
-                    setShowAddPlaceBox(true);
-                  }}
-                  onOptimizeDay={handleOptimizeDay}
-                  onUpdateTravelMode={handleUpdateTravelMode}
-                  onRemoveItem={removeItem}
-                  onReorderItems={reorderItems}
-                  isOptimizing={optimizingDay !== null}
-                  isEditMode={isEditMode}
-                  activeItemId={selectedItem?.id}
-                  allHotels={allHotels}
-                  showDayNavigation={false}
-                />
-              </>
-            )}
-
-            {activeContentTab === 'flights' && (
-              <div className="space-y-3">
-                {allFlights.length === 0 ? (
-                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">No flights added yet</p>
-                    <button
-                      onClick={() => setShowAddPlaceBox(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
-                    >
-                      Add a flight
-                    </button>
-                  </div>
-                ) : (
-                  allFlights.map((flight) => (
-                    <div
-                      key={flight.id}
-                      onClick={() => handleEditItem(flight)}
-                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-all"
-                    >
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{flight.title}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {flight.parsedNotes?.from} → {flight.parsedNotes?.to}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {activeContentTab === 'hotels' && (
-              <div className="space-y-3">
-                {allHotels.length === 0 ? (
-                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">No hotels added yet</p>
-                    <button
-                      onClick={() => setShowAddPlaceBox(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
-                    >
-                      Add a hotel
-                    </button>
-                  </div>
-                ) : (
-                  allHotels.map((hotel) => (
-                    <div
-                      key={hotel.id}
-                      onClick={() => handleEditItem(hotel)}
-                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-all"
-                    >
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{hotel.title}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {hotel.parsedNotes?.checkInTime || 'Check-in time not set'} · {hotel.parsedNotes?.address || 'Address not set'}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {activeContentTab === 'notes' && (
-              <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <TripNotesEditor
-                  notes={parseTripNotes(trip?.notes ?? null)}
-                  onChange={(notes: TripNotes) => {
-                    updateTrip({ notes: stringifyTripNotes(notes) });
-                  }}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Right Column - Sidebar */}
-          <div className="hidden lg:block lg:w-80 lg:flex-shrink-0 space-y-4 mt-6 lg:mt-0">
-            {showTripSettings ? (
-              <TripSettingsBox
-                trip={trip}
-                onUpdate={updateTrip}
-                onDelete={() => router.push('/trips')}
-                onClose={() => setShowTripSettings(false)}
-              />
-            ) : showAddPlaceBox ? (
-              <AddPlaceBox
-                city={primaryCity}
-                dayNumber={selectedDayNumber}
-                dayItems={days.find(d => d.dayNumber === selectedDayNumber)?.items.map(item => ({
-                  id: item.id,
-                  title: item.title,
-                  time: item.time,
-                  parsedNotes: item.parsedNotes,
-                }))}
-                onSelect={(destination, time) => {
-                  addPlace(destination, selectedDayNumber, time);
-                  setShowAddPlaceBox(false);
-                }}
-                onAddFlight={(flightData) => {
-                  // Calculate correct day based on departure date
-                  const targetDay = flightData.departureDate
-                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, flightData.departureDate) ?? selectedDayNumber
-                    : selectedDayNumber;
-                  addFlight(flightData, targetDay);
-                  setShowAddPlaceBox(false);
-                }}
-                onAddTrain={(trainData) => {
-                  // Calculate correct day based on departure date
-                  const targetDay = trainData.departureDate
-                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, trainData.departureDate) ?? selectedDayNumber
-                    : selectedDayNumber;
-                  addTrain(trainData, targetDay);
-                  setShowAddPlaceBox(false);
-                }}
-                onAddHotel={(hotelData) => {
-                  // Calculate correct day based on check-in date
-                  const targetDay = hotelData.checkInDate
-                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, hotelData.checkInDate) ?? selectedDayNumber
-                    : selectedDayNumber;
-                  addHotel(hotelData, targetDay);
-                  setShowAddPlaceBox(false);
-                }}
-                onAddActivity={(activityData, time) => {
-                  addActivity(activityData, selectedDayNumber, time);
-                  setShowAddPlaceBox(false);
-                }}
-                onClose={() => setShowAddPlaceBox(false)}
-              />
-            ) : selectedItem ? (
-              <DestinationBox
-                item={selectedItem}
-                onClose={() => setSelectedItem(null)}
-                onTimeChange={updateItemTime}
-                onNotesChange={updateItemNotes}
-                onItemUpdate={handleItemUpdate}
-                onRemove={(itemId) => {
-                  removeItem(itemId);
-                  setSelectedItem(null);
-                }}
-              />
-            ) : (
-              <>
-                {/* Interactive Map */}
-                <MapSidebarCard
-                  days={days}
-                  selectedDayNumber={selectedDayNumber}
-                  tripDestination={primaryCity}
-                  onExpand={() => setShowFullscreenMap(true)}
-                  onMarkerClick={handleMapMarkerClick}
-                />
-
-                {/* Travel AI - Opens Companion Panel */}
-                <TravelAISidebar
-                  onAddSuggestion={handleAddSuggestion}
-                  onOpenChat={() => setShowCompanionPanel(true)}
-                />
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile Sidebar */}
-        <div className="lg:hidden mt-6 space-y-4">
-          {showTripSettings ? (
-            <TripSettingsBox
-              trip={trip}
-              onUpdate={updateTrip}
-              onDelete={() => router.push('/trips')}
-              onClose={() => setShowTripSettings(false)}
-            />
-          ) : showAddPlaceBox ? (
-            <AddPlaceBox
-              city={primaryCity}
-              dayNumber={selectedDayNumber}
-              dayItems={days.find(d => d.dayNumber === selectedDayNumber)?.items.map(item => ({
-                id: item.id,
-                title: item.title,
-                time: item.time,
-                parsedNotes: item.parsedNotes,
-              }))}
-              onSelect={(destination, time) => {
-                addPlace(destination, selectedDayNumber, time);
-                setShowAddPlaceBox(false);
-              }}
-              onAddFlight={(flightData) => {
-                // Calculate correct day based on departure date
-                const targetDay = flightData.departureDate
-                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, flightData.departureDate) ?? selectedDayNumber
-                  : selectedDayNumber;
-                addFlight(flightData, targetDay);
-                setShowAddPlaceBox(false);
-              }}
-              onAddTrain={(trainData) => {
-                // Calculate correct day based on departure date
-                const targetDay = trainData.departureDate
-                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, trainData.departureDate) ?? selectedDayNumber
-                  : selectedDayNumber;
-                addTrain(trainData, targetDay);
-                setShowAddPlaceBox(false);
-              }}
-              onAddHotel={(hotelData) => {
-                // Calculate correct day based on check-in date
-                const targetDay = hotelData.checkInDate
-                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, hotelData.checkInDate) ?? selectedDayNumber
-                  : selectedDayNumber;
-                addHotel(hotelData, targetDay);
-                setShowAddPlaceBox(false);
-              }}
-              onAddActivity={(activityData, time) => {
-                addActivity(activityData, selectedDayNumber, time);
-                setShowAddPlaceBox(false);
-              }}
-              onClose={() => setShowAddPlaceBox(false)}
-            />
-          ) : selectedItem ? (
-            <DestinationBox
-              item={selectedItem}
-              onClose={() => setSelectedItem(null)}
-              onTimeChange={updateItemTime}
-              onNotesChange={updateItemNotes}
-              onItemUpdate={handleItemUpdate}
-              onRemove={(itemId) => {
-                removeItem(itemId);
-                setSelectedItem(null);
-              }}
-            />
-          ) : (
-            <TravelAISidebar
-              onAddSuggestion={handleAddSuggestion}
-              onOpenChat={() => setShowCompanionPanel(true)}
-            />
+    <div>
+      {/* Day header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+            Day {dayNumber}
+          </span>
+          {dateDisplay && (
+            <span className="text-[11px] text-gray-300 dark:text-gray-600">{dateDisplay}</span>
           )}
         </div>
+
+        {/* Optimize prompt */}
+        {canOptimize && (
+          <button
+            onClick={optimizeRoute}
+            disabled={isOptimizing}
+            className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          >
+            {isOptimizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Route className="w-3 h-3" />}
+            Optimize route
+          </button>
+        )}
       </div>
 
-      {/* Companion Panel - AI Chat Sidebar */}
-      <CompanionPanel
-        isOpen={showCompanionPanel}
-        onClose={() => setShowCompanionPanel(false)}
-        tripTitle={trip.title}
-        destination={primaryCity}
-        days={days}
-        selectedDayNumber={selectedDayNumber}
-        onAddSuggestion={handleAddSuggestion}
-      />
+      {/* Items */}
+      {items.length > 0 && (
+        <Reorder.Group axis="y" values={orderedItems} onReorder={setOrderedItems} className="space-y-1">
+          {orderedItems.map((item, index) => (
+            <div key={item.id}>
+              <ItemRow
+                item={item}
+                isExpanded={expandedItemId === item.id}
+                onToggle={() => onToggleItem(item.id)}
+                onRemove={() => onRemove(item.id)}
+                onUpdateItem={onUpdateItem}
+                onUpdateTime={onUpdateTime}
+                onDragEnd={handleReorderComplete}
+              />
+              {index < orderedItems.length - 1 && (
+                <WalkingTime from={item} to={orderedItems[index + 1]} />
+              )}
+            </div>
+          ))}
+        </Reorder.Group>
+      )}
 
-      {/* Fullscreen Interactive Map */}
-      <FullscreenMapOverlay
-        isOpen={showFullscreenMap}
-        onClose={() => setShowFullscreenMap(false)}
-        days={days}
-        selectedDayNumber={selectedDayNumber}
-        activeItemId={selectedItem?.id}
-        tripDestination={primaryCity}
-        onMarkerClick={handleMapMarkerClick}
-        onAddPlace={handleAddPlaceFromMap}
-      />
-    </main>
+      {/* Search / Add */}
+      <div className="mt-3 relative">
+        <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+          {isSearching || isAdding ? (
+            <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+          ) : (
+            <Search className="w-4 h-4 text-gray-400" />
+          )}
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search or type: flight, hotel, train"
+            className="flex-1 bg-transparent text-[13px] text-gray-900 dark:text-white placeholder-gray-400 outline-none"
+          />
+          {searchQuery && (
+            <button onClick={() => { setSearchQuery(''); setSearchResults([]); setShowTransportForm(null); }}>
+              <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+            </button>
+          )}
+        </div>
+
+        {/* Transport form */}
+        <AnimatePresence>
+          {showTransportForm && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg p-3 z-10"
+            >
+              <TransportForm
+                type={showTransportForm}
+                onSubmit={(data) => addTransport(showTransportForm, data)}
+                onCancel={() => { setShowTransportForm(null); setSearchQuery(''); }}
+                isAdding={isAdding}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Search results */}
+        <AnimatePresence>
+          {searchResults.length > 0 && !showTransportForm && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-10"
+            >
+              {searchResults.map((destination) => (
+                <button
+                  key={destination.id}
+                  onClick={() => addDestination(destination)}
+                  disabled={isAdding}
+                  className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                >
+                  <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                    {destination.image_thumbnail || destination.image ? (
+                      <Image src={destination.image_thumbnail || destination.image || ''} alt="" width={32} height={32} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <MapPin className="w-3 h-3 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{destination.name}</p>
+                    <p className="text-[11px] text-gray-400 truncate">{destination.category} {destination.neighborhood && `· ${destination.neighborhood}`}</p>
+                  </div>
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
   );
+}
+
+/**
+ * Transport/Hotel inline form
+ */
+function TransportForm({
+  type,
+  onSubmit,
+  onCancel,
+  isAdding,
+}: {
+  type: 'flight' | 'hotel' | 'train';
+  onSubmit: (data: Record<string, string>) => void;
+  onCancel: () => void;
+  isAdding: boolean;
+}) {
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [name, setName] = useState('');
+  const [time, setTime] = useState('');
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
+
+  const handleSubmit = () => {
+    if (type === 'flight') {
+      onSubmit({ from, to, departureTime: time });
+    } else if (type === 'train') {
+      onSubmit({ from, to, departureTime: time });
+    } else {
+      onSubmit({ name, checkInTime: checkIn, checkOutTime: checkOut });
+    }
+  };
+
+  const canSubmit = type === 'hotel' ? name.trim() : (from.trim() && to.trim());
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-[12px] font-medium text-gray-900 dark:text-white capitalize">
+          Add {type}
+        </span>
+        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {type === 'hotel' ? (
+        <>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Hotel name"
+            className="w-full px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+            autoFocus
+          />
+          <div className="flex gap-2">
+            <input
+              type="time"
+              value={checkIn}
+              onChange={(e) => setCheckIn(e.target.value)}
+              placeholder="Check-in"
+              className="flex-1 px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+            />
+            <input
+              type="time"
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+              placeholder="Check-out"
+              className="flex-1 px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+            />
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              placeholder="From"
+              className="flex-1 px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              autoFocus
+            />
+            <input
+              type="text"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              placeholder="To"
+              className="flex-1 px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+            />
+          </div>
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            placeholder="Departure time"
+            className="w-full px-3 py-2 text-[13px] bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+          />
+        </>
+      )}
+
+      <button
+        onClick={handleSubmit}
+        disabled={!canSubmit || isAdding}
+        className="w-full py-2 text-[13px] font-medium text-white dark:text-gray-900 bg-gray-900 dark:bg-white rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+      >
+        {isAdding ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : `Add ${type}`}
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Item row
+ */
+function ItemRow({
+  item,
+  isExpanded,
+  onToggle,
+  onRemove,
+  onUpdateItem,
+  onUpdateTime,
+  onDragEnd,
+}: {
+  item: EnrichedItineraryItem;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onRemove: () => void;
+  onUpdateItem: (id: string, updates: Record<string, unknown>) => void;
+  onUpdateTime: (id: string, time: string) => void;
+  onDragEnd: () => void;
+}) {
+  const [isDragging, setIsDragging] = useState(false);
+  const itemType = item.parsedNotes?.type || 'place';
+
+  const getItemText = () => {
+    if (itemType === 'flight') {
+      const from = item.parsedNotes?.from || '?';
+      const to = item.parsedNotes?.to || '?';
+      const time = item.parsedNotes?.departureTime || '';
+      return { icon: '✈️', main: `${from} → ${to}`, sub: time };
+    }
+    if (itemType === 'hotel') {
+      const checkIn = item.parsedNotes?.checkInTime;
+      const checkOut = item.parsedNotes?.checkOutTime;
+      const times = [checkIn && `in ${checkIn}`, checkOut && `out ${checkOut}`].filter(Boolean).join(', ');
+      return { icon: '🏨', main: item.title || 'Hotel', sub: times || '' };
+    }
+    if (itemType === 'train') {
+      const from = item.parsedNotes?.from || '?';
+      const to = item.parsedNotes?.to || '?';
+      const time = item.parsedNotes?.departureTime || '';
+      return { icon: '🚂', main: `${from} → ${to}`, sub: time };
+    }
+    const time = item.time ? formatTime(item.time) : '';
+    const category = item.destination?.category || item.parsedNotes?.category || '';
+    return { icon: '', main: item.title || item.destination?.name || 'Place', sub: [time, category].filter(Boolean).join(' · ') };
+  };
+
+  const { icon, main, sub } = getItemText();
+  const image = item.destination?.image_thumbnail || item.destination?.image;
+
+  return (
+    <Reorder.Item
+      value={item}
+      onDragStart={() => setIsDragging(true)}
+      onDragEnd={() => { setIsDragging(false); onDragEnd(); }}
+      className={`cursor-grab active:cursor-grabbing ${isDragging ? 'z-10' : ''}`}
+    >
+      <div className={`rounded-lg transition-all ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}>
+        <div
+          onClick={onToggle}
+          className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 rounded-lg cursor-pointer group"
+        >
+          {icon ? (
+            <span className="text-base w-6 text-center flex-shrink-0">{icon}</span>
+          ) : image ? (
+            <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0">
+              <Image src={image} alt="" width={24} height={24} className="w-full h-full object-cover" />
+            </div>
+          ) : (
+            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          )}
+
+          <div className="flex-1 min-w-0">
+            <span className="text-[13px] text-gray-900 dark:text-white">{main}</span>
+            {sub && <span className="text-[11px] text-gray-400 ml-2">{sub}</span>}
+          </div>
+
+          <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+        </div>
+
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <ItemDetails
+                item={item}
+                itemType={itemType}
+                onUpdateItem={onUpdateItem}
+                onUpdateTime={onUpdateTime}
+                onRemove={onRemove}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </Reorder.Item>
+  );
+}
+
+/**
+ * Item details
+ */
+function ItemDetails({
+  item,
+  itemType,
+  onUpdateItem,
+  onUpdateTime,
+  onRemove,
+}: {
+  item: EnrichedItineraryItem;
+  itemType: string;
+  onUpdateItem: (id: string, updates: Record<string, unknown>) => void;
+  onUpdateTime: (id: string, time: string) => void;
+  onRemove: () => void;
+}) {
+  const [time, setTime] = useState(item.time || '');
+  const [notes, setNotes] = useState(item.parsedNotes?.notes || '');
+  const [checkInTime, setCheckInTime] = useState(item.parsedNotes?.checkInTime || '');
+  const [checkOutTime, setCheckOutTime] = useState(item.parsedNotes?.checkOutTime || '');
+  const [hasChanges, setHasChanges] = useState(false);
+
+  const handleSave = () => {
+    if (itemType === 'hotel') {
+      onUpdateItem(item.id, { checkInTime, checkOutTime, notes });
+    } else if (time !== item.time) {
+      onUpdateTime(item.id, time);
+    }
+    if (notes !== (item.parsedNotes?.notes || '')) {
+      onUpdateItem(item.id, { notes });
+    }
+    setHasChanges(false);
+  };
+
+  const destination = item.destination;
+
+  return (
+    <div className="px-3 pb-3 pt-1 space-y-3">
+      {destination?.image && itemType === 'place' && (
+        <div className="aspect-[2/1] rounded-lg overflow-hidden">
+          <Image src={destination.image} alt="" width={400} height={200} className="w-full h-full object-cover" />
+        </div>
+      )}
+
+      {itemType === 'hotel' ? (
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-in</label>
+            <input
+              type="time"
+              value={checkInTime}
+              onChange={(e) => { setCheckInTime(e.target.value); setHasChanges(true); }}
+              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-out</label>
+            <input
+              type="time"
+              value={checkOutTime}
+              onChange={(e) => { setCheckOutTime(e.target.value); setHasChanges(true); }}
+              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+            />
+          </div>
+        </div>
+      ) : itemType !== 'flight' && itemType !== 'train' ? (
+        <div>
+          <label className="text-[10px] text-gray-400 uppercase tracking-wide">Time</label>
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => { setTime(e.target.value); setHasChanges(true); }}
+            className="w-full mt-1 px-2 py-1.5 text-[13px] bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+          />
+        </div>
+      ) : null}
+
+      <div>
+        <label className="text-[10px] text-gray-400 uppercase tracking-wide">Notes</label>
+        <textarea
+          value={notes}
+          onChange={(e) => { setNotes(e.target.value); setHasChanges(true); }}
+          placeholder="Add a note..."
+          rows={2}
+          className="w-full mt-1 px-2 py-1.5 text-[13px] bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none resize-none"
+        />
+      </div>
+
+      <div className="flex items-center justify-between pt-1">
+        <button onClick={onRemove} className="text-[11px] text-gray-400 hover:text-red-500 transition-colors">
+          Remove
+        </button>
+        {hasChanges && (
+          <button onClick={handleSave} className="flex items-center gap-1 text-[11px] font-medium text-gray-900 dark:text-white">
+            <Check className="w-3 h-3" /> Save
+          </button>
+        )}
+      </div>
+
+      {destination?.formatted_address && (
+        <p className="text-[11px] text-gray-400 leading-relaxed">{destination.formatted_address}</p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Walking time
+ */
+function WalkingTime({ from, to }: { from: EnrichedItineraryItem; to: EnrichedItineraryItem }) {
+  const fromLat = from.destination?.latitude || from.parsedNotes?.latitude;
+  const fromLng = from.destination?.longitude || from.parsedNotes?.longitude;
+  const toLat = to.destination?.latitude || to.parsedNotes?.latitude;
+  const toLng = to.destination?.longitude || to.parsedNotes?.longitude;
+
+  if (!fromLat || !fromLng || !toLat || !toLng) return null;
+  if (from.parsedNotes?.type === 'flight' || to.parsedNotes?.type === 'flight') return null;
+  if (from.parsedNotes?.type === 'train' || to.parsedNotes?.type === 'train') return null;
+
+  const R = 6371;
+  const dLat = (toLat - fromLat) * Math.PI / 180;
+  const dLng = (toLng - fromLng) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const distance = R * c;
+  const walkingMinutes = Math.round(distance * 12);
+
+  if (walkingMinutes > 20 || walkingMinutes < 1) return null;
+
+  return (
+    <div className="flex justify-center py-0.5">
+      <span className="text-[10px] text-gray-300 dark:text-gray-600">{walkingMinutes} min walk</span>
+    </div>
+  );
+}
+
+function formatTime(time: string): string {
+  try {
+    return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  } catch {
+    return time;
+  }
 }

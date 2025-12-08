@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { ActivityType } from '@/types/trip';
 
 interface GapSuggestionProps {
@@ -253,10 +253,10 @@ export function CompactGapIndicator({
 }
 
 // ============================================================================
-// AI Suggestion Banner
+// Subtle Suggestion Hint (renamed from AISuggestionBanner)
 // ============================================================================
 
-interface AISuggestionBannerProps {
+interface SubtleSuggestionHintProps {
   message: string;
   suggestions?: SuggestionItem[];
   onAccept?: (suggestion: SuggestionItem) => void;
@@ -265,34 +265,33 @@ interface AISuggestionBannerProps {
 }
 
 /**
- * AISuggestionBanner - AI-powered suggestion for filling gaps
- * Shows personalized suggestions based on user preferences
+ * SubtleSuggestionHint - Natural inline suggestion
+ *
+ * Philosophy: Suggestions appear as natural part of the UI,
+ * no AI branding, no explicit "AI" labels - just helpful hints.
  */
-export function AISuggestionBanner({
+export function SubtleSuggestionHint({
   message,
   suggestions = [],
   onAccept,
   onDismiss,
   className = '',
-}: AISuggestionBannerProps) {
+}: SubtleSuggestionHintProps) {
   return (
-    <div className={`p-4 rounded-xl bg-gradient-to-r from-stone-50 to-gray-50 dark:from-gray-900/50 dark:to-gray-800/50 border border-stone-200/50 dark:border-gray-700/50 ${className}`}>
+    <div className={`p-3 rounded-xl bg-gray-50 dark:bg-white/5 ${className}`}>
       <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-          <Sparkles className="w-4 h-4 text-stone-500 dark:text-gray-400" />
-        </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-stone-900 dark:text-gray-100">{message}</p>
+          <p className="text-[12px] text-gray-600 dark:text-gray-400">{message}</p>
           {suggestions.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-2 flex flex-wrap gap-1.5">
               {suggestions.map((suggestion, index) => (
                 <button
                   key={index}
                   onClick={() => onAccept?.(suggestion)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white dark:bg-gray-800 border border-stone-200 dark:border-gray-700 hover:border-stone-300 dark:hover:border-gray-600 transition-colors text-xs"
+                  className="flex items-center gap-1 px-2 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-[11px]"
                 >
                   <span>{suggestion.emoji}</span>
-                  <span className="text-stone-700 dark:text-gray-300">{suggestion.label}</span>
+                  <span className="text-gray-600 dark:text-gray-400">{suggestion.label}</span>
                 </button>
               ))}
             </div>
@@ -301,13 +300,16 @@ export function AISuggestionBanner({
         {onDismiss && (
           <button
             onClick={onDismiss}
-            className="text-stone-400 hover:text-stone-600 dark:hover:text-gray-300 transition-colors"
+            className="text-gray-300 hover:text-gray-500 dark:hover:text-gray-400 transition-colors p-1"
           >
             <span className="sr-only">Dismiss</span>
-            <span className="text-lg">×</span>
+            <span className="text-sm">×</span>
           </button>
         )}
       </div>
     </div>
   );
 }
+
+// Keep the old name as an alias for backwards compatibility
+export const AISuggestionBanner = SubtleSuggestionHint;
