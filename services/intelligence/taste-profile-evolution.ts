@@ -1,9 +1,11 @@
 /**
  * Taste Profile Evolution Service
  * Tracks and learns from user preference changes over time
+ * Integrated with Mem0 for persistent cross-session memory
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { mem0Service, isMem0Available } from '@/lib/ai/mem0';
 
 export interface TasteProfile {
   userId: string;
@@ -81,7 +83,7 @@ export class TasteProfileEvolutionService {
     try {
       // Get current profile
       const currentProfile = await this.getTasteProfile(userId);
-      
+
       // Analyze changes
       const changes = this.detectChanges(currentProfile, newInteractions);
 
@@ -96,9 +98,114 @@ export class TasteProfileEvolutionService {
             confidence: change.confidence,
             metadata: change.metadata,
           });
+
+        // Sync significant changes to Mem0 for long-term memory
+        if (isMem0Available() && change.confidence >= 0.6) {
+          this.syncChangeToMem0(userId, change).catch((error) => {
+            console.debug('[Mem0] Failed to sync preference change:', error);
+          });
+        }
       }
     } catch (error) {
       console.error('Error updating taste profile:', error);
+    }
+  }
+
+  /**
+   * Sync a preference change to Mem0 for persistent memory
+   */
+  private async syncChangeToMem0(
+    userId: string,
+    change: { type: string; description: string; confidence: number; metadata?: any }
+  ): Promise<void> {
+    if (!isMem0Available()) return;
+
+    try {
+      await mem0Service.addTravelMemory(userId, {
+        type: 'destination_preference',
+        content: change.description,
+        metadata: {
+          source: 'preference',
+          confidence: change.confidence,
+          ...change.metadata,
+        },
+      });
+    } catch (error) {
+      console.debug('[Mem0] Error syncing preference to memory:', error);
+    }
+  }
+
+  /**
+   * Record a user interaction and sync to Mem0
+   */
+  async recordInteractionWithMemory(
+    userId: string,
+    interaction: {
+      type: 'view' | 'save' | 'visit' | 'unsave';
+      destination: {
+        id?: number;
+        slug: string;
+        name: string;
+        city?: string;
+        category?: string;
+      };
+    }
+  ): Promise<void> {
+    // Sync to Mem0 for persistent memory
+    if (isMem0Available()) {
+      mem0Service.recordInteraction(
+        userId,
+        interaction.type,
+        interaction.destination
+      ).catch((error) => {
+        console.debug('[Mem0] Failed to record interaction:', error);
+      });
+    }
+
+    // Also update taste profile if applicable
+    if (interaction.destination.id && ['save', 'visit'].includes(interaction.type)) {
+      await this.updateTasteProfile(userId, [{
+        type: interaction.type as 'save' | 'visit',
+        destinationId: interaction.destination.id,
+        timestamp: new Date(),
+      }]);
+    }
+  }
+
+  /**
+   * Sync current taste profile to Mem0 as a summary
+   */
+  async syncProfileToMem0(userId: string): Promise<void> {
+    if (!isMem0Available()) return;
+
+    try {
+      const profile = await this.getTasteProfile(userId);
+      if (!profile) return;
+
+      // Create a summary memory of the user's travel preferences
+      const topCategories = profile.preferences.categories.slice(0, 3).map(c => c.category);
+      const topCities = profile.preferences.cities.slice(0, 3).map(c => c.city);
+      const travelStyle = profile.preferences.travelStyle;
+
+      const summaryContent = [
+        topCategories.length > 0 ? `User frequently visits: ${topCategories.join(', ')}` : null,
+        topCities.length > 0 ? `User's favorite cities: ${topCities.join(', ')}` : null,
+        travelStyle && travelStyle !== 'unknown' ? `Travel style: ${travelStyle}` : null,
+        `Budget preference: ${profile.preferences.priceRange.min}-${profile.preferences.priceRange.max} (${profile.preferences.priceRange.trend})`,
+      ].filter(Boolean).join('. ');
+
+      if (summaryContent) {
+        await mem0Service.addTravelMemory(userId, {
+          type: 'travel_style',
+          content: summaryContent,
+          metadata: {
+            source: 'preference',
+            confidence: 0.8,
+          },
+        });
+      }
+    } catch (error) {
+      console.error('[Mem0] Error syncing profile to memory:', error);
     }
   }
 

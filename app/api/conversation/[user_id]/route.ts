@@ -1,6 +1,7 @@
 /**
  * Conversation API with GPT-5-turbo and Memory
  * Handles multi-turn conversations with context summarization
+ * Integrated with Mem0 for persistent cross-session memory
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -29,6 +30,7 @@ import {
   createRateLimitResponse,
   isUpstashConfigured,
 } from '@/lib/rate-limit';
+import { mem0Service, isMem0Available } from '@/lib/ai/mem0';
 
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
 const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI(GOOGLE_API_KEY) : null;
@@ -116,6 +118,16 @@ export const POST = withErrorHandling(async (
 
     const intent = await extractIntent(message, messages, userContext);
 
+    // Fetch Mem0 memory context for personalization (non-blocking)
+    let memoryContext = '';
+    if (userId && isMem0Available()) {
+      try {
+        memoryContext = await mem0Service.getConversationContext(userId, message);
+      } catch (error) {
+        console.debug('[Mem0] Failed to fetch memory context (optional):', error);
+      }
+    }
+
     // Save user message
     await saveMessage(session.sessionId, {
       role: 'user',
@@ -142,8 +154,13 @@ export const POST = withErrorHandling(async (
 
     await updateContext(session.sessionId, contextUpdates);
 
-    // Build messages for LLM
-    const systemPrompt = `${URBAN_MANUAL_EDITOR_SYSTEM_PROMPT}\n\n${formatFewShots(3)}\n\nCurrent context: ${JSON.stringify({ ...session.context, ...contextUpdates })}`;
+    // Build messages for LLM with memory context
+    let systemPrompt = `${URBAN_MANUAL_EDITOR_SYSTEM_PROMPT}\n\n${formatFewShots(3)}\n\nCurrent context: ${JSON.stringify({ ...session.context, ...contextUpdates })}`;
+
+    // Add Mem0 memory context if available
+    if (memoryContext) {
+      systemPrompt += `\n\n${memoryContext}`;
+    }
     
     const llmMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
       { role: 'system', content: systemPrompt },
@@ -232,6 +249,26 @@ export const POST = withErrorHandling(async (
       content: assistantResponse,
     });
 
+    // Store conversation exchange in Mem0 for long-term memory (non-blocking)
+    if (userId && isMem0Available()) {
+      // Fire and forget - don't block the response
+      mem0Service.addFromConversation(
+        [
+          { role: 'user', content: message },
+          { role: 'assistant', content: assistantResponse },
+        ],
+        userId,
+        {
+          source: 'conversation',
+          city: contextUpdates.city || session.context?.city || undefined,
+          category: contextUpdates.category || session.context?.category || undefined,
+          session_id: session.sessionId,
+        }
+      ).catch((error) => {
+        console.debug('[Mem0] Failed to store conversation memory (non-blocking):', error);
+      });
+    }
+
     // Check if summarization is needed (every 5 turns)
     if (messages.length >= 10 && messages.length % 5 === 0) {
       await summarizeContext(session.sessionId, [
@@ -263,6 +300,8 @@ export const POST = withErrorHandling(async (
       last_activity: session.lastActivity,
       context_summary: session.contextSummary,
       model: usedModel,
+      memory_enabled: userId ? isMem0Available() : false,
+      has_memory_context: !!memoryContext,
     });
   } catch (error: any) {
     console.error('Conversation API error:', error);
