@@ -519,21 +519,56 @@ const DestinationContent = memo(function DestinationContent({
   const [editForm, setEditForm] = useState({
     name: destination.name || '',
     city: destination.city || '',
+    country: destination.country || '',
     category: destination.category || '',
     micro_description: destination.micro_description || '',
     description: destination.description || '',
+    image: destination.image || '',
+    formatted_address: '',
+    international_phone_number: '',
+    website: destination.website || '',
+    latitude: destination.latitude?.toString() || '',
+    longitude: destination.longitude?.toString() || '',
+    price_level: destination.price_level?.toString() || '',
+    rating: destination.rating?.toString() || '',
+    michelin_stars: destination.michelin_stars?.toString() || '',
+    brand: destination.brand || '',
   });
 
-  // Update form when destination changes
+  // Update form when destination or enrichedData changes
   useEffect(() => {
-    setEditForm({
+    setEditForm(prev => ({
+      ...prev,
       name: destination.name || '',
       city: destination.city || '',
+      country: destination.country || '',
       category: destination.category || '',
       micro_description: destination.micro_description || '',
       description: destination.description || '',
-    });
-  }, [destination.name, destination.city, destination.category, destination.micro_description, destination.description]);
+      image: destination.image || '',
+      website: destination.website || '',
+      latitude: destination.latitude?.toString() || '',
+      longitude: destination.longitude?.toString() || '',
+      price_level: destination.price_level?.toString() || '',
+      rating: destination.rating?.toString() || '',
+      michelin_stars: destination.michelin_stars?.toString() || '',
+      brand: destination.brand || '',
+    }));
+  }, [destination]);
+
+  // Sync enriched data to form when loaded
+  useEffect(() => {
+    if (enrichedData) {
+      setEditForm(prev => ({
+        ...prev,
+        formatted_address: enrichedData.formatted_address || prev.formatted_address,
+        international_phone_number: enrichedData.international_phone_number || prev.international_phone_number,
+        website: enrichedData.website || prev.website,
+        rating: enrichedData.rating?.toString() || prev.rating,
+        price_level: enrichedData.price_level?.toString() || prev.price_level,
+      }));
+    }
+  }, [enrichedData]);
 
   const imageUrl = destination.image || destination.image_thumbnail;
 
@@ -768,15 +803,30 @@ const DestinationContent = memo(function DestinationContent({
     setIsSaving(true);
     try {
       const supabase = createClient();
+      const updateData: Record<string, unknown> = {
+        name: editForm.name,
+        city: editForm.city,
+        country: editForm.country || null,
+        category: editForm.category,
+        micro_description: editForm.micro_description,
+        description: editForm.description,
+        image: editForm.image || null,
+        formatted_address: editForm.formatted_address || null,
+        international_phone_number: editForm.international_phone_number || null,
+        website: editForm.website || null,
+        brand: editForm.brand || null,
+      };
+
+      // Parse numeric fields
+      if (editForm.latitude) updateData.latitude = parseFloat(editForm.latitude);
+      if (editForm.longitude) updateData.longitude = parseFloat(editForm.longitude);
+      if (editForm.price_level) updateData.price_level = parseInt(editForm.price_level);
+      if (editForm.rating) updateData.rating = parseFloat(editForm.rating);
+      if (editForm.michelin_stars) updateData.michelin_stars = parseInt(editForm.michelin_stars);
+
       const { error } = await supabase
         .from('destinations')
-        .update({
-          name: editForm.name,
-          city: editForm.city,
-          category: editForm.category,
-          micro_description: editForm.micro_description,
-          description: editForm.description,
-        })
+        .update(updateData)
         .eq('slug', destination.slug);
 
       if (error) throw error;
@@ -1242,58 +1292,140 @@ const DestinationContent = memo(function DestinationContent({
 
   // Render edit form when in edit mode
   if (isEditMode && isAdmin) {
+    const inputClass = "w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white";
+    const labelClass = "block text-[12px] font-medium text-gray-500 mb-1.5";
+
     return (
-      <div className="pb-8 px-5 pt-5">
-        <h2 className="text-[18px] font-semibold text-gray-900 dark:text-white mb-6">Edit Destination</h2>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-[12px] font-medium text-gray-500 mb-1.5">Name</label>
-            <input
-              type="text"
-              value={editForm.name}
-              onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
+      <div className="pb-8 px-5 pt-5 max-h-[calc(100vh-100px)] overflow-y-auto">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-[18px] font-semibold text-gray-900 dark:text-white">Edit Destination</h2>
+          <span className="text-[11px] text-gray-400">{destination.slug}</span>
+        </div>
+
+        <div className="space-y-5">
+          {/* Basic Info */}
+          <div className="space-y-3">
+            <p className="text-[11px] uppercase tracking-wider text-gray-400">Basic Info</p>
             <div>
-              <label className="block text-[12px] font-medium text-gray-500 mb-1.5">City</label>
-              <input
-                type="text"
-                value={editForm.city}
-                onChange={(e) => setEditForm(prev => ({ ...prev, city: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
-              />
+              <label className={labelClass}>Name *</label>
+              <input type="text" value={editForm.name} onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))} className={inputClass} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>City *</label>
+                <input type="text" value={editForm.city} onChange={(e) => setEditForm(prev => ({ ...prev, city: e.target.value }))} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Country</label>
+                <input type="text" value={editForm.country} onChange={(e) => setEditForm(prev => ({ ...prev, country: e.target.value }))} className={inputClass} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Category *</label>
+                <input type="text" value={editForm.category} onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Brand</label>
+                <input type="text" value={editForm.brand} onChange={(e) => setEditForm(prev => ({ ...prev, brand: e.target.value }))} className={inputClass} placeholder="e.g., Aman, Four Seasons" />
+              </div>
+            </div>
+          </div>
+
+          {/* Descriptions */}
+          <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
+            <p className="text-[11px] uppercase tracking-wider text-gray-400">Descriptions</p>
+            <div>
+              <label className={labelClass}>Micro Description</label>
+              <textarea value={editForm.micro_description} onChange={(e) => setEditForm(prev => ({ ...prev, micro_description: e.target.value }))} rows={2} className={`${inputClass} resize-none`} placeholder="One-liner description" />
             </div>
             <div>
-              <label className="block text-[12px] font-medium text-gray-500 mb-1.5">Category</label>
-              <input
-                type="text"
-                value={editForm.category}
-                onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
-              />
+              <label className={labelClass}>Full Description</label>
+              <textarea value={editForm.description} onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))} rows={4} className={`${inputClass} resize-none`} />
             </div>
           </div>
-          <div>
-            <label className="block text-[12px] font-medium text-gray-500 mb-1.5">Micro Description</label>
-            <textarea
-              value={editForm.micro_description}
-              onChange={(e) => setEditForm(prev => ({ ...prev, micro_description: e.target.value }))}
-              rows={2}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white resize-none"
-            />
+
+          {/* Contact & Location */}
+          <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
+            <p className="text-[11px] uppercase tracking-wider text-gray-400">Contact & Location</p>
+            <div>
+              <label className={labelClass}>Address</label>
+              <input type="text" value={editForm.formatted_address} onChange={(e) => setEditForm(prev => ({ ...prev, formatted_address: e.target.value }))} className={inputClass} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Phone</label>
+                <input type="text" value={editForm.international_phone_number} onChange={(e) => setEditForm(prev => ({ ...prev, international_phone_number: e.target.value }))} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Website</label>
+                <input type="text" value={editForm.website} onChange={(e) => setEditForm(prev => ({ ...prev, website: e.target.value }))} className={inputClass} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass}>Latitude</label>
+                <input type="text" value={editForm.latitude} onChange={(e) => setEditForm(prev => ({ ...prev, latitude: e.target.value }))} className={inputClass} placeholder="e.g., 35.6762" />
+              </div>
+              <div>
+                <label className={labelClass}>Longitude</label>
+                <input type="text" value={editForm.longitude} onChange={(e) => setEditForm(prev => ({ ...prev, longitude: e.target.value }))} className={inputClass} placeholder="e.g., 139.6503" />
+              </div>
+            </div>
           </div>
-          <div>
-            <label className="block text-[12px] font-medium text-gray-500 mb-1.5">Description</label>
-            <textarea
-              value={editForm.description}
-              onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-[14px] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white resize-none"
-            />
+
+          {/* Ratings & Status */}
+          <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
+            <p className="text-[11px] uppercase tracking-wider text-gray-400">Ratings & Status</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className={labelClass}>Rating</label>
+                <input type="text" value={editForm.rating} onChange={(e) => setEditForm(prev => ({ ...prev, rating: e.target.value }))} className={inputClass} placeholder="e.g., 4.5" />
+              </div>
+              <div>
+                <label className={labelClass}>Price Level</label>
+                <input type="text" value={editForm.price_level} onChange={(e) => setEditForm(prev => ({ ...prev, price_level: e.target.value }))} className={inputClass} placeholder="1-4" />
+              </div>
+              <div>
+                <label className={labelClass}>Michelin Stars</label>
+                <input type="text" value={editForm.michelin_stars} onChange={(e) => setEditForm(prev => ({ ...prev, michelin_stars: e.target.value }))} className={inputClass} placeholder="0-3" />
+              </div>
+            </div>
           </div>
-          <div className="flex gap-3 pt-4">
+
+          {/* Image */}
+          <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
+            <p className="text-[11px] uppercase tracking-wider text-gray-400">Media</p>
+            <div>
+              <label className={labelClass}>Image URL</label>
+              <input type="text" value={editForm.image} onChange={(e) => setEditForm(prev => ({ ...prev, image: e.target.value }))} className={inputClass} />
+            </div>
+            {editForm.image && (
+              <div className="relative aspect-video rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
+                <Image src={editForm.image} alt="Preview" fill className="object-cover" />
+              </div>
+            )}
+          </div>
+
+          {/* Parent/Nested Info (read-only) */}
+          {(parentDestination || nestedDestinations.length > 0) && (
+            <div className="space-y-3 border-t border-gray-100 dark:border-gray-800 pt-5">
+              <p className="text-[11px] uppercase tracking-wider text-gray-400">Nesting (Managed via parent_destination_id)</p>
+              {parentDestination && (
+                <div className="text-[13px] text-gray-600 dark:text-gray-400">
+                  <span className="text-gray-400">Located inside:</span> {parentDestination.name}
+                </div>
+              )}
+              {nestedDestinations.length > 0 && (
+                <div className="text-[13px] text-gray-600 dark:text-gray-400">
+                  <span className="text-gray-400">Contains:</span> {nestedDestinations.map(n => n.name).join(', ')}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 pt-6 sticky bottom-0 bg-white dark:bg-gray-950 pb-2">
             <button
               onClick={() => setIsEditMode(false)}
               className="flex-1 h-11 rounded-xl border border-gray-200 dark:border-gray-700 text-[14px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"

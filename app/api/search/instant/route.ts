@@ -58,7 +58,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
   const sources: string[] = [];
 
   // Run searches in parallel for speed
-  const [vectorResults, savedResults, visitedResults, tripResults] = await Promise.all([
+  const [vectorResults, textSearchResults, savedResults, visitedResults, tripResults] = await Promise.all([
     // 1. Fast vector search (top 5)
     (async () => {
       try {
@@ -95,6 +95,35 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
         return [];
       } catch (e) {
         console.error('Vector search failed:', e);
+        return [];
+      }
+    })(),
+
+    // 1b. Fallback text search (in case vector search fails or misses exact matches)
+    (async () => {
+      try {
+        const { data: textResults } = await supabase
+          .from('destinations')
+          .select('id, name, city, category, slug, image')
+          .or(`name.ilike.%${query}%,city.ilike.%${query}%`)
+          .limit(5);
+
+        if (textResults && textResults.length > 0) {
+          return textResults.map((d): InstantResult => ({
+            type: 'destination',
+            id: d.id,
+            name: d.name,
+            subtitle: `${d.category} in ${d.city}`,
+            city: d.city,
+            category: d.category,
+            slug: d.slug,
+            image: d.image,
+            score: 0.5, // Lower score than vector results
+          }));
+        }
+        return [];
+      } catch (e) {
+        console.error('Text search failed:', e);
         return [];
       }
     })(),
@@ -199,7 +228,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     })() : Promise.resolve([]),
   ]);
 
-  // Combine results, prioritizing saved/visited (personal), then vector search
+  // Combine results, prioritizing saved/visited (personal), then vector search, then text search
   const seen = new Set<string>();
 
   // Add saved places first
@@ -228,6 +257,15 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     if (r.slug && !seen.has(r.slug)) {
       results.push(r);
       seen.add(r.slug);
+    }
+  }
+
+  // Add text search results (fallback for exact name matches)
+  for (const r of textSearchResults) {
+    if (r.slug && !seen.has(r.slug)) {
+      results.push(r);
+      seen.add(r.slug);
+      if (!sources.includes('text')) sources.push('text');
     }
   }
 
