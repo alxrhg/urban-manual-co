@@ -1951,7 +1951,7 @@ function GapSuggestion({
 }) {
   const fromTime = fromItem.time || fromItem.parsedNotes?.departureTime || fromItem.parsedNotes?.checkOutTime;
   const toTime = toItem.time || toItem.parsedNotes?.departureTime || toItem.parsedNotes?.checkInTime;
-  const fromDuration = fromItem.parsedNotes?.duration || fromItem.duration || 1.5;
+  const fromDuration = fromItem.parsedNotes?.duration || 1.5;
 
   if (!fromTime || !toTime) return null;
 
