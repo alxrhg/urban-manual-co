@@ -33,7 +33,7 @@ import { DrawerMode, DrawerContext } from './types';
  * - Smart trip fit analysis
  */
 const IntelligentDrawer = memo(function IntelligentDrawer() {
-  const { state, close, back, navigate, canGoBack, addToTripQuick } = useIntelligentDrawer();
+  const { state, close, back, navigate, canGoBack, addToTripQuick, saveScrollPosition, restoreScrollPosition, scrollKey } = useIntelligentDrawer();
   const { activeTrip } = useTripBuilder();
   const { isOpen, mode, context, size } = state;
 
@@ -235,6 +235,9 @@ const IntelligentDrawer = memo(function IntelligentDrawer() {
       canGoBack={canGoBack}
       title={title}
       subtitle={subtitle}
+      scrollKey={scrollKey}
+      onSaveScrollPosition={saveScrollPosition}
+      restoreScrollPosition={restoreScrollPosition}
     >
       {renderContent()}
     </DrawerShell>

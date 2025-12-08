@@ -18,6 +18,12 @@ interface DrawerShellProps {
   footerContent?: ReactNode;
   children: ReactNode;
   className?: string;
+  /** Unique key to track scroll position (e.g., destination slug) */
+  scrollKey?: string;
+  /** Callback to save scroll position before navigation */
+  onSaveScrollPosition?: (position: number) => void;
+  /** Scroll position to restore */
+  restoreScrollPosition?: number;
 }
 
 /**
@@ -46,9 +52,38 @@ const DrawerShell = memo(function DrawerShell({
   footerContent,
   children,
   className = '',
+  scrollKey,
+  onSaveScrollPosition,
+  restoreScrollPosition,
 }: DrawerShellProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+
+  // Save scroll position before back navigation
+  const handleBack = useCallback(() => {
+    if (contentRef.current && onSaveScrollPosition) {
+      onSaveScrollPosition(contentRef.current.scrollTop);
+    }
+    onBack?.();
+  }, [onBack, onSaveScrollPosition]);
+
+  // Restore scroll position when it changes
+  useEffect(() => {
+    if (contentRef.current && restoreScrollPosition !== undefined && restoreScrollPosition > 0) {
+      // Small delay to ensure content is rendered
+      requestAnimationFrame(() => {
+        contentRef.current?.scrollTo({ top: restoreScrollPosition, behavior: 'instant' });
+      });
+    }
+  }, [restoreScrollPosition, scrollKey]);
+
+  // Reset scroll position when opening new content
+  useEffect(() => {
+    if (contentRef.current && scrollKey && !restoreScrollPosition) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [scrollKey, restoreScrollPosition]);
 
   // Size configurations
   const sizeConfig = {
@@ -77,16 +112,41 @@ const DrawerShell = memo(function DrawerShell({
     };
   }, [isOpen]);
 
-  // Escape key handler
+  // Keyboard shortcuts
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+    const handleKeyboard = (e: KeyboardEvent) => {
+      if (!isOpen) return;
+
+      // Escape - close drawer
+      if (e.key === 'Escape') {
+        e.preventDefault();
         onClose();
+        return;
+      }
+
+      // Backspace or Left Arrow - go back if possible
+      if ((e.key === 'Backspace' || e.key === 'ArrowLeft') && canGoBack && handleBack) {
+        // Only if not focused on an input
+        const target = e.target as HTMLElement;
+        if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && !target.isContentEditable) {
+          e.preventDefault();
+          handleBack();
+          return;
+        }
+      }
+
+      // Cmd/Ctrl + S - save (if there's a save action - bubble up)
+      if ((e.metaKey || e.ctrlKey) && e.key === 's') {
+        e.preventDefault();
+        // Dispatch custom event for components to handle
+        window.dispatchEvent(new CustomEvent('drawer:save'));
+        return;
       }
     };
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+
+    window.addEventListener('keydown', handleKeyboard);
+    return () => window.removeEventListener('keydown', handleKeyboard);
+  }, [isOpen, onClose, canGoBack, handleBack]);
 
   // Handle drag end for mobile bottom sheet
   const handleDragEnd = useCallback(
@@ -99,6 +159,24 @@ const DrawerShell = memo(function DrawerShell({
       }
     },
     [onClose]
+  );
+
+  // Handle horizontal swipe gesture for right drawer
+  const handleHorizontalDragEnd = useCallback(
+    (_: any, info: PanInfo) => {
+      const threshold = 80;
+      const velocityX = info.velocity.x;
+
+      // Swipe right to go back (if can go back)
+      if ((info.offset.x > threshold || velocityX > 400) && canGoBack) {
+        handleBack();
+      }
+      // Swipe right to close (if at root level)
+      else if ((info.offset.x > threshold * 1.5 || velocityX > 600) && !canGoBack) {
+        onClose();
+      }
+    },
+    [onClose, handleBack, canGoBack]
   );
 
   // Animation variants
@@ -131,7 +209,7 @@ const DrawerShell = memo(function DrawerShell({
             className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px]"
           />
 
-          {/* Drawer - Mobile Bottom Sheet */}
+          {/* Drawer - Mobile Bottom Sheet or Right Panel */}
           <motion.div
             ref={drawerRef}
             initial="hidden"
@@ -143,13 +221,18 @@ const DrawerShell = memo(function DrawerShell({
               damping: 30,
               stiffness: 300,
             }}
-            drag={position === 'bottom' ? 'y' : false}
-            dragConstraints={{ top: 0, bottom: 0 }}
+            drag={position === 'bottom' ? 'y' : 'x'}
+            dragConstraints={position === 'bottom' ? { top: 0, bottom: 0 } : { left: 0, right: 0 }}
             dragElastic={0.2}
+            dragDirectionLock
             onDragStart={() => setIsDragging(true)}
             onDragEnd={(e, info) => {
               setIsDragging(false);
-              handleDragEnd(e, info);
+              if (position === 'bottom') {
+                handleDragEnd(e, info);
+              } else {
+                handleHorizontalDragEnd(e, info);
+              }
             }}
             className={`
               fixed z-50 flex flex-col
@@ -181,9 +264,9 @@ const DrawerShell = memo(function DrawerShell({
               {headerContent || (
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3 min-w-0">
-                    {canGoBack && onBack && (
+                    {canGoBack && handleBack && (
                       <button
-                        onClick={onBack}
+                        onClick={handleBack}
                         className="p-2 -ml-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                         aria-label="Go back"
                       >
@@ -215,7 +298,7 @@ const DrawerShell = memo(function DrawerShell({
             </header>
 
             {/* Content */}
-            <main className="flex-1 overflow-y-auto overscroll-contain">
+            <main ref={contentRef} className="flex-1 overflow-y-auto overscroll-contain">
               {children}
             </main>
 

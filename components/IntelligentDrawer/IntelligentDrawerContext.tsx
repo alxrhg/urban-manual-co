@@ -6,6 +6,8 @@ import React, {
   useState,
   useCallback,
   useMemo,
+  useEffect,
+  useRef,
   ReactNode,
 } from 'react';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
@@ -52,6 +54,10 @@ interface ExtendedContextType extends IntelligentDrawerContextType {
   // Account/Auth helpers
   openAccount: () => void;
   openAuth: () => void;
+  // Scroll position management
+  saveScrollPosition: (position: number) => void;
+  restoreScrollPosition?: number;
+  scrollKey?: string;
 }
 
 const IntelligentDrawerContext = createContext<ExtendedContextType | null>(null);
@@ -175,6 +181,48 @@ export function IntelligentDrawerProvider({ children }: { children: ReactNode })
   const [state, setState] = useState<DrawerState>(initialState);
   const tripBuilder = useTripBuilder();
 
+  // Scroll position memory - keyed by destination slug or mode
+  const scrollPositionsRef = useRef<Map<string, number>>(new Map());
+  const [restoreScrollPosition, setRestoreScrollPosition] = useState<number | undefined>();
+
+  // Get current scroll key
+  const getScrollKey = useCallback((mode: DrawerMode, context: DrawerCtx) => {
+    if (mode === 'destination' && context.destination?.slug) {
+      return `dest:${context.destination.slug}`;
+    }
+    return mode;
+  }, []);
+
+  // Save scroll position
+  const saveScrollPosition = useCallback((position: number) => {
+    const key = getScrollKey(state.mode, state.context);
+    scrollPositionsRef.current.set(key, position);
+  }, [state.mode, state.context, getScrollKey]);
+
+  // ==========================================
+  // DEEP LINKING
+  // ==========================================
+
+  // Update URL when drawer state changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (state.isOpen && state.mode === 'destination' && state.context.destination?.slug) {
+      // Add hash to URL without triggering navigation
+      const hash = `#d=${state.context.destination.slug}`;
+      if (window.location.hash !== hash) {
+        window.history.replaceState(null, '', hash);
+      }
+    } else if (state.isOpen && state.mode === 'trip') {
+      window.history.replaceState(null, '', '#trip');
+    } else if (state.isOpen && state.mode === 'account') {
+      window.history.replaceState(null, '', '#account');
+    } else if (!state.isOpen && window.location.hash) {
+      // Remove hash when closing
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }, [state.isOpen, state.mode, state.context.destination?.slug]);
+
   // Build active trip info
   const activeTripInfo = useMemo<TripContextInfo | null>(() => {
     if (!tripBuilder.activeTrip) return null;
@@ -278,6 +326,11 @@ export function IntelligentDrawerProvider({ children }: { children: ReactNode })
       const history = [...prev.history];
       const lastItem = history.pop()!;
 
+      // Restore scroll position for the previous view
+      const scrollKey = getScrollKey(lastItem.mode, lastItem.context);
+      const savedPosition = scrollPositionsRef.current.get(scrollKey);
+      setRestoreScrollPosition(savedPosition);
+
       return {
         ...prev,
         mode: lastItem.mode,
@@ -285,7 +338,7 @@ export function IntelligentDrawerProvider({ children }: { children: ReactNode })
         history,
       };
     });
-  }, []);
+  }, [getScrollKey]);
 
   const updateContext = useCallback((context: Partial<DrawerCtx>) => {
     setState((prev) => ({
@@ -388,6 +441,9 @@ export function IntelligentDrawerProvider({ children }: { children: ReactNode })
   // Can go back
   const canGoBack = state.history.length > 0;
 
+  // Current scroll key
+  const scrollKey = getScrollKey(state.mode, state.context);
+
   // ==========================================
   // VALUE
   // ==========================================
@@ -411,6 +467,9 @@ export function IntelligentDrawerProvider({ children }: { children: ReactNode })
       addToTripQuick,
       openAccount,
       openAuth,
+      saveScrollPosition,
+      restoreScrollPosition,
+      scrollKey,
     }),
     [
       state,
@@ -430,6 +489,9 @@ export function IntelligentDrawerProvider({ children }: { children: ReactNode })
       addToTripQuick,
       openAccount,
       openAuth,
+      saveScrollPosition,
+      restoreScrollPosition,
+      scrollKey,
     ]
   );
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, memo } from 'react';
+import { useState, useCallback, useEffect, memo, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -196,6 +196,82 @@ const GoogleStaticMap = dynamic(() => import('@/components/maps/GoogleStaticMap'
   ),
 });
 
+// ============================================
+// SKELETON COMPONENTS
+// ============================================
+
+const SkeletonPulse = ({ className = '' }: { className?: string }) => (
+  <div className={`animate-pulse bg-gray-200 dark:bg-gray-700 rounded ${className}`} />
+);
+
+const SectionSkeleton = ({ type }: { type: string }) => {
+  switch (type) {
+    case 'description':
+      return (
+        <div className="mt-5 space-y-2">
+          <SkeletonPulse className="h-4 w-full" />
+          <SkeletonPulse className="h-4 w-5/6" />
+          <SkeletonPulse className="h-4 w-4/6" />
+        </div>
+      );
+    case 'hours':
+      return (
+        <div className="mt-6 space-y-3">
+          <SkeletonPulse className="h-3 w-24" />
+          <div className="flex items-center gap-3">
+            <SkeletonPulse className="h-4 w-4" />
+            <SkeletonPulse className="h-4 w-40" />
+          </div>
+          <div className="flex items-center gap-3">
+            <SkeletonPulse className="h-4 w-4" />
+            <SkeletonPulse className="h-4 w-52" />
+          </div>
+        </div>
+      );
+    case 'architecture':
+      return (
+        <div className="mt-6 space-y-2">
+          <SkeletonPulse className="h-3 w-32" />
+          <div className="flex items-center gap-3 py-2">
+            <SkeletonPulse className="h-10 w-10 rounded-full" />
+            <div className="flex-1 space-y-1">
+              <SkeletonPulse className="h-3 w-16" />
+              <SkeletonPulse className="h-4 w-32" />
+            </div>
+          </div>
+        </div>
+      );
+    case 'similar':
+      return (
+        <div className="mt-6">
+          <SkeletonPulse className="h-3 w-24 mb-3" />
+          <div className="flex gap-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="w-28">
+                <SkeletonPulse className="aspect-square rounded-xl mb-2" />
+                <SkeletonPulse className="h-3 w-20 mb-1" />
+                <SkeletonPulse className="h-2.5 w-14" />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    case 'map':
+      return (
+        <div className="mt-6">
+          <SkeletonPulse className="aspect-[2/1] rounded-xl" />
+        </div>
+      );
+    default:
+      return (
+        <div className="mt-6 space-y-2">
+          <SkeletonPulse className="h-3 w-24" />
+          <SkeletonPulse className="h-4 w-full" />
+        </div>
+      );
+  }
+};
+
 type SourceContext = 'trip' | 'explore' | 'search' | 'similar' | 'general';
 
 interface DestinationContentProps {
@@ -258,6 +334,13 @@ const DestinationContent = memo(function DestinationContent({
   const [nestedDestinations, setNestedDestinations] = useState<Destination[]>([]);
   const [similarPlaces, setSimilarPlaces] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Progressive reveal state
+  const [visibleSections, setVisibleSections] = useState<Set<string>>(new Set());
+
+  // AI summary state
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [userRelatedContext, setUserRelatedContext] = useState<string | null>(null);
 
   const imageUrl = destination.image || destination.image_thumbnail;
 
@@ -379,10 +462,77 @@ const DestinationContent = memo(function DestinationContent({
     }
   }, [destination.slug]);
 
-  // Parse opening hours
+  // Progressive reveal effect - stagger sections for smooth appearance
+  useEffect(() => {
+    // Reset on destination change
+    setVisibleSections(new Set());
+    setShowFullDescription(false);
+
+    // Start progressive reveal after initial load
+    const revealSections = ['description', 'hours', 'architecture', 'parent', 'nested', 'trip', 'map', 'similar', 'related'];
+    const timers: NodeJS.Timeout[] = [];
+
+    revealSections.forEach((section, index) => {
+      const timer = setTimeout(() => {
+        setVisibleSections((prev) => new Set([...prev, section]));
+      }, 100 + index * 80); // Stagger by 80ms
+      timers.push(timer);
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, [destination.slug]);
+
+  // Load user-related context (e.g., "Same architect designed 3 places you've visited")
+  useEffect(() => {
+    async function loadUserContext() {
+      if (!user || !destination?.slug) return;
+
+      const supabase = createClient();
+
+      // Check if user has visited places by the same architect
+      if (enrichedData?.architect_obj?.id) {
+        const { data: visitedByArchitect } = await supabase
+          .from('visited_places')
+          .select('destination_slug, destinations!inner(name, architect_id)')
+          .eq('user_id', user.id)
+          .eq('destinations.architect_id', enrichedData.architect_obj.id)
+          .limit(5);
+
+        if (visitedByArchitect && visitedByArchitect.length > 0) {
+          const count = visitedByArchitect.length;
+          const architectName = enrichedData.architect_obj.name;
+          if (count >= 3) {
+            setUserRelatedContext(`You've visited ${count} other ${architectName} designs`);
+          } else if (count >= 1) {
+            setUserRelatedContext(`${architectName} also designed places you've been`);
+          }
+          return;
+        }
+      }
+
+      // Check if user has visited places in the same city
+      if (destination.city) {
+        const { data: visitedInCity, count } = await supabase
+          .from('visited_places')
+          .select('destination_slug', { count: 'exact' })
+          .eq('user_id', user.id)
+          .not('destination_slug', 'eq', destination.slug)
+          .limit(1);
+
+        // This is a simplified check - would need a join for city filter
+        // For now, just show generic context
+      }
+    }
+
+    loadUserContext();
+  }, [user, destination?.slug, enrichedData?.architect_obj]);
+
+  // Parse opening hours with smart analysis
   const openingHours = enrichedData?.opening_hours?.weekday_text || [];
   const todayHours = getTodayHours(openingHours);
-  const isOpenNow = checkIfOpen(openingHours);
+  const hoursAnalysis = analyzeHours(openingHours);
+  const isOpenNow = hoursAnalysis.isOpen;
+  const bestTimeHint = getBestTimeHint(categoryType, openingHours);
 
   // Has architecture info
   const hasArchInfo = enrichedData?.architect_obj || enrichedData?.interior_designer_obj ||
@@ -480,10 +630,35 @@ const DestinationContent = memo(function DestinationContent({
   const renderSection = (key: SectionKey): React.ReactNode => {
     switch (key) {
       case 'description':
+        const description = destination.micro_description || destination.description || '';
+        const isLong = description.length > 300;
+        const displayText = isLong && !showFullDescription
+          ? description.slice(0, 280) + '...'
+          : description;
+
         return (
-          <p key="description" className="mt-5 text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed">
-            {destination.micro_description || destination.description}
-          </p>
+          <div key="description" className="mt-5">
+            {/* User-related context badge */}
+            {userRelatedContext && (
+              <div className="mb-3 px-3 py-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800">
+                <p className="text-[12px] text-blue-700 dark:text-blue-300 font-medium">
+                  {userRelatedContext}
+                </p>
+              </div>
+            )}
+
+            <p className="text-[15px] text-gray-700 dark:text-gray-300 leading-relaxed">
+              {displayText}
+            </p>
+            {isLong && (
+              <button
+                onClick={() => setShowFullDescription(!showFullDescription)}
+                className="mt-2 text-[13px] font-medium text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                {showFullDescription ? 'Show less' : 'Read more'}
+              </button>
+            )}
+          </div>
         );
 
       case 'parent':
@@ -540,14 +715,29 @@ const DestinationContent = memo(function DestinationContent({
       case 'hours':
         return (
           <div key="hours" className="mt-6">
-            <p className="text-[11px] uppercase tracking-wider text-gray-400 mb-3">
-              {categoryType === 'dining' || categoryType === 'nightlife' ? 'Hours & Contact' : 'Contact & Hours'}
-            </p>
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[11px] uppercase tracking-wider text-gray-400">
+                {categoryType === 'dining' || categoryType === 'nightlife' ? 'Hours & Contact' : 'Contact & Hours'}
+              </p>
+              {bestTimeHint && (
+                <span className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">{bestTimeHint}</span>
+              )}
+            </div>
             <div className="space-y-3">
               {todayHours && (
                 <div className="flex items-start gap-3">
                   <Clock className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
-                  <span className="text-[14px] text-gray-700 dark:text-gray-300">{todayHours}</span>
+                  <div className="flex-1">
+                    <span className="text-[14px] text-gray-700 dark:text-gray-300">{todayHours}</span>
+                    {hoursAnalysis.timeUntilChange && (
+                      <span className={`ml-2 text-[12px] font-medium ${
+                        hoursAnalysis.category === 'closing-soon' ? 'text-amber-600' :
+                        hoursAnalysis.category === 'opening-soon' ? 'text-blue-600' : ''
+                      }`}>
+                        ({hoursAnalysis.status})
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
               {enrichedData?.formatted_address && (
@@ -794,11 +984,14 @@ const DestinationContent = memo(function DestinationContent({
               <Star className="w-2.5 h-2.5 fill-current" />
             </span>
           )}
-          {isOpenNow !== null && (
+          {hoursAnalysis.status && (
             <span className={`px-2 py-0.5 rounded-full text-[11px] font-medium ${
-              isOpenNow ? 'bg-green-500 text-white' : 'bg-gray-800 text-white'
+              hoursAnalysis.category === 'open' ? 'bg-green-500 text-white' :
+              hoursAnalysis.category === 'opening-soon' ? 'bg-blue-500 text-white' :
+              hoursAnalysis.category === 'closing-soon' ? 'bg-amber-500 text-white' :
+              'bg-gray-800 text-white'
             }`}>
-              {isOpenNow ? 'Open' : 'Closed'}
+              {hoursAnalysis.status}
             </span>
           )}
         </div>
@@ -829,34 +1022,83 @@ const DestinationContent = memo(function DestinationContent({
           )}
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex gap-2">
-          <button
-            onClick={user ? handleSave : undefined}
-            className={`flex-1 h-11 flex items-center justify-center gap-2 rounded-xl border text-[14px] font-medium transition-all ${
-              isSaved
-                ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                : 'border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5'
-            }`}
-          >
-            <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-            {isSaved ? 'Saved' : 'Save'}
-          </button>
-          <button
-            onClick={handleShare}
-            className="flex-1 h-11 flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-white/20 text-[14px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
-          >
-            <Share2 className="h-4 w-4" />
-            Share
-          </button>
-          <button
-            onClick={handleDirections}
-            className="flex-1 h-11 flex items-center justify-center gap-2 rounded-xl border border-gray-200 dark:border-white/20 text-[14px] font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
-          >
-            <Navigation className="h-4 w-4" />
-            Go
-          </button>
-        </div>
+        {/* Smart Action Buttons - Context-aware primary action */}
+        {(() => {
+          // Determine primary action based on context
+          const isPrimaryTrip = isFromTrip && activeTrip;
+          const isPrimaryGo = hoursAnalysis.category === 'open' && !isFromTrip;
+          const suggestedDay = tripContext?.day || (activeTrip?.days[0]?.dayNumber ?? 1);
+
+          return (
+            <div className="flex gap-2">
+              {/* Primary Action - changes based on context */}
+              {isPrimaryTrip ? (
+                <button
+                  onClick={() => handleAddToTrip(suggestedDay)}
+                  disabled={isAddingToTrip}
+                  className="flex-1 h-11 flex items-center justify-center gap-2 rounded-xl bg-black dark:bg-white text-white dark:text-black text-[14px] font-medium transition-all disabled:opacity-50"
+                >
+                  {isAddingToTrip ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="h-4 w-4" />
+                      Add to Day {suggestedDay}
+                    </>
+                  )}
+                </button>
+              ) : isPrimaryGo ? (
+                <button
+                  onClick={handleDirections}
+                  className="flex-1 h-11 flex items-center justify-center gap-2 rounded-xl bg-green-600 text-white text-[14px] font-medium transition-all hover:bg-green-700"
+                >
+                  <Navigation className="h-4 w-4" />
+                  Go Now
+                </button>
+              ) : (
+                <button
+                  onClick={user ? handleSave : undefined}
+                  className={`flex-1 h-11 flex items-center justify-center gap-2 rounded-xl border text-[14px] font-medium transition-all ${
+                    isSaved
+                      ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5'
+                  }`}
+                >
+                  <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                  {isSaved ? 'Saved' : 'Save'}
+                </button>
+              )}
+
+              {/* Secondary Actions */}
+              {!isPrimaryTrip && (
+                <button
+                  onClick={user ? handleSave : undefined}
+                  className={`h-11 w-11 flex items-center justify-center rounded-xl border text-[14px] font-medium transition-all ${
+                    isSaved
+                      ? 'border-gray-900 dark:border-white bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                      : 'border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5'
+                  } ${isPrimaryGo ? '' : 'hidden'}`}
+                >
+                  <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                </button>
+              )}
+              <button
+                onClick={handleShare}
+                className="h-11 w-11 flex items-center justify-center rounded-xl border border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
+              >
+                <Share2 className="h-4 w-4" />
+              </button>
+              {!isPrimaryGo && (
+                <button
+                  onClick={handleDirections}
+                  className="h-11 w-11 flex items-center justify-center rounded-xl border border-gray-200 dark:border-white/20 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-all"
+                >
+                  <Navigation className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Been Here Button */}
         {user && (
@@ -873,8 +1115,31 @@ const DestinationContent = memo(function DestinationContent({
           </button>
         )}
 
-        {/* Smart Sections - rendered in category-adaptive order */}
-        {sortedSections.map(({ key }) => renderSection(key))}
+        {/* Smart Sections - rendered in category-adaptive order with progressive reveal */}
+        {sortedSections.map(({ key }, index) => {
+          const isVisible = visibleSections.has(key);
+          const isDataLoaded = !loading || key === 'description' || key === 'trip';
+
+          // Show skeleton while loading or not yet visible
+          if (!isVisible && index < 3) {
+            return <SectionSkeleton key={`skeleton-${key}`} type={key} />;
+          }
+
+          if (!isVisible) return null;
+
+          return (
+            <div
+              key={key}
+              className="transition-all duration-300 ease-out"
+              style={{
+                opacity: isVisible ? 1 : 0,
+                transform: isVisible ? 'translateY(0)' : 'translateY(8px)',
+              }}
+            >
+              {isDataLoaded ? renderSection(key) : <SectionSkeleton type={key} />}
+            </div>
+          );
+        })}
 
         {/* View Full Page */}
         <Link
@@ -900,7 +1165,193 @@ function getTodayHours(hours: string[]): string | null {
 }
 
 /**
- * Check if currently open
+ * Parse time string to minutes from midnight
+ */
+function parseTimeToMinutes(timeStr: string): number | null {
+  // Parse formats like "9:00 AM", "10:30 PM", "21:00"
+  const match = timeStr.match(/(\d{1,2}):?(\d{2})?\s*(AM|PM)?/i);
+  if (!match) return null;
+
+  let hours = parseInt(match[1], 10);
+  const minutes = match[2] ? parseInt(match[2], 10) : 0;
+  const period = match[3]?.toUpperCase();
+
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+
+  return hours * 60 + minutes;
+}
+
+/**
+ * Parse opening hours to get open/close times
+ */
+function parseHoursRange(hoursStr: string): { open: number; close: number } | null {
+  // Parse formats like "Monday: 9:00 AM – 10:00 PM", "Monday: 9:00 – 22:00"
+  const timeMatch = hoursStr.match(/(\d{1,2}:?\d{0,2}\s*(?:AM|PM)?)\s*[–\-]\s*(\d{1,2}:?\d{0,2}\s*(?:AM|PM)?)/i);
+  if (!timeMatch) return null;
+
+  const open = parseTimeToMinutes(timeMatch[1]);
+  const close = parseTimeToMinutes(timeMatch[2]);
+
+  if (open === null || close === null) return null;
+  return { open, close: close < open ? close + 24 * 60 : close }; // Handle overnight hours
+}
+
+interface SmartHoursResult {
+  isOpen: boolean | null;
+  status: string;
+  timeUntilChange: string | null;
+  category: 'open' | 'closing-soon' | 'closed' | 'opening-soon' | 'unknown';
+}
+
+/**
+ * Smart hours analysis - returns human-friendly status
+ */
+function analyzeHours(hours: string[]): SmartHoursResult {
+  const defaultResult: SmartHoursResult = {
+    isOpen: null,
+    status: '',
+    timeUntilChange: null,
+    category: 'unknown',
+  };
+
+  if (!hours || hours.length === 0) return defaultResult;
+
+  const todayHours = getTodayHours(hours);
+  if (!todayHours) return defaultResult;
+
+  // Check if closed today
+  if (todayHours.toLowerCase().includes('closed')) {
+    // Find next open day
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const todayIndex = new Date().getDay();
+
+    for (let i = 1; i <= 7; i++) {
+      const nextDayIndex = (todayIndex + i) % 7;
+      const nextDayHours = hours.find(h => h.startsWith(dayNames[nextDayIndex]));
+      if (nextDayHours && !nextDayHours.toLowerCase().includes('closed')) {
+        const dayName = i === 1 ? 'tomorrow' : dayNames[nextDayIndex];
+        return {
+          isOpen: false,
+          status: `Closed · Opens ${dayName}`,
+          timeUntilChange: null,
+          category: 'closed',
+        };
+      }
+    }
+    return { isOpen: false, status: 'Closed today', timeUntilChange: null, category: 'closed' };
+  }
+
+  // Parse today's hours
+  const range = parseHoursRange(todayHours);
+  if (!range) return { ...defaultResult, isOpen: true, status: 'Open', category: 'open' };
+
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  // Check if currently open
+  if (currentMinutes >= range.open && currentMinutes < range.close) {
+    const minutesUntilClose = range.close - currentMinutes;
+
+    // Closing soon (within 60 minutes)
+    if (minutesUntilClose <= 60) {
+      const timeStr = minutesUntilClose <= 30
+        ? `${minutesUntilClose} min`
+        : `${Math.round(minutesUntilClose / 60)} hr`;
+      return {
+        isOpen: true,
+        status: `Closes in ${timeStr}`,
+        timeUntilChange: timeStr,
+        category: 'closing-soon',
+      };
+    }
+
+    return { isOpen: true, status: 'Open now', timeUntilChange: null, category: 'open' };
+  }
+
+  // Currently closed - check when it opens
+  if (currentMinutes < range.open) {
+    const minutesUntilOpen = range.open - currentMinutes;
+
+    // Opening soon (within 2 hours)
+    if (minutesUntilOpen <= 120) {
+      const hours = Math.floor(minutesUntilOpen / 60);
+      const mins = minutesUntilOpen % 60;
+      const timeStr = hours > 0
+        ? `${hours}h ${mins > 0 ? `${mins}m` : ''}`
+        : `${mins} min`;
+      return {
+        isOpen: false,
+        status: `Opens in ${timeStr.trim()}`,
+        timeUntilChange: timeStr.trim(),
+        category: 'opening-soon',
+      };
+    }
+
+    // Opening later today
+    const openTime = `${Math.floor(range.open / 60)}:${String(range.open % 60).padStart(2, '0')}`;
+    const openHour = Math.floor(range.open / 60);
+    const period = openHour >= 12 ? 'PM' : 'AM';
+    const displayHour = openHour > 12 ? openHour - 12 : openHour === 0 ? 12 : openHour;
+    return {
+      isOpen: false,
+      status: `Opens at ${displayHour}${range.open % 60 > 0 ? ':' + String(range.open % 60).padStart(2, '0') : ''} ${period}`,
+      timeUntilChange: null,
+      category: 'closed',
+    };
+  }
+
+  // After closing - opens tomorrow
+  return {
+    isOpen: false,
+    status: 'Closed · Opens tomorrow',
+    timeUntilChange: null,
+    category: 'closed',
+  };
+}
+
+/**
+ * Get best time hint based on category
+ */
+function getBestTimeHint(categoryType: CategoryType, hours: string[]): string | null {
+  const hints: Record<CategoryType, string[]> = {
+    dining: ['Best for dinner: 7-9 PM', 'Lunch crowds: 12-1:30 PM', 'Quietest: 3-5 PM'],
+    nightlife: ['Peak hours: 10 PM - 1 AM', 'Happy hour vibes: 5-7 PM'],
+    culture: ['Avoid crowds: weekday mornings', 'Best light: late afternoon'],
+    hotel: [],
+    shopping: ['Quietest: weekday mornings', 'Avoid: lunch hour rush'],
+    outdoor: ['Best light: golden hour', 'Cooler temps: early morning'],
+    architecture: ['Best for photos: golden hour', 'Less crowded: early morning'],
+    general: [],
+  };
+
+  const categoryHints = hints[categoryType];
+  if (!categoryHints.length) return null;
+
+  // Return a contextual hint based on time of day
+  const hour = new Date().getHours();
+
+  if (categoryType === 'dining') {
+    if (hour >= 10 && hour < 14) return 'Currently: lunch rush';
+    if (hour >= 17 && hour < 21) return 'Currently: dinner peak';
+    if (hour >= 14 && hour < 17) return 'Good time: quieter now';
+  }
+
+  if (categoryType === 'nightlife') {
+    if (hour >= 17 && hour < 20) return 'Happy hour time';
+    if (hour >= 22 || hour < 2) return 'Peak hours now';
+  }
+
+  if (categoryType === 'culture' || categoryType === 'architecture') {
+    if (hour >= 9 && hour < 11) return 'Good time: morning quiet';
+    if (hour >= 16 && hour < 18) return 'Beautiful afternoon light';
+  }
+
+  return categoryHints[0] || null;
+}
+
+/**
+ * Check if currently open (simplified)
  */
 function checkIfOpen(hours: string[]): boolean | null {
   if (!hours || hours.length === 0) return null;
