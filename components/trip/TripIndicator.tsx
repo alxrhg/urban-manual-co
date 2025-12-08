@@ -1,17 +1,20 @@
 'use client';
 
-import { MapPin, ChevronUp, X, FolderOpen } from 'lucide-react';
+import { MapPin, ChevronUp } from 'lucide-react';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import { useAuth } from '@/contexts/AuthContext';
 
 /**
- * Floating indicator that shows when a trip is being built
- * Also shows "Continue planning" prompt for saved trips
- * Appears at bottom of screen, expands to show summary on hover/tap
+ * TripIndicator - Minimal floating pill
+ *
+ * Philosophy: Simple, unobtrusive indicator
+ * - Just shows trip name and count
+ * - Tap to open panel
+ * - No extra buttons or actions
  */
 export default function TripIndicator() {
   const { user } = useAuth();
-  const { activeTrip, savedTrips, isPanelOpen, totalItems, openPanel, clearTrip } = useTripBuilder();
+  const { activeTrip, savedTrips, isPanelOpen, totalItems, openPanel } = useTripBuilder();
 
   // Don't show if panel is already open
   if (isPanelOpen) return null;
@@ -20,23 +23,17 @@ export default function TripIndicator() {
   if (!activeTrip && user && savedTrips.length > 0) {
     const recentTrip = savedTrips[0];
     return (
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300">
-        <button
-          onClick={openPanel}
-          className="flex items-center gap-3 px-5 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group"
-        >
-          <FolderOpen className="w-5 h-5" />
-          <div className="text-left">
-            <p className="text-[13px] font-medium leading-tight">
-              Continue planning
-            </p>
-            <p className="text-[11px] opacity-70">
-              {recentTrip.title} • {recentTrip.itemCount} places
-            </p>
-          </div>
-          <ChevronUp className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-        </button>
-      </div>
+      <button
+        onClick={openPanel}
+        className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40
+                   flex items-center gap-2 px-4 py-2.5
+                   bg-gray-900 dark:bg-white rounded-full shadow-lg
+                   active:scale-[0.97] transition-transform"
+      >
+        <span className="text-[13px] font-medium text-white dark:text-gray-900">
+          {recentTrip.title} · {recentTrip.itemCount}
+        </span>
+      </button>
     );
   }
 
@@ -44,47 +41,16 @@ export default function TripIndicator() {
   if (!activeTrip || totalItems === 0) return null;
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300">
-      <div className="flex items-center gap-2">
-        {/* Main indicator button */}
-        <button
-          onClick={openPanel}
-          className="flex items-center gap-3 px-5 py-3 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group"
-        >
-          <div className="relative">
-            <MapPin className="w-5 h-5" />
-            {/* Badge with count */}
-            <span className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-[10px] font-bold rounded-full">
-              {totalItems}
-            </span>
-          </div>
-
-          <div className="text-left">
-            <p className="text-[13px] font-medium leading-tight">
-              {activeTrip.title}
-            </p>
-            <p className="text-[11px] opacity-70">
-              {totalItems} {totalItems === 1 ? 'place' : 'places'} • {activeTrip.days.length} {activeTrip.days.length === 1 ? 'day' : 'days'}
-            </p>
-          </div>
-
-          <ChevronUp className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-        </button>
-
-        {/* Clear button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (confirm('Clear your trip?')) {
-              clearTrip();
-            }
-          }}
-          className="p-3 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-full shadow-lg hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200"
-          title="Clear trip"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
+    <button
+      onClick={openPanel}
+      className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40
+                 flex items-center gap-2 px-4 py-2.5
+                 bg-gray-900 dark:bg-white rounded-full shadow-lg
+                 active:scale-[0.97] transition-transform"
+    >
+      <span className="text-[13px] font-medium text-white dark:text-gray-900">
+        {activeTrip.title || activeTrip.city || 'Trip'} · {totalItems}
+      </span>
+    </button>
   );
 }

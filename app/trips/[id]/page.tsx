@@ -2,28 +2,24 @@
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
+import { ArrowLeft, MapPin, X, GripVertical, Plus, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
-import { parseDestinations, parseTripNotes, stringifyTripNotes, type TripNotes } from '@/types/trip';
+import { parseDestinations, formatDestinations } from '@/types/trip';
 import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
-
-// Trip components
-import TripHeader, { type AddItemType } from '@/components/trip/TripHeader';
-import { ItineraryViewRedesign } from '@/components/trip/itinerary';
-import TravelAISidebar from '@/components/trip/TravelAISidebar';
-import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
-import TripMapView from '@/components/trips/TripMapView';
-
-// Existing components
 import { PageLoader } from '@/components/LoadingStates';
-import AddPlaceBox from '@/components/trip/AddPlaceBox';
-import TripSettingsBox from '@/components/trip/TripSettingsBox';
-import DestinationBox from '@/components/trip/DestinationBox';
-import CompanionPanel from '@/components/trip/CompanionPanel';
-import TripNotesEditor from '@/components/trips/TripNotesEditor';
 
 /**
- * TripPage - Trip detail page with itinerary view
+ * TripPage - Minimal trip detail
+ *
+ * Philosophy: A trip is just a list. Nothing more.
+ * - No tabs, no sidebars, no buttons
+ * - Just days with places
+ * - Drag to reorder, tap to view/edit
+ * - Intelligence works invisibly
  */
 export default function TripPage() {
   const params = useParams();
@@ -31,24 +27,12 @@ export default function TripPage() {
   const tripId = params?.id as string;
   const { user } = useAuth();
 
-  // Trip Editor Hook
   const {
     trip,
     days,
     loading,
-    saving,
-    updateTrip,
     reorderItems,
-    addPlace,
-    addFlight,
-    addTrain,
-    addHotel,
-    addActivity,
     removeItem,
-    updateItemTime,
-    updateItemDuration,
-    updateItemNotes,
-    updateItem,
     moveItemToDay,
     refresh,
   } = useTripEditor({
@@ -61,28 +45,36 @@ export default function TripPage() {
   const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
   const primaryCity = destinations[0] || '';
 
-  // UI State
-  const [activeContentTab, setActiveContentTab] = useState<'itinerary' | 'flights' | 'hotels' | 'notes'>('itinerary');
-  const [selectedDayNumber, setSelectedDayNumber] = useState(1);
-  const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
-  const [showAddPlaceBox, setShowAddPlaceBox] = useState(false);
-  const [showTripSettings, setShowTripSettings] = useState(false);
-  const [optimizingDay, setOptimizingDay] = useState<number | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [showMapView, setShowMapView] = useState(false);
-  const [showCompanionPanel, setShowCompanionPanel] = useState(false);
+  // Format date range
+  const dateDisplay = useMemo(() => {
+    if (!trip?.start_date) return '';
+    const start = new Date(trip.start_date);
+    const end = trip.end_date ? new Date(trip.end_date) : start;
+    const startMonth = start.toLocaleDateString('en-US', { month: 'short' });
+    const startDay = start.getDate();
+    const endDay = end.getDate();
+    if (start.getMonth() === end.getMonth() && startDay !== endDay) {
+      return `${startMonth} ${startDay}–${endDay}`;
+    }
+    if (startDay === endDay) {
+      return `${startMonth} ${startDay}`;
+    }
+    const endMonth = end.toLocaleDateString('en-US', { month: 'short' });
+    return `${startMonth} ${startDay} – ${endMonth} ${endDay}`;
+  }, [trip?.start_date, trip?.end_date]);
+
+  // Count total items
+  const totalItems = useMemo(() => {
+    return days.reduce((sum, day) => sum + day.items.length, 0);
+  }, [days]);
 
   // Auto-fix items on wrong days based on their dates
   const hasAutoFixed = useRef(false);
   useEffect(() => {
-    // Wait for data to load and only run once
     if (loading || !trip?.start_date || days.length === 0 || hasAutoFixed.current) return;
-
-    // Count items to ensure we have data
     const totalItems = days.reduce((sum, day) => sum + day.items.length, 0);
     if (totalItems === 0) return;
 
-    // Check all items and move any that are on the wrong day
     for (const day of days) {
       for (const item of day.items) {
         const checkInDate = item.parsedNotes?.checkInDate;
@@ -100,166 +92,11 @@ export default function TripPage() {
     hasAutoFixed.current = true;
   }, [loading, trip?.start_date, trip?.end_date, days, moveItemToDay]);
 
-  // Calculate flight and hotel counts
-  const { flightCount, hotelCount } = useMemo(() => {
-    let flights = 0;
-    let hotels = 0;
-    for (const day of days) {
-      for (const item of day.items) {
-        if (item.parsedNotes?.type === 'flight') flights++;
-        if (item.parsedNotes?.type === 'hotel') hotels++;
-      }
-    }
-    return { flightCount: flights, hotelCount: hotels };
-  }, [days]);
-
-  // Get all flights for flights tab
-  const allFlights = useMemo(() => {
-    const flights: EnrichedItineraryItem[] = [];
-    for (const day of days) {
-      for (const item of day.items) {
-        if (item.parsedNotes?.type === 'flight') {
-          flights.push(item);
-        }
-      }
-    }
-    return flights;
-  }, [days]);
-
-  // Get all hotels for hotels tab
-  const allHotels = useMemo(() => {
-    const hotels: EnrichedItineraryItem[] = [];
-    for (const day of days) {
-      for (const item of day.items) {
-        if (item.parsedNotes?.type === 'hotel') {
-          hotels.push(item);
-        }
-      }
-    }
-    return hotels;
-  }, [days]);
-
-  // Handlers
-  const handleEditItem = useCallback((item: EnrichedItineraryItem) => {
-    setSelectedItem(item);
-    setShowAddPlaceBox(false);
-    setShowTripSettings(false);
-  }, []);
-
-  const handleOptimizeDay = useCallback(async (dayNumber: number) => {
-    const day = days.find(d => d.dayNumber === dayNumber);
-    if (!day || day.items.length < 2) return;
-
-    setOptimizingDay(dayNumber);
-    try {
-      const response = await fetch('/api/intelligence/route-optimizer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: day.items.map(item => ({
-            id: item.id,
-            title: item.title,
-            latitude: item.destination?.latitude ?? item.parsedNotes?.latitude,
-            longitude: item.destination?.longitude ?? item.parsedNotes?.longitude,
-            time: item.time,
-          })),
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.optimizedOrder && Array.isArray(result.optimizedOrder)) {
-          const orderedItems = result.optimizedOrder
-            .map((id: string) => day.items.find(item => item.id === id))
-            .filter(Boolean);
-          if (orderedItems.length === day.items.length) {
-            reorderItems(dayNumber, orderedItems);
-          }
-        }
-      }
-    } catch (err) {
-      console.error('Failed to optimize day:', err);
-    } finally {
-      setOptimizingDay(null);
-    }
-  }, [days, reorderItems]);
-
-  const handleAddSuggestion = useCallback(async (suggestion: { category?: string; dayNumber?: number }) => {
-    if (!trip?.destination) return;
-
-    try {
-      const response = await fetch('/api/intelligence/smart-fill', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          city: primaryCity,
-          existingItems: [],
-          tripDays: days.length,
-          targetDay: suggestion.dayNumber || selectedDayNumber,
-          category: suggestion.category,
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        for (const s of result.suggestions || []) {
-          if (s.destination) {
-            await addPlace(s.destination, s.day || selectedDayNumber, s.startTime);
-          }
-        }
-        await refresh();
-      }
-    } catch (err) {
-      console.error('Failed to add suggestion:', err);
-    }
-  }, [primaryCity, days, selectedDayNumber, addPlace, refresh, trip?.destination]);
-
-  const handleAutoplan = useCallback(async () => {
-    await handleAddSuggestion({ dayNumber: selectedDayNumber });
-  }, [handleAddSuggestion, selectedDayNumber]);
-
-  // Handle add item from dropdown menu
-  const handleAddItemClick = useCallback((type: AddItemType) => {
-    setShowAddPlaceBox(true);
-    // The AddPlaceBox component will handle the different item types
-    // based on its UI - user can switch between tabs for different types
-  }, []);
-
-  // Handle item updates with automatic day move when dates change
-  const handleItemUpdate = useCallback((itemId: string, updates: Record<string, unknown>) => {
-    // Update the item notes
-    updateItem(itemId, updates);
-
-    // Find the item to get its current/new date
-    let item: EnrichedItineraryItem | undefined;
-    for (const day of days) {
-      item = day.items.find(i => i.id === itemId);
-      if (item) break;
-    }
-
-    // Get the date to check - prefer new value from updates, fall back to existing
-    const checkInDate = (updates.checkInDate as string | undefined) || item?.parsedNotes?.checkInDate;
-    const departureDate = (updates.departureDate as string | undefined) || item?.parsedNotes?.departureDate;
-    const dateToCheck = checkInDate || departureDate;
-
-    if (dateToCheck && trip?.start_date) {
-      const targetDay = calculateDayNumberFromDate(trip.start_date, trip.end_date, dateToCheck);
-      if (targetDay !== null) {
-        moveItemToDay(itemId, targetDay);
-      }
-    }
-  }, [updateItem, moveItemToDay, trip?.start_date, trip?.end_date, days]);
-
-  // Handle travel mode change between items
-  const handleUpdateTravelMode = useCallback((itemId: string, mode: 'walking' | 'driving' | 'transit') => {
-    updateItem(itemId, { travelModeToNext: mode });
-  }, [updateItem]);
-
   // Loading state
   if (loading) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950">
-        <div className="max-w-5xl mx-auto">
+      <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950">
+        <div className="max-w-xl mx-auto">
           <PageLoader />
         </div>
       </main>
@@ -269,7 +106,7 @@ export default function TripPage() {
   // Not found
   if (!trip) {
     return (
-      <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+      <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 dark:text-gray-400 mb-4">Trip not found</p>
           <button
@@ -284,323 +121,226 @@ export default function TripPage() {
   }
 
   return (
-    <main className="w-full px-4 sm:px-6 md:px-10 py-20 min-h-screen bg-white dark:bg-gray-950">
-      <div className="max-w-5xl mx-auto">
-        {/* Header with Tabs */}
-        <TripHeader
-          title={trip.title}
-          trip={trip}
-          heroImage={trip.cover_image || undefined}
-          activeContentTab={activeContentTab}
-          onContentTabChange={setActiveContentTab}
-          flightCount={flightCount}
-          hotelCount={hotelCount}
-          days={days}
-          selectedDayNumber={selectedDayNumber}
-          onSelectDay={setSelectedDayNumber}
-          onSettingsClick={() => setShowTripSettings(true)}
-          onAutoplanClick={handleAutoplan}
-          onAddClick={() => setShowAddPlaceBox(true)}
-          onAddItemClick={handleAddItemClick}
-          onEditClick={() => setIsEditMode(!isEditMode)}
-          isEditMode={isEditMode}
-          onMapClick={() => setShowMapView(true)}
-        />
+    <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950">
+      <div className="max-w-xl mx-auto">
+        {/* Header - minimal */}
+        <header className="mb-8">
+          <Link
+            href="/trips"
+            className="inline-flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors mb-3"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Trips
+          </Link>
 
-        {/* Main Content */}
-        <div className="lg:flex lg:gap-6">
-          {/* Left Column - Content */}
-          <div className="flex-1 min-w-0">
-            {activeContentTab === 'itinerary' && (
-              <>
-                {/* Map View (shown when map button clicked) */}
-                {showMapView && (
-                  <div className="mb-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">Day {selectedDayNumber} Map</h3>
-                      <button
-                        onClick={() => setShowMapView(false)}
-                        className="text-xs text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-                      >
-                        Hide map
-                      </button>
-                    </div>
-                    <TripMapView
-                      places={(days.find(d => d.dayNumber === selectedDayNumber)?.items || [])
-                        .filter((item) => item.parsedNotes?.type !== 'flight')
-                        .map((item, index) => ({
-                          id: item.id,
-                          name: item.title || 'Place',
-                          latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
-                          longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
-                          category: item.destination?.category || item.parsedNotes?.category,
-                          order: index + 1,
-                        }))}
-                      className="h-[300px] rounded-2xl"
-                    />
-                  </div>
-                )}
+          <h1 className="text-[22px] font-semibold text-gray-900 dark:text-white mb-1">
+            {trip.title}
+          </h1>
 
-                {/* Itinerary List - New Design with Visual Cards */}
-                <ItineraryViewRedesign
-                  days={days}
-                  selectedDayNumber={selectedDayNumber}
-                  onSelectDay={setSelectedDayNumber}
-                  onEditItem={handleEditItem}
-                  onAddItem={(dayNumber) => {
-                    setSelectedDayNumber(dayNumber);
-                    setShowAddPlaceBox(true);
-                  }}
-                  onOptimizeDay={handleOptimizeDay}
-                  onUpdateTravelMode={handleUpdateTravelMode}
-                  onRemoveItem={removeItem}
-                  onReorderItems={reorderItems}
-                  isOptimizing={optimizingDay !== null}
-                  isEditMode={isEditMode}
-                  activeItemId={selectedItem?.id}
-                  allHotels={allHotels}
-                  showDayNavigation={false}
-                />
-              </>
-            )}
+          <p className="text-[13px] text-gray-400">
+            {[primaryCity, dateDisplay, `${totalItems} ${totalItems === 1 ? 'place' : 'places'}`]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
+        </header>
 
-            {activeContentTab === 'flights' && (
-              <div className="space-y-3">
-                {allFlights.length === 0 ? (
-                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">No flights added yet</p>
-                    <button
-                      onClick={() => setShowAddPlaceBox(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
-                    >
-                      Add a flight
-                    </button>
-                  </div>
-                ) : (
-                  allFlights.map((flight) => (
-                    <div
-                      key={flight.id}
-                      onClick={() => handleEditItem(flight)}
-                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-all"
-                    >
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{flight.title}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {flight.parsedNotes?.from} → {flight.parsedNotes?.to}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {activeContentTab === 'hotels' && (
-              <div className="space-y-3">
-                {allHotels.length === 0 ? (
-                  <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">No hotels added yet</p>
-                    <button
-                      onClick={() => setShowAddPlaceBox(true)}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-xs font-medium hover:opacity-90 transition-opacity"
-                    >
-                      Add a hotel
-                    </button>
-                  </div>
-                ) : (
-                  allHotels.map((hotel) => (
-                    <div
-                      key={hotel.id}
-                      onClick={() => handleEditItem(hotel)}
-                      className="p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-all"
-                    >
-                      <div className="text-sm font-medium text-gray-900 dark:text-white">{hotel.title}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        {hotel.parsedNotes?.checkInTime || 'Check-in time not set'} · {hotel.parsedNotes?.address || 'Address not set'}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {activeContentTab === 'notes' && (
-              <div className="p-6 rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-                <TripNotesEditor
-                  notes={parseTripNotes(trip?.notes ?? null)}
-                  onChange={(notes: TripNotes) => {
-                    updateTrip({ notes: stringifyTripNotes(notes) });
-                  }}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Right Column - Sidebar */}
-          <div className="hidden lg:block lg:w-80 lg:flex-shrink-0 space-y-4 mt-6 lg:mt-0">
-            {showTripSettings ? (
-              <TripSettingsBox
-                trip={trip}
-                onUpdate={updateTrip}
-                onDelete={() => router.push('/trips')}
-                onClose={() => setShowTripSettings(false)}
-              />
-            ) : showAddPlaceBox ? (
-              <AddPlaceBox
-                city={primaryCity}
-                dayNumber={selectedDayNumber}
-                dayItems={days.find(d => d.dayNumber === selectedDayNumber)?.items.map(item => ({
-                  id: item.id,
-                  title: item.title,
-                  time: item.time,
-                  parsedNotes: item.parsedNotes,
-                }))}
-                onSelect={(destination, time) => {
-                  addPlace(destination, selectedDayNumber, time);
-                  setShowAddPlaceBox(false);
-                }}
-                onAddFlight={(flightData) => {
-                  // Calculate correct day based on departure date
-                  const targetDay = flightData.departureDate
-                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, flightData.departureDate) ?? selectedDayNumber
-                    : selectedDayNumber;
-                  addFlight(flightData, targetDay);
-                  setShowAddPlaceBox(false);
-                }}
-                onAddTrain={(trainData) => {
-                  // Calculate correct day based on departure date
-                  const targetDay = trainData.departureDate
-                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, trainData.departureDate) ?? selectedDayNumber
-                    : selectedDayNumber;
-                  addTrain(trainData, targetDay);
-                  setShowAddPlaceBox(false);
-                }}
-                onAddHotel={(hotelData) => {
-                  // Calculate correct day based on check-in date
-                  const targetDay = hotelData.checkInDate
-                    ? calculateDayNumberFromDate(trip.start_date, trip.end_date, hotelData.checkInDate) ?? selectedDayNumber
-                    : selectedDayNumber;
-                  addHotel(hotelData, targetDay);
-                  setShowAddPlaceBox(false);
-                }}
-                onAddActivity={(activityData, time) => {
-                  addActivity(activityData, selectedDayNumber, time);
-                  setShowAddPlaceBox(false);
-                }}
-                onClose={() => setShowAddPlaceBox(false)}
-              />
-            ) : selectedItem ? (
-              <DestinationBox
-                item={selectedItem}
-                onClose={() => setSelectedItem(null)}
-                onTimeChange={updateItemTime}
-                onNotesChange={updateItemNotes}
-                onItemUpdate={handleItemUpdate}
-                onRemove={(itemId) => {
-                  removeItem(itemId);
-                  setSelectedItem(null);
-                }}
-              />
-            ) : (
-              <>
-                {/* Interactive Map */}
-                <InteractiveMapCard
-                  locationName={primaryCity || 'Map'}
-                  onExpand={() => {}}
-                />
-
-                {/* Travel AI - Opens Companion Panel */}
-                <TravelAISidebar
-                  onAddSuggestion={handleAddSuggestion}
-                  onOpenChat={() => setShowCompanionPanel(true)}
-                />
-              </>
-            )}
-          </div>
+        {/* Days - simple list */}
+        <div className="space-y-6">
+          {days.map((day) => (
+            <DaySection
+              key={day.dayNumber}
+              dayNumber={day.dayNumber}
+              date={day.date ?? undefined}
+              items={day.items}
+              onReorder={(items) => reorderItems(day.dayNumber, items)}
+              onRemove={removeItem}
+            />
+          ))}
         </div>
 
-        {/* Mobile Sidebar */}
-        <div className="lg:hidden mt-6 space-y-4">
-          {showTripSettings ? (
-            <TripSettingsBox
-              trip={trip}
-              onUpdate={updateTrip}
-              onDelete={() => router.push('/trips')}
-              onClose={() => setShowTripSettings(false)}
-            />
-          ) : showAddPlaceBox ? (
-            <AddPlaceBox
-              city={primaryCity}
-              dayNumber={selectedDayNumber}
-              dayItems={days.find(d => d.dayNumber === selectedDayNumber)?.items.map(item => ({
-                id: item.id,
-                title: item.title,
-                time: item.time,
-                parsedNotes: item.parsedNotes,
-              }))}
-              onSelect={(destination, time) => {
-                addPlace(destination, selectedDayNumber, time);
-                setShowAddPlaceBox(false);
-              }}
-              onAddFlight={(flightData) => {
-                // Calculate correct day based on departure date
-                const targetDay = flightData.departureDate
-                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, flightData.departureDate) ?? selectedDayNumber
-                  : selectedDayNumber;
-                addFlight(flightData, targetDay);
-                setShowAddPlaceBox(false);
-              }}
-              onAddTrain={(trainData) => {
-                // Calculate correct day based on departure date
-                const targetDay = trainData.departureDate
-                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, trainData.departureDate) ?? selectedDayNumber
-                  : selectedDayNumber;
-                addTrain(trainData, targetDay);
-                setShowAddPlaceBox(false);
-              }}
-              onAddHotel={(hotelData) => {
-                // Calculate correct day based on check-in date
-                const targetDay = hotelData.checkInDate
-                  ? calculateDayNumberFromDate(trip.start_date, trip.end_date, hotelData.checkInDate) ?? selectedDayNumber
-                  : selectedDayNumber;
-                addHotel(hotelData, targetDay);
-                setShowAddPlaceBox(false);
-              }}
-              onAddActivity={(activityData, time) => {
-                addActivity(activityData, selectedDayNumber, time);
-                setShowAddPlaceBox(false);
-              }}
-              onClose={() => setShowAddPlaceBox(false)}
-            />
-          ) : selectedItem ? (
-            <DestinationBox
-              item={selectedItem}
-              onClose={() => setSelectedItem(null)}
-              onTimeChange={updateItemTime}
-              onNotesChange={updateItemNotes}
-              onItemUpdate={handleItemUpdate}
-              onRemove={(itemId) => {
-                removeItem(itemId);
-                setSelectedItem(null);
-              }}
-            />
-          ) : (
-            <TravelAISidebar
-              onAddSuggestion={handleAddSuggestion}
-              onOpenChat={() => setShowCompanionPanel(true)}
-            />
-          )}
-        </div>
+        {/* Empty state */}
+        {totalItems === 0 && (
+          <div className="text-center py-16">
+            <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
+              <MapPin className="w-5 h-5 text-gray-400" />
+            </div>
+            <p className="text-[14px] text-gray-500 mb-4">
+              No places yet
+            </p>
+            <Link
+              href="/"
+              className="text-[13px] font-medium text-gray-900 dark:text-white hover:opacity-70 transition-opacity"
+            >
+              Browse destinations
+            </Link>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+/**
+ * Day section with reorderable items
+ */
+function DaySection({
+  dayNumber,
+  date,
+  items,
+  onReorder,
+  onRemove,
+}: {
+  dayNumber: number;
+  date?: string;
+  items: EnrichedItineraryItem[];
+  onReorder: (items: EnrichedItineraryItem[]) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [orderedItems, setOrderedItems] = useState(items);
+
+  // Sync with parent
+  useEffect(() => {
+    setOrderedItems(items);
+  }, [items]);
+
+  // Handle reorder complete
+  const handleReorderComplete = useCallback(() => {
+    if (JSON.stringify(orderedItems.map(i => i.id)) !== JSON.stringify(items.map(i => i.id))) {
+      onReorder(orderedItems);
+    }
+  }, [orderedItems, items, onReorder]);
+
+  const dateDisplay = date
+    ? new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    : null;
+
+  return (
+    <div>
+      {/* Day header */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
+          Day {dayNumber}
+        </span>
+        {dateDisplay && (
+          <span className="text-[11px] text-gray-300 dark:text-gray-600">
+            {dateDisplay}
+          </span>
+        )}
       </div>
 
-      {/* Companion Panel - AI Chat Sidebar */}
-      <CompanionPanel
-        isOpen={showCompanionPanel}
-        onClose={() => setShowCompanionPanel(false)}
-        tripTitle={trip.title}
-        destination={primaryCity}
-        days={days}
-        selectedDayNumber={selectedDayNumber}
-        onAddSuggestion={handleAddSuggestion}
-      />
-    </main>
+      {/* Items */}
+      {items.length > 0 ? (
+        <Reorder.Group
+          axis="y"
+          values={orderedItems}
+          onReorder={setOrderedItems}
+          className="space-y-2"
+        >
+          {orderedItems.map((item) => (
+            <ItemRow
+              key={item.id}
+              item={item}
+              onRemove={() => onRemove(item.id)}
+              onDragEnd={handleReorderComplete}
+            />
+          ))}
+        </Reorder.Group>
+      ) : (
+        <div className="py-6 text-center">
+          <p className="text-[12px] text-gray-400">No places for this day</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Single item row
+ */
+function ItemRow({
+  item,
+  onRemove,
+  onDragEnd,
+}: {
+  item: EnrichedItineraryItem;
+  onRemove: () => void;
+  onDragEnd: () => void;
+}) {
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Get display info
+  const title = item.title || item.destination?.name || 'Untitled';
+  const image = item.destination?.image_thumbnail || item.destination?.image;
+  const time = item.time || item.parsedNotes?.departureTime || item.parsedNotes?.checkInTime;
+  const category = item.destination?.category || item.parsedNotes?.category || item.parsedNotes?.type;
+
+  // Format time display
+  const timeDisplay = time
+    ? new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    : null;
+
+  return (
+    <Reorder.Item
+      value={item}
+      onDragStart={() => setIsDragging(true)}
+      onDragEnd={() => {
+        setIsDragging(false);
+        onDragEnd();
+      }}
+      className={`
+        flex items-center gap-3 px-3 py-2.5 rounded-xl
+        bg-gray-50 dark:bg-gray-900/50
+        group cursor-grab active:cursor-grabbing
+        ${isDragging ? 'shadow-lg ring-1 ring-gray-200 dark:ring-gray-700 z-10' : ''}
+      `}
+    >
+      {/* Drag handle */}
+      <GripVertical className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+      {/* Time */}
+      <span className="w-14 text-[11px] text-gray-400 text-right flex-shrink-0">
+        {timeDisplay || '—'}
+      </span>
+
+      {/* Image */}
+      <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+        {image ? (
+          <Image
+            src={image}
+            alt=""
+            width={40}
+            height={40}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <MapPin className="w-4 h-4 text-gray-400" />
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">
+          {title}
+        </p>
+        {category && (
+          <p className="text-[11px] text-gray-400 capitalize">
+            {category}
+          </p>
+        )}
+      </div>
+
+      {/* Remove button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="p-1.5 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full"
+      >
+        <X className="w-3.5 h-3.5 text-gray-400 hover:text-red-500" />
+      </button>
+    </Reorder.Item>
   );
 }
