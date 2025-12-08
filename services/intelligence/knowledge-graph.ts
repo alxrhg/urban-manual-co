@@ -321,7 +321,7 @@ export class KnowledgeGraphService {
    */
   async storeRelationship(relationship: DestinationRelationship): Promise<void> {
     if (!this.supabase) return;
-    
+
     try {
       await this.supabase.from('destination_relationships').upsert({
         source_destination_id: relationship.source_id,
@@ -337,6 +337,236 @@ export class KnowledgeGraphService {
     } catch (error) {
       console.error('Error storing relationship:', error);
     }
+  }
+
+  // ============================================
+  // G: KNOWLEDGE GRAPH NAVIGATION
+  // ============================================
+
+  /**
+   * Find destinations by architect
+   */
+  async findByArchitect(
+    architectName: string,
+    limit: number = 20
+  ): Promise<Array<{ id: number; name: string; city: string; category: string; architectRole?: string }>> {
+    if (!this.supabase) return [];
+
+    try {
+      // Search for architect by name
+      const { data: architects } = await this.supabase
+        .from('architects')
+        .select('id, name')
+        .ilike('name', `%${architectName}%`)
+        .limit(1);
+
+      if (!architects || architects.length === 0) {
+        return [];
+      }
+
+      const architectId = architects[0].id;
+
+      // Get destinations linked to this architect
+      const { data: links } = await this.supabase
+        .from('destination_architects')
+        .select(`
+          destination_id,
+          role,
+          destinations (id, name, city, category, slug)
+        `)
+        .eq('architect_id', architectId)
+        .limit(limit);
+
+      if (!links) return [];
+
+      return links.map((link: any) => ({
+        id: link.destinations.id,
+        name: link.destinations.name,
+        city: link.destinations.city,
+        category: link.destinations.category,
+        slug: link.destinations.slug,
+        architectRole: link.role,
+      }));
+    } catch (error) {
+      console.error('Error finding by architect:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Find destinations by architectural movement
+   */
+  async findByMovement(
+    movementName: string,
+    limit: number = 20
+  ): Promise<Array<{ id: number; name: string; city: string; category: string }>> {
+    if (!this.supabase) return [];
+
+    try {
+      // Search for movement by name
+      const { data: movements } = await this.supabase
+        .from('movements')
+        .select('id, name')
+        .ilike('name', `%${movementName}%`)
+        .limit(1);
+
+      if (!movements || movements.length === 0) {
+        return [];
+      }
+
+      const movementId = movements[0].id;
+
+      // Get destinations linked to this movement
+      const { data: links } = await this.supabase
+        .from('destination_movements')
+        .select(`
+          destination_id,
+          destinations (id, name, city, category, slug)
+        `)
+        .eq('movement_id', movementId)
+        .limit(limit);
+
+      if (!links) return [];
+
+      return links.map((link: any) => ({
+        id: link.destinations.id,
+        name: link.destinations.name,
+        city: link.destinations.city,
+        category: link.destinations.category,
+        slug: link.destinations.slug,
+      }));
+    } catch (error) {
+      console.error('Error finding by movement:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Find other works by the same architect(s) of a destination
+   */
+  async findOtherWorksBySameArchitect(
+    destinationId: string | number,
+    limit: number = 10
+  ): Promise<Array<{ id: number; name: string; city: string; architect: string }>> {
+    if (!this.supabase) return [];
+
+    try {
+      // Get architects of this destination
+      const { data: destArchitects } = await this.supabase
+        .from('destination_architects')
+        .select(`
+          architect_id,
+          architects (id, name)
+        `)
+        .eq('destination_id', destinationId);
+
+      if (!destArchitects || destArchitects.length === 0) {
+        return [];
+      }
+
+      const architectIds = destArchitects.map((da: any) => da.architect_id);
+      const architectNames = new Map(destArchitects.map((da: any) => [da.architect_id, da.architects?.name]));
+
+      // Get other destinations by these architects
+      const { data: otherWorks } = await this.supabase
+        .from('destination_architects')
+        .select(`
+          architect_id,
+          destinations (id, name, city, category, slug)
+        `)
+        .in('architect_id', architectIds)
+        .neq('destination_id', destinationId)
+        .limit(limit);
+
+      if (!otherWorks) return [];
+
+      return otherWorks.map((work: any) => ({
+        id: work.destinations.id,
+        name: work.destinations.name,
+        city: work.destinations.city,
+        slug: work.destinations.slug,
+        architect: architectNames.get(work.architect_id) || 'Unknown',
+      }));
+    } catch (error) {
+      console.error('Error finding other works:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Natural language query for knowledge graph
+   */
+  async queryKnowledgeGraph(
+    query: string
+  ): Promise<{
+    type: 'architect' | 'movement' | 'similar' | 'unknown';
+    results: any[];
+    context: string;
+  }> {
+    const lowerQuery = query.toLowerCase();
+
+    // Detect architect query patterns
+    const architectPatterns = [
+      /(?:by|designed by|architect(?:ed)?(?:\s+by)?)\s+(.+)/i,
+      /(.+?)(?:'s|s')\s+(?:work|buildings|designs|architecture)/i,
+      /(?:show me|find)\s+(.+?)(?:'s)?\s+(?:other\s+)?(?:work|buildings|designs)/i,
+    ];
+
+    for (const pattern of architectPatterns) {
+      const match = query.match(pattern);
+      if (match) {
+        const architectName = match[1].trim();
+        const results = await this.findByArchitect(architectName);
+        return {
+          type: 'architect',
+          results,
+          context: `Works by ${architectName}`,
+        };
+      }
+    }
+
+    // Detect movement query patterns
+    const movementPatterns = [
+      /(?:from the|in the|of the)\s+(.+?)\s+(?:movement|style|period|era)/i,
+      /(.+?)\s+(?:movement|style)\s+(?:buildings|architecture|destinations)/i,
+      /(?:brutalist|modernist|metabolist|art deco|art nouveau|bauhaus|gothic|renaissance)/i,
+    ];
+
+    for (const pattern of movementPatterns) {
+      const match = query.match(pattern);
+      if (match) {
+        const movementName = match[1]?.trim() || match[0].trim();
+        const results = await this.findByMovement(movementName);
+        return {
+          type: 'movement',
+          results,
+          context: `${movementName} architecture`,
+        };
+      }
+    }
+
+    // Check for specific movement keywords
+    const movementKeywords = [
+      'brutalist', 'modernist', 'metabolist', 'art deco', 'art nouveau',
+      'bauhaus', 'gothic', 'renaissance', 'postmodern', 'deconstructivist',
+    ];
+
+    for (const keyword of movementKeywords) {
+      if (lowerQuery.includes(keyword)) {
+        const results = await this.findByMovement(keyword);
+        return {
+          type: 'movement',
+          results,
+          context: `${keyword.charAt(0).toUpperCase() + keyword.slice(1)} architecture`,
+        };
+      }
+    }
+
+    return {
+      type: 'unknown',
+      results: [],
+      context: '',
+    };
   }
 }
 

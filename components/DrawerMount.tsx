@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 import { AccountDrawer } from '@/components/AccountDrawer';
-import { DestinationDrawer } from '@/src/features/detail/DestinationDrawer';
+// DestinationDrawer removed - now using IntelligentDrawer from app/layout.tsx
 import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
 import { TripsDrawer } from '@/components/TripsDrawer';
@@ -23,7 +23,7 @@ import { Drawer } from '@/components/ui/Drawer';
 import { useDrawerStyle } from '@/components/ui/UseDrawerStyle';
 
 // Types that are handled by inline PanelLayout on desktop
-const INLINE_TYPES = ['destination', 'account-new', 'trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai'];
+const INLINE_TYPES = ['account-new', 'trip-list', 'trip-settings', 'place-selector', 'trip-add-hotel', 'add-flight', 'trip-ai'];
 
 export default function DrawerMount() {
   const { open, type, props, closeDrawer, displayMode } = useDrawerStore();
@@ -66,15 +66,7 @@ export default function DrawerMount() {
         </Drawer>
       )}
 
-      {/* DestinationDrawer - skip overlay when in inline mode on desktop */}
-      {!shouldSkipOverlay('destination') && (
-        <DestinationDrawer
-          isOpen={open && type === 'destination'}
-          onClose={closeDrawer}
-          destination={props.place || props.destination || null}
-          {...props}
-        />
-      )}
+      {/* DestinationDrawer removed - now using IntelligentDrawer from app/layout.tsx */}
 
       <TripOverviewDrawer
         isOpen={open && type === 'trip-overview'}

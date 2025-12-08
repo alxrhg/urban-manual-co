@@ -9,13 +9,8 @@ import { MapPin, SlidersHorizontal } from 'lucide-react';
 import { CARD_WRAPPER, CARD_MEDIA, CARD_TITLE, CARD_META } from '@/components/CardStyles';
 import Image from 'next/image';
 import { SearchFiltersComponent, SearchFilters } from '@/src/features/search/SearchFilters';
-import dynamic from 'next/dynamic';
 import { useDrawer } from '@/contexts/DrawerContext';
-
-const DestinationDrawer = dynamic(
-  () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
-  { ssr: false, loading: () => null }
-);
+import { useDestinationDrawer } from '@/components/IntelligentDrawer';
 
 interface CategoryPageClientProps {
   category: string;
@@ -26,7 +21,8 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [filteredDestinations, setFilteredDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  // Drawer now handled by IntelligentDrawer
+  const { openDestination: openIntelligentDrawer } = useDestinationDrawer();
   const [filters, setFilters] = useState<SearchFilters>({});
   const [cities, setCities] = useState<string[]>([]);
   const [categories] = useState<string[]>(['Hotels', 'Restaurants', 'Cafes', 'Bars', 'Shops', 'Museums']);
@@ -141,8 +137,7 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
               <button
                 key={destination.slug}
                   onClick={() => {
-                    setSelectedDestination(destination);
-                    openDrawer('destination');
+                    openIntelligentDrawer(destination);
                   }}
                 className={`${CARD_WRAPPER} group text-left`}
               >
@@ -181,42 +176,7 @@ export default function CategoryPageClient({ category }: CategoryPageClientProps
           </div>
         )}
 
-        {/* Destination Drawer - Only render when open */}
-        {isDrawerTypeOpen('destination') && selectedDestination && (
-          <DestinationDrawer
-            destination={selectedDestination}
-            isOpen={true}
-            onClose={() => {
-              closeDrawer();
-              setSelectedDestination(null);
-            }}
-            onDestinationClick={async (slug: string) => {
-              try {
-                const supabaseClient = createClient();
-                if (!supabaseClient) {
-                  console.error('Failed to create Supabase client');
-                  return;
-                }
-                
-                const { data: destination, error } = await supabaseClient
-                  .from('destinations')
-                  .select('*')
-                  .eq('slug', slug)
-                  .single();
-                
-                if (error || !destination) {
-                  console.error('Failed to fetch destination:', error);
-                  return;
-                }
-                
-                setSelectedDestination(destination as Destination);
-                openDrawer('destination');
-              } catch (error) {
-                console.error('Error fetching destination:', error);
-              }
-            }}
-          />
-        )}
+        {/* Destination Drawer - now handled by IntelligentDrawer in layout.tsx */}
       </main>
     </div>
   );

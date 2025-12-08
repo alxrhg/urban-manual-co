@@ -15,13 +15,8 @@ import { UniversalGrid } from '@/components/UniversalGrid';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { slugToArchitectName } from '@/lib/architect-utils';
 
-const DestinationDrawer = dynamic(
-  () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
+// IntelligentDrawer for destination details
+import { useDestinationDrawer } from '@/components/IntelligentDrawer';
 
 function capitalizeCategory(category: string): string {
   return category
@@ -46,7 +41,8 @@ export default function ArchitectPageClient() {
     crown?: boolean;
   }>({});
   const [loading, setLoading] = useState(true);
-  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  // Drawer now handled by IntelligentDrawer
+  const { openDestination: openIntelligentDrawer } = useDestinationDrawer();
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -176,8 +172,7 @@ export default function ArchitectPageClient() {
   };
 
   const handleDestinationClick = (destination: Destination) => {
-    setSelectedDestination(destination);
-    openDrawer('destination');
+    openIntelligentDrawer(destination);
   };
 
   const totalPages = Math.ceil(filteredDestinations.length / itemsPerPage);
@@ -339,42 +334,7 @@ export default function ArchitectPageClient() {
         </div>
       </main>
 
-      {/* Destination Drawer */}
-      {isDrawerTypeOpen('destination') && selectedDestination && (
-        <DestinationDrawer
-          destination={selectedDestination}
-          isOpen={true}
-          onClose={() => {
-            closeDrawer();
-            setSelectedDestination(null);
-          }}
-          onDestinationClick={async (slug: string) => {
-            try {
-              const supabaseClient = createClient();
-              if (!supabaseClient) {
-                console.error('Failed to create Supabase client');
-                return;
-              }
-              
-              const { data: destination, error } = await supabaseClient
-                .from('destinations')
-                .select('*')
-                .eq('slug', slug)
-                .single();
-              
-              if (error || !destination) {
-                console.error('Failed to fetch destination:', error);
-                return;
-              }
-              
-              setSelectedDestination(destination as Destination);
-              openDrawer('destination');
-            } catch (error) {
-              console.error('Error fetching destination:', error);
-            }
-          }}
-        />
-      )}
+      {/* Destination Drawer - now handled by IntelligentDrawer in layout.tsx */}
     </>
   );
 }

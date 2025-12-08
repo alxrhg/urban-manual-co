@@ -58,15 +58,10 @@ import { useDrawerStore } from "@/lib/stores/drawer-store";
 import { useAuth } from "@/contexts/AuthContext";
 import type { User } from "@supabase/supabase-js";
 
-// Lazy load heavy components
-const DestinationDrawer = dynamic(
-  () =>
-    import("@/src/features/detail/DestinationDrawer").then((mod) => ({
-      default: mod.DestinationDrawer,
-    })),
-  { ssr: false, loading: () => null }
-);
+// Import IntelligentDrawer hook
+import { useDestinationDrawer } from "@/components/IntelligentDrawer";
 
+// Lazy load heavy components
 const SmartRecommendations = dynamic(
   () =>
     import("@/components/SmartRecommendations").then((mod) => ({
@@ -217,7 +212,8 @@ export default function HomepageClient({
   const [sortBy, setSortBy] = useState<"default" | "recent">("default");
   const [searching, setSearching] = useState(false);
   const [creatingTrip, setCreatingTrip] = useState(false);
-  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  // Drawer now handled by IntelligentDrawer
+  const { openDestination: openIntelligentDrawer } = useDestinationDrawer();
   const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -1172,7 +1168,7 @@ export default function HomepageClient({
               <div className="mb-12 md:mb-16">
                 <SmartRecommendations
                   onCardClick={(destination) => {
-                    setSelectedDestination(destination);
+                    openIntelligentDrawer(destination);
                     openDrawer("destination");
                     trackDestinationEngagement(destination, "grid", 0);
                   }}
@@ -1213,16 +1209,16 @@ export default function HomepageClient({
               <div className="relative w-full h-[calc(100vh-20rem)] min-h-[500px] rounded-2xl border border-gray-200 dark:border-gray-800">
                 <HomeMapSplitView
                   destinations={displayDestinations}
-                  selectedDestination={selectedDestination}
+                  selectedDestination={null}
                   onMarkerSelect={(destination) => {
-                    setSelectedDestination(destination);
+                    openIntelligentDrawer(destination);
                     trackDestinationEngagement(destination, "map_marker");
                   }}
                   onListItemSelect={(destination) => {
-                    setSelectedDestination(destination);
+                    openIntelligentDrawer(destination);
                     trackDestinationEngagement(destination, "map_list");
                   }}
-                  onCloseDetail={() => setSelectedDestination(null)}
+                  onCloseDetail={() => {/* IntelligentDrawer handles close */}}
                   isLoading={isDestinationsLoading}
                 />
               </div>
@@ -1239,7 +1235,7 @@ export default function HomepageClient({
                         index={index}
                         isVisited={visitedSlugs.has(destination.slug)}
                         onClick={() => {
-                          setSelectedDestination(destination);
+                          openIntelligentDrawer(destination);
                           openDrawer("destination");
                           trackDestinationEngagement(
                             destination,
@@ -1281,15 +1277,7 @@ export default function HomepageClient({
         <ScrollToTop />
       </main>
 
-      {/* Destination Drawer */}
-      <DestinationDrawer
-        destination={selectedDestination}
-        isOpen={!!selectedDestination}
-        onClose={() => {
-          setSelectedDestination(null);
-          closeDrawer();
-        }}
-      />
+      {/* Destination Drawer - now handled by IntelligentDrawer in layout.tsx */}
     </ErrorBoundary>
   );
 }

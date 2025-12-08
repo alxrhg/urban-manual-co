@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Destination } from '@/types/destination';
 import { createClient } from '@/lib/supabase/client';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
+import { useDestinationDrawer } from '@/components/IntelligentDrawer';
 
 /**
  * Homepage Data Provider with Full Features
@@ -126,9 +127,8 @@ function HomepageDataProviderInner({
   // View mode
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
 
-  // Drawer state
-  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  // Drawer state - now delegated to IntelligentDrawer
+  const { openDestination: openIntelligentDrawer } = useDestinationDrawer();
 
   // AI Chat state
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
@@ -292,17 +292,14 @@ function HomepageDataProviderInner({
     router.push(url.pathname + url.search, { scroll: false });
   }, [router]);
 
-  // Open destination in drawer
+  // Open destination in drawer - now uses IntelligentDrawer
   const openDestination = useCallback((destination: Destination) => {
-    setSelectedDestination(destination);
-    setIsDrawerOpen(true);
-  }, []);
+    openIntelligentDrawer(destination);
+  }, [openIntelligentDrawer]);
 
-  // Close drawer
+  // Close drawer - no-op as IntelligentDrawer handles its own close
   const closeDrawer = useCallback(() => {
-    setIsDrawerOpen(false);
-    // Delay clearing destination to allow close animation
-    setTimeout(() => setSelectedDestination(null), 300);
+    // IntelligentDrawer handles its own close via the X button or backdrop click
   }, []);
 
   // Open AI chat with optional initial query
@@ -333,8 +330,8 @@ function HomepageDataProviderInner({
     selectedCategory,
     searchTerm,
     viewMode,
-    selectedDestination,
-    isDrawerOpen,
+    selectedDestination: null, // Now handled by IntelligentDrawer
+    isDrawerOpen: false, // Now handled by IntelligentDrawer
     isAIChatOpen,
     aiChatInitialQuery,
     michelinOnly,

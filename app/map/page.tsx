@@ -11,11 +11,8 @@ import MapView from '@/components/MapView';
 import { Search, X, List, ChevronRight, SlidersHorizontal, Globe2, LayoutGrid, Map, Plus, Filter } from 'lucide-react';
 import Image from 'next/image';
 
-// Lazy load components
-const DestinationDrawer = dynamic(
-  () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
-  { ssr: false, loading: () => null }
-);
+// IntelligentDrawer for destination details
+import { useDestinationDrawer } from '@/components/IntelligentDrawer';
 
 interface FilterState {
   categories: Set<string>;
@@ -28,7 +25,8 @@ export default function MapPage() {
   const { user } = useAuth();
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
-  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  // Drawer now handled by IntelligentDrawer
+  const { openDestination: openIntelligentDrawer } = useDestinationDrawer();
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<FilterState>({
     categories: new Set(),
@@ -149,14 +147,12 @@ export default function MapPage() {
   };
 
   const handleMarkerClick = useCallback((dest: Destination) => {
-    setSelectedDestination(dest);
-    openDrawer('destination');
-  }, [openDrawer]);
+    openIntelligentDrawer(dest);
+  }, [openIntelligentDrawer]);
 
   const handleListItemClick = useCallback((dest: Destination) => {
-    setSelectedDestination(dest);
-    openDrawer('destination');
-  }, [openDrawer]);
+    openIntelligentDrawer(dest);
+  }, [openIntelligentDrawer]);
 
   // Calculate distance from map center (simplified)
   const getDistanceFromCenter = (dest: Destination): number => {
@@ -284,11 +280,7 @@ export default function MapPage() {
               <button
                 key={dest.slug}
                 onClick={() => handleListItemClick(dest)}
-                className={`w-full flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 ease-out text-left ${
-                  selectedDestination?.slug === dest.slug
-                    ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-                    : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:opacity-60'
-                }`}
+                className="w-full flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 ease-out text-left bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800 hover:opacity-60"
               >
                 {dest.image && (
                   <div className="relative w-16 h-16 flex-shrink-0 rounded-2xl overflow-hidden bg-gray-200 dark:bg-gray-700 border border-gray-200 dark:border-gray-800">
@@ -399,42 +391,7 @@ export default function MapPage() {
           </div>
         </div>
 
-      {/* Destination Drawer - Only render when open */}
-      {isDrawerTypeOpen('destination') && selectedDestination && (
-        <DestinationDrawer
-          destination={selectedDestination}
-          isOpen={true}
-          onClose={() => {
-            closeDrawer();
-            setTimeout(() => setSelectedDestination(null), 300);
-          }}
-          onDestinationClick={async (slug: string) => {
-            try {
-              const supabaseClient = createClient();
-              if (!supabaseClient) {
-                console.error('Failed to create Supabase client');
-                return;
-              }
-              
-              const { data: destination, error } = await supabaseClient
-                .from('destinations')
-                .select('*')
-                .eq('slug', slug)
-                .single();
-              
-              if (error || !destination) {
-                console.error('Failed to fetch destination:', error);
-                return;
-              }
-              
-              setSelectedDestination(destination as Destination);
-              openDrawer('destination');
-            } catch (error) {
-              console.error('Error fetching destination:', error);
-            }
-          }}
-        />
-      )}
+      {/* Destination Drawer - now handled by IntelligentDrawer in layout.tsx */}
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { Destination } from '@/types/destination';
 import Image from 'next/image';
 import { getCategoryIconComponent } from '@/lib/icons/category-icons';
 import { useRouter } from 'next/navigation';
+import { useTripBuilder } from '@/contexts/TripBuilderContext';
+import AddToTripButton from '@/components/trip/AddToTripButton';
 
 // Instant search result type
 interface InstantResult {
@@ -123,6 +125,7 @@ export default function InteractiveHero() {
   } = useHomepageData();
 
   const router = useRouter();
+  const { startTrip, addToTrip, activeTrip } = useTripBuilder();
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [showAllCities, setShowAllCities] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -366,6 +369,18 @@ export default function InteractiveHero() {
       if (data.itinerary && data.itinerary.length > 0) {
         setItinerary(data.itinerary);
         setIsItinerary(true);
+
+        // Populate the trip builder with itinerary items
+        const city = data.filters?.city || '';
+        if (city && !activeTrip) {
+          startTrip(city, 1);
+        }
+        // Add each destination to the trip
+        data.itinerary.forEach((slot: { destination?: Destination; timeSlot?: string }) => {
+          if (slot.destination) {
+            addToTrip(slot.destination, 1, slot.timeSlot);
+          }
+        });
       }
 
       // Store filters for contextual follow-ups
@@ -403,7 +418,7 @@ export default function InteractiveHero() {
     } finally {
       setIsSearching(false);
     }
-  }, [localSearchTerm, conversationHistory, setSelectedCity, setSelectedCategory, setMichelinOnly]);
+  }, [localSearchTerm, conversationHistory, setSelectedCity, setSelectedCategory, setMichelinOnly, activeTrip, startTrip, addToTrip]);
 
   // Handle follow-up suggestion click
   const handleFollowUp = useCallback((suggestion: string) => {
@@ -775,37 +790,44 @@ export default function InteractiveHero() {
               {!isItinerary && chatDestinations.length > 0 && (
                 <div className="grid grid-cols-2 gap-2 mb-4">
                   {chatDestinations.slice(0, 4).map((dest) => (
-                    <button
+                    <div
                       key={dest.id || dest.slug}
-                      onClick={() => openDestination(dest)}
-                      className="flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-white/5
-                                 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left group"
+                      className="relative flex items-center gap-3 p-2 rounded-xl bg-gray-50 dark:bg-white/5
+                                 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors group"
                     >
-                      {dest.image_thumbnail || dest.image ? (
-                        <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
-                          <Image
-                            src={dest.image_thumbnail || dest.image || ''}
-                            alt={dest.name}
-                            width={48}
-                            height={48}
-                            className="w-full h-full object-cover"
-                          />
+                      <button
+                        onClick={() => openDestination(dest)}
+                        className="flex items-center gap-3 flex-1 min-w-0 text-left"
+                      >
+                        {dest.image_thumbnail || dest.image ? (
+                          <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 dark:bg-gray-700">
+                            <Image
+                              src={dest.image_thumbnail || dest.image || ''}
+                              alt={dest.name}
+                              width={48}
+                              height={48}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                            <MapPin className="w-5 h-5 text-gray-400" />
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200">
+                            {dest.name}
+                          </p>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
+                            {dest.city} • {capitalizeCategory(dest.category)}
+                          </p>
                         </div>
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
-                          <MapPin className="w-5 h-5 text-gray-400" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate group-hover:text-gray-700 dark:group-hover:text-gray-200">
-                          {dest.name}
-                        </p>
-                        <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate">
-                          {dest.city} • {capitalizeCategory(dest.category)}
-                        </p>
+                      </button>
+                      {/* Add to Trip button */}
+                      <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <AddToTripButton destination={dest} variant="icon" />
                       </div>
-                      <ArrowRight className="w-4 h-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 flex-shrink-0" />
-                    </button>
+                    </div>
                   ))}
                 </div>
               )}

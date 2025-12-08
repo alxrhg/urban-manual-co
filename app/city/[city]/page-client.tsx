@@ -28,14 +28,8 @@ export interface CityPageClientProps {
   initialCategories?: string[];
 }
 
-const DestinationDrawer = dynamic(
-  () => import('@/src/features/detail/DestinationDrawer').then(mod => ({ default: mod.DestinationDrawer })),
-  {
-    ssr: false,
-    loading: () => null,
-  }
-);
-
+// IntelligentDrawer for destination details
+import { useDestinationDrawer } from '@/components/IntelligentDrawer';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
 function capitalizeCity(city: string): string {
@@ -87,7 +81,8 @@ export default function CityPageClient({
   }>({});
   // Skip loading state if we have SSR data
   const [loading, setLoading] = useState(!hasSSRData);
-  const [selectedDestination, setSelectedDestination] = useState<Destination | null>(null);
+  // Drawer now handled by IntelligentDrawer
+  const { openDestination: openIntelligentDrawer } = useDestinationDrawer();
   const [visitedSlugs, setVisitedSlugs] = useState<Set<string>>(new Set());
   const [currentPage, setCurrentPage] = useState(1);
   const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
@@ -100,8 +95,7 @@ export default function CityPageClient({
   const handleAdminEdit = (destination: Destination) => {
     if (!isAdmin) return;
     // Open destination drawer - editing happens inline
-    setSelectedDestination(destination);
-    openDrawer('destination');
+    openIntelligentDrawer(destination);
   };
 
   const handleAddNewPOI = () => {
@@ -454,7 +448,7 @@ export default function CityPageClient({
                         key={destination.slug}
                         destination={destination}
                         onClick={() => {
-                          setSelectedDestination(destination);
+                          openIntelligentDrawer(destination);
                           openDrawer('destination');
                         }}
                         index={globalIndex}
@@ -540,79 +534,7 @@ export default function CityPageClient({
         </div>
       </main>
 
-      {/* Destination Drawer - Only render when open */}
-      {isDrawerTypeOpen('destination') && selectedDestination && (
-        <DestinationDrawer
-          destination={selectedDestination}
-          isOpen={true}
-          onClose={() => {
-            closeDrawer();
-            setSelectedDestination(null);
-          }}
-        onSaveToggle={async (slug: string) => {
-          if (!user) return;
-
-          const { data } = await supabase
-            .from('saved_places')
-            .select('id')
-            .eq('user_id', user.id)
-            .eq('destination_slug', slug)
-            .single();
-
-          if (data) {
-            await supabase.from('saved_places').delete().eq('user_id', user.id).eq('destination_slug', slug);
-          } else {
-            await (supabase.from('saved_places').insert as any)({ user_id: user.id, destination_slug: slug });
-          }
-        }}
-        onVisitToggle={async (slug: string, visited: boolean) => {
-          if (!user) return;
-
-          // Update local state based on the visited parameter
-          setVisitedSlugs(prev => {
-            const next = new Set(prev);
-            if (visited) {
-              next.add(slug);
-            } else {
-              next.delete(slug);
-            }
-            return next;
-          });
-
-          // The DestinationDrawer already handles the database update,
-          // so we just need to sync our local state
-        }}
-        onDestinationUpdate={async () => {
-          await new Promise(resolve => setTimeout(resolve, 200));
-          await fetchDestinations();
-        }}
-        onDestinationClick={async (slug: string) => {
-          try {
-            const supabaseClient = createClient();
-            if (!supabaseClient) {
-              console.error('Failed to create Supabase client');
-              return;
-            }
-            
-            const { data: destination, error } = await supabaseClient
-              .from('destinations')
-              .select('*')
-              .eq('slug', slug)
-              .single();
-            
-            if (error || !destination) {
-              console.error('Failed to fetch destination:', error);
-              return;
-            }
-            
-            setSelectedDestination(destination as Destination);
-            openDrawer('destination');
-          } catch (error) {
-            console.error('Error fetching destination:', error);
-          }
-        }}
-        />
-      )}
+      {/* Destination Drawer - now handled by IntelligentDrawer in layout.tsx */}
     </>
   );
 }

@@ -10,7 +10,7 @@ interface RouteContext {
 
 /**
  * GET /api/trips/[id]
- * Fetch a single trip by ID
+ * Fetch a single trip by ID with its itinerary items
  */
 export const GET = withErrorHandling(async (request: NextRequest, context: RouteContext) => {
   const { id } = await context.params;
@@ -26,6 +26,7 @@ export const GET = withErrorHandling(async (request: NextRequest, context: Route
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Fetch trip
   const { data: trip, error } = await supabase
     .from('trips')
     .select('*')
@@ -40,7 +41,54 @@ export const GET = withErrorHandling(async (request: NextRequest, context: Route
     throw error;
   }
 
-  return NextResponse.json({ trip });
+  // Fetch itinerary items
+  const { data: items, error: itemsError } = await supabase
+    .from('itinerary_items')
+    .select('*')
+    .eq('trip_id', id)
+    .order('day', { ascending: true })
+    .order('order_index', { ascending: true });
+
+  if (itemsError) {
+    console.error('Error fetching itinerary items:', itemsError);
+  }
+
+  // Fetch destination details for items with slugs
+  const slugs = (items || [])
+    .map((item) => item.destination_slug)
+    .filter((s): s is string => Boolean(s));
+
+  let destinations: Record<string, any> = {};
+  if (slugs.length > 0) {
+    const { data: destData } = await supabase
+      .from('destinations')
+      .select('slug, name, city, neighborhood, category, description, image, image_thumbnail, latitude, longitude, rating, price_level')
+      .in('slug', slugs);
+
+    if (destData) {
+      destinations = destData.reduce((acc, d) => {
+        acc[d.slug] = d;
+        return acc;
+      }, {} as Record<string, any>);
+    }
+  }
+
+  // Enrich items with destination data
+  const enrichedItems = (items || []).map((item) => ({
+    ...item,
+    destination: item.destination_slug ? destinations[item.destination_slug] : null,
+  }));
+
+  return NextResponse.json({
+    ...trip,
+    id: trip.id,
+    title: trip.title,
+    destination: trip.destination,
+    start_date: trip.start_date,
+    end_date: trip.end_date,
+    items: enrichedItems,
+    updated_at: trip.updated_at,
+  });
 });
 
 /**
