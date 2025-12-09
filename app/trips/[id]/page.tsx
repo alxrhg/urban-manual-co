@@ -1374,6 +1374,9 @@ function DaySection({
                     fromItem={item}
                     toItem={orderedItems[index + 1]}
                     city={city}
+                    tripId={tripId}
+                    dayNumber={dayNumber}
+                    onRefresh={onRefresh}
                   />
                 </>
               )}
@@ -2358,13 +2361,22 @@ function GapSuggestion({
   fromItem,
   toItem,
   city,
-  onAddPlace,
+  tripId,
+  dayNumber,
+  onRefresh,
 }: {
   fromItem: EnrichedItineraryItem;
   toItem: EnrichedItineraryItem;
   city: string;
-  onAddPlace?: (type: 'coffee' | 'lunch' | 'dinner' | 'walk') => void;
+  tripId: string;
+  dayNumber: number;
+  onRefresh: () => void;
 }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [suggestions, setSuggestions] = useState<Array<{ id: number; slug: string; name: string; category: string; image?: string }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
+
   const fromTime = fromItem.time || fromItem.parsedNotes?.departureTime || fromItem.parsedNotes?.checkOutTime;
   const toTime = toItem.time || toItem.parsedNotes?.departureTime || toItem.parsedNotes?.checkInTime;
   const fromDuration = fromItem.parsedNotes?.duration || 1.5;
@@ -2378,38 +2390,154 @@ function GapSuggestion({
   const toMins = toH * 60 + toM;
   const gapMins = toMins - fromMins;
 
-  // Only show suggestion for gaps > 2 hours
-  if (gapMins < 120) return null;
+  // Only show suggestion for gaps > 1.5 hours
+  if (gapMins < 90) return null;
 
-  // Suggest based on time of day
+  // Suggest category based on time of day
   const midTime = fromMins + gapMins / 2;
   const hour = Math.floor(midTime / 60);
 
-  const getSuggestion = () => {
-    if (hour >= 7 && hour < 10) return { type: 'coffee' as const, label: 'Coffee break?' };
-    if (hour >= 11 && hour < 14) return { type: 'lunch' as const, label: 'Lunch spot?' };
-    if (hour >= 14 && hour < 17) return { type: 'walk' as const, label: 'Explore nearby?' };
-    if (hour >= 18 && hour < 21) return { type: 'dinner' as const, label: 'Dinner?' };
+  const getSuggestionType = () => {
+    if (hour >= 7 && hour < 10) return { category: 'Cafe', label: 'Coffee?' };
+    if (hour >= 11 && hour < 14) return { category: 'Restaurant', label: 'Lunch?' };
+    if (hour >= 14 && hour < 17) return { category: 'Culture', label: 'Explore?' };
+    if (hour >= 18 && hour < 21) return { category: 'Restaurant', label: 'Dinner?' };
+    if (hour >= 21) return { category: 'Bar', label: 'Drinks?' };
     return null;
   };
 
-  const suggestion = getSuggestion();
-  if (!suggestion) return null;
+  const suggestionType = getSuggestionType();
+  if (!suggestionType) return null;
+
+  // Fetch suggestions when expanded
+  const fetchSuggestions = async () => {
+    if (suggestions.length > 0 || isLoading) return;
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `${suggestionType.category} ${city}`,
+          filters: { category: suggestionType.category },
+        }),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions((data.results || []).slice(0, 4).map((d: any) => ({
+          id: d.id,
+          slug: d.slug,
+          name: d.name,
+          category: d.category,
+          image: d.image,
+        })));
+      }
+    } catch (err) {
+      console.error('Failed to fetch suggestions:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleExpand = () => {
+    setIsExpanded(!isExpanded);
+    if (!isExpanded) {
+      fetchSuggestions();
+    }
+  };
+
+  // Calculate suggested time (middle of gap)
+  const suggestedTime = (() => {
+    const midMins = fromMins + Math.round(gapMins / 3); // 1/3 into the gap
+    const h = Math.floor(midMins / 60);
+    const m = midMins % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  })();
+
+  const addSuggestion = async (place: { slug: string; name: string }) => {
+    setIsAdding(true);
+    try {
+      await fetch(`/api/trips/${tripId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          destination_slug: place.slug,
+          day_number: dayNumber,
+          time: suggestedTime,
+          title: place.name,
+        }),
+      });
+      setIsExpanded(false);
+      onRefresh();
+    } catch (err) {
+      console.error('Failed to add suggestion:', err);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const gapHours = Math.round(gapMins / 60 * 10) / 10;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="flex justify-center py-1"
-    >
-      <button
-        onClick={() => onAddPlace?.(suggestion.type)}
-        className="flex items-center gap-1.5 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-      >
-        <Sparkles className="w-3 h-3" />
-        <span>{Math.round(gapMins / 60)}h gap · {suggestion.label}</span>
-      </button>
-    </motion.div>
+    <div className="py-1">
+      <div className="flex justify-center">
+        <button
+          onClick={handleExpand}
+          className="flex items-center gap-1.5 text-[10px] text-amber-500 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300 transition-colors px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 border border-amber-200 dark:border-amber-800"
+        >
+          <Sparkles className="w-3 h-3" />
+          <span>{gapHours}h gap · {suggestionType.label}</span>
+          <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-2 pb-1 px-2">
+              {isLoading ? (
+                <div className="flex justify-center py-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                </div>
+              ) : suggestions.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2">
+                  {suggestions.map((place) => (
+                    <button
+                      key={place.slug}
+                      onClick={() => addSuggestion(place)}
+                      disabled={isAdding}
+                      className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-left"
+                    >
+                      <div className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-700 flex-shrink-0 overflow-hidden">
+                        {place.image ? (
+                          <Image src={place.image} alt="" width={32} height={32} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <MapPin className="w-3 h-3 text-gray-400" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[11px] font-medium text-gray-900 dark:text-white truncate">{place.name}</p>
+                        <p className="text-[9px] text-gray-400 truncate">{place.category}</p>
+                      </div>
+                      <Plus className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[10px] text-gray-400 text-center py-2">No suggestions found</p>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
