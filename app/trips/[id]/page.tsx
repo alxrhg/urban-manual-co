@@ -45,6 +45,10 @@ export default function TripPage() {
     loading,
     updateTrip,
     reorderItems,
+    addPlace,
+    addFlight,
+    addTrain,
+    addHotel,
     removeItem,
     updateItemTime,
     updateItemNotes,
@@ -351,20 +355,55 @@ export default function TripPage() {
             return (
               <DaySection
                 key={day.dayNumber}
-                tripId={tripId}
                 dayNumber={day.dayNumber}
                 date={day.date ?? undefined}
                 items={day.items}
                 city={primaryCity}
-                tripStartDate={trip.start_date}
-                tripEndDate={trip.end_date}
                 expandedItemId={expandedItemId}
                 onToggleItem={toggleItem}
                 onReorder={(items) => reorderItems(day.dayNumber, items)}
                 onRemove={removeItem}
                 onUpdateItem={updateItem}
                 onUpdateTime={updateItemTime}
-                onRefresh={refresh}
+                onAddPlace={(dest) => addPlace(dest, day.dayNumber)}
+                onAddFlight={(data) => addFlight({
+                  type: 'flight',
+                  airline: data.airline || '',
+                  flightNumber: data.flightNumber || '',
+                  from: data.from,
+                  to: data.to,
+                  departureDate: data.departureDate || '',
+                  departureTime: data.departureTime || '',
+                  arrivalDate: data.arrivalDate || '',
+                  arrivalTime: data.arrivalTime || '',
+                  confirmationNumber: data.confirmationNumber,
+                  notes: data.notes,
+                }, day.dayNumber)}
+                onAddTrain={(data) => addTrain({
+                  type: 'train',
+                  trainLine: data.trainLine,
+                  trainNumber: data.trainNumber,
+                  from: data.from,
+                  to: data.to,
+                  departureDate: data.departureDate || '',
+                  departureTime: data.departureTime || '',
+                  arrivalDate: data.arrivalDate,
+                  arrivalTime: data.arrivalTime,
+                  confirmationNumber: data.confirmationNumber,
+                  notes: data.notes,
+                }, day.dayNumber)}
+                onAddHotel={(data) => addHotel({
+                  type: 'hotel',
+                  name: data.name,
+                  address: data.address,
+                  checkInDate: data.checkInDate || '',
+                  checkInTime: data.checkInTime,
+                  checkOutDate: data.checkOutDate,
+                  checkOutTime: data.checkOutTime,
+                  confirmationNumber: data.confirmationNumber,
+                  roomType: data.roomType,
+                  notes: data.notes,
+                }, day.dayNumber)}
                 weather={weather}
               />
             );
@@ -803,36 +842,36 @@ function TripNotesChecklist({ notes, onSave }: { notes: string; onSave: (notes: 
  * Day section with items and smart search
  */
 function DaySection({
-  tripId,
   dayNumber,
   date,
   items,
   city,
-  tripStartDate,
-  tripEndDate,
   expandedItemId,
   onToggleItem,
   onReorder,
   onRemove,
   onUpdateItem,
   onUpdateTime,
-  onRefresh,
+  onAddPlace,
+  onAddFlight,
+  onAddTrain,
+  onAddHotel,
   weather,
 }: {
-  tripId: string;
   dayNumber: number;
   date?: string;
   items: EnrichedItineraryItem[];
   city: string;
-  tripStartDate?: string | null;
-  tripEndDate?: string | null;
   expandedItemId: string | null;
   onToggleItem: (id: string) => void;
   onReorder: (items: EnrichedItineraryItem[]) => void;
   onRemove: (id: string) => void;
   onUpdateItem: (id: string, updates: Record<string, unknown>) => void;
   onUpdateTime: (id: string, time: string) => void;
-  onRefresh: () => void;
+  onAddPlace: (destination: Destination) => void;
+  onAddFlight: (data: { airline?: string; flightNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; confirmationNumber?: string; notes?: string }) => void;
+  onAddTrain: (data: { trainLine?: string; trainNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; duration?: string; confirmationNumber?: string; notes?: string }) => void;
+  onAddHotel: (data: { name: string; address?: string; checkInDate?: string; checkInTime?: string; checkOutDate?: string; checkOutTime?: string; confirmationNumber?: string; roomType?: string; notes?: string }) => void;
   weather?: DayWeather;
 }) {
   const [orderedItems, setOrderedItems] = useState(items);
@@ -919,121 +958,59 @@ function DaySection({
     };
   }, [searchQuery, city, searchSource]);
 
-  // Add destination
-  const addDestination = async (destination: Destination) => {
-    setIsAdding(true);
-    try {
-      const existingTimes = items.map(i => i.time).filter(Boolean).sort();
-      let suggestedTime = '12:00';
-
-      if (existingTimes.length > 0) {
-        const lastTime = existingTimes[existingTimes.length - 1]!;
-        const [h, m] = lastTime.split(':').map(Number);
-        const newHour = Math.min(h + 2, 22);
-        suggestedTime = `${String(newHour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-      }
-
-      const response = await fetch(`/api/trips/${tripId}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          destination_slug: destination.slug,
-          day_number: dayNumber,
-          time: suggestedTime,
-          title: destination.name,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Add destination error:', response.status, errorData);
-        throw new Error(errorData.error || 'Failed to add destination');
-      }
-
-      setSearchQuery('');
-      setSearchResults([]);
-      setShowSearch(false);
-      onRefresh();
-    } catch (err) {
-      console.error('Add error:', err);
-    } finally {
-      setIsAdding(false);
-    }
+  // Add destination (uses hook with optimistic updates)
+  const addDestination = (destination: Destination) => {
+    onAddPlace(destination);
+    setSearchQuery('');
+    setSearchResults([]);
+    setShowSearch(false);
   };
 
-  // Add transport/hotel
-  const addTransport = async (type: 'flight' | 'hotel' | 'train', data: Record<string, string>) => {
-    setIsAdding(true);
-    try {
-      if (type === 'hotel') {
-        // Create separate cards for check-in, breakfast, and checkout
-        const hotelName = data.name || 'Hotel';
-        const baseNotes = { type: 'hotel', name: hotelName };
-
-        // Check-in card
-        if (data.checkInTime) {
-          await fetch(`/api/trips/${tripId}/items`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              day_number: dayNumber,
-              title: hotelName,
-              time: data.checkInTime,
-              notes: JSON.stringify({ ...baseNotes, hotelItemType: 'check_in', checkInTime: data.checkInTime, confirmation: data.confirmation }),
-            }),
-          });
-        }
-
-        // Breakfast card (typically next day, but add to same day for now - user can move)
-        if (data.breakfastTime) {
-          await fetch(`/api/trips/${tripId}/items`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              day_number: dayNumber + 1, // Next day
-              title: hotelName,
-              time: data.breakfastTime.split('-')[0], // Use start of breakfast range
-              notes: JSON.stringify({ ...baseNotes, hotelItemType: 'breakfast', breakfastTime: data.breakfastTime }),
-            }),
-          });
-        }
-
-        // Checkout card
-        if (data.checkOutTime) {
-          await fetch(`/api/trips/${tripId}/items`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              day_number: dayNumber + 1, // Next day
-              title: hotelName,
-              time: data.checkOutTime,
-              notes: JSON.stringify({ ...baseNotes, hotelItemType: 'checkout', checkOutTime: data.checkOutTime }),
-            }),
-          });
-        }
-      } else {
-        // Flight or train - single card
-        const notes = JSON.stringify({ type, ...data });
-        await fetch(`/api/trips/${tripId}/items`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            day_number: dayNumber,
-            title: `${data.from} → ${data.to}`,
-            time: data.departureTime,
-            notes,
-          }),
-        });
-      }
-
-      setShowTransportForm(null);
-      setShowAddMenu(false);
-      onRefresh();
-    } catch (err) {
-      console.error('Add error:', err);
-    } finally {
-      setIsAdding(false);
+  // Add transport/hotel (uses hook with optimistic updates)
+  const addTransport = (type: 'flight' | 'hotel' | 'train', data: Record<string, string>) => {
+    if (type === 'hotel') {
+      onAddHotel({
+        name: data.name || 'Hotel',
+        address: data.address,
+        checkInDate: data.checkInDate,
+        checkInTime: data.checkInTime,
+        checkOutDate: data.checkOutDate,
+        checkOutTime: data.checkOutTime,
+        confirmationNumber: data.confirmation,
+        roomType: data.roomType,
+        notes: data.notes,
+      });
+    } else if (type === 'flight') {
+      onAddFlight({
+        airline: data.airline,
+        flightNumber: data.flightNumber,
+        from: data.from,
+        to: data.to,
+        departureDate: data.departureDate,
+        departureTime: data.departureTime,
+        arrivalDate: data.arrivalDate,
+        arrivalTime: data.arrivalTime,
+        confirmationNumber: data.confirmation,
+        notes: data.notes,
+      });
+    } else if (type === 'train') {
+      onAddTrain({
+        trainLine: data.trainLine,
+        trainNumber: data.trainNumber,
+        from: data.from,
+        to: data.to,
+        departureDate: data.departureDate,
+        departureTime: data.departureTime,
+        arrivalDate: data.arrivalDate,
+        arrivalTime: data.arrivalTime,
+        duration: data.duration,
+        confirmationNumber: data.confirmation,
+        notes: data.notes,
+      });
     }
+
+    setShowTransportForm(null);
+    setShowAddMenu(false);
   };
 
   // Optimize route
@@ -1077,58 +1054,25 @@ function DaySection({
     }
   }, [orderedItems, items, onReorder]);
 
-  // Add Google Place to trip
-  const addGooglePlace = async (place: { id: string; name: string; formatted_address: string; latitude?: number; longitude?: number; category?: string; image?: string }) => {
-    setIsAdding(true);
-    try {
-      const existingTimes = items.map(i => i.time).filter(Boolean).sort();
-      let suggestedTime = '12:00';
+  // Add Google Place to trip (convert to Destination-like object)
+  const addGooglePlace = (place: { id: string; name: string; formatted_address: string; latitude?: number; longitude?: number; category?: string; image?: string }) => {
+    // Create a Destination-like object from Google place data
+    const destination = {
+      slug: `google-${place.id}`, // Use Google place ID as slug
+      name: place.name,
+      city: city,
+      category: place.category || 'place',
+      latitude: place.latitude,
+      longitude: place.longitude,
+      image: place.image,
+      formatted_address: place.formatted_address,
+    } as Destination;
 
-      if (existingTimes.length > 0) {
-        const lastTime = existingTimes[existingTimes.length - 1]!;
-        const [h, m] = lastTime.split(':').map(Number);
-        const newHour = Math.min(h + 2, 22);
-        suggestedTime = `${String(newHour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-      }
-
-      // Create item with Google place data stored in notes
-      const notes = JSON.stringify({
-        type: 'place',
-        googlePlaceId: place.id,
-        address: place.formatted_address,
-        latitude: place.latitude,
-        longitude: place.longitude,
-        category: place.category,
-        image: place.image,
-      });
-
-      const response = await fetch(`/api/trips/${tripId}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          day_number: dayNumber,
-          time: suggestedTime,
-          title: place.name,
-          notes,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Add Google Place error:', response.status, errorData);
-        throw new Error(errorData.error || 'Failed to add place');
-      }
-
-      setSearchQuery('');
-      setSearchResults([]);
-      setGoogleResults([]);
-      setShowSearch(false);
-      onRefresh();
-    } catch (err) {
-      console.error('Add error:', err);
-    } finally {
-      setIsAdding(false);
-    }
+    onAddPlace(destination);
+    setSearchQuery('');
+    setSearchResults([]);
+    setGoogleResults([]);
+    setShowSearch(false);
   };
 
   const closeAllMenus = () => {
@@ -1399,9 +1343,7 @@ function DaySection({
                     fromItem={item}
                     toItem={orderedItems[index + 1]}
                     city={city}
-                    tripId={tripId}
-                    dayNumber={dayNumber}
-                    onRefresh={onRefresh}
+                    onAddPlace={(dest, time) => onAddPlace({ ...dest, slug: dest.slug || `place-${Date.now()}` } as Destination)}
                   />
                 </>
               )}
@@ -2511,16 +2453,12 @@ function GapSuggestion({
   fromItem,
   toItem,
   city,
-  tripId,
-  dayNumber,
-  onRefresh,
+  onAddPlace,
 }: {
   fromItem: EnrichedItineraryItem;
   toItem: EnrichedItineraryItem;
   city: string;
-  tripId: string;
-  dayNumber: number;
-  onRefresh: () => void;
+  onAddPlace: (destination: Destination, time?: string) => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [suggestions, setSuggestions] = useState<Array<{ id: number; slug: string; name: string; category: string; image?: string; reason?: string }>>([]);
@@ -2642,26 +2580,16 @@ function GapSuggestion({
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   })();
 
-  const addSuggestion = async (place: { slug: string; name: string }) => {
-    setIsAdding(true);
-    try {
-      await fetch(`/api/trips/${tripId}/items`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          destination_slug: place.slug,
-          day_number: dayNumber,
-          time: suggestedTime,
-          title: place.name,
-        }),
-      });
-      setIsExpanded(false);
-      onRefresh();
-    } catch (err) {
-      console.error('Failed to add suggestion:', err);
-    } finally {
-      setIsAdding(false);
-    }
+  const addSuggestion = (place: { slug: string; name: string; category?: string; image?: string }) => {
+    const destination = {
+      slug: place.slug,
+      name: place.name,
+      city: city,
+      category: place.category || 'place',
+      image: place.image,
+    } as Destination;
+    onAddPlace(destination, suggestedTime);
+    setIsExpanded(false);
   };
 
   const gapHours = Math.round(gapMins / 60 * 10) / 10;
