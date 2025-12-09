@@ -72,6 +72,7 @@ export default function TripPage() {
   // AI suggestions state
   const [aiSuggestions, setAiSuggestions] = useState<Array<{ id: string; text: string; type: string; destinationId?: number }>>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
 
   // Parse destinations
   const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
@@ -314,28 +315,43 @@ export default function TripPage() {
           </AnimatePresence>
         </div>
 
-        {/* AI Suggestions Section - Inline connector style */}
+        {/* AI Suggestions Section - Collapsible */}
         {aiSuggestions.length > 0 && (
           <div className="mt-6 py-2">
             <div className="flex items-center justify-center gap-2">
               <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowAiSuggestions(!showAiSuggestions)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
                 <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
                 <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300">Room for more</span>
-              </div>
+                <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${showAiSuggestions ? 'rotate-180' : ''}`} />
+              </button>
               <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
             </div>
-            <div className="flex flex-wrap justify-center gap-2 mt-3">
-              {aiSuggestions.map((suggestion) => (
-                <button
-                  key={suggestion.id}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors text-left group"
+            <AnimatePresence>
+              {showAiSuggestions && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
                 >
-                  <span className="text-[11px] text-gray-700 dark:text-gray-200">{suggestion.text}</span>
-                  <Plus className="w-3 h-3 text-gray-400 group-hover:text-amber-500" />
-                </button>
-              ))}
-            </div>
+                  <div className="flex flex-wrap justify-center gap-2 mt-3">
+                    {aiSuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion.id}
+                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors text-left group"
+                      >
+                        <span className="text-[11px] text-gray-700 dark:text-gray-200">{suggestion.text}</span>
+                        <Plus className="w-3 h-3 text-gray-400 group-hover:text-amber-500" />
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
@@ -1918,9 +1934,7 @@ function ItemRow({
               <TrainIcon className="w-3.5 h-3.5 text-gray-500" />
             </div>
           ) : image ? (
-            <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0">
-              <Image src={image} alt="" width={24} height={24} className="w-full h-full object-cover" />
-            </div>
+            <ItemImage src={image} />
           ) : (
             <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
           )}
@@ -2396,6 +2410,34 @@ function formatTime(time: string): string {
 }
 
 /**
+ * Item image with fallback on error
+ */
+function ItemImage({ src }: { src: string }) {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    return (
+      <div className="w-6 h-6 rounded bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+        <MapPin className="w-3 h-3 text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-6 h-6 rounded overflow-hidden flex-shrink-0">
+      <Image
+        src={src}
+        alt=""
+        width={24}
+        height={24}
+        className="w-full h-full object-cover"
+        onError={() => setHasError(true)}
+      />
+    </div>
+  );
+}
+
+/**
  * Weather icon based on weather code
  */
 function WeatherIcon({ code, className = '' }: { code: number; className?: string }) {
@@ -2793,15 +2835,27 @@ function TripIntelligence({
         const time = i.time;
         if (!time) return false;
         const hour = parseInt(time.split(':')[0], 10);
-        const category = i.destination?.category?.toLowerCase() || i.parsedNotes?.type || '';
-        return hour >= 11 && hour < 15 && (category.includes('restaurant') || category.includes('cafe'));
+        // Must be in lunch hours (11:00 - 15:00)
+        if (hour < 11 || hour >= 15) return false;
+        // Check category
+        const category = (i.destination?.category || i.parsedNotes?.category || '').toLowerCase();
+        const title = (i.title || i.destination?.name || '').toLowerCase();
+        // Match various food-related categories and titles
+        const foodKeywords = ['restaurant', 'cafe', 'lunch', 'bistro', 'eatery', 'deli', 'sandwich', 'kitchen', 'grill', 'brasserie', 'diner'];
+        return foodKeywords.some(kw => category.includes(kw) || title.includes(kw));
       });
       const hasDinnerItem = items.some(i => {
         const time = i.time;
         if (!time) return false;
         const hour = parseInt(time.split(':')[0], 10);
-        const category = i.destination?.category?.toLowerCase() || i.parsedNotes?.type || '';
-        return hour >= 18 && hour < 22 && (category.includes('restaurant') || category.includes('bar'));
+        // Must be in dinner hours (18:00 - 22:00)
+        if (hour < 18 || hour >= 22) return false;
+        // Check category
+        const category = (i.destination?.category || i.parsedNotes?.category || '').toLowerCase();
+        const title = (i.title || i.destination?.name || '').toLowerCase();
+        // Match various food-related categories and titles
+        const foodKeywords = ['restaurant', 'bar', 'dining', 'dinner', 'steakhouse', 'bistro', 'eatery', 'grill', 'kitchen', 'tavern', 'trattoria', 'pizzeria', 'sushi', 'ramen', 'brasserie'];
+        return foodKeywords.some(kw => category.includes(kw) || title.includes(kw));
       });
 
       if (items.length >= 2 && !hasLunchItem) {
