@@ -13,6 +13,10 @@ import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 import { PageLoader } from '@/components/LoadingStates';
 import { createClient } from '@/lib/supabase/client';
 import type { Destination } from '@/types/destination';
+import TripSettingsBox from '@/components/trip/TripSettingsBox';
+import DestinationBox from '@/components/trip/DestinationBox';
+import { NeighborhoodTags } from '@/components/trip/NeighborhoodBreakdown';
+import { Settings, Moon } from 'lucide-react';
 
 // Weather type
 interface DayWeather {
@@ -66,6 +70,13 @@ export default function TripPage() {
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [showTripNotes, setShowTripNotes] = useState(false);
 
+  // Edit mode state
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  // Sidebar states (desktop)
+  const [showTripSettings, setShowTripSettings] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
+
   // Weather state
   const [weatherByDate, setWeatherByDate] = useState<Record<string, DayWeather>>({});
   const [weatherLoading, setWeatherLoading] = useState(false);
@@ -83,6 +94,54 @@ export default function TripPage() {
   const totalItems = useMemo(() => {
     return days.reduce((sum, day) => sum + day.items.length, 0);
   }, [days]);
+
+  // Extract all hotels from itinerary
+  const hotels = useMemo(() => {
+    return days.flatMap(d =>
+      d.items.filter(item => item.parsedNotes?.type === 'hotel')
+    );
+  }, [days]);
+
+  // Compute which hotel covers each night based on check-in/check-out dates
+  const nightlyHotelByDay = useMemo(() => {
+    const hotelMap: Record<number, EnrichedItineraryItem | null> = {};
+    if (!trip?.start_date) return hotelMap;
+
+    const tripStart = new Date(trip.start_date);
+    tripStart.setHours(0, 0, 0, 0);
+
+    hotels.forEach(hotel => {
+      const checkInDate = hotel.parsedNotes?.checkInDate;
+      const checkOutDate = hotel.parsedNotes?.checkOutDate;
+
+      if (!checkInDate) return;
+
+      const inDate = new Date(checkInDate);
+      inDate.setHours(0, 0, 0, 0);
+      const checkInDayNum = Math.floor((inDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+      let nights = 1;
+      if (checkOutDate) {
+        try {
+          const outDate = new Date(checkOutDate);
+          outDate.setHours(0, 0, 0, 0);
+          nights = Math.max(1, Math.ceil((outDate.getTime() - inDate.getTime()) / (1000 * 60 * 60 * 24)));
+        } catch {
+          nights = 1;
+        }
+      }
+
+      // Mark this hotel for the check-in day and each subsequent night
+      for (let i = 0; i < nights; i++) {
+        const nightDay = checkInDayNum + i;
+        if (nightDay > 0 && !hotelMap[nightDay]) {
+          hotelMap[nightDay] = hotel;
+        }
+      }
+    });
+
+    return hotelMap;
+  }, [hotels, trip?.start_date]);
 
   // Auto-fix items on wrong days
   const hasAutoFixed = useRef(false);
@@ -228,6 +287,12 @@ export default function TripPage() {
     setExpandedItemId(prev => prev === itemId ? null : itemId);
   }, []);
 
+  // Handle item selection for sidebar detail view (desktop)
+  const handleSelectItem = useCallback((item: EnrichedItineraryItem) => {
+    setSelectedItem(item);
+    setShowTripSettings(false);
+  }, []);
+
   // Handle trip deletion
   const handleDelete = useCallback(async () => {
     if (!user || !trip) return;
@@ -269,7 +334,7 @@ export default function TripPage() {
 
   return (
     <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950">
-      <div className="max-w-xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Back link */}
         <Link
           href="/trips"
@@ -279,15 +344,51 @@ export default function TripPage() {
           Trips
         </Link>
 
-        {/* Header - tap to edit */}
-        <TripHeader
-          trip={trip}
-          primaryCity={primaryCity}
-          totalItems={totalItems}
-          userId={user?.id}
-          onUpdate={updateTrip}
-          onDelete={handleDelete}
-        />
+        {/* Desktop flex layout with sidebar */}
+        <div className="lg:flex lg:gap-8">
+          {/* Main content column */}
+          <div className="flex-1 min-w-0 max-w-xl lg:max-w-none">
+            {/* Header - tap to edit */}
+            <TripHeader
+              trip={trip}
+              primaryCity={primaryCity}
+              totalItems={totalItems}
+              userId={user?.id}
+              onUpdate={updateTrip}
+              onDelete={handleDelete}
+            />
+
+            {/* Action bar: Edit toggle + Settings */}
+            <div className="flex items-center justify-between mt-4 mb-2">
+              <button
+                onClick={() => setIsEditMode(!isEditMode)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-full transition-colors ${
+                  isEditMode
+                    ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-700'
+                }`}
+              >
+                {isEditMode ? (
+                  <>
+                    <Check className="w-3 h-3" />
+                    Done
+                  </>
+                ) : (
+                  <>
+                    <Pencil className="w-3 h-3" />
+                    Edit
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={() => { setShowTripSettings(true); setSelectedItem(null); }}
+                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-[11px] text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                Settings
+              </button>
+            </div>
 
         {/* Trip Notes - expandable */}
         <div className="mt-4">
@@ -369,6 +470,7 @@ export default function TripPage() {
           {days.map((day) => {
             const dayDate = day.date;
             const weather = dayDate ? weatherByDate[dayDate] : undefined;
+            const nightlyHotel = nightlyHotelByDay[day.dayNumber] || null;
             return (
               <DaySection
                 key={day.dayNumber}
@@ -379,6 +481,9 @@ export default function TripPage() {
                 expandedItemId={expandedItemId}
                 onToggleItem={toggleItem}
                 onReorder={(items) => reorderItems(day.dayNumber, items)}
+                isEditMode={isEditMode}
+                nightlyHotel={nightlyHotel}
+                onSelectItem={handleSelectItem}
                 onRemove={removeItem}
                 onUpdateItem={updateItem}
                 onUpdateTime={updateItemTime}
@@ -410,49 +515,19 @@ export default function TripPage() {
                   notes: data.notes,
                 }, day.dayNumber)}
                 onAddHotel={(data) => {
-                  const hotelName = data.name || 'Hotel';
-                  const checkInDay = day.dayNumber;
-
-                  // Calculate checkout day (estimate 1 night if not specified)
-                  const nights = data.nights || 1;
-                  const checkOutDay = checkInDay + nights;
-
-                  // 1. Check-in card (on check-in day at check-in time, default 4 PM)
+                  // Create a single hotel card with all info
                   addHotel({
                     type: 'hotel',
-                    name: hotelName,
+                    name: data.name || 'Hotel',
                     address: data.address,
-                    checkInDate: '',
+                    checkInDate: day.date || '',
                     checkInTime: data.checkInTime || '16:00',
+                    checkOutTime: data.checkOutTime || '11:00',
                     confirmationNumber: data.confirmationNumber,
                     roomType: data.roomType,
-                    notes: JSON.stringify({ hotelItemType: 'check_in' }),
-                  }, checkInDay);
-
-                  // 2. Breakfast cards (on each morning if included)
-                  if (data.breakfastIncluded) {
-                    for (let d = checkInDay + 1; d <= checkOutDay; d++) {
-                      addHotel({
-                        type: 'hotel',
-                        name: hotelName,
-                        checkInDate: '',
-                        checkInTime: '08:00',
-                        notes: JSON.stringify({ hotelItemType: 'breakfast' }),
-                      }, d);
-                    }
-                  }
-
-                  // 3. Checkout card (on checkout day at checkout time, default 11 AM)
-                  if (nights > 0) {
-                    addHotel({
-                      type: 'hotel',
-                      name: hotelName,
-                      address: data.address,
-                      checkInDate: '',
-                      checkOutTime: data.checkOutTime || '11:00',
-                      notes: JSON.stringify({ hotelItemType: 'checkout' }),
-                    }, checkOutDay);
-                  }
+                    breakfastIncluded: data.breakfastIncluded,
+                    breakfastTime: data.breakfastIncluded ? '08:00' : undefined,
+                  }, day.dayNumber);
                 }}
                 onAddActivity={(data) => addActivity(data, day.dayNumber)}
                 weather={weather}
@@ -467,6 +542,39 @@ export default function TripPage() {
             Type in any day to add places, flights, hotels, trains, or activities
           </p>
         )}
+          </div>
+          {/* End main content column */}
+
+          {/* Desktop Sidebar */}
+          <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
+            <div className="sticky top-24 space-y-4">
+              {showTripSettings ? (
+                <TripSettingsBox
+                  trip={trip}
+                  onUpdate={updateTrip}
+                  onDelete={handleDelete}
+                  onClose={() => setShowTripSettings(false)}
+                />
+              ) : selectedItem ? (
+                <DestinationBox
+                  item={selectedItem}
+                  onClose={() => setSelectedItem(null)}
+                  onTimeChange={updateItemTime}
+                  onNotesChange={updateItemNotes}
+                  onItemUpdate={(id, updates) => updateItem(id, updates)}
+                  onRemove={isEditMode ? removeItem : undefined}
+                />
+              ) : (
+                <div className="p-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
+                  <p className="text-[13px] text-gray-500 dark:text-gray-400 text-center">
+                    Click an item to see details
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {/* End desktop flex layout */}
       </div>
     </main>
   );
@@ -909,6 +1017,9 @@ function DaySection({
   onAddHotel,
   onAddActivity,
   weather,
+  isEditMode = false,
+  nightlyHotel,
+  onSelectItem,
 }: {
   dayNumber: number;
   date?: string;
@@ -926,6 +1037,9 @@ function DaySection({
   onAddHotel: (data: { name: string; address?: string; checkInDate?: string; checkInTime?: string; checkOutDate?: string; checkOutTime?: string; confirmationNumber?: string; roomType?: string; notes?: string; nights?: number; breakfastIncluded?: boolean }) => void;
   onAddActivity: (data: ActivityData) => void;
   weather?: DayWeather;
+  isEditMode?: boolean;
+  nightlyHotel?: EnrichedItineraryItem | null;
+  onSelectItem?: (item: EnrichedItineraryItem) => void;
 }) {
   const [orderedItems, setOrderedItems] = useState(items);
   const [showAddMenu, setShowAddMenu] = useState(false);
@@ -1039,47 +1153,47 @@ function DaySection({
   };
 
   // Add transport/hotel (uses hook with optimistic updates)
-  const addTransport = (type: 'flight' | 'hotel' | 'train', data: Record<string, string>) => {
+  const addTransport = (type: 'flight' | 'hotel' | 'train', data: Record<string, string | boolean | number>) => {
     if (type === 'hotel') {
       onAddHotel({
-        name: data.name || 'Hotel',
-        address: data.address,
-        checkInDate: data.checkInDate,
-        checkInTime: data.checkInTime,
-        checkOutDate: data.checkOutDate,
-        checkOutTime: data.checkOutTime,
-        confirmationNumber: data.confirmation,
-        roomType: data.roomType,
-        notes: data.notes,
-        nights: data.nights ? parseInt(data.nights, 10) : 1,
-        breakfastIncluded: data.breakfastTime === 'included',
+        name: String(data.name) || 'Hotel',
+        address: data.address ? String(data.address) : undefined,
+        checkInDate: data.checkInDate ? String(data.checkInDate) : undefined,
+        checkInTime: data.checkInTime ? String(data.checkInTime) : undefined,
+        checkOutDate: data.checkOutDate ? String(data.checkOutDate) : undefined,
+        checkOutTime: data.checkOutTime ? String(data.checkOutTime) : undefined,
+        confirmationNumber: data.confirmation ? String(data.confirmation) : undefined,
+        roomType: data.roomType ? String(data.roomType) : undefined,
+        notes: data.notes ? String(data.notes) : undefined,
+        nights: data.nights ? Number(data.nights) : 1,
+        breakfastIncluded: Boolean(data.breakfastIncluded),
       });
     } else if (type === 'flight') {
       onAddFlight({
-        airline: data.airline,
-        flightNumber: data.flightNumber,
-        from: data.from,
-        to: data.to,
-        departureDate: data.departureDate,
-        departureTime: data.departureTime,
-        arrivalDate: data.arrivalDate,
-        arrivalTime: data.arrivalTime,
-        confirmationNumber: data.confirmation,
-        notes: data.notes,
+        airline: data.airline ? String(data.airline) : undefined,
+        flightNumber: data.flightNumber ? String(data.flightNumber) : undefined,
+        from: String(data.from),
+        to: String(data.to),
+        departureDate: data.departureDate ? String(data.departureDate) : undefined,
+        departureTime: data.departureTime ? String(data.departureTime) : undefined,
+        arrivalDate: data.arrivalDate ? String(data.arrivalDate) : undefined,
+        arrivalTime: data.arrivalTime ? String(data.arrivalTime) : undefined,
+        confirmationNumber: data.confirmation ? String(data.confirmation) : undefined,
+        notes: data.notes ? String(data.notes) : undefined,
       });
     } else if (type === 'train') {
       onAddTrain({
-        trainLine: data.trainLine,
-        trainNumber: data.trainNumber,
-        from: data.from,
-        to: data.to,
-        departureDate: data.departureDate,
-        departureTime: data.departureTime,
-        arrivalDate: data.arrivalDate,
-        arrivalTime: data.arrivalTime,
-        duration: data.duration,
-        confirmationNumber: data.confirmation,
-        notes: data.notes,
+        trainLine: data.trainLine ? String(data.trainLine) : undefined,
+        trainNumber: data.trainNumber ? String(data.trainNumber) : undefined,
+        from: String(data.from),
+        to: String(data.to),
+        departureDate: data.departureDate ? String(data.departureDate) : undefined,
+        departureTime: data.departureTime ? String(data.departureTime) : undefined,
+        arrivalDate: data.arrivalDate ? String(data.arrivalDate) : undefined,
+        arrivalTime: data.arrivalTime ? String(data.arrivalTime) : undefined,
+        duration: data.duration ? String(data.duration) : undefined,
+        confirmationNumber: data.confirmation ? String(data.confirmation) : undefined,
+        notes: data.notes ? String(data.notes) : undefined,
       });
     }
 
@@ -1447,6 +1561,13 @@ function DaySection({
         </div>
       </div>
 
+      {/* Neighborhood tags */}
+      {items.length > 0 && (
+        <div className="mb-3">
+          <NeighborhoodTags items={items} />
+        </div>
+      )}
+
       {/* Items */}
       {items.length > 0 && (
         <Reorder.Group axis="y" values={orderedItems} onReorder={setOrderedItems} className="space-y-1">
@@ -1456,10 +1577,11 @@ function DaySection({
                 item={item}
                 isExpanded={expandedItemId === item.id}
                 onToggle={() => onToggleItem(item.id)}
-                onRemove={() => onRemove(item.id)}
+                onRemove={isEditMode ? () => onRemove(item.id) : undefined}
                 onUpdateItem={onUpdateItem}
                 onUpdateTime={onUpdateTime}
                 onDragEnd={handleReorderComplete}
+                onSelect={onSelectItem ? () => onSelectItem(item) : undefined}
               />
               {index < orderedItems.length - 1 && (
                 <>
@@ -1475,6 +1597,16 @@ function DaySection({
             </div>
           ))}
         </Reorder.Group>
+      )}
+
+      {/* Nightly hotel indicator */}
+      {nightlyHotel && (
+        <div className="mt-4 flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800">
+          <Moon className="w-4 h-4 text-gray-400" />
+          <span className="text-[12px] text-gray-500 dark:text-gray-400">
+            Staying at <span className="font-medium text-gray-700 dark:text-gray-300">{nightlyHotel.title || 'Hotel'}</span>
+          </span>
+        </div>
       )}
     </div>
   );
@@ -1492,7 +1624,7 @@ function TransportForm({
 }: {
   type: 'flight' | 'hotel' | 'train';
   city: string;
-  onSubmit: (data: Record<string, string>) => void;
+  onSubmit: (data: Record<string, string | boolean | number>) => void;
   onCancel: () => void;
   isAdding: boolean;
 }) {
@@ -1590,7 +1722,7 @@ function TransportForm({
         checkInTime: checkIn,
         checkOutTime: checkOut,
         nights,
-        breakfastTime: breakfast,
+        breakfastIncluded: breakfast === 'included',
         confirmation,
         ...(selectedHotel?.slug ? { destination_slug: selectedHotel.slug } : {}),
         ...(selectedHotel?.image ? { image: selectedHotel.image } : {}),
@@ -1848,14 +1980,16 @@ function ItemRow({
   onUpdateItem,
   onUpdateTime,
   onDragEnd,
+  onSelect,
 }: {
   item: EnrichedItineraryItem;
   isExpanded: boolean;
   onToggle: () => void;
-  onRemove: () => void;
+  onRemove?: () => void;
   onUpdateItem: (id: string, updates: Record<string, unknown>) => void;
   onUpdateTime: (id: string, time: string) => void;
   onDragEnd: () => void;
+  onSelect?: () => void;
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const itemType = item.parsedNotes?.type || 'place';
@@ -2052,8 +2186,11 @@ function ItemRow({
       className={`cursor-grab active:cursor-grabbing ${isDragging ? 'z-10' : ''}`}
     >
       <div className={`rounded-lg transition-all ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}>
-        {/* Main row - NOT clickable for expansion */}
-        <div className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 rounded-lg group">
+        {/* Main row - click to select (desktop sidebar) */}
+        <div
+          className={`flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 rounded-lg group ${onSelect ? 'cursor-pointer' : ''}`}
+          onClick={onSelect}
+        >
           {/* Icon or image */}
           {iconType === 'flight' ? (
             <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
@@ -2232,7 +2369,7 @@ function ItemDetails({
   itemType: string;
   onUpdateItem: (id: string, updates: Record<string, unknown>) => void;
   onUpdateTime: (id: string, time: string) => void;
-  onRemove: () => void;
+  onRemove?: () => void;
   onClose: () => void;
 }) {
   const [time, setTime] = useState(item.time || '');
@@ -2442,9 +2579,13 @@ function ItemDetails({
 
       {/* Actions */}
       <div className="flex items-center justify-between pt-1">
-        <button onClick={onRemove} className="text-[11px] text-gray-400 hover:text-red-500 transition-colors">
-          Remove
-        </button>
+        {onRemove ? (
+          <button onClick={onRemove} className="text-[11px] text-gray-400 hover:text-red-500 transition-colors">
+            Remove
+          </button>
+        ) : (
+          <div />
+        )}
         <div className="flex items-center gap-2">
           <button onClick={onClose} className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">
             Cancel

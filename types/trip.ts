@@ -724,6 +724,8 @@ export interface HotelData {
   confirmationNumber?: string;
   roomType?: string;
   notes?: string;
+  breakfastIncluded?: boolean;
+  breakfastTime?: string;
 }
 
 /**
