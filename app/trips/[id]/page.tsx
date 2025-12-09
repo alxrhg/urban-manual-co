@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, Lightbulb, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, Lightbulb, AlertTriangle, Star } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -933,7 +933,7 @@ function DaySection({
         suggestedTime = `${String(newHour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
       }
 
-      await fetch(`/api/trips/${tripId}/items`, {
+      const response = await fetch(`/api/trips/${tripId}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -943,6 +943,12 @@ function DaySection({
           title: destination.name,
         }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Add destination error:', response.status, errorData);
+        throw new Error(errorData.error || 'Failed to add destination');
+      }
 
       setSearchQuery('');
       setSearchResults([]);
@@ -1096,7 +1102,7 @@ function DaySection({
         image: place.image,
       });
 
-      await fetch(`/api/trips/${tripId}/items`, {
+      const response = await fetch(`/api/trips/${tripId}/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1106,6 +1112,12 @@ function DaySection({
           notes,
         }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Add Google Place error:', response.status, errorData);
+        throw new Error(errorData.error || 'Failed to add place');
+      }
 
       setSearchQuery('');
       setSearchResults([]);
@@ -1354,6 +1366,7 @@ function DaySection({
                 >
                   <TransportForm
                     type={showTransportForm}
+                    city={city}
                     onSubmit={(data) => addTransport(showTransportForm, data)}
                     onCancel={closeAllMenus}
                     isAdding={isAdding}
@@ -1401,15 +1414,17 @@ function DaySection({
 }
 
 /**
- * Transport/Hotel inline form
+ * Transport/Hotel inline form with search
  */
 function TransportForm({
   type,
+  city,
   onSubmit,
   onCancel,
   isAdding,
 }: {
   type: 'flight' | 'hotel' | 'train';
+  city: string;
   onSubmit: (data: Record<string, string>) => void;
   onCancel: () => void;
   isAdding: boolean;
@@ -1426,13 +1441,91 @@ function TransportForm({
   const [breakfast, setBreakfast] = useState('');
   const [confirmation, setConfirmation] = useState('');
 
+  // Hotel search state
+  const [hotelSearch, setHotelSearch] = useState('');
+  const [searchSource, setSearchSource] = useState<'curated' | 'google'>('curated');
+  const [searchResults, setSearchResults] = useState<Array<{ id: string | number; name: string; image?: string; category?: string; slug?: string }>>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [selectedHotel, setSelectedHotel] = useState<{ id: string | number; name: string; image?: string; slug?: string } | null>(null);
+  const searchTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Hotel search effect
+  useEffect(() => {
+    if (type !== 'hotel' || !hotelSearch.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+    searchTimeout.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        if (searchSource === 'curated') {
+          const response = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: `hotel ${hotelSearch} ${city}` }),
+          });
+          if (response.ok) {
+            const data = await response.json();
+            const hotels = (data.results || []).filter((d: any) =>
+              d.category?.toLowerCase().includes('hotel') ||
+              d.category?.toLowerCase().includes('accommodation') ||
+              d.category?.toLowerCase().includes('lodging')
+            );
+            setSearchResults(hotels.map((h: any) => ({ id: h.id, name: h.name, image: h.image, category: h.category, slug: h.slug })));
+          }
+        } else {
+          const response = await fetch('/api/google-places-search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: `hotel ${hotelSearch} ${city}` }),
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setSearchResults((data.places || []).map((p: any) => ({
+              id: p.id,
+              name: p.name,
+              image: p.image,
+              category: p.category
+            })));
+          }
+        }
+      } catch (err) {
+        console.error('Hotel search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    };
+  }, [hotelSearch, city, searchSource, type]);
+
+  const selectHotel = (hotel: { id: string | number; name: string; image?: string; slug?: string }) => {
+    setSelectedHotel(hotel);
+    setName(hotel.name);
+    setHotelSearch('');
+    setSearchResults([]);
+  };
+
   const handleSubmit = () => {
     if (type === 'flight') {
       onSubmit({ from, to, departureTime, arrivalTime, airline, flightNumber });
     } else if (type === 'train') {
       onSubmit({ from, to, departureTime, arrivalTime });
     } else {
-      onSubmit({ name, checkInTime: checkIn, checkOutTime: checkOut, breakfastTime: breakfast, confirmation });
+      onSubmit({
+        name,
+        checkInTime: checkIn,
+        checkOutTime: checkOut,
+        breakfastTime: breakfast,
+        confirmation,
+        ...(selectedHotel?.slug ? { destination_slug: selectedHotel.slug } : {}),
+        ...(selectedHotel?.image ? { image: selectedHotel.image } : {}),
+      });
     }
   };
 
@@ -1451,14 +1544,98 @@ function TransportForm({
 
       {type === 'hotel' ? (
         <>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Hotel name"
-            className="w-full px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
-            autoFocus
-          />
+          {/* Search toggle */}
+          <div className="flex items-center gap-1 mb-1">
+            <button
+              onClick={() => { setSearchSource('curated'); setHotelSearch(''); setSearchResults([]); }}
+              className={`px-2 py-0.5 text-[10px] rounded-full transition-colors ${
+                searchSource === 'curated'
+                  ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              Curated
+            </button>
+            <button
+              onClick={() => { setSearchSource('google'); setHotelSearch(''); setSearchResults([]); }}
+              className={`px-2 py-0.5 text-[10px] rounded-full transition-colors ${
+                searchSource === 'google'
+                  ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                  : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              Google
+            </button>
+          </div>
+
+          {/* Hotel search input */}
+          <div className="relative">
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+              {isSearching ? (
+                <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+              ) : searchSource === 'google' ? (
+                <Globe className="w-4 h-4 text-gray-400" />
+              ) : (
+                <Search className="w-4 h-4 text-gray-400" />
+              )}
+              <input
+                type="text"
+                value={selectedHotel ? name : hotelSearch}
+                onChange={(e) => {
+                  if (selectedHotel) {
+                    setSelectedHotel(null);
+                    setName('');
+                  }
+                  setHotelSearch(e.target.value);
+                }}
+                placeholder={searchSource === 'google' ? 'Search hotels on Google...' : 'Search curated hotels...'}
+                className="flex-1 bg-transparent text-[13px] text-gray-900 dark:text-white placeholder-gray-400 outline-none"
+                autoFocus
+              />
+              {selectedHotel && (
+                <button onClick={() => { setSelectedHotel(null); setName(''); }} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+
+            {/* Search results dropdown */}
+            {searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10 max-h-40 overflow-y-auto">
+                {searchResults.map((hotel) => (
+                  <button
+                    key={hotel.id}
+                    onClick={() => selectHotel(hotel)}
+                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 text-left"
+                  >
+                    <div className="w-6 h-6 rounded bg-gray-100 dark:bg-gray-800 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {hotel.image ? (
+                        <Image src={hotel.image} alt="" width={24} height={24} className="w-full h-full object-cover" />
+                      ) : (
+                        <Hotel className="w-3 h-3 text-gray-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate">{hotel.name}</p>
+                      {hotel.category && <p className="text-[10px] text-gray-400 truncate">{hotel.category}</p>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Or manual entry */}
+          {!selectedHotel && !hotelSearch && (
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Or type hotel name manually"
+              className="w-full px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+            />
+          )}
+
           <div className="flex gap-2">
             <div className="flex-1">
               <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-in</label>
@@ -1604,6 +1781,10 @@ function ItemRow({
       const depTime = item.parsedNotes?.departureTime;
       const arrTime = item.parsedNotes?.arrivalTime;
       const airline = [item.parsedNotes?.airline, item.parsedNotes?.flightNumber].filter(Boolean).join(' ');
+      const terminal = item.parsedNotes?.terminal;
+      const gate = item.parsedNotes?.gate;
+      const seat = item.parsedNotes?.seatNumber;
+      const confirmation = item.parsedNotes?.confirmationNumber;
 
       // Inline times: "10:30 dep → 14:45 arr"
       const timeDisplay = [
@@ -1611,11 +1792,20 @@ function ItemRow({
         arrTime && `${formatTime(arrTime)} arr`
       ].filter(Boolean).join(' → ');
 
+      // Extra info line
+      const extraInfo = [
+        terminal && `T${terminal}`,
+        gate && `Gate ${gate}`,
+        seat && `Seat ${seat}`
+      ].filter(Boolean).join(' · ');
+
       return {
         iconType: 'flight' as const,
         title: `${from} → ${to}`,
         inlineTimes: timeDisplay,
-        subtitle: airline || undefined
+        subtitle: airline || undefined,
+        extraInfo: extraInfo || undefined,
+        confirmation
       };
     }
 
@@ -1624,6 +1814,18 @@ function ItemRow({
       const checkIn = item.parsedNotes?.checkInTime;
       const checkOut = item.parsedNotes?.checkOutTime;
       const breakfast = item.parsedNotes?.breakfastTime;
+      const address = item.parsedNotes?.address || item.destination?.formatted_address;
+      const confirmation = item.parsedNotes?.hotelConfirmation || item.parsedNotes?.confirmationNumber;
+
+      // Calculate nights
+      const checkInDate = item.parsedNotes?.checkInDate;
+      const checkOutDate = item.parsedNotes?.checkOutDate;
+      let nights: number | null = null;
+      if (checkInDate && checkOutDate) {
+        const start = new Date(checkInDate);
+        const end = new Date(checkOutDate);
+        nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      }
 
       // Handle specific hotel activity types
       if (hotelItemType === 'check_in') {
@@ -1631,7 +1833,8 @@ function ItemRow({
           iconType: 'checkin' as const,
           title: `Check in · ${item.title || 'Hotel'}`,
           inlineTimes: checkIn ? formatTime(checkIn) : undefined,
-          subtitle: undefined
+          subtitle: address ? address.split(',')[0] : undefined,
+          confirmation
         };
       }
 
@@ -1640,7 +1843,8 @@ function ItemRow({
           iconType: 'checkout' as const,
           title: `Check out · ${item.title || 'Hotel'}`,
           inlineTimes: checkOut ? formatTime(checkOut) : undefined,
-          subtitle: undefined
+          subtitle: address ? address.split(',')[0] : undefined,
+          confirmation
         };
       }
 
@@ -1664,7 +1868,9 @@ function ItemRow({
         iconType: 'hotel' as const,
         title: item.title || 'Hotel',
         inlineTimes: times || undefined,
-        subtitle: undefined
+        subtitle: address ? address.split(',')[0] : undefined,
+        nights,
+        confirmation
       };
     }
 
@@ -1673,17 +1879,23 @@ function ItemRow({
       const to = item.parsedNotes?.to || '?';
       const depTime = item.parsedNotes?.departureTime;
       const arrTime = item.parsedNotes?.arrivalTime;
+      const trainLine = item.parsedNotes?.trainLine;
+      const trainNumber = item.parsedNotes?.trainNumber;
+      const confirmation = item.parsedNotes?.confirmationNumber;
 
       const timeDisplay = [
         depTime && `${formatTime(depTime)} dep`,
         arrTime && `${formatTime(arrTime)} arr`
       ].filter(Boolean).join(' → ');
 
+      const trainInfo = [trainLine, trainNumber].filter(Boolean).join(' ');
+
       return {
         iconType: 'train' as const,
         title: `${from} → ${to}`,
         inlineTimes: timeDisplay,
-        subtitle: undefined
+        subtitle: trainInfo || undefined,
+        confirmation
       };
     }
 
@@ -1691,6 +1903,8 @@ function ItemRow({
     const time = item.time ? formatTime(item.time) : '';
     const duration = item.parsedNotes?.duration;
     const category = item.destination?.category || item.parsedNotes?.category || '';
+    const neighborhood = item.destination?.neighborhood;
+    const rating = item.destination?.rating;
 
     // Build time display with duration
     const timeWithDuration = [
@@ -1698,21 +1912,31 @@ function ItemRow({
       duration && `${duration}h`
     ].filter(Boolean).join(' · ');
 
+    // Location info
+    const locationInfo = [neighborhood, category].filter(Boolean).join(' · ');
+
     return {
       iconType: 'place' as const,
       title: item.title || item.destination?.name || 'Place',
       inlineTimes: timeWithDuration || undefined,
-      subtitle: category || undefined
+      subtitle: locationInfo || undefined,
+      rating
     };
   };
 
-  const { iconType, title, inlineTimes, subtitle } = getItemDisplay();
-  const image = item.destination?.image_thumbnail || item.destination?.image;
+  const { iconType, title, inlineTimes, subtitle, ...extraData } = getItemDisplay();
+  const image = item.destination?.image_thumbnail || item.destination?.image || item.parsedNotes?.image;
   const destination = item.destination;
+
+  // Extra display data
+  const extraInfo = (extraData as any).extraInfo;
+  const confirmation = (extraData as any).confirmation;
+  const nights = (extraData as any).nights;
+  const rating = (extraData as any).rating;
 
   // Quick actions data
   const phone = item.parsedNotes?.phone;
-  const website = item.parsedNotes?.website;
+  const website = item.parsedNotes?.website || destination?.website;
   const hasLocation = (destination?.latitude && destination?.longitude) ||
                       (item.parsedNotes?.latitude && item.parsedNotes?.longitude);
 
@@ -1761,12 +1985,36 @@ function ItemRow({
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-baseline gap-2">
+            <div className="flex items-center gap-2">
               <span className="text-[13px] font-medium text-gray-900 dark:text-white">{title}</span>
-              {subtitle && <span className="text-[11px] text-gray-400">{subtitle}</span>}
+              {subtitle && <span className="text-[11px] text-gray-400 truncate">{subtitle}</span>}
+              {/* Rating badge for places */}
+              {rating && rating > 0 && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400">
+                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                  {rating.toFixed(1)}
+                </span>
+              )}
+              {/* Nights badge for hotels */}
+              {nights && nights > 0 && (
+                <span className="px-1.5 py-0.5 text-[9px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
+                  {nights} {nights === 1 ? 'night' : 'nights'}
+                </span>
+              )}
             </div>
+            {/* Times row */}
             {inlineTimes && (
               <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{inlineTimes}</p>
+            )}
+            {/* Extra info row (terminal, gate, seat for flights) */}
+            {extraInfo && (
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono mt-0.5">{extraInfo}</p>
+            )}
+            {/* Confirmation number */}
+            {confirmation && (
+              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                Ref: <span className="font-mono">{confirmation}</span>
+              </p>
             )}
           </div>
 
@@ -2105,7 +2353,6 @@ function TravelTime({
   const [mode, setMode] = useState<'walking' | 'driving' | 'transit'>(
     (from.parsedNotes?.travelModeToNext as 'walking' | 'driving' | 'transit') || 'driving'
   );
-  const [isExpanded, setIsExpanded] = useState(false);
 
   // Check item types for special labels
   const fromType = from.parsedNotes?.type;
@@ -2132,51 +2379,16 @@ function TravelTime({
 
   // Estimate travel time based on mode
   const getTravelMinutes = () => {
-    if (distanceKm === 0) return 15; // Default 15 min if no coords
+    if (distanceKm === 0) return 15;
     switch (mode) {
-      case 'walking': return Math.round(distanceKm * 12); // ~5 km/h
-      case 'driving': return Math.round(distanceKm * 2);  // ~30 km/h
-      case 'transit': return Math.round(distanceKm * 3);  // ~20 km/h
+      case 'walking': return Math.round(distanceKm * 12);
+      case 'driving': return Math.round(distanceKm * 2);
+      case 'transit': return Math.round(distanceKm * 3);
       default: return Math.round(distanceKm * 12);
     }
   };
 
   const travelMinutes = getTravelMinutes();
-
-  // Calculate spare time between activities
-  const calculateSpareTime = () => {
-    // Get end time of 'from' activity
-    const fromTime = from.time || from.parsedNotes?.departureTime || from.parsedNotes?.checkOutTime;
-    const fromDuration = from.parsedNotes?.duration ? parseFloat(String(from.parsedNotes.duration)) * 60 : 90; // Default 1.5h
-
-    // Get start time of 'to' activity
-    const toTime = to.time || to.parsedNotes?.departureTime || to.parsedNotes?.checkInTime;
-
-    if (!fromTime || !toTime) return null;
-
-    try {
-      const [fromH, fromM] = fromTime.split(':').map(Number);
-      const [toH, toM] = toTime.split(':').map(Number);
-
-      const fromEndMinutes = fromH * 60 + fromM + fromDuration;
-      const toStartMinutes = toH * 60 + toM;
-
-      const gapMinutes = toStartMinutes - fromEndMinutes - travelMinutes;
-      return gapMinutes > 0 ? gapMinutes : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const spareMinutes = calculateSpareTime();
-
-  // Format time
-  const formatDuration = (mins: number) => {
-    if (mins < 60) return `${mins} min`;
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return m > 0 ? `${h}h ${m}m` : `${h}h`;
-  };
 
   // Cycle through modes
   const cycleMode = (e: React.MouseEvent) => {
@@ -2196,14 +2408,6 @@ function TravelTime({
     }
   };
 
-  const getModeLabel = () => {
-    switch (mode) {
-      case 'walking': return 'walk';
-      case 'driving': return 'drive';
-      case 'transit': return 'transit';
-    }
-  };
-
   // Get destination name
   const toName = to.title || to.destination?.name || 'next stop';
 
@@ -2217,87 +2421,21 @@ function TravelTime({
   };
   const specialLabel = getSpecialLabel();
 
-  // Suggestions for spare time
-  const suggestions = [
-    { emoji: '☕', label: 'Coffee break' },
-    { emoji: '📸', label: 'Photo walk' },
-    { emoji: '🛍️', label: 'Quick shopping' },
-    { emoji: '🌳', label: 'Explore nearby' },
-  ];
-
-  // Show compact view if no significant spare time
-  if (!spareMinutes || spareMinutes < 30) {
-    return (
-      <div className="flex justify-center py-1.5">
-        <button
-          onClick={cycleMode}
-          className="flex items-center gap-1.5 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-0.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800"
-          title="Click to change travel mode"
-        >
-          {getModeIcon()}
-          <span>{travelMinutes} min {specialLabel || getModeLabel()}</span>
-        </button>
-      </div>
-    );
-  }
-
-  // Show expanded view with spare time info
+  // Simple inline connector
   return (
-    <div className="py-2">
-      {/* Main connector line */}
-      <div className="flex items-center justify-center gap-2">
-        <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
-
-        {/* Spare time pill - clickable to expand */}
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        >
-          <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300">
-            {formatDuration(spareMinutes)} free
-          </span>
-          <span className="text-gray-300 dark:text-gray-600">·</span>
-          <button
-            onClick={cycleMode}
-            className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            {getModeIcon()}
-            <span>{travelMinutes}m to {toName.length > 15 ? toName.slice(0, 15) + '...' : toName}</span>
-          </button>
-          <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-        </button>
-
-        <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
-      </div>
-
-      {/* Expanded suggestions */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="pt-3 pb-1">
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 text-center mb-2">
-                You have {formatDuration(spareMinutes)} before {toName}
-              </p>
-              <div className="flex flex-wrap justify-center gap-1.5">
-                {suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    className="flex items-center gap-1 px-2 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-[10px]"
-                  >
-                    <span>{s.emoji}</span>
-                    <span className="text-gray-600 dark:text-gray-300">{s.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="flex items-center justify-center py-1">
+      <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
+      <button
+        onClick={cycleMode}
+        className="flex items-center gap-1.5 px-2 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        title="Click to change travel mode"
+      >
+        {getModeIcon()}
+        <span>
+          {travelMinutes}m {specialLabel || `to ${toName.length > 12 ? toName.slice(0, 12) + '...' : toName}`}
+        </span>
+      </button>
+      <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
     </div>
   );
 }
