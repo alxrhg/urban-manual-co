@@ -2373,7 +2373,7 @@ function GapSuggestion({
   onRefresh: () => void;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [suggestions, setSuggestions] = useState<Array<{ id: number; slug: string; name: string; category: string; image?: string }>>([]);
+  const [suggestions, setSuggestions] = useState<Array<{ id: number; slug: string; name: string; category: string; image?: string; reason?: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
@@ -2409,28 +2409,66 @@ function GapSuggestion({
   const suggestionType = getSuggestionType();
   if (!suggestionType) return null;
 
-  // Fetch suggestions when expanded
+  // Fetch AI-powered suggestions when expanded
   const fetchSuggestions = async () => {
     if (suggestions.length > 0 || isLoading) return;
     setIsLoading(true);
     try {
-      const response = await fetch('/api/search', {
+      // Use smart-fill API for intelligent context-aware suggestions
+      const response = await fetch('/api/intelligence/smart-fill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query: `${suggestionType.category} ${city}`,
-          filters: { category: suggestionType.category },
+          city,
+          existingItems: [
+            { title: fromItem.title || fromItem.destination?.name, category: fromItem.destination?.category, time: fromTime },
+            { title: toItem.title || toItem.destination?.name, category: toItem.destination?.category, time: toTime },
+          ],
+          tripDays: 1,
+          gapContext: {
+            afterActivity: fromItem.title || fromItem.destination?.name,
+            afterCategory: fromItem.destination?.category || fromItem.parsedNotes?.type,
+            beforeActivity: toItem.title || toItem.destination?.name,
+            beforeCategory: toItem.destination?.category || toItem.parsedNotes?.type,
+            gapMinutes: gapMins,
+            timeOfDay: suggestionType.category,
+            suggestedTime,
+          },
         }),
       });
+
       if (response.ok) {
         const data = await response.json();
-        setSuggestions((data.results || []).slice(0, 4).map((d: any) => ({
-          id: d.id,
-          slug: d.slug,
-          name: d.name,
-          category: d.category,
-          image: d.image,
-        })));
+        // Parse AI suggestions - they come with full destination objects
+        const aiSuggestions = (data.suggestions || []).slice(0, 4).map((s: any) => ({
+          id: s.destination?.id || s.id,
+          slug: s.destination?.slug || s.slug,
+          name: s.destination?.name || s.name,
+          category: s.destination?.category || s.category,
+          image: s.destination?.image || s.destination?.image_thumbnail || s.image,
+          reason: s.reason,
+        })).filter((s: any) => s.slug && s.name);
+
+        if (aiSuggestions.length > 0) {
+          setSuggestions(aiSuggestions);
+        } else {
+          // Fallback to basic search if AI returns nothing
+          const fallbackResponse = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: `${suggestionType.category} ${city}` }),
+          });
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            setSuggestions((fallbackData.results || []).slice(0, 4).map((d: any) => ({
+              id: d.id,
+              slug: d.slug,
+              name: d.name,
+              category: d.category,
+              image: d.image,
+            })));
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to fetch suggestions:', err);
@@ -2505,28 +2543,32 @@ function GapSuggestion({
                   <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
                 </div>
               ) : suggestions.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
                   {suggestions.map((place) => (
                     <button
                       key={place.slug}
                       onClick={() => addSuggestion(place)}
                       disabled={isAdding}
-                      className="flex items-center gap-2 p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-left"
+                      className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors text-left group"
                     >
-                      <div className="w-8 h-8 rounded-md bg-gray-100 dark:bg-gray-700 flex-shrink-0 overflow-hidden">
+                      <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex-shrink-0 overflow-hidden">
                         {place.image ? (
-                          <Image src={place.image} alt="" width={32} height={32} className="w-full h-full object-cover" />
+                          <Image src={place.image} alt="" width={40} height={40} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <MapPin className="w-3 h-3 text-gray-400" />
+                            <MapPin className="w-4 h-4 text-gray-400" />
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11px] font-medium text-gray-900 dark:text-white truncate">{place.name}</p>
-                        <p className="text-[9px] text-gray-400 truncate">{place.category}</p>
+                        <p className="text-[12px] font-medium text-gray-900 dark:text-white truncate">{place.name}</p>
+                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                          {place.reason || place.category}
+                        </p>
                       </div>
-                      <Plus className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Plus className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                      </div>
                     </button>
                   ))}
                 </div>
