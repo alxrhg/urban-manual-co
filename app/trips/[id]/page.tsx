@@ -4,11 +4,11 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, Lightbulb, AlertTriangle, Star } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, Lightbulb, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
-import { parseDestinations, stringifyDestinations, parseTripNotes, stringifyTripNotes, type TripNoteItem } from '@/types/trip';
+import { parseDestinations, stringifyDestinations, parseTripNotes, stringifyTripNotes, type TripNoteItem, type ActivityData, type ActivityType } from '@/types/trip';
 import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
 import { PageLoader } from '@/components/LoadingStates';
 import { createClient } from '@/lib/supabase/client';
@@ -49,6 +49,7 @@ export default function TripPage() {
     addFlight,
     addTrain,
     addHotel,
+    addActivity,
     removeItem,
     updateItemTime,
     updateItemNotes,
@@ -453,6 +454,7 @@ export default function TripPage() {
                     }, checkOutDay);
                   }
                 }}
+                onAddActivity={(data) => addActivity(data, day.dayNumber)}
                 weather={weather}
               />
             );
@@ -462,7 +464,7 @@ export default function TripPage() {
         {/* Empty state */}
         {totalItems === 0 && days.length > 0 && (
           <p className="text-center text-[13px] text-gray-400 mt-8">
-            Type in any day to add places, flights, hotels, or trains
+            Type in any day to add places, flights, hotels, trains, or activities
           </p>
         )}
       </div>
@@ -905,6 +907,7 @@ function DaySection({
   onAddFlight,
   onAddTrain,
   onAddHotel,
+  onAddActivity,
   weather,
 }: {
   dayNumber: number;
@@ -921,6 +924,7 @@ function DaySection({
   onAddFlight: (data: { airline?: string; flightNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; confirmationNumber?: string; notes?: string }) => void;
   onAddTrain: (data: { trainLine?: string; trainNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; duration?: string; confirmationNumber?: string; notes?: string }) => void;
   onAddHotel: (data: { name: string; address?: string; checkInDate?: string; checkInTime?: string; checkOutDate?: string; checkOutTime?: string; confirmationNumber?: string; roomType?: string; notes?: string; nights?: number; breakfastIncluded?: boolean }) => void;
+  onAddActivity: (data: ActivityData) => void;
   weather?: DayWeather;
 }) {
   const [orderedItems, setOrderedItems] = useState(items);
@@ -932,8 +936,27 @@ function DaySection({
   const [googleResults, setGoogleResults] = useState<Array<{ id: string; name: string; formatted_address: string; latitude?: number; longitude?: number; category?: string; image?: string; rating?: number }>>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
-  const [showTransportForm, setShowTransportForm] = useState<'flight' | 'hotel' | 'train' | null>(null);
+  const [showTransportForm, setShowTransportForm] = useState<'flight' | 'hotel' | 'train' | 'activity' | null>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<ActivityType | null>(null);
+
+  // Activity options for quick-add
+  const ACTIVITY_OPTIONS: { type: ActivityType; icon: typeof BedDouble; label: string; defaultDuration: number }[] = [
+    { type: 'nap', icon: BedDouble, label: 'Nap / Rest', defaultDuration: 60 },
+    { type: 'pool', icon: Waves, label: 'Pool Time', defaultDuration: 90 },
+    { type: 'spa', icon: Sparkles, label: 'Spa', defaultDuration: 120 },
+    { type: 'gym', icon: Dumbbell, label: 'Workout', defaultDuration: 60 },
+    { type: 'breakfast-at-hotel', icon: Coffee, label: 'Hotel Breakfast', defaultDuration: 45 },
+    { type: 'getting-ready', icon: Shirt, label: 'Getting Ready', defaultDuration: 45 },
+    { type: 'packing', icon: Package, label: 'Packing', defaultDuration: 30 },
+    { type: 'checkout-prep', icon: Package, label: 'Check-out Prep', defaultDuration: 30 },
+    { type: 'free-time', icon: Clock, label: 'Free Time', defaultDuration: 60 },
+    { type: 'sunset', icon: Sun, label: 'Sunset', defaultDuration: 45 },
+    { type: 'work', icon: Briefcase, label: 'Work Time', defaultDuration: 120 },
+    { type: 'call', icon: Phone, label: 'Call / Meeting', defaultDuration: 30 },
+    { type: 'shopping-time', icon: ShoppingBag, label: 'Shopping', defaultDuration: 90 },
+    { type: 'photo-walk', icon: Camera, label: 'Photo Walk', defaultDuration: 60 },
+  ];
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -1239,6 +1262,14 @@ function DaySection({
                     <TrainIcon className="w-3.5 h-3.5" />
                     Train
                   </button>
+                  <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
+                  <button
+                    onClick={() => setShowTransportForm('activity')}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    Activity
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1352,7 +1383,7 @@ function DaySection({
 
             {/* Inline transport form */}
             <AnimatePresence>
-              {showTransportForm && (
+              {showTransportForm && showTransportForm !== 'activity' && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1366,6 +1397,49 @@ function DaySection({
                     onCancel={closeAllMenus}
                     isAdding={isAdding}
                   />
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Inline activity form */}
+            <AnimatePresence>
+              {showTransportForm === 'activity' && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  className="absolute right-0 top-full mt-1 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3"
+                >
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[12px] font-medium text-gray-900 dark:text-white">Add activity</span>
+                    <button onClick={closeAllMenus} className="text-gray-400 hover:text-gray-600">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-500 mb-3">Hotel activities, downtime, or personal time blocks</p>
+                  <div className="grid grid-cols-2 gap-1.5 max-h-64 overflow-y-auto">
+                    {ACTIVITY_OPTIONS.map((option) => {
+                      const Icon = option.icon;
+                      return (
+                        <button
+                          key={option.type}
+                          onClick={() => {
+                            onAddActivity({
+                              type: 'activity',
+                              activityType: option.type,
+                              title: option.label,
+                              duration: option.defaultDuration,
+                            });
+                            closeAllMenus();
+                          }}
+                          className="flex items-center gap-2 p-2.5 rounded-lg text-left bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          <Icon className="w-3.5 h-3.5 text-gray-500" />
+                          <span className="text-[11px] font-medium text-gray-700 dark:text-gray-300">{option.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1912,6 +1986,23 @@ function ItemRow({
       };
     }
 
+    if (itemType === 'activity') {
+      const activityType = item.parsedNotes?.activityType || 'free-time';
+      const duration = item.parsedNotes?.duration;
+      const time = item.time ? formatTime(item.time) : '';
+
+      const durationDisplay = duration ? `${Math.round(duration / 60)}h ${duration % 60}m` : '';
+      const timeDisplay = [time, durationDisplay].filter(Boolean).join(' · ');
+
+      return {
+        iconType: 'activity' as const,
+        activityType,
+        title: item.title || 'Activity',
+        inlineTimes: timeDisplay || undefined,
+        subtitle: undefined
+      };
+    }
+
     // Regular place
     const time = item.time ? formatTime(item.time) : '';
     const duration = item.parsedNotes?.duration;
@@ -1987,6 +2078,27 @@ function ItemRow({
           ) : iconType === 'train' ? (
             <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
               <TrainIcon className="w-3.5 h-3.5 text-gray-500" />
+            </div>
+          ) : iconType === 'activity' ? (
+            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
+              {(() => {
+                const aType = (extraData as any).activityType;
+                switch (aType) {
+                  case 'nap': return <BedDouble className="w-3.5 h-3.5 text-gray-500" />;
+                  case 'pool': return <Waves className="w-3.5 h-3.5 text-gray-500" />;
+                  case 'spa': return <Sparkles className="w-3.5 h-3.5 text-gray-500" />;
+                  case 'gym': return <Dumbbell className="w-3.5 h-3.5 text-gray-500" />;
+                  case 'breakfast-at-hotel': return <Coffee className="w-3.5 h-3.5 text-gray-500" />;
+                  case 'getting-ready': return <Shirt className="w-3.5 h-3.5 text-gray-500" />;
+                  case 'packing': case 'checkout-prep': return <Package className="w-3.5 h-3.5 text-gray-500" />;
+                  case 'sunset': return <Sun className="w-3.5 h-3.5 text-gray-500" />;
+                  case 'work': return <Briefcase className="w-3.5 h-3.5 text-gray-500" />;
+                  case 'call': return <Phone className="w-3.5 h-3.5 text-gray-500" />;
+                  case 'shopping-time': return <ShoppingBag className="w-3.5 h-3.5 text-gray-500" />;
+                  case 'photo-walk': return <Camera className="w-3.5 h-3.5 text-gray-500" />;
+                  default: return <Clock className="w-3.5 h-3.5 text-gray-500" />;
+                }
+              })()}
             </div>
           ) : image ? (
             <ItemImage src={image} />
