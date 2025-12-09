@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, Lightbulb } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, Lightbulb, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -330,6 +330,14 @@ export default function TripPage() {
             </div>
           </div>
         )}
+
+        {/* Trip Intelligence - Smart Warnings & Suggestions */}
+        <TripIntelligence
+          days={days}
+          city={primaryCity}
+          weatherByDate={weatherByDate}
+          onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
+        />
 
         {/* Days */}
         <div className="mt-8 space-y-8">
@@ -2669,4 +2677,402 @@ function WeatherWarning({ item, date }: { item: EnrichedItineraryItem; date?: st
       <span>Rain expected</span>
     </span>
   );
+}
+
+/**
+ * Trip Intelligence - Smart warnings and suggestions
+ */
+function TripIntelligence({
+  days,
+  city,
+  weatherByDate,
+  onOptimizeRoute,
+}: {
+  days: Array<{ dayNumber: number; date: string | null; items: EnrichedItineraryItem[] }>;
+  city: string;
+  weatherByDate: Record<string, DayWeather>;
+  onOptimizeRoute: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
+}) {
+  const [insights, setInsights] = useState<Array<{
+    id: string;
+    type: 'warning' | 'suggestion' | 'optimization';
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    action?: { label: string; onClick: () => void };
+    dayNumber?: number;
+  }>>([]);
+
+  // Analyze trip and generate insights
+  useEffect(() => {
+    const newInsights: typeof insights = [];
+
+    days.forEach((day) => {
+      const items = day.items;
+      if (items.length === 0) return;
+
+      // 1. MEAL GAP DETECTION
+      const hasMorningItem = items.some(i => {
+        const time = i.time;
+        if (!time) return false;
+        const hour = parseInt(time.split(':')[0], 10);
+        return hour >= 7 && hour < 11;
+      });
+      const hasLunchItem = items.some(i => {
+        const time = i.time;
+        if (!time) return false;
+        const hour = parseInt(time.split(':')[0], 10);
+        const category = i.destination?.category?.toLowerCase() || i.parsedNotes?.type || '';
+        return hour >= 11 && hour < 15 && (category.includes('restaurant') || category.includes('cafe'));
+      });
+      const hasDinnerItem = items.some(i => {
+        const time = i.time;
+        if (!time) return false;
+        const hour = parseInt(time.split(':')[0], 10);
+        const category = i.destination?.category?.toLowerCase() || i.parsedNotes?.type || '';
+        return hour >= 18 && hour < 22 && (category.includes('restaurant') || category.includes('bar'));
+      });
+
+      if (items.length >= 2 && !hasLunchItem) {
+        const hasMiddayActivity = items.some(i => {
+          const time = i.time;
+          if (!time) return false;
+          const hour = parseInt(time.split(':')[0], 10);
+          return hour >= 11 && hour < 15;
+        });
+        if (hasMiddayActivity) {
+          newInsights.push({
+            id: `meal-lunch-${day.dayNumber}`,
+            type: 'suggestion',
+            icon: <UtensilsCrossed className="w-4 h-4" />,
+            title: `Day ${day.dayNumber}: No lunch planned`,
+            description: 'You have activities midday but no lunch spot',
+            dayNumber: day.dayNumber,
+          });
+        }
+      }
+
+      if (items.length >= 2 && !hasDinnerItem) {
+        const hasEveningActivity = items.some(i => {
+          const time = i.time;
+          if (!time) return false;
+          const hour = parseInt(time.split(':')[0], 10);
+          return hour >= 17;
+        });
+        if (hasEveningActivity) {
+          newInsights.push({
+            id: `meal-dinner-${day.dayNumber}`,
+            type: 'suggestion',
+            icon: <UtensilsCrossed className="w-4 h-4" />,
+            title: `Day ${day.dayNumber}: No dinner planned`,
+            description: 'You have evening activities but no dinner reservation',
+            dayNumber: day.dayNumber,
+          });
+        }
+      }
+
+      // 2. TIMING CONFLICT DETECTION
+      const sortedItems = [...items].sort((a, b) => {
+        const timeA = a.time || '00:00';
+        const timeB = b.time || '00:00';
+        return timeA.localeCompare(timeB);
+      });
+
+      for (let i = 0; i < sortedItems.length - 1; i++) {
+        const current = sortedItems[i];
+        const next = sortedItems[i + 1];
+
+        if (!current.time || !next.time) continue;
+
+        const [curH, curM] = current.time.split(':').map(Number);
+        const [nextH, nextM] = next.time.split(':').map(Number);
+        const duration = current.parsedNotes?.duration ? parseFloat(String(current.parsedNotes.duration)) * 60 : 90;
+
+        const currentEndMins = curH * 60 + curM + duration;
+        const nextStartMins = nextH * 60 + nextM;
+
+        // Calculate travel time if we have coordinates
+        let travelMins = 15; // Default
+        const fromLat = current.destination?.latitude || current.parsedNotes?.latitude;
+        const fromLng = current.destination?.longitude || current.parsedNotes?.longitude;
+        const toLat = next.destination?.latitude || next.parsedNotes?.latitude;
+        const toLng = next.destination?.longitude || next.parsedNotes?.longitude;
+
+        if (fromLat && fromLng && toLat && toLng) {
+          const R = 6371;
+          const dLat = (toLat - fromLat) * Math.PI / 180;
+          const dLng = (toLng - fromLng) * Math.PI / 180;
+          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
+                    Math.sin(dLng/2) * Math.sin(dLng/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          const distKm = R * c;
+          travelMins = Math.round(distKm * 3); // ~20 km/h average
+        }
+
+        const availableTime = nextStartMins - currentEndMins;
+        if (availableTime < travelMins && availableTime < 0) {
+          newInsights.push({
+            id: `timing-${day.dayNumber}-${i}`,
+            type: 'warning',
+            icon: <AlertTriangle className="w-4 h-4" />,
+            title: `Day ${day.dayNumber}: Timing conflict`,
+            description: `Only ${Math.max(0, availableTime)} min between "${current.title || current.destination?.name}" and "${next.title || next.destination?.name}" but need ~${travelMins} min travel`,
+            dayNumber: day.dayNumber,
+          });
+        }
+      }
+
+      // 3. ROUTE OPTIMIZATION
+      if (items.length >= 3) {
+        const itemsWithCoords = items.filter(i =>
+          (i.destination?.latitude && i.destination?.longitude) ||
+          (i.parsedNotes?.latitude && i.parsedNotes?.longitude)
+        );
+
+        if (itemsWithCoords.length >= 3) {
+          // Calculate current total distance
+          let currentDistance = 0;
+          for (let i = 0; i < itemsWithCoords.length - 1; i++) {
+            const from = itemsWithCoords[i];
+            const to = itemsWithCoords[i + 1];
+            const fromLat = from.destination?.latitude || from.parsedNotes?.latitude;
+            const fromLng = from.destination?.longitude || from.parsedNotes?.longitude;
+            const toLat = to.destination?.latitude || to.parsedNotes?.latitude;
+            const toLng = to.destination?.longitude || to.parsedNotes?.longitude;
+
+            if (fromLat && fromLng && toLat && toLng) {
+              const R = 6371;
+              const dLat = (toLat - fromLat) * Math.PI / 180;
+              const dLng = (toLng - fromLng) * Math.PI / 180;
+              const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                        Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
+                        Math.sin(dLng/2) * Math.sin(dLng/2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+              currentDistance += R * c;
+            }
+          }
+
+          // Try nearest-neighbor optimization
+          const optimized = nearestNeighborOptimize(itemsWithCoords);
+          let optimizedDistance = 0;
+          for (let i = 0; i < optimized.length - 1; i++) {
+            const from = optimized[i];
+            const to = optimized[i + 1];
+            const fromLat = from.destination?.latitude || from.parsedNotes?.latitude;
+            const fromLng = from.destination?.longitude || from.parsedNotes?.longitude;
+            const toLat = to.destination?.latitude || to.parsedNotes?.latitude;
+            const toLng = to.destination?.longitude || to.parsedNotes?.longitude;
+
+            if (fromLat && fromLng && toLat && toLng) {
+              const R = 6371;
+              const dLat = (toLat - fromLat) * Math.PI / 180;
+              const dLng = (toLng - fromLng) * Math.PI / 180;
+              const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                        Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
+                        Math.sin(dLng/2) * Math.sin(dLng/2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+              optimizedDistance += R * c;
+            }
+          }
+
+          const savings = currentDistance - optimizedDistance;
+          const savingsMin = Math.round(savings * 3); // Convert km to approx mins at 20km/h
+
+          if (savingsMin >= 15) {
+            newInsights.push({
+              id: `optimize-${day.dayNumber}`,
+              type: 'optimization',
+              icon: <Route className="w-4 h-4" />,
+              title: `Day ${day.dayNumber}: Route can be optimized`,
+              description: `Reorder activities to save ~${savingsMin} min walking`,
+              dayNumber: day.dayNumber,
+              action: {
+                label: 'Optimize',
+                onClick: () => {
+                  // Reorder with original times preserved
+                  const newOrder = optimized.map((item, idx) => ({
+                    ...item,
+                    time: items[idx]?.time || item.time,
+                  }));
+                  onOptimizeRoute(day.dayNumber, newOrder);
+                },
+              },
+            });
+          }
+        }
+      }
+
+      // 4. WEATHER WARNINGS
+      const dayWeather = day.date ? weatherByDate[day.date] : undefined;
+      if (dayWeather && dayWeather.precipProbability > 50) {
+        const outdoorItems = items.filter(i => {
+          const category = i.destination?.category?.toLowerCase() || '';
+          return ['park', 'garden', 'beach', 'outdoor', 'walk', 'market'].some(c => category.includes(c));
+        });
+
+        if (outdoorItems.length > 0) {
+          newInsights.push({
+            id: `weather-${day.dayNumber}`,
+            type: 'warning',
+            icon: <CloudRain className="w-4 h-4" />,
+            title: `Day ${day.dayNumber}: Rain likely (${dayWeather.precipProbability}%)`,
+            description: `Consider indoor alternatives for: ${outdoorItems.map(i => i.title || i.destination?.name).join(', ')}`,
+            dayNumber: day.dayNumber,
+          });
+        }
+      }
+
+      // 5. AUTO TIME SLOT SUGGESTION
+      const itemsWithoutTime = items.filter(i => !i.time);
+      if (itemsWithoutTime.length > 0 && items.length > itemsWithoutTime.length) {
+        newInsights.push({
+          id: `autotime-${day.dayNumber}`,
+          type: 'suggestion',
+          icon: <Clock className="w-4 h-4" />,
+          title: `Day ${day.dayNumber}: ${itemsWithoutTime.length} items missing times`,
+          description: 'Add times to help plan your day better',
+          dayNumber: day.dayNumber,
+        });
+      }
+    });
+
+    setInsights(newInsights);
+  }, [days, weatherByDate, onOptimizeRoute]);
+
+  if (insights.length === 0) return null;
+
+  const warnings = insights.filter(i => i.type === 'warning');
+  const suggestions = insights.filter(i => i.type === 'suggestion');
+  const optimizations = insights.filter(i => i.type === 'optimization');
+
+  return (
+    <div className="mt-6 space-y-3">
+      {/* Warnings */}
+      {warnings.length > 0 && (
+        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-4 h-4 text-red-500" />
+            <span className="text-[12px] font-medium text-red-700 dark:text-red-300">
+              {warnings.length} warning{warnings.length > 1 ? 's' : ''}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {warnings.map((insight) => (
+              <div key={insight.id} className="flex items-start gap-2 text-[11px]">
+                <span className="text-red-500 mt-0.5">{insight.icon}</span>
+                <div>
+                  <p className="font-medium text-red-700 dark:text-red-300">{insight.title}</p>
+                  <p className="text-red-600 dark:text-red-400">{insight.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Optimizations */}
+      {optimizations.length > 0 && (
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <Route className="w-4 h-4 text-blue-500" />
+            <span className="text-[12px] font-medium text-blue-700 dark:text-blue-300">
+              Route optimizations available
+            </span>
+          </div>
+          <div className="space-y-2">
+            {optimizations.map((insight) => (
+              <div key={insight.id} className="flex items-center justify-between gap-2 text-[11px]">
+                <div className="flex items-start gap-2">
+                  <span className="text-blue-500 mt-0.5">{insight.icon}</span>
+                  <div>
+                    <p className="font-medium text-blue-700 dark:text-blue-300">{insight.title}</p>
+                    <p className="text-blue-600 dark:text-blue-400">{insight.description}</p>
+                  </div>
+                </div>
+                {insight.action && (
+                  <button
+                    onClick={insight.action.onClick}
+                    className="px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-medium rounded-full transition-colors"
+                  >
+                    {insight.action.label}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Suggestions */}
+      {suggestions.length > 0 && (
+        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
+          <div className="flex items-center gap-2 mb-2">
+            <Lightbulb className="w-4 h-4 text-amber-500" />
+            <span className="text-[12px] font-medium text-amber-700 dark:text-amber-300">
+              {suggestions.length} suggestion{suggestions.length > 1 ? 's' : ''}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {suggestions.map((insight) => (
+              <div key={insight.id} className="flex items-start gap-2 text-[11px]">
+                <span className="text-amber-500 mt-0.5">{insight.icon}</span>
+                <div>
+                  <p className="font-medium text-amber-700 dark:text-amber-300">{insight.title}</p>
+                  <p className="text-amber-600 dark:text-amber-400">{insight.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Nearest neighbor algorithm for route optimization
+ */
+function nearestNeighborOptimize(items: EnrichedItineraryItem[]): EnrichedItineraryItem[] {
+  if (items.length <= 2) return items;
+
+  const getCoords = (item: EnrichedItineraryItem) => ({
+    lat: item.destination?.latitude || item.parsedNotes?.latitude || 0,
+    lng: item.destination?.longitude || item.parsedNotes?.longitude || 0,
+  });
+
+  const getDistance = (a: EnrichedItineraryItem, b: EnrichedItineraryItem) => {
+    const coordsA = getCoords(a);
+    const coordsB = getCoords(b);
+    const R = 6371;
+    const dLat = (coordsB.lat - coordsA.lat) * Math.PI / 180;
+    const dLng = (coordsB.lng - coordsA.lng) * Math.PI / 180;
+    const x = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(coordsA.lat * Math.PI / 180) * Math.cos(coordsB.lat * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+    return R * c;
+  };
+
+  const result: EnrichedItineraryItem[] = [items[0]];
+  const remaining = [...items.slice(1)];
+
+  while (remaining.length > 0) {
+    const current = result[result.length - 1];
+    let nearestIdx = 0;
+    let nearestDist = Infinity;
+
+    for (let i = 0; i < remaining.length; i++) {
+      const dist = getDistance(current, remaining[i]);
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearestIdx = i;
+      }
+    }
+
+    result.push(remaining[nearestIdx]);
+    remaining.splice(nearestIdx, 1);
+  }
+
+  return result;
 }
