@@ -2901,16 +2901,38 @@ function TripIntelligence({
       });
       const hasDinnerItem = items.some(i => {
         const time = i.time;
-        if (!time) return false;
-        const hour = parseInt(time.split(':')[0], 10);
-        // Must be in dinner hours (18:00 - 22:00)
-        if (hour < 18 || hour >= 22) return false;
-        // Check category
+        // If no time, check if it's explicitly a restaurant/dining category
         const category = (i.destination?.category || i.parsedNotes?.category || '').toLowerCase();
         const title = (i.title || i.destination?.name || '').toLowerCase();
-        // Match various food-related categories and titles
-        const foodKeywords = ['restaurant', 'bar', 'dining', 'dinner', 'steakhouse', 'bistro', 'eatery', 'grill', 'kitchen', 'tavern', 'trattoria', 'pizzeria', 'sushi', 'ramen', 'brasserie'];
-        return foodKeywords.some(kw => category.includes(kw) || title.includes(kw));
+
+        // Food-related keywords - expanded list
+        const foodKeywords = ['restaurant', 'bar', 'dining', 'dinner', 'steakhouse', 'bistro',
+          'eatery', 'grill', 'kitchen', 'tavern', 'trattoria', 'pizzeria', 'sushi', 'ramen',
+          'brasserie', 'food', 'cafe', 'gastropub', 'pub', 'cantina', 'osteria', 'taqueria',
+          'seafood', 'bbq', 'barbecue', 'chophouse', 'diner', 'ristorante'];
+
+        const isFood = foodKeywords.some(kw => category.includes(kw) || title.includes(kw));
+
+        // If we have a time, check if it's in evening hours (17:00 - 23:00)
+        if (time) {
+          const hour = parseInt(time.split(':')[0], 10);
+          if (hour >= 17 && hour < 23 && isFood) return true;
+        }
+
+        // If no time but it's a food place, still count it (user likely dining there)
+        // Only count if there are evening activities suggesting it's an evening plan
+        if (!time && isFood) {
+          // Check if there are any evening activities in this day
+          const hasEveningItems = items.some(item => {
+            const t = item.time;
+            if (!t) return false;
+            const h = parseInt(t.split(':')[0], 10);
+            return h >= 17;
+          });
+          if (hasEveningItems) return true;
+        }
+
+        return false;
       });
 
       if (items.length >= 2 && !hasLunchItem) {
