@@ -2942,90 +2942,65 @@ function TripIntelligence({
 
   if (insights.length === 0) return null;
 
-  const warnings = insights.filter(i => i.type === 'warning');
-  const suggestions = insights.filter(i => i.type === 'suggestion');
-  const optimizations = insights.filter(i => i.type === 'optimization');
+  // Sort: warnings first, then optimizations, then suggestions
+  const sortedInsights = [...insights].sort((a, b) => {
+    const order = { warning: 0, optimization: 1, suggestion: 2 };
+    return order[a.type] - order[b.type];
+  });
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'warning': return 'text-red-500';
+      case 'optimization': return 'text-blue-500';
+      case 'suggestion': return 'text-amber-500';
+      default: return 'text-gray-500';
+    }
+  };
+
+  const getTypeBg = (type: string) => {
+    switch (type) {
+      case 'warning': return 'bg-red-500/10';
+      case 'optimization': return 'bg-blue-500/10';
+      case 'suggestion': return 'bg-amber-500/10';
+      default: return 'bg-gray-500/10';
+    }
+  };
 
   return (
-    <div className="mt-6 space-y-3">
-      {/* Warnings */}
-      {warnings.length > 0 && (
-        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-4 h-4 text-red-500" />
-            <span className="text-[12px] font-medium text-red-700 dark:text-red-300">
-              {warnings.length} warning{warnings.length > 1 ? 's' : ''}
-            </span>
-          </div>
-          <div className="space-y-2">
-            {warnings.map((insight) => (
-              <div key={insight.id} className="flex items-start gap-2 text-[11px]">
-                <span className="text-red-500 mt-0.5">{insight.icon}</span>
-                <div>
-                  <p className="font-medium text-red-700 dark:text-red-300">{insight.title}</p>
-                  <p className="text-red-600 dark:text-red-400">{insight.description}</p>
-                </div>
+    <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl">
+      <div className="flex items-center gap-2 mb-3">
+        <Sparkles className="w-4 h-4 text-gray-400" />
+        <span className="text-[13px] font-medium text-gray-600 dark:text-gray-300">Trip Intelligence</span>
+        <span className="text-[11px] text-gray-400">({insights.length})</span>
+      </div>
+      <div className="space-y-2">
+        {sortedInsights.map((insight) => (
+          <div
+            key={insight.id}
+            className={`flex items-center justify-between gap-3 p-2 rounded-lg ${getTypeBg(insight.type)}`}
+          >
+            <div className="flex items-center gap-2 min-w-0">
+              <span className={`flex-shrink-0 ${getTypeColor(insight.type)}`}>{insight.icon}</span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 truncate">
+                  {insight.title}
+                </p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                  {insight.description}
+                </p>
               </div>
-            ))}
+            </div>
+            {insight.action && (
+              <button
+                onClick={insight.action.onClick}
+                className="flex-shrink-0 px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-medium rounded-full transition-colors"
+              >
+                {insight.action.label}
+              </button>
+            )}
           </div>
-        </div>
-      )}
-
-      {/* Optimizations */}
-      {optimizations.length > 0 && (
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-          <div className="flex items-center gap-2 mb-2">
-            <Route className="w-4 h-4 text-blue-500" />
-            <span className="text-[12px] font-medium text-blue-700 dark:text-blue-300">
-              Route optimizations available
-            </span>
-          </div>
-          <div className="space-y-2">
-            {optimizations.map((insight) => (
-              <div key={insight.id} className="flex items-center justify-between gap-2 text-[11px]">
-                <div className="flex items-start gap-2">
-                  <span className="text-blue-500 mt-0.5">{insight.icon}</span>
-                  <div>
-                    <p className="font-medium text-blue-700 dark:text-blue-300">{insight.title}</p>
-                    <p className="text-blue-600 dark:text-blue-400">{insight.description}</p>
-                  </div>
-                </div>
-                {insight.action && (
-                  <button
-                    onClick={insight.action.onClick}
-                    className="px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-medium rounded-full transition-colors"
-                  >
-                    {insight.action.label}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Suggestions */}
-      {suggestions.length > 0 && (
-        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
-          <div className="flex items-center gap-2 mb-2">
-            <Lightbulb className="w-4 h-4 text-amber-500" />
-            <span className="text-[12px] font-medium text-amber-700 dark:text-amber-300">
-              {suggestions.length} suggestion{suggestions.length > 1 ? 's' : ''}
-            </span>
-          </div>
-          <div className="space-y-2">
-            {suggestions.map((insight) => (
-              <div key={insight.id} className="flex items-start gap-2 text-[11px]">
-                <span className="text-amber-500 mt-0.5">{insight.icon}</span>
-                <div>
-                  <p className="font-medium text-amber-700 dark:text-amber-300">{insight.title}</p>
-                  <p className="text-amber-600 dark:text-amber-400">{insight.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
