@@ -408,18 +408,51 @@ export default function TripPage() {
                   confirmationNumber: data.confirmationNumber,
                   notes: data.notes,
                 }, day.dayNumber)}
-                onAddHotel={(data) => addHotel({
-                  type: 'hotel',
-                  name: data.name,
-                  address: data.address,
-                  checkInDate: data.checkInDate || '',
-                  checkInTime: data.checkInTime,
-                  checkOutDate: data.checkOutDate,
-                  checkOutTime: data.checkOutTime,
-                  confirmationNumber: data.confirmationNumber,
-                  roomType: data.roomType,
-                  notes: data.notes,
-                }, day.dayNumber)}
+                onAddHotel={(data) => {
+                  const hotelName = data.name || 'Hotel';
+                  const checkInDay = day.dayNumber;
+
+                  // Calculate checkout day (estimate 1 night if not specified)
+                  const nights = data.nights || 1;
+                  const checkOutDay = checkInDay + nights;
+
+                  // 1. Check-in card (on check-in day at check-in time, default 4 PM)
+                  addHotel({
+                    type: 'hotel',
+                    name: hotelName,
+                    address: data.address,
+                    checkInDate: '',
+                    checkInTime: data.checkInTime || '16:00',
+                    confirmationNumber: data.confirmationNumber,
+                    roomType: data.roomType,
+                    notes: JSON.stringify({ hotelItemType: 'check_in' }),
+                  }, checkInDay);
+
+                  // 2. Breakfast cards (on each morning if included)
+                  if (data.breakfastIncluded) {
+                    for (let d = checkInDay + 1; d <= checkOutDay; d++) {
+                      addHotel({
+                        type: 'hotel',
+                        name: hotelName,
+                        checkInDate: '',
+                        checkInTime: '08:00',
+                        notes: JSON.stringify({ hotelItemType: 'breakfast' }),
+                      }, d);
+                    }
+                  }
+
+                  // 3. Checkout card (on checkout day at checkout time, default 11 AM)
+                  if (nights > 0) {
+                    addHotel({
+                      type: 'hotel',
+                      name: hotelName,
+                      address: data.address,
+                      checkInDate: '',
+                      checkOutTime: data.checkOutTime || '11:00',
+                      notes: JSON.stringify({ hotelItemType: 'checkout' }),
+                    }, checkOutDay);
+                  }
+                }}
                 weather={weather}
               />
             );
@@ -887,7 +920,7 @@ function DaySection({
   onAddPlace: (destination: Destination) => void;
   onAddFlight: (data: { airline?: string; flightNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; confirmationNumber?: string; notes?: string }) => void;
   onAddTrain: (data: { trainLine?: string; trainNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; duration?: string; confirmationNumber?: string; notes?: string }) => void;
-  onAddHotel: (data: { name: string; address?: string; checkInDate?: string; checkInTime?: string; checkOutDate?: string; checkOutTime?: string; confirmationNumber?: string; roomType?: string; notes?: string }) => void;
+  onAddHotel: (data: { name: string; address?: string; checkInDate?: string; checkInTime?: string; checkOutDate?: string; checkOutTime?: string; confirmationNumber?: string; roomType?: string; notes?: string; nights?: number; breakfastIncluded?: boolean }) => void;
   weather?: DayWeather;
 }) {
   const [orderedItems, setOrderedItems] = useState(items);
@@ -995,6 +1028,8 @@ function DaySection({
         confirmationNumber: data.confirmation,
         roomType: data.roomType,
         notes: data.notes,
+        nights: data.nights ? parseInt(data.nights, 10) : 1,
+        breakfastIncluded: data.breakfastTime === 'included',
       });
     } else if (type === 'flight') {
       onAddFlight({
@@ -1394,8 +1429,9 @@ function TransportForm({
   const [arrivalTime, setArrivalTime] = useState('');
   const [airline, setAirline] = useState('');
   const [flightNumber, setFlightNumber] = useState('');
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
+  const [checkIn, setCheckIn] = useState('16:00');
+  const [checkOut, setCheckOut] = useState('11:00');
+  const [nights, setNights] = useState('1');
   const [breakfast, setBreakfast] = useState('');
   const [confirmation, setConfirmation] = useState('');
 
@@ -1479,6 +1515,7 @@ function TransportForm({
         name,
         checkInTime: checkIn,
         checkOutTime: checkOut,
+        nights,
         breakfastTime: breakfast,
         confirmation,
         ...(selectedHotel?.slug ? { destination_slug: selectedHotel.slug } : {}),
@@ -1596,45 +1633,63 @@ function TransportForm({
 
           <div className="flex gap-2">
             <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-in</label>
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Nights</label>
               <input
-                type="time"
+                type="number"
+                min="1"
+                max="30"
+                value={nights}
+                onChange={(e) => setNights(e.target.value)}
+                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-in</label>
+              <select
                 value={checkIn}
                 onChange={(e) => setCheckIn(e.target.value)}
                 className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
-              />
+              >
+                <option value="14:00">2 PM</option>
+                <option value="15:00">3 PM</option>
+                <option value="16:00">4 PM</option>
+                <option value="17:00">5 PM</option>
+                <option value="18:00">6 PM</option>
+              </select>
             </div>
             <div className="flex-1">
               <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-out</label>
-              <input
-                type="time"
+              <select
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
                 className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
-              />
+              >
+                <option value="10:00">10 AM</option>
+                <option value="11:00">11 AM</option>
+                <option value="12:00">12 PM</option>
+              </select>
             </div>
           </div>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Breakfast</label>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
-                type="text"
-                value={breakfast}
-                onChange={(e) => setBreakfast(e.target.value)}
-                placeholder="e.g. 7:00-10:00"
-                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+                type="checkbox"
+                checked={breakfast === 'included'}
+                onChange={(e) => setBreakfast(e.target.checked ? 'included' : '')}
+                className="w-4 h-4 rounded border-gray-300 text-gray-900 focus:ring-gray-500"
               />
-            </div>
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Confirmation</label>
-              <input
-                type="text"
-                value={confirmation}
-                onChange={(e) => setConfirmation(e.target.value)}
-                placeholder="Booking ref"
-                className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
-              />
-            </div>
+              <span className="text-[12px] text-gray-600 dark:text-gray-300">Breakfast included</span>
+            </label>
+          </div>
+          <div>
+            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Confirmation</label>
+            <input
+              type="text"
+              value={confirmation}
+              onChange={(e) => setConfirmation(e.target.value)}
+              placeholder="Booking reference"
+              className="w-full mt-1 px-3 py-2 text-[13px] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg outline-none"
+            />
           </div>
         </>
       ) : (
