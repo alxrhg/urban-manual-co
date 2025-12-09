@@ -310,21 +310,25 @@ export default function TripPage() {
           </AnimatePresence>
         </div>
 
-        {/* AI Suggestions Section */}
+        {/* AI Suggestions Section - Inline connector style */}
         {aiSuggestions.length > 0 && (
-          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl">
-            <div className="flex items-center gap-2 mb-3">
-              <Lightbulb className="w-4 h-4 text-gray-400" />
-              <span className="text-[13px] font-medium text-gray-600 dark:text-gray-300">Suggestions for your trip</span>
+          <div className="mt-6 py-2">
+            <div className="flex items-center justify-center gap-2">
+              <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
+                <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300">Room for more</span>
+              </div>
+              <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap justify-center gap-2 mt-3">
               {aiSuggestions.map((suggestion) => (
                 <button
                   key={suggestion.id}
-                  className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors text-left"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors text-left group"
                 >
-                  <span className="text-[13px] text-gray-700 dark:text-gray-200">{suggestion.text}</span>
-                  <Plus className="w-3.5 h-3.5 text-gray-400" />
+                  <span className="text-[11px] text-gray-700 dark:text-gray-200">{suggestion.text}</span>
+                  <Plus className="w-3 h-3 text-gray-400 group-hover:text-amber-500" />
                 </button>
               ))}
             </div>
