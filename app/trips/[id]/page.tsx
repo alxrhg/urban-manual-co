@@ -2835,9 +2835,10 @@ function TripIntelligence({
   weatherByDate: Record<string, DayWeather>;
   onOptimizeRoute: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
 }) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [insights, setInsights] = useState<Array<{
     id: string;
-    type: 'warning' | 'suggestion' | 'optimization';
+    type: 'warning' | 'suggestion' | 'optimization' | 'info';
     icon: React.ReactNode;
     title: string;
     description: string;
@@ -3065,7 +3066,75 @@ function TripIntelligence({
         }
       }
 
-      // 5. AUTO TIME SLOT SUGGESTION
+      // 5. TRAVEL TIME SUMMARY
+      if (sortedItems.length >= 2) {
+        let totalTravelMins = 0;
+        let longTravelSegments: Array<{ from: string; to: string; mins: number }> = [];
+
+        for (let i = 0; i < sortedItems.length - 1; i++) {
+          const current = sortedItems[i];
+          const next = sortedItems[i + 1];
+
+          const fromLat = current.destination?.latitude || current.parsedNotes?.latitude;
+          const fromLng = current.destination?.longitude || current.parsedNotes?.longitude;
+          const toLat = next.destination?.latitude || next.parsedNotes?.latitude;
+          const toLng = next.destination?.longitude || next.parsedNotes?.longitude;
+
+          let travelMins = 10;
+          if (fromLat && fromLng && toLat && toLng) {
+            const R = 6371;
+            const dLat = (toLat - fromLat) * Math.PI / 180;
+            const dLng = (toLng - fromLng) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const distKm = R * c;
+            travelMins = Math.round(distKm * 3); // ~20 km/h average
+          }
+
+          totalTravelMins += travelMins;
+
+          // Track long travel segments (> 30 min)
+          if (travelMins > 30) {
+            longTravelSegments.push({
+              from: current.title || current.destination?.name || 'Unknown',
+              to: next.title || next.destination?.name || 'Unknown',
+              mins: travelMins,
+            });
+          }
+        }
+
+        // Add info about total travel time if significant
+        if (totalTravelMins > 60) {
+          const hours = Math.floor(totalTravelMins / 60);
+          const mins = totalTravelMins % 60;
+          const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+          newInsights.push({
+            id: `travel-total-${day.dayNumber}`,
+            type: 'info',
+            icon: <Car className="w-4 h-4" />,
+            title: `Day ${day.dayNumber}: ${timeStr} total travel`,
+            description: `You'll spend about ${timeStr} traveling between ${sortedItems.length} stops`,
+            dayNumber: day.dayNumber,
+          });
+        }
+
+        // Warn about long travel segments
+        if (longTravelSegments.length > 0) {
+          const longest = longTravelSegments.sort((a, b) => b.mins - a.mins)[0];
+          newInsights.push({
+            id: `travel-long-${day.dayNumber}`,
+            type: 'warning',
+            icon: <Car className="w-4 h-4" />,
+            title: `Day ${day.dayNumber}: Long travel segment`,
+            description: `~${longest.mins}m from ${longest.from} to ${longest.to}`,
+            dayNumber: day.dayNumber,
+          });
+        }
+      }
+
+      // 6. AUTO TIME SLOT SUGGESTION
       const itemsWithoutTime = items.filter(i => !i.time);
       if (itemsWithoutTime.length > 0 && items.length > itemsWithoutTime.length) {
         newInsights.push({
@@ -3084,10 +3153,10 @@ function TripIntelligence({
 
   if (insights.length === 0) return null;
 
-  // Sort: warnings first, then optimizations, then suggestions
+  // Sort: warnings first, then optimizations, then suggestions, then info
   const sortedInsights = [...insights].sort((a, b) => {
-    const order = { warning: 0, optimization: 1, suggestion: 2 };
-    return order[a.type] - order[b.type];
+    const order: Record<string, number> = { warning: 0, optimization: 1, suggestion: 2, info: 3 };
+    return (order[a.type] ?? 4) - (order[b.type] ?? 4);
   });
 
   const getTypeColor = (type: string) => {
@@ -3095,6 +3164,7 @@ function TripIntelligence({
       case 'warning': return 'text-red-500';
       case 'optimization': return 'text-blue-500';
       case 'suggestion': return 'text-amber-500';
+      case 'info': return 'text-gray-500';
       default: return 'text-gray-500';
     }
   };
@@ -3104,45 +3174,75 @@ function TripIntelligence({
       case 'warning': return 'bg-red-500/10';
       case 'optimization': return 'bg-blue-500/10';
       case 'suggestion': return 'bg-amber-500/10';
+      case 'info': return 'bg-gray-500/10';
       default: return 'bg-gray-500/10';
     }
   };
 
+  // Count warnings for header badge
+  const warningCount = insights.filter(i => i.type === 'warning').length;
+
   return (
-    <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="w-4 h-4 text-gray-400" />
-        <span className="text-[13px] font-medium text-gray-600 dark:text-gray-300">Trip Intelligence</span>
-        <span className="text-[11px] text-gray-400">({insights.length})</span>
-      </div>
-      <div className="space-y-2">
-        {sortedInsights.map((insight) => (
-          <div
-            key={insight.id}
-            className={`flex items-center justify-between gap-3 p-2 rounded-lg ${getTypeBg(insight.type)}`}
+    <div className="mt-6 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
+      {/* Collapsible header */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="w-full flex items-center justify-between gap-2 p-4 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-gray-400" />
+          <span className="text-[13px] font-medium text-gray-600 dark:text-gray-300">Trip Intelligence</span>
+          <span className="text-[11px] text-gray-400">({insights.length})</span>
+          {warningCount > 0 && (
+            <span className="px-1.5 py-0.5 text-[9px] font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">
+              {warningCount} warning{warningCount > 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isCollapsed ? '' : 'rotate-180'}`} />
+      </button>
+
+      {/* Collapsible content */}
+      <AnimatePresence initial={false}>
+        {!isCollapsed && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <span className={`flex-shrink-0 ${getTypeColor(insight.type)}`}>{insight.icon}</span>
-              <div className="min-w-0">
-                <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 truncate">
-                  {insight.title}
-                </p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
-                  {insight.description}
-                </p>
-              </div>
+            <div className="px-4 pb-4 space-y-2">
+              {sortedInsights.map((insight) => (
+                <div
+                  key={insight.id}
+                  className={`flex items-center justify-between gap-3 p-2 rounded-lg ${getTypeBg(insight.type)}`}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className={`flex-shrink-0 ${getTypeColor(insight.type)}`}>{insight.icon}</span>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 truncate">
+                        {insight.title}
+                      </p>
+                      <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                        {insight.description}
+                      </p>
+                    </div>
+                  </div>
+                  {insight.action && (
+                    <button
+                      onClick={insight.action.onClick}
+                      className="flex-shrink-0 px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-medium rounded-full transition-colors"
+                    >
+                      {insight.action.label}
+                    </button>
+                  )}
+                </div>
+              ))}
             </div>
-            {insight.action && (
-              <button
-                onClick={insight.action.onClick}
-                className="flex-shrink-0 px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-medium rounded-full transition-colors"
-              >
-                {insight.action.label}
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
