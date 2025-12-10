@@ -1310,6 +1310,10 @@ function DaySection({
     return activities;
   }, [breakfastHotel, checkoutHotel, checkInHotel]);
 
+  // Track if we've initialized the order for edit mode
+  const prevEditModeRef = useRef(isEditMode);
+  const prevItemsLengthRef = useRef(items.length);
+
   useEffect(() => {
     // Filter items to exclude:
     // 1. Hotels shown as activity cards (by ID)
@@ -1321,11 +1325,22 @@ function DaySection({
       return true;
     });
 
-    // In edit mode, include hotel activity items at the top (same order as view mode)
+    // Check if we're entering edit mode or if items changed
+    const enteringEditMode = isEditMode && !prevEditModeRef.current;
+    const itemsChanged = items.length !== prevItemsLengthRef.current;
+
+    // Update refs
+    prevEditModeRef.current = isEditMode;
+    prevItemsLengthRef.current = items.length;
+
+    // In edit mode, include hotel activity items
     if (isEditMode && hotelActivityItems.length > 0) {
-      // Keep hotel activities at top, then regular items (no time-based sorting to maintain consistency)
-      setOrderedItems([...hotelActivityItems, ...filteredItems]);
+      // Only reset order when entering edit mode or items change, not on every render
+      if (enteringEditMode || itemsChanged) {
+        setOrderedItems([...hotelActivityItems, ...filteredItems]);
+      }
     } else {
+      // In view mode, always update with filtered items (no hotel activities)
       setOrderedItems(filteredItems);
     }
   }, [items, checkoutHotel?.id, checkInHotel?.id, breakfastHotel?.id, isEditMode, hotelActivityItems]);
