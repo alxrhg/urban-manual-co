@@ -26,9 +26,6 @@
  *   return (
  *     <div>
  *       <button onClick={() => openDestination(destination)}>View</button>
- *       {activeTripInfo && (
- *         <TripContextBadge destination={destination} />
- *       )}
  *     </div>
  *   );
  * }
@@ -58,9 +55,6 @@ export { default as WhyThisContent } from './WhyThisContent';
 export { default as TripContent } from './TripContent';
 export { default as TripSelectorContent } from './TripSelectorContent';
 export { default as AddToTripContent } from './AddToTripContent';
-
-// Trip context badge for cards
-export { default as TripContextBadge, TripContextBadgeFloating } from './TripContextBadge';
 
 // Context and hooks
 export {

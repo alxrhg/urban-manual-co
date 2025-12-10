@@ -6,7 +6,6 @@
  *
  * - TripDrawer: Bottom sheet interface with multiple views
  * - TripFloatingBar: Persistent trip access while browsing
- * - TripContextBadge: Smart suggestions on destination cards
  * - TripPanel: Full-featured side panel (legacy)
  *
  * @example
@@ -21,17 +20,11 @@
  *     </>
  *   );
  * }
- *
- * // Add context badges to destination cards
- * import { TripContextBadge } from '@/components/trip/TripBuilder';
- *
- * <TripContextBadge destination={destination} />
  */
 
 // Primary components (new intelligent interface)
 export { default as TripDrawer } from './TripDrawer';
 export { default as TripFloatingBar } from './TripFloatingBar';
-export { default as TripContextBadge } from './TripContextBadge';
 
 // Panel components (side panel architecture)
 export { default as TripPanel } from './TripPanel';
