@@ -408,6 +408,7 @@ export default function TripPage() {
               primaryCity={primaryCity}
               totalItems={totalItems}
               userId={user?.id}
+              days={days}
               onUpdate={updateTrip}
               onDelete={handleDelete}
             />
@@ -694,13 +695,14 @@ export default function TripPage() {
 }
 
 /**
- * Trip header with inline editing - includes cover, destination, delete
+ * Trip header with inline editing - includes map cover, destination, delete
  */
 function TripHeader({
   trip,
   primaryCity,
   totalItems,
   userId,
+  days,
   onUpdate,
   onDelete,
 }: {
@@ -708,6 +710,7 @@ function TripHeader({
   primaryCity: string;
   totalItems: number;
   userId?: string;
+  days: Array<{ items: EnrichedItineraryItem[] }>;
   onUpdate: (updates: Record<string, unknown>) => void;
   onDelete: () => void;
 }) {
@@ -721,6 +724,39 @@ function TripHeader({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const titleRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Calculate map center from all items with coordinates
+  const mapCenter = useMemo(() => {
+    const allItems = days.flatMap(d => d.items);
+    const coords = allItems
+      .map(item => ({
+        lat: item.destination?.latitude || item.parsedNotes?.latitude,
+        lng: item.destination?.longitude || item.parsedNotes?.longitude,
+      }))
+      .filter(c => c.lat && c.lng) as { lat: number; lng: number }[];
+
+    if (coords.length === 0) return null;
+
+    // Calculate center
+    const sumLat = coords.reduce((sum, c) => sum + c.lat, 0);
+    const sumLng = coords.reduce((sum, c) => sum + c.lng, 0);
+    return {
+      lat: sumLat / coords.length,
+      lng: sumLng / coords.length,
+    };
+  }, [days]);
+
+  // Generate static map URL
+  const staticMapUrl = useMemo(() => {
+    if (!mapCenter) return null;
+    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+    if (!token) return null;
+
+    // Pin marker
+    const pin = `pin-s+ef4444(${mapCenter.lng},${mapCenter.lat})`;
+    // Static map with streets style
+    return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${pin}/${mapCenter.lng},${mapCenter.lat},11,0/600x200@2x?access_token=${token}`;
+  }, [mapCenter]);
 
   useEffect(() => {
     if (isEditing && titleRef.current) {
@@ -923,20 +959,44 @@ function TripHeader({
   }
 
   return (
-    <div onClick={() => setIsEditing(true)} className="cursor-pointer group">
-      {/* Cover image */}
-      {trip.cover_image && (
-        <div className="aspect-[3/1] rounded-xl overflow-hidden mb-4 group-hover:opacity-90 transition-opacity">
-          <Image src={trip.cover_image} alt="" width={600} height={200} className="w-full h-full object-cover" />
-        </div>
-      )}
+    <div className="group">
+      {/* Static map cover */}
+      <div className="relative aspect-[3/1] rounded-xl overflow-hidden mb-4">
+        {staticMapUrl ? (
+          <>
+            <Image
+              src={staticMapUrl}
+              alt={`Map of ${primaryCity}`}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+            {/* City overlay */}
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-red-500" />
+              <span className="text-[12px] font-medium text-gray-900 dark:text-white">{primaryCity}</span>
+              <span className="text-[11px] text-gray-400">{totalItems} pinned</span>
+            </div>
+          </>
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center">
+            <div className="text-center">
+              <MapPin className="w-8 h-8 text-blue-400 mx-auto mb-1" />
+              <span className="text-[12px] text-blue-500 dark:text-blue-400">{primaryCity || 'Add places to see map'}</span>
+            </div>
+          </div>
+        )}
+      </div>
 
-      <h1 className="text-[22px] font-semibold text-gray-900 dark:text-white group-hover:opacity-70 transition-opacity">
-        {trip.title}
-      </h1>
-      <p className="text-[13px] text-gray-400 group-hover:opacity-70 transition-opacity">
-        {[primaryCity, dateDisplay, `${totalItems} ${totalItems === 1 ? 'place' : 'places'}`].filter(Boolean).join(' · ')}
-      </p>
+      {/* Title and info - click to edit */}
+      <div onClick={() => setIsEditing(true)} className="cursor-pointer">
+        <h1 className="text-[22px] font-semibold text-gray-900 dark:text-white group-hover:opacity-70 transition-opacity">
+          {trip.title}
+        </h1>
+        <p className="text-[13px] text-gray-400 group-hover:opacity-70 transition-opacity">
+          {[primaryCity, dateDisplay, `${totalItems} ${totalItems === 1 ? 'place' : 'places'}`].filter(Boolean).join(' · ')}
+        </p>
+      </div>
     </div>
   );
 }

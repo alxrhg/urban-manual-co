@@ -210,7 +210,9 @@ const nextConfig: NextConfig = {
         // Vercel Blob storage
         { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
         // Common travel image sources
-        { protocol: 'https', hostname: 'images.unsplash.com' }
+        { protocol: 'https', hostname: 'images.unsplash.com' },
+        // Mapbox static maps
+        { protocol: 'https', hostname: 'api.mapbox.com' }
       )
       return patterns
     })(),

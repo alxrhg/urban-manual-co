@@ -19,6 +19,7 @@ import type { Trip } from '@/types/trip';
 
 export interface TripWithStats extends Trip {
   stats: TripStatsType;
+  mapCenter?: { lat: number; lng: number } | null;
 }
 
 interface TripsPageClientProps {
@@ -162,7 +163,7 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
 }
 
 /**
- * Trip Row - minimal design
+ * Trip Row - minimal design with static map
  */
 function TripRow({ trip }: { trip: TripWithStats }) {
   const state = getTripState(trip.end_date, trip.start_date, trip.stats);
@@ -172,8 +173,10 @@ function TripRow({ trip }: { trip: TripWithStats }) {
   const totalItems = getTotalItems(trip.stats);
   const timeLabel = getTimeLabel(trip.start_date, trip.end_date, state);
 
-  // Get cover image or first letter
-  const initial = trip.title.charAt(0).toUpperCase();
+  // Generate static map URL
+  const staticMapUrl = trip.mapCenter
+    ? `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-s+ef4444(${trip.mapCenter.lng},${trip.mapCenter.lat})/${trip.mapCenter.lng},${trip.mapCenter.lat},10,0/112x112@2x?access_token=${process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}`
+    : null;
 
   return (
     <Link
@@ -186,21 +189,20 @@ function TripRow({ trip }: { trip: TripWithStats }) {
         ${isPast ? 'opacity-60' : ''}
       `}
     >
-      {/* Cover or initial */}
+      {/* Static map cover */}
       <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0">
-        {trip.cover_image ? (
+        {staticMapUrl ? (
           <Image
-            src={trip.cover_image}
+            src={staticMapUrl}
             alt=""
             width={56}
             height={56}
             className="w-full h-full object-cover"
+            unoptimized
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <span className="text-[18px] font-semibold text-gray-400">
-              {initial}
-            </span>
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30">
+            <MapPin className="w-5 h-5 text-blue-400" />
           </div>
         )}
       </div>
