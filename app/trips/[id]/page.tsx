@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2, Link2 } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -1845,49 +1845,41 @@ function DaySection({
       )}
 
       {/* Hotel Activity Cards - Breakfast, Check-out, Check-in (only shown when NOT in edit mode) */}
-      {!isEditMode && (checkoutHotel || breakfastHotel || checkInHotel) && (
-        <div className="mb-3 space-y-0">
-          {breakfastHotel && (
-            <button
-              onClick={() => onSelectItem?.(breakfastHotel)}
-              className="w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50"
-            >
-              <span className="text-[14px] font-medium text-gray-900 dark:text-white">
-                Breakfast
-              </span>
-              <span className="text-[13px] text-gray-400">
-                at {breakfastHotel.title || 'Hotel'}
-              </span>
-            </button>
-          )}
-          {checkoutHotel && (
-            <button
-              onClick={() => onSelectItem?.(checkoutHotel)}
-              className="w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50"
-            >
-              <span className="text-[14px] font-medium text-gray-900 dark:text-white">
-                Check-out
-              </span>
-              <span className="text-[13px] text-gray-400">
-                {checkoutHotel.parsedNotes?.checkOutTime || ''} from {checkoutHotel.title || 'Hotel'}
-              </span>
-            </button>
-          )}
-          {checkInHotel && (
-            <button
-              onClick={() => onSelectItem?.(checkInHotel)}
-              className="w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50"
-            >
-              <span className="text-[14px] font-medium text-gray-900 dark:text-white">
-                Check-in
-              </span>
-              <span className="text-[13px] text-gray-400">
-                {checkInHotel.parsedNotes?.checkInTime || ''} at {checkInHotel.title || 'Hotel'}
-              </span>
-            </button>
-          )}
-        </div>
-      )}
+      {!isEditMode && (checkoutHotel || breakfastHotel || checkInHotel) && (() => {
+        // Build ordered list of hotel activities for proper travel time calculation
+        const hotelActivities: Array<{ type: 'breakfast' | 'checkout' | 'checkin'; hotel: EnrichedItineraryItem }> = [];
+        if (breakfastHotel) hotelActivities.push({ type: 'breakfast', hotel: breakfastHotel });
+        if (checkoutHotel) hotelActivities.push({ type: 'checkout', hotel: checkoutHotel });
+        if (checkInHotel) hotelActivities.push({ type: 'checkin', hotel: checkInHotel });
+
+        return (
+          <div className="mb-0 space-y-0">
+            {hotelActivities.map((activity, index) => (
+              <div key={`${activity.type}-${activity.hotel.id}`}>
+                <button
+                  onClick={() => onSelectItem?.(activity.hotel)}
+                  className="w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                >
+                  <span className="text-[14px] font-medium text-gray-900 dark:text-white">
+                    {activity.type === 'breakfast' ? 'Breakfast' : activity.type === 'checkout' ? 'Check-out' : 'Check-in'}
+                  </span>
+                  <span className="text-[13px] text-gray-400">
+                    {activity.type === 'breakfast' && `at ${activity.hotel.title || 'Hotel'}`}
+                    {activity.type === 'checkout' && `${activity.hotel.parsedNotes?.checkOutTime || ''} from ${activity.hotel.title || 'Hotel'}`}
+                    {activity.type === 'checkin' && `${activity.hotel.parsedNotes?.checkInTime || ''} at ${activity.hotel.title || 'Hotel'}`}
+                  </span>
+                </button>
+                {/* Travel time to next hotel activity or first regular item */}
+                {index < hotelActivities.length - 1 ? (
+                  <TravelTime from={activity.hotel} to={hotelActivities[index + 1].hotel} />
+                ) : orderedItems.length > 0 ? (
+                  <TravelTime from={activity.hotel} to={orderedItems[0]} />
+                ) : null}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Items */}
       {orderedItems.length > 0 ? (
@@ -3120,7 +3112,11 @@ function TravelTime({
   const duration = formatDuration(travelMinutes);
   const hasCoordinates = travelMinutes !== null;
 
-  // Always show connector between items
+  // Hide travel time if no coordinates available
+  if (!hasCoordinates) {
+    return null;
+  }
+
   return (
     <div className="flex items-center gap-3 py-1.5 pl-3">
       {/* Vertical line */}
@@ -3128,24 +3124,18 @@ function TravelTime({
         <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
       </div>
 
-      {/* Travel info - only show if we have coordinates */}
-      {hasCoordinates ? (
-        <button
-          onClick={cycleMode}
-          className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-          title="Click to change travel mode"
-        >
-          {getModeIcon()}
-          <span className="tabular-nums">{duration}</span>
-          {specialLabel && (
-            <span className="text-gray-300 dark:text-gray-600 ml-1">{specialLabel}</span>
-          )}
-        </button>
-      ) : (
-        <span className="flex items-center gap-1.5 text-[11px] text-gray-300 dark:text-gray-600">
-          <Link2 className="w-3 h-3" />
-        </span>
-      )}
+      {/* Travel info */}
+      <button
+        onClick={cycleMode}
+        className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        title="Click to change travel mode"
+      >
+        {getModeIcon()}
+        <span className="tabular-nums">{duration}</span>
+        {specialLabel && (
+          <span className="text-gray-300 dark:text-gray-600 ml-1">{specialLabel}</span>
+        )}
+      </button>
     </div>
   );
 }
