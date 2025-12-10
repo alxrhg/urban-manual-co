@@ -620,6 +620,10 @@ export interface ItineraryItemNotes {
   hotelConfirmation?: string;
   confirmation?: string; // Booking reference
   roomType?: string;
+  // Hotel activity positions (for reordering check-in/checkout/breakfast cards)
+  checkinPosition?: number; // Position of check-in card among day items
+  checkoutPosition?: number; // Position of checkout card among day items
+  breakfastPosition?: number; // Position of breakfast card among day items
   // Lodging details
   name?: string;
   address?: string;

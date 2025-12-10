@@ -195,7 +195,7 @@ export default function AddPlacePanel({
     onClose();
   };
 
-  const handleAddActivity = (activity: typeof ACTIVITY_OPTIONS[0]) => {
+  const handleAddActivity = (activity: { type: string; label: string; duration: number }) => {
     onAddActivity({
       type: activity.type,
       title: activity.label,

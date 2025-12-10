@@ -1276,9 +1276,9 @@ function DaySection({
     breakfastHotel?.id,
   ].filter(Boolean));
 
-  // Create virtual items for hotel activities (breakfast, checkout, checkin)
+  // Create virtual items for hotel activities (breakfast, checkout, checkin) with saved positions
   const hotelActivityItems = useMemo(() => {
-    const activities: Array<EnrichedItineraryItem & { hotelActivityType?: 'breakfast' | 'checkout' | 'checkin' }> = [];
+    const activities: Array<EnrichedItineraryItem & { hotelActivityType?: 'breakfast' | 'checkout' | 'checkin'; savedPosition?: number }> = [];
 
     if (breakfastHotel) {
       activities.push({
@@ -1286,7 +1286,8 @@ function DaySection({
         id: `breakfast-${breakfastHotel.id}`,
         hotelActivityType: 'breakfast',
         time: breakfastHotel.parsedNotes?.breakfastTime?.split('-')[0] || '08:00',
-      } as EnrichedItineraryItem & { hotelActivityType: 'breakfast' });
+        savedPosition: breakfastHotel.parsedNotes?.breakfastPosition,
+      } as EnrichedItineraryItem & { hotelActivityType: 'breakfast'; savedPosition?: number });
     }
 
     if (checkoutHotel) {
@@ -1295,7 +1296,8 @@ function DaySection({
         id: `checkout-${checkoutHotel.id}`,
         hotelActivityType: 'checkout',
         time: checkoutHotel.parsedNotes?.checkOutTime || '11:00',
-      } as EnrichedItineraryItem & { hotelActivityType: 'checkout' });
+        savedPosition: checkoutHotel.parsedNotes?.checkoutPosition,
+      } as EnrichedItineraryItem & { hotelActivityType: 'checkout'; savedPosition?: number });
     }
 
     if (checkInHotel) {
@@ -1304,7 +1306,8 @@ function DaySection({
         id: `checkin-${checkInHotel.id}`,
         hotelActivityType: 'checkin',
         time: checkInHotel.parsedNotes?.checkInTime || '15:00',
-      } as EnrichedItineraryItem & { hotelActivityType: 'checkin' });
+        savedPosition: checkInHotel.parsedNotes?.checkinPosition,
+      } as EnrichedItineraryItem & { hotelActivityType: 'checkin'; savedPosition?: number });
     }
 
     return activities;
@@ -1333,7 +1336,41 @@ function DaySection({
       // Only set initial order once, or when items actually change
       if (!initializedRef.current || itemsChanged) {
         initializedRef.current = true;
-        setOrderedItems([...hotelActivityItems, ...filteredItems]);
+
+        // Check if any hotel activity has a saved position
+        const hasSavedPositions = hotelActivityItems.some(
+          (item) => (item as EnrichedItineraryItem & { savedPosition?: number }).savedPosition !== undefined
+        );
+
+        if (hasSavedPositions) {
+          // Merge hotel activities into filtered items at their saved positions
+          const allItems = [...filteredItems];
+
+          // Sort hotel activities by their saved positions (ascending)
+          const sortedActivities = [...hotelActivityItems].sort((a, b) => {
+            const posA = (a as EnrichedItineraryItem & { savedPosition?: number }).savedPosition ?? 0;
+            const posB = (b as EnrichedItineraryItem & { savedPosition?: number }).savedPosition ?? 0;
+            return posA - posB;
+          });
+
+          // Insert each hotel activity at its saved position
+          sortedActivities.forEach((activity) => {
+            const savedPos = (activity as EnrichedItineraryItem & { savedPosition?: number }).savedPosition;
+            if (savedPos !== undefined) {
+              // Clamp position to valid range
+              const insertAt = Math.min(savedPos, allItems.length);
+              allItems.splice(insertAt, 0, activity);
+            } else {
+              // No saved position, add at beginning
+              allItems.unshift(activity);
+            }
+          });
+
+          setOrderedItems(allItems);
+        } else {
+          // No saved positions, put hotel activities at beginning (default)
+          setOrderedItems([...hotelActivityItems, ...filteredItems]);
+        }
       }
       // Otherwise preserve user's reordering
     } else {
@@ -1502,10 +1539,32 @@ function DaySection({
   };
 
   const handleReorderComplete = useCallback(() => {
+    // Save hotel activity positions to hotel notes
+    orderedItems.forEach((item, index) => {
+      const hotelActivityType = (item as EnrichedItineraryItem & { hotelActivityType?: string }).hotelActivityType;
+      if (hotelActivityType) {
+        // Get the actual hotel ID from the virtual item ID (e.g., "checkin-abc123" -> "abc123")
+        const actualHotelId = String(item.id).replace(`${hotelActivityType}-`, '');
+
+        // Determine which position field to update based on activity type
+        const positionField = hotelActivityType === 'checkin' ? 'checkinPosition'
+          : hotelActivityType === 'checkout' ? 'checkoutPosition'
+          : 'breakfastPosition';
+
+        // Update the hotel item's notes with the position
+        onUpdateItem(actualHotelId, {
+          notes: JSON.stringify({
+            ...((hotelActivityType === 'checkin' ? checkInHotel : hotelActivityType === 'checkout' ? checkoutHotel : breakfastHotel)?.parsedNotes || {}),
+            [positionField]: index
+          })
+        });
+      }
+    });
+
     if (JSON.stringify(orderedItems.map(i => i.id)) !== JSON.stringify(items.map(i => i.id))) {
       onReorder(orderedItems);
     }
-  }, [orderedItems, items, onReorder]);
+  }, [orderedItems, items, onReorder, onUpdateItem, checkInHotel, checkoutHotel, breakfastHotel]);
 
   // Add Google Place to trip (convert to Destination-like object)
   const addGooglePlace = (place: { id: string; name: string; formatted_address: string; latitude?: number; longitude?: number; category?: string; image?: string }) => {
