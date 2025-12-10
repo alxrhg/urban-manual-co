@@ -1273,8 +1273,15 @@ function DaySection({
   ].filter(Boolean));
 
   useEffect(() => {
-    // Filter items to exclude hotels shown as activity cards
-    const filteredItems = items.filter(item => !hotelCardIds.has(item.id));
+    // Filter items to exclude:
+    // 1. Hotels shown as activity cards (by ID)
+    // 2. Old-style checkout/breakfast hotel items (by hotelItemType)
+    const filteredItems = items.filter(item => {
+      if (hotelCardIds.has(item.id)) return false;
+      const hotelItemType = item.parsedNotes?.hotelItemType;
+      if (hotelItemType === 'checkout' || hotelItemType === 'breakfast') return false;
+      return true;
+    });
     setOrderedItems(filteredItems);
   }, [items, checkoutHotel?.id, checkInHotel?.id, breakfastHotel?.id]);
 
