@@ -3076,13 +3076,13 @@ function TravelTime({
   }
 
   // Estimate travel time based on mode
-  // Walking: ~5 km/h, Driving: ~30 km/h, Metro: ~20 km/h (subway/train, excludes bus)
+  // Walking: ~5 km/h, Driving: ~30 km/h, Subway: ~20 km/h (excludes bus)
   const getTravelMinutes = (): number | null => {
     if (distanceKm === 0) return null; // No valid coordinates
     switch (mode) {
       case 'walking': return Math.round(distanceKm * 12); // 12 min/km = 5 km/h
       case 'driving': return Math.round(distanceKm * 2);  // 2 min/km = 30 km/h
-      case 'transit': return Math.round(distanceKm * 3);  // 3 min/km = 20 km/h (metro/subway)
+      case 'transit': return Math.round(distanceKm * 3);  // 3 min/km = 20 km/h (subway)
       default: return Math.round(distanceKm * 12);
     }
   };
@@ -3111,7 +3111,7 @@ function TravelTime({
     switch (mode) {
       case 'walking': return 'walk';
       case 'driving': return 'drive';
-      case 'transit': return 'metro'; // Display as metro (subway/train), not general transit
+      case 'transit': return 'subway'; // Display as subway/train, not bus
     }
   };
 
