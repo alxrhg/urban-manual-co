@@ -2338,6 +2338,7 @@ function HotelActivityRow({
   onDragEnd?: () => void;
 }) {
   const [isDragging, setIsDragging] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const getLabel = () => {
     switch (activityType) {
@@ -2351,6 +2352,18 @@ function HotelActivityRow({
   };
 
   const { label, detail } = getLabel();
+  const image = item.destination?.image_thumbnail || item.destination?.image || item.parsedNotes?.image;
+
+  const getIcon = () => {
+    switch (activityType) {
+      case 'breakfast':
+        return <Coffee className="w-5 h-5 text-gray-500" />;
+      case 'checkout':
+        return <LogOut className="w-5 h-5 text-gray-500" />;
+      case 'checkin':
+        return <DoorOpen className="w-5 h-5 text-gray-500" />;
+    }
+  };
 
   return (
     <Reorder.Item
@@ -2363,10 +2376,10 @@ function HotelActivityRow({
     >
       <div
         onClick={onSelect}
-        className={`flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}
+        className={`flex items-center gap-3 py-3 px-1 rounded-xl transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}
       >
         {isEditMode && (
-          <div className="flex flex-col gap-0.5 opacity-40 group-hover:opacity-60 transition-opacity">
+          <div className="flex flex-col gap-0.5 opacity-40 group-hover:opacity-60 transition-opacity px-1">
             <div className="flex gap-0.5">
               <div className="w-1 h-1 rounded-full bg-gray-400" />
               <div className="w-1 h-1 rounded-full bg-gray-400" />
@@ -2381,12 +2394,34 @@ function HotelActivityRow({
             </div>
           </div>
         )}
-        <span className="text-[14px] font-medium text-gray-900 dark:text-white">
-          {label}
-        </span>
-        <span className="text-[13px] text-gray-400">
-          {detail}
-        </span>
+
+        {/* Circle thumbnail */}
+        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+          {image && !imageError ? (
+            <Image
+              src={image}
+              alt={item.title || 'Hotel'}
+              width={48}
+              height={48}
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              {getIcon()}
+            </div>
+          )}
+        </div>
+
+        {/* Text content */}
+        <div className="flex-1 min-w-0">
+          <div className="text-[14px] font-medium text-gray-900 dark:text-white">
+            {label}
+          </div>
+          <div className="text-[13px] text-gray-400 truncate">
+            {detail}
+          </div>
+        </div>
       </div>
     </Reorder.Item>
   );
