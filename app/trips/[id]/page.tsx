@@ -1310,9 +1310,9 @@ function DaySection({
     return activities;
   }, [breakfastHotel, checkoutHotel, checkInHotel]);
 
-  // Track if we've initialized the order for edit mode
-  const prevEditModeRef = useRef(isEditMode);
+  // Track previous state to detect changes
   const prevItemsLengthRef = useRef(items.length);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     // Filter items to exclude:
@@ -1325,25 +1325,21 @@ function DaySection({
       return true;
     });
 
-    // Check if we're entering edit mode or if items changed
-    const enteringEditMode = isEditMode && !prevEditModeRef.current;
     const itemsChanged = items.length !== prevItemsLengthRef.current;
-
-    // Update refs
-    prevEditModeRef.current = isEditMode;
     prevItemsLengthRef.current = items.length;
 
-    // In edit mode, include hotel activity items
-    if (isEditMode && hotelActivityItems.length > 0) {
-      // Only reset order when entering edit mode or items change, not on every render
-      if (enteringEditMode || itemsChanged) {
+    // Always include hotel activities in orderedItems for consistent rendering
+    if (hotelActivityItems.length > 0) {
+      // Only set initial order once, or when items actually change
+      if (!initializedRef.current || itemsChanged) {
+        initializedRef.current = true;
         setOrderedItems([...hotelActivityItems, ...filteredItems]);
       }
+      // Otherwise preserve user's reordering
     } else {
-      // In view mode, always update with filtered items (no hotel activities)
       setOrderedItems(filteredItems);
     }
-  }, [items, checkoutHotel?.id, checkInHotel?.id, breakfastHotel?.id, isEditMode, hotelActivityItems]);
+  }, [items, checkoutHotel?.id, checkInHotel?.id, breakfastHotel?.id, hotelActivityItems]);
 
   // Focus search input when shown
   useEffect(() => {
@@ -1854,44 +1850,7 @@ function DaySection({
         </div>
       )}
 
-      {/* Hotel Activity Cards - Breakfast, Check-out, Check-in (only shown when NOT in edit mode) */}
-      {!isEditMode && (checkoutHotel || breakfastHotel || checkInHotel) && (() => {
-        // Build ordered list of hotel activities for proper travel time calculation
-        const hotelActivities: Array<{ type: 'breakfast' | 'checkout' | 'checkin'; hotel: EnrichedItineraryItem }> = [];
-        if (breakfastHotel) hotelActivities.push({ type: 'breakfast', hotel: breakfastHotel });
-        if (checkoutHotel) hotelActivities.push({ type: 'checkout', hotel: checkoutHotel });
-        if (checkInHotel) hotelActivities.push({ type: 'checkin', hotel: checkInHotel });
-
-        return (
-          <div className="mb-0 space-y-0">
-            {hotelActivities.map((activity, index) => (
-              <div key={`${activity.type}-${activity.hotel.id}`}>
-                <button
-                  onClick={() => onSelectItem?.(activity.hotel)}
-                  className="w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                >
-                  <span className="text-[14px] font-medium text-gray-900 dark:text-white">
-                    {activity.type === 'breakfast' ? 'Breakfast' : activity.type === 'checkout' ? 'Check-out' : 'Check-in'}
-                  </span>
-                  <span className="text-[13px] text-gray-400">
-                    {activity.type === 'breakfast' && `at ${activity.hotel.title || 'Hotel'}`}
-                    {activity.type === 'checkout' && `${activity.hotel.parsedNotes?.checkOutTime || ''} from ${activity.hotel.title || 'Hotel'}`}
-                    {activity.type === 'checkin' && `${activity.hotel.parsedNotes?.checkInTime || ''} at ${activity.hotel.title || 'Hotel'}`}
-                  </span>
-                </button>
-                {/* Travel time to next hotel activity or first regular item */}
-                {index < hotelActivities.length - 1 ? (
-                  <TravelTime from={activity.hotel} to={hotelActivities[index + 1].hotel} />
-                ) : orderedItems.length > 0 ? (
-                  <TravelTime from={activity.hotel} to={orderedItems[0]} />
-                ) : null}
-              </div>
-            ))}
-          </div>
-        );
-      })()}
-
-      {/* Items */}
+      {/* Items (including hotel activities which are now always part of orderedItems) */}
       {orderedItems.length > 0 ? (
         <Reorder.Group axis="y" values={orderedItems} onReorder={setOrderedItems} className="space-y-0">
           {orderedItems.map((item, index) => {
