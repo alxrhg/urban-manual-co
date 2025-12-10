@@ -19,18 +19,12 @@ interface DayItem {
 }
 
 interface DayIntelligenceProps {
-  dayNumber: number;
-  date?: string | null;
   items: DayItem[];
   weatherForecast?: {
     condition: string;
     precipitation: number;
     tempMax: number;
   } | null;
-  onOptimizeDay?: () => void;
-  onAutoFill?: () => void;
-  isOptimizing?: boolean;
-  isAutoFilling?: boolean;
   className?: string;
 }
 

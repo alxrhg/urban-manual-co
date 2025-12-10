@@ -1,21 +1,21 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { Plus, Loader2, MapPin, Plane } from 'lucide-react';
-import { formatTripDateRange, calculateTripDays } from '@/lib/utils';
+import { formatTripDateRange } from '@/lib/utils';
 import { formatDestinationsFromField } from '@/types/trip';
 import {
   getTripState,
   getTimeLabel,
   getTotalItems,
   type TripStats as TripStatsType,
-  type TripState,
 } from '@/lib/trip';
 import type { Trip } from '@/types/trip';
+import TripSetupWizard from '@/components/trip/TripSetupWizard';
 
 export interface TripWithStats extends Trip {
   stats: TripStatsType;
@@ -35,8 +35,8 @@ type FilterTab = 'all' | 'upcoming' | 'past';
 export default function TripsPageClient({ initialTrips, userId }: TripsPageClientProps) {
   const router = useRouter();
   const [trips] = useState<TripWithStats[]>(initialTrips);
-  const [creating, setCreating] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
+  const [showWizard, setShowWizard] = useState(false);
 
   // Categorize trips by state
   const categorizedTrips = useMemo(() => {
@@ -88,30 +88,40 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
     past: categorizedTrips.past.length,
   }), [trips.length, categorizedTrips]);
 
-  const createTrip = async () => {
-    try {
-      setCreating(true);
-      const supabase = createClient();
-      if (!supabase) return;
+  // Create trip with wizard data
+  const handleCreateTrip = useCallback(async (data: {
+    title: string;
+    destination: string;
+    startDate: string;
+    endDate: string;
+  }) => {
+    const supabase = createClient();
+    if (!supabase) return;
 
-      const { data, error } = await supabase
+    try {
+      const { data: trip, error } = await supabase
         .from('trips')
         .insert({
           user_id: userId,
-          title: 'New Trip',
+          title: data.title,
+          destination: data.destination || null,
+          start_date: data.startDate || null,
+          end_date: data.endDate || null,
           status: 'planning',
         })
         .select()
         .single();
 
       if (error) throw error;
-      if (data) router.push(`/trips/${data.id}`);
+      if (trip) {
+        setShowWizard(false);
+        router.push(`/trips/${trip.id}`);
+      }
     } catch (err) {
       console.error('Error creating trip:', err);
-    } finally {
-      setCreating(false);
+      throw err;
     }
-  };
+  }, [userId, router]);
 
   return (
     <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950">
@@ -123,19 +133,14 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
           </h1>
 
           <button
-            onClick={createTrip}
-            disabled={creating}
+            onClick={() => setShowWizard(true)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-full
                        bg-gray-900 dark:bg-white text-white dark:text-gray-900
                        text-[13px] font-medium
                        hover:bg-gray-800 dark:hover:bg-gray-100
-                       disabled:opacity-50 transition-all"
+                       transition-all"
           >
-            {creating ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4" />
-            )}
+            <Plus className="w-4 h-4" />
             New Trip
           </button>
         </header>
@@ -180,15 +185,14 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
               Create a trip to save places and plan your adventures
             </p>
             <button
-              onClick={createTrip}
-              disabled={creating}
+              onClick={() => setShowWizard(true)}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full
                          bg-gray-900 dark:bg-white text-white dark:text-gray-900
                          text-[13px] font-medium
                          hover:bg-gray-800 dark:hover:bg-gray-100
-                         disabled:opacity-50 transition-all"
+                         transition-all"
             >
-              {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              <Plus className="w-4 h-4" />
               Create Trip
             </button>
           </div>
@@ -208,6 +212,13 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
           </div>
         )}
       </div>
+
+      {/* Trip Setup Wizard */}
+      <TripSetupWizard
+        isOpen={showWizard}
+        onClose={() => setShowWizard(false)}
+        onCreate={handleCreateTrip}
+      />
     </main>
   );
 }

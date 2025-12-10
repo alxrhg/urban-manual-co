@@ -20,6 +20,7 @@ import AddPlacePanel from '@/components/trip/AddPlacePanel';
 import { NeighborhoodTags } from '@/components/trip/NeighborhoodBreakdown';
 import DayIntelligence from '@/components/trip/DayIntelligence';
 import { CrowdBadge } from '@/components/trip/CrowdIndicator';
+import { UndoProvider } from '@/components/trip/UndoToast';
 import { Settings, Moon } from 'lucide-react';
 
 // Weather type
@@ -392,6 +393,7 @@ export default function TripPage() {
   const tripNotes = trip.notes || '';
 
   return (
+    <UndoProvider>
     <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
       <div className="max-w-6xl mx-auto">
         {/* Back link */}
@@ -597,11 +599,18 @@ export default function TripPage() {
           })}
         </div>
 
-        {/* Empty state */}
+        {/* Empty state - context-aware */}
         {totalItems === 0 && days.length > 0 && (
-          <p className="text-center text-[13px] text-gray-400 mt-8">
-            Type in any day to add places, flights, hotels, trains, or activities
-          </p>
+          <div className="text-center py-8 mt-4">
+            <p className="text-[14px] text-gray-500 dark:text-gray-400 mb-2">
+              {primaryCity
+                ? `Start planning your ${primaryCity} trip`
+                : 'Start planning your trip'}
+            </p>
+            <p className="text-[12px] text-gray-400 dark:text-gray-500">
+              Tap the + button to add places, flights, or hotels
+            </p>
+          </div>
         )}
           </div>
           {/* End main content column */}
@@ -727,6 +736,7 @@ export default function TripPage() {
         {/* End desktop flex layout */}
       </div>
     </main>
+    </UndoProvider>
   );
 }
 
@@ -2783,23 +2793,20 @@ function ItemRow({
             }
           }}
         >
-          {/* Drag handle - only in edit mode */}
-          {isEditMode && (
-            <div className="flex flex-col gap-0.5 opacity-40 group-hover:opacity-60 transition-opacity px-1">
-              <div className="flex gap-0.5">
-                <div className="w-1 h-1 rounded-full bg-gray-400" />
-                <div className="w-1 h-1 rounded-full bg-gray-400" />
-              </div>
-              <div className="flex gap-0.5">
-                <div className="w-1 h-1 rounded-full bg-gray-400" />
-                <div className="w-1 h-1 rounded-full bg-gray-400" />
-              </div>
-              <div className="flex gap-0.5">
-                <div className="w-1 h-1 rounded-full bg-gray-400" />
-                <div className="w-1 h-1 rounded-full bg-gray-400" />
-              </div>
-            </div>
-          )}
+          {/* Drag handle - always visible on mobile, hover on desktop */}
+          <div
+            className={`flex-shrink-0 px-1 touch-none ${
+              isEditMode
+                ? 'cursor-grab active:cursor-grabbing'
+                : 'pointer-events-none'
+            }`}
+          >
+            <GripVertical className={`w-4 h-4 transition-opacity ${
+              isEditMode
+                ? 'text-gray-400 opacity-60 group-hover:opacity-100'
+                : 'text-gray-300 dark:text-gray-600 opacity-40 sm:opacity-0 sm:group-hover:opacity-40'
+            }`} />
+          </div>
 
           {/* Circle image or icon */}
           <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
