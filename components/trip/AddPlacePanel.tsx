@@ -52,6 +52,8 @@ interface HotelData {
   breakfastIncluded?: boolean;
   destination_slug?: string;
   image?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 interface ActivityData {
