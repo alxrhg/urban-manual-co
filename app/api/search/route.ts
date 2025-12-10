@@ -217,7 +217,21 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         });
 
         if (!vectorError && vectorResults && vectorResults.length > 0) {
-          results = vectorResults;
+          // Enrich vector results with latitude/longitude/image_thumbnail (not returned by RPC)
+          const slugs = vectorResults.map((r: any) => r.slug);
+          const { data: fullData } = await supabase
+            .from('destinations')
+            .select('slug, latitude, longitude, image_thumbnail')
+            .in('slug', slugs);
+
+          const coordsMap = new Map(
+            (fullData || []).map((d: any) => [d.slug, { latitude: d.latitude, longitude: d.longitude, image_thumbnail: d.image_thumbnail }])
+          );
+
+          results = vectorResults.map((r: any) => ({
+            ...r,
+            ...coordsMap.get(r.slug)
+          }));
           searchTier = 'vector-semantic';
           console.log('[Search API] Vector search found', results.length, 'results');
         } else if (vectorError) {
@@ -244,7 +258,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
       try {
         let fullTextQuery = supabase
           .from('destinations')
-          .select('slug, name, city, category, micro_description, description, content, image, michelin_stars, crown, rating, price_level, brand')
+          .select('slug, name, city, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, rating, price_level, brand, latitude, longitude')
           .limit(PAGE_SIZE);
 
         // Full-text search - use ILIKE on search_text as fallback (textSearch requires tsvector column)
@@ -306,7 +320,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
           const slugs = aiFieldResults.map((r: any) => r.slug);
           const { data: fullData } = await supabase
             .from('destinations')
-            .select('slug, name, city, category, micro_description, description, content, image, michelin_stars, crown, rating, price_level, brand')
+            .select('slug, name, city, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, rating, price_level, brand, latitude, longitude')
             .in('slug', slugs)
             .limit(PAGE_SIZE);
 
@@ -342,7 +356,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     if (results.length === 0) {
       let fallbackQuery = supabase
         .from('destinations')
-        .select('slug, name, city, category, micro_description, description, content, image, michelin_stars, crown, rating, price_level, brand')
+        .select('slug, name, city, category, micro_description, description, content, image, image_thumbnail, michelin_stars, crown, rating, price_level, brand, latitude, longitude')
         .limit(PAGE_SIZE);
 
       // Apply filters
