@@ -79,6 +79,9 @@ export default function TripPage() {
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const [showTripNotes, setShowTripNotes] = useState(false);
 
+  // Day selection state (for tab view)
+  const [selectedDayNumber, setSelectedDayNumber] = useState(1);
+
   // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
 
@@ -482,24 +485,24 @@ export default function TripPage() {
           />
         </div>
 
-        {/* Horizontal Day Tabs */}
-        {days.length > 1 && (
-          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 mt-6">
-            <div className="flex overflow-x-auto no-scrollbar">
+        {/* Day Tabs */}
+        {days.length > 0 && (
+          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-white dark:bg-gray-950 mt-6">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
               {days.map((day) => {
+                const isSelected = day.dayNumber === selectedDayNumber;
                 const dayDate = day.date
                   ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                   : null;
                 return (
                   <button
                     key={day.dayNumber}
-                    onClick={() => {
-                      const element = document.getElementById(`day-${day.dayNumber}`);
-                      if (element) {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
-                    }}
-                    className="flex-shrink-0 px-4 py-3 text-[13px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border-b-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-colors whitespace-nowrap"
+                    onClick={() => setSelectedDayNumber(day.dayNumber)}
+                    className={`flex-shrink-0 px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all ${
+                      isSelected
+                        ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    }`}
                   >
                     {dayDate || `Day ${day.dayNumber}`}
                   </button>
@@ -509,9 +512,9 @@ export default function TripPage() {
           </div>
         )}
 
-        {/* Days */}
-        <div className="mt-4 space-y-8">
-          {days.map((day) => {
+        {/* Selected Day */}
+        <div className="mt-4">
+          {days.filter(day => day.dayNumber === selectedDayNumber).map((day) => {
             const dayDate = day.date;
             const weather = dayDate ? weatherByDate[dayDate] : undefined;
             const nightlyHotel = nightlyHotelByDay[day.dayNumber] || null;
