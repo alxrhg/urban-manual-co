@@ -2,8 +2,8 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // Distinctive typography - avoid generic AI aesthetics
-        sans: ['Outfit', 'system-ui', '-apple-system', 'sans-serif'],
+        // Inter - clean, modern sans-serif with Apple-like feel
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         serif: ['Playfair Display', 'Georgia', 'serif'],
         mono: ['JetBrains Mono', 'Menlo', 'monospace'],
         display: ['Instrument Serif', 'Playfair Display', 'Georgia', 'serif'],
