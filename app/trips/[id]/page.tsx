@@ -1226,7 +1226,7 @@ function DaySection({
   onAddPlace: (destination: Destination) => void;
   onAddFlight: (data: { airline?: string; flightNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; confirmationNumber?: string; notes?: string }) => void;
   onAddTrain: (data: { trainLine?: string; trainNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; duration?: string; confirmationNumber?: string; notes?: string }) => void;
-  onAddHotel: (data: { name: string; address?: string; checkInDate?: string; checkInTime?: string; checkOutDate?: string; checkOutTime?: string; confirmationNumber?: string; roomType?: string; notes?: string; nights?: number; breakfastIncluded?: boolean; destination_slug?: string; image?: string }) => void;
+  onAddHotel: (data: { name: string; address?: string; checkInDate?: string; checkInTime?: string; checkOutDate?: string; checkOutTime?: string; confirmationNumber?: string; roomType?: string; notes?: string; nights?: number; breakfastIncluded?: boolean; destination_slug?: string; image?: string; latitude?: number; longitude?: number }) => void;
   onAddActivity: (data: ActivityData) => void;
   weather?: DayWeather;
   isEditMode?: boolean;
