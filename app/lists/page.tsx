@@ -6,6 +6,17 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Plus, Lock, Globe, Trash2, Loader2, Heart, MapPin, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface List {
   id: string;
@@ -40,6 +51,8 @@ export default function ListsPage() {
   const [newListDescription, setNewListDescription] = useState("");
   const [newListPublic, setNewListPublic] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [listToDelete, setListToDelete] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -137,7 +150,7 @@ export default function ListsPage() {
 
     if (error) {
       console.error('Error creating list:', error);
-      alert('Failed to create list');
+      toast.error('Failed to create list');
     } else if (data) {
       setLists([{ ...data, item_count: 0, like_count: 0, cities: [] }, ...lists]);
       setShowCreateModal(false);
@@ -149,20 +162,29 @@ export default function ListsPage() {
     setCreating(false);
   };
 
-  const deleteList = async (listId: string, listName: string) => {
-    if (!confirm(`Are you sure you want to delete "${listName}"?`)) return;
+  const handleDeleteClick = (listId: string, listName: string) => {
+    setListToDelete({ id: listId, name: listName });
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteList = async () => {
+    if (!listToDelete) return;
 
     const { error } = await supabase
       .from('lists')
       .delete()
-      .eq('id', listId);
+      .eq('id', listToDelete.id);
 
     if (error) {
       console.error('Error deleting list:', error);
-      alert('Failed to delete list');
+      toast.error('Failed to delete list');
     } else {
-      setLists(lists.filter(l => l.id !== listId));
+      setLists(lists.filter(l => l.id !== listToDelete.id));
+      toast.success('List deleted');
     }
+
+    setDeleteDialogOpen(false);
+    setListToDelete(null);
   };
 
   if (authLoading) {
@@ -235,9 +257,10 @@ export default function ListsPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      deleteList(list.id, list.name);
+                      handleDeleteClick(list.id, list.name);
                     }}
                     className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 dark:hover:bg-dark-blue-700 rounded"
+                    aria-label={`Delete ${list.name}`}
                   >
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </button>
@@ -346,6 +369,23 @@ export default function ListsPage() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete List</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{listToDelete?.name}"? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteList} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Loader2, Check } from 'lucide-react';
+import { toast } from '@/components/ui/sonner';
 
 interface PreferencesFormProps {
   userId: string;
@@ -18,6 +19,7 @@ const INTERESTS = [
 export default function PreferencesForm({ userId, className = '' }: PreferencesFormProps) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [preferences, setPreferences] = useState({
     favoriteCities: [] as string[],
     favoriteCategories: [] as string[],
@@ -58,19 +60,13 @@ export default function PreferencesForm({ userId, className = '' }: PreferencesF
         throw new Error('Failed to save preferences');
       }
 
-      // Show success feedback
-      const button = document.querySelector('[data-save-preferences]');
-      if (button) {
-        button.textContent = 'Saved!';
-        setTimeout(() => {
-          if (button instanceof HTMLButtonElement) {
-            button.textContent = 'Save Preferences';
-          }
-        }, 2000);
-      }
+      // Show success feedback using state
+      setSaveSuccess(true);
+      toast.success('Preferences saved successfully');
+      setTimeout(() => setSaveSuccess(false), 2000);
     } catch (error) {
       console.error('Error saving preferences:', error);
-      alert('Failed to save preferences. Please try again.');
+      toast.error('Failed to save preferences. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -193,7 +189,6 @@ export default function PreferencesForm({ userId, className = '' }: PreferencesF
 
       {/* Save Button */}
       <button
-        data-save-preferences
         onClick={savePreferences}
         disabled={saving}
         className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 flex items-center gap-2"
@@ -202,6 +197,11 @@ export default function PreferencesForm({ userId, className = '' }: PreferencesF
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
             Saving...
+          </>
+        ) : saveSuccess ? (
+          <>
+            <Check className="h-4 w-4" />
+            Saved!
           </>
         ) : (
           'Save Preferences'

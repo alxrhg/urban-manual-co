@@ -5,6 +5,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import { MessageCircle, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/components/ui/sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface CollectionCommentsProps {
   collectionId: string;
@@ -31,6 +42,8 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     loadComments();
@@ -72,33 +85,43 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
       if (response.ok) {
         setComments([data.comment, ...comments]);
         setNewComment('');
+        toast.success('Comment posted');
       } else {
-        alert(data.error || 'Failed to post comment');
+        toast.error(data.error || 'Failed to post comment');
       }
     } catch (error) {
       console.error('Error posting comment:', error);
-      alert('Failed to post comment');
+      toast.error('Failed to post comment');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleDeleteComment = async (commentId: string) => {
-    if (!confirm('Delete this comment?')) return;
+  const handleDeleteClick = (commentId: string) => {
+    setCommentToDelete(commentId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return;
 
     try {
-      const response = await fetch(`/api/collections/${collectionId}/comments/${commentId}`, {
+      const response = await fetch(`/api/collections/${collectionId}/comments/${commentToDelete}`, {
         method: 'DELETE'
       });
 
       if (response.ok) {
-        setComments(comments.filter(c => c.id !== commentId));
+        setComments(comments.filter(c => c.id !== commentToDelete));
+        toast.success('Comment deleted');
       } else {
-        alert('Failed to delete comment');
+        toast.error('Failed to delete comment');
       }
     } catch (error) {
       console.error('Error deleting comment:', error);
-      alert('Failed to delete comment');
+      toast.error('Failed to delete comment');
+    } finally {
+      setDeleteDialogOpen(false);
+      setCommentToDelete(null);
     }
   };
 
@@ -200,8 +223,9 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
                       </button>
                       {canDelete && (
                         <button
-                          onClick={() => handleDeleteComment(comment.id)}
+                          onClick={() => handleDeleteClick(comment.id)}
                           className="text-gray-400 hover:text-red-500 transition-colors"
+                          aria-label="Delete comment"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -226,6 +250,23 @@ export function CollectionComments({ collectionId, isOwner }: CollectionComments
           })}
         </div>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Comment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this comment? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteComment} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

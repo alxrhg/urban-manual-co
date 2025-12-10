@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { Camera, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/sonner';
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string | null;
@@ -35,13 +36,13 @@ export function AvatarUpload({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      toast.error('Please select an image file');
       return;
     }
 
     // Validate file size (2MB max)
     if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be smaller than 2MB');
+      toast.error('Image must be smaller than 2MB');
       return;
     }
 
@@ -72,7 +73,7 @@ export function AvatarUpload({
       onUploadComplete(data.url);
     } catch (error) {
       console.error('Upload error:', error);
-      alert(error instanceof Error ? error.message : 'Failed to upload image');
+      toast.error(error instanceof Error ? error.message : 'Failed to upload image');
       setPreviewUrl(null);
     } finally {
       setUploading(false);

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { formatDestinationsFromField } from '@/types/trip';
+import { toast } from '@/components/ui/sonner';
 
 interface Trip {
   id: string;
@@ -109,7 +110,7 @@ export const QuickTripSelector = memo(function QuickTripSelector({
       }, 1000);
     } catch (error) {
       console.error('Error adding to trip:', error);
-      alert('Failed to add to trip. Please try again.');
+      toast.error('Failed to add to trip. Please try again.');
     } finally {
       setAdding(null);
     }
@@ -156,7 +157,7 @@ export const QuickTripSelector = memo(function QuickTripSelector({
       }, 800);
     } catch (error) {
       console.error('Error creating trip:', error);
-      alert('Failed to create trip. Please try again.');
+      toast.error('Failed to create trip. Please try again.');
     } finally {
       setAdding(null);
     }

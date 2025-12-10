@@ -7,6 +7,7 @@
 
 import { useState } from 'react';
 import { IntelligenceDashboard } from '@/components/IntelligenceDashboard';
+import { toast } from '@/components/ui/sonner';
 
 export default function IntelligencePage() {
   const [intelligence, setIntelligence] = useState<any>(null);
@@ -24,7 +25,7 @@ export default function IntelligencePage() {
 
   const handleGenerate = async () => {
     if (!input.destination || !input.dates.start || !input.dates.end) {
-      alert('Please fill in all required fields');
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -51,7 +52,7 @@ export default function IntelligencePage() {
       setIntelligence(data);
     } catch (error) {
       console.error('Error generating intelligence:', error);
-      alert('Failed to generate intelligence. Please try again.');
+      toast.error('Failed to generate intelligence. Please try again.');
     } finally {
       setLoading(false);
     }

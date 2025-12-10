@@ -3,6 +3,7 @@
 import React from 'react';
 import { ProfileEditor } from '@/components/ProfileEditor';
 import { AccountPrivacyManager } from '@/components/AccountPrivacyManager';
+import { toast } from '@/components/ui/sonner';
 
 interface SettingsTabProps {
   userId: string;
@@ -14,8 +15,7 @@ export default function SettingsTab({ userId }: SettingsTabProps) {
       <ProfileEditor
         userId={userId}
         onSaveComplete={() => {
-          // Optionally reload user data or show success message
-          alert('Profile updated successfully!');
+          toast.success('Profile updated successfully!');
         }}
       />
       <AccountPrivacyManager />

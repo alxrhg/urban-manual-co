@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { toast } from '@/components/ui/sonner';
 
 interface VisitedModalProps {
   destinationSlug: string;
@@ -138,7 +139,7 @@ export function VisitedModal({
       onClose();
     } catch (error) {
       console.error('Error saving visit details:', error);
-      alert('Failed to save visit details. Please try again.');
+      toast.error('Failed to save visit details. Please try again.');
     } finally {
       setSaving(false);
     }

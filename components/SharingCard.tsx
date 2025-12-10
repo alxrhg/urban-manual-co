@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Share2, Download, X } from 'lucide-react';
+import { toast } from '@/components/ui/sonner';
 
 interface SharingCardProps {
   title: string;
@@ -21,7 +22,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
   const handleGenerateImage = async () => {
     // Feature disabled - html2canvas not installed
     // To enable: npm install html2canvas
-    alert('Image download feature coming soon! For now, use the Share Link button below.');
+    toast.info('Image download feature coming soon! For now, use the Share Link button below.');
     return;
 
     /* Disabled until html2canvas is installed
@@ -65,7 +66,7 @@ export function SharingCard({ title, subtitle, imageUrl, stats, variant = 'colle
     } else {
       // Fallback: copy link
       navigator.clipboard.writeText(window.location.href);
-      alert('Link copied to clipboard!');
+      toast.success('Link copied to clipboard!');
     }
   };
 
