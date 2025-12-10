@@ -482,13 +482,13 @@ export default function TripPage() {
           />
         </div>
 
-        {/* Horizontal Day Switcher */}
+        {/* Horizontal Day Tabs */}
         {days.length > 1 && (
-          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 mt-6">
-            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 mt-6">
+            <div className="flex overflow-x-auto no-scrollbar">
               {days.map((day) => {
-                const shortDate = day.date
-                  ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 3)
+                const dayDate = day.date
+                  ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                   : null;
                 return (
                   <button
@@ -499,10 +499,9 @@ export default function TripPage() {
                         element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                       }
                     }}
-                    className="flex-shrink-0 flex flex-col items-center px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="flex-shrink-0 px-4 py-3 text-[13px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border-b-2 border-transparent hover:border-gray-400 dark:hover:border-gray-500 transition-colors whitespace-nowrap"
                   >
-                    <span className="text-[10px] text-gray-400 dark:text-gray-500">{shortDate}</span>
-                    <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Day {day.dayNumber}</span>
+                    {dayDate || `Day ${day.dayNumber}`}
                   </button>
                 );
               })}
@@ -1579,12 +1578,9 @@ function DaySection({
           : hotelActivityType === 'checkout' ? 'checkoutPosition'
           : 'breakfastPosition';
 
-        // Update the hotel item's notes with the position
+        // Update the hotel item's notes with the position (updateItem expects partial ItineraryItemNotes)
         onUpdateItem(actualHotelId, {
-          notes: JSON.stringify({
-            ...((hotelActivityType === 'checkin' ? checkInHotel : hotelActivityType === 'checkout' ? checkoutHotel : breakfastHotel)?.parsedNotes || {}),
-            [positionField]: index
-          })
+          [positionField]: index
         });
       }
     });
@@ -1592,7 +1588,7 @@ function DaySection({
     if (JSON.stringify(orderedItems.map(i => i.id)) !== JSON.stringify(items.map(i => i.id))) {
       onReorder(orderedItems);
     }
-  }, [orderedItems, items, onReorder, onUpdateItem, checkInHotel, checkoutHotel, breakfastHotel]);
+  }, [orderedItems, items, onReorder, onUpdateItem]);
 
   // Add Google Place to trip (convert to Destination-like object)
   const addGooglePlace = (place: { id: string; name: string; formatted_address: string; latitude?: number; longitude?: number; category?: string; image?: string }) => {
