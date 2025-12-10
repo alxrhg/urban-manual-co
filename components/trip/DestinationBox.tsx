@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import {
   X, MapPin, Star, Globe, Clock, ChevronDown,
   Plane, Train, Building2, Phone, Navigation, ExternalLink,
-  Flag, Tag, CalendarCheck, Timer, Check
+  Flag, Tag, CalendarCheck, Timer, Check, ImageOff
 } from 'lucide-react';
 import type { EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import type { ItineraryItemNotes } from '@/types/trip';
@@ -71,6 +71,7 @@ export default function DestinationBox({
   const [editPriority, setEditPriority] = useState(item.parsedNotes?.priority || '');
   const [editBookingStatus, setEditBookingStatus] = useState(item.parsedNotes?.bookingStatus || '');
   const [editTags, setEditTags] = useState<string[]>(item.parsedNotes?.tags || []);
+  const [imageError, setImageError] = useState(false);
 
   const destination = item.destination;
   const parsedNotes = item.parsedNotes;
@@ -102,6 +103,7 @@ export default function DestinationBox({
     setEditBookingStatus(item.parsedNotes?.bookingStatus || '');
     setEditTags(item.parsedNotes?.tags || []);
     setShowMore(false);
+    setImageError(false);
   }, [item.id]);
 
   // Save changes on blur or when values change
@@ -209,14 +211,30 @@ export default function DestinationBox({
       </div>
 
       {/* Image */}
-      {image && isPlace && (
-        <div className="aspect-[2/1] relative">
+      {image && isPlace && !imageError && (
+        <div className="aspect-[2/1] relative bg-gray-100 dark:bg-gray-800">
           <Image
             src={image}
             alt={name}
             fill
             className="object-cover"
+            onError={() => setImageError(true)}
+            unoptimized={image.includes('googleusercontent.com') || image.includes('maps.googleapis.com')}
           />
+          {michelinStars && michelinStars > 0 && (
+            <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center gap-1">
+              <Star className="w-3 h-3 fill-current" />
+              {michelinStars}
+            </div>
+          )}
+        </div>
+      )}
+      {/* Image fallback */}
+      {isPlace && (!image || imageError) && (
+        <div className="aspect-[2/1] relative bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+          <div className="text-center">
+            <ImageOff className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-1" />
+          </div>
           {michelinStars && michelinStars > 0 && (
             <div className="absolute top-2 left-2 px-2 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center gap-1">
               <Star className="w-3 h-3 fill-current" />
