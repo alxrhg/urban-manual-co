@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -183,12 +183,22 @@ export default function TripPage() {
 
     hotels.forEach(hotel => {
       const checkOutDate = hotel.parsedNotes?.checkOutDate;
+      const checkInDate = hotel.parsedNotes?.checkInDate;
+
+      let checkOutDayNum: number;
       if (checkOutDate) {
         const outDate = new Date(checkOutDate + 'T00:00:00');
-        const checkOutDayNum = Math.floor((outDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        if (checkOutDayNum > 0) {
-          checkoutMap[checkOutDayNum] = hotel;
-        }
+        checkOutDayNum = Math.floor((outDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      } else {
+        // Fallback: checkout is the day after check-in (or day after hotel's day)
+        const checkInDayNum = checkInDate
+          ? Math.floor((new Date(checkInDate + 'T00:00:00').getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
+          : hotel.day;
+        checkOutDayNum = checkInDayNum + 1;
+      }
+
+      if (checkOutDayNum > 0) {
+        checkoutMap[checkOutDayNum] = hotel;
       }
     });
 
@@ -204,12 +214,18 @@ export default function TripPage() {
 
     hotels.forEach(hotel => {
       const checkInDate = hotel.parsedNotes?.checkInDate;
+
+      let checkInDayNum: number;
       if (checkInDate) {
         const inDate = new Date(checkInDate + 'T00:00:00');
-        const checkInDayNum = Math.floor((inDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-        if (checkInDayNum > 0) {
-          checkInMap[checkInDayNum] = hotel;
-        }
+        checkInDayNum = Math.floor((inDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      } else {
+        // Fallback: use the day the hotel item is on
+        checkInDayNum = hotel.day;
+      }
+
+      if (checkInDayNum > 0) {
+        checkInMap[checkInDayNum] = hotel;
       }
     });
 
@@ -1746,6 +1762,7 @@ function DaySection({
               <ItemRow
                 item={item}
                 isExpanded={expandedItemId === item.id}
+                isEditMode={isEditMode}
                 onToggle={() => onToggleItem(item.id)}
                 onRemove={isEditMode ? () => onRemove(item.id) : undefined}
                 onUpdateItem={onUpdateItem}
@@ -1761,29 +1778,22 @@ function DaySection({
         </Reorder.Group>
       ) : null}
 
-      {/* Add more events button */}
-      <button
-        onClick={() => {
-          const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
-          if (isDesktop && onOpenSidebarAdd) {
-            onOpenSidebarAdd();
-          } else {
-            setShowAddMenu(true);
-          }
-        }}
-        className="w-full mt-3 py-3 text-[14px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
-      >
-        Add more events...
-      </button>
+      {/* Travel time to nightly hotel */}
+      {nightlyHotel && orderedItems.length > 0 && (
+        <TravelTime from={orderedItems[orderedItems.length - 1]} to={nightlyHotel} />
+      )}
 
       {/* Nightly hotel indicator */}
       {nightlyHotel && (
-        <div className="mt-4 flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800">
+        <button
+          onClick={() => onSelectItem?.(nightlyHotel)}
+          className="w-full mt-2 flex items-center gap-2 px-3 py-2.5 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-left"
+        >
           <Moon className="w-4 h-4 text-gray-400" />
-          <span className="text-[12px] text-gray-500 dark:text-gray-400">
+          <span className="text-[13px] text-gray-500 dark:text-gray-400">
             Staying at <span className="font-medium text-gray-700 dark:text-gray-300">{nightlyHotel.title || 'Hotel'}</span>
           </span>
-        </div>
+        </button>
       )}
     </div>
   );
@@ -2198,6 +2208,7 @@ function TransportForm({
 function ItemRow({
   item,
   isExpanded,
+  isEditMode,
   onToggle,
   onRemove,
   onUpdateItem,
@@ -2207,6 +2218,7 @@ function ItemRow({
 }: {
   item: EnrichedItineraryItem;
   isExpanded: boolean;
+  isEditMode?: boolean;
   onToggle: () => void;
   onRemove?: () => void;
   onUpdateItem: (id: string, updates: Record<string, unknown>) => void;
@@ -2216,6 +2228,8 @@ function ItemRow({
 }) {
   const [isDragging, setIsDragging] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const actionsRef = useRef<HTMLDivElement>(null);
   const itemType = item.parsedNotes?.type || 'place';
 
   // Build inline display with all relevant times
@@ -2402,12 +2416,26 @@ function ItemRow({
   const hasLocation = (destination?.latitude && destination?.longitude) ||
                       (item.parsedNotes?.latitude && item.parsedNotes?.longitude);
 
+  // Close actions dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) {
+        setShowActions(false);
+      }
+    };
+    if (showActions) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showActions]);
+
   return (
     <Reorder.Item
       value={item}
       onDragStart={() => setIsDragging(true)}
       onDragEnd={() => { setIsDragging(false); onDragEnd(); }}
-      className={`cursor-grab active:cursor-grabbing ${isDragging ? 'z-10' : ''}`}
+      className={`${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'z-10' : ''}`}
+      dragListener={isEditMode}
     >
       <div className={`rounded-xl transition-all ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}>
         {/* Main row - reference design style */}
@@ -2422,24 +2450,26 @@ function ItemRow({
             }
           }}
         >
-          {/* Drag handle */}
-          <div className="flex flex-col gap-0.5 opacity-40 group-hover:opacity-60 transition-opacity px-1">
-            <div className="flex gap-0.5">
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
+          {/* Drag handle - only in edit mode */}
+          {isEditMode && (
+            <div className="flex flex-col gap-0.5 opacity-40 group-hover:opacity-60 transition-opacity px-1">
+              <div className="flex gap-0.5">
+                <div className="w-1 h-1 rounded-full bg-gray-400" />
+                <div className="w-1 h-1 rounded-full bg-gray-400" />
+              </div>
+              <div className="flex gap-0.5">
+                <div className="w-1 h-1 rounded-full bg-gray-400" />
+                <div className="w-1 h-1 rounded-full bg-gray-400" />
+              </div>
+              <div className="flex gap-0.5">
+                <div className="w-1 h-1 rounded-full bg-gray-400" />
+                <div className="w-1 h-1 rounded-full bg-gray-400" />
+              </div>
             </div>
-            <div className="flex gap-0.5">
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
-            </div>
-            <div className="flex gap-0.5">
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
-              <div className="w-1 h-1 rounded-full bg-gray-400" />
-            </div>
-          </div>
+          )}
 
-          {/* Square image or icon */}
-          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+          {/* Circle image or icon */}
+          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
             {iconType === 'flight' ? (
               <div className="w-full h-full flex items-center justify-center">
                 <Plane className="w-5 h-5 text-gray-500" />
@@ -2509,16 +2539,56 @@ function ItemRow({
             </p>
           </div>
 
-          {/* More options button */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggle();
-            }}
-            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <MoreHorizontal className="w-5 h-5 text-gray-400" />
-          </button>
+          {/* More options button with dropdown */}
+          <div className="relative" ref={actionsRef}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowActions(!showActions);
+              }}
+              className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <MoreHorizontal className="w-5 h-5 text-gray-400" />
+            </button>
+
+            {/* Actions dropdown */}
+            <AnimatePresence>
+              {showActions && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-w-[140px]"
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowActions(false);
+                      onToggle();
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit
+                  </button>
+                  {onRemove && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowActions(false);
+                        onRemove();
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         {/* Expanded edit form - mobile only (desktop uses sidebar) */}
@@ -2824,20 +2894,16 @@ function TravelTime({
   };
   const specialLabel = getSpecialLabel();
 
-  // Don't show if no valid travel time
-  if (travelMinutes === null || travelMinutes <= 0) {
-    return null;
-  }
-
   // Format duration nicely
-  const formatDuration = (mins: number): string => {
+  const formatDuration = (mins: number | null): string => {
+    if (mins === null || mins <= 0) return '<1 min';
     if (mins < 60) return `${mins} min`;
     const h = Math.floor(mins / 60);
     const m = mins % 60;
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
   };
 
-  // Simple vertical connector with travel info
+  // Always show connector between items
   return (
     <div className="flex items-center gap-3 py-1.5 pl-3">
       {/* Vertical line */}
