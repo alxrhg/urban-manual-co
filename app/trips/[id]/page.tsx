@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -1344,47 +1344,41 @@ function DaySection({
     ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     : null;
 
+  // Format date like "March 5th"
+  const longDateDisplay = date
+    ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric' })
+    : null;
+
   return (
     <div>
-      {/* Day header */}
-      <div className="flex items-center justify-between mb-3">
+      {/* Day header - reference style */}
+      <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
-              Day {dayNumber}
-            </span>
-            {dateDisplay && (
-              <span className="text-[11px] text-gray-300 dark:text-gray-600">{dateDisplay}</span>
-            )}
-          </div>
-          {/* Weather display */}
+          <h3 className="text-[16px] font-semibold text-gray-900 dark:text-white">
+            Day {dayNumber}{longDateDisplay && `: ${longDateDisplay}`}
+          </h3>
+          {/* Weather badge */}
           {weather && (
-            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 dark:bg-gray-800 rounded-full">
+            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded-full">
               <WeatherIcon code={weather.weatherCode} className="w-3.5 h-3.5" />
-              <span className="text-[11px] text-gray-600 dark:text-gray-300">
+              <span className="text-[12px] text-gray-600 dark:text-gray-300">
                 {weather.tempMax}°
               </span>
-              {weather.precipProbability > 30 && (
-                <span className="text-[10px] text-blue-500 flex items-center gap-0.5">
-                  <Umbrella className="w-3 h-3" />
-                  {weather.precipProbability}%
-                </span>
-              )}
             </div>
           )}
           {/* Day pacing indicator */}
           <DayPacing items={items} />
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-2">
+        <div className="flex items-center gap-2">
           {/* Optimize prompt */}
           {canOptimize && (
             <button
               onClick={optimizeRoute}
               disabled={isOptimizing}
-              className="flex items-center gap-1 text-[11px] sm:text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors py-1"
+              className="flex items-center gap-1.5 text-[12px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              {isOptimizing ? <Loader2 className="w-3.5 h-3.5 sm:w-3 sm:h-3 animate-spin" /> : <Route className="w-3.5 h-3.5 sm:w-3 sm:h-3" />}
+              {isOptimizing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Route className="w-3.5 h-3.5" />}
               <span className="hidden sm:inline">Optimize</span>
             </button>
           )}
@@ -1701,8 +1695,8 @@ function DaySection({
       )}
 
       {/* Items */}
-      {items.length > 0 && (
-        <Reorder.Group axis="y" values={orderedItems} onReorder={setOrderedItems} className="space-y-1">
+      {items.length > 0 ? (
+        <Reorder.Group axis="y" values={orderedItems} onReorder={setOrderedItems} className="space-y-0">
           {orderedItems.map((item, index) => (
             <div key={item.id}>
               <ItemRow
@@ -1721,7 +1715,22 @@ function DaySection({
             </div>
           ))}
         </Reorder.Group>
-      )}
+      ) : null}
+
+      {/* Add more events button */}
+      <button
+        onClick={() => {
+          const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+          if (isDesktop && onOpenSidebarAdd) {
+            onOpenSidebarAdd();
+          } else {
+            setShowAddMenu(true);
+          }
+        }}
+        className="w-full mt-3 py-3 text-[14px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
+      >
+        Add more events...
+      </button>
 
       {/* Nightly hotel indicator */}
       {nightlyHotel && (
@@ -2355,13 +2364,11 @@ function ItemRow({
       onDragEnd={() => { setIsDragging(false); onDragEnd(); }}
       className={`cursor-grab active:cursor-grabbing ${isDragging ? 'z-10' : ''}`}
     >
-      <div className={`rounded-lg transition-all ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}>
-        {/* Main row - click to select (desktop) or expand inline (mobile) */}
+      <div className={`rounded-xl transition-all ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}>
+        {/* Main row - reference design style */}
         <div
-          className="flex items-center gap-3 px-3 py-3 sm:py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 active:bg-gray-100 dark:active:bg-gray-800/50 rounded-xl sm:rounded-lg group cursor-pointer"
+          className="flex items-center gap-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-900/50 active:bg-gray-100 dark:active:bg-gray-800/50 rounded-xl group cursor-pointer"
           onClick={() => {
-            // On desktop (lg+): select for sidebar
-            // On mobile: toggle inline expansion
             const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
             if (isDesktop && onSelect) {
               onSelect();
@@ -2370,131 +2377,96 @@ function ItemRow({
             }
           }}
         >
-          {/* Icon or image */}
-          {iconType === 'flight' ? (
-            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              <Plane className="w-3.5 h-3.5 text-gray-500" />
+          {/* Drag handle */}
+          <div className="flex flex-col gap-0.5 opacity-40 group-hover:opacity-60 transition-opacity px-1">
+            <div className="flex gap-0.5">
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
             </div>
-          ) : iconType === 'hotel' ? (
-            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              <Hotel className="w-3.5 h-3.5 text-gray-500" />
+            <div className="flex gap-0.5">
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
             </div>
-          ) : iconType === 'checkin' ? (
-            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              <DoorOpen className="w-3.5 h-3.5 text-gray-500" />
+            <div className="flex gap-0.5">
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
             </div>
-          ) : iconType === 'checkout' ? (
-            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              <LogOut className="w-3.5 h-3.5 text-gray-500" />
-            </div>
-          ) : iconType === 'breakfast' ? (
-            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              <UtensilsCrossed className="w-3.5 h-3.5 text-gray-500" />
-            </div>
-          ) : iconType === 'train' ? (
-            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              <TrainIcon className="w-3.5 h-3.5 text-gray-500" />
-            </div>
-          ) : iconType === 'activity' ? (
-            <div className="w-6 h-6 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
-              {(() => {
-                const aType = (extraData as any).activityType;
-                switch (aType) {
-                  case 'nap': return <BedDouble className="w-3.5 h-3.5 text-gray-500" />;
-                  case 'pool': return <Waves className="w-3.5 h-3.5 text-gray-500" />;
-                  case 'spa': return <Sparkles className="w-3.5 h-3.5 text-gray-500" />;
-                  case 'gym': return <Dumbbell className="w-3.5 h-3.5 text-gray-500" />;
-                  case 'breakfast-at-hotel': return <Coffee className="w-3.5 h-3.5 text-gray-500" />;
-                  case 'getting-ready': return <Shirt className="w-3.5 h-3.5 text-gray-500" />;
-                  case 'packing': case 'checkout-prep': return <Package className="w-3.5 h-3.5 text-gray-500" />;
-                  case 'sunset': return <Sun className="w-3.5 h-3.5 text-gray-500" />;
-                  case 'work': return <Briefcase className="w-3.5 h-3.5 text-gray-500" />;
-                  case 'call': return <Phone className="w-3.5 h-3.5 text-gray-500" />;
-                  case 'shopping-time': return <ShoppingBag className="w-3.5 h-3.5 text-gray-500" />;
-                  case 'photo-walk': return <Camera className="w-3.5 h-3.5 text-gray-500" />;
-                  default: return <Clock className="w-3.5 h-3.5 text-gray-500" />;
-                }
-              })()}
-            </div>
-          ) : image ? (
-            <ItemImage src={image} />
-          ) : (
-            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          )}
+          </div>
 
-          {/* Content */}
+          {/* Square image or icon */}
+          <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+            {iconType === 'flight' ? (
+              <div className="w-full h-full flex items-center justify-center bg-blue-50 dark:bg-blue-900/30">
+                <Plane className="w-5 h-5 text-blue-500" />
+              </div>
+            ) : iconType === 'hotel' ? (
+              <div className="w-full h-full flex items-center justify-center bg-purple-50 dark:bg-purple-900/30">
+                <Hotel className="w-5 h-5 text-purple-500" />
+              </div>
+            ) : iconType === 'checkin' ? (
+              <div className="w-full h-full flex items-center justify-center bg-green-50 dark:bg-green-900/30">
+                <DoorOpen className="w-5 h-5 text-green-500" />
+              </div>
+            ) : iconType === 'checkout' ? (
+              <div className="w-full h-full flex items-center justify-center bg-orange-50 dark:bg-orange-900/30">
+                <LogOut className="w-5 h-5 text-orange-500" />
+              </div>
+            ) : iconType === 'breakfast' ? (
+              <div className="w-full h-full flex items-center justify-center bg-amber-50 dark:bg-amber-900/30">
+                <UtensilsCrossed className="w-5 h-5 text-amber-500" />
+              </div>
+            ) : iconType === 'train' ? (
+              <div className="w-full h-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/30">
+                <TrainIcon className="w-5 h-5 text-emerald-500" />
+              </div>
+            ) : iconType === 'activity' ? (
+              <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-800">
+                {(() => {
+                  const aType = (extraData as any).activityType;
+                  switch (aType) {
+                    case 'nap': return <BedDouble className="w-5 h-5 text-gray-500" />;
+                    case 'pool': return <Waves className="w-5 h-5 text-cyan-500" />;
+                    case 'spa': return <Sparkles className="w-5 h-5 text-pink-500" />;
+                    case 'gym': return <Dumbbell className="w-5 h-5 text-gray-500" />;
+                    case 'breakfast-at-hotel': return <Coffee className="w-5 h-5 text-amber-500" />;
+                    case 'getting-ready': return <Shirt className="w-5 h-5 text-gray-500" />;
+                    case 'packing': case 'checkout-prep': return <Package className="w-5 h-5 text-gray-500" />;
+                    case 'sunset': return <Sun className="w-5 h-5 text-orange-500" />;
+                    case 'work': return <Briefcase className="w-5 h-5 text-gray-500" />;
+                    case 'call': return <Phone className="w-5 h-5 text-gray-500" />;
+                    case 'shopping-time': return <ShoppingBag className="w-5 h-5 text-pink-500" />;
+                    case 'photo-walk': return <Camera className="w-5 h-5 text-gray-500" />;
+                    default: return <Clock className="w-5 h-5 text-gray-500" />;
+                  }
+                })()}
+              </div>
+            ) : image ? (
+              <Image src={image} alt="" width={48} height={48} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <MapPin className="w-5 h-5 text-gray-400" />
+              </div>
+            )}
+          </div>
+
+          {/* Content - name and category */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[13px] font-medium text-gray-900 dark:text-white">{title}</span>
-              {subtitle && <span className="text-[11px] text-gray-400 truncate">{subtitle}</span>}
-              {/* Rating badge for places */}
-              {rating && rating > 0 && (
-                <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400">
-                  <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                  {rating.toFixed(1)}
-                </span>
-              )}
-              {/* Nights badge for hotels */}
-              {nights && nights > 0 && (
-                <span className="px-1.5 py-0.5 text-[9px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded">
-                  {nights} {nights === 1 ? 'night' : 'nights'}
-                </span>
-              )}
-            </div>
-            {/* Times row */}
-            {inlineTimes && (
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5">{inlineTimes}</p>
-            )}
-            {/* Extra info row (terminal, gate, seat for flights) */}
-            {extraInfo && (
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 font-mono mt-0.5">{extraInfo}</p>
-            )}
-            {/* Confirmation number */}
-            {confirmation && (
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-                Ref: <span className="font-mono">{confirmation}</span>
-              </p>
-            )}
+            <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">{title}</p>
+            <p className="text-[13px] text-gray-400 truncate">
+              {subtitle || inlineTimes || (item.destination?.category) || 'Place'}
+            </p>
           </div>
 
-          {/* Quick actions - visible on hover */}
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {phone && (
-              <a
-                href={`tel:${phone}`}
-                onClick={(e) => e.stopPropagation()}
-                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                title="Call"
-              >
-                <Phone className="w-3 h-3 text-gray-400" />
-              </a>
-            )}
-            {website && (
-              <a
-                href={website.startsWith('http') ? website : `https://${website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                title="Website"
-              >
-                <ExternalLink className="w-3 h-3 text-gray-400" />
-              </a>
-            )}
-            {hasLocation && (
-              <a
-                href={`https://maps.apple.com/?q=${destination?.latitude || item.parsedNotes?.latitude},${destination?.longitude || item.parsedNotes?.longitude}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                title="Directions"
-              >
-                <Navigation className="w-3 h-3 text-gray-400" />
-              </a>
-            )}
-          </div>
-
+          {/* More options button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle();
+            }}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <MoreHorizontal className="w-5 h-5 text-gray-400" />
+          </button>
         </div>
 
         {/* Expanded edit form - mobile only (desktop uses sidebar) */}
