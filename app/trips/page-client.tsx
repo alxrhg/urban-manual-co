@@ -140,8 +140,8 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
           </button>
         </header>
 
-        {/* Filter Tabs */}
-        {trips.length > 0 && (
+        {/* Filter Tabs - only show when both upcoming AND past exist */}
+        {categorizedTrips.upcoming.length > 0 && categorizedTrips.past.length > 0 && (
           <div className="flex gap-1 p-1 mb-6 bg-gray-100 dark:bg-gray-900 rounded-xl w-fit">
             {(['all', 'upcoming', 'past'] as FilterTab[]).map((tab) => (
               <button
@@ -156,13 +156,11 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
                 `}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                {tabCounts[tab] > 0 && (
-                  <span className={`ml-1.5 text-[11px] ${
-                    activeFilter === tab ? 'text-gray-500' : 'text-gray-400'
-                  }`}>
-                    {tabCounts[tab]}
-                  </span>
-                )}
+                <span className={`ml-1.5 text-[11px] ${
+                  activeFilter === tab ? 'text-gray-500' : 'text-gray-400'
+                }`}>
+                  {tabCounts[tab]}
+                </span>
               </button>
             ))}
           </div>

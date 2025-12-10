@@ -20,7 +20,6 @@ import AddPlacePanel from '@/components/trip/AddPlacePanel';
 import { NeighborhoodTags } from '@/components/trip/NeighborhoodBreakdown';
 import DayIntelligence from '@/components/trip/DayIntelligence';
 import { CrowdBadge } from '@/components/trip/CrowdIndicator';
-import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import { Settings, Moon } from 'lucide-react';
 
 // Weather type
@@ -1654,10 +1653,8 @@ function DaySection({
               </span>
             </div>
           )}
-          {/* Day pacing indicator */}
+          {/* Day warnings - only shows when there's a problem */}
           <DayIntelligence
-            dayNumber={dayNumber}
-            date={date}
             items={items.map(item => ({
               id: item.id,
               title: item.title,
@@ -2001,38 +1998,6 @@ function DaySection({
           })}
         </Reorder.Group>
       ) : null}
-
-      {/* Smart suggestions for the day */}
-      {orderedItems.length > 0 && city && (
-        <SmartSuggestions
-          days={[{
-            dayNumber,
-            date: date || null,
-            items: orderedItems.map(item => ({
-              id: item.id,
-              title: item.title,
-              destination_slug: item.destination_slug,
-              destination: item.destination ? {
-                category: item.destination.category,
-                latitude: item.destination.latitude,
-                longitude: item.destination.longitude,
-              } : null,
-              time: item.time,
-              parsedNotes: item.parsedNotes ? {
-                category: item.parsedNotes.category,
-              } : undefined,
-            })),
-          }]}
-          destination={city}
-          selectedDayNumber={dayNumber}
-          onAddPlace={(targetDay, category) => {
-            // Open search with optional category filter
-            setShowSearch(true);
-            setSearchSource('curated');
-          }}
-          className="mt-4"
-        />
-      )}
 
       {/* Travel time to nightly hotel */}
       {nightlyHotel && orderedItems.length > 0 && (
@@ -3678,14 +3643,14 @@ function WeatherWarning({ item, date }: { item: EnrichedItineraryItem; date?: st
 }
 
 /**
- * Trip Intelligence - Smart warnings and suggestions
+ * Trip Intelligence - Only critical warnings
+ *
+ * Philosophy: Silent until needed. Only shows when there's an actual problem.
+ * No suggestions, no info, no optimizations - just warnings that need attention.
  */
 function TripIntelligence({
   days,
-  city,
   weatherByDate,
-  onOptimizeRoute,
-  compact = false,
 }: {
   days: Array<{ dayNumber: number; date: string | null; items: EnrichedItineraryItem[] }>;
   city: string;
@@ -3693,130 +3658,19 @@ function TripIntelligence({
   onOptimizeRoute: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
   compact?: boolean;
 }) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [insights, setInsights] = useState<Array<{
-    id: string;
-    type: 'warning' | 'suggestion' | 'optimization' | 'info';
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    action?: { label: string; onClick: () => void };
-    dayNumber?: number;
-  }>>([]);
-
-  // Analyze trip and generate insights
-  useEffect(() => {
-    const newInsights: typeof insights = [];
+  const warnings = useMemo(() => {
+    const result: Array<{ id: string; title: string }> = [];
 
     days.forEach((day) => {
       const items = day.items;
-      if (items.length === 0) return;
+      if (items.length < 2) return;
 
-      // 1. MEAL GAP DETECTION
-      const hasMorningItem = items.some(i => {
-        const time = i.time;
-        if (!time) return false;
-        const hour = parseInt(time.split(':')[0], 10);
-        return hour >= 7 && hour < 11;
-      });
-      const hasLunchItem = items.some(i => {
-        const time = i.time;
-        if (!time) return false;
-        const hour = parseInt(time.split(':')[0], 10);
-        // Must be in lunch hours (11:00 - 15:00)
-        if (hour < 11 || hour >= 15) return false;
-        // Check category
-        const category = (i.destination?.category || i.parsedNotes?.category || '').toLowerCase();
-        const title = (i.title || i.destination?.name || '').toLowerCase();
-        // Match various food-related categories and titles
-        const foodKeywords = ['restaurant', 'cafe', 'lunch', 'bistro', 'eatery', 'deli', 'sandwich', 'kitchen', 'grill', 'brasserie', 'diner'];
-        return foodKeywords.some(kw => category.includes(kw) || title.includes(kw));
-      });
-      const hasDinnerItem = items.some(i => {
-        const time = i.time;
-        // If no time, check if it's explicitly a restaurant/dining category
-        const category = (i.destination?.category || i.parsedNotes?.category || '').toLowerCase();
-        const title = (i.title || i.destination?.name || '').toLowerCase();
-
-        // Food-related keywords - expanded list
-        const foodKeywords = ['restaurant', 'bar', 'dining', 'dinner', 'steakhouse', 'bistro',
-          'eatery', 'grill', 'kitchen', 'tavern', 'trattoria', 'pizzeria', 'sushi', 'ramen',
-          'brasserie', 'food', 'cafe', 'gastropub', 'pub', 'cantina', 'osteria', 'taqueria',
-          'seafood', 'bbq', 'barbecue', 'chophouse', 'diner', 'ristorante'];
-
-        const isFood = foodKeywords.some(kw => category.includes(kw) || title.includes(kw));
-
-        // If we have a time, check if it's in evening hours (17:00 - 23:00)
-        if (time) {
-          const hour = parseInt(time.split(':')[0], 10);
-          if (hour >= 17 && hour < 23 && isFood) return true;
-        }
-
-        // If no time but it's a food place, still count it (user likely dining there)
-        // Only count if there are evening activities suggesting it's an evening plan
-        if (!time && isFood) {
-          // Check if there are any evening activities in this day
-          const hasEveningItems = items.some(item => {
-            const t = item.time;
-            if (!t) return false;
-            const h = parseInt(t.split(':')[0], 10);
-            return h >= 17;
-          });
-          if (hasEveningItems) return true;
-        }
-
-        return false;
-      });
-
-      if (items.length >= 2 && !hasLunchItem) {
-        const hasMiddayActivity = items.some(i => {
-          const time = i.time;
-          if (!time) return false;
-          const hour = parseInt(time.split(':')[0], 10);
-          return hour >= 11 && hour < 15;
-        });
-        if (hasMiddayActivity) {
-          newInsights.push({
-            id: `meal-lunch-${day.dayNumber}`,
-            type: 'suggestion',
-            icon: <UtensilsCrossed className="w-4 h-4" />,
-            title: `Day ${day.dayNumber}: No lunch planned`,
-            description: 'You have activities midday but no lunch spot',
-            dayNumber: day.dayNumber,
-          });
-        }
-      }
-
-      if (items.length >= 2 && !hasDinnerItem) {
-        const hasEveningActivity = items.some(i => {
-          const time = i.time;
-          if (!time) return false;
-          const hour = parseInt(time.split(':')[0], 10);
-          return hour >= 17;
-        });
-        if (hasEveningActivity) {
-          newInsights.push({
-            id: `meal-dinner-${day.dayNumber}`,
-            type: 'suggestion',
-            icon: <UtensilsCrossed className="w-4 h-4" />,
-            title: `Day ${day.dayNumber}: No dinner planned`,
-            description: 'You have evening activities but no dinner reservation',
-            dayNumber: day.dayNumber,
-          });
-        }
-      }
-
-      // 2. TIMING CONFLICT DETECTION
-      const sortedItems = [...items].sort((a, b) => {
-        const timeA = a.time || '00:00';
-        const timeB = b.time || '00:00';
-        return timeA.localeCompare(timeB);
-      });
+      // 1. TIMING CONFLICT - activities overlap
+      const sortedItems = [...items].filter(i => i.time).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
       for (let i = 0; i < sortedItems.length - 1; i++) {
         const current = sortedItems[i];
         const next = sortedItems[i + 1];
-
         if (!current.time || !next.time) continue;
 
         const [curH, curM] = current.time.split(':').map(Number);
@@ -3826,403 +3680,45 @@ function TripIntelligence({
         const currentEndMins = curH * 60 + curM + duration;
         const nextStartMins = nextH * 60 + nextM;
 
-        // Calculate travel time if we have coordinates
-        let travelMins = 15; // Default
-        const fromLat = current.destination?.latitude || current.parsedNotes?.latitude;
-        const fromLng = current.destination?.longitude || current.parsedNotes?.longitude;
-        const toLat = next.destination?.latitude || next.parsedNotes?.latitude;
-        const toLng = next.destination?.longitude || next.parsedNotes?.longitude;
-
-        if (fromLat && fromLng && toLat && toLng) {
-          const R = 6371;
-          const dLat = (toLat - fromLat) * Math.PI / 180;
-          const dLng = (toLng - fromLng) * Math.PI / 180;
-          const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
-                    Math.sin(dLng/2) * Math.sin(dLng/2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-          const distKm = R * c;
-          travelMins = Math.round(distKm * 3); // ~20 km/h average
-        }
-
-        const availableTime = nextStartMins - currentEndMins;
-        if (availableTime < travelMins && availableTime < 0) {
-          newInsights.push({
+        // Only warn if activities actually overlap (negative time between)
+        if (nextStartMins < currentEndMins) {
+          result.push({
             id: `timing-${day.dayNumber}-${i}`,
-            type: 'warning',
-            icon: <AlertTriangle className="w-4 h-4" />,
-            title: `Day ${day.dayNumber}: Timing conflict`,
-            description: `Only ${Math.max(0, availableTime)} min between "${current.title || current.destination?.name}" and "${next.title || next.destination?.name}" but need ~${travelMins} min travel`,
-            dayNumber: day.dayNumber,
+            title: `Day ${day.dayNumber}: Schedule conflict`,
           });
+          break; // One warning per day is enough
         }
       }
 
-      // 3. ROUTE OPTIMIZATION
-      if (items.length >= 3) {
-        const itemsWithCoords = items.filter(i =>
-          (i.destination?.latitude && i.destination?.longitude) ||
-          (i.parsedNotes?.latitude && i.parsedNotes?.longitude)
-        );
-
-        if (itemsWithCoords.length >= 3) {
-          // Calculate current total distance
-          let currentDistance = 0;
-          for (let i = 0; i < itemsWithCoords.length - 1; i++) {
-            const from = itemsWithCoords[i];
-            const to = itemsWithCoords[i + 1];
-            const fromLat = from.destination?.latitude || from.parsedNotes?.latitude;
-            const fromLng = from.destination?.longitude || from.parsedNotes?.longitude;
-            const toLat = to.destination?.latitude || to.parsedNotes?.latitude;
-            const toLng = to.destination?.longitude || to.parsedNotes?.longitude;
-
-            if (fromLat && fromLng && toLat && toLng) {
-              const R = 6371;
-              const dLat = (toLat - fromLat) * Math.PI / 180;
-              const dLng = (toLng - fromLng) * Math.PI / 180;
-              const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                        Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
-                        Math.sin(dLng/2) * Math.sin(dLng/2);
-              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-              currentDistance += R * c;
-            }
-          }
-
-          // Try nearest-neighbor optimization
-          const optimized = nearestNeighborOptimize(itemsWithCoords);
-          let optimizedDistance = 0;
-          for (let i = 0; i < optimized.length - 1; i++) {
-            const from = optimized[i];
-            const to = optimized[i + 1];
-            const fromLat = from.destination?.latitude || from.parsedNotes?.latitude;
-            const fromLng = from.destination?.longitude || from.parsedNotes?.longitude;
-            const toLat = to.destination?.latitude || to.parsedNotes?.latitude;
-            const toLng = to.destination?.longitude || to.parsedNotes?.longitude;
-
-            if (fromLat && fromLng && toLat && toLng) {
-              const R = 6371;
-              const dLat = (toLat - fromLat) * Math.PI / 180;
-              const dLng = (toLng - fromLng) * Math.PI / 180;
-              const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                        Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
-                        Math.sin(dLng/2) * Math.sin(dLng/2);
-              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-              optimizedDistance += R * c;
-            }
-          }
-
-          const savings = currentDistance - optimizedDistance;
-          const savingsMin = Math.round(savings * 3); // Convert km to approx mins at 20km/h
-
-          if (savingsMin >= 15) {
-            newInsights.push({
-              id: `optimize-${day.dayNumber}`,
-              type: 'optimization',
-              icon: <Route className="w-4 h-4" />,
-              title: `Day ${day.dayNumber}: Route can be optimized`,
-              description: `Reorder activities to save ~${savingsMin} min walking`,
-              dayNumber: day.dayNumber,
-              action: {
-                label: 'Optimize',
-                onClick: () => {
-                  // Reorder with original times preserved
-                  const newOrder = optimized.map((item, idx) => ({
-                    ...item,
-                    time: items[idx]?.time || item.time,
-                  }));
-                  onOptimizeRoute(day.dayNumber, newOrder);
-                },
-              },
-            });
-          }
-        }
-      }
-
-      // 4. WEATHER WARNINGS
+      // 2. WEATHER WARNING - rain + outdoor activities
       const dayWeather = day.date ? weatherByDate[day.date] : undefined;
       if (dayWeather && dayWeather.precipProbability > 50) {
-        const outdoorItems = items.filter(i => {
-          const category = i.destination?.category?.toLowerCase() || '';
+        const hasOutdoor = items.some(i => {
+          const category = (i.destination?.category || '').toLowerCase();
           return ['park', 'garden', 'beach', 'outdoor', 'walk', 'market'].some(c => category.includes(c));
         });
 
-        if (outdoorItems.length > 0) {
-          newInsights.push({
+        if (hasOutdoor) {
+          result.push({
             id: `weather-${day.dayNumber}`,
-            type: 'warning',
-            icon: <CloudRain className="w-4 h-4" />,
-            title: `Day ${day.dayNumber}: Rain likely (${dayWeather.precipProbability}%)`,
-            description: `Consider indoor alternatives for: ${outdoorItems.map(i => i.title || i.destination?.name).join(', ')}`,
-            dayNumber: day.dayNumber,
-          });
-        }
-      }
-
-      // 5. TRAVEL TIME SUMMARY
-      if (sortedItems.length >= 2) {
-        let totalTravelMins = 0;
-        let longTravelSegments: Array<{ from: string; to: string; mins: number }> = [];
-
-        for (let i = 0; i < sortedItems.length - 1; i++) {
-          const current = sortedItems[i];
-          const next = sortedItems[i + 1];
-
-          const fromLat = current.destination?.latitude || current.parsedNotes?.latitude;
-          const fromLng = current.destination?.longitude || current.parsedNotes?.longitude;
-          const toLat = next.destination?.latitude || next.parsedNotes?.latitude;
-          const toLng = next.destination?.longitude || next.parsedNotes?.longitude;
-
-          let travelMins = 10;
-          if (fromLat && fromLng && toLat && toLng) {
-            const R = 6371;
-            const dLat = (toLat - fromLat) * Math.PI / 180;
-            const dLng = (toLng - fromLng) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                      Math.cos(fromLat * Math.PI / 180) * Math.cos(toLat * Math.PI / 180) *
-                      Math.sin(dLng/2) * Math.sin(dLng/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            const distKm = R * c;
-            travelMins = Math.round(distKm * 3); // ~20 km/h average
-          }
-
-          totalTravelMins += travelMins;
-
-          // Track long travel segments (> 30 min)
-          if (travelMins > 30) {
-            longTravelSegments.push({
-              from: current.title || current.destination?.name || 'Unknown',
-              to: next.title || next.destination?.name || 'Unknown',
-              mins: travelMins,
-            });
-          }
-        }
-
-        // Add info about total travel time if significant
-        if (totalTravelMins > 60) {
-          const hours = Math.floor(totalTravelMins / 60);
-          const mins = totalTravelMins % 60;
-          const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-          newInsights.push({
-            id: `travel-total-${day.dayNumber}`,
-            type: 'info',
-            icon: <Car className="w-4 h-4" />,
-            title: `Day ${day.dayNumber}: ${timeStr} total travel`,
-            description: `You'll spend about ${timeStr} traveling between ${sortedItems.length} stops`,
-            dayNumber: day.dayNumber,
-          });
-        }
-
-        // Warn about long travel segments
-        if (longTravelSegments.length > 0) {
-          const longest = longTravelSegments.sort((a, b) => b.mins - a.mins)[0];
-          newInsights.push({
-            id: `travel-long-${day.dayNumber}`,
-            type: 'warning',
-            icon: <Car className="w-4 h-4" />,
-            title: `Day ${day.dayNumber}: Long travel segment`,
-            description: `~${longest.mins}m from ${longest.from} to ${longest.to}`,
-            dayNumber: day.dayNumber,
-          });
-        }
-      }
-
-      // 6. AUTO TIME SLOT SUGGESTION
-      const itemsWithoutTime = items.filter(i => !i.time);
-      if (itemsWithoutTime.length > 0 && items.length > itemsWithoutTime.length) {
-        newInsights.push({
-          id: `autotime-${day.dayNumber}`,
-          type: 'suggestion',
-          icon: <Clock className="w-4 h-4" />,
-          title: `Day ${day.dayNumber}: ${itemsWithoutTime.length} items missing times`,
-          description: 'Add times to help plan your day better',
-          dayNumber: day.dayNumber,
-        });
-      }
-
-      // 7. GAP SUGGESTIONS - Detect large gaps between activities
-      for (let i = 0; i < sortedItems.length - 1; i++) {
-        const current = sortedItems[i];
-        const next = sortedItems[i + 1];
-
-        const curTime = current.time || current.parsedNotes?.departureTime || current.parsedNotes?.checkOutTime;
-        const nextTime = next.time || next.parsedNotes?.departureTime || next.parsedNotes?.checkInTime;
-        const curDuration = current.parsedNotes?.duration || 1.5;
-
-        if (!curTime || !nextTime) continue;
-
-        const [curH, curM] = curTime.split(':').map(Number);
-        const [nextH, nextM] = nextTime.split(':').map(Number);
-        const curEndMins = curH * 60 + curM + (parseFloat(String(curDuration)) * 60);
-        const nextStartMins = nextH * 60 + nextM;
-        const gapMins = nextStartMins - curEndMins;
-
-        // Only suggest for gaps > 90 minutes
-        if (gapMins >= 90) {
-          const midTime = curEndMins + gapMins / 2;
-          const hour = Math.floor(midTime / 60);
-
-          // Determine suggestion type based on time of day
-          let suggestionLabel: string;
-          if (hour >= 7 && hour < 10) suggestionLabel = 'Coffee or breakfast?';
-          else if (hour >= 11 && hour < 14) suggestionLabel = 'Time for lunch?';
-          else if (hour >= 14 && hour < 17) suggestionLabel = 'Explore something new?';
-          else if (hour >= 18 && hour < 21) suggestionLabel = 'Dinner reservation?';
-          else if (hour >= 21) suggestionLabel = 'Grab drinks?';
-          else continue;
-
-          const gapHours = Math.floor(gapMins / 60);
-          const gapRemMins = gapMins % 60;
-          const gapStr = gapHours > 0 ? `${gapHours}h ${gapRemMins}m` : `${gapRemMins}m`;
-
-          newInsights.push({
-            id: `gap-${day.dayNumber}-${i}`,
-            type: 'suggestion',
-            icon: <Plus className="w-4 h-4" />,
-            title: `Day ${day.dayNumber}: ${gapStr} gap`,
-            description: `${suggestionLabel} Between "${current.title || current.destination?.name || 'activity'}" and "${next.title || next.destination?.name || 'activity'}"`,
-            dayNumber: day.dayNumber,
+            title: `Day ${day.dayNumber}: Rain likely`,
           });
         }
       }
     });
 
-    setInsights(newInsights);
-  }, [days, weatherByDate, onOptimizeRoute]);
+    return result;
+  }, [days, weatherByDate]);
 
-  if (insights.length === 0) return null;
-
-  // Sort: warnings first, then optimizations, then suggestions, then info
-  const sortedInsights = [...insights].sort((a, b) => {
-    const order: Record<string, number> = { warning: 0, optimization: 1, suggestion: 2, info: 3 };
-    return (order[a.type] ?? 4) - (order[b.type] ?? 4);
-  });
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'warning': return 'text-red-500';
-      case 'optimization': return 'text-blue-500';
-      case 'suggestion': return 'text-amber-500';
-      case 'info': return 'text-gray-500';
-      default: return 'text-gray-500';
-    }
-  };
-
-  const getTypeBg = (type: string) => {
-    switch (type) {
-      case 'warning': return 'bg-red-500/10';
-      case 'optimization': return 'bg-blue-500/10';
-      case 'suggestion': return 'bg-amber-500/10';
-      case 'info': return 'bg-gray-500/10';
-      default: return 'bg-gray-500/10';
-    }
-  };
-
-  // Count warnings for header badge
-  const warningCount = insights.filter(i => i.type === 'warning').length;
-
-  // Compact mode for sidebar
-  if (compact) {
-    return (
-      <div className="p-4">
-        <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
-          Intelligence
-          {warningCount > 0 && (
-            <span className="px-1.5 py-0.5 text-[9px] font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">
-              {warningCount}
-            </span>
-          )}
-        </h3>
-        <div className="space-y-2">
-          {sortedInsights.slice(0, 5).map((insight) => (
-            <div
-              key={insight.id}
-              className={`flex items-start gap-2 p-2 rounded-lg ${getTypeBg(insight.type)}`}
-            >
-              <div className={`flex-shrink-0 ${getTypeColor(insight.type)}`}>
-                {insight.icon}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[12px] font-medium text-gray-700 dark:text-gray-200">{insight.title}</p>
-                {insight.action && (
-                  <button
-                    onClick={insight.action.onClick}
-                    className="mt-1 text-[11px] text-blue-500 hover:text-blue-600"
-                  >
-                    {insight.action.label}
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-          {sortedInsights.length > 5 && (
-            <p className="text-[11px] text-gray-400 text-center">+{sortedInsights.length - 5} more</p>
-          )}
-        </div>
-      </div>
-    );
-  }
+  // Nothing to warn about? Show nothing.
+  if (warnings.length === 0) return null;
 
   return (
-    <div className="mt-6 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
-      {/* Collapsible header */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="w-full flex items-center justify-between gap-2 p-4 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-gray-400" />
-          <span className="text-[13px] font-medium text-gray-600 dark:text-gray-300">Trip Intelligence</span>
-          <span className="text-[11px] text-gray-400">({insights.length})</span>
-          {warningCount > 0 && (
-            <span className="px-1.5 py-0.5 text-[9px] font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">
-              {warningCount} warning{warningCount > 1 ? 's' : ''}
-            </span>
-          )}
-        </div>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isCollapsed ? '' : 'rotate-180'}`} />
-      </button>
-
-      {/* Collapsible content */}
-      <AnimatePresence initial={false}>
-        {!isCollapsed && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 space-y-2">
-              {sortedInsights.map((insight) => (
-                <div
-                  key={insight.id}
-                  className={`flex items-center justify-between gap-3 p-2 rounded-lg ${getTypeBg(insight.type)}`}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className={`flex-shrink-0 ${getTypeColor(insight.type)}`}>{insight.icon}</span>
-                    <div className="min-w-0">
-                      <p className="text-[11px] font-medium text-gray-800 dark:text-gray-200 truncate">
-                        {insight.title}
-                      </p>
-                      <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
-                        {insight.description}
-                      </p>
-                    </div>
-                  </div>
-                  {insight.action && (
-                    <button
-                      onClick={insight.action.onClick}
-                      className="flex-shrink-0 px-2.5 py-1 bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-medium rounded-full transition-colors"
-                    >
-                      {insight.action.label}
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+      <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+      <span className="text-[12px] text-amber-700 dark:text-amber-300">
+        {warnings.length === 1 ? warnings[0].title : `${warnings.length} issues need attention`}
+      </span>
     </div>
   );
 }
