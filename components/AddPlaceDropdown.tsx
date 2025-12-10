@@ -7,6 +7,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/sonner';
 import {
   Popover,
   PopoverContent,
@@ -76,7 +77,7 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
         .maybeSingle();
 
       if (existing) {
-        alert('You already marked this place as visited');
+        toast.info('You already marked this place as visited');
         setAdding(null);
         return;
       }
@@ -102,7 +103,7 @@ export function AddPlaceDropdown({ onPlaceAdded }: AddPlaceDropdownProps) {
       }
     } catch (error) {
       console.error('Error adding place:', error);
-      alert('Failed to add place. Please try again.');
+      toast.error('Failed to add place. Please try again.');
     } finally {
       setAdding(null);
     }

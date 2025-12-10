@@ -5,11 +5,21 @@ import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ArrowLeft, Plus, Trash2, Edit2, Globe, Lock, MoreHorizontal } from 'lucide-react';
 import Image from 'next/image';
-import { PageLoader } from '@/components/LoadingStates';
+import { CollectionDetailSkeleton } from '@/components/LoadingStates';
 import { EmptyState } from '@/components/EmptyStates';
 import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
 import type { Destination } from '@/types/destination';
-import { toast } from '@/lib/toast';
+import { toast } from '@/components/ui/sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Helper function to capitalize city names
 function capitalizeCity(city: string): string {
@@ -33,6 +43,9 @@ export default function CollectionDetailPage() {
   const [editDescription, setEditDescription] = useState('');
   const [editPublic, setEditPublic] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [removeDialogOpen, setRemoveDialogOpen] = useState(false);
+  const [slugToRemove, setSlugToRemove] = useState<string | null>(null);
 
   useEffect(() => {
     async function checkAuth() {
@@ -134,8 +147,6 @@ export default function CollectionDetailPage() {
   };
 
   const handleDeleteCollection = async () => {
-    if (!confirm('Are you sure you want to delete this collection?')) return;
-
     try {
       // Delete list items first
       await supabase
@@ -152,15 +163,17 @@ export default function CollectionDetailPage() {
 
       if (error) throw error;
 
+      toast.success('Collection deleted');
       router.push('/account');
     } catch (error) {
       console.error('Error deleting collection:', error);
       toast.error('Failed to delete collection');
+    } finally {
+      setDeleteDialogOpen(false);
     }
   };
 
   const handleRemoveDestination = async (slug: string) => {
-    if (!confirm('Remove this place from collection?')) return;
     try {
       const { error } = await supabase
         .from('list_items')
@@ -177,17 +190,24 @@ export default function CollectionDetailPage() {
         .from('collections')
         .update as any)({ destination_count: Math.max(0, (collection.destination_count || 0) - 1) })
         .eq('id', collectionId);
+
+      toast.success('Place removed from collection');
     } catch (error) {
       console.error('Error removing destination:', error);
+      toast.error('Failed to remove place');
+    } finally {
+      setRemoveDialogOpen(false);
+      setSlugToRemove(null);
     }
   };
 
+  const openRemoveDialog = (slug: string) => {
+    setSlugToRemove(slug);
+    setRemoveDialogOpen(true);
+  };
+
   if (loading) {
-    return (
-      <main className="w-full px-6 md:px-10 py-20 min-h-screen">
-        <PageLoader />
-      </main>
-    );
+    return <CollectionDetailSkeleton />;
   }
 
   if (!collection) {
@@ -265,8 +285,9 @@ export default function CollectionDetailPage() {
                 Edit
               </button>
               <button
-                onClick={handleDeleteCollection}
+                onClick={() => setDeleteDialogOpen(true)}
                 className="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 hover:border-red-100 dark:hover:border-red-900/30 rounded-xl transition-colors text-xs font-medium flex items-center gap-2 shadow-sm text-gray-600 dark:text-gray-400"
+                aria-label="Delete collection"
               >
                 <Trash2 className="h-3 w-3" />
                 Delete
@@ -300,10 +321,10 @@ export default function CollectionDetailPage() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleRemoveDestination(destination.slug);
+                      openRemoveDialog(destination.slug);
                     }}
                     className="absolute top-1/2 -translate-y-1/2 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                    title="Remove from collection"
+                    aria-label={`Remove ${destination.name} from collection`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -390,6 +411,45 @@ export default function CollectionDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Collection Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Collection</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{collection?.name}"? This will remove all places from this collection. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteCollection} className="bg-red-600 hover:bg-red-700">
+              Delete Collection
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Remove Destination Dialog */}
+      <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from Collection</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this place from the collection?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => slugToRemove && handleRemoveDestination(slugToRemove)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

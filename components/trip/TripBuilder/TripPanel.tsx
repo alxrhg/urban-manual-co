@@ -10,6 +10,7 @@ import TripHeader from './TripHeader';
 import TripDayCard from './TripDayCard';
 import TripEmptyState from './TripEmptyState';
 import TripActions from './TripActions';
+import { toast } from '@/components/ui/sonner';
 
 /**
  * TripPanel - Main trip builder panel
@@ -64,12 +65,13 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
   // Handlers
   const handleSave = useCallback(async () => {
     if (!user) {
-      alert('Please sign in to save your trip');
+      toast.error('Please sign in to save your trip');
       return;
     }
     setIsSaving(true);
     await saveTrip();
     await refreshSavedTrips();
+    toast.success('Trip saved');
     setIsSaving(false);
   }, [user, saveTrip, refreshSavedTrips]);
 
@@ -77,9 +79,9 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
     if (activeTrip?.id) {
       const url = `${window.location.origin}/trips/${activeTrip.id}`;
       navigator.clipboard.writeText(url);
-      alert('Link copied to clipboard!');
+      toast.success('Link copied to clipboard!');
     } else {
-      alert('Save your trip first to share it');
+      toast.info('Save your trip first to share it');
     }
   }, [activeTrip]);
 

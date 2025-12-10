@@ -22,6 +22,9 @@ import { useMLTopics } from '@/hooks/useMLTopics';
 import { useMLAnomaly } from '@/hooks/useMLAnomaly';
 import { useMLSequence } from '@/hooks/useMLSequence';
 
+// Loading States
+import { CollectionGridSkeleton } from '@/components/LoadingStates';
+
 type TabType = 'recommendations' | 'trending' | 'sentiment' | 'topics' | 'anomalies' | 'explain' | 'sequences' | 'collections';
 
 export default function DiscoverPage() {
@@ -494,9 +497,7 @@ export default function DiscoverPage() {
 
         {/* Collections Grid */}
         {loading ? (
-          <div className="text-center py-20 text-gray-500">
-            <p className="text-sm">Loading...</p>
-          </div>
+          <CollectionGridSkeleton count={6} />
         ) : collections.length === 0 ? (
           <div className="text-center py-20 text-gray-500">
             <p className="text-sm">No collections found</p>

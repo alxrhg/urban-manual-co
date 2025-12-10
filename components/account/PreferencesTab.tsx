@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase';
 import { UserProfile, HomeBase } from '@/types/personalization';
 import { Save, Loader2, MapPin, X } from 'lucide-react';
 import { cityCountryMap } from '@/data/cityCountryMap';
+import { toast } from '@/components/ui/sonner';
 
 const ALL_CITIES = Object.keys(cityCountryMap).map(city =>
   city.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
@@ -151,10 +152,10 @@ export function PreferencesTab({ userId }: PreferencesTabProps) {
         });
 
       if (error) throw error;
-      alert('Preferences saved successfully!');
+      toast.success('Preferences saved successfully!');
     } catch (error) {
       console.error('Error saving profile:', error);
-      alert('Failed to save preferences. Please try again.');
+      toast.error('Failed to save preferences. Please try again.');
     } finally {
       setSaving(false);
     }

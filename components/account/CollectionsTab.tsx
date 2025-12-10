@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Collection } from '@/types/common';
 import { NoCollectionsEmptyState } from '@/components/EmptyStates';
+import { toast } from '@/components/ui/sonner';
 
 interface CollectionsTabProps {
   collections: Collection[];
@@ -53,7 +54,7 @@ export default function CollectionsTab({ collections, onCreateCollection }: Coll
       setNewCollectionPublic(true);
     } catch (error) {
       console.error('Error creating collection:', error);
-      alert(error instanceof Error ? error.message : 'An unknown error occurred.');
+      toast.error(error instanceof Error ? error.message : 'An unknown error occurred.');
     } finally {
       setCreatingCollection(false);
     }

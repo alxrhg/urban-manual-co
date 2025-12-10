@@ -8,6 +8,7 @@ import Image from 'next/image';
 import type { Trip } from '@/types/trip';
 import { parseDestinations, stringifyDestinations } from '@/types/trip';
 import { MultiCityAutocompleteInput } from '@/components/MultiCityAutocompleteInput';
+import { toast } from '@/components/ui/sonner';
 import {
   TripCard,
   TripCardHeader,
@@ -145,11 +146,11 @@ export default function TripSettingsBox({
 
     // Validate file type and size
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      toast.error('Please select an image file');
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      alert('Image must be less than 5MB');
+      toast.error('Image must be less than 5MB');
       return;
     }
 
@@ -180,7 +181,7 @@ export default function TripSettingsBox({
       }
     } catch (err) {
       console.error('Error uploading image:', err);
-      alert('Failed to upload image');
+      toast.error('Failed to upload image');
     } finally {
       setUploadingImage(false);
     }

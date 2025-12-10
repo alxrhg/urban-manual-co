@@ -5,6 +5,17 @@ import { createClient } from '@/lib/supabase/client';
 import { Collection } from '@/types/personalization';
 import { Plus, X, Edit2, Trash2, Folder, FolderOpen } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from '@/components/ui/sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface CollectionsManagerProps {
   destinationId: number;
@@ -22,6 +33,8 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
   const [newCollectionEmoji, setNewCollectionEmoji] = useState('📍');
   const [creating, setCreating] = useState(false);
   const [selectedCollectionId, setSelectedCollectionId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [collectionToDelete, setCollectionToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -113,7 +126,7 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
       }
     } catch (error: any) {
       console.error('Error creating collection:', error);
-      alert(error.message || 'Failed to create collection. Please try again.');
+      toast.error(error.message || 'Failed to create collection. Please try again.');
     } finally {
       setCreating(false);
     }
@@ -131,37 +144,45 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
     }
   }
 
-  async function deleteCollection(collectionId: string, e: React.MouseEvent) {
+  function handleDeleteClick(collectionId: string, e: React.MouseEvent) {
     e.stopPropagation();
-    if (!user) return;
-    if (!confirm('Are you sure you want to delete this collection? This will remove it from all saved destinations.')) return;
+    setCollectionToDelete(collectionId);
+    setDeleteDialogOpen(true);
+  }
+
+  async function confirmDeleteCollection() {
+    if (!user || !collectionToDelete) return;
 
     try {
       const supabaseClient = createClient();
       if (!supabaseClient) return;
-      
+
       // Remove collection from all saved destinations
       await supabaseClient
         .from('saved_destinations')
         .update({ collection_id: null })
-        .eq('collection_id', collectionId);
+        .eq('collection_id', collectionToDelete);
 
       // Delete the collection
       const { error } = await supabaseClient
         .from('collections')
         .delete()
-        .eq('id', collectionId)
+        .eq('id', collectionToDelete)
         .eq('user_id', user.id);
 
       if (error) throw error;
 
-      setCollections(collections.filter(c => c.id !== collectionId));
-      if (selectedCollectionId === collectionId) {
+      setCollections(collections.filter(c => c.id !== collectionToDelete));
+      if (selectedCollectionId === collectionToDelete) {
         setSelectedCollectionId(null);
       }
+      toast.success('Collection deleted');
     } catch (error) {
       console.error('Error deleting collection:', error);
-      alert('Failed to delete collection. Please try again.');
+      toast.error('Failed to delete collection. Please try again.');
+    } finally {
+      setDeleteDialogOpen(false);
+      setCollectionToDelete(null);
     }
   }
 
@@ -307,8 +328,9 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
               )}
             </div>
             <button
-              onClick={(e) => deleteCollection(collection.id, e)}
+              onClick={(e) => handleDeleteClick(collection.id, e)}
               className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-all"
+              aria-label={`Delete ${collection.name} collection`}
             >
               <Trash2 className="h-4 w-4 text-gray-500" />
             </button>
@@ -323,6 +345,23 @@ export function CollectionsManager({ destinationId, onCollectionSelect, onClose 
           </div>
         )}
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Collection</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this collection? This will remove it from all saved destinations.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteCollection} className="bg-red-600 hover:bg-red-700">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

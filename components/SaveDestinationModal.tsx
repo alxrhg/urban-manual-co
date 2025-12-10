@@ -13,6 +13,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/components/ui/sonner';
 
 interface SaveDestinationModalProps {
   destinationId: number;
@@ -130,7 +131,7 @@ export function SaveDestinationModal({
       onClose();
     } catch (error) {
       console.error('Error saving destination:', error);
-      alert('Failed to save destination. Please try again.');
+      toast.error('Failed to save destination. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -168,7 +169,7 @@ export function SaveDestinationModal({
       onClose();
     } catch (error) {
       console.error('Error unsaving destination:', error);
-      alert('Failed to unsave destination. Please try again.');
+      toast.error('Failed to unsave destination. Please try again.');
     } finally {
       setSaving(false);
     }

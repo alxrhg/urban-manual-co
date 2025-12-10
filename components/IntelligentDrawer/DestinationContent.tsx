@@ -26,6 +26,7 @@ import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { toast } from '@/components/ui/sonner';
 
 // ============================================
 // SMART CATEGORY DETECTION
@@ -918,7 +919,7 @@ const DestinationContent = memo(function DestinationContent({
       window.location.reload();
     } catch (error) {
       console.error('Error saving:', error);
-      alert('Failed to save changes');
+      toast.error('Failed to save changes');
     } finally {
       setIsSaving(false);
     }

@@ -30,6 +30,7 @@ import { SequencePredictionsInline } from '@/components/SequencePredictionsInlin
 import { ArchitectDesignInfo } from '@/components/ArchitectDesignInfo';
 import { PRICE_LEVEL } from '@/lib/constants';
 import { HorizontalDestinationCard } from '@/components/HorizontalDestinationCard';
+import { toast } from '@/components/ui/sonner';
 
 interface Recommendation {
   slug: string;
@@ -228,7 +229,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
       } else {
         // Add visit with current date (no modal needed - just mark as visited)
         if (!destination.slug) {
-          alert('Invalid destination. Please try again.');
+          toast.error('Invalid destination. Please try again.');
           return;
         }
 
@@ -249,7 +250,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             setIsVisited(true);
             return;
           }
-          alert(`Failed to mark as visited: ${error.message || 'Please try again.'}`);
+          toast.error(`Failed to mark as visited: ${error.message || 'Please try again.'}`);
           return;
         }
 
@@ -264,7 +265,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
       }
     } catch (error: any) {
       console.error('Error toggling visit:', error);
-      alert(`Failed to update visit status: ${error.message || 'Please try again.'}`);
+      toast.error(`Failed to update visit status: ${error.message || 'Please try again.'}`);
     }
   };
 

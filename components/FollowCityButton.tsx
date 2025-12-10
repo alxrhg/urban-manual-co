@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { Heart } from 'lucide-react';
+import { toast } from '@/components/ui/sonner';
 
 interface FollowCityButtonProps {
   citySlug: string;
@@ -88,7 +89,7 @@ export function FollowCityButton({
       }
     } catch (error) {
       console.error('Error toggling follow:', error);
-      alert('Failed to update follow status. Please try again.');
+      toast.error('Failed to update follow status. Please try again.');
     } finally {
       setIsUpdating(false);
     }
