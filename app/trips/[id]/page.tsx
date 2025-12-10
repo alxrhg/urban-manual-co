@@ -188,6 +188,27 @@ export default function TripPage() {
     return checkoutMap;
   }, [hotels, trip?.start_date]);
 
+  // Compute which hotel is checking in on each day
+  const checkInHotelByDay = useMemo(() => {
+    const checkInMap: Record<number, EnrichedItineraryItem | null> = {};
+    if (!trip?.start_date) return checkInMap;
+
+    const tripStart = new Date(trip.start_date + 'T00:00:00');
+
+    hotels.forEach(hotel => {
+      const checkInDate = hotel.parsedNotes?.checkInDate;
+      if (checkInDate) {
+        const inDate = new Date(checkInDate + 'T00:00:00');
+        const checkInDayNum = Math.floor((inDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        if (checkInDayNum > 0) {
+          checkInMap[checkInDayNum] = hotel;
+        }
+      }
+    });
+
+    return checkInMap;
+  }, [hotels, trip?.start_date]);
+
   // Compute which hotel provides breakfast on each day (previous night's hotel with breakfast included)
   const breakfastHotelByDay = useMemo(() => {
     const breakfastMap: Record<number, EnrichedItineraryItem | null> = {};
@@ -434,6 +455,7 @@ export default function TripPage() {
             const weather = dayDate ? weatherByDate[dayDate] : undefined;
             const nightlyHotel = nightlyHotelByDay[day.dayNumber] || null;
             const checkoutHotel = checkoutHotelByDay[day.dayNumber] || null;
+            const checkInHotel = checkInHotelByDay[day.dayNumber] || null;
             const breakfastHotel = breakfastHotelByDay[day.dayNumber] || null;
             return (
               <DaySection
@@ -448,6 +470,7 @@ export default function TripPage() {
                 isEditMode={isEditMode}
                 nightlyHotel={nightlyHotel}
                 checkoutHotel={checkoutHotel}
+                checkInHotel={checkInHotel}
                 breakfastHotel={breakfastHotel}
                 onSelectItem={handleSelectItem}
                 onRemove={removeItem}
@@ -1079,6 +1102,7 @@ function DaySection({
   isEditMode = false,
   nightlyHotel,
   checkoutHotel,
+  checkInHotel,
   breakfastHotel,
   onSelectItem,
 }: {
@@ -1102,6 +1126,7 @@ function DaySection({
   isEditMode?: boolean;
   nightlyHotel?: EnrichedItineraryItem | null;
   checkoutHotel?: EnrichedItineraryItem | null;
+  checkInHotel?: EnrichedItineraryItem | null;
   breakfastHotel?: EnrichedItineraryItem | null;
   onSelectItem?: (item: EnrichedItineraryItem) => void;
 }) {
@@ -1651,44 +1676,49 @@ function DaySection({
         </div>
       )}
 
-      {/* Morning Cards - Checkout and Breakfast */}
-      {(checkoutHotel || breakfastHotel) && (
-        <div className="mb-3 space-y-1">
+      {/* Hotel Activity Cards - Breakfast, Check-out, Check-in */}
+      {(checkoutHotel || breakfastHotel || checkInHotel) && (
+        <div className="mb-3 space-y-1 bg-gray-50 dark:bg-gray-800/30 rounded-xl p-1">
           {breakfastHotel && (
             <button
               onClick={() => onSelectItem?.(breakfastHotel)}
-              className="w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all hover:bg-stone-50 dark:hover:bg-gray-800/50"
+              className="w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all hover:bg-white dark:hover:bg-gray-800"
             >
-              <span className="text-base flex-shrink-0 w-6 text-center">🍳</span>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-stone-900 dark:text-white">
-                  Breakfast
-                </span>
-                <span className="text-xs text-stone-400 dark:text-gray-500 ml-2">
-                  at {breakfastHotel.title || 'Hotel'}
-                </span>
-              </div>
+              <span className="text-lg flex-shrink-0">🍳</span>
+              <span className="text-[14px] font-medium text-gray-900 dark:text-white">
+                Breakfast
+              </span>
+              <span className="text-[13px] text-gray-400">
+                at {breakfastHotel.title || 'Hotel'}
+              </span>
             </button>
           )}
           {checkoutHotel && (
             <button
               onClick={() => onSelectItem?.(checkoutHotel)}
-              className="w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all hover:bg-stone-50 dark:hover:bg-gray-800/50"
+              className="w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all hover:bg-white dark:hover:bg-gray-800"
             >
-              <span className="text-base flex-shrink-0 w-6 text-center">🧳</span>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-stone-900 dark:text-white">
-                  Check-out
-                </span>
-                <span className="text-xs text-stone-400 dark:text-gray-500 ml-2">
-                  from {checkoutHotel.title || 'Hotel'}
-                </span>
-              </div>
-              {checkoutHotel.parsedNotes?.checkOutTime && (
-                <span className="text-xs text-stone-500 dark:text-gray-400">
-                  Before {checkoutHotel.parsedNotes.checkOutTime}
-                </span>
-              )}
+              <span className="text-lg flex-shrink-0">🧳</span>
+              <span className="text-[14px] font-medium text-gray-900 dark:text-white">
+                Check-out
+              </span>
+              <span className="text-[13px] text-gray-400">
+                {checkoutHotel.parsedNotes?.checkOutTime || ''} from {checkoutHotel.title || 'Hotel'}
+              </span>
+            </button>
+          )}
+          {checkInHotel && (
+            <button
+              onClick={() => onSelectItem?.(checkInHotel)}
+              className="w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all hover:bg-white dark:hover:bg-gray-800"
+            >
+              <span className="text-lg flex-shrink-0">🛎️</span>
+              <span className="text-[14px] font-medium text-gray-900 dark:text-white">
+                Check-in
+              </span>
+              <span className="text-[13px] text-gray-400">
+                {checkInHotel.parsedNotes?.checkInTime || ''} at {checkInHotel.title || 'Hotel'}
+              </span>
             </button>
           )}
         </div>
