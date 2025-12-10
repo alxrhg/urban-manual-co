@@ -729,6 +729,9 @@ export interface HotelData {
   // For curated hotels
   destination_slug?: string;
   image?: string;
+  // Coordinates for travel time calculation
+  latitude?: number;
+  longitude?: number;
 }
 
 /**

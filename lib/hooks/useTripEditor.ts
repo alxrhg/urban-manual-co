@@ -542,6 +542,9 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       raw: hotelData.notes,
       // Include image from curated hotel
       image: hotelData.image,
+      // Include coordinates for travel time calculation
+      latitude: hotelData.latitude,
+      longitude: hotelData.longitude,
     };
 
     const title = hotelData.name;

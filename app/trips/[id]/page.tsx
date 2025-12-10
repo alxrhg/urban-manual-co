@@ -554,6 +554,8 @@ export default function TripPage() {
                     breakfastTime: data.breakfastIncluded ? '08:00' : undefined,
                     destination_slug: data.destination_slug,
                     image: data.image,
+                    latitude: data.latitude,
+                    longitude: data.longitude,
                   }, day.dayNumber);
                 }}
                 onAddActivity={(data) => addActivity(data, day.dayNumber)}
@@ -630,6 +632,8 @@ export default function TripPage() {
                       confirmationNumber: data.confirmationNumber,
                       destination_slug: data.destination_slug,
                       image: data.image,
+                      latitude: data.latitude,
+                      longitude: data.longitude,
                     }, sidebarAddDay);
                     setSidebarAddDay(null);
                   }}
@@ -1919,9 +1923,9 @@ function TransportForm({
   // Hotel search state
   const [hotelSearch, setHotelSearch] = useState('');
   const [searchSource, setSearchSource] = useState<'curated' | 'google'>('curated');
-  const [searchResults, setSearchResults] = useState<Array<{ id: string | number; name: string; image?: string; category?: string; slug?: string }>>([]);
+  const [searchResults, setSearchResults] = useState<Array<{ id: string | number; name: string; image?: string; category?: string; slug?: string; latitude?: number; longitude?: number; address?: string }>>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [selectedHotel, setSelectedHotel] = useState<{ id: string | number; name: string; image?: string; slug?: string } | null>(null);
+  const [selectedHotel, setSelectedHotel] = useState<{ id: string | number; name: string; image?: string; slug?: string; latitude?: number; longitude?: number; address?: string } | null>(null);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Hotel search effect
@@ -1963,7 +1967,10 @@ function TransportForm({
               id: p.id,
               name: p.name,
               image: p.image,
-              category: p.category
+              category: p.category,
+              latitude: p.latitude,
+              longitude: p.longitude,
+              address: p.formatted_address || p.address,
             })));
           }
         }
@@ -1979,9 +1986,10 @@ function TransportForm({
     };
   }, [hotelSearch, city, searchSource, type]);
 
-  const selectHotel = (hotel: { id: string | number; name: string; image?: string; slug?: string }) => {
+  const selectHotel = (hotel: { id: string | number; name: string; image?: string; slug?: string; latitude?: number; longitude?: number; address?: string }) => {
     setSelectedHotel(hotel);
     setName(hotel.name);
+    if (hotel.address) setAddress(hotel.address);
     setHotelSearch('');
     setSearchResults([]);
   };
@@ -2004,6 +2012,8 @@ function TransportForm({
         confirmation,
         ...(selectedHotel?.slug ? { destination_slug: selectedHotel.slug } : {}),
         ...(selectedHotel?.image ? { image: selectedHotel.image } : {}),
+        ...(selectedHotel?.latitude ? { latitude: selectedHotel.latitude } : {}),
+        ...(selectedHotel?.longitude ? { longitude: selectedHotel.longitude } : {}),
       });
     }
   };
