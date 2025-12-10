@@ -344,13 +344,7 @@ export default function DayTimeline({
       {day.items.length > 0 && (
         <div className="px-4 py-2 border-b border-black/[0.04] dark:border-white/[0.06]">
           <DayIntelligence
-            dayNumber={day.dayNumber}
-            date={day.date}
             items={day.items}
-            onOptimizeDay={() => onOptimizeDay?.(day.dayNumber)}
-            onAutoFill={() => onAutoFillDay?.(day.dayNumber)}
-            isOptimizing={isOptimizing}
-            isAutoFilling={isAutoFilling}
           />
         </div>
       )}
