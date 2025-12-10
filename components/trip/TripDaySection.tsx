@@ -269,13 +269,7 @@ export default function TripDaySection({
       {isExpanded && (
         <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/30">
           <DayIntelligence
-            dayNumber={day.dayNumber}
-            date={day.date}
             items={day.items}
-            onOptimizeDay={() => onOptimizeDay?.(day.dayNumber)}
-            onAutoFill={() => onAutoFillDay?.(day.dayNumber)}
-            isOptimizing={isOptimizing}
-            isAutoFilling={isAutoFilling}
           />
         </div>
       )}
