@@ -2321,7 +2321,7 @@ function ItemRow({
 }
 
 /**
- * Item details - edit form (no image)
+ * Item details - minimal inline edit form for mobile
  */
 function ItemDetails({
   item,
@@ -2338,35 +2338,20 @@ function ItemDetails({
   onRemove?: () => void;
   onClose: () => void;
 }) {
+  // Core fields
   const [time, setTime] = useState(item.time || '');
-  const [duration, setDuration] = useState(item.parsedNotes?.duration || '');
   const [notes, setNotes] = useState(item.parsedNotes?.notes || '');
-  const [checkInTime, setCheckInTime] = useState(item.parsedNotes?.checkInTime || '');
-  const [checkOutTime, setCheckOutTime] = useState(item.parsedNotes?.checkOutTime || '');
-  const [breakfastTime, setBreakfastTime] = useState(item.parsedNotes?.breakfastTime || '');
+  const [confirmationNumber, setConfirmationNumber] = useState(
+    item.parsedNotes?.confirmationNumber || item.parsedNotes?.hotelConfirmation || ''
+  );
+
+  // Flight/Train fields
   const [departureTime, setDepartureTime] = useState(item.parsedNotes?.departureTime || '');
   const [arrivalTime, setArrivalTime] = useState(item.parsedNotes?.arrivalTime || '');
-  const [airline, setAirline] = useState(item.parsedNotes?.airline || '');
-  const [flightNumber, setFlightNumber] = useState(item.parsedNotes?.flightNumber || '');
-  const [fromAirport, setFromAirport] = useState(item.parsedNotes?.from || '');
-  const [toAirport, setToAirport] = useState(item.parsedNotes?.to || '');
-  const [hasChanges, setHasChanges] = useState(false);
 
-  // Additional fields for all card types
-  const [priority, setPriority] = useState(item.parsedNotes?.priority || '');
-  const [bookingStatus, setBookingStatus] = useState(item.parsedNotes?.bookingStatus || '');
-  const [tags, setTags] = useState<string[]>(item.parsedNotes?.tags || []);
-  const [category, setCategory] = useState(item.destination?.category || item.parsedNotes?.category || '');
-
-  // Hotel-specific fields
-  const [checkInDate, setCheckInDate] = useState(item.parsedNotes?.checkInDate || '');
-  const [checkOutDate, setCheckOutDate] = useState(item.parsedNotes?.checkOutDate || '');
-  const [roomType, setRoomType] = useState(item.parsedNotes?.roomType || '');
-  const [confirmationNumber, setConfirmationNumber] = useState(item.parsedNotes?.confirmationNumber || '');
-  const [address, setAddress] = useState(item.parsedNotes?.address || item.destination?.formatted_address || '');
-
-  // Tag options
-  const tagOptions = ['Romantic', 'Kid-friendly', 'Business', 'Budget', 'Splurge', 'Quick bite', 'Reservation needed'];
+  // Hotel fields
+  const [checkInTime, setCheckInTime] = useState(item.parsedNotes?.checkInTime || '');
+  const [checkOutTime, setCheckOutTime] = useState(item.parsedNotes?.checkOutTime || '');
 
   const handleSave = () => {
     const updates: Record<string, unknown> = {};
@@ -2374,374 +2359,139 @@ function ItemDetails({
     if (itemType === 'hotel') {
       if (checkInTime !== (item.parsedNotes?.checkInTime || '')) updates.checkInTime = checkInTime;
       if (checkOutTime !== (item.parsedNotes?.checkOutTime || '')) updates.checkOutTime = checkOutTime;
-      if (breakfastTime !== (item.parsedNotes?.breakfastTime || '')) updates.breakfastTime = breakfastTime;
-      if (checkInDate !== (item.parsedNotes?.checkInDate || '')) updates.checkInDate = checkInDate;
-      if (checkOutDate !== (item.parsedNotes?.checkOutDate || '')) updates.checkOutDate = checkOutDate;
-      if (roomType !== (item.parsedNotes?.roomType || '')) updates.roomType = roomType;
-      if (confirmationNumber !== (item.parsedNotes?.confirmationNumber || '')) updates.confirmationNumber = confirmationNumber;
-      if (address !== (item.parsedNotes?.address || item.destination?.formatted_address || '')) updates.address = address;
+      if (confirmationNumber !== (item.parsedNotes?.confirmationNumber || item.parsedNotes?.hotelConfirmation || '')) {
+        updates.confirmationNumber = confirmationNumber;
+        updates.hotelConfirmation = confirmationNumber;
+      }
     } else if (itemType === 'flight' || itemType === 'train') {
-      if (fromAirport !== (item.parsedNotes?.from || '')) updates.from = fromAirport;
-      if (toAirport !== (item.parsedNotes?.to || '')) updates.to = toAirport;
       if (departureTime !== (item.parsedNotes?.departureTime || '')) updates.departureTime = departureTime;
       if (arrivalTime !== (item.parsedNotes?.arrivalTime || '')) updates.arrivalTime = arrivalTime;
       if (confirmationNumber !== (item.parsedNotes?.confirmationNumber || '')) updates.confirmationNumber = confirmationNumber;
-      if (itemType === 'flight') {
-        if (airline !== (item.parsedNotes?.airline || '')) updates.airline = airline;
-        if (flightNumber !== (item.parsedNotes?.flightNumber || '')) updates.flightNumber = flightNumber;
-      }
     } else {
       if (time !== item.time) onUpdateTime(item.id, time);
-      if (duration !== (item.parsedNotes?.duration || '')) updates.duration = duration;
-      if (category !== (item.destination?.category || item.parsedNotes?.category || '')) updates.category = category;
     }
 
-    // Common fields for all types
     if (notes !== (item.parsedNotes?.notes || '')) updates.notes = notes;
-    if (priority !== (item.parsedNotes?.priority || '')) updates.priority = priority;
-    if (bookingStatus !== (item.parsedNotes?.bookingStatus || '')) updates.bookingStatus = bookingStatus;
-    if (JSON.stringify(tags) !== JSON.stringify(item.parsedNotes?.tags || [])) updates.tags = tags;
 
     if (Object.keys(updates).length > 0) {
       onUpdateItem(item.id, updates);
     }
-    setHasChanges(false);
     onClose();
   };
 
-  const destination = item.destination;
-
   return (
-    <div className="px-3 pb-3 pt-1 space-y-3 bg-gray-50/50 dark:bg-gray-900/30 rounded-b-lg mx-3 mb-2">
-      {/* Hotel fields */}
+    <div className="px-3 pb-3 pt-2 space-y-3 border-t border-gray-100 dark:border-gray-800 mt-2">
+      {/* Hotel: check-in/out times */}
       {itemType === 'hotel' && (
-        <>
-          {/* Address */}
-          <div>
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Address</label>
-            <input
-              type="text"
-              value={address}
-              onChange={(e) => { setAddress(e.target.value); setHasChanges(true); }}
-              placeholder="Hotel address"
-              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-            />
-          </div>
-
-          {/* Check-in/out dates */}
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-in Date</label>
-              <input
-                type="date"
-                value={checkInDate}
-                onChange={(e) => { setCheckInDate(e.target.value); setHasChanges(true); }}
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-out Date</label>
-              <input
-                type="date"
-                value={checkOutDate}
-                onChange={(e) => { setCheckOutDate(e.target.value); setHasChanges(true); }}
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Check-in/out times */}
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-in Time</label>
-              <input
-                type="time"
-                value={checkInTime}
-                onChange={(e) => { setCheckInTime(e.target.value); setHasChanges(true); }}
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Check-out Time</label>
-              <input
-                type="time"
-                value={checkOutTime}
-                onChange={(e) => { setCheckOutTime(e.target.value); setHasChanges(true); }}
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Room type and Confirmation */}
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Room Type</label>
-              <input
-                type="text"
-                value={roomType}
-                onChange={(e) => { setRoomType(e.target.value); setHasChanges(true); }}
-                placeholder="e.g. Deluxe King"
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Confirmation #</label>
-              <input
-                type="text"
-                value={confirmationNumber}
-                onChange={(e) => { setConfirmationNumber(e.target.value); setHasChanges(true); }}
-                placeholder="Booking ref"
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none font-mono"
-              />
-            </div>
-          </div>
-
-          {/* Breakfast */}
-          <div>
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Breakfast</label>
-            <input
-              type="text"
-              value={breakfastTime}
-              onChange={(e) => { setBreakfastTime(e.target.value); setHasChanges(true); }}
-              placeholder="e.g. 7:00-10:00"
-              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-            />
-          </div>
-        </>
-      )}
-
-      {/* Flight/Train times */}
-      {(itemType === 'flight' || itemType === 'train') && (
-        <>
-          {/* From/To airports */}
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">From</label>
-              <input
-                type="text"
-                value={fromAirport}
-                onChange={(e) => { setFromAirport(e.target.value); setHasChanges(true); }}
-                placeholder={itemType === 'flight' ? 'e.g. LHR' : 'e.g. London'}
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">To</label>
-              <input
-                type="text"
-                value={toAirport}
-                onChange={(e) => { setToAirport(e.target.value); setHasChanges(true); }}
-                placeholder={itemType === 'flight' ? 'e.g. CDG' : 'e.g. Paris'}
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              />
-            </div>
-          </div>
-          {itemType === 'flight' && (
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="text-[10px] text-gray-400 uppercase tracking-wide">Airline</label>
-                <input
-                  type="text"
-                  value={airline}
-                  onChange={(e) => { setAirline(e.target.value); setHasChanges(true); }}
-                  placeholder="e.g. BA"
-                  className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="text-[10px] text-gray-400 uppercase tracking-wide">Flight #</label>
-                <input
-                  type="text"
-                  value={flightNumber}
-                  onChange={(e) => { setFlightNumber(e.target.value); setHasChanges(true); }}
-                  placeholder="e.g. 123"
-                  className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-                />
-              </div>
-            </div>
-          )}
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Departure</label>
-              <input
-                type="time"
-                value={departureTime}
-                onChange={(e) => { setDepartureTime(e.target.value); setHasChanges(true); }}
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              />
-            </div>
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Arrival</label>
-              <input
-                type="time"
-                value={arrivalTime}
-                onChange={(e) => { setArrivalTime(e.target.value); setHasChanges(true); }}
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              />
-            </div>
-          </div>
-          {/* Confirmation number */}
-          <div>
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Confirmation #</label>
-            <input
-              type="text"
-              value={confirmationNumber}
-              onChange={(e) => { setConfirmationNumber(e.target.value); setHasChanges(true); }}
-              placeholder="Booking reference"
-              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none font-mono"
-            />
-          </div>
-        </>
-      )}
-
-      {/* Regular place time + duration */}
-      {itemType !== 'hotel' && itemType !== 'flight' && itemType !== 'train' && (
-        <div className="flex gap-2">
+        <div className="flex gap-3">
           <div className="flex-1">
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Time</label>
+            <label className="text-[10px] text-gray-400 mb-1 block">Check-in</label>
             <input
               type="time"
-              value={time}
-              onChange={(e) => { setTime(e.target.value); setHasChanges(true); }}
-              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
+              value={checkInTime}
+              onChange={(e) => setCheckInTime(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
             />
           </div>
-          <div className="w-20">
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Duration</label>
-            <div className="relative mt-1">
-              <input
-                type="number"
-                step="0.5"
-                min="0.5"
-                max="12"
-                value={duration}
-                onChange={(e) => { setDuration(e.target.value); setHasChanges(true); }}
-                placeholder="1.5"
-                className="w-full px-2 py-1.5 pr-6 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[11px] text-gray-400">h</span>
-            </div>
+          <div className="flex-1">
+            <label className="text-[10px] text-gray-400 mb-1 block">Check-out</label>
+            <input
+              type="time"
+              value={checkOutTime}
+              onChange={(e) => setCheckOutTime(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
+            />
           </div>
         </div>
       )}
 
-      {/* Priority & Booking Status for regular places */}
-      {itemType !== 'hotel' && itemType !== 'flight' && itemType !== 'train' && (
-        <>
-          <div className="flex gap-2">
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Priority</label>
-              <select
-                value={priority}
-                onChange={(e) => { setPriority(e.target.value); setHasChanges(true); }}
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              >
-                <option value="">Select...</option>
-                <option value="must">Must do</option>
-                <option value="want">Want to</option>
-                <option value="if_time">If time</option>
-              </select>
-            </div>
-            <div className="flex-1">
-              <label className="text-[10px] text-gray-400 uppercase tracking-wide">Booking</label>
-              <select
-                value={bookingStatus}
-                onChange={(e) => { setBookingStatus(e.target.value); setHasChanges(true); }}
-                className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-              >
-                <option value="">Select...</option>
-                <option value="need_to_book">Need to book</option>
-                <option value="booked">Booked</option>
-                <option value="waitlist">Waitlist</option>
-                <option value="walk_in">Walk-in</option>
-              </select>
-            </div>
+      {/* Flight/Train: departure/arrival times */}
+      {(itemType === 'flight' || itemType === 'train') && (
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="text-[10px] text-gray-400 mb-1 block">Departs</label>
+            <input
+              type="time"
+              value={departureTime}
+              onChange={(e) => setDepartureTime(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
+            />
           </div>
-
-          {/* Category */}
-          <div>
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Category</label>
-            <select
-              value={category}
-              onChange={(e) => { setCategory(e.target.value); setHasChanges(true); }}
-              className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none"
-            >
-              <option value="">Select...</option>
-              <option value="restaurant">Restaurant</option>
-              <option value="cafe">Cafe</option>
-              <option value="bar">Bar</option>
-              <option value="museum">Museum</option>
-              <option value="attraction">Attraction</option>
-              <option value="shop">Shop</option>
-              <option value="park">Park</option>
-              <option value="activity">Activity</option>
-              <option value="other">Other</option>
-            </select>
+          <div className="flex-1">
+            <label className="text-[10px] text-gray-400 mb-1 block">Arrives</label>
+            <input
+              type="time"
+              value={arrivalTime}
+              onChange={(e) => setArrivalTime(e.target.value)}
+              className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
+            />
           </div>
-
-          {/* Tags */}
-          <div>
-            <label className="text-[10px] text-gray-400 uppercase tracking-wide">Tags</label>
-            <div className="flex flex-wrap gap-1.5 mt-1.5">
-              {tagOptions.map((tag) => (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => {
-                    setTags(prev =>
-                      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-                    );
-                    setHasChanges(true);
-                  }}
-                  className={`px-2 py-0.5 text-[11px] rounded-full border transition-colors ${
-                    tags.includes(tag)
-                      ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 border-gray-900 dark:border-white'
-                      : 'bg-white dark:bg-gray-900 text-gray-500 border-gray-200 dark:border-gray-700 hover:border-gray-400'
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
-        </>
+        </div>
       )}
 
-      {/* Notes */}
+      {/* Place: scheduled time */}
+      {itemType !== 'hotel' && itemType !== 'flight' && itemType !== 'train' && (
+        <div>
+          <label className="text-[10px] text-gray-400 mb-1 block">Time</label>
+          <input
+            type="time"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg"
+          />
+        </div>
+      )}
+
+      {/* Confirmation # for bookable items */}
+      {(itemType === 'hotel' || itemType === 'flight' || itemType === 'train') && (
+        <div>
+          <label className="text-[10px] text-gray-400 mb-1 block">Confirmation #</label>
+          <input
+            type="text"
+            value={confirmationNumber}
+            onChange={(e) => setConfirmationNumber(e.target.value)}
+            placeholder="Booking reference"
+            className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg font-mono"
+          />
+        </div>
+      )}
+
+      {/* Notes - always show */}
       <div>
-        <label className="text-[10px] text-gray-400 uppercase tracking-wide">Notes</label>
+        <label className="text-[10px] text-gray-400 mb-1 block">Notes</label>
         <textarea
           value={notes}
-          onChange={(e) => { setNotes(e.target.value); setHasChanges(true); }}
+          onChange={(e) => setNotes(e.target.value)}
           placeholder="Add a note..."
           rows={2}
-          className="w-full mt-1 px-2 py-1.5 text-[13px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded outline-none resize-none"
+          className="w-full px-3 py-2 text-sm bg-gray-50 dark:bg-gray-800 border-0 rounded-lg resize-none"
         />
       </div>
-
-      {/* Address */}
-      {destination?.formatted_address && (
-        <p className="text-[11px] text-gray-400 leading-relaxed">{destination.formatted_address}</p>
-      )}
 
       {/* Actions */}
       <div className="flex items-center justify-between pt-1">
         {onRemove ? (
-          <button onClick={onRemove} className="text-[11px] text-gray-400 hover:text-red-500 transition-colors">
+          <button
+            onClick={onRemove}
+            className="text-xs text-red-500 hover:text-red-600 font-medium"
+          >
             Remove
           </button>
         ) : (
           <div />
         )}
         <div className="flex items-center gap-2">
-          <button onClick={onClose} className="text-[11px] text-gray-400 hover:text-gray-600 transition-colors">
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700"
+          >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="flex items-center gap-1 text-[11px] font-medium text-white dark:text-gray-900 bg-gray-900 dark:bg-white px-2.5 py-1 rounded-full"
+            className="px-3 py-1.5 text-xs font-medium text-white bg-gray-900 dark:bg-white dark:text-gray-900 rounded-full"
           >
-            <Check className="w-3 h-3" /> Save
+            Save
           </button>
         </div>
       </div>
