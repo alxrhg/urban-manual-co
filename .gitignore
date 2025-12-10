@@ -156,6 +156,28 @@ dist-python/
 .dmypy.json
 dmypy.json
 
-# Environment variables
-.env
-.env.local
+# Temporary import data
+data/imports/
+
+# Archived documentation (use wiki or external docs)
+docs/archive/
+
+# iOS app (separate repo)
+ios/
+
+# Large data exports
+public/destinations.csv
+scripts/sql/update_coordinates*.sql
+
+# Duplicate iOS app directory
+ios-app/
+
+# Old migrations (use supabase/migrations)
+migrations/
+
+# Generated/source icons (keep icon-512.png as canonical)
+public/icon.png
+public/icon-original.jpg
+
+# Static data exports (use Supabase as source of truth)
+public/destinations.json

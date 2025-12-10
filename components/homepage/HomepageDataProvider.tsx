@@ -167,46 +167,19 @@ function HomepageDataProviderInner({
           .order('rating', { ascending: false, nullsFirst: false })
           .limit(1000); // Fetch all destinations (897+)
 
-        if (!error && data && data.length > 0) {
+        if (error) {
+          console.error('[Client] Supabase error:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
           setDestinations(data as Destination[]);
           const filters = extractFilters(data as Destination[]);
           setCities(filters.cities);
           setCategories(filters.categories);
-          setIsLoading(false);
-          return;
-        }
-
-        // Fallback to static JSON
-        console.log('[Client] Trying /destinations.json fallback');
-        const response = await fetch('/destinations.json');
-        if (response.ok) {
-          const jsonData = await response.json();
-          const fallbackData = (Array.isArray(jsonData) ? jsonData : jsonData.destinations || []) as Destination[];
-          if (fallbackData.length > 0) {
-            setDestinations(fallbackData);
-            const filters = extractFilters(fallbackData);
-            setCities(filters.cities);
-            setCategories(filters.categories);
-          }
         }
       } catch (error) {
-        console.error('[Client] Error fetching data:', error);
-        // Try static JSON as last resort
-        try {
-          const response = await fetch('/destinations.json');
-          if (response.ok) {
-            const jsonData = await response.json();
-            const fallbackData = (Array.isArray(jsonData) ? jsonData : jsonData.destinations || []) as Destination[];
-            if (fallbackData.length > 0) {
-              setDestinations(fallbackData);
-              const filters = extractFilters(fallbackData);
-              setCities(filters.cities);
-              setCategories(filters.categories);
-            }
-          }
-        } catch {
-          // Silent fail
-        }
+        console.error('[Client] Error fetching destinations:', error);
       } finally {
         setIsLoading(false);
       }

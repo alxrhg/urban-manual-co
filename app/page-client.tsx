@@ -725,60 +725,9 @@ export default function HomePageClient({
     };
   };
 
-  const loadFallbackDestinations = async () => {
-    if (fallbackDestinationsRef.current) {
-      return fallbackDestinationsRef.current;
-    }
-
-    try {
-      const response = await fetch("/destinations.json");
-      if (!response.ok) {
-        throw new Error(
-          `Failed to load fallback destinations: ${response.status}`
-        );
-      }
-
-      const raw = await response.json();
-      const normalized: Destination[] = (Array.isArray(raw) ? raw : [])
-        .map((item: any) => {
-          const slug = slugify(item.slug || item.name || "");
-
-          const tags = Array.isArray(item.tags)
-            ? item.tags
-            : typeof item.cardTags === "string"
-              ? item.cardTags
-                  .split(",")
-                  .map((tag: string) => tag.trim())
-                  .filter(Boolean)
-              : undefined;
-
-          return {
-            slug,
-            name: (item.name || slug || "Unknown destination").toString(),
-            city: (item.city || "").toString().trim(),
-            category: (item.category || "").toString().trim(),
-            description: item.description || item.subline || undefined,
-            content: item.content || undefined,
-            image: item.image || item.mainImage || undefined,
-            michelin_stars:
-              item.michelin_stars ?? item.michelinStars ?? undefined,
-            crown: item.crown ?? undefined,
-            tags: tags && tags.length > 0 ? tags : undefined,
-          } as Destination;
-        })
-        .filter((destination: Destination) =>
-          Boolean(destination.slug && destination.city && destination.category)
-        );
-
-      fallbackDestinationsRef.current = normalized;
-      return normalized;
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.warn("[Fallback] Unable to load static destinations:", error);
-      }
-      fallbackDestinationsRef.current = [];
-      return [];
-    }
+  // Static fallback removed - all data comes from Supabase
+  const loadFallbackDestinations = async (): Promise<Destination[]> => {
+    return fallbackDestinationsRef.current || [];
   };
 
   const applyFallbackData = async (
