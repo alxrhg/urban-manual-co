@@ -488,8 +488,8 @@ export default function InteractiveHero() {
                 onBlur={() => setTimeout(() => setIsFocused(false), 150)}
                 onKeyDown={handleInputKeyDown}
                 placeholder={showChatResults ? 'Ask a follow-up question...' : AI_PLACEHOLDERS[placeholderIndex]}
-                className="w-full h-[56px] pl-11 pr-14 text-[15px] bg-gray-100/80 dark:bg-white/[0.08]
-                           border-0 rounded-[16px] text-gray-900 dark:text-white
+                className="w-full h-[52px] sm:h-[56px] pl-11 pr-14 text-[16px] sm:text-[15px] bg-gray-100/80 dark:bg-white/[0.08]
+                           border-0 rounded-[14px] sm:rounded-[16px] text-gray-900 dark:text-white
                            placeholder:text-gray-400 dark:placeholder:text-gray-500
                            focus:outline-none focus:ring-2 focus:ring-gray-900/20 dark:focus:ring-white/20
                            focus:bg-white dark:focus:bg-white/[0.12]
@@ -498,10 +498,11 @@ export default function InteractiveHero() {
               <button
                 type="submit"
                 disabled={isSearching || !localSearchTerm.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-10 sm:h-10 flex items-center justify-center
                            rounded-[12px] bg-gray-900 dark:bg-white
                            text-white dark:text-gray-900
                            hover:bg-gray-800 dark:hover:bg-gray-100
+                           active:bg-gray-700 dark:active:bg-gray-200
                            disabled:opacity-50 transition-all duration-200 z-10"
                 aria-label="Search"
               >

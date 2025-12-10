@@ -592,6 +592,7 @@ export interface ItineraryItemNotes {
   // Location data
   latitude?: number;
   longitude?: number;
+  googlePlaceId?: string; // Google Places API place_id
   // Flight-specific fields
   from?: string;
   to?: string;
@@ -611,12 +612,18 @@ export interface ItineraryItemNotes {
   // Hotel-specific fields
   isHotel?: boolean; // Marks this as the hotel for the night
   breakfastIncluded?: boolean; // If true, shows breakfast at top of next day
+  breakfastTime?: string; // e.g. "7:00-10:00"
   checkInTime?: string;
   checkOutTime?: string;
   checkInDate?: string;
   checkOutDate?: string;
   hotelConfirmation?: string;
+  confirmation?: string; // Booking reference
   roomType?: string;
+  // Hotel activity positions (for reordering check-in/checkout/breakfast cards)
+  checkinPosition?: number; // Position of check-in card among day items
+  checkoutPosition?: number; // Position of checkout card among day items
+  breakfastPosition?: number; // Position of breakfast card among day items
   // Lodging details
   name?: string;
   address?: string;
@@ -721,6 +728,14 @@ export interface HotelData {
   confirmationNumber?: string;
   roomType?: string;
   notes?: string;
+  breakfastIncluded?: boolean;
+  breakfastTime?: string;
+  // For curated hotels
+  destination_slug?: string;
+  image?: string;
+  // Coordinates for travel time calculation
+  latitude?: number;
+  longitude?: number;
 }
 
 /**

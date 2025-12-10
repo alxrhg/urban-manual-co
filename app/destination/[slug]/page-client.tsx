@@ -15,12 +15,11 @@ import {
 import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { htmlToPlainText } from '@/lib/sanitize';
-import { CARD_MEDIA, CARD_TITLE, CARD_WRAPPER } from '@/components/CardStyles';
 import { trackEvent } from '@/lib/analytics/track';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
 import { useAuth } from '@/contexts/AuthContext';
-import { LocatedInBadge, NestedDestinations } from '@/components/NestedDestinations';
+import { NestedDestinations } from '@/components/NestedDestinations';
 import { ForecastInfo } from '@/components/ForecastInfo';
 import { SentimentDisplay } from '@/components/SentimentDisplay';
 import { TopicsDisplay } from '@/components/TopicsDisplay';
@@ -388,78 +387,239 @@ export default function DestinationPageClient({ initialDestination, parentDestin
   const cityName = capitalizeCity(destination.city || '');
 
   return (
-    <main className="w-full px-6 md:px-10 lg:px-12 py-12 md:py-16 min-h-screen">
-      <div className="w-full max-w-4xl mx-auto space-y-10 md:space-y-12">
-        {/* Header */}
-        <div>
+    <main className="w-full min-h-screen">
+      {/* Hero Section - Full width with gradient overlay */}
+      <div className="relative">
+        {/* Hero Image */}
+        {destination.image ? (
+          <div className="relative w-full h-[50vh] md:h-[50vh] lg:h-[45vh] xl:h-[40vh]">
+            <Image
+              src={destination.image}
+              alt={`${destination.name} - ${destination.category} in ${destination.city}`}
+              fill
+              sizes="100vw"
+              className="object-cover"
+              quality={90}
+              priority
+            />
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+          </div>
+        ) : (
+          <div className="w-full h-[40vh] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-900 dark:to-gray-800" />
+        )}
+
+        {/* Floating Back Button */}
+        <button
+          onClick={() => router.back()}
+          className="absolute top-4 left-4 md:top-6 md:left-6 z-10 w-10 h-10 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center text-gray-900 dark:text-white hover:bg-white dark:hover:bg-black transition-colors shadow-lg"
+          aria-label="Back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+
+        {/* Floating Action Buttons */}
+        <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex items-center gap-2">
           <button
-            onClick={() => router.back()}
-            className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors mb-6"
-            aria-label="Back"
+            onClick={() => {
+              if (navigator.share) {
+                navigator.share({
+                  title: destination.name,
+                  text: `Check out ${destination.name} in ${cityName}`,
+                  url: window.location.href,
+                }).catch(() => {});
+              } else {
+                navigator.clipboard.writeText(window.location.href);
+              }
+            }}
+            className="w-10 h-10 rounded-full bg-white/90 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center text-gray-900 dark:text-white hover:bg-white dark:hover:bg-black transition-colors shadow-lg"
+            aria-label="Share"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <Share2 className="w-5 h-5" />
           </button>
-
-          <div className="space-y-3">
-            {/* Location */}
-            <div className="flex flex-wrap items-center gap-2">
-              <a
-                href={`/city/${destination.city}`}
-                className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1.5 text-xs"
+          {user && (
+            <>
+              <button
+                onClick={() => {
+                  if (!isSaved) {
+                    setShowSaveModal(true);
+                  }
+                }}
+                className={`w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-lg ${
+                  isSaved
+                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    : 'bg-white/90 dark:bg-black/80 text-gray-900 dark:text-white hover:bg-white dark:hover:bg-black'
+                }`}
+                aria-label={isSaved ? 'Saved' : 'Save'}
               >
-                <MapPin className="h-3 w-3" />
-                {destination.neighborhood && (
-                  <span>{destination.neighborhood} · </span>
-                )}
-                {destination.country ? `${cityName}, ${destination.country}` : cityName}
-              </a>
-            </div>
+                <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+              </button>
+              <button
+                onClick={handleVisitToggle}
+                className={`w-10 h-10 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors shadow-lg ${
+                  isVisited
+                    ? 'bg-green-600 text-white'
+                    : 'bg-white/90 dark:bg-black/80 text-gray-900 dark:text-white hover:bg-white dark:hover:bg-black'
+                }`}
+                aria-label={isVisited ? 'Visited' : 'Mark Visited'}
+              >
+                <Check className={`w-5 h-5 ${isVisited ? 'stroke-[3]' : ''}`} />
+              </button>
+            </>
+          )}
+        </div>
 
-            {/* Title and Action Buttons */}
-            <div className="flex items-start justify-between gap-4">
-              <h1 className="text-2xl md:text-3xl font-bold leading-tight flex-1">
-                {destination.name}
-              </h1>
-              {user && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      if (!isSaved) {
-                        setShowSaveModal(true);
+        {/* Hero Content Overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 lg:p-12">
+          <div className="max-w-4xl mx-auto">
+            {/* Location Tag */}
+            <a
+              href={`/city/${destination.city}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 mb-4 rounded-full bg-white/20 backdrop-blur-sm text-white text-[13px] font-medium hover:bg-white/30 transition-colors"
+            >
+              <MapPin className="h-3.5 w-3.5" />
+              {destination.neighborhood && <span>{destination.neighborhood} · </span>}
+              {destination.country ? `${cityName}, ${destination.country}` : cityName}
+            </a>
+
+            {/* Title */}
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4">
+              {destination.name}
+            </h1>
+
+            {/* Meta badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              {destination.category && (
+                <span className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[13px] font-medium flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5" />
+                  {formatLabel(destination.category)}
+                </span>
+              )}
+              {destination.michelin_stars && destination.michelin_stars > 0 && (
+                <span className="px-3 py-1.5 rounded-full bg-red-600/90 backdrop-blur-sm text-white text-[13px] font-medium flex items-center gap-1.5">
+                  <Image
+                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                    alt="Michelin star"
+                    width={14}
+                    height={14}
+                    className="h-3.5 w-3.5 brightness-0 invert"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src !== '/michelin-star.svg') {
+                        target.src = '/michelin-star.svg';
                       }
                     }}
-                    className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                  />
+                  {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
+                </span>
+              )}
+              {destination.crown && (
+                <span className="px-3 py-1.5 rounded-full bg-amber-500/90 backdrop-blur-sm text-white text-[13px] font-medium">
+                  Crown
+                </span>
+              )}
+              {(enrichedData?.rating || destination.rating) && (
+                <span className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[13px] font-medium flex items-center gap-1.5">
+                  <span className="text-yellow-400">★</span>
+                  {(enrichedData?.rating || destination.rating).toFixed(1)}
+                  {enrichedData?.user_ratings_total && (
+                    <span className="text-white/70">({enrichedData.user_ratings_total.toLocaleString()})</span>
+                  )}
+                </span>
+              )}
+              {(enrichedData?.price_level || destination.price_level) && (
+                <span className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[13px] font-medium">
+                  {PRICE_LEVEL.LABELS[(enrichedData?.price_level || destination.price_level) as keyof typeof PRICE_LEVEL.LABELS]}
+                </span>
+              )}
+              {destination.brand && (
+                <span className="px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[13px] font-medium flex items-center gap-1.5">
+                  <Building2 className="h-3.5 w-3.5" />
+                  {destination.brand}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Navigation - Desktop only */}
+      <div className="hidden lg:block sticky top-0 z-20 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-white/10">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-12">
+          <nav className="flex items-center gap-8 overflow-x-auto">
+            <a href="#about" className="py-4 text-[14px] font-medium text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white -mb-px">
+              About
+            </a>
+            {enrichedData?.reviews && enrichedData.reviews.length > 0 && (
+              <a href="#reviews" className="py-4 text-[14px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                Reviews
+              </a>
+            )}
+            <a href="#location" className="py-4 text-[14px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+              Location
+            </a>
+            {recommendations.length > 0 && (
+              <a href="#similar" className="py-4 text-[14px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                Similar
+              </a>
+            )}
+          </nav>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="px-6 md:px-10 lg:px-12 py-8 md:py-10">
+        <div className="max-w-7xl mx-auto">
+          {/* Two-column layout on desktop */}
+          <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-12">
+            {/* Main Column */}
+            <div className="space-y-8 md:space-y-10">
+              {/* Parent Destination Link */}
+              {parentDestination && (
+                <div className="bg-gray-50 dark:bg-white/5 rounded-2xl p-4 border border-gray-100 dark:border-white/10">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
+                    Located inside
+                  </p>
+                  <HorizontalDestinationCard
+                    destination={parentDestination}
+                    onClick={() => router.push(`/destination/${parentDestination.slug}`)}
+                    showBadges={true}
+                  />
+                </div>
+              )}
+
+              {/* Quick Actions Bar - Visible on Mobile */}
+              {user && (
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-2 px-2 lg:hidden">
+                  <button
+                    onClick={() => !isSaved && setShowSaveModal(true)}
+                    className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 transition-colors ${
                       isSaved
-                        ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                        : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300'
                     }`}
                   >
-                    <Bookmark className={`h-3 w-3 ${isSaved ? 'fill-current' : ''}`} />
+                    <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
                     {isSaved ? 'Saved' : 'Save'}
                   </button>
-
-                  {/* Visited Button with Dropdown */}
                   <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
                     <DropdownMenuTrigger asChild>
                       <button
-                        className={`px-3 py-1.5 border border-gray-200 dark:border-gray-800 rounded-2xl text-xs transition-colors flex items-center gap-1.5 ${
+                        className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 transition-colors ${
                           isVisited
-                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
-                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300'
                         }`}
                         onClick={(e) => {
                           if (!isVisited) {
                             e.preventDefault();
                             handleVisitToggle();
                           }
-                          // If already visited, let the dropdown handle the click
                         }}
                       >
-                        <Check className={`h-3 w-3 ${isVisited ? 'stroke-[3]' : ''}`} />
+                        <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
                         {isVisited ? 'Visited' : 'Mark Visited'}
-                        {isVisited && <ChevronDown className="h-3 w-3 ml-0.5" />}
+                        {isVisited && <ChevronDown className="h-4 w-4" />}
                       </button>
                     </DropdownMenuTrigger>
                     {isVisited && (
@@ -483,411 +643,421 @@ export default function DestinationPageClient({ initialDestination, parentDestin
                   </DropdownMenu>
                 </div>
               )}
-            </div>
 
-            {/* Meta badges */}
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-              {/* Parent destination badge - show if this is nested */}
-              {parentDestination && (
-                <LocatedInBadge
-                  parent={parentDestination}
-                  onClick={() => router.push(`/destination/${parentDestination.slug}`)}
+              {/* Sequence Predictions */}
+              {user && predictions && predictions.predictions && predictions.predictions.length > 0 && (
+                <SequencePredictionsInline
+                  predictions={predictions.predictions}
+                  compact={false}
                 />
               )}
-              
-              {destination.category && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <Tag className="h-3 w-3" />
-                  {formatLabel(destination.category)}
-                </span>
+
+              {/* ML Intelligence Section */}
+              {destination.id && (
+                <div className="space-y-4">
+                  <AnomalyAlert destinationId={destination.id} type="traffic" />
+                  <ForecastInfo destinationId={destination.id} />
+                  <SentimentDisplay destinationId={destination.id} days={30} />
+                  <TopicsDisplay destinationId={destination.id} minTopicSize={3} />
+                </div>
               )}
-              {destination.brand && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <Building2 className="h-3 w-3" />
-                  {destination.brand}
-                </span>
-              )}
-              {destination.michelin_stars && destination.michelin_stars > 0 && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <Image
-                    src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                    alt="Michelin star"
-                    width={12}
-                    height={12}
-                    className="h-3 w-3"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (target.src !== '/michelin-star.svg') {
-                        target.src = '/michelin-star.svg';
-                      }
-                    }}
-                  />
-                  {destination.michelin_stars} Michelin {destination.michelin_stars === 1 ? 'Star' : 'Stars'}
-                </span>
-              )}
-              {destination.crown && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400">
-                  Crown
-                </span>
-              )}
-              {(enrichedData?.rating || destination.rating) && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 flex items-center gap-1.5">
-                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                  </svg>
-                  {(enrichedData?.rating || destination.rating).toFixed(1)}
-                  {enrichedData?.user_ratings_total && (
-                    <span className="text-gray-400">({enrichedData.user_ratings_total.toLocaleString()})</span>
+
+              {/* About Section */}
+              {destination.content && (
+                <div id="about" className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 p-6 md:p-8 scroll-mt-20">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">About</h2>
+                  <div className="text-[15px] leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                    {htmlToPlainText(destination.content)}
+                  </div>
+                  {destination.micro_description && destination.micro_description !== destination.content && (
+                    <p className="mt-6 pt-6 border-t border-gray-100 dark:border-white/10 text-[14px] text-gray-500 dark:text-gray-500 italic">
+                      {destination.micro_description}
+                    </p>
                   )}
-                </span>
+                </div>
               )}
-              {(enrichedData?.price_level || destination.price_level) && (
-                <span className="px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-xl text-gray-600 dark:text-gray-400 font-medium">
-                  {PRICE_LEVEL.LABELS[(enrichedData?.price_level || destination.price_level) as keyof typeof PRICE_LEVEL.LABELS]}
-                </span>
+
+              {/* Architecture & Design */}
+              <ArchitectDesignInfo destination={destination} />
+
+              {/* Reviews Section */}
+              {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
+                <div id="reviews" className="scroll-mt-20">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">Reviews</h2>
+                  <div className="space-y-4">
+                    {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
+                      <div key={idx} className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 p-5 hover:border-gray-200 dark:hover:border-white/20 transition-colors">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
+                            <span className="text-[14px] font-medium text-gray-600 dark:text-gray-400">
+                              {review.author_name?.charAt(0)?.toUpperCase() || '?'}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-[14px] text-gray-900 dark:text-white">{review.author_name}</span>
+                              <div className="flex items-center gap-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className={`text-[12px] ${i < (review.rating || 0) ? 'text-yellow-400' : 'text-gray-200 dark:text-gray-700'}`}
+                                  >
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
+                              {review.relative_time_description && (
+                                <span className="text-[12px] text-gray-400">· {review.relative_time_description}</span>
+                              )}
+                            </div>
+                            {review.text && (
+                              <p className="mt-2 text-[14px] text-gray-600 dark:text-gray-400 leading-relaxed">
+                                {review.text}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
-            </div>
 
-            {parentDestination && (
-              <div className="mt-4 space-y-2">
-                <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  Located inside
-                </p>
-                <HorizontalDestinationCard
-                  destination={parentDestination}
-                  onClick={() => router.push(`/destination/${parentDestination.slug}`)}
-                  showBadges={true}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+              {/* Nested Destinations */}
+              {destination.nested_destinations && destination.nested_destinations.length > 0 && (
+                <div>
+                  <NestedDestinations
+                    destinations={destination.nested_destinations}
+                    parentName={destination.name}
+                    onDestinationClick={(nested) => router.push(`/destination/${nested.slug}`)}
+                  />
+                </div>
+              )}
 
-        {/* Sequence Predictions - Show next suggested actions */}
-        {user && predictions && predictions.predictions && predictions.predictions.length > 0 && (
-          <div className="mt-4">
-            <SequencePredictionsInline 
-              predictions={predictions.predictions} 
-              compact={false}
-            />
-          </div>
-        )}
+              {/* Similar Destinations */}
+              {(loadingRecommendations || recommendations.length > 0) && (
+                <div id="similar" className="scroll-mt-20">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">You might also like</h2>
 
-        {/* ML Intelligence Section */}
-        {destination.id && (
-          <div className="mt-4 space-y-4">
-            {/* Anomaly Alert */}
-            <AnomalyAlert destinationId={destination.id} type="traffic" />
-            
-            {/* Forecast Info */}
-            <ForecastInfo destinationId={destination.id} />
-            
-            {/* Sentiment Analysis */}
-            <SentimentDisplay destinationId={destination.id} days={30} />
-            
-            {/* Topics */}
-            <TopicsDisplay destinationId={destination.id} minTopicSize={3} />
-          </div>
-        )}
-
-        {/* Hero Image */}
-        {destination.image && (
-          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-gray-100 dark:bg-gray-900 shadow-sm">
-            <Image
-              src={destination.image}
-              alt={`${destination.name} - ${destination.category} in ${destination.city}`}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-              className="object-cover"
-              quality={90}
-              priority
-            />
-          </div>
-        )}
-
-        {/* About */}
-        {destination.content && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <h2 className="text-sm font-medium mb-4">About</h2>
-            <div className="text-sm leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-              {htmlToPlainText(destination.content)}
-            </div>
-            {destination.micro_description && destination.micro_description !== destination.content && (
-              <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                <p className="text-xs text-gray-500 dark:text-gray-500 italic">
-                  {destination.micro_description}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Architecture & Design */}
-        <ArchitectDesignInfo destination={destination} />
-
-        {/* Location & Contact */}
-        {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.formatted_address || 
-          enrichedData?.international_phone_number || destination.phone_number || 
-          enrichedData?.website || destination.website || destination.instagram_url) && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <h2 className="text-sm font-medium mb-4">Location & Contact</h2>
-            <div className="space-y-4">
-              {/* Address */}
-              {(enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity) && (
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-4 w-4 text-gray-500 dark:text-gray-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity}
+                  {loadingRecommendations ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                        <div key={i} className="space-y-3">
+                          <Skeleton className="aspect-[4/3] rounded-2xl" />
+                          <Skeleton className="h-4 rounded-lg w-3/4" />
+                          <Skeleton className="h-3 rounded-lg w-1/2" />
+                        </div>
+                      ))}
                     </div>
-                    {destination.latitude && destination.longitude && (
+                  ) : recommendations.length === 0 ? (
+                    <div className="text-center py-12 text-[14px] text-gray-400">
+                      No similar destinations found
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {recommendations.slice(0, 8).map(rec => (
+                        <button
+                          key={rec.slug}
+                          onClick={() => {
+                            trackEvent({
+                              event_type: 'click',
+                              destination_slug: rec.slug,
+                              metadata: {
+                                source: 'destination_detail_recommendations',
+                                category: rec.category,
+                                city: rec.city,
+                              },
+                            });
+                            router.push(`/destination/${rec.slug}`);
+                          }}
+                          className="text-left group"
+                        >
+                          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3">
+                            {rec.image ? (
+                              <Image
+                                src={rec.image}
+                                alt={`${rec.name} - ${rec.category} in ${rec.city}`}
+                                fill
+                                sizes="(max-width: 768px) 50vw, 25vw"
+                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                quality={75}
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                                <MapPin className="h-10 w-10 opacity-20" />
+                              </div>
+                            )}
+
+                            {rec.michelin_stars && rec.michelin_stars > 0 && (
+                              <div className="absolute bottom-2 left-2 px-2 py-1 rounded-lg bg-red-600 text-white text-[11px] font-medium flex items-center gap-1">
+                                <img
+                                  src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                                  alt="Michelin star"
+                                  width={12}
+                                  height={12}
+                                  className="h-3 w-3 brightness-0 invert"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    if (target.src !== '/michelin-star.svg') {
+                                      target.src = '/michelin-star.svg';
+                                    }
+                                  }}
+                                />
+                                {rec.michelin_stars}
+                              </div>
+                            )}
+                          </div>
+
+                          <h3 className="text-[14px] font-medium text-gray-900 dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors line-clamp-1">
+                            {rec.name}
+                          </h3>
+                          <p className="text-[13px] text-gray-500 mt-1">
+                            {capitalizeCity(rec.city)}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Footer Actions - Mobile only */}
+              <div className="pt-8 border-t border-gray-100 dark:border-white/10 lg:hidden">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => router.push(`/city/${destination.city}`)}
+                    className="flex-1 px-6 py-3.5 text-[14px] font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-opacity"
+                  >
+                    Explore more in {cityName}
+                  </button>
+                  <button
+                    onClick={() => router.push('/')}
+                    className="flex-1 px-6 py-3.5 text-[14px] font-medium border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300"
+                  >
+                    Browse all destinations
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar - Desktop only */}
+            <div id="location" className="hidden lg:block scroll-mt-20">
+              <div className="sticky top-16 space-y-6">
+                {/* Location & Contact Card */}
+                {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.formatted_address ||
+                  enrichedData?.international_phone_number || destination.phone_number ||
+                  enrichedData?.website || destination.website || destination.instagram_url ||
+                  enrichedData?.opening_hours?.weekday_text) && (
+                  <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 overflow-hidden">
+                    <div className="p-5">
+                      <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white mb-4">Location & Contact</h2>
+
+                      {/* Address */}
+                      {(enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity) && (
+                        <div className="flex items-start gap-3 mb-4">
+                          <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <p className="text-[13px] text-gray-600 dark:text-gray-400 leading-relaxed">
+                            {enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Directions Button */}
+                      {destination.latitude && destination.longitude && (
+                        <a
+                          href={`https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-[13px] font-medium hover:opacity-90 transition-opacity mb-4"
+                        >
+                          <Navigation className="h-4 w-4" />
+                          Get Directions
+                        </a>
+                      )}
+
+                      {/* Contact Buttons */}
+                      <div className="flex flex-wrap gap-2">
+                        {(enrichedData?.international_phone_number || destination.phone_number) && (
+                          <a
+                            href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
+                            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 dark:bg-white/10 rounded-xl text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+                          >
+                            <Phone className="h-4 w-4" />
+                            Call
+                          </a>
+                        )}
+                        {(enrichedData?.website || destination.website) && (() => {
+                          const websiteUrl = (enrichedData?.website || destination.website) || '';
+                          const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+                          return (
+                            <a
+                              href={fullUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 dark:bg-white/10 rounded-xl text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+                            >
+                              <Globe className="h-4 w-4" />
+                              Website
+                            </a>
+                          );
+                        })()}
+                      </div>
+                      {destination.instagram_url && (
+                        <a
+                          href={destination.instagram_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 dark:bg-white/10 rounded-xl text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+                        >
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                          </svg>
+                          Instagram
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Opening Hours */}
+                    {enrichedData?.opening_hours?.weekday_text && Array.isArray(enrichedData.opening_hours.weekday_text) && (
+                      <div className="px-5 py-4 bg-gray-50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-white/10">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Clock className="h-4 w-4 text-gray-500" />
+                          <h3 className="text-[13px] font-semibold text-gray-900 dark:text-white">Hours</h3>
+                        </div>
+                        <div className="space-y-1.5">
+                          {enrichedData.opening_hours.weekday_text.map((day: string, index: number) => {
+                            const [dayName, hoursText] = day.split(': ');
+                            return (
+                              <div key={index} className="flex justify-between items-center">
+                                <span className="text-[12px] text-gray-500">{dayName}</span>
+                                <span className="text-[12px] text-gray-900 dark:text-white font-medium">{hoursText}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Quick Actions - Desktop */}
+                <div className="space-y-3">
+                  <button
+                    onClick={() => router.push(`/city/${destination.city}`)}
+                    className="w-full px-5 py-3 text-[14px] font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-opacity"
+                  >
+                    Explore more in {cityName}
+                  </button>
+                  <button
+                    onClick={() => router.push('/')}
+                    className="w-full px-5 py-3 text-[14px] font-medium border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300"
+                  >
+                    Browse all destinations
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Location & Contact - Mobile only (shown below main content) */}
+          <div className="lg:hidden mt-8 space-y-8">
+            {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.formatted_address ||
+              enrichedData?.international_phone_number || destination.phone_number ||
+              enrichedData?.website || destination.website || destination.instagram_url ||
+              enrichedData?.opening_hours?.weekday_text) && (
+              <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 overflow-hidden">
+                <div className="p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">Location & Contact</h2>
+
+                  {(enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity) && (
+                    <div className="flex items-start gap-4 mb-6">
+                      <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[15px] text-gray-900 dark:text-white font-medium">
+                          {enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity}
+                        </p>
+                        {destination.latitude && destination.longitude && (
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-[13px] font-medium hover:opacity-90 transition-opacity"
+                          >
+                            <Navigation className="h-4 w-4" />
+                            Get Directions
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    {(enrichedData?.international_phone_number || destination.phone_number) && (
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
+                        href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/10 rounded-xl text-[14px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+                      >
+                        <Phone className="h-4 w-4" />
+                        Call
+                      </a>
+                    )}
+                    {(enrichedData?.website || destination.website) && (() => {
+                      const websiteUrl = (enrichedData?.website || destination.website) || '';
+                      const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+                      return (
+                        <a
+                          href={fullUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/10 rounded-xl text-[14px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+                        >
+                          <Globe className="h-4 w-4" />
+                          Website
+                          <ExternalLink className="h-3 w-3 opacity-60" />
+                        </a>
+                      );
+                    })()}
+                    {destination.instagram_url && (
+                      <a
+                        href={destination.instagram_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/10 rounded-xl text-[14px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
                       >
-                        <Navigation className="h-3 w-3" />
-                        Get Directions
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                        Instagram
                       </a>
                     )}
                   </div>
                 </div>
-              )}
 
-              {/* Contact Info */}
-              <div className="flex flex-wrap gap-3">
-                {(enrichedData?.international_phone_number || destination.phone_number) && (
-                  <a
-                    href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <Phone className="h-4 w-4" />
-                    Call
-                  </a>
+                {enrichedData?.opening_hours?.weekday_text && Array.isArray(enrichedData.opening_hours.weekday_text) && (
+                  <div className="px-6 py-5 bg-gray-50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-white/10">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                      <h3 className="text-[14px] font-semibold text-gray-900 dark:text-white">Hours</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                      {enrichedData.opening_hours.weekday_text.map((day: string, index: number) => {
+                        const [dayName, hoursText] = day.split(': ');
+                        return (
+                          <div key={index} className="flex justify-between items-center py-1">
+                            <span className="text-[13px] text-gray-500">{dayName}</span>
+                            <span className="text-[13px] text-gray-900 dark:text-white font-medium">{hoursText}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
-                {(enrichedData?.website || destination.website) && (() => {
-                  const websiteUrl = (enrichedData?.website || destination.website) || '';
-                  const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
-                  return (
-                    <a
-                      href={fullUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                    >
-                      <Globe className="h-4 w-4" />
-                      Website
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
-                  );
-                })()}
-                {destination.instagram_url && (
-                  <a
-                    href={destination.instagram_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 dark:border-gray-800 rounded-xl text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                  >
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                    </svg>
-                    Instagram
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Opening Hours */}
-        {enrichedData?.opening_hours?.weekday_text && Array.isArray(enrichedData.opening_hours.weekday_text) && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <h2 className="text-sm font-medium mb-4 flex items-center gap-2">
-              <Clock className="h-4 w-4" />
-              Opening Hours
-            </h2>
-            <div className="space-y-2 text-sm">
-              {enrichedData.opening_hours.weekday_text.map((day: string, index: number) => {
-                const [dayName, hoursText] = day.split(': ');
-                return (
-                  <div key={index} className="flex justify-between items-center py-1">
-                    <span className="text-gray-600 dark:text-gray-400">{dayName}</span>
-                    <span className="text-gray-900 dark:text-white font-medium">{hoursText}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Reviews */}
-        {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <h2 className="text-sm font-medium mb-4">Top Reviews</h2>
-            <div className="space-y-3">
-              {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
-                <div key={idx} className="border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <span className="font-medium text-sm text-gray-900 dark:text-white">{review.author_name}</span>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-yellow-500">⭐</span>
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{review.rating}</span>
-                        {review.relative_time_description && (
-                          <span className="text-xs text-gray-500 dark:text-gray-500">· {review.relative_time_description}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {review.text && (
-                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-2 leading-relaxed">
-                      {review.text}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Nested Destinations - Show venues within this destination */}
-        {destination.nested_destinations && destination.nested_destinations.length > 0 && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <NestedDestinations
-              destinations={destination.nested_destinations}
-              parentName={destination.name}
-              onDestinationClick={(nested) => router.push(`/destination/${nested.slug}`)}
-            />
-          </div>
-        )}
-
-        {/* Similar Destinations */}
-        {(loadingRecommendations || recommendations.length > 0) && (
-          <div className="border-t border-gray-200 dark:border-gray-800 pt-8">
-            <h2 className="text-sm font-medium mb-6">Similar Destinations</h2>
-
-            {loadingRecommendations ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 items-start">
-                {[1, 2, 3, 4, 5, 6].slice(0, 6).map(i => (
-                  <div key={i} className="space-y-2">
-                    <Skeleton className="aspect-square rounded-2xl" />
-                    <Skeleton className="h-3 rounded-full w-3/4" />
-                    <Skeleton className="h-2 rounded-full w-1/2" />
-                  </div>
-                ))}
-              </div>
-            ) : recommendations.length === 0 ? (
-              <div className="text-center py-12 text-xs text-gray-400">
-                No similar destinations found
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 md:gap-6 items-start">
-                {recommendations.slice(0, 6).map(rec => (
-                  <button
-                    key={rec.slug}
-                    onClick={() => {
-                      trackEvent({
-                        event_type: 'click',
-                        destination_slug: rec.slug,
-                        metadata: {
-                          source: 'destination_detail_recommendations',
-                          category: rec.category,
-                          city: rec.city,
-                        },
-                      });
-                      router.push(`/destination/${rec.slug}`);
-                    }}
-                    className={`${CARD_WRAPPER} text-left group`}
-                  >
-                    <div className={`${CARD_MEDIA} mb-2`}>
-                      {(rec.image) ? (
-                        <Image
-                          src={rec.image}
-                          alt={`${rec.name} - ${rec.category} in ${rec.city}`}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 33vw"
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          quality={75}
-                          loading="lazy"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                          <MapPin className="h-10 w-10 opacity-20" />
-                        </div>
-                      )}
-
-                      {rec.michelin_stars && rec.michelin_stars > 0 && (
-                        <div className="absolute bottom-2 left-2 px-3 py-1 border border-gray-200 dark:border-gray-800 rounded-2xl text-gray-600 dark:text-gray-400 text-xs bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm flex items-center gap-1.5">
-                          <img
-                            src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                            alt="Michelin star"
-                            width={12}
-                            height={12}
-                            className="h-3 w-3"
-                            onError={(e) => {
-                              // Fallback to local file if external URL fails
-                              const target = e.currentTarget;
-                              if (target.src !== '/michelin-star.svg') {
-                                target.src = '/michelin-star.svg';
-                              }
-                            }}
-                          />
-                          {rec.michelin_stars}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <h3 className={CARD_TITLE}>
-                        {rec.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                        {capitalizeCity(rec.city)}
-                      </p>
-                    </div>
-                  </button>
-                ))}
               </div>
             )}
           </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex flex-wrap gap-3 pt-8 border-t border-gray-200 dark:border-gray-800">
-          <button
-            onClick={() => router.push('/')}
-            className="flex-1 min-w-[160px] px-6 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            Back to catalogue
-          </button>
-          <button
-            onClick={() => router.push(`/city/${destination.city}`)}
-            className="flex-1 min-w-[160px] px-6 py-2.5 text-xs font-medium bg-black text-white dark:bg-white dark:text-black rounded-xl hover:opacity-80 transition-opacity"
-          >
-            Explore {cityName}
-          </button>
-          <button
-            onClick={() => {
-              if (navigator.share) {
-                navigator.share({
-                  title: destination.name,
-                  text: `Check out ${destination.name} in ${cityName}`,
-                  url: window.location.href,
-                }).catch(() => {});
-              } else {
-                navigator.clipboard.writeText(window.location.href);
-              }
-            }}
-            className="px-6 py-2.5 text-xs font-medium border border-gray-200 dark:border-gray-800 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-2"
-          >
-            <Share2 className="h-3 w-3" />
-            Share
-          </button>
         </div>
       </div>
 

@@ -11,7 +11,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const supabase = await createServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { city, existingItems, tripDays } = await request.json();
+  const { city, existingItems, tripDays, gapContext } = await request.json();
 
   if (!city) {
     throw createValidationError('City is required');
@@ -52,7 +52,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
     let suggestions: any[] = [];
 
-    if (apiKey) {
+    // If gapContext is provided, use targeted gap-filling suggestions
+    if (gapContext && apiKey) {
+      suggestions = await generateGapSuggestions(
+        apiKey,
+        city,
+        availableDestinations,
+        gapContext
+      );
+    } else if (apiKey) {
       suggestions = await generateAISuggestions(
         apiKey,
         city,
@@ -397,4 +405,108 @@ function getOrderFromTimeSlot(slot: string): number {
     case 'night': return 3;
     default: return 1;
   }
+}
+
+/**
+ * Generate intelligent gap-filling suggestions using AI
+ */
+async function generateGapSuggestions(
+  apiKey: string,
+  city: string,
+  availableDestinations: any[],
+  gapContext: {
+    afterActivity?: string;
+    afterCategory?: string;
+    beforeActivity?: string;
+    beforeCategory?: string;
+    gapMinutes: number;
+    timeOfDay: string;
+    suggestedTime: string;
+  }
+): Promise<any[]> {
+  try {
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+
+    // Filter destinations by relevant categories based on context
+    const relevantDestinations = availableDestinations.slice(0, 40).map(d => ({
+      id: d.id,
+      name: d.name,
+      category: d.category,
+      rating: d.rating,
+      description: d.description?.slice(0, 100),
+      tags: d.tags,
+    }));
+
+    const gapHours = Math.round(gapContext.gapMinutes / 60 * 10) / 10;
+
+    const prompt = `You are a smart travel assistant helping fill a ${gapHours} hour gap in someone's ${city} itinerary.
+
+CONTEXT:
+- Previous activity: ${gapContext.afterActivity || 'None'} (${gapContext.afterCategory || 'unknown'})
+- Next activity: ${gapContext.beforeActivity || 'None'} (${gapContext.beforeCategory || 'unknown'})
+- Time slot: ${gapContext.timeOfDay} (around ${gapContext.suggestedTime})
+- Available time: ${gapHours} hours
+
+AVAILABLE PLACES IN ${city.toUpperCase()}:
+${JSON.stringify(relevantDestinations, null, 2)}
+
+TASK: Select 3-4 places that would PERFECTLY fit this gap. Consider:
+1. What activity flows naturally after ${gapContext.afterActivity || 'the previous activity'}
+2. What prepares them well for ${gapContext.beforeActivity || 'the next activity'}
+3. The time of day (${gapContext.timeOfDay}) and typical activities
+4. Time needed - places should be doable in ${gapHours} hours
+
+For each suggestion, provide a SHORT reason (max 8 words) explaining why it's perfect for THIS specific gap.
+
+Return ONLY valid JSON array:
+[
+  {"destinationId": 123, "reason": "Perfect coffee break after museum visit"},
+  {"destinationId": 456, "reason": "Great pre-dinner cocktails spot"}
+]
+
+Return only JSON, no other text:`;
+
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+
+      // Enrich with full destination data
+      return parsed.map((suggestion: any) => {
+        const dest = availableDestinations.find(d => d.id === suggestion.destinationId);
+        if (!dest) return null;
+
+        return {
+          destination: dest,
+          reason: suggestion.reason,
+          suggestedTime: gapContext.suggestedTime,
+        };
+      }).filter(Boolean);
+    }
+  } catch (error) {
+    console.error('Gap suggestion generation failed:', error);
+  }
+
+  // Fallback: return top-rated places matching the time of day
+  const categoryMap: Record<string, string[]> = {
+    'Cafe': ['cafe', 'coffee', 'bakery'],
+    'Restaurant': ['restaurant', 'dining', 'bistro'],
+    'Bar': ['bar', 'cocktail', 'wine'],
+    'Culture': ['museum', 'gallery', 'attraction'],
+  };
+
+  const targetCategories = categoryMap[gapContext.timeOfDay] || [];
+  const fallbackSuggestions = availableDestinations
+    .filter(d => targetCategories.some(cat => d.category?.toLowerCase().includes(cat)))
+    .slice(0, 4)
+    .map(dest => ({
+      destination: dest,
+      reason: `Great ${dest.category?.toLowerCase()} for ${gapContext.timeOfDay.toLowerCase()}`,
+      suggestedTime: gapContext.suggestedTime,
+    }));
+
+  return fallbackSuggestions;
 }

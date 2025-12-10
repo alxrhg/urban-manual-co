@@ -540,17 +540,24 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
       hotelConfirmation: hotelData.confirmationNumber,
       roomType: hotelData.roomType,
       raw: hotelData.notes,
+      // Include image from curated hotel
+      image: hotelData.image,
+      // Include coordinates for travel time calculation
+      latitude: hotelData.latitude,
+      longitude: hotelData.longitude,
     };
 
     const title = hotelData.name;
     const description = hotelData.address || '';
+    // Use destination_slug if provided (from curated search)
+    const destinationSlug = hotelData.destination_slug || null;
 
     // Optimistic update
     const tempId = `temp-${Date.now()}`;
     const newItem: EnrichedItineraryItem = {
       id: tempId,
       trip_id: trip.id,
-      destination_slug: null,
+      destination_slug: destinationSlug,
       day: dayNumber,
       order_index: orderIndex,
       time: hotelData.checkInTime || null,
@@ -577,7 +584,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
       const { data, error } = await supabase.from('itinerary_items').insert({
         trip_id: trip.id,
-        destination_slug: null,
+        destination_slug: destinationSlug,
         day: dayNumber,
         order_index: orderIndex,
         time: hotelData.checkInTime,

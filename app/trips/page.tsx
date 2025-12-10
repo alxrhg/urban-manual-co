@@ -58,15 +58,23 @@ async function getTripsData(userId: string): Promise<TripWithStats[]> {
     return [];
   }
 
-  // Fetch items for each trip
+  // Fetch items for each trip with destination coordinates
   const tripIds = tripsData.map(t => t.id);
 
   const { data: items } = await supabase
     .from('itinerary_items')
-    .select('trip_id, notes')
+    .select(`
+      trip_id,
+      notes,
+      destination_id,
+      destinations:destination_id (
+        latitude,
+        longitude
+      )
+    `)
     .in('trip_id', tripIds);
 
-  // Calculate categorized stats for each trip
+  // Calculate categorized stats and map center for each trip
   const tripsWithStats: TripWithStats[] = tripsData.map(trip => {
     const tripItems = items?.filter(i => i.trip_id === trip.id) || [];
 
@@ -78,17 +86,45 @@ async function getTripsData(userId: string): Promise<TripWithStats[]> {
       places: 0,
     };
 
-    // Categorize each item
+    // Collect coordinates for map center
+    const coords: { lat: number; lng: number }[] = [];
+
+    // Categorize each item and extract coordinates
     tripItems.forEach(item => {
       const category = categorizeItem(item.notes);
       if (category) {
         stats[category]++;
       }
+
+      // Get coordinates from destination or parsed notes
+      const dest = item.destinations as { latitude?: number; longitude?: number } | null;
+      if (dest?.latitude && dest?.longitude) {
+        coords.push({ lat: dest.latitude, lng: dest.longitude });
+      } else if (item.notes) {
+        try {
+          const parsed = JSON.parse(item.notes);
+          if (parsed?.latitude && parsed?.longitude) {
+            coords.push({ lat: parsed.latitude, lng: parsed.longitude });
+          }
+        } catch {}
+      }
     });
+
+    // Calculate map center
+    let mapCenter: { lat: number; lng: number } | null = null;
+    if (coords.length > 0) {
+      const sumLat = coords.reduce((sum, c) => sum + c.lat, 0);
+      const sumLng = coords.reduce((sum, c) => sum + c.lng, 0);
+      mapCenter = {
+        lat: sumLat / coords.length,
+        lng: sumLng / coords.length,
+      };
+    }
 
     return {
       ...trip,
       stats,
+      mapCenter,
     };
   });
 
