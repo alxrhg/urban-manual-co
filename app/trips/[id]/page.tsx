@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { Destination } from '@/types/destination';
 import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import DestinationBox from '@/components/trip/DestinationBox';
+import AddPlacePanel from '@/components/trip/AddPlacePanel';
 import { NeighborhoodTags } from '@/components/trip/NeighborhoodBreakdown';
 import { Settings, Moon } from 'lucide-react';
 
@@ -76,6 +77,7 @@ export default function TripPage() {
   // Sidebar states (desktop)
   const [showTripSettings, setShowTripSettings] = useState(false);
   const [selectedItem, setSelectedItem] = useState<EnrichedItineraryItem | null>(null);
+  const [sidebarAddDay, setSidebarAddDay] = useState<number | null>(null); // Which day is adding via sidebar
 
   // Weather state
   const [weatherByDate, setWeatherByDate] = useState<Record<string, DayWeather>>({});
@@ -391,6 +393,7 @@ export default function TripPage() {
                 onRemove={removeItem}
                 onUpdateItem={updateItem}
                 onUpdateTime={updateItemTime}
+                onOpenSidebarAdd={() => { setSidebarAddDay(day.dayNumber); setSelectedItem(null); }}
                 onAddPlace={(dest) => addPlace(dest, day.dayNumber)}
                 onAddFlight={(data) => addFlight({
                   type: 'flight',
@@ -452,8 +455,67 @@ export default function TripPage() {
           {/* Desktop Sidebar */}
           <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
             <div className="sticky top-24 space-y-4 max-h-[calc(100vh-8rem)] overflow-y-auto pb-8">
+              {/* Add Place Panel */}
+              {sidebarAddDay !== null && (
+                <AddPlacePanel
+                  city={primaryCity}
+                  dayNumber={sidebarAddDay}
+                  onClose={() => setSidebarAddDay(null)}
+                  onAddPlace={(dest) => {
+                    addPlace(dest, sidebarAddDay);
+                    setSidebarAddDay(null);
+                  }}
+                  onAddFlight={(data) => {
+                    addFlight({
+                      type: 'flight',
+                      airline: data.airline || '',
+                      flightNumber: data.flightNumber || '',
+                      from: data.from,
+                      to: data.to,
+                      departureDate: '',
+                      departureTime: data.departureTime || '',
+                      arrivalDate: '',
+                      arrivalTime: data.arrivalTime || '',
+                      confirmationNumber: data.confirmationNumber,
+                    }, sidebarAddDay);
+                    setSidebarAddDay(null);
+                  }}
+                  onAddTrain={(data) => {
+                    addTrain({
+                      type: 'train',
+                      trainLine: data.trainLine,
+                      trainNumber: data.trainNumber,
+                      from: data.from,
+                      to: data.to,
+                      departureDate: '',
+                      departureTime: data.departureTime || '',
+                      arrivalDate: '',
+                      arrivalTime: data.arrivalTime,
+                      confirmationNumber: data.confirmationNumber,
+                    }, sidebarAddDay);
+                    setSidebarAddDay(null);
+                  }}
+                  onAddHotel={(data) => {
+                    addHotel({
+                      type: 'hotel',
+                      name: data.name,
+                      address: data.address,
+                      checkInDate: '',
+                      checkInTime: data.checkInTime,
+                      checkOutTime: data.checkOutTime,
+                      confirmationNumber: data.confirmationNumber,
+                    }, sidebarAddDay);
+                    setSidebarAddDay(null);
+                  }}
+                  onAddActivity={(data) => {
+                    addActivity(data as ActivityData, sidebarAddDay);
+                    setSidebarAddDay(null);
+                  }}
+                />
+              )}
+
               {/* Selected Item Details */}
-              {selectedItem && (
+              {selectedItem && !sidebarAddDay && (
                 <DestinationBox
                   item={selectedItem}
                   onClose={() => setSelectedItem(null)}
@@ -465,7 +527,7 @@ export default function TripPage() {
               )}
 
               {/* Trip Settings */}
-              {showTripSettings && (
+              {showTripSettings && !sidebarAddDay && (
                 <TripSettingsBox
                   trip={trip}
                   onUpdate={updateTrip}
@@ -475,24 +537,28 @@ export default function TripPage() {
               )}
 
               {/* Trip Intelligence */}
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-                <TripIntelligence
-                  days={days}
-                  city={primaryCity}
-                  weatherByDate={weatherByDate}
-                  onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
-                  compact
-                />
-              </div>
+              {!sidebarAddDay && (
+                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                  <TripIntelligence
+                    days={days}
+                    city={primaryCity}
+                    weatherByDate={weatherByDate}
+                    onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
+                    compact
+                  />
+                </div>
+              )}
 
               {/* Checklist */}
-              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-                <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Checklist</h3>
-                <TripNotesChecklist
-                  notes={tripNotes}
-                  onSave={(notes) => updateTrip({ notes })}
-                />
-              </div>
+              {!sidebarAddDay && (
+                <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                  <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Checklist</h3>
+                  <TripNotesChecklist
+                    notes={tripNotes}
+                    onSave={(notes) => updateTrip({ notes })}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -933,6 +999,7 @@ function DaySection({
   onRemove,
   onUpdateItem,
   onUpdateTime,
+  onOpenSidebarAdd,
   onAddPlace,
   onAddFlight,
   onAddTrain,
@@ -953,6 +1020,7 @@ function DaySection({
   onRemove: (id: string) => void;
   onUpdateItem: (id: string, updates: Record<string, unknown>) => void;
   onUpdateTime: (id: string, time: string) => void;
+  onOpenSidebarAdd?: () => void; // Desktop: open sidebar add panel
   onAddPlace: (destination: Destination) => void;
   onAddFlight: (data: { airline?: string; flightNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; confirmationNumber?: string; notes?: string }) => void;
   onAddTrain: (data: { trainLine?: string; trainNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; duration?: string; confirmationNumber?: string; notes?: string }) => void;
@@ -1247,20 +1315,31 @@ function DaySection({
           {/* Plus button */}
           <div className="relative">
             <button
-              onClick={() => { setShowAddMenu(!showAddMenu); setShowSearch(false); setShowTransportForm(null); }}
+              onClick={() => {
+                // Desktop: use sidebar panel
+                const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+                if (isDesktop && onOpenSidebarAdd) {
+                  onOpenSidebarAdd();
+                } else {
+                  // Mobile: use inline menu
+                  setShowAddMenu(!showAddMenu);
+                  setShowSearch(false);
+                  setShowTransportForm(null);
+                }
+              }}
               className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
               <Plus className={`w-4 h-4 sm:w-3.5 sm:h-3.5 text-gray-500 transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
             </button>
 
-            {/* Add menu dropdown */}
+            {/* Add menu dropdown (mobile only) */}
             <AnimatePresence>
               {showAddMenu && !showSearch && !showTransportForm && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-44 sm:w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl sm:rounded-lg shadow-lg overflow-hidden z-20"
+                  className="absolute right-0 top-full mt-1 w-44 sm:w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl sm:rounded-lg shadow-lg overflow-hidden z-20 lg:hidden"
                 >
                   <button
                     onClick={() => { setShowSearch(true); setSearchSource('curated'); }}
@@ -1310,14 +1389,14 @@ function DaySection({
               )}
             </AnimatePresence>
 
-            {/* Inline search panel */}
+            {/* Inline search panel (mobile only) */}
             <AnimatePresence>
               {showSearch && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-1 w-auto sm:w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3"
+                  className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-1 w-auto sm:w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3 lg:hidden"
                 >
                   {/* Source toggle */}
                   <div className="flex items-center gap-1 mb-2">
@@ -1417,14 +1496,14 @@ function DaySection({
               )}
             </AnimatePresence>
 
-            {/* Inline transport form */}
+            {/* Inline transport form (mobile only) */}
             <AnimatePresence>
               {showTransportForm && showTransportForm !== 'activity' && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3"
+                  className="absolute right-0 top-full mt-1 w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3 lg:hidden"
                 >
                   <TransportForm
                     type={showTransportForm}
@@ -1437,14 +1516,14 @@ function DaySection({
               )}
             </AnimatePresence>
 
-            {/* Inline activity form */}
+            {/* Inline activity form (mobile only) */}
             <AnimatePresence>
               {showTransportForm === 'activity' && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3"
+                  className="absolute right-0 top-full mt-1 w-80 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3 lg:hidden"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-[12px] font-medium text-gray-900 dark:text-white">Add activity</span>
