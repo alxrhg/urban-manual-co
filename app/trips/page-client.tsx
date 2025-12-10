@@ -27,44 +27,66 @@ interface TripsPageClientProps {
   userId: string;
 }
 
+type FilterTab = 'all' | 'upcoming' | 'past';
+
 /**
- * TripsPageClient - Minimal trips list
- *
- * Philosophy: Simple grid of trips. Nothing more.
- * - No tabs, no filters, no search
- * - Just trips sorted by date
- * - Tap to open
+ * TripsPageClient - Trips list with filter tabs
  */
 export default function TripsPageClient({ initialTrips, userId }: TripsPageClientProps) {
   const router = useRouter();
   const [trips] = useState<TripWithStats[]>(initialTrips);
   const [creating, setCreating] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterTab>('all');
 
-  // Sort trips: upcoming first by start date, then past by end date descending
-  const sortedTrips = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  // Categorize trips by state
+  const categorizedTrips = useMemo(() => {
+    const upcoming: TripWithStats[] = [];
+    const past: TripWithStats[] = [];
 
-    return [...trips].sort((a, b) => {
-      const stateA = getTripState(a.end_date, a.start_date, a.stats);
-      const stateB = getTripState(b.end_date, b.start_date, b.stats);
-
-      // Upcoming/planning before past
-      if (stateA === 'past' && stateB !== 'past') return 1;
-      if (stateA !== 'past' && stateB === 'past') return -1;
-
-      // Within same category, sort by date
-      if (stateA === 'past' && stateB === 'past') {
-        const dateA = a.end_date ? new Date(a.end_date).getTime() : 0;
-        const dateB = b.end_date ? new Date(b.end_date).getTime() : 0;
-        return dateB - dateA;
+    trips.forEach((trip) => {
+      const state = getTripState(trip.end_date, trip.start_date, trip.stats);
+      if (state === 'past') {
+        past.push(trip);
+      } else {
+        upcoming.push(trip);
       }
+    });
 
+    // Sort upcoming by start date (soonest first)
+    upcoming.sort((a, b) => {
       const dateA = a.start_date ? new Date(a.start_date).getTime() : Infinity;
       const dateB = b.start_date ? new Date(b.start_date).getTime() : Infinity;
       return dateA - dateB;
     });
+
+    // Sort past by end date (most recent first)
+    past.sort((a, b) => {
+      const dateA = a.end_date ? new Date(a.end_date).getTime() : 0;
+      const dateB = b.end_date ? new Date(b.end_date).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    return { upcoming, past };
   }, [trips]);
+
+  // Filter trips based on active tab
+  const filteredTrips = useMemo(() => {
+    switch (activeFilter) {
+      case 'upcoming':
+        return categorizedTrips.upcoming;
+      case 'past':
+        return categorizedTrips.past;
+      default:
+        return [...categorizedTrips.upcoming, ...categorizedTrips.past];
+    }
+  }, [activeFilter, categorizedTrips]);
+
+  // Tab counts
+  const tabCounts = useMemo(() => ({
+    all: trips.length,
+    upcoming: categorizedTrips.upcoming.length,
+    past: categorizedTrips.past.length,
+  }), [trips.length, categorizedTrips]);
 
   const createTrip = async () => {
     try {
@@ -94,16 +116,11 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
   return (
     <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950">
       <div className="max-w-2xl mx-auto">
-        {/* Header - minimal */}
-        <header className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-[22px] font-semibold text-gray-900 dark:text-white">
-              Trips
-            </h1>
-            <p className="text-[13px] text-gray-400 mt-0.5">
-              {trips.length} {trips.length === 1 ? 'trip' : 'trips'}
-            </p>
-          </div>
+        {/* Header */}
+        <header className="flex items-center justify-between mb-6">
+          <h1 className="text-[22px] font-semibold text-gray-900 dark:text-white">
+            Trips
+          </h1>
 
           <button
             onClick={createTrip}
@@ -123,9 +140,37 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
           </button>
         </header>
 
+        {/* Filter Tabs */}
+        {trips.length > 0 && (
+          <div className="flex gap-1 p-1 mb-6 bg-gray-100 dark:bg-gray-900 rounded-xl w-fit">
+            {(['all', 'upcoming', 'past'] as FilterTab[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveFilter(tab)}
+                className={`
+                  px-4 py-2 rounded-lg text-[13px] font-medium transition-all
+                  ${activeFilter === tab
+                    ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                  }
+                `}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {tabCounts[tab] > 0 && (
+                  <span className={`ml-1.5 text-[11px] ${
+                    activeFilter === tab ? 'text-gray-500' : 'text-gray-400'
+                  }`}>
+                    {tabCounts[tab]}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Trip List */}
         {trips.length === 0 ? (
-          /* Empty State */
+          /* Empty State - No trips at all */
           <div className="text-center py-20">
             <div className="w-14 h-14 mx-auto mb-5 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
               <Plane className="w-6 h-6 text-gray-400" />
@@ -149,10 +194,17 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
               Create Trip
             </button>
           </div>
+        ) : filteredTrips.length === 0 ? (
+          /* Empty State - Filter has no results */
+          <div className="text-center py-16">
+            <p className="text-[14px] text-gray-500">
+              No {activeFilter === 'upcoming' ? 'upcoming' : 'past'} trips
+            </p>
+          </div>
         ) : (
           /* Trip Grid */
           <div className="space-y-3">
-            {sortedTrips.map((trip) => (
+            {filteredTrips.map((trip) => (
               <TripRow key={trip.id} trip={trip} />
             ))}
           </div>

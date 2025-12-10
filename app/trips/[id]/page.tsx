@@ -18,6 +18,9 @@ import TripSettingsBox from '@/components/trip/TripSettingsBox';
 import DestinationBox from '@/components/trip/DestinationBox';
 import AddPlacePanel from '@/components/trip/AddPlacePanel';
 import { NeighborhoodTags } from '@/components/trip/NeighborhoodBreakdown';
+import DayIntelligence from '@/components/trip/DayIntelligence';
+import { CrowdBadge } from '@/components/trip/CrowdIndicator';
+import SmartSuggestions from '@/components/trip/SmartSuggestions';
 import { Settings, Moon } from 'lucide-react';
 
 // Weather type
@@ -1652,7 +1655,29 @@ function DaySection({
             </div>
           )}
           {/* Day pacing indicator */}
-          <DayPacing items={items} />
+          <DayIntelligence
+            dayNumber={dayNumber}
+            date={date}
+            items={items.map(item => ({
+              id: item.id,
+              title: item.title,
+              time: item.time,
+              destination: item.destination ? {
+                category: item.destination.category,
+                latitude: item.destination.latitude,
+                longitude: item.destination.longitude,
+              } : null,
+              parsedNotes: item.parsedNotes ? {
+                type: item.parsedNotes.type,
+                category: item.parsedNotes.category,
+              } : undefined,
+            }))}
+            weatherForecast={weather ? {
+              condition: weather.description,
+              precipitation: weather.precipProbability,
+              tempMax: weather.tempMax,
+            } : null}
+          />
         </div>
 
         <div className="flex items-center gap-2">
@@ -1976,6 +2001,38 @@ function DaySection({
           })}
         </Reorder.Group>
       ) : null}
+
+      {/* Smart suggestions for the day */}
+      {orderedItems.length > 0 && city && (
+        <SmartSuggestions
+          days={[{
+            dayNumber,
+            date: date || null,
+            items: orderedItems.map(item => ({
+              id: item.id,
+              title: item.title,
+              destination_slug: item.destination_slug,
+              destination: item.destination ? {
+                category: item.destination.category,
+                latitude: item.destination.latitude,
+                longitude: item.destination.longitude,
+              } : null,
+              time: item.time,
+              parsedNotes: item.parsedNotes ? {
+                category: item.parsedNotes.category,
+              } : undefined,
+            })),
+          }]}
+          destination={city}
+          selectedDayNumber={dayNumber}
+          onAddPlace={(targetDay, category) => {
+            // Open search with optional category filter
+            setShowSearch(true);
+            setSearchSource('curated');
+          }}
+          className="mt-4"
+        />
+      )}
 
       {/* Travel time to nightly hotel */}
       {nightlyHotel && orderedItems.length > 0 && (
@@ -2844,7 +2901,16 @@ function ItemRow({
 
           {/* Content - name and category */}
           <div className="flex-1 min-w-0">
-            <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">{title}</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">{title}</p>
+              {/* Crowd indicator for places with time */}
+              {iconType === 'place' && item.time && (
+                <CrowdBadge
+                  category={item.destination?.category || item.parsedNotes?.category}
+                  time={item.time}
+                />
+              )}
+            </div>
             <p className="text-[13px] text-gray-400 truncate">
               {subtitle || inlineTimes || (item.destination?.category) || 'Place'}
             </p>
@@ -3312,40 +3378,6 @@ function WeatherIcon({ code, className = '' }: { code: number; className?: strin
   return <Sun className={`text-gray-400 ${className}`} />;
 }
 
-/**
- * Day pacing meter - shows if day is packed/sparse
- */
-function DayPacing({ items }: { items: EnrichedItineraryItem[] }) {
-  // Calculate total hours planned
-  const totalDuration = items.reduce((sum, item) => {
-    const d = item.parsedNotes?.duration;
-    return sum + (d ? parseFloat(String(d)) : 1.5); // Default 1.5h if not set
-  }, 0);
-
-  // Estimate travel time between items
-  const travelMinutes = (items.length - 1) * 15; // Rough estimate
-  const totalHours = totalDuration + travelMinutes / 60;
-
-  // Determine pacing
-  const getPacing = () => {
-    if (items.length === 0) return { label: 'Empty', color: 'text-gray-400', hint: '' };
-    if (totalHours < 4) return { label: 'Light', color: 'text-blue-500', hint: '' };
-    if (totalHours <= 8) return { label: 'Balanced', color: 'text-green-500', hint: '' };
-    if (totalHours <= 10) return { label: 'Full', color: 'text-amber-500', hint: '' };
-    return { label: 'Packed', color: 'text-red-500', hint: 'May be rushed' };
-  };
-
-  const pacing = getPacing();
-  if (items.length === 0) return null;
-
-  return (
-    <div className="flex items-center gap-1.5 text-[10px]">
-      <div className={`w-1.5 h-1.5 rounded-full ${pacing.color.replace('text-', 'bg-')}`} />
-      <span className={pacing.color}>{pacing.label}</span>
-      {pacing.hint && <span className="text-gray-400">· {pacing.hint}</span>}
-    </div>
-  );
-}
 
 /**
  * Gap suggestion - shows between items when there's a time gap
@@ -3563,20 +3595,15 @@ function GapSuggestion({
 }
 
 /**
- * Smart suggestions - shows at end of day based on what's missing
+ * Meal gap suggestions - shows at end of day based on missing meals
  */
-function SmartSuggestions({
+function MealGapSuggestions({
   items,
-  city,
   onAddSuggestion,
 }: {
   items: EnrichedItineraryItem[];
-  city: string;
   onAddSuggestion?: (type: string) => void;
 }) {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
   // Analyze what's in the day
   const hasBreakfast = items.some(i =>
     i.parsedNotes?.type === 'hotel' ||
