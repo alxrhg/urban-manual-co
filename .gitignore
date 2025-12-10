@@ -178,3 +178,6 @@ migrations/
 # Generated/source icons (keep icon-512.png as canonical)
 public/icon.png
 public/icon-original.jpg
+
+# Static data exports (use Supabase as source of truth)
+public/destinations.json
