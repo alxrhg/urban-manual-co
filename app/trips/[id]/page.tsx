@@ -1678,13 +1678,12 @@ function DaySection({
 
       {/* Hotel Activity Cards - Breakfast, Check-out, Check-in */}
       {(checkoutHotel || breakfastHotel || checkInHotel) && (
-        <div className="mb-3 space-y-1 bg-gray-50 dark:bg-gray-800/30 rounded-xl p-1">
+        <div className="mb-3 space-y-0">
           {breakfastHotel && (
             <button
               onClick={() => onSelectItem?.(breakfastHotel)}
-              className="w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all hover:bg-white dark:hover:bg-gray-800"
+              className="w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50"
             >
-              <span className="text-lg flex-shrink-0">🍳</span>
               <span className="text-[14px] font-medium text-gray-900 dark:text-white">
                 Breakfast
               </span>
@@ -1696,9 +1695,8 @@ function DaySection({
           {checkoutHotel && (
             <button
               onClick={() => onSelectItem?.(checkoutHotel)}
-              className="w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all hover:bg-white dark:hover:bg-gray-800"
+              className="w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50"
             >
-              <span className="text-lg flex-shrink-0">🧳</span>
               <span className="text-[14px] font-medium text-gray-900 dark:text-white">
                 Check-out
               </span>
@@ -1710,9 +1708,8 @@ function DaySection({
           {checkInHotel && (
             <button
               onClick={() => onSelectItem?.(checkInHotel)}
-              className="w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-lg transition-all hover:bg-white dark:hover:bg-gray-800"
+              className="w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50"
             >
-              <span className="text-lg flex-shrink-0">🛎️</span>
               <span className="text-[14px] font-medium text-gray-900 dark:text-white">
                 Check-in
               </span>
@@ -2426,45 +2423,45 @@ function ItemRow({
           {/* Square image or icon */}
           <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
             {iconType === 'flight' ? (
-              <div className="w-full h-full flex items-center justify-center bg-blue-50 dark:bg-blue-900/30">
-                <Plane className="w-5 h-5 text-blue-500" />
+              <div className="w-full h-full flex items-center justify-center">
+                <Plane className="w-5 h-5 text-gray-500" />
               </div>
             ) : iconType === 'hotel' ? (
-              <div className="w-full h-full flex items-center justify-center bg-purple-50 dark:bg-purple-900/30">
-                <Hotel className="w-5 h-5 text-purple-500" />
+              <div className="w-full h-full flex items-center justify-center">
+                <Hotel className="w-5 h-5 text-gray-500" />
               </div>
             ) : iconType === 'checkin' ? (
-              <div className="w-full h-full flex items-center justify-center bg-green-50 dark:bg-green-900/30">
-                <DoorOpen className="w-5 h-5 text-green-500" />
+              <div className="w-full h-full flex items-center justify-center">
+                <DoorOpen className="w-5 h-5 text-gray-500" />
               </div>
             ) : iconType === 'checkout' ? (
-              <div className="w-full h-full flex items-center justify-center bg-orange-50 dark:bg-orange-900/30">
-                <LogOut className="w-5 h-5 text-orange-500" />
+              <div className="w-full h-full flex items-center justify-center">
+                <LogOut className="w-5 h-5 text-gray-500" />
               </div>
             ) : iconType === 'breakfast' ? (
-              <div className="w-full h-full flex items-center justify-center bg-amber-50 dark:bg-amber-900/30">
-                <UtensilsCrossed className="w-5 h-5 text-amber-500" />
+              <div className="w-full h-full flex items-center justify-center">
+                <UtensilsCrossed className="w-5 h-5 text-gray-500" />
               </div>
             ) : iconType === 'train' ? (
-              <div className="w-full h-full flex items-center justify-center bg-emerald-50 dark:bg-emerald-900/30">
-                <TrainIcon className="w-5 h-5 text-emerald-500" />
+              <div className="w-full h-full flex items-center justify-center">
+                <TrainIcon className="w-5 h-5 text-gray-500" />
               </div>
             ) : iconType === 'activity' ? (
-              <div className="w-full h-full flex items-center justify-center bg-gray-50 dark:bg-gray-800">
+              <div className="w-full h-full flex items-center justify-center">
                 {(() => {
                   const aType = (extraData as any).activityType;
                   switch (aType) {
                     case 'nap': return <BedDouble className="w-5 h-5 text-gray-500" />;
-                    case 'pool': return <Waves className="w-5 h-5 text-cyan-500" />;
-                    case 'spa': return <Sparkles className="w-5 h-5 text-pink-500" />;
+                    case 'pool': return <Waves className="w-5 h-5 text-gray-500" />;
+                    case 'spa': return <Sparkles className="w-5 h-5 text-gray-500" />;
                     case 'gym': return <Dumbbell className="w-5 h-5 text-gray-500" />;
-                    case 'breakfast-at-hotel': return <Coffee className="w-5 h-5 text-amber-500" />;
+                    case 'breakfast-at-hotel': return <Coffee className="w-5 h-5 text-gray-500" />;
                     case 'getting-ready': return <Shirt className="w-5 h-5 text-gray-500" />;
                     case 'packing': case 'checkout-prep': return <Package className="w-5 h-5 text-gray-500" />;
-                    case 'sunset': return <Sun className="w-5 h-5 text-orange-500" />;
+                    case 'sunset': return <Sun className="w-5 h-5 text-gray-500" />;
                     case 'work': return <Briefcase className="w-5 h-5 text-gray-500" />;
                     case 'call': return <Phone className="w-5 h-5 text-gray-500" />;
-                    case 'shopping-time': return <ShoppingBag className="w-5 h-5 text-pink-500" />;
+                    case 'shopping-time': return <ShoppingBag className="w-5 h-5 text-gray-500" />;
                     case 'photo-walk': return <Camera className="w-5 h-5 text-gray-500" />;
                     default: return <Clock className="w-5 h-5 text-gray-500" />;
                   }
