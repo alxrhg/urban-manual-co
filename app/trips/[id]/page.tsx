@@ -2793,20 +2793,12 @@ function ItemRow({
             }
           }}
         >
-          {/* Drag handle - always visible on mobile, hover on desktop */}
-          <div
-            className={`flex-shrink-0 px-1 touch-none ${
-              isEditMode
-                ? 'cursor-grab active:cursor-grabbing'
-                : 'pointer-events-none'
-            }`}
-          >
-            <GripVertical className={`w-4 h-4 transition-opacity ${
-              isEditMode
-                ? 'text-gray-400 opacity-60 group-hover:opacity-100'
-                : 'text-gray-300 dark:text-gray-600 opacity-40 sm:opacity-0 sm:group-hover:opacity-40'
-            }`} />
-          </div>
+          {/* Drag handle - only visible in edit mode */}
+          {isEditMode && (
+            <div className="flex-shrink-0 px-1 touch-none cursor-grab active:cursor-grabbing">
+              <GripVertical className="w-4 h-4 text-gray-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+            </div>
+          )}
 
           {/* Circle image or icon */}
           <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
