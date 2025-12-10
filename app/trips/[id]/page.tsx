@@ -1469,81 +1469,91 @@ function DaySection({
             {/* Inline search panel (mobile only) */}
             <AnimatePresence>
               {showSearch && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-1 w-auto sm:w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3 lg:hidden"
-                >
+                <>
+                  {/* Backdrop */}
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={closeAllMenus}
+                    className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    className="fixed inset-x-0 bottom-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 rounded-t-2xl shadow-2xl p-4 pb-8 lg:hidden"
+                    style={{ maxHeight: '70vh' }}
+                  >
                   {/* Source toggle */}
-                  <div className="flex items-center gap-1 mb-2">
+                  <div className="flex items-center gap-2 mb-3">
                     <button
                       onClick={() => { setSearchSource('curated'); setSearchQuery(''); setSearchResults([]); setGoogleResults([]); }}
-                      className={`px-2.5 py-1 text-[11px] rounded-full transition-colors ${
+                      className={`px-3 py-1.5 text-[13px] rounded-full transition-colors ${
                         searchSource === 'curated'
                           ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                          : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                       }`}
                     >
                       Curated
                     </button>
                     <button
                       onClick={() => { setSearchSource('google'); setSearchQuery(''); setSearchResults([]); setGoogleResults([]); }}
-                      className={`px-2.5 py-1 text-[11px] rounded-full transition-colors ${
+                      className={`px-3 py-1.5 text-[13px] rounded-full transition-colors ${
                         searchSource === 'google'
                           ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
-                          : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                       }`}
                     >
                       Google
                     </button>
                     <div className="flex-1" />
-                    <button onClick={closeAllMenus}>
-                      <X className="w-4 h-4 text-gray-400 hover:text-gray-600" />
+                    <button onClick={closeAllMenus} className="p-2 -mr-2">
+                      <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-100 dark:bg-gray-800 rounded-xl">
                     {isSearching || isAdding ? (
-                      <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+                      <Loader2 className="w-5 h-5 text-gray-400 animate-spin" />
                     ) : searchSource === 'google' ? (
-                      <Globe className="w-4 h-4 text-gray-400" />
+                      <Globe className="w-5 h-5 text-gray-400" />
                     ) : (
-                      <Search className="w-4 h-4 text-gray-400" />
+                      <Search className="w-5 h-5 text-gray-400" />
                     )}
                     <input
                       ref={searchInputRef}
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder={searchSource === 'google' ? 'Search Google...' : 'Search curated...'}
-                      className="flex-1 bg-transparent text-[13px] text-gray-900 dark:text-white placeholder-gray-400 outline-none"
+                      placeholder={searchSource === 'google' ? 'Search Google...' : 'Search curated places...'}
+                      className="flex-1 bg-transparent text-[16px] text-gray-900 dark:text-white placeholder-gray-400 outline-none"
                       autoFocus
                     />
                   </div>
 
                   {/* Search results */}
                   {(searchResults.length > 0 || googleResults.length > 0) && (
-                    <div className="mt-2 max-h-60 overflow-y-auto">
+                    <div className="mt-3 max-h-[40vh] overflow-y-auto -mx-1">
                       {searchResults.map((destination) => (
                         <button
                           key={destination.id}
                           onClick={() => addDestination(destination)}
                           disabled={isAdding}
-                          className="w-full flex items-center gap-3 px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors text-left active:bg-gray-100 dark:active:bg-gray-700"
                         >
-                          <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                             {destination.image_thumbnail || destination.image ? (
-                              <Image src={destination.image_thumbnail || destination.image || ''} alt="" width={32} height={32} className="w-full h-full object-cover" />
+                              <Image src={destination.image_thumbnail || destination.image || ''} alt="" width={48} height={48} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center">
-                                <MapPin className="w-3 h-3 text-gray-400" />
+                                <MapPin className="w-4 h-4 text-gray-400" />
                               </div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{destination.name}</p>
-                            <p className="text-[11px] text-gray-400 truncate">{destination.category}</p>
+                            <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">{destination.name}</p>
+                            <p className="text-[13px] text-gray-400 truncate">{destination.category}</p>
                           </div>
                         </button>
                       ))}
@@ -1552,24 +1562,25 @@ function DaySection({
                           key={place.id}
                           onClick={() => addGooglePlace(place)}
                           disabled={isAdding}
-                          className="w-full flex items-center gap-3 px-2 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
+                          className="w-full flex items-center gap-3 px-3 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors text-left active:bg-gray-100 dark:active:bg-gray-700"
                         >
-                          <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                          <div className="w-12 h-12 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
                             {place.image ? (
-                              <Image src={place.image} alt="" width={32} height={32} className="w-full h-full object-cover" />
+                              <Image src={place.image} alt="" width={48} height={48} className="w-full h-full object-cover" />
                             ) : (
-                              <Globe className="w-4 h-4 text-gray-400" />
+                              <Globe className="w-5 h-5 text-gray-400" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-medium text-gray-900 dark:text-white truncate">{place.name}</p>
-                            <p className="text-[11px] text-gray-400 truncate">{place.category || place.formatted_address}</p>
+                            <p className="text-[15px] font-medium text-gray-900 dark:text-white truncate">{place.name}</p>
+                            <p className="text-[13px] text-gray-400 truncate">{place.category || place.formatted_address}</p>
                           </div>
                         </button>
                       ))}
                     </div>
                   )}
-                </motion.div>
+                  </motion.div>
+                </>
               )}
             </AnimatePresence>
 
