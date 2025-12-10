@@ -3076,12 +3076,13 @@ function TravelTime({
   }
 
   // Estimate travel time based on mode
+  // Walking: ~5 km/h, Driving: ~30 km/h, Metro: ~20 km/h (subway/train, excludes bus)
   const getTravelMinutes = (): number | null => {
     if (distanceKm === 0) return null; // No valid coordinates
     switch (mode) {
-      case 'walking': return Math.round(distanceKm * 12);
-      case 'driving': return Math.round(distanceKm * 2);
-      case 'transit': return Math.round(distanceKm * 3);
+      case 'walking': return Math.round(distanceKm * 12); // 12 min/km = 5 km/h
+      case 'driving': return Math.round(distanceKm * 2);  // 2 min/km = 30 km/h
+      case 'transit': return Math.round(distanceKm * 3);  // 3 min/km = 20 km/h (metro/subway)
       default: return Math.round(distanceKm * 12);
     }
   };
@@ -3102,7 +3103,15 @@ function TravelTime({
     switch (mode) {
       case 'walking': return <Footprints className="w-3 h-3" />;
       case 'driving': return <Car className="w-3 h-3" />;
-      case 'transit': return <TrainIcon className="w-3 h-3" />;
+      case 'transit': return <TrainIcon className="w-3 h-3" />; // Metro/subway, not bus
+    }
+  };
+
+  const getModeLabel = () => {
+    switch (mode) {
+      case 'walking': return 'walk';
+      case 'driving': return 'drive';
+      case 'transit': return 'metro'; // Display as metro (subway/train), not general transit
     }
   };
 
@@ -3148,7 +3157,7 @@ function TravelTime({
       <button
         onClick={cycleMode}
         className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-        title="Click to change travel mode"
+        title={`${duration} by ${getModeLabel()} - click to change`}
       >
         {getModeIcon()}
         <span className="tabular-nums">{duration}</span>
