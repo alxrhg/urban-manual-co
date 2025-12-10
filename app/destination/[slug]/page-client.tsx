@@ -392,7 +392,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
       <div className="relative">
         {/* Hero Image */}
         {destination.image ? (
-          <div className="relative w-full h-[50vh] md:h-[60vh] lg:h-[70vh]">
+          <div className="relative w-full h-[50vh] md:h-[50vh] lg:h-[45vh] xl:h-[40vh]">
             <Image
               src={destination.image}
               alt={`${destination.name} - ${destination.category} in ${destination.city}`}
@@ -545,373 +545,494 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
       {/* Main Content */}
       <div className="px-6 md:px-10 lg:px-12 py-10 md:py-12">
-        <div className="max-w-4xl mx-auto space-y-8 md:space-y-10">
+        <div className="max-w-7xl mx-auto">
+          {/* Two-column layout on desktop */}
+          <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-10">
+            {/* Main Column */}
+            <div className="space-y-8 md:space-y-10">
+              {/* Parent Destination Link */}
+              {parentDestination && (
+                <div className="bg-gray-50 dark:bg-white/5 rounded-2xl p-4 border border-gray-100 dark:border-white/10">
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
+                    Located inside
+                  </p>
+                  <HorizontalDestinationCard
+                    destination={parentDestination}
+                    onClick={() => router.push(`/destination/${parentDestination.slug}`)}
+                    showBadges={true}
+                  />
+                </div>
+              )}
 
-          {/* Parent Destination Link */}
-          {parentDestination && (
-            <div className="bg-gray-50 dark:bg-white/5 rounded-2xl p-4 border border-gray-100 dark:border-white/10">
-              <p className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-3">
-                Located inside
-              </p>
-              <HorizontalDestinationCard
-                destination={parentDestination}
-                onClick={() => router.push(`/destination/${parentDestination.slug}`)}
-                showBadges={true}
-              />
-            </div>
-          )}
-
-          {/* Quick Actions Bar - Visible on Mobile */}
-          {user && (
-            <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-2 px-2 md:hidden">
-              <button
-                onClick={() => !isSaved && setShowSaveModal(true)}
-                className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 transition-colors ${
-                  isSaved
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                    : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300'
-                }`}
-              >
-                <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                {isSaved ? 'Saved' : 'Save'}
-              </button>
-              <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
-                <DropdownMenuTrigger asChild>
+              {/* Quick Actions Bar - Visible on Mobile */}
+              {user && (
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-2 px-2 lg:hidden">
                   <button
+                    onClick={() => !isSaved && setShowSaveModal(true)}
                     className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 transition-colors ${
-                      isVisited
-                        ? 'bg-green-600 text-white'
+                      isSaved
+                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300'
                     }`}
-                    onClick={(e) => {
-                      if (!isVisited) {
-                        e.preventDefault();
-                        handleVisitToggle();
-                      }
-                    }}
                   >
-                    <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
-                    {isVisited ? 'Visited' : 'Mark Visited'}
-                    {isVisited && <ChevronDown className="h-4 w-4" />}
+                    <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                    {isSaved ? 'Saved' : 'Save'}
                   </button>
-                </DropdownMenuTrigger>
-                {isVisited && (
-                  <DropdownMenuContent align="start" className="w-48">
-                    <DropdownMenuItem onClick={() => {
-                      setShowVisitedModal(true);
-                      setShowVisitedDropdown(false);
-                    }}>
-                      <Plus className="h-3 w-3 mr-2" />
-                      Add Details
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      handleVisitToggle();
-                      setShowVisitedDropdown(false);
-                    }}>
-                      <X className="h-3 w-3 mr-2" />
-                      Remove Visit
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                )}
-              </DropdownMenu>
-            </div>
-          )}
-
-          {/* Sequence Predictions - Show next suggested actions */}
-          {user && predictions && predictions.predictions && predictions.predictions.length > 0 && (
-            <SequencePredictionsInline
-              predictions={predictions.predictions}
-              compact={false}
-            />
-          )}
-
-          {/* ML Intelligence Section */}
-          {destination.id && (
-            <div className="space-y-4">
-              <AnomalyAlert destinationId={destination.id} type="traffic" />
-              <ForecastInfo destinationId={destination.id} />
-              <SentimentDisplay destinationId={destination.id} days={30} />
-              <TopicsDisplay destinationId={destination.id} minTopicSize={3} />
-            </div>
-          )}
-
-          {/* About Section */}
-          {destination.content && (
-            <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 p-6 md:p-8">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">About</h2>
-              <div className="text-[15px] leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
-                {htmlToPlainText(destination.content)}
-              </div>
-              {destination.micro_description && destination.micro_description !== destination.content && (
-                <p className="mt-6 pt-6 border-t border-gray-100 dark:border-white/10 text-[14px] text-gray-500 dark:text-gray-500 italic">
-                  {destination.micro_description}
-                </p>
+                  <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 transition-colors ${
+                          isVisited
+                            ? 'bg-green-600 text-white'
+                            : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300'
+                        }`}
+                        onClick={(e) => {
+                          if (!isVisited) {
+                            e.preventDefault();
+                            handleVisitToggle();
+                          }
+                        }}
+                      >
+                        <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
+                        {isVisited ? 'Visited' : 'Mark Visited'}
+                        {isVisited && <ChevronDown className="h-4 w-4" />}
+                      </button>
+                    </DropdownMenuTrigger>
+                    {isVisited && (
+                      <DropdownMenuContent align="start" className="w-48">
+                        <DropdownMenuItem onClick={() => {
+                          setShowVisitedModal(true);
+                          setShowVisitedDropdown(false);
+                        }}>
+                          <Plus className="h-3 w-3 mr-2" />
+                          Add Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => {
+                          handleVisitToggle();
+                          setShowVisitedDropdown(false);
+                        }}>
+                          <X className="h-3 w-3 mr-2" />
+                          Remove Visit
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    )}
+                  </DropdownMenu>
+                </div>
               )}
-            </div>
-          )}
 
-          {/* Architecture & Design */}
-          <ArchitectDesignInfo destination={destination} />
+              {/* Sequence Predictions */}
+              {user && predictions && predictions.predictions && predictions.predictions.length > 0 && (
+                <SequencePredictionsInline
+                  predictions={predictions.predictions}
+                  compact={false}
+                />
+              )}
 
-          {/* Location & Contact Card */}
-          {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.formatted_address ||
-            enrichedData?.international_phone_number || destination.phone_number ||
-            enrichedData?.website || destination.website || destination.instagram_url ||
-            enrichedData?.opening_hours?.weekday_text) && (
-            <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 overflow-hidden">
-              {/* Map Preview or Address Header */}
-              <div className="p-6 md:p-8">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">Location & Contact</h2>
+              {/* ML Intelligence Section */}
+              {destination.id && (
+                <div className="space-y-4">
+                  <AnomalyAlert destinationId={destination.id} type="traffic" />
+                  <ForecastInfo destinationId={destination.id} />
+                  <SentimentDisplay destinationId={destination.id} days={30} />
+                  <TopicsDisplay destinationId={destination.id} minTopicSize={3} />
+                </div>
+              )}
 
-                {/* Address with Directions */}
-                {(enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity) && (
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
-                      <MapPin className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              {/* About Section */}
+              {destination.content && (
+                <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 p-6 md:p-8">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">About</h2>
+                  <div className="text-[15px] leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                    {htmlToPlainText(destination.content)}
+                  </div>
+                  {destination.micro_description && destination.micro_description !== destination.content && (
+                    <p className="mt-6 pt-6 border-t border-gray-100 dark:border-white/10 text-[14px] text-gray-500 dark:text-gray-500 italic">
+                      {destination.micro_description}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Architecture & Design */}
+              <ArchitectDesignInfo destination={destination} />
+
+              {/* Reviews Section */}
+              {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">Reviews</h2>
+                  <div className="space-y-4">
+                    {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
+                      <div key={idx} className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 p-5 hover:border-gray-200 dark:hover:border-white/20 transition-colors">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
+                            <span className="text-[14px] font-medium text-gray-600 dark:text-gray-400">
+                              {review.author_name?.charAt(0)?.toUpperCase() || '?'}
+                            </span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium text-[14px] text-gray-900 dark:text-white">{review.author_name}</span>
+                              <div className="flex items-center gap-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <span
+                                    key={i}
+                                    className={`text-[12px] ${i < (review.rating || 0) ? 'text-yellow-400' : 'text-gray-200 dark:text-gray-700'}`}
+                                  >
+                                    ★
+                                  </span>
+                                ))}
+                              </div>
+                              {review.relative_time_description && (
+                                <span className="text-[12px] text-gray-400">· {review.relative_time_description}</span>
+                              )}
+                            </div>
+                            {review.text && (
+                              <p className="mt-2 text-[14px] text-gray-600 dark:text-gray-400 leading-relaxed">
+                                {review.text}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Nested Destinations */}
+              {destination.nested_destinations && destination.nested_destinations.length > 0 && (
+                <div>
+                  <NestedDestinations
+                    destinations={destination.nested_destinations}
+                    parentName={destination.name}
+                    onDestinationClick={(nested) => router.push(`/destination/${nested.slug}`)}
+                  />
+                </div>
+              )}
+
+              {/* Similar Destinations */}
+              {(loadingRecommendations || recommendations.length > 0) && (
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">You might also like</h2>
+
+                  {loadingRecommendations ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                        <div key={i} className="space-y-3">
+                          <Skeleton className="aspect-[4/3] rounded-2xl" />
+                          <Skeleton className="h-4 rounded-lg w-3/4" />
+                          <Skeleton className="h-3 rounded-lg w-1/2" />
+                        </div>
+                      ))}
                     </div>
-                    <div className="flex-1">
-                      <p className="text-[15px] text-gray-900 dark:text-white font-medium">
-                        {enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity}
-                      </p>
+                  ) : recommendations.length === 0 ? (
+                    <div className="text-center py-12 text-[14px] text-gray-400">
+                      No similar destinations found
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {recommendations.slice(0, 8).map(rec => (
+                        <button
+                          key={rec.slug}
+                          onClick={() => {
+                            trackEvent({
+                              event_type: 'click',
+                              destination_slug: rec.slug,
+                              metadata: {
+                                source: 'destination_detail_recommendations',
+                                category: rec.category,
+                                city: rec.city,
+                              },
+                            });
+                            router.push(`/destination/${rec.slug}`);
+                          }}
+                          className="text-left group"
+                        >
+                          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3">
+                            {rec.image ? (
+                              <Image
+                                src={rec.image}
+                                alt={`${rec.name} - ${rec.category} in ${rec.city}`}
+                                fill
+                                sizes="(max-width: 768px) 50vw, 25vw"
+                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                quality={75}
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
+                                <MapPin className="h-10 w-10 opacity-20" />
+                              </div>
+                            )}
+
+                            {rec.michelin_stars && rec.michelin_stars > 0 && (
+                              <div className="absolute bottom-2 left-2 px-2 py-1 rounded-lg bg-red-600 text-white text-[11px] font-medium flex items-center gap-1">
+                                <img
+                                  src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
+                                  alt="Michelin star"
+                                  width={12}
+                                  height={12}
+                                  className="h-3 w-3 brightness-0 invert"
+                                  onError={(e) => {
+                                    const target = e.currentTarget;
+                                    if (target.src !== '/michelin-star.svg') {
+                                      target.src = '/michelin-star.svg';
+                                    }
+                                  }}
+                                />
+                                {rec.michelin_stars}
+                              </div>
+                            )}
+                          </div>
+
+                          <h3 className="text-[14px] font-medium text-gray-900 dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors line-clamp-1">
+                            {rec.name}
+                          </h3>
+                          <p className="text-[13px] text-gray-500 mt-1">
+                            {capitalizeCity(rec.city)}
+                          </p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Footer Actions - Mobile only */}
+              <div className="pt-8 border-t border-gray-100 dark:border-white/10 lg:hidden">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => router.push(`/city/${destination.city}`)}
+                    className="flex-1 px-6 py-3.5 text-[14px] font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-opacity"
+                  >
+                    Explore more in {cityName}
+                  </button>
+                  <button
+                    onClick={() => router.push('/')}
+                    className="flex-1 px-6 py-3.5 text-[14px] font-medium border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300"
+                  >
+                    Browse all destinations
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Sidebar - Desktop only */}
+            <div className="hidden lg:block">
+              <div className="sticky top-6 space-y-6">
+                {/* Location & Contact Card */}
+                {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.formatted_address ||
+                  enrichedData?.international_phone_number || destination.phone_number ||
+                  enrichedData?.website || destination.website || destination.instagram_url ||
+                  enrichedData?.opening_hours?.weekday_text) && (
+                  <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 overflow-hidden">
+                    <div className="p-5">
+                      <h2 className="text-[15px] font-semibold text-gray-900 dark:text-white mb-4">Location & Contact</h2>
+
+                      {/* Address */}
+                      {(enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity) && (
+                        <div className="flex items-start gap-3 mb-4">
+                          <MapPin className="h-4 w-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                          <p className="text-[13px] text-gray-600 dark:text-gray-400 leading-relaxed">
+                            {enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Directions Button */}
                       {destination.latitude && destination.longitude && (
                         <a
                           href={`https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-[13px] font-medium hover:opacity-90 transition-opacity"
+                          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-[13px] font-medium hover:opacity-90 transition-opacity mb-4"
                         >
                           <Navigation className="h-4 w-4" />
                           Get Directions
                         </a>
                       )}
+
+                      {/* Contact Buttons */}
+                      <div className="flex flex-wrap gap-2">
+                        {(enrichedData?.international_phone_number || destination.phone_number) && (
+                          <a
+                            href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
+                            className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 dark:bg-white/10 rounded-xl text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+                          >
+                            <Phone className="h-4 w-4" />
+                            Call
+                          </a>
+                        )}
+                        {(enrichedData?.website || destination.website) && (() => {
+                          const websiteUrl = (enrichedData?.website || destination.website) || '';
+                          const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+                          return (
+                            <a
+                              href={fullUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 dark:bg-white/10 rounded-xl text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+                            >
+                              <Globe className="h-4 w-4" />
+                              Website
+                            </a>
+                          );
+                        })()}
+                      </div>
+                      {destination.instagram_url && (
+                        <a
+                          href={destination.instagram_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 w-full inline-flex items-center justify-center gap-2 px-3 py-2 bg-gray-100 dark:bg-white/10 rounded-xl text-[13px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+                        >
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                          </svg>
+                          Instagram
+                        </a>
+                      )}
                     </div>
+
+                    {/* Opening Hours */}
+                    {enrichedData?.opening_hours?.weekday_text && Array.isArray(enrichedData.opening_hours.weekday_text) && (
+                      <div className="px-5 py-4 bg-gray-50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-white/10">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Clock className="h-4 w-4 text-gray-500" />
+                          <h3 className="text-[13px] font-semibold text-gray-900 dark:text-white">Hours</h3>
+                        </div>
+                        <div className="space-y-1.5">
+                          {enrichedData.opening_hours.weekday_text.map((day: string, index: number) => {
+                            const [dayName, hoursText] = day.split(': ');
+                            return (
+                              <div key={index} className="flex justify-between items-center">
+                                <span className="text-[12px] text-gray-500">{dayName}</span>
+                                <span className="text-[12px] text-gray-900 dark:text-white font-medium">{hoursText}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Contact Buttons */}
-                <div className="flex flex-wrap gap-2">
-                  {(enrichedData?.international_phone_number || destination.phone_number) && (
-                    <a
-                      href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/10 rounded-xl text-[14px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
-                    >
-                      <Phone className="h-4 w-4" />
-                      Call
-                    </a>
+                {/* Quick Actions - Desktop */}
+                <div className="space-y-3">
+                  <button
+                    onClick={() => router.push(`/city/${destination.city}`)}
+                    className="w-full px-5 py-3 text-[14px] font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-opacity"
+                  >
+                    Explore more in {cityName}
+                  </button>
+                  <button
+                    onClick={() => router.push('/')}
+                    className="w-full px-5 py-3 text-[14px] font-medium border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300"
+                  >
+                    Browse all destinations
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Location & Contact - Mobile only (shown below main content) */}
+          <div className="lg:hidden mt-8 space-y-8">
+            {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.formatted_address ||
+              enrichedData?.international_phone_number || destination.phone_number ||
+              enrichedData?.website || destination.website || destination.instagram_url ||
+              enrichedData?.opening_hours?.weekday_text) && (
+              <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 overflow-hidden">
+                <div className="p-6">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">Location & Contact</h2>
+
+                  {(enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity) && (
+                    <div className="flex items-start gap-4 mb-6">
+                      <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
+                        <MapPin className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-[15px] text-gray-900 dark:text-white font-medium">
+                          {enrichedData?.formatted_address || destination.formatted_address || enrichedData?.vicinity}
+                        </p>
+                        {destination.latitude && destination.longitude && (
+                          <a
+                            href={`https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-[13px] font-medium hover:opacity-90 transition-opacity"
+                          >
+                            <Navigation className="h-4 w-4" />
+                            Get Directions
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   )}
-                  {(enrichedData?.website || destination.website) && (() => {
-                    const websiteUrl = (enrichedData?.website || destination.website) || '';
-                    const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
-                    return (
+
+                  <div className="flex flex-wrap gap-2">
+                    {(enrichedData?.international_phone_number || destination.phone_number) && (
                       <a
-                        href={fullUrl}
+                        href={`tel:${enrichedData?.international_phone_number || destination.phone_number}`}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/10 rounded-xl text-[14px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+                      >
+                        <Phone className="h-4 w-4" />
+                        Call
+                      </a>
+                    )}
+                    {(enrichedData?.website || destination.website) && (() => {
+                      const websiteUrl = (enrichedData?.website || destination.website) || '';
+                      const fullUrl = websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`;
+                      return (
+                        <a
+                          href={fullUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/10 rounded-xl text-[14px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
+                        >
+                          <Globe className="h-4 w-4" />
+                          Website
+                          <ExternalLink className="h-3 w-3 opacity-60" />
+                        </a>
+                      );
+                    })()}
+                    {destination.instagram_url && (
+                      <a
+                        href={destination.instagram_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/10 rounded-xl text-[14px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
                       >
-                        <Globe className="h-4 w-4" />
-                        Website
-                        <ExternalLink className="h-3 w-3 opacity-60" />
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                        </svg>
+                        Instagram
                       </a>
-                    );
-                  })()}
-                  {destination.instagram_url && (
-                    <a
-                      href={destination.instagram_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 dark:bg-white/10 rounded-xl text-[14px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/15 transition-colors"
-                    >
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                      </svg>
-                      Instagram
-                    </a>
-                  )}
-                </div>
-              </div>
-
-              {/* Opening Hours Section */}
-              {enrichedData?.opening_hours?.weekday_text && Array.isArray(enrichedData.opening_hours.weekday_text) && (
-                <div className="px-6 md:px-8 py-5 bg-gray-50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-white/10">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Clock className="h-4 w-4 text-gray-500" />
-                    <h3 className="text-[14px] font-semibold text-gray-900 dark:text-white">Hours</h3>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
-                    {enrichedData.opening_hours.weekday_text.map((day: string, index: number) => {
-                      const [dayName, hoursText] = day.split(': ');
-                      return (
-                        <div key={index} className="flex justify-between items-center py-1">
-                          <span className="text-[13px] text-gray-500 dark:text-gray-500">{dayName}</span>
-                          <span className="text-[13px] text-gray-900 dark:text-white font-medium">{hoursText}</span>
-                        </div>
-                      );
-                    })}
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
-          )}
 
-          {/* Reviews Section */}
-          {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">Reviews</h2>
-              <div className="space-y-4">
-                {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
-                  <div key={idx} className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 p-5 hover:border-gray-200 dark:hover:border-white/20 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-[14px] font-medium text-gray-600 dark:text-gray-400">
-                          {review.author_name?.charAt(0)?.toUpperCase() || '?'}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-[14px] text-gray-900 dark:text-white">{review.author_name}</span>
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <span
-                                key={i}
-                                className={`text-[12px] ${i < (review.rating || 0) ? 'text-yellow-400' : 'text-gray-200 dark:text-gray-700'}`}
-                              >
-                                ★
-                              </span>
-                            ))}
+                {enrichedData?.opening_hours?.weekday_text && Array.isArray(enrichedData.opening_hours.weekday_text) && (
+                  <div className="px-6 py-5 bg-gray-50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-white/10">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                      <h3 className="text-[14px] font-semibold text-gray-900 dark:text-white">Hours</h3>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+                      {enrichedData.opening_hours.weekday_text.map((day: string, index: number) => {
+                        const [dayName, hoursText] = day.split(': ');
+                        return (
+                          <div key={index} className="flex justify-between items-center py-1">
+                            <span className="text-[13px] text-gray-500">{dayName}</span>
+                            <span className="text-[13px] text-gray-900 dark:text-white font-medium">{hoursText}</span>
                           </div>
-                          {review.relative_time_description && (
-                            <span className="text-[12px] text-gray-400">· {review.relative_time_description}</span>
-                          )}
-                        </div>
-                        {review.text && (
-                          <p className="mt-2 text-[14px] text-gray-600 dark:text-gray-400 leading-relaxed">
-                            {review.text}
-                          </p>
-                        )}
-                      </div>
+                        );
+                      })}
                     </div>
                   </div>
-                ))}
+                )}
               </div>
-            </div>
-          )}
-
-          {/* Nested Destinations - Show venues within this destination */}
-          {destination.nested_destinations && destination.nested_destinations.length > 0 && (
-            <div>
-              <NestedDestinations
-                destinations={destination.nested_destinations}
-                parentName={destination.name}
-                onDestinationClick={(nested) => router.push(`/destination/${nested.slug}`)}
-              />
-            </div>
-          )}
-
-          {/* Similar Destinations */}
-          {(loadingRecommendations || recommendations.length > 0) && (
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">You might also like</h2>
-
-              {loadingRecommendations ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {[1, 2, 3, 4, 5, 6].map(i => (
-                    <div key={i} className="space-y-3">
-                      <Skeleton className="aspect-[4/3] rounded-2xl" />
-                      <Skeleton className="h-4 rounded-lg w-3/4" />
-                      <Skeleton className="h-3 rounded-lg w-1/2" />
-                    </div>
-                  ))}
-                </div>
-              ) : recommendations.length === 0 ? (
-                <div className="text-center py-12 text-[14px] text-gray-400">
-                  No similar destinations found
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {recommendations.slice(0, 6).map(rec => (
-                    <button
-                      key={rec.slug}
-                      onClick={() => {
-                        trackEvent({
-                          event_type: 'click',
-                          destination_slug: rec.slug,
-                          metadata: {
-                            source: 'destination_detail_recommendations',
-                            category: rec.category,
-                            city: rec.city,
-                          },
-                        });
-                        router.push(`/destination/${rec.slug}`);
-                      }}
-                      className="text-left group"
-                    >
-                      <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 mb-3">
-                        {rec.image ? (
-                          <Image
-                            src={rec.image}
-                            alt={`${rec.name} - ${rec.category} in ${rec.city}`}
-                            fill
-                            sizes="(max-width: 768px) 50vw, 33vw"
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                            quality={75}
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-700">
-                            <MapPin className="h-10 w-10 opacity-20" />
-                          </div>
-                        )}
-
-                        {rec.michelin_stars && rec.michelin_stars > 0 && (
-                          <div className="absolute bottom-2 left-2 px-2 py-1 rounded-lg bg-red-600 text-white text-[11px] font-medium flex items-center gap-1">
-                            <img
-                              src="https://guide.michelin.com/assets/images/icons/1star-1f2c04d7e6738e8a3312c9cda4b64fd0.svg"
-                              alt="Michelin star"
-                              width={12}
-                              height={12}
-                              className="h-3 w-3 brightness-0 invert"
-                              onError={(e) => {
-                                const target = e.currentTarget;
-                                if (target.src !== '/michelin-star.svg') {
-                                  target.src = '/michelin-star.svg';
-                                }
-                              }}
-                            />
-                            {rec.michelin_stars}
-                          </div>
-                        )}
-                      </div>
-
-                      <h3 className="text-[14px] font-medium text-gray-900 dark:text-white group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors line-clamp-1">
-                        {rec.name}
-                      </h3>
-                      <p className="text-[13px] text-gray-500 mt-1">
-                        {capitalizeCity(rec.city)}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Footer Actions */}
-          <div className="pt-8 border-t border-gray-100 dark:border-white/10">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={() => router.push(`/city/${destination.city}`)}
-                className="flex-1 px-6 py-3.5 text-[14px] font-medium bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl hover:opacity-90 transition-opacity"
-              >
-                Explore more in {cityName}
-              </button>
-              <button
-                onClick={() => router.push('/')}
-                className="flex-1 px-6 py-3.5 text-[14px] font-medium border border-gray-200 dark:border-white/10 rounded-xl hover:bg-gray-50 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-gray-300"
-              >
-                Browse all destinations
-              </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
