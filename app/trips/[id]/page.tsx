@@ -482,8 +482,36 @@ export default function TripPage() {
           />
         </div>
 
+        {/* Horizontal Day Switcher */}
+        {days.length > 1 && (
+          <div className="sticky top-16 z-30 -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 bg-white/95 dark:bg-gray-950/95 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 mt-6">
+            <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
+              {days.map((day) => {
+                const shortDate = day.date
+                  ? new Date(day.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short' }).substring(0, 3)
+                  : null;
+                return (
+                  <button
+                    key={day.dayNumber}
+                    onClick={() => {
+                      const element = document.getElementById(`day-${day.dayNumber}`);
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
+                    className="flex-shrink-0 flex flex-col items-center px-3 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500">{shortDate}</span>
+                    <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">Day {day.dayNumber}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Days */}
-        <div className="mt-8 space-y-8">
+        <div className="mt-4 space-y-8">
           {days.map((day) => {
             const dayDate = day.date;
             const weather = dayDate ? weatherByDate[dayDate] : undefined;
@@ -1608,7 +1636,7 @@ function DaySection({
     : null;
 
   return (
-    <div>
+    <div id={`day-${dayNumber}`} className="scroll-mt-20">
       {/* Day header - reference style */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -1934,7 +1962,7 @@ function DaySection({
                     isExpanded={expandedItemId === item.id}
                     isEditMode={isEditMode}
                     onToggle={() => onToggleItem(item.id)}
-                    onRemove={isEditMode ? () => onRemove(item.id) : undefined}
+                    onRemove={() => onRemove(item.id)}
                     onUpdateItem={onUpdateItem}
                     onUpdateTime={onUpdateTime}
                     onDragEnd={handleReorderComplete}
