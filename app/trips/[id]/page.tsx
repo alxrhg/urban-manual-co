@@ -43,7 +43,14 @@ export default function TripPage() {
   const params = useParams();
   const router = useRouter();
   const tripId = params?.id as string;
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+
+  // Redirect to sign in if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.replace('/signin');
+    }
+  }, [authLoading, user, router]);
 
   const {
     trip,
@@ -331,7 +338,17 @@ export default function TripPage() {
     }
   }, [user, trip, router]);
 
-  if (loading) {
+  // Show loader while auth or trip is loading
+  if (authLoading || loading) {
+    return (
+      <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
+        <div className="max-w-xl mx-auto"><PageLoader /></div>
+      </main>
+    );
+  }
+
+  // If not authenticated, the useEffect will redirect - show loader in meantime
+  if (!user) {
     return (
       <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
         <div className="max-w-xl mx-auto"><PageLoader /></div>
