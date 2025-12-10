@@ -312,7 +312,7 @@ export default function TripPage() {
 
   if (loading) {
     return (
-      <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950">
+      <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
         <div className="max-w-xl mx-auto"><PageLoader /></div>
       </main>
     );
@@ -320,7 +320,7 @@ export default function TripPage() {
 
   if (!trip) {
     return (
-      <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+      <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-500 dark:text-gray-400 mb-4">Trip not found</p>
           <Link href="/trips" className="text-gray-900 dark:text-white hover:opacity-70">Back to trips</Link>
@@ -333,7 +333,7 @@ export default function TripPage() {
   const tripNotes = trip.notes || '';
 
   return (
-    <main className="w-full px-4 sm:px-6 py-20 min-h-screen bg-white dark:bg-gray-950">
+    <main className="w-full px-4 sm:px-6 pt-16 pb-24 sm:py-20 min-h-screen bg-white dark:bg-gray-950">
       <div className="max-w-6xl mx-auto">
         {/* Back link */}
         <Link
@@ -362,7 +362,7 @@ export default function TripPage() {
             <div className="flex items-center justify-between mt-4 mb-2">
               <button
                 onClick={() => setIsEditMode(!isEditMode)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-medium rounded-full transition-colors ${
+                className={`flex items-center gap-1.5 px-4 py-2 sm:px-3 sm:py-1.5 text-[12px] sm:text-[11px] font-medium rounded-full transition-colors ${
                   isEditMode
                     ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900'
                     : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-200 dark:border-gray-700'
@@ -370,12 +370,12 @@ export default function TripPage() {
               >
                 {isEditMode ? (
                   <>
-                    <Check className="w-3 h-3" />
+                    <Check className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                     Done
                   </>
                 ) : (
                   <>
-                    <Pencil className="w-3 h-3" />
+                    <Pencil className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                     Edit
                   </>
                 )}
@@ -1309,16 +1309,16 @@ function DaySection({
           <DayPacing items={items} />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 sm:gap-2">
           {/* Optimize prompt */}
           {canOptimize && (
             <button
               onClick={optimizeRoute}
               disabled={isOptimizing}
-              className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+              className="flex items-center gap-1 text-[11px] sm:text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors py-1"
             >
-              {isOptimizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Route className="w-3 h-3" />}
-              Optimize
+              {isOptimizing ? <Loader2 className="w-3.5 h-3.5 sm:w-3 sm:h-3 animate-spin" /> : <Route className="w-3.5 h-3.5 sm:w-3 sm:h-3" />}
+              <span className="hidden sm:inline">Optimize</span>
             </button>
           )}
 
@@ -1326,9 +1326,9 @@ function DaySection({
           <div className="relative">
             <button
               onClick={() => { setShowAddMenu(!showAddMenu); setShowSearch(false); setShowTransportForm(null); }}
-              className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
-              <Plus className={`w-3.5 h-3.5 text-gray-500 transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
+              <Plus className={`w-4 h-4 sm:w-3.5 sm:h-3.5 text-gray-500 transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
             </button>
 
             {/* Add menu dropdown */}
@@ -1338,50 +1338,50 @@ function DaySection({
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20"
+                  className="absolute right-0 top-full mt-1 w-44 sm:w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl sm:rounded-lg shadow-lg overflow-hidden z-20"
                 >
                   <button
                     onClick={() => { setShowSearch(true); setSearchSource('curated'); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
                   >
-                    <Search className="w-3.5 h-3.5" />
+                    <Search className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     From curation
                   </button>
                   <button
                     onClick={() => { setShowSearch(true); setSearchSource('google'); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
                   >
-                    <Globe className="w-3.5 h-3.5" />
+                    <Globe className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     From Google
                   </button>
                   <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
                   <button
                     onClick={() => setShowTransportForm('flight')}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
                   >
-                    <Plane className="w-3.5 h-3.5" />
+                    <Plane className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     Flight
                   </button>
                   <button
                     onClick={() => setShowTransportForm('hotel')}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
                   >
-                    <Hotel className="w-3.5 h-3.5" />
+                    <Hotel className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     Hotel
                   </button>
                   <button
                     onClick={() => setShowTransportForm('train')}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
                   >
-                    <TrainIcon className="w-3.5 h-3.5" />
+                    <TrainIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     Train
                   </button>
                   <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
                   <button
                     onClick={() => setShowTransportForm('activity')}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
                   >
-                    <Clock className="w-3.5 h-3.5" />
+                    <Clock className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     Activity
                   </button>
                 </motion.div>
@@ -1395,7 +1395,7 @@ function DaySection({
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95, y: -4 }}
-                  className="absolute right-0 top-full mt-1 w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3"
+                  className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-1 w-auto sm:w-72 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-lg shadow-lg overflow-hidden z-20 p-3"
                 >
                   {/* Source toggle */}
                   <div className="flex items-center gap-1 mb-2">
@@ -2234,7 +2234,7 @@ function ItemRow({
       <div className={`rounded-lg transition-all ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}>
         {/* Main row - click to select (desktop sidebar) */}
         <div
-          className={`flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 rounded-lg group ${onSelect ? 'cursor-pointer' : ''}`}
+          className={`flex items-center gap-3 px-3 py-3 sm:py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 active:bg-gray-100 dark:active:bg-gray-800/50 rounded-xl sm:rounded-lg group ${onSelect ? 'cursor-pointer' : ''}`}
           onClick={onSelect}
         >
           {/* Icon or image */}

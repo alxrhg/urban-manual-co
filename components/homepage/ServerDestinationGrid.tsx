@@ -42,7 +42,7 @@ function ServerDestinationCard({
       className="group relative w-full flex flex-col"
     >
       {/* Image Container - Apple-style rounded corners */}
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[16px] bg-gray-100 dark:bg-gray-800/50 mb-3">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-[12px] sm:rounded-[16px] bg-gray-100 dark:bg-gray-800/50 mb-2 sm:mb-3">
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -115,7 +115,7 @@ export function ServerDestinationGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-5 md:gap-6 lg:gap-7 items-start">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 sm:gap-5 md:gap-6 lg:gap-7 items-start">
       {displayedDestinations.map((destination, index) => (
         <ServerDestinationCard
           key={destination.slug}

@@ -83,14 +83,14 @@ export default async function HomePage() {
           </h1>
 
           {/* Hero Section - Apple-inspired spacious layout */}
-          <section className="min-h-[50vh] flex flex-col px-6 md:px-10 py-10 pb-6 md:pb-10">
+          <section className="min-h-[45vh] sm:min-h-[50vh] flex flex-col px-4 sm:px-6 md:px-10 py-8 sm:py-10 pb-4 sm:pb-6 md:pb-10">
             <div className="w-full flex md:justify-start flex-1 items-center">
               <InteractiveHero />
             </div>
           </section>
 
           {/* Content Section */}
-          <div className="w-full px-6 md:px-10 mt-8">
+          <div className="w-full px-4 sm:px-6 md:px-10 mt-6 sm:mt-8">
             <div className="max-w-[1800px] mx-auto">
               {/* Navigation bar */}
               <NavigationBar />

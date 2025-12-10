@@ -65,16 +65,16 @@ export default function NavigationBar() {
           <button
             onClick={handleCreateTrip}
             disabled={creatingTrip}
-            className="flex h-[38px] flex-shrink-0 items-center justify-center gap-2 rounded-full
-                       bg-gray-900 dark:bg-white px-4 text-[13px] font-medium
+            className="flex h-[42px] sm:h-[38px] flex-shrink-0 items-center justify-center gap-2 rounded-full
+                       bg-gray-900 dark:bg-white px-4 text-[14px] sm:text-[13px] font-medium
                        text-white dark:text-gray-900
                        disabled:opacity-50 hover:bg-gray-800 dark:hover:bg-gray-100
-                       active:scale-[0.98] transition-all duration-200"
+                       active:scale-[0.98] active:bg-gray-700 dark:active:bg-gray-200 transition-all duration-200"
           >
             {creatingTrip ? (
-              <Loader2 className="h-[15px] w-[15px] animate-spin" />
+              <Loader2 className="h-[16px] w-[16px] sm:h-[15px] sm:w-[15px] animate-spin" />
             ) : (
-              <Plus className="h-[15px] w-[15px]" />
+              <Plus className="h-[16px] w-[16px] sm:h-[15px] sm:w-[15px]" />
             )}
             <span className="hidden sm:inline">
               {creatingTrip ? 'Creating...' : 'Create Trip'}
@@ -84,13 +84,13 @@ export default function NavigationBar() {
           {/* Discover by Cities */}
           <Link
             href="/cities"
-            className="flex h-[38px] flex-shrink-0 items-center justify-center gap-2 rounded-full
+            className="flex h-[42px] sm:h-[38px] flex-shrink-0 items-center justify-center gap-2 rounded-full
                        border border-gray-200/80 dark:border-white/[0.12] bg-white dark:bg-white/[0.06]
-                       px-4 text-[13px] font-medium text-gray-700 dark:text-gray-200
+                       px-4 text-[14px] sm:text-[13px] font-medium text-gray-700 dark:text-gray-200
                        hover:bg-gray-50 dark:hover:bg-white/[0.1]
-                       active:scale-[0.98] transition-all duration-200"
+                       active:scale-[0.98] active:bg-gray-100 dark:active:bg-white/[0.15] transition-all duration-200"
           >
-            <Globe className="h-[15px] w-[15px]" />
+            <Globe className="h-[16px] w-[16px] sm:h-[15px] sm:w-[15px]" />
             <span className="hidden sm:inline">Discover by Cities</span>
           </Link>
         </div>
