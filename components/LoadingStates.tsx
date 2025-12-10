@@ -152,6 +152,37 @@ export function CollectionGridSkeleton({ count = 6 }: { count?: number }) {
   );
 }
 
+// Skeleton for collection detail page
+export function CollectionDetailSkeleton() {
+  return (
+    <main className="w-full min-h-screen bg-white dark:bg-gray-950">
+      {/* Header background */}
+      <div className="h-48 w-full bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800" />
+
+      <div className="max-w-5xl mx-auto px-6 md:px-10 -mt-12">
+        {/* Collection header */}
+        <div className="mb-8 animate-pulse">
+          <div className="flex items-start gap-4">
+            <Skeleton className="h-16 w-16 rounded-2xl flex-shrink-0" />
+            <div className="flex-1 space-y-3">
+              <Skeleton className="h-8 w-2/3" />
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-4 w-1/2" />
+            </div>
+          </div>
+        </div>
+
+        {/* Destinations grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <HorizontalCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
+
 // ============================================
 // TRIP SKELETONS
 // ============================================
