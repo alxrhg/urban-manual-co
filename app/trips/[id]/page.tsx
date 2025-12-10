@@ -2619,7 +2619,7 @@ function TravelTime({
 
   // Estimate travel time based on mode
   const getTravelMinutes = () => {
-    if (distanceKm === 0) return 15;
+    if (distanceKm === 0) return null; // No coordinates = can't calculate
     switch (mode) {
       case 'walking': return Math.round(distanceKm * 12);
       case 'driving': return Math.round(distanceKm * 2);
@@ -2672,7 +2672,7 @@ function TravelTime({
       >
         {getModeIcon()}
         <span>
-          {travelMinutes}m {specialLabel || `to ${toName.length > 12 ? toName.slice(0, 12) + '...' : toName}`}
+          {travelMinutes !== null ? `${travelMinutes}m ` : ''}{specialLabel || `to ${toName.length > 12 ? toName.slice(0, 12) + '...' : toName}`}
         </span>
       </button>
       <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
