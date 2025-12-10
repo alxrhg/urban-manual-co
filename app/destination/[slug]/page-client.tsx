@@ -543,11 +543,35 @@ export default function DestinationPageClient({ initialDestination, parentDestin
         </div>
       </div>
 
+      {/* Tab Navigation - Desktop only */}
+      <div className="hidden lg:block sticky top-0 z-20 bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-white/10">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 lg:px-12">
+          <nav className="flex items-center gap-8 overflow-x-auto">
+            <a href="#about" className="py-4 text-[14px] font-medium text-gray-900 dark:text-white border-b-2 border-gray-900 dark:border-white -mb-px">
+              About
+            </a>
+            {enrichedData?.reviews && enrichedData.reviews.length > 0 && (
+              <a href="#reviews" className="py-4 text-[14px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                Reviews
+              </a>
+            )}
+            <a href="#location" className="py-4 text-[14px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+              Location
+            </a>
+            {recommendations.length > 0 && (
+              <a href="#similar" className="py-4 text-[14px] font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                Similar
+              </a>
+            )}
+          </nav>
+        </div>
+      </div>
+
       {/* Main Content */}
-      <div className="px-6 md:px-10 lg:px-12 py-10 md:py-12">
+      <div className="px-6 md:px-10 lg:px-12 py-8 md:py-10">
         <div className="max-w-7xl mx-auto">
           {/* Two-column layout on desktop */}
-          <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-10">
+          <div className="lg:grid lg:grid-cols-[1fr,380px] lg:gap-12">
             {/* Main Column */}
             <div className="space-y-8 md:space-y-10">
               {/* Parent Destination Link */}
@@ -640,7 +664,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
               {/* About Section */}
               {destination.content && (
-                <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 p-6 md:p-8">
+                <div id="about" className="bg-white dark:bg-white/5 rounded-2xl border border-gray-100 dark:border-white/10 p-6 md:p-8 scroll-mt-20">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">About</h2>
                   <div className="text-[15px] leading-relaxed text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                     {htmlToPlainText(destination.content)}
@@ -658,7 +682,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
               {/* Reviews Section */}
               {enrichedData?.reviews && Array.isArray(enrichedData.reviews) && enrichedData.reviews.length > 0 && (
-                <div>
+                <div id="reviews" className="scroll-mt-20">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">Reviews</h2>
                   <div className="space-y-4">
                     {enrichedData.reviews.slice(0, 3).map((review: any, idx: number) => (
@@ -712,7 +736,7 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
               {/* Similar Destinations */}
               {(loadingRecommendations || recommendations.length > 0) && (
-                <div>
+                <div id="similar" className="scroll-mt-20">
                   <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-5">You might also like</h2>
 
                   {loadingRecommendations ? (
@@ -818,8 +842,8 @@ export default function DestinationPageClient({ initialDestination, parentDestin
             </div>
 
             {/* Sidebar - Desktop only */}
-            <div className="hidden lg:block">
-              <div className="sticky top-6 space-y-6">
+            <div id="location" className="hidden lg:block scroll-mt-20">
+              <div className="sticky top-16 space-y-6">
                 {/* Location & Contact Card */}
                 {(enrichedData?.formatted_address || enrichedData?.vicinity || destination.formatted_address ||
                   enrichedData?.international_phone_number || destination.phone_number ||
