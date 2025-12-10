@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
 import { parseDestinations, stringifyDestinations, parseTripNotes, stringifyTripNotes, type TripNoteItem, type ActivityData, type ActivityType } from '@/types/trip';
 import { calculateDayNumberFromDate } from '@/lib/utils/time-calculations';
+import { getAirportCoordinates } from '@/lib/utils/airports';
 import { PageLoader } from '@/components/LoadingStates';
 import { createClient } from '@/lib/supabase/client';
 import type { Destination } from '@/types/destination';
@@ -2598,11 +2599,27 @@ function TravelTime({
   const fromType = from.parsedNotes?.type;
   const toType = to.parsedNotes?.type;
 
-  // Get coordinates
-  const fromLat = from.destination?.latitude || from.parsedNotes?.latitude;
-  const fromLng = from.destination?.longitude || from.parsedNotes?.longitude;
-  const toLat = to.destination?.latitude || to.parsedNotes?.latitude;
-  const toLng = to.destination?.longitude || to.parsedNotes?.longitude;
+  // Get coordinates - check for airport/station coordinates for flights/trains
+  let fromLat = from.destination?.latitude || from.parsedNotes?.latitude;
+  let fromLng = from.destination?.longitude || from.parsedNotes?.longitude;
+  let toLat = to.destination?.latitude || to.parsedNotes?.latitude;
+  let toLng = to.destination?.longitude || to.parsedNotes?.longitude;
+
+  // For flights/trains, use destination airport/station coordinates
+  if (fromType === 'flight' && !fromLat && from.parsedNotes?.to) {
+    const airportCoords = getAirportCoordinates(from.parsedNotes.to);
+    if (airportCoords) {
+      fromLat = airportCoords.latitude;
+      fromLng = airportCoords.longitude;
+    }
+  }
+  if (toType === 'flight' && !toLat && to.parsedNotes?.from) {
+    const airportCoords = getAirportCoordinates(to.parsedNotes.from);
+    if (airportCoords) {
+      toLat = airportCoords.latitude;
+      toLng = airportCoords.longitude;
+    }
+  }
 
   // Calculate distance (Haversine)
   let distanceKm = 0;
@@ -2618,8 +2635,8 @@ function TravelTime({
   }
 
   // Estimate travel time based on mode
-  const getTravelMinutes = () => {
-    if (distanceKm === 0) return null; // No coordinates = can't calculate
+  const getTravelMinutes = (): number | null => {
+    if (distanceKm === 0) return null; // No valid coordinates
     switch (mode) {
       case 'walking': return Math.round(distanceKm * 12);
       case 'driving': return Math.round(distanceKm * 2);
