@@ -746,6 +746,9 @@ function TripHeader({
     };
   }, [days]);
 
+  // State for map image error
+  const [mapError, setMapError] = useState(false);
+
   // Generate static map URL
   const staticMapUrl = useMemo(() => {
     if (!mapCenter) return null;
@@ -757,6 +760,11 @@ function TripHeader({
     // Static map with streets style
     return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/${pin}/${mapCenter.lng},${mapCenter.lat},11,0/600x200@2x?access_token=${token}`;
   }, [mapCenter]);
+
+  // Reset error when URL changes
+  useEffect(() => {
+    setMapError(false);
+  }, [staticMapUrl]);
 
   useEffect(() => {
     if (isEditing && titleRef.current) {
@@ -962,7 +970,7 @@ function TripHeader({
     <div className="group">
       {/* Static map cover */}
       <div className="relative aspect-[3/1] rounded-xl overflow-hidden mb-4">
-        {staticMapUrl ? (
+        {staticMapUrl && !mapError ? (
           <>
             <Image
               src={staticMapUrl}
@@ -970,6 +978,7 @@ function TripHeader({
               fill
               className="object-cover"
               unoptimized
+              onError={() => setMapError(true)}
             />
             {/* City overlay */}
             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
@@ -1256,9 +1265,18 @@ function DaySection({
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Filter out hotels that are already shown as check-in/checkout cards
+  const hotelCardIds = new Set([
+    checkoutHotel?.id,
+    checkInHotel?.id,
+    breakfastHotel?.id,
+  ].filter(Boolean));
+
   useEffect(() => {
-    setOrderedItems(items);
-  }, [items]);
+    // Filter items to exclude hotels shown as activity cards
+    const filteredItems = items.filter(item => !hotelCardIds.has(item.id));
+    setOrderedItems(filteredItems);
+  }, [items, checkoutHotel?.id, checkInHotel?.id, breakfastHotel?.id]);
 
   // Focus search input when shown
   useEffect(() => {

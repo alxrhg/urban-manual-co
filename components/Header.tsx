@@ -120,11 +120,11 @@ export function Header() {
         <TooltipTrigger asChild>
           <button
             onClick={() => navigate('/trips')}
-            className="flex items-center gap-1.5 px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
             aria-label="View trips"
           >
             <Map className="w-4 h-4" />
-            <span>Trips</span>
+            <span className="hidden sm:inline">Trips</span>
           </button>
         </TooltipTrigger>
         <TooltipContent>
@@ -137,7 +137,7 @@ export function Header() {
           <TooltipTrigger asChild>
             <button
               onClick={() => openDrawer('account')}
-              className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
               aria-label="Open account drawer"
             >
               {avatarUrl ? (
@@ -184,7 +184,7 @@ export function Header() {
                   )}
                 </span>
               )}
-              <span>Account</span>
+              <span className="hidden sm:inline">Account</span>
             </button>
           </TooltipTrigger>
           <TooltipContent>
@@ -196,11 +196,11 @@ export function Header() {
           <TooltipTrigger asChild>
             <button
               onClick={() => openDrawer('login')}
-              className="flex items-center gap-1.5 px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+              className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition-opacity touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
               aria-label="Sign in"
             >
               <User className="w-4 h-4" />
-              <span>Sign In</span>
+              <span className="hidden sm:inline">Sign In</span>
             </button>
           </TooltipTrigger>
           <TooltipContent>

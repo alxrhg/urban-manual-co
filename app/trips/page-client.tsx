@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -166,6 +166,7 @@ export default function TripsPageClient({ initialTrips, userId }: TripsPageClien
  * Trip Row - minimal design with static map
  */
 function TripRow({ trip }: { trip: TripWithStats }) {
+  const [imageError, setImageError] = useState(false);
   const state = getTripState(trip.end_date, trip.start_date, trip.stats);
   const isPast = state === 'past';
   const destinations = formatDestinationsFromField(trip.destination);
@@ -191,7 +192,7 @@ function TripRow({ trip }: { trip: TripWithStats }) {
     >
       {/* Static map cover */}
       <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0">
-        {staticMapUrl ? (
+        {staticMapUrl && !imageError ? (
           <Image
             src={staticMapUrl}
             alt=""
@@ -199,6 +200,7 @@ function TripRow({ trip }: { trip: TripWithStats }) {
             height={56}
             className="w-full h-full object-cover"
             unoptimized
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30">
