@@ -42,10 +42,16 @@ interface TrainData {
 interface HotelData {
   name: string;
   address?: string;
+  checkInDate?: string;
   checkInTime?: string;
+  checkOutDate?: string;
   checkOutTime?: string;
   confirmationNumber?: string;
+  roomType?: string;
   nights?: number;
+  breakfastIncluded?: boolean;
+  destination_slug?: string;
+  image?: string;
 }
 
 interface ActivityData {

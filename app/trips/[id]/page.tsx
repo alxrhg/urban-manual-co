@@ -109,28 +109,32 @@ export default function TripPage() {
   }, [days]);
 
   // Compute which hotel covers each night based on check-in/check-out dates
+  // Note: Parse all dates as local time to avoid timezone shifts
   const nightlyHotelByDay = useMemo(() => {
     const hotelMap: Record<number, EnrichedItineraryItem | null> = {};
     if (!trip?.start_date) return hotelMap;
 
-    const tripStart = new Date(trip.start_date);
-    tripStart.setHours(0, 0, 0, 0);
+    const tripStart = new Date(trip.start_date + 'T00:00:00');
 
     hotels.forEach(hotel => {
       const checkInDate = hotel.parsedNotes?.checkInDate;
       const checkOutDate = hotel.parsedNotes?.checkOutDate;
 
-      if (!checkInDate) return;
-
-      const inDate = new Date(checkInDate);
-      inDate.setHours(0, 0, 0, 0);
-      const checkInDayNum = Math.floor((inDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      // Fallback to item's day number if no explicit checkInDate
+      let checkInDayNum: number;
+      if (checkInDate) {
+        const inDate = new Date(checkInDate + 'T00:00:00');
+        checkInDayNum = Math.floor((inDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      } else {
+        // Use the day the hotel item is on
+        checkInDayNum = hotel.day;
+      }
 
       let nights = 1;
       if (checkOutDate) {
         try {
-          const outDate = new Date(checkOutDate);
-          outDate.setHours(0, 0, 0, 0);
+          const outDate = new Date(checkOutDate + 'T00:00:00');
+          const inDate = checkInDate ? new Date(checkInDate + 'T00:00:00') : tripStart;
           nights = Math.max(1, Math.ceil((outDate.getTime() - inDate.getTime()) / (1000 * 60 * 60 * 24)));
         } catch {
           nights = 1;
@@ -430,11 +434,14 @@ export default function TripPage() {
                     address: data.address,
                     checkInDate: day.date || '',
                     checkInTime: data.checkInTime || '16:00',
+                    checkOutDate: data.checkOutDate,
                     checkOutTime: data.checkOutTime || '11:00',
                     confirmationNumber: data.confirmationNumber,
                     roomType: data.roomType,
                     breakfastIncluded: data.breakfastIncluded,
                     breakfastTime: data.breakfastIncluded ? '08:00' : undefined,
+                    destination_slug: data.destination_slug,
+                    image: data.image,
                   }, day.dayNumber);
                 }}
                 onAddActivity={(data) => addActivity(data, day.dayNumber)}
@@ -497,14 +504,20 @@ export default function TripPage() {
                     setSidebarAddDay(null);
                   }}
                   onAddHotel={(data) => {
+                    // Get the day's date for checkInDate if not provided in form
+                    const dayInfo = days.find(d => d.dayNumber === sidebarAddDay);
+                    const dayDate = dayInfo?.date || '';
                     addHotel({
                       type: 'hotel',
                       name: data.name,
                       address: data.address,
-                      checkInDate: '',
+                      checkInDate: data.checkInDate || dayDate,
                       checkInTime: data.checkInTime,
+                      checkOutDate: data.checkOutDate,
                       checkOutTime: data.checkOutTime,
                       confirmationNumber: data.confirmationNumber,
+                      destination_slug: data.destination_slug,
+                      image: data.image,
                     }, sidebarAddDay);
                     setSidebarAddDay(null);
                   }}
@@ -523,7 +536,7 @@ export default function TripPage() {
                   onTimeChange={updateItemTime}
                   onNotesChange={updateItemNotes}
                   onItemUpdate={(id, updates) => updateItem(id, updates)}
-                  onRemove={isEditMode ? removeItem : undefined}
+                  onRemove={removeItem}
                 />
               )}
 
@@ -664,11 +677,12 @@ function TripHeader({
     }
   };
 
-  // Format date display
+  // Format date display - parse as local time to avoid timezone shifts
   const dateDisplay = useMemo(() => {
     if (!trip.start_date) return 'No dates';
-    const start = new Date(trip.start_date);
-    const end = trip.end_date ? new Date(trip.end_date) : start;
+    // Parse dates as local time (add T00:00:00 to prevent UTC interpretation)
+    const start = new Date(trip.start_date + 'T00:00:00');
+    const end = trip.end_date ? new Date(trip.end_date + 'T00:00:00') : start;
     return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   }, [trip.start_date, trip.end_date]);
 
@@ -1025,7 +1039,7 @@ function DaySection({
   onAddPlace: (destination: Destination) => void;
   onAddFlight: (data: { airline?: string; flightNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; confirmationNumber?: string; notes?: string }) => void;
   onAddTrain: (data: { trainLine?: string; trainNumber?: string; from: string; to: string; departureDate?: string; departureTime?: string; arrivalDate?: string; arrivalTime?: string; duration?: string; confirmationNumber?: string; notes?: string }) => void;
-  onAddHotel: (data: { name: string; address?: string; checkInDate?: string; checkInTime?: string; checkOutDate?: string; checkOutTime?: string; confirmationNumber?: string; roomType?: string; notes?: string; nights?: number; breakfastIncluded?: boolean }) => void;
+  onAddHotel: (data: { name: string; address?: string; checkInDate?: string; checkInTime?: string; checkOutDate?: string; checkOutTime?: string; confirmationNumber?: string; roomType?: string; notes?: string; nights?: number; breakfastIncluded?: boolean; destination_slug?: string; image?: string }) => void;
   onAddActivity: (data: ActivityData) => void;
   weather?: DayWeather;
   isEditMode?: boolean;
@@ -1158,6 +1172,8 @@ function DaySection({
         notes: data.notes ? String(data.notes) : undefined,
         nights: data.nights ? Number(data.nights) : 1,
         breakfastIncluded: Boolean(data.breakfastIncluded),
+        destination_slug: data.destination_slug ? String(data.destination_slug) : undefined,
+        image: data.image ? String(data.image) : undefined,
       });
     } else if (type === 'flight') {
       onAddFlight({
@@ -1264,8 +1280,9 @@ function DaySection({
     setSearchSource('curated');
   };
 
+  // Parse as local time to avoid timezone shifts
   const dateDisplay = date
-    ? new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+    ? new Date(date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
     : null;
 
   return (
@@ -2086,13 +2103,13 @@ function ItemRow({
       const address = item.parsedNotes?.address || item.destination?.formatted_address;
       const confirmation = item.parsedNotes?.hotelConfirmation || item.parsedNotes?.confirmationNumber;
 
-      // Calculate nights
+      // Calculate nights (parse as local time to avoid timezone shifts)
       const checkInDate = item.parsedNotes?.checkInDate;
       const checkOutDate = item.parsedNotes?.checkOutDate;
       let nights: number | null = null;
       if (checkInDate && checkOutDate) {
-        const start = new Date(checkInDate);
-        const end = new Date(checkOutDate);
+        const start = new Date(checkInDate + 'T00:00:00');
+        const end = new Date(checkOutDate + 'T00:00:00');
         nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
       }
 

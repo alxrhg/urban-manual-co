@@ -726,6 +726,9 @@ export interface HotelData {
   notes?: string;
   breakfastIncluded?: boolean;
   breakfastTime?: string;
+  // For curated hotels
+  destination_slug?: string;
+  image?: string;
 }
 
 /**
