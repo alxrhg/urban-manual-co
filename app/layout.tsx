@@ -5,7 +5,6 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
-import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { TripBuilderProvider } from "@/contexts/TripBuilderContext";
 import TripBuilderPanel from "@/components/trip/TripBuilderPanel";
 import TripIndicator from "@/components/trip/TripIndicator";
@@ -245,7 +244,6 @@ export default function RootLayout({
                   <DrawerProvider>
                     <Suspense fallback={null}>
                       <AdminEditModeProvider>
-                        <ItineraryProvider>
                           <TripBuilderProvider>
                             <IntelligentDrawerProvider>
                               <Header />
@@ -263,7 +261,6 @@ export default function RootLayout({
                               <IntelligentDrawer />
                             </IntelligentDrawerProvider>
                           </TripBuilderProvider>
-                        </ItineraryProvider>
                       </AdminEditModeProvider>
                     </Suspense>
                   </DrawerProvider>
