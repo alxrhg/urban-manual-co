@@ -110,13 +110,26 @@ export default function TripPage() {
 
   // Compute which hotel covers each night based on check-in/check-out dates
   // Note: Parse all dates as local time to avoid timezone shifts
+  // For same-day checkout/checkin, the CHECK-IN hotel is the "stay" for that night
   const nightlyHotelByDay = useMemo(() => {
     const hotelMap: Record<number, EnrichedItineraryItem | null> = {};
     if (!trip?.start_date) return hotelMap;
 
     const tripStart = new Date(trip.start_date + 'T00:00:00');
 
-    hotels.forEach(hotel => {
+    // Sort hotels by check-in date so later check-ins override earlier ones for same night
+    const sortedHotels = [...hotels].sort((a, b) => {
+      const aCheckIn = a.parsedNotes?.checkInDate;
+      const bCheckIn = b.parsedNotes?.checkInDate;
+      if (aCheckIn && bCheckIn) {
+        return new Date(aCheckIn + 'T00:00:00').getTime() - new Date(bCheckIn + 'T00:00:00').getTime();
+      }
+      if (aCheckIn) return -1;
+      if (bCheckIn) return 1;
+      return a.day - b.day;
+    });
+
+    sortedHotels.forEach(hotel => {
       const checkInDate = hotel.parsedNotes?.checkInDate;
       const checkOutDate = hotel.parsedNotes?.checkOutDate;
 
@@ -142,9 +155,10 @@ export default function TripPage() {
       }
 
       // Mark this hotel for the check-in day and each subsequent night
+      // Later check-ins override earlier ones (for same-day checkout/checkin scenarios)
       for (let i = 0; i < nights; i++) {
         const nightDay = checkInDayNum + i;
-        if (nightDay > 0 && !hotelMap[nightDay]) {
+        if (nightDay > 0) {
           hotelMap[nightDay] = hotel;
         }
       }
@@ -152,6 +166,43 @@ export default function TripPage() {
 
     return hotelMap;
   }, [hotels, trip?.start_date]);
+
+  // Compute which hotel is checking out on each day
+  const checkoutHotelByDay = useMemo(() => {
+    const checkoutMap: Record<number, EnrichedItineraryItem | null> = {};
+    if (!trip?.start_date) return checkoutMap;
+
+    const tripStart = new Date(trip.start_date + 'T00:00:00');
+
+    hotels.forEach(hotel => {
+      const checkOutDate = hotel.parsedNotes?.checkOutDate;
+      if (checkOutDate) {
+        const outDate = new Date(checkOutDate + 'T00:00:00');
+        const checkOutDayNum = Math.floor((outDate.getTime() - tripStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        if (checkOutDayNum > 0) {
+          checkoutMap[checkOutDayNum] = hotel;
+        }
+      }
+    });
+
+    return checkoutMap;
+  }, [hotels, trip?.start_date]);
+
+  // Compute which hotel provides breakfast on each day (previous night's hotel with breakfast included)
+  const breakfastHotelByDay = useMemo(() => {
+    const breakfastMap: Record<number, EnrichedItineraryItem | null> = {};
+
+    // For each day, if there was a hotel the previous night with breakfast, show it
+    Object.entries(nightlyHotelByDay).forEach(([dayNum, hotel]) => {
+      if (hotel && hotel.parsedNotes?.breakfastIncluded) {
+        // Breakfast is served the morning AFTER staying at the hotel
+        const nextDay = parseInt(dayNum) + 1;
+        breakfastMap[nextDay] = hotel;
+      }
+    });
+
+    return breakfastMap;
+  }, [nightlyHotelByDay]);
 
   // Auto-fix items on wrong days
   const hasAutoFixed = useRef(false);
@@ -382,6 +433,8 @@ export default function TripPage() {
             const dayDate = day.date;
             const weather = dayDate ? weatherByDate[dayDate] : undefined;
             const nightlyHotel = nightlyHotelByDay[day.dayNumber] || null;
+            const checkoutHotel = checkoutHotelByDay[day.dayNumber] || null;
+            const breakfastHotel = breakfastHotelByDay[day.dayNumber] || null;
             return (
               <DaySection
                 key={day.dayNumber}
@@ -394,6 +447,8 @@ export default function TripPage() {
                 onReorder={(items) => reorderItems(day.dayNumber, items)}
                 isEditMode={isEditMode}
                 nightlyHotel={nightlyHotel}
+                checkoutHotel={checkoutHotel}
+                breakfastHotel={breakfastHotel}
                 onSelectItem={handleSelectItem}
                 onRemove={removeItem}
                 onUpdateItem={updateItem}
@@ -1023,6 +1078,8 @@ function DaySection({
   weather,
   isEditMode = false,
   nightlyHotel,
+  checkoutHotel,
+  breakfastHotel,
   onSelectItem,
 }: {
   dayNumber: number;
@@ -1044,6 +1101,8 @@ function DaySection({
   weather?: DayWeather;
   isEditMode?: boolean;
   nightlyHotel?: EnrichedItineraryItem | null;
+  checkoutHotel?: EnrichedItineraryItem | null;
+  breakfastHotel?: EnrichedItineraryItem | null;
   onSelectItem?: (item: EnrichedItineraryItem) => void;
 }) {
   const [orderedItems, setOrderedItems] = useState(items);
@@ -1587,6 +1646,49 @@ function DaySection({
         </div>
       )}
 
+      {/* Morning Cards - Checkout and Breakfast */}
+      {(checkoutHotel || breakfastHotel) && (
+        <div className="mb-3 space-y-1">
+          {breakfastHotel && (
+            <button
+              onClick={() => onSelectItem?.(breakfastHotel)}
+              className="w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all hover:bg-stone-50 dark:hover:bg-gray-800/50"
+            >
+              <span className="text-base flex-shrink-0 w-6 text-center">🍳</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium text-stone-900 dark:text-white">
+                  Breakfast
+                </span>
+                <span className="text-xs text-stone-400 dark:text-gray-500 ml-2">
+                  at {breakfastHotel.title || 'Hotel'}
+                </span>
+              </div>
+            </button>
+          )}
+          {checkoutHotel && (
+            <button
+              onClick={() => onSelectItem?.(checkoutHotel)}
+              className="w-full text-left flex items-center gap-3 py-2.5 px-3 rounded-xl transition-all hover:bg-stone-50 dark:hover:bg-gray-800/50"
+            >
+              <span className="text-base flex-shrink-0 w-6 text-center">🧳</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium text-stone-900 dark:text-white">
+                  Check-out
+                </span>
+                <span className="text-xs text-stone-400 dark:text-gray-500 ml-2">
+                  from {checkoutHotel.title || 'Hotel'}
+                </span>
+              </div>
+              {checkoutHotel.parsedNotes?.checkOutTime && (
+                <span className="text-xs text-stone-500 dark:text-gray-400">
+                  Before {checkoutHotel.parsedNotes.checkOutTime}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Items */}
       {items.length > 0 && (
         <Reorder.Group axis="y" values={orderedItems} onReorder={setOrderedItems} className="space-y-1">
@@ -1603,15 +1705,7 @@ function DaySection({
                 onSelect={onSelectItem ? () => onSelectItem(item) : undefined}
               />
               {index < orderedItems.length - 1 && (
-                <>
-                  <TravelTime from={item} to={orderedItems[index + 1]} />
-                  <GapSuggestion
-                    fromItem={item}
-                    toItem={orderedItems[index + 1]}
-                    city={city}
-                    onAddPlace={(dest, time) => onAddPlace({ ...dest, slug: dest.slug || `place-${Date.now()}` } as Destination)}
-                  />
-                </>
+                <TravelTime from={item} to={orderedItems[index + 1]} />
               )}
             </div>
           ))}
@@ -2695,21 +2789,39 @@ function TravelTime({
   };
   const specialLabel = getSpecialLabel();
 
-  // Simple inline connector
+  // Don't show if no valid travel time
+  if (travelMinutes === null || travelMinutes <= 0) {
+    return null;
+  }
+
+  // Format duration nicely
+  const formatDuration = (mins: number): string => {
+    if (mins < 60) return `${mins} min`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  };
+
+  // Simple vertical connector with travel info
   return (
-    <div className="flex items-center justify-center py-1">
-      <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
+    <div className="flex items-center gap-3 py-1.5 pl-3">
+      {/* Vertical line */}
+      <div className="w-6 flex justify-center">
+        <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+      </div>
+
+      {/* Travel info */}
       <button
         onClick={cycleMode}
-        className="flex items-center gap-1.5 px-2 text-[10px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+        className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
         title="Click to change travel mode"
       >
         {getModeIcon()}
-        <span>
-          {travelMinutes !== null ? `${travelMinutes}m ` : ''}{specialLabel || `to ${toName.length > 12 ? toName.slice(0, 12) + '...' : toName}`}
-        </span>
+        <span className="tabular-nums">{formatDuration(travelMinutes)}</span>
+        {specialLabel && (
+          <span className="text-gray-300 dark:text-gray-600 ml-1">{specialLabel}</span>
+        )}
       </button>
-      <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
     </div>
   );
 }
@@ -3469,6 +3581,52 @@ function TripIntelligence({
           description: 'Add times to help plan your day better',
           dayNumber: day.dayNumber,
         });
+      }
+
+      // 7. GAP SUGGESTIONS - Detect large gaps between activities
+      for (let i = 0; i < sortedItems.length - 1; i++) {
+        const current = sortedItems[i];
+        const next = sortedItems[i + 1];
+
+        const curTime = current.time || current.parsedNotes?.departureTime || current.parsedNotes?.checkOutTime;
+        const nextTime = next.time || next.parsedNotes?.departureTime || next.parsedNotes?.checkInTime;
+        const curDuration = current.parsedNotes?.duration || 1.5;
+
+        if (!curTime || !nextTime) continue;
+
+        const [curH, curM] = curTime.split(':').map(Number);
+        const [nextH, nextM] = nextTime.split(':').map(Number);
+        const curEndMins = curH * 60 + curM + (parseFloat(String(curDuration)) * 60);
+        const nextStartMins = nextH * 60 + nextM;
+        const gapMins = nextStartMins - curEndMins;
+
+        // Only suggest for gaps > 90 minutes
+        if (gapMins >= 90) {
+          const midTime = curEndMins + gapMins / 2;
+          const hour = Math.floor(midTime / 60);
+
+          // Determine suggestion type based on time of day
+          let suggestionLabel: string;
+          if (hour >= 7 && hour < 10) suggestionLabel = 'Coffee or breakfast?';
+          else if (hour >= 11 && hour < 14) suggestionLabel = 'Time for lunch?';
+          else if (hour >= 14 && hour < 17) suggestionLabel = 'Explore something new?';
+          else if (hour >= 18 && hour < 21) suggestionLabel = 'Dinner reservation?';
+          else if (hour >= 21) suggestionLabel = 'Grab drinks?';
+          else continue;
+
+          const gapHours = Math.floor(gapMins / 60);
+          const gapRemMins = gapMins % 60;
+          const gapStr = gapHours > 0 ? `${gapHours}h ${gapRemMins}m` : `${gapRemMins}m`;
+
+          newInsights.push({
+            id: `gap-${day.dayNumber}-${i}`,
+            type: 'suggestion',
+            icon: <Plus className="w-4 h-4" />,
+            title: `Day ${day.dayNumber}: ${gapStr} gap`,
+            description: `${suggestionLabel} Between "${current.title || current.destination?.name || 'activity'}" and "${next.title || next.destination?.name || 'activity'}"`,
+            dayNumber: day.dayNumber,
+          });
+        }
       }
     });
 
