@@ -24,6 +24,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { CookieConsent } from "@/components/CookieConsent";
 import { NotificationPrompt } from "@/components/NotificationPrompt";
+import { NativeExperienceProvider } from "@/components/NativeExperienceProvider";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -246,12 +247,17 @@ export default function RootLayout({
                           <TripBuilderProvider>
                             <IntelligentDrawerProvider>
                               <Header />
-                              <PanelLayout>
-                                <main id="main-content" className="min-h-screen page-transition" role="main">
-                                  {children}
-                                </main>
-                                <Footer />
-                              </PanelLayout>
+                              <NativeExperienceProvider
+                                enableSwipeBack={true}
+                                disableSwipeBackPaths={['/map', '/chat', '/trip', '/admin', '/studio']}
+                              >
+                                <PanelLayout>
+                                  <main id="main-content" className="min-h-screen page-transition" role="main">
+                                    {children}
+                                  </main>
+                                  <Footer />
+                                </PanelLayout>
+                              </NativeExperienceProvider>
                               <CookieConsent />
                               <NotificationPrompt />
                               <DrawerMount />

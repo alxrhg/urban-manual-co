@@ -1492,3 +1492,224 @@ html.christmas-mode.dark::before,
     opacity: 0.5;
   }
 }
+
+/* ============================================
+   VIEW TRANSITIONS API - Native-like Page Transitions
+   ============================================ */
+
+/* Default view transition animation */
+::view-transition-old(root) {
+  animation: view-transition-fade-out 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+::view-transition-new(root) {
+  animation: view-transition-fade-in 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes view-transition-fade-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+
+@keyframes view-transition-fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Shared element transitions (for cards, images that morph between pages) */
+::view-transition-old(card),
+::view-transition-old(hero-image),
+::view-transition-old(destination-card) {
+  animation: view-transition-scale-out 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+::view-transition-new(card),
+::view-transition-new(hero-image),
+::view-transition-new(destination-card) {
+  animation: view-transition-scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes view-transition-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes view-transition-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Back navigation uses different animation */
+::view-transition-old(root).going-back {
+  animation: view-transition-slide-out-right 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+::view-transition-new(root).going-back {
+  animation: view-transition-slide-in-left 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes view-transition-slide-out-right {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+}
+
+@keyframes view-transition-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* View transition group styling */
+::view-transition-group(*) {
+  animation-duration: 0.25s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(card),
+  ::view-transition-new(card),
+  ::view-transition-old(hero-image),
+  ::view-transition-new(hero-image),
+  ::view-transition-old(destination-card),
+  ::view-transition-new(destination-card) {
+    animation: none !important;
+  }
+
+  ::view-transition-group(*) {
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   CONTENT-VISIBILITY - Performance Optimization
+   Skip rendering of off-screen content
+   ============================================ */
+
+/* Destination cards in grid - skip rendering when off-screen */
+.destination-card,
+.content-visibility-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 300px;
+}
+
+/* Larger items like trip cards */
+.trip-card,
+.content-visibility-auto-lg {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 400px;
+}
+
+/* Small items like list items */
+.content-visibility-auto-sm {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 100px;
+}
+
+/* Force visible for above-the-fold content */
+.content-visibility-visible {
+  content-visibility: visible;
+}
+
+/* Grid containers with many items */
+.destination-grid > *:nth-child(n+13) {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
+}
+
+/* ============================================
+   NATIVE-LIKE INTERACTION UTILITIES
+   ============================================ */
+
+/* Tap highlight removal for native feel */
+.tap-highlight-none {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Active state scale for buttons (native-like press feedback) */
+.press-scale {
+  transition: transform 0.1s ease-out;
+}
+
+.press-scale:active {
+  transform: scale(0.97);
+}
+
+/* Smooth momentum scrolling */
+.scroll-momentum {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Prevent text selection during interactions */
+.select-none-touch {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* iOS-style bounce prevention */
+.no-bounce {
+  overscroll-behavior: none;
+}
+
+/* Elastic overscroll (iOS-style) */
+.overscroll-elastic {
+  overscroll-behavior: contain;
+}
+
+/* GPU-accelerated animations */
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Native-like scrollbar hide on mobile */
+@media (max-width: 768px) {
+  .native-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .native-scroll::-webkit-scrollbar {
+    display: none;
+  }
+}
