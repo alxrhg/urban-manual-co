@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2 } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2, Link2 } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -1276,6 +1276,40 @@ function DaySection({
     breakfastHotel?.id,
   ].filter(Boolean));
 
+  // Create virtual items for hotel activities (breakfast, checkout, checkin)
+  const hotelActivityItems = useMemo(() => {
+    const activities: Array<EnrichedItineraryItem & { hotelActivityType?: 'breakfast' | 'checkout' | 'checkin' }> = [];
+
+    if (breakfastHotel) {
+      activities.push({
+        ...breakfastHotel,
+        id: `breakfast-${breakfastHotel.id}`,
+        hotelActivityType: 'breakfast',
+        time: breakfastHotel.parsedNotes?.breakfastTime?.split('-')[0] || '08:00',
+      } as EnrichedItineraryItem & { hotelActivityType: 'breakfast' });
+    }
+
+    if (checkoutHotel) {
+      activities.push({
+        ...checkoutHotel,
+        id: `checkout-${checkoutHotel.id}`,
+        hotelActivityType: 'checkout',
+        time: checkoutHotel.parsedNotes?.checkOutTime || '11:00',
+      } as EnrichedItineraryItem & { hotelActivityType: 'checkout' });
+    }
+
+    if (checkInHotel) {
+      activities.push({
+        ...checkInHotel,
+        id: `checkin-${checkInHotel.id}`,
+        hotelActivityType: 'checkin',
+        time: checkInHotel.parsedNotes?.checkInTime || '15:00',
+      } as EnrichedItineraryItem & { hotelActivityType: 'checkin' });
+    }
+
+    return activities;
+  }, [breakfastHotel, checkoutHotel, checkInHotel]);
+
   useEffect(() => {
     // Filter items to exclude:
     // 1. Hotels shown as activity cards (by ID)
@@ -1286,8 +1320,20 @@ function DaySection({
       if (hotelItemType === 'checkout' || hotelItemType === 'breakfast') return false;
       return true;
     });
-    setOrderedItems(filteredItems);
-  }, [items, checkoutHotel?.id, checkInHotel?.id, breakfastHotel?.id]);
+
+    // In edit mode, include hotel activity items in the list so they can be reordered
+    if (isEditMode && hotelActivityItems.length > 0) {
+      // Sort by time to put items in logical order
+      const allItems = [...hotelActivityItems, ...filteredItems].sort((a, b) => {
+        const timeA = a.time || '12:00';
+        const timeB = b.time || '12:00';
+        return timeA.localeCompare(timeB);
+      });
+      setOrderedItems(allItems);
+    } else {
+      setOrderedItems(filteredItems);
+    }
+  }, [items, checkoutHotel?.id, checkInHotel?.id, breakfastHotel?.id, isEditMode, hotelActivityItems]);
 
   // Focus search input when shown
   useEffect(() => {
@@ -1798,8 +1844,8 @@ function DaySection({
         </div>
       )}
 
-      {/* Hotel Activity Cards - Breakfast, Check-out, Check-in */}
-      {(checkoutHotel || breakfastHotel || checkInHotel) && (
+      {/* Hotel Activity Cards - Breakfast, Check-out, Check-in (only shown when NOT in edit mode) */}
+      {!isEditMode && (checkoutHotel || breakfastHotel || checkInHotel) && (
         <div className="mb-3 space-y-0">
           {breakfastHotel && (
             <button
@@ -1844,26 +1890,42 @@ function DaySection({
       )}
 
       {/* Items */}
-      {items.length > 0 ? (
+      {orderedItems.length > 0 ? (
         <Reorder.Group axis="y" values={orderedItems} onReorder={setOrderedItems} className="space-y-0">
-          {orderedItems.map((item, index) => (
-            <div key={item.id}>
-              <ItemRow
-                item={item}
-                isExpanded={expandedItemId === item.id}
-                isEditMode={isEditMode}
-                onToggle={() => onToggleItem(item.id)}
-                onRemove={isEditMode ? () => onRemove(item.id) : undefined}
-                onUpdateItem={onUpdateItem}
-                onUpdateTime={onUpdateTime}
-                onDragEnd={handleReorderComplete}
-                onSelect={onSelectItem ? () => onSelectItem(item) : undefined}
-              />
-              {index < orderedItems.length - 1 && (
-                <TravelTime from={item} to={orderedItems[index + 1]} />
-              )}
-            </div>
-          ))}
+          {orderedItems.map((item, index) => {
+            // Check if this is a virtual hotel activity item
+            const hotelActivityType = (item as EnrichedItineraryItem & { hotelActivityType?: string }).hotelActivityType;
+            const isHotelActivity = hotelActivityType === 'breakfast' || hotelActivityType === 'checkout' || hotelActivityType === 'checkin';
+
+            return (
+              <div key={item.id}>
+                {isHotelActivity ? (
+                  // Render hotel activity as a special card
+                  <HotelActivityRow
+                    item={item}
+                    activityType={hotelActivityType}
+                    isEditMode={isEditMode}
+                    onSelect={onSelectItem ? () => onSelectItem(item) : undefined}
+                  />
+                ) : (
+                  <ItemRow
+                    item={item}
+                    isExpanded={expandedItemId === item.id}
+                    isEditMode={isEditMode}
+                    onToggle={() => onToggleItem(item.id)}
+                    onRemove={isEditMode ? () => onRemove(item.id) : undefined}
+                    onUpdateItem={onUpdateItem}
+                    onUpdateTime={onUpdateTime}
+                    onDragEnd={handleReorderComplete}
+                    onSelect={onSelectItem ? () => onSelectItem(item) : undefined}
+                  />
+                )}
+                {index < orderedItems.length - 1 && (
+                  <TravelTime from={item} to={orderedItems[index + 1]} />
+                )}
+              </div>
+            );
+          })}
         </Reorder.Group>
       ) : null}
 
@@ -2294,6 +2356,62 @@ function TransportForm({
         {isAdding ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : `Add ${type}`}
       </button>
     </div>
+  );
+}
+
+/**
+ * Hotel activity row - for breakfast, checkout, checkin items (draggable in edit mode)
+ */
+function HotelActivityRow({
+  item,
+  activityType,
+  isEditMode,
+  onSelect,
+}: {
+  item: EnrichedItineraryItem;
+  activityType: 'breakfast' | 'checkout' | 'checkin';
+  isEditMode?: boolean;
+  onSelect?: () => void;
+}) {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const getLabel = () => {
+    switch (activityType) {
+      case 'breakfast':
+        return { label: 'Breakfast', detail: `at ${item.title || 'Hotel'}` };
+      case 'checkout':
+        return { label: 'Check-out', detail: `${item.parsedNotes?.checkOutTime ? formatTime(item.parsedNotes.checkOutTime) : ''} from ${item.title || 'Hotel'}` };
+      case 'checkin':
+        return { label: 'Check-in', detail: `${item.parsedNotes?.checkInTime ? formatTime(item.parsedNotes.checkInTime) : ''} at ${item.title || 'Hotel'}` };
+    }
+  };
+
+  const { label, detail } = getLabel();
+
+  return (
+    <Reorder.Item
+      value={item}
+      id={item.id}
+      onDragStart={() => setIsDragging(true)}
+      onDragEnd={() => setIsDragging(false)}
+      dragListener={isEditMode}
+      className={`${isDragging ? 'z-50 shadow-lg bg-white dark:bg-gray-900 rounded-lg' : ''}`}
+    >
+      <button
+        onClick={onSelect}
+        className="w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50"
+      >
+        {isEditMode && (
+          <GripVertical className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 cursor-grab flex-shrink-0" />
+        )}
+        <span className="text-[14px] font-medium text-gray-900 dark:text-white">
+          {label}
+        </span>
+        <span className="text-[13px] text-gray-400">
+          {detail}
+        </span>
+      </button>
+    </Reorder.Item>
   );
 }
 
@@ -2991,12 +3109,16 @@ function TravelTime({
 
   // Format duration nicely
   const formatDuration = (mins: number | null): string => {
-    if (mins === null || mins <= 0) return '<1 min';
+    if (mins === null) return ''; // No coordinates available
+    if (mins <= 0) return '<1 min';
     if (mins < 60) return `${mins} min`;
     const h = Math.floor(mins / 60);
     const m = mins % 60;
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
   };
+
+  const duration = formatDuration(travelMinutes);
+  const hasCoordinates = travelMinutes !== null;
 
   // Always show connector between items
   return (
@@ -3006,18 +3128,24 @@ function TravelTime({
         <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
       </div>
 
-      {/* Travel info */}
-      <button
-        onClick={cycleMode}
-        className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-        title="Click to change travel mode"
-      >
-        {getModeIcon()}
-        <span className="tabular-nums">{formatDuration(travelMinutes)}</span>
-        {specialLabel && (
-          <span className="text-gray-300 dark:text-gray-600 ml-1">{specialLabel}</span>
-        )}
-      </button>
+      {/* Travel info - only show if we have coordinates */}
+      {hasCoordinates ? (
+        <button
+          onClick={cycleMode}
+          className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+          title="Click to change travel mode"
+        >
+          {getModeIcon()}
+          <span className="tabular-nums">{duration}</span>
+          {specialLabel && (
+            <span className="text-gray-300 dark:text-gray-600 ml-1">{specialLabel}</span>
+          )}
+        </button>
+      ) : (
+        <span className="flex items-center gap-1.5 text-[11px] text-gray-300 dark:text-gray-600">
+          <Link2 className="w-3 h-3" />
+        </span>
+      )}
     </div>
   );
 }
