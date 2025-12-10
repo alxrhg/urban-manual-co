@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { TripBuilderProvider } from "@/contexts/TripBuilderContext";
 import TripBuilderPanel from "@/components/trip/TripBuilderPanel";
+import { AIProvider } from "@/contexts/AIContext";
+import { AICompanion } from "@/components/ai";
 import { IntelligentDrawerProvider, IntelligentDrawer } from "@/components/IntelligentDrawer";
 import { DrawerProvider } from "@/contexts/DrawerContext";
 import { ChristmasThemeProvider } from "@/contexts/ChristmasThemeContext";
@@ -244,20 +246,23 @@ export default function RootLayout({
                     <Suspense fallback={null}>
                       <AdminEditModeProvider>
                           <TripBuilderProvider>
-                            <IntelligentDrawerProvider>
-                              <Header />
-                              <PanelLayout>
-                                <main id="main-content" className="min-h-screen page-transition" role="main">
-                                  {children}
-                                </main>
-                                <Footer />
-                              </PanelLayout>
-                              <CookieConsent />
-                              <NotificationPrompt />
-                              <DrawerMount />
-                              <TripBuilderPanel />
-                              <IntelligentDrawer />
-                            </IntelligentDrawerProvider>
+                            <AIProvider>
+                              <IntelligentDrawerProvider>
+                                <Header />
+                                <PanelLayout>
+                                  <main id="main-content" className="min-h-screen page-transition" role="main">
+                                    {children}
+                                  </main>
+                                  <Footer />
+                                </PanelLayout>
+                                <CookieConsent />
+                                <NotificationPrompt />
+                                <DrawerMount />
+                                <TripBuilderPanel />
+                                <IntelligentDrawer />
+                                <AICompanion />
+                              </IntelligentDrawerProvider>
+                            </AIProvider>
                           </TripBuilderProvider>
                       </AdminEditModeProvider>
                     </Suspense>

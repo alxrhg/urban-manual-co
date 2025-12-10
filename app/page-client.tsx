@@ -71,7 +71,7 @@ import { useItemsPerPage } from '@/hooks/useGridColumns';
 import { useDestinationLoading } from '@/hooks/useDestinationLoading';
 import { getContextAwareLoadingMessage } from '@/src/lib/context/loading-message';
 import { useAdminEditMode } from '@/contexts/AdminEditModeContext';
-import { AIAssistant } from '@/components/AIAssistant';
+// AIAssistant removed - now using AICompanion globally from layout.tsx
 import { ScrollToTop } from '@/components/ScrollToTop';
 
 // Lazy load components that are conditionally rendered or not immediately visible
@@ -3434,7 +3434,7 @@ export default function HomePageClient({
             </div>
 
         {/* Destinations now use IntelligentDrawer - rendered in app/layout.tsx */}
-        <AIAssistant />
+        {/* AICompanion is now rendered globally in app/layout.tsx */}
         <ScrollToTop threshold={400} />
       </main>
     </ErrorBoundary>
