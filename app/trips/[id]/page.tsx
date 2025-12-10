@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, Lightbulb, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -81,10 +81,6 @@ export default function TripPage() {
   const [weatherByDate, setWeatherByDate] = useState<Record<string, DayWeather>>({});
   const [weatherLoading, setWeatherLoading] = useState(false);
 
-  // AI suggestions state
-  const [aiSuggestions, setAiSuggestions] = useState<Array<{ id: string; text: string; type: string; destinationId?: number }>>([]);
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [showAiSuggestions, setShowAiSuggestions] = useState(false);
 
   // Parse destinations
   const destinations = useMemo(() => parseDestinations(trip?.destination ?? null), [trip?.destination]);
@@ -96,9 +92,16 @@ export default function TripPage() {
   }, [days]);
 
   // Extract all hotels from itinerary
+  // Include new style hotels (no hotelItemType) and old style check_in items (they have the checkInDate)
+  // Exclude old style checkout/breakfast items since they're sub-activities
   const hotels = useMemo(() => {
     return days.flatMap(d =>
-      d.items.filter(item => item.parsedNotes?.type === 'hotel')
+      d.items.filter(item => {
+        if (item.parsedNotes?.type !== 'hotel') return false;
+        const hotelItemType = item.parsedNotes?.hotelItemType;
+        // New style hotel (no hotelItemType) or old style check_in item
+        return !hotelItemType || hotelItemType === 'check_in';
+      })
     );
   }, [days]);
 
@@ -221,67 +224,6 @@ export default function TripPage() {
     fetchWeather();
   }, [trip?.start_date, primaryCity, weatherLoading, weatherByDate]);
 
-  // Fetch AI suggestions
-  useEffect(() => {
-    if (!trip || !primaryCity || suggestionsLoading || aiSuggestions.length > 0) return;
-
-    const fetchSuggestions = async () => {
-      setSuggestionsLoading(true);
-      try {
-        const response = await fetch('/api/intelligence/smart-fill', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            city: primaryCity,
-            existingItems: days.flatMap(d => d.items.map(i => i.title)),
-            tripDays: days.length,
-          }),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.suggestions && Array.isArray(data.suggestions)) {
-            const parsed = data.suggestions.slice(0, 3).map((s: any, i: number) => {
-              // Handle smart-fill API format: { destination: { name, ... }, reason, timeSlot }
-              let text = '';
-              let category = 'suggestion';
-
-              if (typeof s === 'string') {
-                text = s;
-              } else if (s && typeof s === 'object') {
-                // Check for nested destination object (smart-fill format)
-                if (s.destination && typeof s.destination === 'object') {
-                  text = s.destination.name || '';
-                  category = s.destination.category || s.timeSlot || 'suggestion';
-                } else {
-                  // Flat format fallback
-                  text = s.name || s.text || s.title || '';
-                  category = s.category || 'suggestion';
-                }
-              }
-
-              return {
-                id: `suggestion-${i}`,
-                text: String(text).slice(0, 40),
-                type: String(category).toLowerCase(),
-                destinationId: s?.destination?.id,
-              };
-            }).filter((s: any) => s.text && s.text.length > 0);
-            setAiSuggestions(parsed);
-          }
-        }
-      } catch (err) {
-        // Silently fail - suggestions are optional
-        console.error('Suggestions fetch error:', err);
-      } finally {
-        setSuggestionsLoading(false);
-      }
-    };
-
-    // Delay to avoid too many requests
-    const timer = setTimeout(fetchSuggestions, 1000);
-    return () => clearTimeout(timer);
-  }, [trip, primaryCity, days, suggestionsLoading, aiSuggestions.length]);
-
   // Toggle item expansion
   const toggleItem = useCallback((itemId: string) => {
     setExpandedItemId(prev => prev === itemId ? null : itemId);
@@ -390,8 +332,8 @@ export default function TripPage() {
               </button>
             </div>
 
-        {/* Trip Notes - expandable */}
-        <div className="mt-4">
+        {/* Trip Notes - expandable (mobile only, desktop uses sidebar) */}
+        <div className="mt-4 lg:hidden">
           <button
             onClick={() => setShowTripNotes(!showTripNotes)}
             className="text-[12px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
@@ -417,53 +359,15 @@ export default function TripPage() {
           </AnimatePresence>
         </div>
 
-        {/* AI Suggestions Section - Collapsible */}
-        {aiSuggestions.length > 0 && (
-          <div className="mt-6 py-2">
-            <div className="flex items-center justify-center gap-2">
-              <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
-              <button
-                onClick={() => setShowAiSuggestions(!showAiSuggestions)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <Lightbulb className="w-3.5 h-3.5 text-amber-400" />
-                <span className="text-[11px] font-medium text-gray-600 dark:text-gray-300">Room for more</span>
-                <ChevronDown className={`w-3 h-3 text-gray-400 transition-transform ${showAiSuggestions ? 'rotate-180' : ''}`} />
-              </button>
-              <div className="flex-1 border-t border-dashed border-gray-200 dark:border-gray-700" />
-            </div>
-            <AnimatePresence>
-              {showAiSuggestions && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <div className="flex flex-wrap justify-center gap-2 mt-3">
-                    {aiSuggestions.map((suggestion) => (
-                      <button
-                        key={suggestion.id}
-                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-amber-300 dark:hover:border-amber-600 hover:bg-amber-50/50 dark:hover:bg-amber-900/10 transition-colors text-left group"
-                      >
-                        <span className="text-[11px] text-gray-700 dark:text-gray-200">{suggestion.text}</span>
-                        <Plus className="w-3 h-3 text-gray-400 group-hover:text-amber-500" />
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
-
-        {/* Trip Intelligence - Smart Warnings & Suggestions */}
-        <TripIntelligence
-          days={days}
-          city={primaryCity}
-          weatherByDate={weatherByDate}
-          onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
-        />
+        {/* Trip Intelligence - Smart Warnings & Suggestions (mobile only) */}
+        <div className="lg:hidden">
+          <TripIntelligence
+            days={days}
+            city={primaryCity}
+            weatherByDate={weatherByDate}
+            onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
+          />
+        </div>
 
         {/* Days */}
         <div className="mt-8 space-y-8">
@@ -547,15 +451,9 @@ export default function TripPage() {
 
           {/* Desktop Sidebar */}
           <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
-            <div className="sticky top-24 space-y-4">
-              {showTripSettings ? (
-                <TripSettingsBox
-                  trip={trip}
-                  onUpdate={updateTrip}
-                  onDelete={handleDelete}
-                  onClose={() => setShowTripSettings(false)}
-                />
-              ) : selectedItem ? (
+            <div className="sticky top-24 space-y-4 max-h-[calc(100vh-8rem)] overflow-y-auto pb-8">
+              {/* Selected Item Details */}
+              {selectedItem && (
                 <DestinationBox
                   item={selectedItem}
                   onClose={() => setSelectedItem(null)}
@@ -564,13 +462,37 @@ export default function TripPage() {
                   onItemUpdate={(id, updates) => updateItem(id, updates)}
                   onRemove={isEditMode ? removeItem : undefined}
                 />
-              ) : (
-                <div className="p-6 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800">
-                  <p className="text-[13px] text-gray-500 dark:text-gray-400 text-center">
-                    Click an item to see details
-                  </p>
-                </div>
               )}
+
+              {/* Trip Settings */}
+              {showTripSettings && (
+                <TripSettingsBox
+                  trip={trip}
+                  onUpdate={updateTrip}
+                  onDelete={handleDelete}
+                  onClose={() => setShowTripSettings(false)}
+                />
+              )}
+
+              {/* Trip Intelligence */}
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+                <TripIntelligence
+                  days={days}
+                  city={primaryCity}
+                  weatherByDate={weatherByDate}
+                  onOptimizeRoute={(dayNumber, optimizedItems) => reorderItems(dayNumber, optimizedItems)}
+                  compact
+                />
+              </div>
+
+              {/* Checklist */}
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
+                <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3">Checklist</h3>
+                <TripNotesChecklist
+                  notes={tripNotes}
+                  onSave={(notes) => updateTrip({ notes })}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -3004,15 +2926,15 @@ function DayPacing({ items }: { items: EnrichedItineraryItem[] }) {
 
   // Determine pacing
   const getPacing = () => {
-    if (items.length === 0) return { label: 'Empty', color: 'text-gray-400', hint: 'Add some activities' };
-    if (totalHours < 4) return { label: 'Light', color: 'text-blue-500', hint: 'Room for more' };
+    if (items.length === 0) return { label: 'Empty', color: 'text-gray-400', hint: '' };
+    if (totalHours < 4) return { label: 'Light', color: 'text-blue-500', hint: '' };
     if (totalHours <= 8) return { label: 'Balanced', color: 'text-green-500', hint: '' };
-    if (totalHours <= 10) return { label: 'Full', color: 'text-amber-500', hint: 'Consider pacing' };
-    return { label: 'Packed', color: 'text-red-500', hint: 'May be too much' };
+    if (totalHours <= 10) return { label: 'Full', color: 'text-amber-500', hint: '' };
+    return { label: 'Packed', color: 'text-red-500', hint: 'May be rushed' };
   };
 
   const pacing = getPacing();
-  if (!pacing.hint) return null;
+  if (items.length === 0) return null;
 
   return (
     <div className="flex items-center gap-1.5 text-[10px]">
@@ -3334,11 +3256,13 @@ function TripIntelligence({
   city,
   weatherByDate,
   onOptimizeRoute,
+  compact = false,
 }: {
   days: Array<{ dayNumber: number; date: string | null; items: EnrichedItineraryItem[] }>;
   city: string;
   weatherByDate: Record<string, DayWeather>;
   onOptimizeRoute: (dayNumber: number, items: EnrichedItineraryItem[]) => void;
+  compact?: boolean;
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [insights, setInsights] = useState<Array<{
@@ -3720,6 +3644,48 @@ function TripIntelligence({
 
   // Count warnings for header badge
   const warningCount = insights.filter(i => i.type === 'warning').length;
+
+  // Compact mode for sidebar
+  if (compact) {
+    return (
+      <div className="p-4">
+        <h3 className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+          Intelligence
+          {warningCount > 0 && (
+            <span className="px-1.5 py-0.5 text-[9px] font-medium bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">
+              {warningCount}
+            </span>
+          )}
+        </h3>
+        <div className="space-y-2">
+          {sortedInsights.slice(0, 5).map((insight) => (
+            <div
+              key={insight.id}
+              className={`flex items-start gap-2 p-2 rounded-lg ${getTypeBg(insight.type)}`}
+            >
+              <div className={`flex-shrink-0 ${getTypeColor(insight.type)}`}>
+                {insight.icon}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[12px] font-medium text-gray-700 dark:text-gray-200">{insight.title}</p>
+                {insight.action && (
+                  <button
+                    onClick={insight.action.onClick}
+                    className="mt-1 text-[11px] text-blue-500 hover:text-blue-600"
+                  >
+                    {insight.action.label}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+          {sortedInsights.length > 5 && (
+            <p className="text-[11px] text-gray-400 text-center">+{sortedInsights.length - 5} more</p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-6 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
