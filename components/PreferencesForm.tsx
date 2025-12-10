@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2, Check } from 'lucide-react';
 import { toast } from '@/components/ui/sonner';
+import { Button } from '@/components/ui/button';
 
 interface PreferencesFormProps {
   userId: string;
@@ -188,10 +189,9 @@ export default function PreferencesForm({ userId, className = '' }: PreferencesF
       </div>
 
       {/* Save Button */}
-      <button
+      <Button
         onClick={savePreferences}
         disabled={saving}
-        className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-80 transition-opacity disabled:opacity-50 flex items-center gap-2"
       >
         {saving ? (
           <>
@@ -206,7 +206,7 @@ export default function PreferencesForm({ userId, className = '' }: PreferencesF
         ) : (
           'Save Preferences'
         )}
-      </button>
+      </Button>
     </div>
   );
 }
