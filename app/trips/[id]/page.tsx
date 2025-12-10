@@ -1321,15 +1321,10 @@ function DaySection({
       return true;
     });
 
-    // In edit mode, include hotel activity items in the list so they can be reordered
+    // In edit mode, include hotel activity items at the top (same order as view mode)
     if (isEditMode && hotelActivityItems.length > 0) {
-      // Sort by time to put items in logical order
-      const allItems = [...hotelActivityItems, ...filteredItems].sort((a, b) => {
-        const timeA = a.time || '12:00';
-        const timeB = b.time || '12:00';
-        return timeA.localeCompare(timeB);
-      });
-      setOrderedItems(allItems);
+      // Keep hotel activities at top, then regular items (no time-based sorting to maintain consistency)
+      setOrderedItems([...hotelActivityItems, ...filteredItems]);
     } else {
       setOrderedItems(filteredItems);
     }
@@ -1898,6 +1893,7 @@ function DaySection({
                     activityType={hotelActivityType}
                     isEditMode={isEditMode}
                     onSelect={onSelectItem ? () => onSelectItem(item) : undefined}
+                    onDragEnd={handleReorderComplete}
                   />
                 ) : (
                   <ItemRow
@@ -2359,11 +2355,13 @@ function HotelActivityRow({
   activityType,
   isEditMode,
   onSelect,
+  onDragEnd,
 }: {
   item: EnrichedItineraryItem;
   activityType: 'breakfast' | 'checkout' | 'checkin';
   isEditMode?: boolean;
   onSelect?: () => void;
+  onDragEnd?: () => void;
 }) {
   const [isDragging, setIsDragging] = useState(false);
 
@@ -2385,16 +2383,29 @@ function HotelActivityRow({
       value={item}
       id={item.id}
       onDragStart={() => setIsDragging(true)}
-      onDragEnd={() => setIsDragging(false)}
+      onDragEnd={() => { setIsDragging(false); onDragEnd?.(); }}
       dragListener={isEditMode}
-      className={`${isDragging ? 'z-50 shadow-lg bg-white dark:bg-gray-900 rounded-lg' : ''}`}
+      className={`${isEditMode ? 'cursor-grab active:cursor-grabbing' : ''} ${isDragging ? 'z-50' : ''}`}
     >
-      <button
+      <div
         onClick={onSelect}
-        className="w-full text-left flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50"
+        className={`flex items-center gap-2 py-2.5 px-3 rounded-lg transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}
       >
         {isEditMode && (
-          <GripVertical className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 cursor-grab flex-shrink-0" />
+          <div className="flex flex-col gap-0.5 opacity-40 group-hover:opacity-60 transition-opacity">
+            <div className="flex gap-0.5">
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
+            </div>
+            <div className="flex gap-0.5">
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
+            </div>
+            <div className="flex gap-0.5">
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
+              <div className="w-1 h-1 rounded-full bg-gray-400" />
+            </div>
+          </div>
         )}
         <span className="text-[14px] font-medium text-gray-900 dark:text-white">
           {label}
@@ -2402,7 +2413,7 @@ function HotelActivityRow({
         <span className="text-[13px] text-gray-400">
           {detail}
         </span>
-      </button>
+      </div>
     </Reorder.Item>
   );
 }
