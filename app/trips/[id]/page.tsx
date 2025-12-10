@@ -2198,6 +2198,7 @@ function ItemRow({
   onSelect?: () => void;
 }) {
   const [isDragging, setIsDragging] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const itemType = item.parsedNotes?.type || 'place';
 
   // Build inline display with all relevant times
@@ -2467,8 +2468,15 @@ function ItemRow({
                   }
                 })()}
               </div>
-            ) : image ? (
-              <Image src={image} alt="" width={48} height={48} className="w-full h-full object-cover" />
+            ) : image && !imageError ? (
+              <Image
+                src={image}
+                alt=""
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
+                onError={() => setImageError(true)}
+              />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <MapPin className="w-5 h-5 text-gray-400" />
