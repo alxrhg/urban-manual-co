@@ -8,7 +8,6 @@ import { AdminEditModeProvider } from "@/contexts/AdminEditModeContext";
 import { ItineraryProvider } from "@/contexts/ItineraryContext";
 import { TripBuilderProvider } from "@/contexts/TripBuilderContext";
 import TripBuilderPanel from "@/components/trip/TripBuilderPanel";
-import TripIndicator from "@/components/trip/TripIndicator";
 import { IntelligentDrawerProvider, IntelligentDrawer } from "@/components/IntelligentDrawer";
 import { DrawerProvider } from "@/contexts/DrawerContext";
 import { ChristmasThemeProvider } from "@/contexts/ChristmasThemeContext";
@@ -259,7 +258,6 @@ export default function RootLayout({
                               <NotificationPrompt />
                               <DrawerMount />
                               <TripBuilderPanel />
-                              <TripIndicator />
                               <IntelligentDrawer />
                             </IntelligentDrawerProvider>
                           </TripBuilderProvider>
