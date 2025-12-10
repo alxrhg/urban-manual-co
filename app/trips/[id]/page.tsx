@@ -2154,10 +2154,19 @@ function ItemRow({
       className={`cursor-grab active:cursor-grabbing ${isDragging ? 'z-10' : ''}`}
     >
       <div className={`rounded-lg transition-all ${isDragging ? 'shadow-lg bg-white dark:bg-gray-900' : ''}`}>
-        {/* Main row - click to select (desktop sidebar) */}
+        {/* Main row - click to select (desktop) or expand inline (mobile) */}
         <div
-          className={`flex items-center gap-3 px-3 py-3 sm:py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 active:bg-gray-100 dark:active:bg-gray-800/50 rounded-xl sm:rounded-lg group ${onSelect ? 'cursor-pointer' : ''}`}
-          onClick={onSelect}
+          className="flex items-center gap-3 px-3 py-3 sm:py-2 hover:bg-gray-50 dark:hover:bg-gray-900/50 active:bg-gray-100 dark:active:bg-gray-800/50 rounded-xl sm:rounded-lg group cursor-pointer"
+          onClick={() => {
+            // On desktop (lg+): select for sidebar
+            // On mobile: toggle inline expansion
+            const isDesktop = window.matchMedia('(min-width: 1024px)').matches;
+            if (isDesktop && onSelect) {
+              onSelect();
+            } else {
+              onToggle();
+            }
+          }}
         >
           {/* Icon or image */}
           {iconType === 'flight' ? (
@@ -2284,27 +2293,16 @@ function ItemRow({
             )}
           </div>
 
-          {/* Edit button */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggle(); }}
-            className={`w-6 h-6 flex items-center justify-center rounded-full transition-colors ${
-              isExpanded
-                ? 'bg-gray-900 dark:bg-white'
-                : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
-            }`}
-          >
-            <Pencil className={`w-3 h-3 ${isExpanded ? 'text-white dark:text-gray-900' : 'text-gray-500'}`} />
-          </button>
         </div>
 
-        {/* Expanded edit form */}
+        {/* Expanded edit form - mobile only (desktop uses sidebar) */}
         <AnimatePresence>
           {isExpanded && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
+              className="overflow-hidden lg:hidden"
             >
               <ItemDetails
                 item={item}
