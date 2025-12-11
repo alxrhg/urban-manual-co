@@ -141,8 +141,21 @@ const enrichmentTools = [
 
 const tripTools = [
   {
+    name: "plan_trip",
+    description: "Plan a multi-day trip to a city. Returns recommended destinations organized by day based on location and category. Use this when users ask to plan a trip.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        city: { type: "string", description: "City to visit" },
+        days: { type: "number", description: "Number of days (1-14)" },
+        interests: { type: "array", items: { type: "string" }, description: "e.g., ['restaurants', 'architecture', 'cocktail bars']" },
+      },
+      required: ["city", "days"],
+    },
+  },
+  {
     name: "trip_create",
-    description: "Create a new trip.",
+    description: "Save a trip to the user's account.",
     inputSchema: {
       type: "object",
       properties: {
@@ -185,11 +198,8 @@ const resources = [
   { uri: "urbanmanual://trending", name: "Trending", description: "Trending destinations", mimeType: "application/json" },
 ];
 
-// Prompts
-const prompts = [
-  { name: "trip_planning", description: "Plan a multi-day trip", arguments: [{ name: "destination", required: true }, { name: "days", required: true }] },
-  { name: "restaurant_recommendation", description: "Get restaurant recommendations", arguments: [{ name: "city", required: true }] },
-];
+// Prompts - empty, use tools for conversational interaction
+const prompts: { name: string; description: string; arguments?: { name: string; required?: boolean }[] }[] = [];
 
 /**
  * Process a JSON-RPC request
@@ -401,6 +411,67 @@ async function handleToolCall(name: string, args?: Record<string, unknown>) {
 
       const { data } = await dbQuery;
       return { content: [{ type: "text", text: JSON.stringify({ trending: data || [] }, null, 2) }] };
+    }
+
+    case "plan_trip": {
+      const { city, days } = args || {};
+      const numDays = Math.min(Math.max(Number(days) || 3, 1), 14);
+
+      // Fetch ALL destinations for the city (no limit)
+      const { data: allDestinations } = await supabase
+        .from("destinations")
+        .select("slug, name, city, category, micro_description, rating, latitude, longitude, image")
+        .ilike("city", `%${city}%`)
+        .order("rating", { ascending: false, nullsFirst: false });
+
+      if (!allDestinations?.length) {
+        return { content: [{ type: "text", text: `No destinations found in ${city}. Try a different city.` }] };
+      }
+
+      // Group by category
+      type Destination = typeof allDestinations[number];
+      const byCategory = new Map<string, Destination[]>();
+      allDestinations.forEach(d => {
+        const cat = d.category || "other";
+        if (!byCategory.has(cat)) byCategory.set(cat, []);
+        byCategory.get(cat)!.push(d);
+      });
+
+      // Create daily itinerary
+      const itinerary: { day: number; theme: string; places: Destination[] }[] = [];
+      const usedSlugs = new Set<string>();
+      const categories = Array.from(byCategory.keys());
+
+      for (let day = 1; day <= numDays; day++) {
+        const dayPlaces: Destination[] = [];
+        const theme = categories[(day - 1) % categories.length] || "exploration";
+
+        // Add 4-5 places per day from different categories
+        for (const [, places] of byCategory) {
+          const available = places.filter(p => !usedSlugs.has(p.slug));
+          if (available.length > 0) {
+            const pick = available[0];
+            dayPlaces.push(pick);
+            usedSlugs.add(pick.slug);
+            if (dayPlaces.length >= 5) break;
+          }
+        }
+
+        itinerary.push({ day, theme, places: dayPlaces });
+      }
+
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            city,
+            days: numDays,
+            total_destinations_in_city: allDestinations.length,
+            itinerary,
+            categories: Array.from(byCategory.keys()),
+          }, null, 2)
+        }]
+      };
     }
 
     case "trip_create": {
