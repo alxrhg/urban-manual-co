@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Loader2, Sparkles, X, MapPin, ChevronRight, Bookmark, Plus, Brain } from 'lucide-react';
+import { Send, Loader2, Sparkles, X, MapPin, ChevronRight, Bookmark, Plus, Brain, Calendar, Map } from 'lucide-react';
 import Image from 'next/image';
 import { Destination } from '@/types/destination';
 import { useHomepageData } from './HomepageDataProvider';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
+import { useTripBuilder } from '@/contexts/TripBuilderContext';
 
 /**
  * AI Search Chat - Smart Conversation Interface
@@ -37,9 +38,11 @@ interface SmartSuggestion {
 }
 
 interface ProactiveAction {
-  type: 'save' | 'add_to_trip' | 'compare' | 'show_map' | 'schedule';
+  type: 'save' | 'add_to_trip' | 'compare' | 'show_map' | 'schedule' | 'create_trip';
   label: string;
   destinationSlug?: string;
+  destinationSlugs?: string[]; // For create_trip action with multiple destinations
+  city?: string; // For create_trip action
   reasoning: string;
 }
 
@@ -54,6 +57,7 @@ const SESSION_KEY = 'urbanmanual_chat_session';
 
 export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProps) {
   const { openDestination, destinations } = useHomepageData();
+  const { startTrip, addToTrip, openPanel } = useTripBuilder();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -195,6 +199,64 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
     openDestination(dest);
   }, [trackClick, openDestination]);
 
+  // Handle proactive action click
+  const handleProactiveAction = useCallback((action: ProactiveAction, messageDestinations?: Destination[]) => {
+    switch (action.type) {
+      case 'create_trip': {
+        // Create a new trip with the destinations from the chat response
+        if (!messageDestinations || messageDestinations.length === 0) return;
+
+        // Get city from first destination or action
+        const city = action.city || messageDestinations[0]?.city || 'My Trip';
+
+        // Start a new trip
+        startTrip(city, 1);
+
+        // Add all destinations to the trip
+        messageDestinations.forEach((dest, index) => {
+          // Add with a slight delay to ensure proper ordering
+          setTimeout(() => {
+            addToTrip(dest, 1);
+          }, index * 50);
+        });
+
+        // Open the trip panel
+        openPanel();
+        break;
+      }
+      case 'add_to_trip': {
+        // Add single destination to existing trip
+        if (!action.destinationSlug) return;
+        const dest = messageDestinations?.find(d => d.slug === action.destinationSlug)
+          || destinations.find(d => d.slug === action.destinationSlug);
+        if (dest) {
+          addToTrip(dest);
+          openPanel();
+        }
+        break;
+      }
+      case 'save': {
+        // For now, clicking save opens the destination detail
+        if (!action.destinationSlug) return;
+        const dest = messageDestinations?.find(d => d.slug === action.destinationSlug)
+          || destinations.find(d => d.slug === action.destinationSlug);
+        if (dest) {
+          openDestination(dest);
+        }
+        break;
+      }
+      case 'show_map': {
+        // Could implement map view
+        break;
+      }
+      case 'schedule':
+      case 'compare':
+      default:
+        // Not implemented yet
+        break;
+    }
+  }, [startTrip, addToTrip, openPanel, destinations, openDestination]);
+
   // Local search as fallback
   const localSearch = useCallback((query: string): Destination[] => {
     const term = query.toLowerCase();
@@ -260,15 +322,35 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
           }
           setTurnNumber(data.data.turnNumber || turnNumber + 1);
 
+          // Build proactive actions - add "Create Trip" if multiple destinations
+          const responseDestinations: Destination[] = data.data.destinations || [];
+          const existingActions: ProactiveAction[] = data.data.proactiveActions || [];
+
+          // Add "Create Trip" action if there are 2+ destinations and no existing create_trip action
+          let enhancedActions = [...existingActions];
+          if (responseDestinations.length >= 2 && !existingActions.some(a => a.type === 'create_trip')) {
+            const city = responseDestinations[0]?.city || 'Trip';
+            enhancedActions = [
+              {
+                type: 'create_trip' as const,
+                label: `Create ${city} Trip`,
+                city,
+                destinationSlugs: responseDestinations.map(d => d.slug),
+                reasoning: `Turn these ${responseDestinations.length} places into a trip`,
+              },
+              ...existingActions,
+            ];
+          }
+
           setMessages(prev => prev.map(m =>
             m.id === assistantId
               ? {
                   ...m,
                   content: data.data.content || 'Here are some recommendations:',
-                  destinations: data.data.destinations || [],
+                  destinations: responseDestinations,
                   suggestions: data.data.suggestions || [],
                   contextualHints: data.data.contextualHints || [],
-                  proactiveActions: data.data.proactiveActions || [],
+                  proactiveActions: enhancedActions,
                   isStreaming: false,
                 }
               : m
@@ -288,6 +370,17 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
         ? `I found ${results.length} place${results.length === 1 ? '' : 's'} matching "${query}":`
         : `I couldn't find anything matching "${query}". Try a different search term.`;
 
+      // Build "Create Trip" action for fallback results too
+      const fallbackActions: ProactiveAction[] = results.length >= 2
+        ? [{
+            type: 'create_trip' as const,
+            label: `Create ${results[0]?.city || 'Trip'}`,
+            city: results[0]?.city || 'Trip',
+            destinationSlugs: results.map(d => d.slug),
+            reasoning: `Turn these ${results.length} places into a trip`,
+          }]
+        : [];
+
       setMessages(prev => prev.map(m =>
         m.id === assistantId
           ? {
@@ -301,6 +394,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                 { text: 'Restaurants in Tokyo', type: 'expand' as const },
                 { text: 'Hotels in London', type: 'expand' as const },
               ],
+              proactiveActions: fallbackActions,
               isStreaming: false,
             }
           : m
@@ -501,14 +595,18 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                     {message.proactiveActions.map((action, i) => (
                       <button
                         key={i}
-                        className="px-3 py-1.5 rounded-full bg-purple-100 dark:bg-purple-500/20
-                                   text-[12px] text-purple-700 dark:text-purple-300
-                                   hover:bg-purple-200 dark:hover:bg-purple-500/30 transition-colors
-                                   flex items-center gap-1.5"
+                        onClick={() => handleProactiveAction(action, message.destinations)}
+                        className={`px-3 py-1.5 rounded-full text-[12px] transition-colors flex items-center gap-1.5 ${
+                          action.type === 'create_trip'
+                            ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 font-medium'
+                            : 'bg-purple-100 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-500/30'
+                        }`}
                         title={action.reasoning}
                       >
                         {action.type === 'save' && <Bookmark className="w-3 h-3" />}
                         {action.type === 'add_to_trip' && <Plus className="w-3 h-3" />}
+                        {action.type === 'create_trip' && <Calendar className="w-3 h-3" />}
+                        {action.type === 'show_map' && <Map className="w-3 h-3" />}
                         {action.label}
                       </button>
                     ))}
