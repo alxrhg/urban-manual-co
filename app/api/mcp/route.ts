@@ -16,13 +16,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 // Import MCP handler
-// Note: We use dynamic import to handle the ESM module
-async function getMcpHandler() {
-  const { processRequest, getServerInfo, endpoints } = await import(
-    "../../../mcp-server/http-handler.js"
-  );
-  return { processRequest, getServerInfo, endpoints };
-}
+import { processRequest, getServerInfo, endpoints } from "@/lib/mcp/handler";
 
 // Rate limiter configuration
 let ratelimit: Ratelimit | null = null;
@@ -99,8 +93,6 @@ async function checkRateLimit(identifier: string) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const { getServerInfo, endpoints } = await getMcpHandler();
-
     return NextResponse.json({
       ...getServerInfo(),
       endpoints,
@@ -174,7 +166,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Process the request
-    const { processRequest } = await getMcpHandler();
     const response = await processRequest({
       jsonrpc: "2.0",
       id: body.id,

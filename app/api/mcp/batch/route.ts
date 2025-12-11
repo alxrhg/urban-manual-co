@@ -11,12 +11,7 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
 // Import MCP handler
-async function getMcpHandler() {
-  const { processRequest } = await import(
-    "../../../../mcp-server/http-handler.js"
-  );
-  return { processRequest };
-}
+import { processRequest } from "@/lib/mcp/handler";
 
 // Rate limiter
 let ratelimit: Ratelimit | null = null;
@@ -116,8 +111,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Process all requests in parallel
-    const { processRequest } = await getMcpHandler();
-
     const responses = await Promise.all(
       body.requests.map(async (req: { jsonrpc: string; id: unknown; method: string; params?: unknown }) => {
         if (!req.jsonrpc || req.jsonrpc !== "2.0" || !req.method) {
