@@ -83,6 +83,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
         suggestions: response.suggestions,
         contextualHints: response.contextualHints,
         proactiveActions: response.proactiveActions,
+        tripPlan: response.tripPlan,
         conversationId: response.conversationId,
         turnNumber: response.turnNumber,
         intent: response.intent,
