@@ -82,7 +82,7 @@ const SESSION_KEY = 'urbanmanual_chat_session';
 
 export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProps) {
   const { openDestination, destinations } = useHomepageData();
-  const { startTrip, addToTrip, openPanel: openTripPanel } = useTripBuilder();
+  const { startTrip, addToTrip } = useTripBuilder();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -389,10 +389,9 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
       });
     });
 
-    // Open the trip panel and close chat
-    openTripPanel();
+    // Close the chat after creating the trip
     onClose();
-  }, [startTrip, addToTrip, destinations, openTripPanel, onClose]);
+  }, [startTrip, addToTrip, destinations, onClose]);
 
   if (!isOpen) return null;
 
