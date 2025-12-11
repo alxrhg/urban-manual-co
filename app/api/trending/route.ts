@@ -8,6 +8,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     const city = searchParams.get('city');
     const category = searchParams.get('category');
     const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const offset = parseInt(searchParams.get('offset') || '0', 10);
     const includeGoogleTrends = searchParams.get('include_google_trends') === 'true';
 
     const supabase = await createServerClient();
@@ -29,22 +30,25 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
         .order('trending_score', { ascending: false })
         .order('google_trends_direction', { ascending: false })
         .order('google_trends_interest', { ascending: false })
-        .limit(limit);
+        .range(offset, offset + limit - 1);
 
       if (error) {
         // Check if error is due to missing google_trends columns
         if (error.message?.includes('google_trends') || error.code === '42703') {
           console.warn('[Trending API] Google Trends columns not found, falling back to basic query');
           // Retry without google_trends ordering
-          const { data: fallbackData, error: fallbackError } = await supabase
+          let fallbackQuery = supabase
             .from('destinations')
             .select('*')
             .gt('trending_score', 0)
-            .gte('rating', 4.0)
-            .eq('city', city || undefined as any)
-            .eq('category', category || undefined as any)
+            .gte('rating', 4.0);
+
+          if (city) fallbackQuery = fallbackQuery.eq('city', city);
+          if (category) fallbackQuery = fallbackQuery.eq('category', category);
+
+          const { data: fallbackData, error: fallbackError } = await fallbackQuery
             .order('trending_score', { ascending: false })
-            .limit(limit);
+            .range(offset, offset + limit - 1);
 
           if (fallbackError) throw fallbackError;
 
@@ -53,6 +57,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
             meta: {
               filters: { city, category },
               count: fallbackData?.length || 0,
+              offset,
               period: 'Past 14 days',
               includesGoogleTrends: false,
               note: 'Google Trends data not available',
@@ -67,6 +72,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
         meta: {
           filters: { city, category },
           count: trending?.length || 0,
+          offset,
           period: 'Past 14 days (enhanced with Google Trends)',
           includesGoogleTrends: includeGoogleTrends,
         },
