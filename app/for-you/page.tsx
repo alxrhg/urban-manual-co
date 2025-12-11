@@ -237,8 +237,8 @@ export default function ForYouPage() {
                           {featuredDestination.rating.toFixed(1)}
                         </span>
                       )}
-                      {featuredDestination.review_count && (
-                        <span>{featuredDestination.review_count} reviews</span>
+                      {featuredDestination.views_count && (
+                        <span>{featuredDestination.views_count} views</span>
                       )}
                     </div>
                   </div>
