@@ -8,15 +8,25 @@
  * - GET /api/mcp - Server info and capability discovery
  * - POST /api/mcp - Process JSON-RPC requests
  * - GET /api/mcp/sse - SSE endpoint for streaming (future)
+ *
+ * Authentication:
+ * - OAuth 2.0 tokens (from /api/mcp/oauth/authorize flow)
+ * - Supabase Auth JWT tokens
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { jwtVerify } from "jose";
 
 // Import MCP handler
 import { processRequest, getServerInfo, endpoints } from "@/lib/mcp/handler";
+
+// JWT secret for MCP OAuth tokens
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.MCP_JWT_SECRET || process.env.SUPABASE_JWT_SECRET || "urban-manual-mcp-secret-key-change-in-production"
+);
 
 // Rate limiter configuration
 let ratelimit: Ratelimit | null = null;
@@ -45,7 +55,7 @@ function getRateLimiter() {
 }
 
 /**
- * Authenticate request using Supabase Auth
+ * Authenticate request using OAuth or Supabase Auth
  * Returns user info if authenticated, null otherwise
  */
 async function authenticateRequest(request: NextRequest) {
@@ -57,8 +67,28 @@ async function authenticateRequest(request: NextRequest) {
     }
 
     const token = authHeader.slice(7);
-    const supabase = await createServerClient();
 
+    // First, try to verify as MCP OAuth JWT
+    try {
+      const { payload } = await jwtVerify(token, JWT_SECRET, {
+        issuer: "urban-manual-mcp",
+      });
+
+      if (payload.type === "access" && payload.sub) {
+        return {
+          id: payload.sub as string,
+          email: null,
+          role: "user",
+          scope: payload.scope as string || "read",
+          authType: "oauth",
+        };
+      }
+    } catch {
+      // Not an MCP OAuth token, try Supabase
+    }
+
+    // Try Supabase Auth token
+    const supabase = await createServerClient();
     const {
       data: { user },
       error,
@@ -72,6 +102,7 @@ async function authenticateRequest(request: NextRequest) {
       id: user.id,
       email: user.email,
       role: user.user_metadata?.role || "user",
+      authType: "supabase",
     };
   } catch {
     return null;
@@ -88,21 +119,32 @@ async function checkRateLimit(identifier: string) {
   return await limiter.limit(identifier);
 }
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.urbanmanual.co";
+
 /**
  * GET /api/mcp - Server info and capability discovery
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     return NextResponse.json({
       ...getServerInfo(),
       endpoints,
+      oauth: {
+        authorization_endpoint: `${SITE_URL}/api/mcp/oauth/authorize`,
+        token_endpoint: `${SITE_URL}/api/mcp/oauth/token`,
+        scopes_supported: ["read", "write", "trips"],
+      },
       documentation: {
         description: "Urban Manual MCP Server - Travel Intelligence API",
-        authentication: "Bearer token (Supabase Auth JWT)",
+        authentication: {
+          oauth: "OAuth 2.0 Authorization Code flow",
+          bearer: "Bearer token (Supabase Auth JWT or MCP OAuth token)",
+        },
         rate_limit: "100 requests per minute",
         usage: {
           single_request: "POST /api/mcp with JSON-RPC body",
           discovery: "GET /api/mcp for available tools/resources/prompts",
+          oauth_flow: "GET /api/mcp/oauth/authorize to start OAuth",
         },
       },
     });
