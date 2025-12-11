@@ -124,10 +124,10 @@ export async function POST(request: NextRequest) {
     const user = await authenticateRequest(request);
 
     // Rate limiting
-    const identifier = user?.id || request.ip || "anonymous";
-    const { success: rateLimitOk, remaining } = await checkRateLimit(identifier);
+    const identifier = user?.id || request.headers.get("x-forwarded-for")?.split(",")[0] || "anonymous";
+    const rateLimitResult = await checkRateLimit(identifier);
 
-    if (!rateLimitOk) {
+    if (!rateLimitResult.success) {
       return NextResponse.json(
         {
           jsonrpc: "2.0",
@@ -140,7 +140,6 @@ export async function POST(request: NextRequest) {
         {
           status: 429,
           headers: {
-            "X-RateLimit-Remaining": String(remaining),
             "Retry-After": "60",
           },
         }
@@ -173,10 +172,9 @@ export async function POST(request: NextRequest) {
       params: body.params || {},
     });
 
-    // Return response with rate limit headers
+    // Return response with server info header
     return NextResponse.json(response, {
       headers: {
-        "X-RateLimit-Remaining": String(remaining),
         "X-MCP-Server": "urban-manual-mcp/1.0.0",
       },
     });

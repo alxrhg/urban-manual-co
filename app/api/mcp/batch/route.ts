@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     const user = await authenticateRequest(request);
 
     // Rate limit
-    const identifier = user?.id || request.ip || "anonymous";
+    const identifier = user?.id || request.headers.get("x-forwarded-for")?.split(",")[0] || "anonymous";
     const limiter = getRateLimiter();
     if (limiter) {
       const { success } = await limiter.limit(identifier);
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
           jsonrpc: "2.0",
           id: req.id,
           method: req.method,
-          params: req.params || {},
+          params: (req.params || {}) as Record<string, unknown>,
         });
       })
     );
