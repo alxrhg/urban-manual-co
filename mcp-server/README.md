@@ -111,7 +111,7 @@ UPSTASH_VECTOR_REST_TOKEN=your-upstash-token
 
 ## Usage
 
-### Local Development
+### Local Development (stdio)
 
 ```bash
 # Run in development mode
@@ -120,6 +120,65 @@ npm run dev
 # Test with MCP Inspector
 npm run inspect
 ```
+
+### Online / HTTP API (Recommended)
+
+The MCP server is also available as an HTTP API, deployed on Vercel:
+
+**Base URL:** `https://www.urbanmanual.co/api/mcp`
+
+#### Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/mcp` | GET | Server info and capability discovery |
+| `/api/mcp` | POST | Process single JSON-RPC request |
+| `/api/mcp/batch` | POST | Process multiple requests in parallel |
+| `/api/mcp/sse` | GET | SSE streaming connection |
+
+#### Authentication
+
+Include a Supabase Auth JWT token in the Authorization header:
+
+```bash
+Authorization: Bearer <your-jwt-token>
+```
+
+#### Example: Single Request
+
+```bash
+curl -X POST https://www.urbanmanual.co/api/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "name": "search_destinations",
+      "arguments": { "city": "Tokyo", "category": "restaurant" }
+    }
+  }'
+```
+
+#### Example: Batch Request
+
+```bash
+curl -X POST https://www.urbanmanual.co/api/mcp/batch \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{
+    "requests": [
+      { "jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {} },
+      { "jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": { "name": "get_weather", "arguments": { "city": "Paris" } } }
+    ]
+  }'
+```
+
+#### Rate Limits
+
+- Single requests: 100/minute
+- Batch requests: 50/minute (max 20 requests per batch)
 
 ### With Claude Desktop
 
@@ -162,7 +221,8 @@ npm run clean
 
 ```
 mcp-server/
-├── index.ts           # Server entry point
+├── index.ts           # Server entry point (stdio)
+├── http-handler.ts    # HTTP transport handler
 ├── tools/
 │   ├── search.ts      # Search tools
 │   ├── recommendations.ts
@@ -179,6 +239,11 @@ mcp-server/
     ├── supabase.ts    # Database client
     ├── vector.ts      # Vector search
     └── types.ts       # Type definitions
+
+app/api/mcp/
+├── route.ts           # Main HTTP endpoint
+├── batch/route.ts     # Batch processing
+└── sse/route.ts       # SSE streaming
 ```
 
 ## License
