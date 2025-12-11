@@ -1,5 +1,7 @@
 import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
 import { router, protectedProcedure } from '../trpc';
+import { conversationRatelimit, memoryConversationRatelimit, isUpstashConfigured } from '@/lib/rate-limit';
 import { generateDestinationEmbedding } from '@/lib/embeddings/generate';
 import { findSimilarPlace, inferPriceFromBudgetPhrase, inferGroupSize } from '@/lib/ai/fuzzy-matching';
 import { analyzeIntent, type UserContext } from '@/lib/ai/intent-analysis';
@@ -15,6 +17,18 @@ export const aiRouter = router({
       
       if (!userId) {
         throw new Error('User ID is required');
+      }
+
+      // Rate limiting
+      const identifier = `user:${userId}`;
+      const activeLimiter = isUpstashConfigured() ? conversationRatelimit : memoryConversationRatelimit;
+      const { success } = await activeLimiter.limit(identifier);
+
+      if (!success) {
+        throw new TRPCError({
+          code: 'TOO_MANY_REQUESTS',
+          message: 'Rate limit exceeded. Please try again later.',
+        });
       }
 
       // Generate or use existing session ID
