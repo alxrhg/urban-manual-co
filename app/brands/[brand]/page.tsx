@@ -2,18 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
 import { Destination } from '@/types/destination';
 import { Building2, ArrowLeft, Loader2 } from 'lucide-react';
 import { UniversalGrid } from '@/components/UniversalGrid';
 import { DestinationCard } from '@/components/DestinationCard';
-import { useDrawer } from '@/contexts/DrawerContext';
 import { useItemsPerPage } from '@/hooks/useGridColumns';
 
 export default function BrandPage() {
   const router = useRouter();
   const params = useParams();
-  const { openDestination } = useDrawer();
   const brandSlug = params.brand as string;
 
   const [brandName, setBrandName] = useState<string>('');
@@ -114,7 +111,7 @@ export default function BrandPage() {
                   <DestinationCard
                     key={destination.slug}
                     destination={destination}
-                    onClick={() => openDestination(destination.slug)}
+                    onClick={() => router.push(`/destination/${destination.slug}`)}
                     showBadges={true}
                     showQuickActions={true}
                   />
