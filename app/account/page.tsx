@@ -17,6 +17,7 @@ import { ProfileEditor } from "@/components/ProfileEditor";
 import { AccountPrivacyManager } from "@/components/AccountPrivacyManager";
 import { SecuritySettings } from "@/components/SecuritySettings";
 import { PreferencesTab } from "@/components/account/PreferencesTab";
+import { MCPIntegration } from "@/components/account/MCPIntegration";
 import { openCookieSettings } from "@/components/CookieConsent";
 import type { Collection, SavedPlace, VisitedPlace } from "@/types/common";
 import { formatDestinationsFromField } from "@/types/trip";
@@ -46,14 +47,14 @@ export default function Account() {
   const [authChecked, setAuthChecked] = useState(false);
   
   // Get initial tab from URL query param - use useEffect to avoid SSR issues
-  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips' | 'preferences'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'visited' | 'saved' | 'collections' | 'achievements' | 'settings' | 'trips' | 'preferences' | 'integrations'>('profile');
 
   // Update tab from URL params after mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
-      const validTabs = ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings', 'trips', 'preferences'] as const;
+      const validTabs = ['profile', 'visited', 'saved', 'collections', 'achievements', 'settings', 'trips', 'preferences', 'integrations'] as const;
       if (tab && validTabs.includes(tab as typeof validTabs[number])) {
         setActiveTab(tab as typeof activeTab);
       }
@@ -442,7 +443,7 @@ export default function Account() {
         {/* Tab Navigation - Minimal, matches homepage city/category style */}
         <div className="mb-12">
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
-            {(['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'preferences', 'settings'] as const).map((tab) => (
+            {(['profile', 'visited', 'saved', 'collections', 'trips', 'achievements', 'preferences', 'integrations', 'settings'] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -779,6 +780,13 @@ export default function Account() {
         {activeTab === 'preferences' && user && (
           <div className="fade-in">
             <PreferencesTab userId={user.id} />
+          </div>
+        )}
+
+        {/* Integrations Tab */}
+        {activeTab === 'integrations' && user && (
+          <div className="fade-in">
+            <MCPIntegration />
           </div>
         )}
 
