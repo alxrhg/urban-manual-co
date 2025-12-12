@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useId, memo } from 'react';
+import { useState, useCallback, useId, memo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIntelligentDrawer } from './IntelligentDrawerContext';
