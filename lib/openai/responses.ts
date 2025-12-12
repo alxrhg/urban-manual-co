@@ -18,10 +18,66 @@ import { getOpenAI } from '../openai';
 import { createServerClient } from '@/lib/supabase/server';
 import { URBAN_MANUAL_EDITOR_SYSTEM_PROMPT } from '@/lib/ai/systemPrompts';
 import { trackUsage, estimateTokens, trackOpenAIResponse } from '@/lib/ai/cost-tracking';
+import { rerankDestinations } from '@/lib/search/reranker';
+import { generateFollowUpSuggestions } from '@/lib/chat/generateFollowUpSuggestions';
 
 // Models - using GPT-4.1 series for best performance
 const RESPONSES_MODEL = process.env.OPENAI_RESPONSES_MODEL || 'gpt-4o';
 const RESPONSES_MODEL_MINI = process.env.OPENAI_RESPONSES_MODEL_MINI || 'gpt-4o-mini';
+
+// Category synonym mapping (matches ai-chat)
+const CATEGORY_SYNONYMS: Record<string, string> = {
+  'restaurant': 'Restaurant',
+  'dining': 'Restaurant',
+  'food': 'Restaurant',
+  'eat': 'Restaurant',
+  'meal': 'Restaurant',
+  'hotel': 'Hotel',
+  'stay': 'Hotel',
+  'accommodation': 'Hotel',
+  'lodging': 'Hotel',
+  'cafe': 'Cafe',
+  'coffee': 'Cafe',
+  'bar': 'Bar',
+  'drink': 'Bar',
+  'cocktail': 'Bar',
+  'nightlife': 'Bar',
+  'culture': 'Culture',
+  'museum': 'Culture',
+  'art': 'Culture',
+  'gallery': 'Culture'
+};
+
+// Intent type definition
+export interface ParsedIntent {
+  keywords: string[];
+  city?: string;
+  category?: string;
+  filters?: {
+    openNow?: boolean;
+    priceLevel?: number;
+    rating?: number;
+    michelinStar?: number;
+  };
+  intent?: string;
+  confidence?: number;
+  clarifications?: string[];
+  inferredTags?: {
+    neighborhoods?: string[];
+    styleTags?: string[];
+    priceLevel?: string;
+    modifiers?: string[];
+  };
+  tripPlanning?: {
+    isTrip?: boolean;
+    tripType?: 'weekend' | 'day' | 'week' | 'multi-day' | null;
+    duration?: number | null;
+    startDate?: string | null;
+    endDate?: string | null;
+    travelers?: 'solo' | 'couple' | 'family' | 'group' | null;
+    tripStyle?: 'adventure' | 'relaxation' | 'cultural' | 'foodie' | 'romantic' | 'business' | null;
+  };
+}
 
 // Web search configuration (for future Responses API upgrade)
 const WEB_SEARCH_CONFIG = {
@@ -175,6 +231,190 @@ export const RESPONSES_TOOLS: Array<{
     },
   },
 ];
+
+/**
+ * Extract intent from user query using OpenAI
+ * Matches the functionality from ai-chat for consistency
+ */
+export async function extractIntent(
+  query: string,
+  conversationHistory: Array<{ role: string; content: string }> = []
+): Promise<ParsedIntent> {
+  const openai = getOpenAI();
+
+  // Fallback to simple parsing if OpenAI unavailable
+  if (!openai?.chat) {
+    return parseQueryFallback(query);
+  }
+
+  try {
+    const systemPrompt = `You are a travel search intent analyzer. Extract structured information from travel/dining queries. Return ONLY valid JSON with this structure:
+{
+  "keywords": ["array", "of", "main", "keywords"],
+  "city": "city name or null",
+  "category": "category like Restaurant/Cafe/Hotel/Bar/Culture/Shop or null",
+  "filters": {
+    "openNow": true/false/null,
+    "priceLevel": 1-4 or null,
+    "rating": 4-5 or null,
+    "michelinStar": 1-3 or null
+  },
+  "intent": "brief description of user intent",
+  "confidence": 0.0-1.0,
+  "clarifications": ["questions if query is ambiguous"],
+  "inferredTags": {
+    "neighborhoods": ["neighborhood names if mentioned"],
+    "styleTags": ["minimalist", "contemporary", "traditional", "luxury"],
+    "priceLevel": "$" to "$$$$" or null,
+    "modifiers": ["quiet", "romantic", "trendy", "hidden gem"]
+  },
+  "tripPlanning": {
+    "isTrip": true/false,
+    "tripType": "weekend" | "day" | "week" | "multi-day" | null,
+    "duration": number or null,
+    "travelers": "solo" | "couple" | "family" | "group" | null,
+    "tripStyle": "adventure" | "relaxation" | "cultural" | "foodie" | "romantic" | "business" | null
+  }
+}
+
+Guidelines:
+- Set tripPlanning.isTrip=true for queries like "plan my weekend in miami", "3 day trip to tokyo"
+- Extract descriptive modifiers: romantic, cozy, luxury, budget, hidden, trendy
+- For neighborhoods: Extract specific names (Daikanyama, Aoyama, Soho, etc.)
+- Confidence should reflect how clear the query intent is
+Return only the JSON, no other text.`;
+
+    const conversationContext = conversationHistory.length > 0
+      ? `\n\nConversation History:\n${conversationHistory.slice(-6).map(msg => `${msg.role}: ${msg.content}`).join('\n')}`
+      : '';
+
+    const response = await openai.chat.completions.create({
+      model: RESPONSES_MODEL_MINI,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: `Query: "${query}"${conversationContext}` }
+      ],
+      temperature: 0.2,
+      response_format: { type: 'json_object' },
+      max_tokens: 500,
+    });
+
+    const text = response.choices?.[0]?.message?.content || '';
+    if (text) {
+      const parsed = JSON.parse(text);
+      // Normalize category
+      if (parsed.category) {
+        const normalized = CATEGORY_SYNONYMS[parsed.category.toLowerCase()];
+        if (normalized) parsed.category = normalized;
+      }
+      return parsed;
+    }
+  } catch (error) {
+    console.error('[Responses] Intent extraction error:', error);
+  }
+
+  return parseQueryFallback(query);
+}
+
+/**
+ * Simple fallback query parser when AI is unavailable
+ */
+function parseQueryFallback(query: string): ParsedIntent {
+  const lowerQuery = query.toLowerCase();
+  let city: string | undefined;
+  let category: string | undefined;
+
+  // City detection
+  const cityNames = ['tokyo', 'paris', 'london', 'new york', 'los angeles', 'singapore', 'hong kong', 'sydney', 'dubai', 'bangkok', 'berlin', 'amsterdam', 'rome', 'barcelona', 'lisbon', 'madrid', 'vienna', 'prague', 'stockholm', 'milan', 'taipei', 'seoul', 'shanghai', 'miami', 'san francisco', 'chicago', 'boston', 'seattle', 'toronto', 'vancouver', 'melbourne'];
+  for (const cityName of cityNames) {
+    if (lowerQuery.includes(cityName)) {
+      city = cityName;
+      break;
+    }
+  }
+
+  // Category detection
+  for (const [keyword, cat] of Object.entries(CATEGORY_SYNONYMS)) {
+    if (lowerQuery.includes(keyword)) {
+      category = cat;
+      break;
+    }
+  }
+
+  // Trip planning detection
+  const tripKeywords = ['plan', 'trip', 'itinerary', 'vacation', 'holiday', 'getaway'];
+  const isTrip = tripKeywords.some(kw => lowerQuery.includes(kw));
+
+  let tripType: 'weekend' | 'day' | 'week' | 'multi-day' | null = null;
+  let duration: number | null = null;
+
+  if (isTrip) {
+    if (lowerQuery.includes('weekend')) {
+      tripType = 'weekend';
+      duration = 2;
+    } else if (lowerQuery.includes('week')) {
+      tripType = 'week';
+      duration = 7;
+    } else if (lowerQuery.match(/(\d+)\s*day/)) {
+      const match = lowerQuery.match(/(\d+)\s*day/);
+      duration = match ? parseInt(match[1]) : null;
+      tripType = duration === 1 ? 'day' : 'multi-day';
+    }
+  }
+
+  const keywords = query.split(/\s+/).filter(w => w.length > 2);
+
+  return {
+    keywords,
+    city,
+    category,
+    intent: isTrip ? `planning a trip${city ? ` to ${city}` : ''}` : `finding ${category || 'places'}${city ? ` in ${city}` : ''}`,
+    confidence: (city ? 0.7 : 0.5) + (category ? 0.2 : 0),
+    tripPlanning: isTrip ? { isTrip: true, tripType, duration } : undefined,
+    clarifications: isTrip && !city ? ['Where would you like to go?'] : undefined,
+  };
+}
+
+/**
+ * Enrich destinations with additional data (weather, events, photos)
+ */
+async function enrichDestinations(destinations: any[]): Promise<any[]> {
+  if (destinations.length === 0) return destinations;
+
+  const supabase = await createServerClient();
+  const slugs = destinations.slice(0, 10).map((d: any) => d.slug);
+
+  try {
+    const { data: enrichmentData } = await supabase
+      .from('destinations')
+      .select('slug, photos_json, current_weather_json, weather_forecast_json, nearby_events_json, route_from_city_center_json, walking_time_from_center_minutes, static_map_url')
+      .in('slug', slugs);
+
+    if (!enrichmentData) return destinations;
+
+    const enrichmentMap = new Map(enrichmentData.map((item: any) => [item.slug, item]));
+
+    return destinations.map((dest: any) => {
+      const enriched = enrichmentMap.get(dest.slug);
+      if (enriched) {
+        return {
+          ...dest,
+          photos: enriched.photos_json ? JSON.parse(enriched.photos_json) : null,
+          currentWeather: enriched.current_weather_json ? JSON.parse(enriched.current_weather_json) : null,
+          weatherForecast: enriched.weather_forecast_json ? JSON.parse(enriched.weather_forecast_json) : null,
+          nearbyEvents: enriched.nearby_events_json ? JSON.parse(enriched.nearby_events_json) : null,
+          routeFromCityCenter: enriched.route_from_city_center_json ? JSON.parse(enriched.route_from_city_center_json) : null,
+          walkingTimeFromCenter: enriched.walking_time_from_center_minutes,
+          staticMapUrl: enriched.static_map_url,
+        };
+      }
+      return dest;
+    });
+  } catch (error) {
+    console.debug('[Responses] Enrichment failed:', error);
+    return destinations;
+  }
+}
 
 /**
  * Execute a tool call from the Responses API
@@ -490,6 +730,23 @@ export async function chatWithResponses(options: {
   citations?: Array<{ title: string; url: string }>;
   model: string;
   usage?: { inputTokens: number; outputTokens: number };
+  // New fields matching ai-chat functionality
+  intent?: ParsedIntent;
+  suggestions?: Array<{ text: string; icon?: string; type?: string }>;
+  tripPlanning?: {
+    isTrip: boolean;
+    tripType?: string | null;
+    duration?: number | null;
+    suggestedTitle?: string;
+    destination?: string | null;
+  };
+  enriched?: {
+    hasWeather: boolean;
+    hasEvents: boolean;
+    hasPhotos: boolean;
+    hasRoutes: boolean;
+  };
+  inferredTags?: ParsedIntent['inferredTags'];
 }> {
   const openai = getOpenAI();
   if (!openai?.chat) {
@@ -503,6 +760,10 @@ export async function chatWithResponses(options: {
     userContext,
     maxToolCalls = 5,
   } = options;
+
+  // Extract intent first (for trip planning detection, filters, etc.)
+  const intent = await extractIntent(message, conversationHistory);
+  console.log('[Responses] Extracted intent:', JSON.stringify(intent, null, 2));
 
   // Build messages array with system prompt
   const messages: Array<{
@@ -533,7 +794,8 @@ export async function chatWithResponses(options: {
     message.length > 200 ||
     message.includes('compare') ||
     message.includes('plan') ||
-    message.includes('itinerary');
+    message.includes('itinerary') ||
+    intent.tripPlanning?.isTrip;
   const model = isComplex ? RESPONSES_MODEL : RESPONSES_MODEL_MINI;
 
   try {
@@ -611,15 +873,94 @@ export async function chatWithResponses(options: {
     // Track costs
     trackOpenAIResponse(response, model, '/api/responses', userId);
 
+    // Enrich destinations with weather, events, photos
+    let enrichedResults = curatedResults;
+    if (curatedResults.length > 0) {
+      enrichedResults = await enrichDestinations(curatedResults);
+    }
+
+    // Apply reranking based on query intent and context
+    if (enrichedResults.length > 0) {
+      const topResultForContext = enrichedResults[0];
+      const enrichedContext = topResultForContext ? {
+        currentWeather: topResultForContext.currentWeather || null,
+        nearbyEvents: topResultForContext.nearbyEvents || null,
+      } : null;
+
+      enrichedResults = rerankDestinations(enrichedResults, {
+        query: message,
+        queryIntent: {
+          city: intent.city,
+          category: intent.category,
+          price_level: intent.filters?.priceLevel,
+          weather_preference: message.toLowerCase().includes('outdoor') ? 'outdoor' :
+                            message.toLowerCase().includes('indoor') ? 'indoor' : null,
+          event_context: message.toLowerCase().includes('event') || message.toLowerCase().includes('happening'),
+        },
+        userId,
+        boostPersonalized: !!userId,
+        enrichedContext: enrichedContext || undefined,
+      });
+    }
+
+    // Generate follow-up suggestions
+    let suggestions: Array<{ text: string; icon?: string; type?: string }> = [];
+    try {
+      const normalizedIntent = {
+        ...intent,
+        filters: intent.filters ? {
+          ...intent.filters,
+          priceLevel: intent.filters.priceLevel ? String(intent.filters.priceLevel) : undefined,
+        } : undefined,
+      };
+
+      suggestions = generateFollowUpSuggestions({
+        query: message,
+        intent: normalizedIntent,
+        destinations: enrichedResults,
+        conversationHistory,
+        userContext: userContext ? {
+          favoriteCities: userContext.favoriteCities || [],
+          favoriteCategories: userContext.favoriteCategories || [],
+        } : undefined,
+      });
+    } catch (error) {
+      console.debug('[Responses] Failed to generate suggestions:', error);
+    }
+
+    // Build enrichment metadata
+    const enrichedMetadata = {
+      hasWeather: enrichedResults.some((r: any) => r.currentWeather),
+      hasEvents: enrichedResults.some((r: any) => r.nearbyEvents && r.nearbyEvents.length > 0),
+      hasPhotos: enrichedResults.some((r: any) => r.photos && r.photos.length > 0),
+      hasRoutes: enrichedResults.some((r: any) => r.routeFromCityCenter),
+    };
+
+    // Build trip planning response if detected
+    const tripPlanningResponse = intent.tripPlanning?.isTrip ? {
+      isTrip: true,
+      tripType: intent.tripPlanning.tripType,
+      duration: intent.tripPlanning.duration,
+      suggestedTitle: intent.tripPlanning.tripType
+        ? `${intent.tripPlanning.tripType.charAt(0).toUpperCase() + intent.tripPlanning.tripType.slice(1)} in ${intent.city || 'your destination'}`
+        : `Trip to ${intent.city || 'your destination'}`,
+      destination: intent.city || null,
+    } : undefined;
+
     return {
       response: finalResponse,
       toolsUsed,
-      curatedResults: curatedResults.length > 0 ? curatedResults : undefined,
+      curatedResults: enrichedResults.length > 0 ? enrichedResults : undefined,
       model,
       usage: {
         inputTokens: totalInputTokens,
         outputTokens: totalOutputTokens,
       },
+      intent,
+      suggestions,
+      tripPlanning: tripPlanningResponse,
+      enriched: enrichedMetadata,
+      inferredTags: intent.inferredTags,
     };
   } catch (error: any) {
     console.error('[Responses] API error:', error);

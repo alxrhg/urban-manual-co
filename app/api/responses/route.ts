@@ -23,7 +23,6 @@ import {
   isUpstashConfigured,
   createRateLimitResponse,
 } from '@/lib/rate-limit';
-import { extractIntent } from '@/app/api/intent/schema';
 import { mem0Service, isMem0Available } from '@/lib/ai/mem0';
 
 // SSE helper
@@ -244,8 +243,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       enableWebSearch,
     });
 
-    // Extract intent for response metadata
-    const intent = await extractIntent(message, conversationHistory, userContext);
+    // Use intent from chatWithResponses (already extracted there)
+    const intent = result.intent;
 
     // Store in Mem0 if available (non-blocking)
     if (userId && isMem0Available()) {
@@ -258,8 +257,8 @@ export async function POST(request: NextRequest): Promise<Response> {
           userId,
           {
             source: 'conversation',
-            city: intent.city || undefined,
-            category: intent.category || undefined,
+            city: intent?.city || undefined,
+            category: intent?.category || undefined,
           }
         )
         .catch(() => {
@@ -286,15 +285,39 @@ export async function POST(request: NextRequest): Promise<Response> {
       // Non-critical
     }
 
+    // Return full response matching ai-chat format
     return NextResponse.json({
-      message: result.response,
+      // Core response
+      content: result.response,  // Match ai-chat field name
+      message: result.response,  // Keep for backwards compat
       destinations: result.curatedResults || [],
+
+      // Intent and context
+      intent: intent ? {
+        ...intent,
+        resultCount: result.curatedResults?.length || 0,
+        hasResults: (result.curatedResults?.length || 0) > 0,
+      } : undefined,
+      inferredTags: result.inferredTags,
+
+      // Trip planning (when detected)
+      tripPlanning: result.tripPlanning,
+
+      // Follow-up suggestions
+      suggestions: result.suggestions || [],
+
+      // Enrichment metadata
+      enriched: result.enriched,
+
+      // Web search data
       citations: result.citations || [],
-      toolsUsed: result.toolsUsed,
       webSearchUsed: result.webSearchResults !== undefined,
-      intent,
+
+      // Metadata
+      toolsUsed: result.toolsUsed,
       model: result.model,
       usage: result.usage,
+      searchTier: 'openai-responses',  // Indicate this came from responses API
     });
   } catch (error: any) {
     console.error('[Responses API] Error:', error);
