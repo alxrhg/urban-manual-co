@@ -1586,6 +1586,15 @@ const DestinationContent = memo(function DestinationContent({
             {destination.category && capitalizeCategory(destination.category)}
             {destination.city && ` · ${capitalizeCity(destination.city)}`}
           </p>
+          {destination.brand && (
+            <Link
+              href={`/brands/${encodeURIComponent(destination.brand)}`}
+              className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-gray-100 dark:bg-white/10 text-[12px] font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+            >
+              <Building2 className="h-3 w-3" />
+              {destination.brand}
+            </Link>
+          )}
           {/* Rating with review count */}
           {rating && (
             <div className="flex items-center gap-1.5 mt-2">
