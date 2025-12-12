@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { Trip, ItineraryItem, ItineraryItemNotes, FlightData, TrainData, ActivityData, HotelData } from '@/types/trip';
 import { parseItineraryNotes, stringifyItineraryNotes } from '@/types/trip';
@@ -19,6 +19,8 @@ export interface EnrichedItineraryItem extends ItineraryItem {
   parsedNotes?: ItineraryItemNotes;
 }
 
+export type SavingStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 interface UseTripEditorOptions {
   tripId: string;
   userId: string | undefined;
@@ -34,7 +36,41 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
   const [days, setDays] = useState<TripDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingStatus, setSavingStatus] = useState<SavingStatus>('idle');
+  const [lastSavedItemId, setLastSavedItemId] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+  const savingStatusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Helper to update saving status with auto-reset
+  const updateSavingStatus = useCallback((status: SavingStatus, itemId?: string) => {
+    // Clear any pending timeout
+    if (savingStatusTimeoutRef.current) {
+      clearTimeout(savingStatusTimeoutRef.current);
+      savingStatusTimeoutRef.current = null;
+    }
+
+    setSavingStatus(status);
+    if (itemId) {
+      setLastSavedItemId(itemId);
+    }
+
+    // Auto-reset to idle after showing 'saved' or 'error' status
+    if (status === 'saved' || status === 'error') {
+      savingStatusTimeoutRef.current = setTimeout(() => {
+        setSavingStatus('idle');
+        setLastSavedItemId(null);
+      }, 2000);
+    }
+  }, []);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (savingStatusTimeoutRef.current) {
+        clearTimeout(savingStatusTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Fetch trip and items
   const fetchTrip = useCallback(async (isInitialLoad = false) => {
@@ -280,6 +316,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
     try {
       setSaving(true);
+      updateSavingStatus('saving');
       const supabase = createClient();
       if (!supabase) return;
 
@@ -310,6 +347,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
               : d
           )
         );
+        updateSavingStatus('saved', data.id);
       }
     } catch (err) {
       console.error('Error adding place:', err);
@@ -322,11 +360,12 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
         )
       );
       toast.error('Failed to add place. Please check your connection and try again.');
+      updateSavingStatus('error');
       onError?.(err instanceof Error ? err : new Error('Failed to add place'));
     } finally {
       setSaving(false);
     }
-  }, [trip, userId, days, onError]);
+  }, [trip, userId, days, onError, updateSavingStatus]);
 
   // Add a flight
   const addFlight = useCallback(async (flightData: FlightData, dayNumber: number) => {
@@ -379,6 +418,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
     try {
       setSaving(true);
+      updateSavingStatus('saving');
       const supabase = createClient();
       if (!supabase) return;
 
@@ -409,6 +449,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
               : d
           )
         );
+        updateSavingStatus('saved', data.id);
       }
     } catch (err) {
       console.error('Error adding flight:', err);
@@ -421,11 +462,12 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
         )
       );
       toast.error('Failed to add flight. Please check your connection and try again.');
+      updateSavingStatus('error');
       onError?.(err instanceof Error ? err : new Error('Failed to add flight'));
     } finally {
       setSaving(false);
     }
-  }, [trip, userId, days, onError]);
+  }, [trip, userId, days, onError, updateSavingStatus]);
 
   // Add a train
   const addTrain = useCallback(async (trainData: TrainData, dayNumber: number) => {
@@ -481,6 +523,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
     try {
       setSaving(true);
+      updateSavingStatus('saving');
       const supabase = createClient();
       if (!supabase) return;
 
@@ -511,6 +554,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
               : d
           )
         );
+        updateSavingStatus('saved', data.id);
       }
     } catch (err) {
       console.error('Error adding train:', err);
@@ -523,11 +567,12 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
         )
       );
       toast.error('Failed to add train. Please check your connection and try again.');
+      updateSavingStatus('error');
       onError?.(err instanceof Error ? err : new Error('Failed to add train'));
     } finally {
       setSaving(false);
     }
-  }, [trip, userId, days, onError]);
+  }, [trip, userId, days, onError, updateSavingStatus]);
 
   // Add a hotel
   const addHotel = useCallback(async (hotelData: HotelData, dayNumber: number) => {
@@ -586,6 +631,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
     try {
       setSaving(true);
+      updateSavingStatus('saving');
       const supabase = createClient();
       if (!supabase) return;
 
@@ -616,6 +662,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
               : d
           )
         );
+        updateSavingStatus('saved', data.id);
       }
     } catch (err) {
       console.error('Error adding hotel:', err);
@@ -628,11 +675,12 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
         )
       );
       toast.error('Failed to add hotel. Please check your connection and try again.');
+      updateSavingStatus('error');
       onError?.(err instanceof Error ? err : new Error('Failed to add hotel'));
     } finally {
       setSaving(false);
     }
-  }, [trip, userId, days, onError]);
+  }, [trip, userId, days, onError, updateSavingStatus]);
 
   // Add an activity (downtime, hotel time, etc.)
   const addActivity = useCallback(async (activityData: ActivityData, dayNumber: number, time?: string) => {
@@ -677,6 +725,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
 
     try {
       setSaving(true);
+      updateSavingStatus('saving');
       const supabase = createClient();
       if (!supabase) return;
 
@@ -707,6 +756,7 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
               : d
           )
         );
+        updateSavingStatus('saved', data.id);
       }
     } catch (err) {
       console.error('Error adding activity:', err);
@@ -719,11 +769,12 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
         )
       );
       toast.error('Failed to add activity. Please check your connection and try again.');
+      updateSavingStatus('error');
       onError?.(err instanceof Error ? err : new Error('Failed to add activity'));
     } finally {
       setSaving(false);
     }
-  }, [trip, userId, days, onError]);
+  }, [trip, userId, days, onError, updateSavingStatus]);
 
   // Remove an item
   const removeItem = useCallback(async (itemId: string) => {
@@ -981,6 +1032,8 @@ export function useTripEditor({ tripId, userId, onError }: UseTripEditorOptions)
     days,
     loading,
     saving,
+    savingStatus,
+    lastSavedItemId,
     updateTrip,
     reorderItems,
     addPlace,
