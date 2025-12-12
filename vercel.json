@@ -15,6 +15,10 @@
     {
       "path": "/api/realtime/check-price-alerts",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/update-trends",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

@@ -34,6 +34,7 @@
     "enrich:architects": "tsx scripts/enrich-architects.ts",
     "enrich:movements": "tsx scripts/enrich-movements.ts",
     "enrich:materials": "tsx scripts/enrich-materials.ts",
+    "enrich:trends": "tsx scripts/enrich-with-trends.ts",
     "export:r2": "tsx scripts/export-destinations-to-r2.ts",
     "export:r2:dry-run": "tsx scripts/export-destinations-to-r2.ts --dry-run",
     "sanity:sync": "tsx scripts/sync-supabase-to-sanity.ts",
