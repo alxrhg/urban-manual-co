@@ -2962,7 +2962,7 @@ export default function HomePageClient({
                         <button
                           onClick={handleCreateTrip}
                           disabled={creatingTrip}
-                          className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-4 sm:px-5 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10 disabled:opacity-50"
+                          className="flex h-[34px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-2 sm:px-2 text-sm font-medium text-white transition-all duration-200 ease-in-out hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-black/10 focus:ring-offset-2 dark:bg-white dark:text-black dark:focus:ring-white/10 disabled:opacity-50"
                           style={{ borderRadius: '9999px' }}
                           aria-label="Create Trip"
                         >
@@ -3010,7 +3010,7 @@ export default function HomePageClient({
                       {/* Discover by Cities - Compact Link */}
                       <Link
                         href="/cities"
-                        className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 sm:px-5 text-sm font-medium text-gray-900 transition-all duration-200 ease-out hover:bg-gray-50 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
+                        className="flex items-center justify-center gap-2 py-2 flex-shrink-0 rounded-full border border-gray-200 bg-white px-4 sm:px-5 text-sm font-medium text-gray-900 transition-all duration-200 ease-out hover:bg-gray-50 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)] dark:hover:bg-[rgba(255,255,255,0.12)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.08),0_4px_14px_rgba(0,0,0,0.4)] dark:[background:linear-gradient(to_bottom,rgba(255,255,255,0.10),rgba(255,255,255,0.04))]"
                         style={{ borderRadius: '9999px' }}
                       >
                         <Globe className="h-4 w-4" />
