@@ -89,17 +89,19 @@ export const AIRPORTS: Record<string, Airport> = {
 
 export function getAirport(query: string): Airport | null {
   if (!query) return null;
-  const normalized = query.toUpperCase().trim();
-  
-  // Try exact code match
-  if (AIRPORTS[normalized]) {
-    return AIRPORTS[normalized];
+  const trimmed = query.trim();
+  if (!trimmed) return null;
+
+  // Try exact IATA code match first (highest priority)
+  const upperCode = trimmed.toUpperCase();
+  if (AIRPORTS[upperCode]) {
+    return AIRPORTS[upperCode];
   }
 
-  // Try searching by city or name (less efficient but helpful)
-  const lowerQuery = query.toLowerCase();
+  // Try searching by city or name
+  const lowerQuery = trimmed.toLowerCase();
   for (const airport of Object.values(AIRPORTS)) {
-    if (airport.city.toLowerCase().includes(lowerQuery) || 
+    if (airport.city.toLowerCase().includes(lowerQuery) ||
         airport.name.toLowerCase().includes(lowerQuery)) {
       return airport;
     }
