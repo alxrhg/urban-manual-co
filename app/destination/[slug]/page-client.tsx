@@ -19,6 +19,7 @@ import { trackEvent } from '@/lib/analytics/track';
 import { SaveDestinationModal } from '@/components/SaveDestinationModal';
 import { VisitedModal } from '@/components/VisitedModal';
 import { useAuth } from '@/contexts/AuthContext';
+import AddToTripButton from '@/components/trip/AddToTripButton';
 import { NestedDestinations } from '@/components/NestedDestinations';
 import { ForecastInfo } from '@/components/ForecastInfo';
 import { SentimentDisplay } from '@/components/SentimentDisplay';
@@ -421,6 +422,12 @@ export default function DestinationPageClient({ initialDestination, parentDestin
 
         {/* Floating Action Buttons */}
         <div className="absolute top-4 right-4 md:top-6 md:right-6 z-10 flex items-center gap-2">
+          {/* Add to Trip Button */}
+          <AddToTripButton
+            destination={destination}
+            variant="icon"
+            className="!bg-white/90 dark:!bg-black/80 backdrop-blur-sm shadow-lg !text-gray-900 dark:!text-white hover:!bg-white dark:hover:!bg-black"
+          />
           <button
             onClick={() => {
               if (navigator.share) {
@@ -590,60 +597,68 @@ export default function DestinationPageClient({ initialDestination, parentDestin
               )}
 
               {/* Quick Actions Bar - Visible on Mobile */}
-              {user && (
-                <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-2 px-2 lg:hidden">
-                  <button
-                    onClick={() => !isSaved && setShowSaveModal(true)}
-                    className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 transition-colors ${
-                      isSaved
-                        ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
-                        : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300'
-                    }`}
-                  >
-                    <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                    {isSaved ? 'Saved' : 'Save'}
-                  </button>
-                  <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 transition-colors ${
-                          isVisited
-                            ? 'bg-green-600 text-white'
-                            : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300'
-                        }`}
-                        onClick={(e) => {
-                          if (!isVisited) {
-                            e.preventDefault();
+              <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-2 px-2 lg:hidden">
+                {/* Add to Trip - available to all users */}
+                <AddToTripButton
+                  destination={destination}
+                  variant="button"
+                  className="flex-shrink-0"
+                />
+                {user && (
+                  <>
+                    <button
+                      onClick={() => !isSaved && setShowSaveModal(true)}
+                      className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 transition-colors ${
+                        isSaved
+                          ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                          : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      <Bookmark className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
+                      {isSaved ? 'Saved' : 'Save'}
+                    </button>
+                    <DropdownMenu open={showVisitedDropdown} onOpenChange={setShowVisitedDropdown}>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 transition-colors ${
+                            isVisited
+                              ? 'bg-green-600 text-white'
+                              : 'bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300'
+                          }`}
+                          onClick={(e) => {
+                            if (!isVisited) {
+                              e.preventDefault();
+                              handleVisitToggle();
+                            }
+                          }}
+                        >
+                          <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
+                          {isVisited ? 'Visited' : 'Mark Visited'}
+                          {isVisited && <ChevronDown className="h-4 w-4" />}
+                        </button>
+                      </DropdownMenuTrigger>
+                      {isVisited && (
+                        <DropdownMenuContent align="start" className="w-48">
+                          <DropdownMenuItem onClick={() => {
+                            setShowVisitedModal(true);
+                            setShowVisitedDropdown(false);
+                          }}>
+                            <Plus className="h-3 w-3 mr-2" />
+                            Add Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
                             handleVisitToggle();
-                          }
-                        }}
-                      >
-                        <Check className={`h-4 w-4 ${isVisited ? 'stroke-[3]' : ''}`} />
-                        {isVisited ? 'Visited' : 'Mark Visited'}
-                        {isVisited && <ChevronDown className="h-4 w-4" />}
-                      </button>
-                    </DropdownMenuTrigger>
-                    {isVisited && (
-                      <DropdownMenuContent align="start" className="w-48">
-                        <DropdownMenuItem onClick={() => {
-                          setShowVisitedModal(true);
-                          setShowVisitedDropdown(false);
-                        }}>
-                          <Plus className="h-3 w-3 mr-2" />
-                          Add Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => {
-                          handleVisitToggle();
-                          setShowVisitedDropdown(false);
-                        }}>
-                          <X className="h-3 w-3 mr-2" />
-                          Remove Visit
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    )}
-                  </DropdownMenu>
-                </div>
-              )}
+                            setShowVisitedDropdown(false);
+                          }}>
+                            <X className="h-3 w-3 mr-2" />
+                            Remove Visit
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      )}
+                    </DropdownMenu>
+                  </>
+                )}
+              </div>
 
               {/* Sequence Predictions */}
               {user && predictions && predictions.predictions && predictions.predictions.length > 0 && (

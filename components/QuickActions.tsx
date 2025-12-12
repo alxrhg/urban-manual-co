@@ -1,17 +1,20 @@
 'use client';
 
 import { useState, memo } from 'react';
-import { Bookmark, Check, Plus, Loader2 } from 'lucide-react';
+import { Bookmark, Check, Loader2 } from 'lucide-react';
 import { useQuickSave } from '@/hooks/useQuickSave';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrawer } from '@/contexts/DrawerContext';
-import { useDrawerStore } from '@/lib/stores/drawer-store';
+import AddToTripButton from '@/components/trip/AddToTripButton';
+import { Destination } from '@/types/destination';
 
 interface QuickActionsProps {
   destinationId?: number;
   destinationSlug: string;
   destinationName: string;
   destinationCity?: string;
+  destinationImage?: string;
+  destinationCategory?: string;
   showAddToTrip?: boolean;
   compact?: boolean;
   className?: string;
@@ -27,6 +30,8 @@ export const QuickActions = memo(function QuickActions({
   destinationSlug,
   destinationName,
   destinationCity,
+  destinationImage,
+  destinationCategory,
   showAddToTrip = true,
   compact = false,
   className = '',
@@ -34,7 +39,6 @@ export const QuickActions = memo(function QuickActions({
 }: QuickActionsProps) {
   const { user } = useAuth();
   const { openDrawer } = useDrawer();
-  const { openDrawer: openStoreDrawer } = useDrawerStore();
   const [showLoginToast, setShowLoginToast] = useState(false);
 
   const {
@@ -75,28 +79,6 @@ export const QuickActions = memo(function QuickActions({
     await toggleVisited();
   };
 
-  const handleAddToTrip = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    if (requiresAuth) {
-      setShowLoginToast(true);
-      setTimeout(() => setShowLoginToast(false), 2000);
-      openDrawer('login-modal');
-      return;
-    }
-
-    // Use callback if provided, otherwise open quick trip selector
-    if (onAddToTrip) {
-      onAddToTrip();
-    } else {
-      openStoreDrawer('quick-trip-selector', {
-        destinationSlug,
-        destinationName,
-        destinationCity,
-      });
-    }
-  };
 
   const buttonBaseClass = compact
     ? 'w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200'
@@ -152,21 +134,24 @@ export const QuickActions = memo(function QuickActions({
         )}
       </button>
 
-      {/* Add to Trip Button */}
+      {/* Add to Trip Button - Uses TripBuilderContext for proper integration */}
       {showAddToTrip && (
-        <button
-          onClick={handleAddToTrip}
+        <AddToTripButton
+          destination={{
+            slug: destinationSlug,
+            name: destinationName,
+            city: destinationCity || '',
+            category: destinationCategory || '',
+            image: destinationImage,
+            id: destinationId,
+          } as Destination}
+          variant="icon"
           className={`
-            ${buttonBaseClass}
-            bg-white/90 dark:bg-gray-900/90 text-gray-700 dark:text-gray-300
-            hover:bg-gray-100 dark:hover:bg-gray-800
+            !p-0 ${compact ? '!w-8 !h-8' : '!w-9 !h-9'}
+            !bg-white/90 dark:!bg-gray-900/90
             backdrop-blur-sm shadow-sm hover:shadow-md
           `}
-          aria-label={`Add ${destinationName} to trip`}
-          title="Add to trip"
-        >
-          <Plus className={iconSize} />
-        </button>
+        />
       )}
 
       {/* Login Toast */}

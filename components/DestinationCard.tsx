@@ -156,6 +156,8 @@ export const DestinationCard = memo(function DestinationCard({
               destinationSlug={destination.slug}
               destinationName={destination.name}
               destinationCity={destination.city}
+              destinationImage={destination.image_thumbnail || destination.image}
+              destinationCategory={destination.category}
               showAddToTrip={true}
               compact
               onAddToTrip={onAddToTrip}

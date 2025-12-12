@@ -12,7 +12,9 @@ import {
   Check,
   MoveVertical,
   ArrowRight,
+  ExternalLink,
 } from 'lucide-react';
+import Link from 'next/link';
 import { TripItemRowProps } from './types';
 import { formatDuration, getCrowdColor, getDayNumbers, openDestination } from './utils';
 import { capitalizeCategory } from '@/lib/utils';
@@ -283,6 +285,17 @@ const TripItemRow = memo(function TripItemRow({
 
         {/* Action buttons */}
         <div className="relative flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* View Guide Link - Navigate to full destination page */}
+          <Link
+            href={`/destination/${item.destination.slug}`}
+            onClick={(e) => e.stopPropagation()}
+            className="p-1.5 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors group/guide"
+            title="View full guide"
+            aria-label="View full guide"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-gray-400 group-hover/guide:text-blue-500 transition-colors" />
+          </Link>
+
           <button
             onClick={() => setIsEditingNotes(true)}
             className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
