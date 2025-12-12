@@ -21,6 +21,7 @@ import { NeighborhoodTags } from '@/components/trip/NeighborhoodBreakdown';
 import DayIntelligence from '@/components/trip/DayIntelligence';
 import { CrowdBadge } from '@/components/trip/CrowdIndicator';
 import { UndoProvider } from '@/components/trip/UndoToast';
+import { SavingFeedback } from '@/components/trip/SavingFeedback';
 import { Settings, Moon } from 'lucide-react';
 
 // Weather type
@@ -59,6 +60,8 @@ export default function TripPage() {
     trip,
     days,
     loading,
+    savingStatus,
+    lastSavedItemId,
     updateTrip,
     reorderItems,
     addPlace,
@@ -533,6 +536,7 @@ export default function TripPage() {
                 items={day.items}
                 city={primaryCity}
                 expandedItemId={expandedItemId}
+                lastSavedItemId={lastSavedItemId}
                 onToggleItem={toggleItem}
                 onReorder={(items) => reorderItems(day.dayNumber, items)}
                 isEditMode={isEditMode}
@@ -735,6 +739,9 @@ export default function TripPage() {
         </div>
         {/* End desktop flex layout */}
       </div>
+
+      {/* Saving feedback indicator */}
+      <SavingFeedback status={savingStatus} />
     </main>
     </UndoProvider>
   );
@@ -1235,6 +1242,7 @@ function DaySection({
   items,
   city,
   expandedItemId,
+  lastSavedItemId,
   onToggleItem,
   onReorder,
   onRemove,
@@ -1259,6 +1267,7 @@ function DaySection({
   items: EnrichedItineraryItem[];
   city: string;
   expandedItemId: string | null;
+  lastSavedItemId?: string | null;
   onToggleItem: (id: string) => void;
   onReorder: (items: EnrichedItineraryItem[]) => void;
   onRemove: (id: string) => void;

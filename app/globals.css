@@ -96,6 +96,23 @@
   animation: highlightPulse 2s ease-in-out;
 }
 
+/* Save glow animation for newly saved items */
+@keyframes saveGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.animate-save-glow {
+  animation: saveGlow 0.6s ease-out;
+}
+
 /* Slide up animation for modals */
 @keyframes slideUp {
   from {
