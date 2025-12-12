@@ -9,6 +9,7 @@ import {
   ChevronDown,
   Pencil,
   FolderOpen,
+  Maximize2,
 } from 'lucide-react';
 import { TripHeaderProps, TripSummary } from './types';
 import { TripHealthBadge } from './TripInsightsBar';
@@ -33,6 +34,7 @@ const TripHeader = memo(function TripHeader({
   onUpdateTitle,
   onUpdateDate,
   onSwitchTrip,
+  onOpenStudio,
 }: TripHeaderProps) {
   // Local state
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -224,14 +226,26 @@ const TripHeader = memo(function TripHeader({
           )}
         </div>
 
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
-          aria-label="Close panel"
-        >
-          <X className="w-5 h-5 text-gray-400" />
-        </button>
+        {/* Action buttons */}
+        <div className="flex items-center gap-1">
+          {onOpenStudio && (
+            <button
+              onClick={onOpenStudio}
+              className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
+              aria-label="Open Studio"
+              title="Open full-screen Studio"
+            >
+              <Maximize2 className="w-5 h-5 text-gray-400" />
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
+            aria-label="Close panel"
+          >
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
       </div>
 
       {/* Stats bar */}

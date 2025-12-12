@@ -94,6 +94,7 @@ export interface TripBuilderContextType {
   activeTrip: ActiveTrip | null;
   savedTrips: SavedTripSummary[];
   isPanelOpen: boolean;
+  isStudioMode: boolean;
   isBuilding: boolean;
   isLoadingTrips: boolean;
   isSuggestingNext: boolean;
@@ -119,6 +120,11 @@ export interface TripBuilderContextType {
   openPanel: () => void;
   closePanel: () => void;
   togglePanel: () => void;
+
+  // Studio Mode
+  openStudio: () => void;
+  closeStudio: () => void;
+  toggleStudio: () => void;
 
   // AI Actions
   generateItinerary: (city: string, days: number, preferences?: {
@@ -236,6 +242,7 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
   const [activeTrip, setActiveTrip] = useState<ActiveTrip | null>(null);
   const [savedTrips, setSavedTrips] = useState<SavedTripSummary[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isStudioMode, setIsStudioMode] = useState(false);
   const [isBuilding, setIsBuilding] = useState(false);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
   const [isSuggestingNext, setIsSuggestingNext] = useState(false);
@@ -1286,6 +1293,14 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
   const closePanel = useCallback(() => setIsPanelOpen(false), []);
   const togglePanel = useCallback(() => setIsPanelOpen(p => !p), []);
 
+  // Studio mode controls
+  const openStudio = useCallback(() => {
+    setIsStudioMode(true);
+    setIsPanelOpen(true);
+  }, []);
+  const closeStudio = useCallback(() => setIsStudioMode(false), []);
+  const toggleStudio = useCallback(() => setIsStudioMode(p => !p), []);
+
   // Computed values
   const totalItems = useMemo(() =>
     activeTrip?.days.reduce((sum, day) => sum + day.items.length, 0) || 0
@@ -1306,6 +1321,7 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     activeTrip,
     savedTrips,
     isPanelOpen,
+    isStudioMode,
     isBuilding,
     isLoadingTrips,
     isSuggestingNext,
@@ -1327,6 +1343,9 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     openPanel,
     closePanel,
     togglePanel,
+    openStudio,
+    closeStudio,
+    toggleStudio,
     generateItinerary,
     optimizeDay,
     suggestNextItem,

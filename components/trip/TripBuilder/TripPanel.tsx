@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, memo } from 'react';
-import { X, MapPin, ChevronRight, Loader2, Plus } from 'lucide-react';
+import { X, MapPin, ChevronRight, Loader2, Plus, Maximize2 } from 'lucide-react';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useExpandedDays } from './hooks';
@@ -10,6 +10,7 @@ import TripHeader from './TripHeader';
 import TripDayCard from './TripDayCard';
 import TripEmptyState from './TripEmptyState';
 import TripActions from './TripActions';
+import TripStudioView from './TripStudioView';
 import { toast } from '@/components/ui/sonner';
 
 /**
@@ -30,6 +31,7 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
     activeTrip,
     savedTrips,
     isPanelOpen,
+    isStudioMode,
     isBuilding,
     isLoadingTrips,
     isSuggestingNext,
@@ -43,6 +45,8 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
     clearTrip,
     saveTrip,
     closePanel,
+    closeStudio,
+    openStudio,
     optimizeDay,
     autoScheduleDay,
     moveItemToDay,
@@ -176,6 +180,16 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
   // Don't render if no active trip
   if (!activeTrip) return null;
 
+  // Studio Mode - Full-screen canvas view
+  if (isStudioMode) {
+    return (
+      <TripStudioView
+        city={activeTrip.city}
+        onClose={closeStudio}
+      />
+    );
+  }
+
   return (
     <>
       {/* Backdrop for mobile */}
@@ -208,6 +222,7 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
           onUpdateTitle={handleUpdateTitle}
           onUpdateDate={handleUpdateDate}
           onSwitchTrip={handleSwitchTrip}
+          onOpenStudio={openStudio}
         />
 
         {/* Content */}

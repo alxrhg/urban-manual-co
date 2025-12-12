@@ -122,6 +122,7 @@ export interface TripHeaderProps {
   onUpdateTitle: (title: string) => void;
   onUpdateDate: (date: string) => void;
   onSwitchTrip: (tripId: string) => void;
+  onOpenStudio?: () => void;
 }
 
 export interface TripDayCardProps {
