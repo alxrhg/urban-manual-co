@@ -20,6 +20,11 @@ const AuthContent = memo(function AuthContent() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/82b45f6a-fbfe-48b1-8584-ea1380f88caa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContent.tsx:20',message:'AuthContent state initialized',data:{name,email,password,uniqueId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  }, []);
+  // #endregion
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -132,16 +137,21 @@ const AuthContent = memo(function AuthContent() {
             <label htmlFor={`auth-email-${uniqueId}`} className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
               Email
             </label>
-            <input
-              id={`auth-email-${uniqueId}`}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-              className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-sm text-gray-900 dark:text-white"
-              placeholder="you@example.com"
-            />
+              <input
+                id={`auth-email-${uniqueId}`}
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  // #region agent log
+                  fetch('http://127.0.0.1:7242/ingest/82b45f6a-fbfe-48b1-8584-ea1380f88caa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContent.tsx:139',message:'Email input onChange',data:{oldValue:email,newValue:e.target.value,labelText:'Email',inputId:`auth-email-${uniqueId}`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                  // #endregion
+                  setEmail(e.target.value);
+                }}
+                required
+                autoComplete="email"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors text-sm text-gray-900 dark:text-white"
+                placeholder="you@example.com"
+              />
           </div>
 
           {/* Password Field */}
@@ -154,7 +164,12 @@ const AuthContent = memo(function AuthContent() {
                 id={`auth-password-${uniqueId}`}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  // #region agent log
+                  fetch('http://127.0.0.1:7242/ingest/82b45f6a-fbfe-48b1-8584-ea1380f88caa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContent.tsx:157',message:'Password input onChange',data:{oldValue:password,newValue:e.target.value,labelText:'Password',inputId:`auth-password-${uniqueId}`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                  // #endregion
+                  setPassword(e.target.value);
+                }}
                 required
                 minLength={6}
                 autoComplete={isSignUp ? 'new-password' : 'current-password'}

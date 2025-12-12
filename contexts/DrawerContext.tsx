@@ -79,6 +79,9 @@ export function DrawerProvider({ children }: { children: ReactNode }) {
 
   const openDrawer = useCallback(
     (type: DrawerType, parent?: DrawerType, data?: DrawerData) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/82b45f6a-fbfe-48b1-8584-ea1380f88caa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DrawerContext.tsx:80',message:'openDrawer called',data:{type,parent,previousActiveDrawer:activeDrawer},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       // Add current drawer to history if one is open
       if (activeDrawer) {
         setHistoryStack((prev) => [...prev, activeDrawer]);
@@ -92,6 +95,9 @@ export function DrawerProvider({ children }: { children: ReactNode }) {
       setParentDrawer(parent || null);
       setActiveDrawer(type);
       setAnimationState('entering');
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/82b45f6a-fbfe-48b1-8584-ea1380f88caa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DrawerContext.tsx:94',message:'activeDrawer state set',data:{newActiveDrawer:type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
     },
     [activeDrawer]
   );
@@ -138,7 +144,11 @@ export function DrawerProvider({ children }: { children: ReactNode }) {
 
   const isDrawerOpen = useCallback(
     (type: DrawerType) => {
-      return activeDrawer === type;
+      const result = activeDrawer === type;
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/82b45f6a-fbfe-48b1-8584-ea1380f88caa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DrawerContext.tsx:139',message:'isDrawerOpen check',data:{type,activeDrawer,result},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      return result;
     },
     [activeDrawer]
   );

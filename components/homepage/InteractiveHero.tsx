@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { Sparkles, Send, Loader2, X, MapPin, ArrowRight, RefreshCw, Search, Bookmark, CheckCircle, Map } from 'lucide-react';
+import { Sparkles, Send, Loader2, X, MapPin, ArrowRight, RefreshCw, Search, Bookmark, CheckCircle, Map, Brain } from 'lucide-react';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useHomepageData } from './HomepageDataProvider';
@@ -475,9 +475,23 @@ export default function InteractiveHero() {
           {/* Search Input - Clean monochrome style */}
           <form onSubmit={handleSearch} className="mb-6">
             <div className="relative max-w-xl">
-              {/* AI indicator */}
+              {/* AI indicator - Animated thinking/loading */}
               <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none z-10">
-                <Sparkles className={`w-4 h-4 transition-colors ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
+                {isSearching || isLoadingInstant ? (
+                  <Loader2 className={`w-4 h-4 animate-spin ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'}`} />
+                ) : (
+                  <div className="relative flex items-center justify-center">
+                    <Brain className={`w-4 h-4 transition-all duration-300 ${isFocused || showChatResults ? 'text-gray-900 dark:text-white' : 'text-gray-400'} ${localSearchTerm.trim() ? 'animate-pulse' : ''}`} />
+                    {/* Thinking dots animation - subtle pulsing when user is typing */}
+                    {localSearchTerm.trim() && (
+                      <div className="absolute -right-1 -top-0.5 flex gap-0.5">
+                        <span className="w-1 h-1 rounded-full bg-current opacity-40 animate-pulse" style={{ animationDelay: '0s', animationDuration: '1.5s' }} />
+                        <span className="w-1 h-1 rounded-full bg-current opacity-40 animate-pulse" style={{ animationDelay: '0.3s', animationDuration: '1.5s' }} />
+                        <span className="w-1 h-1 rounded-full bg-current opacity-40 animate-pulse" style={{ animationDelay: '0.6s', animationDuration: '1.5s' }} />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <input
                 ref={inputRef}
@@ -707,7 +721,7 @@ export default function InteractiveHero() {
               )}
             </div>
             {!showChatResults && !showInstantResults && (
-              <p className="mt-2 text-[12px] text-gray-400 dark:text-gray-500">
+              <p className="mt-2 text-[11px] text-gray-400 dark:text-gray-500">
                 Press <kbd className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-white/10 font-mono text-[11px]">/</kbd> to focus • Enter to search
               </p>
             )}
@@ -881,7 +895,7 @@ export default function InteractiveHero() {
               <div className="flex flex-wrap gap-x-1 gap-y-2">
                 <button
                   onClick={() => setSelectedCity('')}
-                  className={`px-3 py-1.5 text-[13px] font-medium rounded-full transition-all duration-200 ${
+                  className={`px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
                     !selectedCity
                       ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                       : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
@@ -893,7 +907,7 @@ export default function InteractiveHero() {
                   <button
                     key={city}
                     onClick={() => handleCityClick(city)}
-                    className={`px-3 py-1.5 text-[13px] font-medium rounded-full transition-all duration-200 ${
+                    className={`px-3 py-1.5 text-[12px] font-medium rounded-full transition-all duration-200 ${
                       selectedCity.toLowerCase() === city.toLowerCase()
                         ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
                         : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
@@ -905,7 +919,7 @@ export default function InteractiveHero() {
                 {cities.length > displayedCities.length && !showAllCities && (
                   <button
                     onClick={() => setShowAllCities(true)}
-                    className="px-3 py-1.5 text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
                     +{cities.length - displayedCities.length} more
                   </button>
@@ -913,7 +927,7 @@ export default function InteractiveHero() {
                 {showAllCities && (
                   <button
                     onClick={() => setShowAllCities(false)}
-                    className="px-3 py-1.5 text-[13px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="px-3 py-1.5 text-[12px] font-medium text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
                     Show less
                   </button>
@@ -923,7 +937,7 @@ export default function InteractiveHero() {
 
             {/* Category Filters with Icons */}
             {categories.length > 0 && (
-              <div className="flex flex-wrap gap-x-4 gap-y-2 text-[13px]">
+              <div className="flex flex-wrap gap-x-4 gap-y-2 text-[12px]">
                 <button
                   onClick={() => {
                     setSelectedCategory('');

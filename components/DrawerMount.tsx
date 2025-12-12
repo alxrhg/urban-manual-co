@@ -44,6 +44,11 @@ export default function DrawerMount() {
     return displayMode === 'inline' && isDesktop && INLINE_TYPES.includes(drawerType);
   };
 
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/82b45f6a-fbfe-48b1-8584-ea1380f88caa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'DrawerMount.tsx:47',message:'DrawerMount render - all drawers always rendered',data:{open,type,displayMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  }, [open, type, displayMode]);
+  // #endregion
   return (
     <>
       {/* Legacy drawers that use their own drawer context */}

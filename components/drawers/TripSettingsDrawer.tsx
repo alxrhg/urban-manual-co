@@ -58,6 +58,11 @@ export default function TripSettingsDrawer({
   const [destination, setDestination] = useState(trip.destination || '');
   const [startDate, setStartDate] = useState(formatDateForInput(trip.start_date));
   const [endDate, setEndDate] = useState(formatDateForInput(trip.end_date));
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/82b45f6a-fbfe-48b1-8584-ea1380f88caa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TripSettingsDrawer.tsx:60',message:'Input state initialized',data:{title,destination,startDate,endDate,tripTitle:trip.title},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  }, []);
+  // #endregion
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -129,7 +134,12 @@ export default function TripSettingsDrawer({
         <input
           type="text"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/82b45f6a-fbfe-48b1-8584-ea1380f88caa',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'TripSettingsDrawer.tsx:132',message:'Title input onChange',data:{oldValue:title,newValue:e.target.value,labelText:'Trip Name'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
+            setTitle(e.target.value);
+          }}
           className="w-full px-4 py-3 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-stone-900 dark:focus:ring-white transition-all"
           placeholder="Trip name"
         />
