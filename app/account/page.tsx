@@ -156,6 +156,12 @@ export default function Account() {
         (visitedResult.data as VisitedPlaceRow[]).forEach((item) => allSlugs.add(item.destination_slug));
       }
 
+      // Clear lists if no slugs found (user removed all saved/visited places)
+      if (allSlugs.size === 0) {
+        setSavedPlaces([]);
+        setVisitedPlaces([]);
+      }
+
       // Fetch destinations with location data for map
       if (allSlugs.size > 0) {
         interface DestRow {

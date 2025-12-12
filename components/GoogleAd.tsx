@@ -147,29 +147,33 @@ export function DisplayAd({ slot, className = '' }: { slot: string; className?: 
       initializedRef.current = true;
 
       // Check if ad loaded - use multiple checks with increasing delays
-      const checkAdLoaded = () => {
+      // Only hide after sufficient time has passed to allow ad to load
+      const checkAdLoaded = (canHide: boolean = false) => {
         if (!adRef.current) return;
 
         const adStatus = adRef.current.getAttribute('data-ad-status');
         const hasContent = adRef.current.innerHTML.trim().length > 0;
         const hasIframes = adRef.current.querySelectorAll('iframe').length > 0;
 
-        // Hide if ad status is unfilled or if there's no content and no iframes
-        if (adStatus === 'unfilled' || (!hasContent && !hasIframes)) {
-          setShouldShow(false);
-        } else if (adStatus === 'filled' || hasContent || hasIframes) {
+        // Show if ad is filled or has content
+        if (adStatus === 'filled' || hasContent || hasIframes) {
           setShouldShow(true);
+        } else if (canHide && adStatus === 'unfilled') {
+          // Only hide if explicitly unfilled AND we've waited long enough
+          setShouldShow(false);
         }
       };
 
-      // Check immediately, then after delays
-      checkAdLoaded();
-      const timer1 = setTimeout(checkAdLoaded, 1000);
-      const timer2 = setTimeout(checkAdLoaded, 2000);
-      const timer3 = setTimeout(checkAdLoaded, 3000);
+      // Check for positive signals immediately and at intervals
+      // But only allow hiding after 5 seconds to give ads time to load
+      checkAdLoaded(false);
+      const timer1 = setTimeout(() => checkAdLoaded(false), 1000);
+      const timer2 = setTimeout(() => checkAdLoaded(false), 2000);
+      const timer3 = setTimeout(() => checkAdLoaded(false), 3000);
+      const timer4 = setTimeout(() => checkAdLoaded(true), 5000); // Can hide after 5s
 
       // Also observe mutations to catch late-loading ads
-      const observer = new MutationObserver(checkAdLoaded);
+      const observer = new MutationObserver(() => checkAdLoaded(false));
       if (adRef.current) {
         observer.observe(adRef.current, {
           childList: true,
@@ -183,6 +187,7 @@ export function DisplayAd({ slot, className = '' }: { slot: string; className?: 
         clearTimeout(timer1);
         clearTimeout(timer2);
         clearTimeout(timer3);
+        clearTimeout(timer4);
         observer.disconnect();
       };
     } catch (err) {
@@ -275,29 +280,33 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
       initializedRef.current = true;
 
       // Check if ad loaded - use multiple checks with increasing delays
-      const checkAdLoaded = () => {
+      // Only hide after sufficient time has passed to allow ad to load
+      const checkAdLoaded = (canHide: boolean = false) => {
         if (!adRef.current) return;
 
         const adStatus = adRef.current.getAttribute('data-ad-status');
         const hasContent = adRef.current.innerHTML.trim().length > 0;
         const hasIframes = adRef.current.querySelectorAll('iframe').length > 0;
 
-        // Hide if ad status is unfilled or if there's no content and no iframes
-        if (adStatus === 'unfilled' || (!hasContent && !hasIframes)) {
-          setShouldShow(false);
-        } else if (adStatus === 'filled' || hasContent || hasIframes) {
+        // Show if ad is filled or has content
+        if (adStatus === 'filled' || hasContent || hasIframes) {
           setShouldShow(true);
+        } else if (canHide && adStatus === 'unfilled') {
+          // Only hide if explicitly unfilled AND we've waited long enough
+          setShouldShow(false);
         }
       };
 
-      // Check immediately, then after delays
-      checkAdLoaded();
-      const timer1 = setTimeout(checkAdLoaded, 1000);
-      const timer2 = setTimeout(checkAdLoaded, 2000);
-      const timer3 = setTimeout(checkAdLoaded, 3000);
+      // Check for positive signals immediately and at intervals
+      // But only allow hiding after 5 seconds to give ads time to load
+      checkAdLoaded(false);
+      const timer1 = setTimeout(() => checkAdLoaded(false), 1000);
+      const timer2 = setTimeout(() => checkAdLoaded(false), 2000);
+      const timer3 = setTimeout(() => checkAdLoaded(false), 3000);
+      const timer4 = setTimeout(() => checkAdLoaded(true), 5000); // Can hide after 5s
 
       // Also observe mutations to catch late-loading ads
-      const observer = new MutationObserver(checkAdLoaded);
+      const observer = new MutationObserver(() => checkAdLoaded(false));
       if (adRef.current) {
         observer.observe(adRef.current, {
           childList: true,
@@ -311,6 +320,7 @@ export function MultiplexAd({ slot, className = '' }: { slot: string; className?
         clearTimeout(timer1);
         clearTimeout(timer2);
         clearTimeout(timer3);
+        clearTimeout(timer4);
         observer.disconnect();
       };
     } catch (err) {
