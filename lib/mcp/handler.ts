@@ -417,12 +417,16 @@ async function handleToolCall(name: string, args?: Record<string, unknown>) {
       const { city, days } = args || {};
       const numDays = Math.min(Math.max(Number(days) || 3, 1), 14);
 
-      // Fetch ALL destinations for the city (no limit)
+      // Limit destinations to prevent expensive/abusable queries
+      // 100 destinations is enough for 14 days @ 5 places/day with variety
+      const MAX_DESTINATIONS = 100;
+
       const { data: allDestinations } = await supabase
         .from("destinations")
         .select("slug, name, city, category, micro_description, rating, latitude, longitude, image")
         .ilike("city", `%${city}%`)
-        .order("rating", { ascending: false, nullsFirst: false });
+        .order("rating", { ascending: false, nullsFirst: false })
+        .limit(MAX_DESTINATIONS);
 
       if (!allDestinations?.length) {
         return { content: [{ type: "text", text: `No destinations found in ${city}. Try a different city.` }] };

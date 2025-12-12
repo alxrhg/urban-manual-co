@@ -14,12 +14,17 @@ import { SignJWT } from "jose";
 const ACCESS_TOKEN_EXPIRY = 60 * 60 * 24 * 7; // 7 days in seconds
 const REFRESH_TOKEN_EXPIRY = 60 * 60 * 24 * 30; // 30 days in seconds
 
-// JWT secret (should be env var in production)
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.MCP_JWT_SECRET || process.env.SUPABASE_JWT_SECRET || "urban-manual-mcp-secret-key-change-in-production"
-);
+// JWT secret - REQUIRED, no fallback to prevent insecure deployments
+const JWT_SECRET_RAW = process.env.MCP_JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
+const JWT_SECRET = JWT_SECRET_RAW ? new TextEncoder().encode(JWT_SECRET_RAW) : null;
 
 export async function POST(request: NextRequest) {
+  // Fail securely if JWT secret is not configured
+  if (!JWT_SECRET) {
+    console.error("OAuth token endpoint called but MCP_JWT_SECRET/SUPABASE_JWT_SECRET not configured");
+    return tokenError("server_error", "OAuth not configured");
+  }
+
   // Parse form data or JSON
   let body: Record<string, string>;
   const contentType = request.headers.get("content-type") || "";
@@ -45,58 +50,43 @@ export async function POST(request: NextRequest) {
       return tokenError("invalid_request", "Authorization code is required");
     }
 
-    // Try to find the code in the database
+    // Find the code in the database - no fallback to unsigned codes
     const { data: codeData, error: codeError } = await supabase
       .from("mcp_oauth_codes")
       .select("*")
       .eq("code", code)
       .single();
 
-    let userId: string;
-    let scope: string;
-    let clientIdFromCode: string;
-
     if (codeError || !codeData) {
-      // Try to decode fallback code format
-      try {
-        const decoded = JSON.parse(Buffer.from(code, "base64url").toString());
-        if (decoded.exp < Date.now()) {
-          return tokenError("invalid_grant", "Authorization code has expired");
-        }
-        userId = decoded.userId;
-        scope = decoded.scope || "read";
-        clientIdFromCode = decoded.clientId;
-      } catch {
-        return tokenError("invalid_grant", "Invalid or expired authorization code");
-      }
-    } else {
-      // Validate code hasn't expired
-      if (new Date(codeData.expires_at) < new Date()) {
-        // Delete expired code
-        await supabase.from("mcp_oauth_codes").delete().eq("code", code);
-        return tokenError("invalid_grant", "Authorization code has expired");
-      }
-
-      // Verify PKCE if code_challenge was provided
-      if (codeData.code_challenge && codeData.code_challenge_method === "S256") {
-        if (!code_verifier) {
-          return tokenError("invalid_request", "Code verifier is required");
-        }
-        const expectedChallenge = createHash("sha256")
-          .update(code_verifier)
-          .digest("base64url");
-        if (expectedChallenge !== codeData.code_challenge) {
-          return tokenError("invalid_grant", "Code verifier does not match");
-        }
-      }
-
-      userId = codeData.user_id;
-      scope = codeData.scope;
-      clientIdFromCode = codeData.client_id;
-
-      // Delete used code (codes are single-use)
-      await supabase.from("mcp_oauth_codes").delete().eq("code", code);
+      return tokenError("invalid_grant", "Invalid or expired authorization code");
     }
+
+    // Validate code hasn't expired
+    if (new Date(codeData.expires_at) < new Date()) {
+      // Delete expired code
+      await supabase.from("mcp_oauth_codes").delete().eq("code", code);
+      return tokenError("invalid_grant", "Authorization code has expired");
+    }
+
+    // Verify PKCE if code_challenge was provided
+    if (codeData.code_challenge && codeData.code_challenge_method === "S256") {
+      if (!code_verifier) {
+        return tokenError("invalid_request", "Code verifier is required");
+      }
+      const expectedChallenge = createHash("sha256")
+        .update(code_verifier)
+        .digest("base64url");
+      if (expectedChallenge !== codeData.code_challenge) {
+        return tokenError("invalid_grant", "Code verifier does not match");
+      }
+    }
+
+    const userId = codeData.user_id;
+    const scope = codeData.scope;
+    const clientIdFromCode = codeData.client_id;
+
+    // Delete used code (codes are single-use)
+    await supabase.from("mcp_oauth_codes").delete().eq("code", code);
 
     // Generate tokens
     const { accessToken, refreshToken } = await generateTokens(userId, clientIdFromCode, scope);
@@ -172,6 +162,11 @@ export async function POST(request: NextRequest) {
 }
 
 async function generateTokens(userId: string, clientId: string, scope: string) {
+  // JWT_SECRET is guaranteed to be non-null here since POST validates it first
+  if (!JWT_SECRET) {
+    throw new Error("JWT_SECRET not configured");
+  }
+
   const now = Math.floor(Date.now() / 1000);
 
   // Generate JWT access token

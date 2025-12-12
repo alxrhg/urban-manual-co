@@ -8,12 +8,55 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { randomBytes, createHash } from "crypto";
+import { randomBytes, createHmac } from "crypto";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.urbanmanual.co";
 
 // Authorization codes expire after 10 minutes
 const CODE_EXPIRY_MS = 10 * 60 * 1000;
+
+// HMAC secret for verifying OAuth state - must match authorize endpoint
+const STATE_SIGNING_SECRET = process.env.MCP_JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
+
+/**
+ * Verify and parse a signed OAuth state
+ * Returns null if signature is invalid or state is malformed
+ */
+function verifySignedState(signedState: string): object | null {
+  if (!STATE_SIGNING_SECRET) {
+    return null;
+  }
+
+  const parts = signedState.split(".");
+  if (parts.length !== 2) {
+    return null;
+  }
+
+  const [payload, signature] = parts;
+  const expectedSignature = createHmac("sha256", STATE_SIGNING_SECRET)
+    .update(payload)
+    .digest("base64url");
+
+  // Constant-time comparison to prevent timing attacks
+  if (signature.length !== expectedSignature.length) {
+    return null;
+  }
+
+  let mismatch = 0;
+  for (let i = 0; i < signature.length; i++) {
+    mismatch |= signature.charCodeAt(i) ^ expectedSignature.charCodeAt(i);
+  }
+
+  if (mismatch !== 0) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(Buffer.from(payload, "base64url").toString());
+  } catch {
+    return null;
+  }
+}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -23,8 +66,13 @@ export async function GET(request: NextRequest) {
     return errorPage("Missing OAuth state. Please try connecting again.");
   }
 
-  // Decode OAuth state
-  let state: {
+  // Verify and decode signed OAuth state
+  const verifiedState = verifySignedState(oauthState);
+  if (!verifiedState) {
+    return errorPage("Invalid or tampered OAuth state. Please try connecting again.");
+  }
+
+  const state = verifiedState as {
     sessionId: string;
     clientId: string;
     redirectUri: string;
@@ -34,12 +82,6 @@ export async function GET(request: NextRequest) {
     codeChallengeMethod?: string;
     createdAt: number;
   };
-
-  try {
-    state = JSON.parse(Buffer.from(oauthState, "base64url").toString());
-  } catch {
-    return errorPage("Invalid OAuth state. Please try connecting again.");
-  }
 
   // Check if state is expired (30 minutes max)
   if (Date.now() - state.createdAt > 30 * 60 * 1000) {
@@ -77,30 +119,15 @@ export async function GET(request: NextRequest) {
     created_at: new Date().toISOString(),
   };
 
-  // Store in mcp_oauth_codes table (we'll create this)
+  // Store in mcp_oauth_codes table
   const { error: insertError } = await serviceClient
     .from("mcp_oauth_codes")
     .insert(codeData);
 
   if (insertError) {
-    // Table might not exist, try to create a simple token directly
+    // Database error - fail securely instead of falling back to unsigned codes
     console.error("Failed to store OAuth code:", insertError);
-    // Fallback: encode the code with user info (less secure but works without table)
-    const fallbackCode = Buffer.from(JSON.stringify({
-      userId: user.id,
-      clientId: state.clientId,
-      scope: state.scope,
-      exp: Date.now() + CODE_EXPIRY_MS,
-    })).toString("base64url");
-
-    // Redirect back to client with code
-    const redirectUrl = new URL(state.redirectUri);
-    redirectUrl.searchParams.set("code", fallbackCode);
-    if (state.state) {
-      redirectUrl.searchParams.set("state", state.state);
-    }
-
-    return NextResponse.redirect(redirectUrl);
+    return errorPage("Authorization failed. Please try again later.");
   }
 
   // Redirect back to MCP client with authorization code
