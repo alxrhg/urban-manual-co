@@ -56,10 +56,11 @@ function DraggablePlaceCard({ place, onAddToTrip }: DraggablePlaceCardProps) {
       ref={setNodeRef}
       style={style}
       className={`
-        group flex items-center gap-3 p-2 rounded-xl border border-gray-200 dark:border-gray-800
-        bg-white dark:bg-gray-900 cursor-grab active:cursor-grabbing
-        hover:border-gray-300 dark:hover:border-gray-700 transition-all
-        ${isDragging ? 'opacity-50 shadow-lg' : ''}
+        group flex items-center gap-3 p-2 rounded-xl border cursor-grab active:cursor-grabbing
+        transition-all duration-200
+        ${isDragging
+          ? 'scale-[1.03] shadow-xl ring-2 ring-gray-900/10 dark:ring-white/20 bg-white dark:bg-gray-800 border-transparent z-50'
+          : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700'}
       `}
       {...listeners}
       {...attributes}

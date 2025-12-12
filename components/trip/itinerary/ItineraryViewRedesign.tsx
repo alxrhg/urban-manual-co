@@ -95,12 +95,18 @@ function SortableItineraryItem({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 1000 : undefined,
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="relative group">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`
+        relative group transition-all duration-200
+        ${isDragging ? 'scale-[1.03] shadow-xl ring-2 ring-stone-900/10 dark:ring-white/20 rounded-2xl bg-white dark:bg-gray-800' : ''}
+      `}
+    >
       {/* Drag Handle (edit mode only) */}
       {isEditMode && (
         <div
