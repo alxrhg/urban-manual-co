@@ -11,6 +11,7 @@ import {
   isOutdoorCategory,
   formatDuration,
 } from '@/lib/trip-intelligence';
+import { isClosedOnDay, getHoursForDay } from '@/lib/utils/opening-hours';
 
 // ============================================
 // TYPES
@@ -1029,6 +1030,29 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
 
     const insights: DayInsight[] = [];
 
+    // Check for closure days using actual opening hours data
+    if (day.date) {
+      const dayDate = new Date(day.date);
+      const dayOfWeek = dayDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+      day.items.forEach(item => {
+        const openingHours = item.destination.opening_hours_json;
+        if (openingHours) {
+          const closureCheck = isClosedOnDay(openingHours, dayOfWeek);
+          if (closureCheck.isClosed) {
+            const hoursText = getHoursForDay(openingHours, dayOfWeek);
+            insights.push({
+              type: 'warning',
+              icon: 'clock',
+              message: `${item.destination.name} is closed on ${dayNames[dayOfWeek]}s`,
+              action: hoursText ? `Hours: ${hoursText}` : 'Move to another day',
+            });
+          }
+        }
+      });
+    }
+
     // Check for time conflicts
     const times = day.items.filter(i => i.timeSlot).map(i => i.timeSlot!);
     const uniqueTimes = new Set(times);
@@ -1141,9 +1165,32 @@ export function TripBuilderProvider({ children }: { children: React.ReactNode })
     let totalWalkingTime = 0;
     let hasTimeConflicts = false;
     const missingMeals: number[] = [];
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
     // Analyze each day
     activeTrip.days.forEach(day => {
+      // Check for closure days using actual opening hours
+      if (day.date) {
+        const dayDate = new Date(day.date);
+        const dayOfWeek = dayDate.getDay();
+
+        day.items.forEach(item => {
+          const openingHours = item.destination.opening_hours_json;
+          if (openingHours) {
+            const closureCheck = isClosedOnDay(openingHours, dayOfWeek);
+            if (closureCheck.isClosed) {
+              score -= 15; // Significant penalty for scheduling on closure days
+              insights.push({
+                type: 'warning',
+                icon: 'clock',
+                message: `${item.destination.name} is closed on ${dayNames[dayOfWeek]}s (Day ${day.dayNumber})`,
+                action: 'Reschedule',
+              });
+            }
+          }
+        });
+      }
+
       // Count categories
       day.items.forEach(item => {
         const cat = item.destination.category || 'other';
