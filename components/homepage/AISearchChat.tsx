@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, Loader2, Sparkles, X, MapPin, ChevronRight, Bookmark, Plus, Brain } from 'lucide-react';
+import { Send, Loader2, Sparkles, X, MapPin, ChevronRight, Bookmark, Plus, Brain, Calendar, Clock, Utensils, Building2, Coffee, Wine, Camera, Plane } from 'lucide-react';
 import Image from 'next/image';
 import { Destination } from '@/types/destination';
 import { useHomepageData } from './HomepageDataProvider';
 import { capitalizeCity, capitalizeCategory } from '@/lib/utils';
+import { useTripBuilder } from '@/contexts/TripBuilderContext';
 
 /**
  * AI Search Chat - Smart Conversation Interface
@@ -26,6 +27,7 @@ interface ChatMessage {
   suggestions?: SmartSuggestion[];
   contextualHints?: string[];
   proactiveActions?: ProactiveAction[];
+  tripPlan?: TripPlan;
   isStreaming?: boolean;
 }
 
@@ -37,10 +39,36 @@ interface SmartSuggestion {
 }
 
 interface ProactiveAction {
-  type: 'save' | 'add_to_trip' | 'compare' | 'show_map' | 'schedule';
+  type: 'save' | 'add_to_trip' | 'compare' | 'show_map' | 'schedule' | 'create_trip';
   label: string;
   destinationSlug?: string;
   reasoning: string;
+}
+
+// Trip plan itinerary item from AI
+interface TripPlanItem {
+  time?: string;
+  title: string;
+  description?: string;
+  category?: string;
+  destinationSlug?: string;
+}
+
+// Trip plan day structure
+interface TripPlanDay {
+  day: number;
+  title: string;
+  items: TripPlanItem[];
+}
+
+// Full trip plan from AI
+interface TripPlan {
+  city: string;
+  title: string;
+  days: TripPlanDay[];
+  startDate?: string;
+  travelers?: number;
+  summary?: string;
 }
 
 interface AISearchChatProps {
@@ -54,6 +82,7 @@ const SESSION_KEY = 'urbanmanual_chat_session';
 
 export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProps) {
   const { openDestination, destinations } = useHomepageData();
+  const { startTrip, addToTrip } = useTripBuilder();
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -269,6 +298,7 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                   suggestions: data.data.suggestions || [],
                   contextualHints: data.data.contextualHints || [],
                   proactiveActions: data.data.proactiveActions || [],
+                  tripPlan: data.data.tripPlan,
                   isStreaming: false,
                 }
               : m
@@ -326,6 +356,42 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
       default: return null;
     }
   };
+
+  // Get icon for trip plan item category
+  const getTripItemIcon = (category?: string) => {
+    if (!category) return <MapPin className="w-4 h-4" />;
+    const cat = category.toLowerCase();
+    if (cat.includes('restaurant') || cat.includes('dining')) return <Utensils className="w-4 h-4" />;
+    if (cat.includes('hotel')) return <Building2 className="w-4 h-4" />;
+    if (cat.includes('cafe') || cat.includes('coffee') || cat.includes('breakfast')) return <Coffee className="w-4 h-4" />;
+    if (cat.includes('bar') || cat.includes('cocktail') || cat.includes('drink')) return <Wine className="w-4 h-4" />;
+    if (cat.includes('museum') || cat.includes('gallery') || cat.includes('attraction')) return <Camera className="w-4 h-4" />;
+    if (cat.includes('flight') || cat.includes('airport')) return <Plane className="w-4 h-4" />;
+    return <MapPin className="w-4 h-4" />;
+  };
+
+  // Handle creating a trip from the AI-generated plan
+  const handleCreateTripFromPlan = useCallback((tripPlan: TripPlan) => {
+    // Start a new trip with the AI plan
+    const numDays = tripPlan.days.length || 3;
+    startTrip(tripPlan.city, numDays, tripPlan.startDate);
+
+    // Add destinations to the trip if they have slugs
+    tripPlan.days.forEach((day) => {
+      day.items.forEach((item) => {
+        if (item.destinationSlug) {
+          // Find the destination in our data
+          const dest = destinations.find(d => d.slug === item.destinationSlug);
+          if (dest) {
+            addToTrip(dest, day.day, item.time);
+          }
+        }
+      });
+    });
+
+    // Close the chat after creating the trip
+    onClose();
+  }, [startTrip, addToTrip, destinations, onClose]);
 
   if (!isOpen) return null;
 
@@ -428,6 +494,77 @@ export function AISearchChat({ isOpen, onClose, initialQuery }: AISearchChatProp
                         {hint}
                       </p>
                     ))}
+                  </div>
+                )}
+
+                {/* Trip Plan UI */}
+                {message.tripPlan && !message.isStreaming && (
+                  <div className="mt-4 space-y-3">
+                    {/* Trip Header with Create Button */}
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-500/10 dark:to-purple-500/10 border border-blue-100 dark:border-blue-500/20">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                          <Calendar className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <h3 className="text-[14px] font-semibold text-gray-900 dark:text-white">
+                            {message.tripPlan.title}
+                          </h3>
+                          <p className="text-[12px] text-gray-500 dark:text-gray-400">
+                            {message.tripPlan.days.length} days in {message.tripPlan.city}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleCreateTripFromPlan(message.tripPlan!)}
+                        className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-medium transition-colors flex items-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Create Trip
+                      </button>
+                    </div>
+
+                    {/* Trip Days */}
+                    <div className="space-y-3">
+                      {message.tripPlan.days.map((day) => (
+                        <div key={day.day} className="rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden">
+                          {/* Day Header */}
+                          <div className="px-4 py-2 bg-gray-50 dark:bg-white/5 border-b border-gray-200 dark:border-white/10">
+                            <h4 className="text-[13px] font-semibold text-gray-900 dark:text-white">
+                              Day {day.day}: {day.title}
+                            </h4>
+                          </div>
+                          {/* Day Items */}
+                          <div className="divide-y divide-gray-100 dark:divide-white/5">
+                            {day.items.map((item, idx) => (
+                              <div key={idx} className="px-4 py-3 flex items-start gap-3">
+                                <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-gray-100 dark:bg-white/10 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                                  {getTripItemIcon(item.category)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    {item.time && (
+                                      <span className="text-[11px] font-medium text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        {item.time}
+                                      </span>
+                                    )}
+                                    <h5 className="text-[13px] font-medium text-gray-900 dark:text-white truncate">
+                                      {item.title}
+                                    </h5>
+                                  </div>
+                                  {item.description && (
+                                    <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">
+                                      {item.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
 

@@ -56,6 +56,11 @@ export interface QueryIntent {
   clarifications?: string[];
   isFollowUp?: boolean;
   referencesPrevious?: boolean;
+  // Trip planning specific
+  isTripPlanning?: boolean;
+  tripDays?: number;
+  tripStartDate?: string;
+  tripStyle?: string[];  // e.g., ['food', 'architecture', 'nightlife']
 }
 
 export interface ConversationSession {
@@ -123,12 +128,37 @@ export interface TravelCompanion {
   vibe?: 'romantic' | 'adventurous' | 'relaxed' | 'cultural' | 'party';
 }
 
+// Trip plan types for AI-generated itineraries
+export interface TripPlanItem {
+  time?: string;
+  title: string;
+  description?: string;
+  category?: string;
+  destinationSlug?: string;
+}
+
+export interface TripPlanDay {
+  day: number;
+  title: string;
+  items: TripPlanItem[];
+}
+
+export interface TripPlan {
+  city: string;
+  title: string;
+  days: TripPlanDay[];
+  startDate?: string;
+  travelers?: number;
+  summary?: string;
+}
+
 export interface SmartResponse {
   content: string;
   destinations: DestinationWithReasoning[];
   suggestions: SmartSuggestion[];
   contextualHints: string[];
   proactiveActions?: ProactiveAction[];
+  tripPlan?: TripPlan;
   conversationId: string;
   turnNumber: number;
   intent: QueryIntent;
@@ -405,6 +435,19 @@ class SmartConversationEngine {
     // 1. Understand the query with conversation context
     const intent = await this.understandQueryWithContext(message, session);
 
+    // 1.5. Check for trip planning intent and enhance if needed
+    const tripPlanningInfo = this.detectTripPlanningIntent(message);
+    if (tripPlanningInfo.isTripPlanning) {
+      intent.isTripPlanning = true;
+      intent.tripDays = tripPlanningInfo.days;
+      intent.tripStartDate = tripPlanningInfo.startDate;
+      intent.tripStyle = tripPlanningInfo.styles;
+      // If city wasn't detected, use the one from trip planning detection
+      if (!intent.city && tripPlanningInfo.city) {
+        intent.city = tripPlanningInfo.city;
+      }
+    }
+
     // 2. Get unified intelligence context
     let intelligenceContext: UnifiedContext | null = null;
     if (userId) {
@@ -468,6 +511,18 @@ class SmartConversationEngine {
       intent.city  // Pass city for seasonal hints
     );
 
+    // 7.5. Generate trip plan if this is a trip planning query
+    let tripPlan: TripPlan | undefined;
+    if (intent.isTripPlanning && intent.city) {
+      tripPlan = await this.generateTripPlan(
+        intent.city,
+        intent.tripDays || 3,
+        searchResults,
+        intent.tripStyle,
+        message
+      );
+    }
+
     // 8. Update session context
     this.updateSessionContext(session, intent, searchResults);
 
@@ -499,6 +554,7 @@ class SmartConversationEngine {
       suggestions,
       contextualHints: hints,
       proactiveActions,
+      tripPlan,
       conversationId: session.id,
       turnNumber,
       intent,
@@ -2915,6 +2971,193 @@ Summary:`;
         responseTime: Date.now() - startTime,
       },
     };
+  }
+
+  // ============================================
+  // TRIP PLANNING FROM CHAT
+  // ============================================
+
+  /**
+   * Detect if the user is asking for trip planning/itinerary generation
+   */
+  private detectTripPlanningIntent(message: string): {
+    isTripPlanning: boolean;
+    city?: string;
+    days?: number;
+    startDate?: string;
+    styles?: string[];
+  } {
+    const lowerMessage = message.toLowerCase();
+
+    // Trip planning patterns
+    const tripPlanPatterns = [
+      /\b(plan|create|build|make)\s+(a\s+)?(trip|itinerary|vacation|holiday)\b/i,
+      /\b(\d+)[\s-]*(day|night)s?\s+(trip|itinerary|in|to)\b/i,
+      /\bplan(ning)?\s+(my|our|a)\s+(trip|visit|vacation)\b/i,
+      /\b(trip|itinerary)\s+(for|to|in)\s+(\w+)/i,
+      /\bgenerate\s+(a\s+)?(trip|itinerary)/i,
+      /\b(going|heading|flying|traveling)\s+to\s+\w+.*\d+[\s-]*(day|night)/i,
+      /\bhelp\s+(me\s+)?(plan|with)\s+(a\s+)?(trip|itinerary|vacation)/i,
+      /\barrive\s+(at|in)\s+\w+/i,
+    ];
+
+    const isTripPlanning = tripPlanPatterns.some(p => p.test(lowerMessage));
+
+    if (!isTripPlanning) {
+      return { isTripPlanning: false };
+    }
+
+    // Extract number of days
+    const daysMatch = lowerMessage.match(/(\d+)[\s-]*(day|night)s?/i);
+    const days = daysMatch ? parseInt(daysMatch[1]) : undefined;
+
+    // Extract city
+    const knownCities = [
+      'tokyo', 'kyoto', 'osaka', 'paris', 'london', 'berlin', 'barcelona',
+      'rome', 'florence', 'venice', 'amsterdam', 'vienna', 'prague',
+      'new york', 'los angeles', 'san francisco', 'miami', 'chicago',
+      'bangkok', 'singapore', 'hong kong', 'seoul', 'taipei',
+      'sydney', 'melbourne', 'lisbon', 'madrid', 'munich', 'copenhagen',
+    ];
+    const city = knownCities.find(c => lowerMessage.includes(c));
+
+    // Extract travel styles/interests
+    const styles: string[] = [];
+    if (/\b(food|restaurant|dining|eat|cuisine|culinary)\b/i.test(lowerMessage)) styles.push('food');
+    if (/\b(architecture|design|building|museum|art)\b/i.test(lowerMessage)) styles.push('architecture');
+    if (/\b(nightlife|bar|drink|cocktail|party)\b/i.test(lowerMessage)) styles.push('nightlife');
+    if (/\b(shop|shopping|boutique)\b/i.test(lowerMessage)) styles.push('shopping');
+    if (/\b(culture|history|historic|temple|shrine)\b/i.test(lowerMessage)) styles.push('culture');
+    if (/\b(chill|relax|leisure|spa)\b/i.test(lowerMessage)) styles.push('relaxation');
+    if (/\b(upscale|luxury|fancy|michelin)\b/i.test(lowerMessage)) styles.push('luxury');
+
+    // Extract start date if mentioned (e.g., "Dec 14", "on the 14th")
+    const dateMatch = lowerMessage.match(/(?:on\s+)?(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)?(?:\s+(?:of\s+)?(\w+))?/i);
+    let startDate: string | undefined;
+    if (dateMatch) {
+      const day = parseInt(dateMatch[1]);
+      const monthStr = dateMatch[2]?.toLowerCase();
+      const monthMap: Record<string, number> = {
+        'jan': 0, 'january': 0, 'feb': 1, 'february': 1, 'mar': 2, 'march': 2,
+        'apr': 3, 'april': 3, 'may': 4, 'jun': 5, 'june': 5, 'jul': 6, 'july': 6,
+        'aug': 7, 'august': 7, 'sep': 8, 'september': 8, 'oct': 9, 'october': 9,
+        'nov': 10, 'november': 10, 'dec': 11, 'december': 11
+      };
+      if (monthStr && monthMap[monthStr] !== undefined) {
+        const year = new Date().getFullYear();
+        const date = new Date(year, monthMap[monthStr], day);
+        // If the date is in the past, assume next year
+        if (date < new Date()) {
+          date.setFullYear(year + 1);
+        }
+        startDate = date.toISOString().split('T')[0];
+      }
+    }
+
+    return { isTripPlanning, city, days, startDate, styles };
+  }
+
+  /**
+   * Generate a structured trip plan using AI
+   */
+  private async generateTripPlan(
+    city: string,
+    days: number,
+    destinations: any[],
+    styles?: string[],
+    originalQuery?: string
+  ): Promise<TripPlan | undefined> {
+    if (!this.genAI) return undefined;
+
+    try {
+      const model = this.genAI.getGenerativeModel({
+        model: 'gemini-1.5-flash-latest',
+        generationConfig: { responseMimeType: 'application/json' },
+      });
+
+      // Build available destinations context
+      const availableDestinations = destinations.slice(0, 20).map((d: any) => ({
+        name: d.name,
+        slug: d.slug,
+        category: d.category,
+        neighborhood: d.neighborhood,
+        description: d.micro_description || d.description,
+        rating: d.rating,
+        priceLevel: d.price_level,
+      }));
+
+      const prompt = `You are creating a ${days}-day trip itinerary for ${city}.
+
+User's original request: "${originalQuery || `Plan a ${days}-day trip to ${city}`}"
+
+Travel style preferences: ${styles?.length ? styles.join(', ') : 'general exploration'}
+
+Available destinations from our curated catalog:
+${JSON.stringify(availableDestinations, null, 2)}
+
+Create a realistic, well-paced itinerary following these rules:
+1. Balance each day with mix of activities (meals, attractions, relaxation)
+2. Morning: Start with breakfast/coffee, then cultural activities
+3. Afternoon: Lunch, exploration, shopping
+4. Evening: Dinner, drinks, nightlife (if requested)
+5. Don't overstuff days - 4-6 activities per day is ideal
+6. Include realistic timing (e.g., restaurants at meal times, museums in morning/afternoon)
+7. When possible, use destinations from the catalog and include their slugs
+8. You can add generic items (like "Transfer to hotel", "Flight arrival") without slugs
+
+Return ONLY valid JSON in this exact format:
+{
+  "city": "${city}",
+  "title": "Your ${city} Trip",
+  "summary": "Brief 1-2 sentence description of the trip",
+  "days": [
+    {
+      "day": 1,
+      "title": "Day theme (e.g., 'Arrival & South Beach Dining')",
+      "items": [
+        {
+          "time": "12:00",
+          "title": "Item title",
+          "description": "Brief description",
+          "category": "category like restaurant, hotel, attraction, transport",
+          "destinationSlug": "slug-from-catalog-or-null"
+        }
+      ]
+    }
+  ]
+}`;
+
+      const result = await model.generateContent(prompt);
+      const responseText = result.response.text();
+
+      // Parse the response
+      const tripPlan: TripPlan = JSON.parse(responseText);
+
+      // Validate and clean up the plan
+      if (!tripPlan.city) tripPlan.city = city;
+      if (!tripPlan.title) tripPlan.title = `Your ${city} Trip`;
+      if (!tripPlan.days || tripPlan.days.length === 0) {
+        return undefined;
+      }
+
+      // Ensure each day has proper structure
+      tripPlan.days = tripPlan.days.map((day, idx) => ({
+        day: idx + 1,
+        title: day.title || `Day ${idx + 1}`,
+        items: (day.items || []).map(item => ({
+          time: item.time,
+          title: item.title || 'Activity',
+          description: item.description,
+          category: item.category,
+          destinationSlug: item.destinationSlug || undefined,
+        })),
+      }));
+
+      return tripPlan;
+    } catch (error) {
+      console.error('[SmartChat] Error generating trip plan:', error);
+      return undefined;
+    }
   }
 }
 
