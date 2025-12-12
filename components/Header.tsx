@@ -120,11 +120,11 @@ export function Header() {
         <TooltipTrigger asChild>
           <button
             onClick={() => navigate('/trips')}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
+            className="flex items-center justify-center gap-1.5 px-2 py-2 h-[34px] w-[34px] bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white rounded-full text-sm font-medium hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:ring-offset-2"
             aria-label="View trips"
           >
             <Map className="w-4 h-4" />
-            <span className="hidden sm:inline">Trips</span>
+            <span className="hidden sm:inline text-[12px]">Trips</span>
           </button>
         </TooltipTrigger>
         <TooltipContent>

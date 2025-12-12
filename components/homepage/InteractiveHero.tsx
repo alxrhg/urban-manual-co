@@ -464,7 +464,7 @@ export default function InteractiveHero() {
           <h2 className="text-[2rem] md:text-[2.5rem] leading-[1.1] font-semibold tracking-tight text-gray-900 dark:text-white mb-3">
             {userName ? `${getGreeting()}, ${userName}` : 'Discover the world'}
           </h2>
-          <p className="text-[15px] text-gray-500 dark:text-gray-400 mb-8 tracking-[-0.01em]">
+          <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-8 tracking-[-0.01em]">
             {isLoading
               ? 'Loading destinations...'
               : hasFilters

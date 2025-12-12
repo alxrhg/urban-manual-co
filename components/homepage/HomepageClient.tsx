@@ -1098,7 +1098,7 @@ export default function HomepageClient({
                 <div className="flex w-full items-center gap-3 overflow-x-auto pb-2 no-scrollbar sm:justify-end sm:overflow-visible">
                   <button
                     onClick={() => setViewMode(viewMode === "grid" ? "map" : "grid")}
-                    className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 sm:px-5 text-sm font-medium text-gray-900 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)]"
+                    className="flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-2 text-sm font-medium text-gray-900 dark:border-[rgba(255,255,255,0.18)] dark:bg-[rgba(255,255,255,0.08)] dark:text-[rgba(255,255,255,0.92)]"
                   >
                     {viewMode === "grid" ? (
                       <>
@@ -1116,7 +1116,7 @@ export default function HomepageClient({
                   <button
                     onClick={handleCreateTrip}
                     disabled={creatingTrip}
-                    className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-4 sm:px-5 text-sm font-medium text-white dark:bg-white dark:text-black disabled:opacity-50"
+                    className="flex h-[34px] flex-shrink-0 items-center justify-center gap-2 rounded-full bg-black px-2 py-2 text-sm font-medium text-white dark:bg-white dark:text-black disabled:opacity-50"
                   >
                     {creatingTrip ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -1154,7 +1154,7 @@ export default function HomepageClient({
 
                   <Link
                     href="/cities"
-                    className="flex h-[44px] flex-shrink-0 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-4 sm:px-5 text-sm font-medium text-gray-900 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)]"
+                    className="flex items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-2 py-2 text-sm font-medium text-gray-900 dark:border-[rgba(255,255,255,0.10)] dark:text-[rgba(255,255,255,0.92)]"
                   >
                     <Globe className="h-4 w-4" />
                     <span className="hidden sm:inline">Discover by Cities</span>
