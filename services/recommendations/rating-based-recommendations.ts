@@ -6,6 +6,41 @@
  */
 
 import { createServerClient } from '@/lib/supabase/server';
+import type { Destination } from '@/types/destination';
+
+/** Visit record with joined destination data */
+interface VisitWithDestination {
+  rating: number | null;
+  destination_slug: string;
+  destinations: {
+    id: number;
+    category: string;
+    city: string;
+    price_level: number | null;
+    tags: string[] | null;
+    name?: string;
+    slug?: string;
+  } | null;
+}
+
+/** Saved/visited place slug record */
+interface PlaceSlugRecord {
+  destination_slug: string;
+}
+
+/** Candidate destination from database */
+interface CandidateDestination {
+  id: number;
+  slug: string;
+  name: string;
+  city: string;
+  category: string;
+  rating: number | null;
+  price_level: number | null;
+  image: string | null;
+  micro_description: string | null;
+  tags: string[] | null;
+}
 
 export interface UserRatingProfile {
   userId: string;
@@ -79,7 +114,7 @@ export async function buildUserRatingProfile(userId: string): Promise<UserRating
   const attributeCounts: Record<string, number> = {};
   let totalRating = 0;
 
-  visits.forEach((visit: any) => {
+  visits.forEach((visit: VisitWithDestination) => {
     const rating = visit.rating || 0;
     const dest = visit.destinations;
 
@@ -190,8 +225,8 @@ export async function getPersonalizedRecommendations(
       .eq('user_id', userId),
   ]);
 
-  const visitedSlugs = (visitedResult.data || []).map((v: any) => v.destination_slug);
-  const savedSlugs = (savedResult.data || []).map((s: any) => s.destination_slug);
+  const visitedSlugs = (visitedResult.data || []).map((v: PlaceSlugRecord) => v.destination_slug);
+  const savedSlugs = (savedResult.data || []).map((s: PlaceSlugRecord) => s.destination_slug);
   const allExcluded = new Set([...visitedSlugs, ...savedSlugs, ...excludeSlugs]);
 
   // Build query for candidates
@@ -218,8 +253,8 @@ export async function getPersonalizedRecommendations(
 
   // Score and rank candidates
   const scoredCandidates = candidates
-    .filter((c: any) => !allExcluded.has(c.slug))
-    .map((candidate: any) => {
+    .filter((c: CandidateDestination) => !allExcluded.has(c.slug))
+    .map((candidate: CandidateDestination) => {
       let score = 0;
       const reasons: string[] = [];
 
@@ -273,7 +308,7 @@ export async function getPersonalizedRecommendations(
       }
 
       // Add generic reason if no specific matches
-      if (reasons.length === 0 && candidate.rating >= 4.5) {
+      if (reasons.length === 0 && candidate.rating !== null && candidate.rating >= 4.5) {
         reasons.push('Highly rated destination');
       }
 
@@ -284,16 +319,16 @@ export async function getPersonalizedRecommendations(
           name: candidate.name,
           city: candidate.city,
           category: candidate.category,
-          rating: candidate.rating,
-          priceLevel: candidate.price_level,
-          image: candidate.image,
-          microDescription: candidate.micro_description,
+          rating: candidate.rating ?? undefined,
+          priceLevel: candidate.price_level ?? undefined,
+          image: candidate.image ?? undefined,
+          microDescription: candidate.micro_description ?? undefined,
         },
         score,
         reasons,
       };
     })
-    .sort((a, b) => b.score - a.score)
+    .sort((a: { score: number }, b: { score: number }) => b.score - a.score)
     .slice(0, limit);
 
   return scoredCandidates;
@@ -339,7 +374,7 @@ export async function getSimilarToLiked(
   const results: { basedOn: string; recommendations: RecommendationResult[] }[] = [];
 
   for (const visit of topRated) {
-    const dest = (visit as any).destinations;
+    const dest = (visit as VisitWithDestination).destinations;
     if (!dest) continue;
 
     // Find similar destinations
@@ -369,20 +404,20 @@ export async function getSimilarToLiked(
 
     if (combined.length > 0) {
       results.push({
-        basedOn: dest.name,
-        recommendations: combined.map((c: any) => ({
+        basedOn: dest.name || '',
+        recommendations: combined.map((c: CandidateDestination) => ({
           destination: {
             id: c.id,
             slug: c.slug,
             name: c.name,
             city: c.city,
             category: c.category,
-            rating: c.rating,
-            priceLevel: c.price_level,
-            image: c.image,
-            microDescription: c.micro_description,
+            rating: c.rating ?? undefined,
+            priceLevel: c.price_level ?? undefined,
+            image: c.image ?? undefined,
+            microDescription: c.micro_description ?? undefined,
           },
-          score: c.rating * 10,
+          score: (c.rating ?? 0) * 10,
           reasons: [`Similar to ${dest.name}`],
         })),
       });

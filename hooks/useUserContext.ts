@@ -4,6 +4,64 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+/** Saved place from database with joined destination */
+interface SavedPlaceRow {
+  destination_slug: string;
+  destinations: {
+    name?: string;
+    city?: string;
+    category?: string;
+  } | null;
+}
+
+/** Visited place from database with joined destination */
+interface VisitedPlaceRow {
+  destination_slug: string;
+  rating: number | null;
+  visited_at: string;
+  destinations: {
+    name?: string;
+    city?: string;
+    category?: string;
+  } | null;
+}
+
+/** Trip from database */
+interface TripRow {
+  id: string;
+  name: string;
+  destinations: string[] | null;
+  start_date: string | null;
+  end_date: string | null;
+}
+
+/** Saved place in user context */
+export interface UserSavedPlace {
+  slug: string;
+  name?: string;
+  city?: string;
+  category?: string;
+}
+
+/** Visited place in user context */
+export interface UserVisitedPlace {
+  slug: string;
+  name?: string;
+  city?: string;
+  category?: string;
+  rating?: number;
+  visitedAt?: string;
+}
+
+/** Active trip in user context */
+export interface UserActiveTrip {
+  id: string;
+  name: string;
+  destinations: string[];
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface UserContextData {
   // Profile
   displayName?: string;
@@ -13,29 +71,11 @@ export interface UserContextData {
   interests?: string[];
 
   // Saved & Visited
-  savedPlaces: Array<{
-    slug: string;
-    name?: string;
-    city?: string;
-    category?: string;
-  }>;
-  visitedPlaces: Array<{
-    slug: string;
-    name?: string;
-    city?: string;
-    category?: string;
-    rating?: number;
-    visitedAt?: string;
-  }>;
+  savedPlaces: UserSavedPlace[];
+  visitedPlaces: UserVisitedPlace[];
 
   // Active Trips
-  activeTrips: Array<{
-    id: string;
-    name: string;
-    destinations: string[];
-    startDate?: string;
-    endDate?: string;
-  }>;
+  activeTrips: UserActiveTrip[];
 
   // Stats
   stats: {
@@ -132,14 +172,14 @@ export function useUserContext(): UseUserContextReturn {
       ]);
 
       const profile = profileResult.data;
-      const savedPlaces = (savedResult.data || []).map((item: any) => ({
+      const savedPlaces = (savedResult.data || []).map((item: SavedPlaceRow) => ({
         slug: item.destination_slug,
         name: item.destinations?.name,
         city: item.destinations?.city,
         category: item.destinations?.category,
       }));
 
-      const visitedPlaces = (visitedResult.data || []).map((item: any) => ({
+      const visitedPlaces = (visitedResult.data || []).map((item: VisitedPlaceRow) => ({
         slug: item.destination_slug,
         name: item.destinations?.name,
         city: item.destinations?.city,
@@ -148,7 +188,7 @@ export function useUserContext(): UseUserContextReturn {
         visitedAt: item.visited_at,
       }));
 
-      const activeTrips = (tripsResult.data || []).map((trip: any) => ({
+      const activeTrips = (tripsResult.data || []).map((trip: TripRow) => ({
         id: trip.id,
         name: trip.name,
         destinations: trip.destinations || [],
@@ -264,10 +304,20 @@ export function useUserContext(): UseUserContextReturn {
   };
 }
 
+/** Formatted user context for API */
+export interface FormattedUserContext {
+  travelStyle?: string;
+  favoriteCities?: string[];
+  favoriteCategories?: string[];
+  savedSlugs: string[];
+  highlyRatedVisits: Array<{ slug: string; rating: number | undefined }>;
+  activeTrips: Array<{ name: string; destinations: string[] }>;
+}
+
 /**
  * Format user context for API requests
  */
-export function formatUserContextForAPI(context: UserContextData | null): Record<string, any> {
+export function formatUserContextForAPI(context: UserContextData | null): FormattedUserContext | Record<string, never> {
   if (!context) return {};
 
   return {

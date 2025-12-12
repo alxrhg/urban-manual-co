@@ -13,10 +13,11 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { generateText, generateJSON } from '@/lib/llm';
 import { extendedConversationMemoryService } from './conversation-memory';
 import { tasteProfileEvolutionService, TasteProfile } from './taste-profile-evolution';
 import { knowledgeGraphService } from './knowledge-graph';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Destination } from '@/types/destination';
 
 // ============================================
 // TYPES
@@ -131,7 +132,7 @@ export interface BehaviorSignal {
   category?: string;
   city?: string;
   timestamp: Date;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ImplicitPreference {
@@ -194,16 +195,112 @@ export interface ReasoningResult {
 // Autonomous Actions (H)
 export interface AutonomousAction {
   type: 'save_place' | 'add_to_trip' | 'create_itinerary' | 'remove_from_trip' | 'mark_visited' | 'update_preference';
-  params: Record<string, any>;
+  params: ActionParams;
   description: string;
   requiresConfirmation: boolean;
+}
+
+/** Parameters for autonomous actions */
+export interface ActionParams {
+  destinationSlug?: string;
+  tripId?: string;
+  day?: number;
+  time?: string;
+  title?: string;
+  rating?: number;
+  destinations?: ItineraryDestination[];
+}
+
+/** Destination for creating itinerary */
+interface ItineraryDestination {
+  slug: string;
+  name: string;
+  day?: number;
+  time?: string;
+  category?: string;
 }
 
 export interface ActionResult {
   success: boolean;
   action: AutonomousAction;
   message: string;
-  data?: any;
+  data?: { itemCount?: number };
+}
+
+// ============================================
+// INTERNAL DB TYPES
+// ============================================
+
+/** Raw trip from database */
+interface TripRow {
+  id: string;
+  title: string;
+  destination: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  status: string;
+  itinerary_items?: ItineraryItemRow[];
+}
+
+/** Raw itinerary item from database */
+interface ItineraryItemRow {
+  id: string;
+  day: number;
+  order_index: number;
+  time: string | null;
+  title: string;
+  description: string | null;
+  destination_slug: string | null;
+}
+
+/** User interaction from database */
+interface UserInteractionRow {
+  interaction_type: string;
+  destination_id: number;
+  context: Record<string, unknown>;
+  created_at: string;
+}
+
+/** Destination with fingerprint fields */
+interface DestinationWithFingerprint extends Destination {
+  vibe_tags?: string[];
+}
+
+/** Saved place row from database */
+interface SavedPlaceRow {
+  destination_slug: string;
+  created_at: string;
+}
+
+/** Visited place row from database */
+interface VisitedPlaceRow {
+  destination_slug: string;
+  visited_at: string;
+  rating?: number;
+}
+
+/** Destination lookup result */
+interface DestinationLookup {
+  id: number;
+  slug: string;
+  name: string;
+  city: string;
+  category: string;
+}
+
+/** Architect row from database */
+interface ArchitectRow {
+  id: number;
+  name: string;
+  destinations?: Array<{ id: number; city: string }>;
+}
+
+/** Movement row from database */
+interface MovementRow {
+  id: number;
+  name: string;
+  period?: string;
+  destinations?: Array<{ id: number; city: string }>;
 }
 
 // ============================================
@@ -211,7 +308,7 @@ export interface ActionResult {
 // ============================================
 
 export class UnifiedIntelligenceCore {
-  private supabase: any;
+  private supabase: SupabaseClient | null;
 
   constructor() {
     try {
@@ -375,7 +472,7 @@ export class UnifiedIntelligenceCore {
           }
 
           // Calculate schedule gaps
-          const items = (trip.itinerary_items || []).sort((a: any, b: any) => {
+          const items = (trip.itinerary_items || []).sort((a: ItineraryItemRow, b: ItineraryItemRow) => {
             const dayDiff = (a.day || 0) - (b.day || 0);
             return dayDiff !== 0 ? dayDiff : (a.order_index || 0) - (b.order_index || 0);
           });
@@ -389,7 +486,7 @@ export class UnifiedIntelligenceCore {
             startDate: trip.start_date,
             endDate: trip.end_date,
             status: trip.status,
-            itineraryItems: items.map((item: any) => ({
+            itineraryItems: items.map((item: ItineraryItemRow) => ({
               id: item.id,
               day: item.day,
               time: item.time,
@@ -419,9 +516,9 @@ export class UnifiedIntelligenceCore {
     }
   }
 
-  private calculateScheduleGaps(items: any[]): ScheduleGap[] {
+  private calculateScheduleGaps(items: ItineraryItemRow[]): ScheduleGap[] {
     const gaps: ScheduleGap[] = [];
-    const dayGroups = new Map<number, any[]>();
+    const dayGroups = new Map<number, ItineraryItemRow[]>();
 
     // Group items by day
     for (const item of items) {
@@ -443,7 +540,7 @@ export class UnifiedIntelligenceCore {
       ];
 
       for (const slot of timeSlots) {
-        const hasItemInSlot = dayItems.some((item: any) => {
+        const hasItemInSlot = dayItems.some((item: ItineraryItemRow) => {
           if (!item.time) return false;
           const itemTime = item.time.substring(0, 5);
           return itemTime >= slot.start && itemTime < slot.end;
@@ -533,7 +630,7 @@ export class UnifiedIntelligenceCore {
         .order('created_at', { ascending: false })
         .limit(50);
 
-      const signals: BehaviorSignal[] = (interactions || []).map((i: any) => ({
+      const signals: BehaviorSignal[] = (interactions || []).map((i: UserInteractionRow) => ({
         type: i.interaction_type as BehaviorSignal['type'],
         destinationId: i.destination_id,
         timestamp: new Date(i.created_at),
@@ -569,14 +666,14 @@ export class UnifiedIntelligenceCore {
 
     if (!destinations) return preferences;
 
-    const destMap = new Map(destinations.map((d: any) => [d.id, d]));
+    const destMap = new Map(destinations.map((d: DestinationWithFingerprint) => [d.id, d]));
 
     // Analyze patterns
-    const savedDests = signals.filter(s => s.type === 'save').map(s => destMap.get(s.destinationId)).filter(Boolean);
-    const viewedDests = signals.filter(s => s.type === 'view').map(s => destMap.get(s.destinationId)).filter(Boolean);
+    const savedDests = signals.filter(s => s.type === 'save').map(s => destMap.get(s.destinationId)).filter(Boolean) as DestinationWithFingerprint[];
+    const _viewedDests = signals.filter(s => s.type === 'view').map(s => destMap.get(s.destinationId)).filter(Boolean) as DestinationWithFingerprint[];
 
     // Price preference (saves at higher price = higher price tolerance)
-    const savedPrices = savedDests.map((d: any) => d.price_level).filter(Boolean);
+    const savedPrices = savedDests.map((d: DestinationWithFingerprint) => d.price_level).filter((p): p is number => p != null);
     if (savedPrices.length >= 2) {
       const avgPrice = savedPrices.reduce((a: number, b: number) => a + b, 0) / savedPrices.length;
       preferences.push({
@@ -590,7 +687,7 @@ export class UnifiedIntelligenceCore {
 
     // Category preference
     const categoryCounts = new Map<string, number>();
-    for (const dest of savedDests as any[]) {
+    for (const dest of savedDests) {
       const cat = dest?.category;
       if (cat) {
         categoryCounts.set(cat, (categoryCounts.get(cat) || 0) + 1);
@@ -609,7 +706,7 @@ export class UnifiedIntelligenceCore {
     }
 
     // Michelin preference
-    const michelinSaves = savedDests.filter((d: any) => d.michelin_stars > 0).length;
+    const michelinSaves = savedDests.filter((d: DestinationWithFingerprint) => (d.michelin_stars ?? 0) > 0).length;
     if (michelinSaves >= 2) {
       preferences.push({
         dimension: 'michelin_affinity',
@@ -648,8 +745,8 @@ export class UnifiedIntelligenceCore {
 
       // Get destination details
       const allSlugs = [
-        ...(saved || []).map((s: any) => s.destination_slug),
-        ...(visited || []).map((v: any) => v.destination_slug),
+        ...(saved || []).map((s: SavedPlaceRow) => s.destination_slug),
+        ...(visited || []).map((v: VisitedPlaceRow) => v.destination_slug),
       ].filter(Boolean);
 
       const { data: destinations } = await this.supabase
@@ -672,8 +769,8 @@ export class UnifiedIntelligenceCore {
   }
 
   private calculateFingerprint(
-    destinations: any[],
-    visited: any[]
+    destinations: DestinationWithFingerprint[],
+    _visited: VisitedPlaceRow[]
   ): TasteFingerprint {
     const n = destinations.length;
     if (n === 0) return this.buildDefaultFingerprint();
@@ -686,7 +783,7 @@ export class UnifiedIntelligenceCore {
     const adventurousness = Math.min(1, (categories.size / 8) * 0.5 + (hiddenGems / n) * 0.5);
 
     // Calculate price affinity
-    const prices = destinations.map(d => d.price_level).filter(Boolean);
+    const prices = destinations.map(d => d.price_level).filter((p): p is number => p != null);
     const avgPrice = prices.length > 0 ? prices.reduce((a: number, b: number) => a + b, 0) / prices.length : 2;
     const priceAffinity = avgPrice / 4;
 
@@ -813,8 +910,8 @@ export class UnifiedIntelligenceCore {
 
       // Get destination details
       const allSlugs = [
-        ...(saved || []).map((s: any) => s.destination_slug),
-        ...(visited || []).map((v: any) => v.destination_slug),
+        ...(saved || []).map((s: SavedPlaceRow) => s.destination_slug),
+        ...(visited || []).map((v: VisitedPlaceRow) => v.destination_slug),
       ].filter(Boolean);
 
       if (allSlugs.length === 0) {
@@ -826,10 +923,10 @@ export class UnifiedIntelligenceCore {
         .select('id, slug, name, city, category')
         .in('slug', allSlugs);
 
-      const destMap = new Map<string, any>((destinations || []).map((d: any) => [d.slug, d]));
+      const destMap = new Map<string, DestinationLookup>((destinations || []).map((d: DestinationLookup) => [d.slug, d]));
 
       const savedPlaces: SavedPlace[] = (saved || [])
-        .map((s: any) => {
+        .map((s: SavedPlaceRow) => {
           const dest = destMap.get(s.destination_slug);
           if (!dest) return null;
           return {
@@ -844,7 +941,7 @@ export class UnifiedIntelligenceCore {
         .filter(Boolean) as SavedPlace[];
 
       const visitedPlaces: VisitedPlace[] = (visited || [])
-        .map((v: any) => {
+        .map((v: VisitedPlaceRow) => {
           const dest = destMap.get(v.destination_slug);
           if (!dest) return null;
           return {
@@ -898,12 +995,12 @@ export class UnifiedIntelligenceCore {
         .limit(5);
 
       return {
-        architects: (architects || []).map((a: any) => ({
+        architects: (architects || []).map((a: ArchitectRow) => ({
           id: a.id,
           name: a.name,
           destinationCount: a.destinations?.length || 0,
         })),
-        movements: (movements || []).map((m: any) => ({
+        movements: (movements || []).map((m: MovementRow) => ({
           id: m.id,
           name: m.name,
           period: m.period || '',
@@ -1071,11 +1168,11 @@ export class UnifiedIntelligenceCore {
             message: `Unknown action type: ${action.type}`,
           };
       }
-    } catch (error: any) {
+    } catch (error) {
       return {
         success: false,
         action,
-        message: error.message || 'Action failed',
+        message: error instanceof Error ? error.message : 'Action failed',
       };
     }
   }
@@ -1154,11 +1251,19 @@ export class UnifiedIntelligenceCore {
     };
   }
 
-  private async executeCreateItinerary(action: AutonomousAction, userId: string): Promise<ActionResult> {
+  private async executeCreateItinerary(action: AutonomousAction, _userId: string): Promise<ActionResult> {
     const { tripId, destinations } = action.params;
 
+    if (!destinations || destinations.length === 0) {
+      return {
+        success: false,
+        action,
+        message: 'No destinations provided',
+      };
+    }
+
     // Create itinerary items from destinations
-    const items = destinations.map((dest: any, index: number) => ({
+    const items = destinations.map((dest: ItineraryDestination, index: number) => ({
       trip_id: tripId,
       destination_slug: dest.slug,
       day: dest.day || 1,
