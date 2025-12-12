@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withErrorHandling, createValidationError } from '@/lib/errors';
+import { withErrorHandling, createValidationError, createUnauthorizedError } from '@/lib/errors';
+import { createServerClient } from '@/lib/supabase/server';
+import { parseItineraryNotes } from '@/types/trip';
 
 interface RouteItem {
   id: string;
@@ -100,28 +102,101 @@ function optimizeRoute(items: RouteItem[]): string[] {
 /**
  * POST /api/intelligence/route-optimizer
  * Optimizes the order of items to minimize travel distance
+ *
+ * Security: Requires authentication and verifies data ownership
+ * - Client sends tripId and itemIds (not full item objects)
+ * - Server fetches items from database and verifies trip ownership
  */
 export const POST = withErrorHandling(async (request: NextRequest) => {
-  const body = await request.json();
-  const { items } = body;
+  // 1. Authenticate user
+  const supabase = await createServerClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (!items || !Array.isArray(items)) {
-    throw createValidationError('items array is required');
+  if (authError || !user) {
+    throw createUnauthorizedError('Authentication required');
   }
 
+  // 2. Parse and validate request body
+  const body = await request.json();
+  const { tripId, itemIds } = body;
+
+  if (!tripId || typeof tripId !== 'string') {
+    throw createValidationError('tripId is required');
+  }
+
+  if (!itemIds || !Array.isArray(itemIds) || itemIds.length === 0) {
+    throw createValidationError('itemIds array is required');
+  }
+
+  // Validate all itemIds are strings
+  if (!itemIds.every((id: unknown) => typeof id === 'string')) {
+    throw createValidationError('All itemIds must be strings');
+  }
+
+  // 3. Verify trip ownership
+  const { data: trip, error: tripError } = await supabase
+    .from('trips')
+    .select('id')
+    .eq('id', tripId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (tripError || !trip) {
+    return NextResponse.json(
+      { error: 'Trip not found or access denied' },
+      { status: 404 }
+    );
+  }
+
+  // 4. Fetch items from database with ownership verification
+  // Only fetch items that belong to the verified trip
+  const { data: dbItems, error: itemsError } = await supabase
+    .from('itinerary_items')
+    .select('id, title, time, notes')
+    .eq('trip_id', tripId)
+    .in('id', itemIds);
+
+  if (itemsError) {
+    throw itemsError;
+  }
+
+  // Verify all requested items were found (prevents ID enumeration)
+  if (!dbItems || dbItems.length !== itemIds.length) {
+    const foundIds = new Set(dbItems?.map(i => i.id) || []);
+    const missingIds = itemIds.filter((id: string) => !foundIds.has(id));
+    return NextResponse.json(
+      { error: `Some items not found or do not belong to this trip: ${missingIds.join(', ')}` },
+      { status: 403 }
+    );
+  }
+
+  // 5. Transform database items to RouteItem format
+  const items: RouteItem[] = dbItems.map(item => {
+    const parsedNotes = parseItineraryNotes(item.notes);
+    return {
+      id: item.id,
+      title: item.title,
+      latitude: parsedNotes?.latitude ?? null,
+      longitude: parsedNotes?.longitude ?? null,
+      time: item.time ?? null,
+    };
+  });
+
+  // 6. Handle edge cases
   if (items.length < 2) {
     return NextResponse.json({
-      optimizedOrder: items.map((i: RouteItem) => i.id),
+      optimizedOrder: items.map(i => i.id),
       message: 'Not enough items to optimize',
     });
   }
 
+  // 7. Optimize the route
   const optimizedOrder = optimizeRoute(items);
 
   // Calculate savings
   const originalDistance = calculateTotalDistance(items);
   const optimizedItems = optimizedOrder
-    .map(id => items.find((i: RouteItem) => i.id === id))
+    .map(id => items.find(i => i.id === id))
     .filter(Boolean);
   const optimizedDistance = calculateTotalDistance(optimizedItems as RouteItem[]);
   const savedDistance = Math.max(0, originalDistance - optimizedDistance);
