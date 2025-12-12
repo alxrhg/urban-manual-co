@@ -95,6 +95,110 @@ function parseTime(timeStr: string): number {
 }
 
 /**
+ * Check if destination is closed on a specific day of the week
+ * @param openingHours - The opening_hours_json from destination
+ * @param dayOfWeek - Day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+ * @returns Object with isClosed boolean and reason string
+ */
+export function isClosedOnDay(
+  openingHours: unknown,
+  dayOfWeek: number
+): { isClosed: boolean; reason?: string } {
+  // Handle both opening_hours (normalized) and opening_hours_json (from database)
+  let hours = openingHours;
+
+  // If it's a string, try to parse it
+  if (typeof hours === 'string') {
+    try {
+      hours = JSON.parse(hours);
+    } catch {
+      return { isClosed: false }; // Can't determine, assume open
+    }
+  }
+
+  if (!hours || typeof hours !== 'object') {
+    return { isClosed: false }; // No data, can't determine
+  }
+
+  const hoursObj = hours as Record<string, unknown>;
+
+  if (!hoursObj.weekday_text || !Array.isArray(hoursObj.weekday_text)) {
+    return { isClosed: false }; // No weekday data
+  }
+
+  try {
+    // Google Places API weekday_text starts with Monday (index 0)
+    // Convert: Sun=0 -> 6, Mon=1 -> 0, Tue=2 -> 1, etc.
+    const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const dayText = hoursObj.weekday_text[googleDayIndex] as string;
+
+    if (!dayText) {
+      return { isClosed: false };
+    }
+
+    // Extract hours part (after "Day: ")
+    const hoursText = dayText.substring(dayText.indexOf(':') + 1).trim().toLowerCase();
+
+    if (hoursText.includes('closed')) {
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      return {
+        isClosed: true,
+        reason: `Closed on ${dayNames[dayOfWeek]}s`
+      };
+    }
+
+    return { isClosed: false };
+  } catch (error) {
+    console.error('Error checking closure day:', error);
+    return { isClosed: false };
+  }
+}
+
+/**
+ * Get opening hours text for a specific day
+ * @param openingHours - The opening_hours_json from destination
+ * @param dayOfWeek - Day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+ * @returns The hours text for that day (e.g., "10:00 AM – 5:00 PM" or "Closed")
+ */
+export function getHoursForDay(
+  openingHours: unknown,
+  dayOfWeek: number
+): string | null {
+  let hours = openingHours;
+
+  if (typeof hours === 'string') {
+    try {
+      hours = JSON.parse(hours);
+    } catch {
+      return null;
+    }
+  }
+
+  if (!hours || typeof hours !== 'object') {
+    return null;
+  }
+
+  const hoursObj = hours as Record<string, unknown>;
+
+  if (!hoursObj.weekday_text || !Array.isArray(hoursObj.weekday_text)) {
+    return null;
+  }
+
+  try {
+    const googleDayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const dayText = hoursObj.weekday_text[googleDayIndex] as string;
+
+    if (!dayText) {
+      return null;
+    }
+
+    return dayText.substring(dayText.indexOf(':') + 1).trim();
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Check if destination is open now based on opening hours and timezone
  */
 export function isOpenNow(

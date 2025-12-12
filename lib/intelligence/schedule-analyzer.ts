@@ -3,6 +3,7 @@
  */
 
 import type { PlannerWarning } from './types';
+import { isClosedOnDay, getHoursForDay } from '@/lib/utils/opening-hours';
 
 interface ScheduleItem {
   id: string;
@@ -11,6 +12,8 @@ interface ScheduleItem {
   time?: string | null;
   duration?: number;
   category?: string;
+  /** Opening hours data from Google Places API */
+  openingHoursJson?: Record<string, unknown> | null;
   parsedNotes?: {
     type?: string;
     category?: string;
@@ -204,24 +207,63 @@ export function detectConflicts(items: ScheduleItem[]): PlannerWarning[] {
 }
 
 /**
- * Check for common closure days
+ * Check for closure days using actual opening hours data
+ * Falls back to category-based heuristics if no opening hours available
  */
 export function checkClosureDays(items: ScheduleItem[], tripStartDate?: string): PlannerWarning[] {
   const warnings: PlannerWarning[] = [];
 
   if (!tripStartDate) return warnings;
 
-  // Common closure patterns
-  const CLOSURE_PATTERNS: Record<string, number[]> = {
+  // Fallback closure patterns (only used when no actual data available)
+  const FALLBACK_CLOSURE_PATTERNS: Record<string, number[]> = {
     museum: [1], // Many museums close Monday
     gallery: [1], // Galleries often close Monday
   };
 
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
   items.forEach(item => {
+    // Calculate the day of week for this item
+    let dayOfWeek: number;
+    let dayName: string;
+
+    try {
+      const startDate = new Date(tripStartDate);
+      const itemDate = new Date(startDate);
+      itemDate.setDate(startDate.getDate() + item.dayNumber - 1);
+      dayOfWeek = itemDate.getDay();
+      dayName = dayNames[dayOfWeek];
+    } catch {
+      // Invalid date, skip
+      return;
+    }
+
+    // PRIORITY 1: Check actual opening hours data if available
+    if (item.openingHoursJson) {
+      const closureCheck = isClosedOnDay(item.openingHoursJson, dayOfWeek);
+
+      if (closureCheck.isClosed) {
+        const hoursText = getHoursForDay(item.openingHoursJson, dayOfWeek);
+        warnings.push({
+          id: `closure-day-${item.id}`,
+          type: 'timing',
+          severity: 'high', // High severity when we have confirmed data
+          message: `${item.title} is closed on ${dayName}s`,
+          suggestion: hoursText
+            ? `Opening hours show: "${hoursText}". Consider rescheduling to another day.`
+            : `This venue is closed on ${dayName}s. Consider rescheduling to another day.`,
+          blockId: item.id,
+        });
+        return; // Already handled with actual data
+      }
+    }
+
+    // PRIORITY 2: Fall back to category-based heuristics
     const category = (item.parsedNotes?.category || item.category || '').toLowerCase();
 
     let closureDays: number[] | undefined;
-    for (const [key, days] of Object.entries(CLOSURE_PATTERNS)) {
+    for (const [key, days] of Object.entries(FALLBACK_CLOSURE_PATTERNS)) {
       if (category.includes(key)) {
         closureDays = days;
         break;
@@ -230,26 +272,15 @@ export function checkClosureDays(items: ScheduleItem[], tripStartDate?: string):
 
     if (!closureDays) return;
 
-    // Calculate the day of week for this item
-    try {
-      const startDate = new Date(tripStartDate);
-      const itemDate = new Date(startDate);
-      itemDate.setDate(startDate.getDate() + item.dayNumber - 1);
-      const dayOfWeek = itemDate.getDay();
-
-      if (closureDays.includes(dayOfWeek)) {
-        const dayName = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek];
-        warnings.push({
-          id: `closure-day-${item.id}`,
-          type: 'timing',
-          severity: 'medium',
-          message: `${item.title} may be closed on ${dayName}`,
-          suggestion: `Many ${category}s close on ${dayName}. Verify opening hours.`,
-          blockId: item.id,
-        });
-      }
-    } catch {
-      // Invalid date, skip
+    if (closureDays.includes(dayOfWeek)) {
+      warnings.push({
+        id: `closure-day-${item.id}`,
+        type: 'timing',
+        severity: 'medium', // Medium severity for heuristic-based warnings
+        message: `${item.title} may be closed on ${dayName}`,
+        suggestion: `Many ${category}s close on ${dayName}. Verify opening hours before visiting.`,
+        blockId: item.id,
+      });
     }
   });
 
