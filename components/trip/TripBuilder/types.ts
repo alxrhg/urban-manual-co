@@ -129,6 +129,7 @@ export interface TripDayCardProps {
   day: TripDay;
   dayCount: number;
   isExpanded: boolean;
+  isDropTarget?: boolean;
   insights: DayInsight[];
   isSuggesting: boolean;
   onToggle: () => void;

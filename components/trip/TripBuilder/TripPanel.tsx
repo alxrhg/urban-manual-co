@@ -1,7 +1,19 @@
 'use client';
 
 import { useState, useCallback, memo } from 'react';
-import { X, MapPin, ChevronRight, Loader2, Plus, Maximize2 } from 'lucide-react';
+import { X, MapPin, ChevronRight, Loader2, Plus } from 'lucide-react';
+import {
+  DndContext,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  TouchSensor,
+  DragStartEvent,
+  DragEndEvent,
+  DragOverEvent,
+  closestCenter,
+} from '@dnd-kit/core';
 import { useTripBuilder } from '@/contexts/TripBuilderContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useExpandedDays } from './hooks';
@@ -10,8 +22,10 @@ import TripHeader from './TripHeader';
 import TripDayCard from './TripDayCard';
 import TripEmptyState from './TripEmptyState';
 import TripActions from './TripActions';
-import TripStudioView from './TripStudioView';
+import DestinationPalette from './DestinationPalette';
+import DragPreview from './DragPreview';
 import { toast } from '@/components/ui/sonner';
+import type { Destination } from '@/types/destination';
 
 /**
  * TripPanel - Main trip builder panel
@@ -31,7 +45,6 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
     activeTrip,
     savedTrips,
     isPanelOpen,
-    isStudioMode,
     isBuilding,
     isLoadingTrips,
     isSuggestingNext,
@@ -45,8 +58,6 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
     clearTrip,
     saveTrip,
     closePanel,
-    closeStudio,
-    openStudio,
     optimizeDay,
     autoScheduleDay,
     moveItemToDay,
@@ -61,10 +72,45 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
 
   // Local state
   const [isSaving, setIsSaving] = useState(false);
+  const [draggedDestination, setDraggedDestination] = useState<Destination | null>(null);
+  const [overDayNumber, setOverDayNumber] = useState<number | null>(null);
   const { isExpanded, toggle, expand } = useExpandedDays([1]);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+  );
 
   // Get trip health
   const tripHealth = getTripHealth();
+
+  // DnD event handlers
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const destination = event.active.data.current?.destination as Destination | undefined;
+    if (destination) {
+      setDraggedDestination(destination);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const dayNumber = event.over?.data.current?.dayNumber as number | undefined;
+    setOverDayNumber(dayNumber ?? null);
+  }, []);
+
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const destination = draggedDestination;
+    const dayNumber = event.over?.data.current?.dayNumber as number | undefined;
+
+    setDraggedDestination(null);
+    setOverDayNumber(null);
+
+    if (destination && dayNumber) {
+      addToTrip(destination, dayNumber);
+      expand(dayNumber);
+      toast.success(`Added ${destination.name} to Day ${dayNumber}`);
+    }
+  }, [draggedDestination, addToTrip, expand]);
 
   // Handlers
   const handleSave = useCallback(async () => {
@@ -180,18 +226,14 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
   // Don't render if no active trip
   if (!activeTrip) return null;
 
-  // Studio Mode - Full-screen canvas view
-  if (isStudioMode) {
-    return (
-      <TripStudioView
-        city={activeTrip.city}
-        onClose={closeStudio}
-      />
-    );
-  }
-
   return (
-    <>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
+      onDragEnd={handleDragEnd}
+    >
       {/* Backdrop for mobile */}
       <div
         className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 md:hidden"
@@ -222,7 +264,6 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
           onUpdateTitle={handleUpdateTitle}
           onUpdateDate={handleUpdateDate}
           onSwitchTrip={handleSwitchTrip}
-          onOpenStudio={openStudio}
         />
 
         {/* Content */}
@@ -244,6 +285,7 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
                   day={day}
                   dayCount={activeTrip.days.length}
                   isExpanded={isExpanded(day.dayNumber)}
+                  isDropTarget={overDayNumber === day.dayNumber}
                   insights={getDayInsights(day.dayNumber) as DayInsight[]}
                   isSuggesting={isSuggestingNext}
                   onToggle={() => toggle(day.dayNumber)}
@@ -277,6 +319,9 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
           )}
         </main>
 
+        {/* Destination Palette - Drag source */}
+        <DestinationPalette city={activeTrip.city} />
+
         {/* Footer */}
         <TripActions
           tripId={activeTrip.id}
@@ -287,7 +332,17 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
           onClear={clearTrip}
         />
       </aside>
-    </>
+
+      {/* Drag Overlay */}
+      <DragOverlay dropAnimation={{ duration: 200, easing: 'ease-out' }}>
+        {draggedDestination && (
+          <DragPreview
+            destination={draggedDestination}
+            isOverTarget={overDayNumber !== null}
+          />
+        )}
+      </DragOverlay>
+    </DndContext>
   );
 });
 
