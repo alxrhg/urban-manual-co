@@ -22,9 +22,11 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
     }
 
     const dest = destination as Destination;
+    const category = dest.category || 'Place';
+    const city = dest.city || 'Unknown';
 
     // Generate title
-    const title = `${dest.name} - ${dest.category} in ${dest.city} | The Urban Manual`;
+    const title = `${dest.name} - ${category} in ${city} | The Urban Manual`;
 
     // Generate description
     let description = '';
@@ -39,7 +41,7 @@ export async function generateDestinationMetadata(slug: string): Promise<Metadat
       }
     } else {
       // Fallback description
-      description = `Discover ${dest.name}, a ${dest.category.toLowerCase()} in ${dest.city}`;
+      description = `Discover ${dest.name}, a ${category.toLowerCase()} in ${city}`;
       if (dest.michelin_stars && dest.michelin_stars > 0) {
         description += `. ${dest.michelin_stars} Michelin star${dest.michelin_stars > 1 ? 's' : ''}`;
       }

@@ -37,12 +37,13 @@ export async function GET() {
       <link>${baseUrl}</link>
     </image>
 ${(destinations || []).map((dest: Destination) => {
-  const cityName = dest.city
+  const cityName = (dest.city || 'Unknown')
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 
-  const title = `${dest.name} - ${dest.category} in ${cityName}`;
+  const category = dest.category || 'Place';
+  const title = `${dest.name} - ${category} in ${cityName}`;
   const link = `${baseUrl}/destination/${dest.slug}`;
   const pubDate = buildDate; // Use build date for all items
 
@@ -59,7 +60,7 @@ ${(destinations || []).map((dest: Destination) => {
   } else if (dest.description) {
     description = dest.description;
   } else {
-    description = `Discover ${dest.name}, a ${dest.category.toLowerCase()} in ${cityName}. Curated by The Urban Manual.`;
+    description = `Discover ${dest.name}, a ${category.toLowerCase()} in ${cityName}. Curated by The Urban Manual.`;
   }
 
   // Escape XML special characters
@@ -76,9 +77,9 @@ ${(destinations || []).map((dest: Destination) => {
       <guid isPermaLink="true">${link}</guid>
       <description>${escapeXml(description)}</description>
       <pubDate>${pubDate}</pubDate>
-      <category>${escapeXml(dest.category)}</category>
+      <category>${escapeXml(category)}</category>
       <dc:creator>The Urban Manual</dc:creator>
-      ${dest.image ? `<enclosure url="${dest.image}" type="image/jpeg"/>` : ''}
+      ${dest.image ? `<enclosure url="${escapeXml(dest.image)}" type="image/jpeg"/>` : ''}
     </item>`;
 }).join('\n')}
   </channel>

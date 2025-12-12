@@ -101,14 +101,15 @@ export const PUT = withErrorHandling(async (request: NextRequest) => {
   if (bio !== undefined) updateData.bio = bio;
   if (location !== undefined) updateData.location = location;
   if (website_url !== undefined) updateData.website_url = website_url;
-  if (birthday !== undefined) updateData.birthday = birthday;
+  // Convert empty birthday string to null to avoid Postgres DATE column error
+  if (birthday !== undefined) updateData.birthday = birthday === '' ? null : birthday;
   if (username !== undefined) updateData.username = username;
   if (is_public !== undefined) updateData.is_public = is_public;
 
-  // Update the profile
+  // Update the profile (use onConflict to properly handle upsert on user_id)
   const { data: updatedProfile, error: updateError } = await supabase
     .from('user_profiles')
-    .upsert(updateData)
+    .upsert(updateData, { onConflict: 'user_id' })
     .select()
     .single();
 

@@ -109,9 +109,28 @@ export function RecentlyViewed({ onCardClick }: RecentlyViewedProps) {
                   console.warn('Discovery Engine tracking error:', error);
                 }
               }
-              
+
               if (onCardClick) {
-                onCardClick(item as Destination);
+                // If item has id, use it directly; otherwise fetch the full destination
+                if (item.id) {
+                  onCardClick(item as Destination);
+                } else {
+                  // Fetch the full destination to get the id for drawer functionality
+                  try {
+                    const res = await fetch(`/api/destination/${item.slug}`);
+                    if (res.ok) {
+                      const data = await res.json();
+                      if (data.destination) {
+                        onCardClick(data.destination as Destination);
+                        return;
+                      }
+                    }
+                  } catch (error) {
+                    console.warn('Failed to fetch destination:', error);
+                  }
+                  // Fallback to item without id
+                  onCardClick(item as Destination);
+                }
               } else {
                 router.push(`/destination/${item.slug}`);
               }

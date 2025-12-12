@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createServiceRoleClient } from '@/lib/supabase-server';
+import { createServerClient } from '@/lib/supabase/server';
 import { fetchGreetingContext } from '@/lib/greetings/context-fetcher';
 
 // Mark route as dynamic since it uses searchParams
@@ -22,6 +22,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'User ID is required' },
         { status: 400 }
+      );
+    }
+
+    // Verify the caller is authenticated and owns the requested userId
+    const supabase = await createServerClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    // Only allow users to fetch their own greeting context
+    if (user.id !== userId) {
+      return NextResponse.json(
+        { error: 'Access denied' },
+        { status: 403 }
       );
     }
 

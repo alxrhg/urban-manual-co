@@ -29,7 +29,7 @@ export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmpt
         museum: ['gallery', 'art space', 'cultural center'],
       };
 
-      const alts = categoryAlternatives[intent.category.toLowerCase()];
+      const alts = categoryAlternatives[(intent.category || '').toLowerCase()];
       if (alts) {
         suggestions.push(...alts);
       }
@@ -44,7 +44,7 @@ export function SmartEmptyState({ query, intent, onAlternativeClick }: SmartEmpt
         'london': ['Shoreditch', 'Camden', 'Notting Hill'],
       };
 
-      const alts = cityAlternatives[intent.city.toLowerCase()];
+      const alts = cityAlternatives[(intent.city || '').toLowerCase()];
       if (alts) {
         suggestions.push(...alts.map(area => `${intent.category || 'places'} in ${area}`));
       }
