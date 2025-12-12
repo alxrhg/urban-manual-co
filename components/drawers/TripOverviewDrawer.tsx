@@ -135,7 +135,7 @@ export default function TripOverviewDrawer({ isOpen, onClose, trip: initialTrip 
     onClose();
     if (displayTrip.id) {
       setTimeout(() => {
-        router.push(`/trips/${displayTrip.id}`);
+        router.push(`/planning/trips/${displayTrip.id}`);
       }, 200);
     }
   };

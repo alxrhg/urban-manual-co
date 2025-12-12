@@ -74,7 +74,7 @@ export default function TripOverviewQuickDrawer({ isOpen, onClose, trip }: TripO
     onClose();
     if (displayTrip.id) {
       setTimeout(() => {
-        router.push(`/trips/${displayTrip.id}`);
+        router.push(`/planning/trips/${displayTrip.id}`);
       }, 200);
     }
   };
