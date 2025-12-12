@@ -78,7 +78,6 @@ function SortableBucketItem({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
   };
 
   const getIcon = () => {
@@ -101,7 +100,12 @@ function SortableBucketItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="group relative bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 rounded-xl overflow-hidden hover:border-stone-300 dark:hover:border-stone-700 transition-colors"
+      className={`
+        group relative rounded-xl overflow-hidden transition-all duration-200
+        ${isDragging
+          ? 'scale-[1.03] shadow-xl ring-2 ring-stone-900/10 dark:ring-white/20 bg-white dark:bg-gray-800 z-50 border-transparent'
+          : 'bg-white dark:bg-gray-900 border border-stone-200 dark:border-gray-800 hover:border-stone-300 dark:hover:border-stone-700'}
+      `}
     >
       <div className="flex items-start gap-2 p-3">
         {/* Drag Handle */}

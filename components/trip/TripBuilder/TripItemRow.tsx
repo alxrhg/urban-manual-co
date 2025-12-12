@@ -149,7 +149,7 @@ const TripItemRow = memo(function TripItemRow({
           bg-gray-50 dark:bg-white/5
           hover:bg-gray-100 dark:hover:bg-white/10
           transition-all duration-200 ease-out
-          ${isDragging ? 'opacity-50 scale-[0.98] shadow-lg' : ''}
+          ${isDragging ? 'scale-[1.03] shadow-xl ring-2 ring-gray-900/10 dark:ring-white/20 bg-white dark:bg-gray-800 z-50' : ''}
         `}
         role="listitem"
         aria-label={`${item.destination.name} at ${item.timeSlot || 'unscheduled'}`}

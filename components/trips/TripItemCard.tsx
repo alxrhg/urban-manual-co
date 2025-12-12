@@ -47,11 +47,11 @@ export const TripItemCard = memo(function TripItemCard({
   const estimatedDuration = getEstimatedDuration(category);
 
   return (
-    <div 
+    <div
       className={`
         group relative rounded-2xl border transition-all duration-200
-        ${isDragging ? 'shadow-lg border-black/10 dark:border-white/20 bg-white dark:bg-gray-800 z-10' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700'}
-        ${isFlight ? 'bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' : ''}
+        ${isDragging ? 'scale-[1.03] shadow-xl ring-2 ring-gray-900/10 dark:ring-white/20 bg-white dark:bg-gray-800 z-50 border-transparent' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-700'}
+        ${isFlight && !isDragging ? 'bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30' : ''}
       `}
     >
       <div className="flex items-start gap-3 p-3">

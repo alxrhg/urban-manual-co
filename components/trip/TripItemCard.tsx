@@ -64,7 +64,10 @@ function SortableTripItemCard({
     <div
       ref={setNodeRef}
       style={style}
-      className={`group relative mb-2 sm:mb-2 ${isDragging ? 'z-50 opacity-50' : ''}`}
+      className={`
+        group relative mb-2 sm:mb-2 transition-all duration-200
+        ${isDragging ? 'z-50 scale-[1.03] shadow-xl ring-2 ring-gray-900/10 dark:ring-white/20 rounded-2xl bg-white dark:bg-gray-800' : ''}
+      `}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onTouchStart={handleTouchStart}
