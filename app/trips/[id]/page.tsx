@@ -887,6 +887,26 @@ function TripHeader({
     return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
   }, [trip.start_date, trip.end_date]);
 
+  // Calculate trip duration in days
+  const tripDuration = useMemo(() => {
+    if (!trip.start_date || !trip.end_date) return null;
+    const start = new Date(trip.start_date + 'T00:00:00');
+    const end = new Date(trip.end_date + 'T00:00:00');
+    const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    return days;
+  }, [trip.start_date, trip.end_date]);
+
+  // Format date for passport style (DD MMM YYYY)
+  const formatPassportDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '-- --- ----';
+    const date = new Date(dateStr + 'T00:00:00');
+    return date.toLocaleDateString('en-US', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    }).toUpperCase();
+  };
+
   if (isEditing) {
     return (
       <div className="space-y-4">
@@ -1012,45 +1032,114 @@ function TripHeader({
     );
   }
 
+  // Passport-style display view
   return (
-    <div className="group">
-      {/* Static map cover */}
-      <div className="relative aspect-[3/1] rounded-xl overflow-hidden mb-4">
-        {staticMapUrl && !mapError ? (
-          <>
+    <div className="group" onClick={() => setIsEditing(true)}>
+      {/* Passport Identity Card */}
+      <div className="relative rounded-xl overflow-hidden cursor-pointer">
+        {/* Background - Map or gradient */}
+        <div className="absolute inset-0">
+          {staticMapUrl && !mapError ? (
             <Image
               src={staticMapUrl}
               alt={`Map of ${primaryCity}`}
               fill
-              className="object-cover"
+              className="object-cover opacity-30 dark:opacity-20"
               unoptimized
               onError={() => setMapError(true)}
             />
-            {/* City overlay */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-900 rounded-full px-3 py-1.5 shadow-lg flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-red-500" />
-              <span className="text-[12px] font-medium text-gray-900 dark:text-white">{primaryCity}</span>
-              <span className="text-[11px] text-gray-400">{totalItems} pinned</span>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900" />
+          )}
+        </div>
+
+        {/* Glass Panel */}
+        <div className="relative backdrop-blur-md bg-white/70 dark:bg-slate-900/70 border border-slate-200/50 dark:border-slate-700/50 p-5 rounded-xl">
+          {/* Passport Header */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center">
+                <span className="text-white text-xs font-bold">UM</span>
+              </div>
+              <span className="text-[10px] font-semibold tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">
+                Travel Document
+              </span>
             </div>
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 flex items-center justify-center">
-            <div className="text-center">
-              <MapPin className="w-8 h-8 text-blue-400 mx-auto mb-1" />
-              <span className="text-[12px] text-blue-500 dark:text-blue-400">{primaryCity || 'Add places to see map'}</span>
+
+            {/* Stamped Effect */}
+            <div className="relative">
+              <div className="absolute -inset-1 bg-red-500/10 dark:bg-red-400/10 rounded-full blur-sm" />
+              <div className="relative px-3 py-1.5 border-2 border-red-500/60 dark:border-red-400/60 rounded-full rotate-[-8deg]">
+                <span className="font-mono text-[10px] font-bold tracking-wider text-red-600 dark:text-red-400 uppercase">
+                  {trip.start_date ? 'Confirmed' : 'Draft'}
+                </span>
+              </div>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Title and info - click to edit */}
-      <div onClick={() => setIsEditing(true)} className="cursor-pointer">
-        <h1 className="text-[22px] font-semibold text-gray-900 dark:text-white group-hover:opacity-70 transition-opacity">
-          {trip.title}
-        </h1>
-        <p className="text-[13px] text-gray-400 group-hover:opacity-70 transition-opacity">
-          {[primaryCity, dateDisplay, `${totalItems} ${totalItems === 1 ? 'place' : 'places'}`].filter(Boolean).join(' · ')}
-        </p>
+          {/* Trip Title */}
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white mb-4 group-hover:opacity-70 transition-opacity">
+            {trip.title}
+          </h1>
+
+          {/* Passport Data Fields */}
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+            {/* Destination */}
+            <div>
+              <span className="block text-[9px] font-semibold tracking-[0.15em] text-slate-400 dark:text-slate-500 uppercase mb-0.5">
+                Destination
+              </span>
+              <span className="font-mono text-sm font-medium text-slate-800 dark:text-slate-200 uppercase tracking-wide">
+                {primaryCity || '---'}
+              </span>
+            </div>
+
+            {/* Places */}
+            <div>
+              <span className="block text-[9px] font-semibold tracking-[0.15em] text-slate-400 dark:text-slate-500 uppercase mb-0.5">
+                Places
+              </span>
+              <span className="font-mono text-sm font-medium text-slate-800 dark:text-slate-200">
+                {totalItems.toString().padStart(2, '0')} {totalItems === 1 ? 'LOCATION' : 'LOCATIONS'}
+              </span>
+            </div>
+
+            {/* Departure Date */}
+            <div>
+              <span className="block text-[9px] font-semibold tracking-[0.15em] text-slate-400 dark:text-slate-500 uppercase mb-0.5">
+                Departure
+              </span>
+              <span className="font-mono text-sm font-medium text-slate-800 dark:text-slate-200 tracking-wider">
+                {formatPassportDate(trip.start_date)}
+              </span>
+            </div>
+
+            {/* Return Date */}
+            <div>
+              <span className="block text-[9px] font-semibold tracking-[0.15em] text-slate-400 dark:text-slate-500 uppercase mb-0.5">
+                Return
+              </span>
+              <span className="font-mono text-sm font-medium text-slate-800 dark:text-slate-200 tracking-wider">
+                {formatPassportDate(trip.end_date)}
+              </span>
+            </div>
+          </div>
+
+          {/* Duration Badge */}
+          {tripDuration && (
+            <div className="mt-4 pt-3 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-3.5 h-3.5 text-amber-500" />
+                <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  {tripDuration} {tripDuration === 1 ? 'Day' : 'Days'} Journey
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors">
+                Tap to edit
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
