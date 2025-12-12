@@ -115,7 +115,6 @@ export default function TripPage() {
   // Drag and drop state
   const [draggedDestination, setDraggedDestination] = useState<Destination | null>(null);
   const [overDayNumber, setOverDayNumber] = useState<number | null>(null);
-  const [showPalette, setShowPalette] = useState(false);
 
   // DnD sensors
   const sensors = useSensors(
@@ -779,6 +778,15 @@ export default function TripPage() {
                 </div>
               )}
 
+              {/* Drag & Drop Palette */}
+              {!sidebarAddDay && !selectedItem && (
+                <SidebarDestinationPalette
+                  city={primaryCity}
+                  selectedDayNumber={selectedDayNumber}
+                  onAddPlace={(dest, dayNum) => addPlace(dest, dayNum)}
+                />
+              )}
+
               {/* Checklist */}
               {!sidebarAddDay && (
                 <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
@@ -794,13 +802,6 @@ export default function TripPage() {
         </div>
         {/* End desktop flex layout */}
       </div>
-
-      {/* Destination Palette - Fixed at bottom */}
-      <TripDestinationPalette
-        city={primaryCity}
-        isOpen={showPalette}
-        onToggle={() => setShowPalette(!showPalette)}
-      />
     </main>
 
     {/* Drag Overlay */}
@@ -3867,22 +3868,22 @@ function nearestNeighborOptimize(items: EnrichedItineraryItem[]): EnrichedItiner
 }
 
 /**
- * Destination Palette - Fixed at bottom for drag-drop
+ * Sidebar Destination Palette - Drag destinations to add to trip
  */
-function TripDestinationPalette({
+function SidebarDestinationPalette({
   city,
-  isOpen,
-  onToggle,
+  selectedDayNumber,
+  onAddPlace,
 }: {
   city: string;
-  isOpen: boolean;
-  onToggle: () => void;
+  selectedDayNumber: number;
+  onAddPlace: (destination: Destination, dayNumber: number) => void;
 }) {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!city || !isOpen) return;
+    if (!city) return;
 
     const fetchDestinations = async () => {
       setIsLoading(true);
@@ -3892,67 +3893,58 @@ function TripDestinationPalette({
         .select('id, slug, name, city, category, image_thumbnail, image, rating')
         .eq('city', city)
         .order('rating', { ascending: false })
-        .limit(15);
+        .limit(12);
 
       setDestinations((data as Destination[]) || []);
       setIsLoading(false);
     };
 
     fetchDestinations();
-  }, [city, isOpen]);
+  }, [city]);
+
+  if (!city) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-lg">
-      {/* Toggle button */}
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-center gap-2 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-      >
-        <Sparkles className="w-4 h-4 text-amber-500" />
-        <span className="text-[13px] font-medium text-gray-700 dark:text-gray-300">
-          {isOpen ? 'Hide Places' : 'Drag Places to Add'}
-        </span>
-        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+    <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+      {/* Header */}
+      <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-amber-500" />
+          <h3 className="text-[12px] font-semibold text-gray-900 dark:text-white">
+            Drag to Add
+          </h3>
+        </div>
+        <p className="text-[11px] text-gray-500 mt-0.5">
+          Drag places onto Day {selectedDayNumber}
+        </p>
+      </div>
 
-      {/* Expandable destination list */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: 'auto' }}
-            exit={{ height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 max-h-48 overflow-x-auto">
-              {isLoading ? (
-                <div className="py-4 text-center text-[12px] text-gray-400">
-                  Loading suggestions...
-                </div>
-              ) : destinations.length === 0 ? (
-                <div className="py-4 text-center text-[12px] text-gray-400">
-                  No destinations found for {city}
-                </div>
-              ) : (
-                <div className="flex gap-2 pb-2">
-                  {destinations.map((destination) => (
-                    <DraggablePaletteCard
-                      key={destination.id}
-                      destination={destination}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </motion.div>
+      {/* Destination list */}
+      <div className="p-2 max-h-64 overflow-y-auto space-y-1">
+        {isLoading ? (
+          <div className="py-6 text-center">
+            <Loader2 className="w-5 h-5 animate-spin text-gray-400 mx-auto" />
+            <p className="text-[11px] text-gray-400 mt-2">Loading places...</p>
+          </div>
+        ) : destinations.length === 0 ? (
+          <div className="py-6 text-center text-[11px] text-gray-400">
+            No places found for {city}
+          </div>
+        ) : (
+          destinations.map((destination) => (
+            <DraggablePaletteCard
+              key={destination.id}
+              destination={destination}
+            />
+          ))
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 }
 
 /**
- * Draggable card in the palette
+ * Draggable card in the palette - Row layout for sidebar
  */
 function DraggablePaletteCard({ destination }: { destination: Destination }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -3979,7 +3971,7 @@ function DraggablePaletteCard({ destination }: { destination: Destination }) {
       {...listeners}
       {...attributes}
       className={`
-        flex-shrink-0 w-32 p-2 rounded-lg
+        flex items-center gap-2.5 p-2 rounded-lg
         bg-gray-50 dark:bg-gray-800
         hover:bg-gray-100 dark:hover:bg-gray-700
         cursor-grab active:cursor-grabbing
@@ -3987,14 +3979,17 @@ function DraggablePaletteCard({ destination }: { destination: Destination }) {
         ${isDragging ? 'shadow-xl ring-2 ring-gray-900/20 dark:ring-white/20 z-50' : ''}
       `}
     >
+      {/* Drag handle */}
+      <GripVertical className="w-3 h-3 text-gray-300 flex-shrink-0" />
+
       {/* Thumbnail */}
-      <div className="w-full h-16 rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 mb-2">
+      <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 flex-shrink-0">
         {hasImage ? (
           <Image
             src={destination.image_thumbnail || destination.image || ''}
             alt={destination.name}
-            width={128}
-            height={64}
+            width={40}
+            height={40}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -4005,12 +4000,14 @@ function DraggablePaletteCard({ destination }: { destination: Destination }) {
       </div>
 
       {/* Info */}
-      <p className="text-[11px] font-medium text-gray-900 dark:text-white truncate">
-        {destination.name}
-      </p>
-      <p className="text-[10px] text-gray-500 truncate capitalize">
-        {destination.category}
-      </p>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] font-medium text-gray-900 dark:text-white truncate">
+          {destination.name}
+        </p>
+        <p className="text-[10px] text-gray-500 truncate capitalize">
+          {destination.category}
+        </p>
+      </div>
     </div>
   );
 }
