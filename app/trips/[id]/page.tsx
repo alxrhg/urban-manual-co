@@ -12,7 +12,7 @@ import TripHeader, { type AddItemType } from '@/components/trip/TripHeader';
 import ItineraryView from '@/components/trip/ItineraryView';
 import TravelAISidebar from '@/components/trip/TravelAISidebar';
 import InteractiveMapCard from '@/components/trip/InteractiveMapCard';
-import TripMapView from '@/components/trips/TripMapView';
+import { MapPin } from 'lucide-react';
 
 // Existing components
 import { PageLoader } from '@/components/LoadingStates';
@@ -317,19 +317,19 @@ export default function TripPage() {
                         Hide map
                       </button>
                     </div>
-                    <TripMapView
-                      places={(days.find(d => d.dayNumber === selectedDayNumber)?.items || [])
-                        .filter((item) => item.parsedNotes?.type !== 'flight')
-                        .map((item, index) => ({
-                          id: item.id,
-                          name: item.title || 'Place',
-                          latitude: item.parsedNotes?.latitude ?? item.destination?.latitude ?? undefined,
-                          longitude: item.parsedNotes?.longitude ?? item.destination?.longitude ?? undefined,
-                          category: item.destination?.category || item.parsedNotes?.category,
-                          order: index + 1,
-                        }))}
-                      className="h-[300px] rounded-2xl"
-                    />
+                    {/* Inline map placeholder - shows places list */}
+                    <div className="h-[300px] rounded-2xl bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex flex-col items-center justify-center p-4">
+                      <MapPin className="w-8 h-8 text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+                        {(() => {
+                          const places = (days.find(d => d.dayNumber === selectedDayNumber)?.items || [])
+                            .filter((item) => item.parsedNotes?.type !== 'flight');
+                          return places.length > 0
+                            ? `${places.length} location${places.length > 1 ? 's' : ''} on Day ${selectedDayNumber}`
+                            : 'No locations added yet';
+                        })()}
+                      </p>
+                    </div>
                   </div>
                 )}
 

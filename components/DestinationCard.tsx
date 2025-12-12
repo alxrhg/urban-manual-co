@@ -7,7 +7,7 @@ import { Destination } from '@/types/destination';
 import { capitalizeCity } from '@/lib/utils';
 import { DestinationCardSkeleton } from './skeletons/DestinationCardSkeleton';
 import { DestinationBadges } from './DestinationBadges';
-import { QuickActions } from './QuickActions';
+import { QuickActions } from './trip/QuickActions';
 
 interface DestinationCardProps {
   destination: Destination;

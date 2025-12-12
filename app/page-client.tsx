@@ -93,13 +93,6 @@ const SequencePredictionsInline = dynamic(
     })),
   { ssr: false }
 );
-const SmartRecommendations = dynamic(
-  () =>
-    import("@/components/SmartRecommendations").then(mod => ({
-      default: mod.SmartRecommendations,
-    })),
-  { ssr: false }
-);
 const TrendingSection = dynamic(
   () =>
     import("@/components/TrendingSection").then(mod => ({
@@ -130,13 +123,6 @@ const SessionResume = dynamic(
   () =>
     import("@/components/SessionResume").then(mod => ({
       default: mod.SessionResume,
-    })),
-  { ssr: false }
-);
-const ContextCards = dynamic(
-  () =>
-    import("@/components/ContextCards").then(mod => ({
-      default: mod.ContextCards,
     })),
   { ssr: false }
 );
@@ -2511,13 +2497,6 @@ export default function HomePageClient({
                         </div>
                       )}
 
-                      {/* Context Cards - Show user's saved preferences */}
-                      {userContext && user && !searchTerm && (
-                        <div className="mb-6">
-                          <ContextCards context={userContext} />
-                        </div>
-                      )}
-
                       <GreetingHero
                         searchQuery={searchTerm}
                         onSearchChange={value => {
@@ -3082,69 +3061,6 @@ export default function HomePageClient({
 
 
             <div id="search-filters-inline-slot" className="px-2 sm:px-0" />
-
-            {/* Smart Recommendations - Show only when user is logged in and no active search */}
-            {user && !submittedQuery && !selectedCity && !selectedCategory && (
-              <div className="mb-12 md:mb-16">
-                <SmartRecommendations
-                  onCardClick={destination => {
-                    setSelectedDestination(destination);
-                    openDrawer('destination');
-
-                    // Track destination click
-                    trackDestinationClick({
-                      destinationSlug: destination.slug,
-                      position: 0,
-                      source: "smart_recommendations",
-                    });
-
-                    // Track for sequence prediction
-                    trackAction({
-                      type: "click",
-                      destination_id: destination.id,
-                      destination_slug: destination.slug,
-                    });
-
-                    // Also track with new analytics system
-                    if (destination.id) {
-                      import("@/lib/analytics/track").then(({ trackEvent }) => {
-                        trackEvent({
-                          event_type: "click",
-                          destination_id: destination.id,
-                          destination_slug: destination.slug,
-                          metadata: {
-                            category: destination.category,
-                            city: destination.city,
-                            source: "smart_recommendations",
-                          },
-                        });
-                      });
-                    }
-
-                    // Track click event to Discovery Engine for personalization
-                    if (user?.id) {
-                      fetch("/api/discovery/track-event", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          userId: user.id,
-                          eventType: "click",
-                          documentId: destination.slug,
-                          source: "smart_recommendations",
-                        }),
-                      }).catch(error => {
-                        if (process.env.NODE_ENV === 'development') {
-                          console.warn(
-                            "Failed to track Discovery Engine event:",
-                            error
-                          );
-                        }
-                      });
-                    }
-                  }}
-                />
-              </div>
-            )}
 
             {/* Sequence Predictions - Show after user has performed some actions */}
             {user &&

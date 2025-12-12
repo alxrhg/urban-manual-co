@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useDrawerStore } from '@/lib/stores/drawer-store';
 
-import { AccountDrawer } from '@/components/AccountDrawer';
 import { DestinationDrawer } from '@/src/features/detail/DestinationDrawer';
 import { SavedPlacesDrawer } from '@/components/SavedPlacesDrawer';
 import { VisitedPlacesDrawer } from '@/components/VisitedPlacesDrawer';
@@ -47,7 +46,6 @@ export default function DrawerMount() {
   return (
     <>
       {/* Legacy drawers that use their own drawer context */}
-      <AccountDrawer />
       <SavedPlacesDrawer />
       <VisitedPlacesDrawer />
       <TripsDrawer />

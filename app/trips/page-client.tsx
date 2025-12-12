@@ -4,11 +4,10 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Plus, Loader2, Plane, Search, X } from 'lucide-react';
+import Image from 'next/image';
+import { Plus, Loader2, Plane, Search, X, MapPin, Hotel, Utensils } from 'lucide-react';
 import { formatTripDateRange, calculateTripDays } from '@/lib/utils';
 import { formatDestinationsFromField } from '@/types/trip';
-import { TripCoverImage } from '@/components/trips/TripCoverImage';
-import { TripStats } from '@/components/trips/TripStats';
 import {
   getTripState,
   getTimeLabel,
@@ -356,7 +355,7 @@ function TripCard({ trip, state }: TripCardProps) {
         {/* Stats */}
         <div className="mt-1">
           {totalItems > 0 ? (
-            <TripStats stats={trip.stats} />
+            <TripStatsDisplay stats={trip.stats} />
           ) : (
             <span className="text-sm text-gray-500 dark:text-gray-400">
               No plans yet
@@ -379,5 +378,59 @@ function TripCard({ trip, state }: TripCardProps) {
         </div>
       </div>
     </Link>
+  );
+}
+
+/** Inline TripCoverImage - replaces deleted component */
+function TripCoverImage({
+  coverImageUrl,
+  title,
+  isPast,
+  className = '',
+}: {
+  coverImageUrl?: string | null;
+  title: string;
+  isPast?: boolean;
+  className?: string;
+}) {
+  return (
+    <div className={`relative rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 ${className} ${isPast ? 'opacity-70' : ''}`}>
+      {coverImageUrl ? (
+        <Image
+          src={coverImageUrl}
+          alt={title}
+          fill
+          className="object-cover"
+          sizes="80px"
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-gray-600">
+          <Plane className="w-6 h-6" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Inline TripStatsDisplay - replaces deleted component */
+function TripStatsDisplay({ stats }: { stats: TripStatsType }) {
+  const items = [
+    { count: stats.places, icon: MapPin, label: 'places' },
+    { count: stats.restaurants, icon: Utensils, label: 'dining' },
+    { count: stats.hotels, icon: Hotel, label: 'stays' },
+    { count: stats.flights, icon: Plane, label: 'flights' },
+  ].filter((item) => item.count > 0);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+      {items.map(({ count, icon: Icon, label }) => (
+        <span key={label} className="flex items-center gap-1">
+          <Icon className="w-3 h-3" />
+          {count}
+        </span>
+      ))}
+    </div>
   );
 }
