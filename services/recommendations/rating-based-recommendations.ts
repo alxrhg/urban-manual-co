@@ -8,11 +8,11 @@
 import { createServerClient } from '@/lib/supabase/server';
 import type { Destination } from '@/types/destination';
 
-/** Visit record with joined destination data */
+/** Visit record with joined destination data - Supabase returns array for joins */
 interface VisitWithDestination {
   rating: number | null;
   destination_slug: string;
-  destinations: {
+  destinations: Array<{
     id: number;
     category: string;
     city: string;
@@ -20,7 +20,7 @@ interface VisitWithDestination {
     tags: string[] | null;
     name?: string;
     slug?: string;
-  } | null;
+  }>;
 }
 
 /** Saved/visited place slug record */
@@ -71,7 +71,7 @@ export interface RecommendationResult {
     name: string;
     city: string;
     category: string;
-    rating: number;
+    rating?: number;
     priceLevel?: number;
     image?: string;
     microDescription?: string;
@@ -116,7 +116,7 @@ export async function buildUserRatingProfile(userId: string): Promise<UserRating
 
   visits.forEach((visit: VisitWithDestination) => {
     const rating = visit.rating || 0;
-    const dest = visit.destinations;
+    const dest = visit.destinations?.[0];
 
     if (!dest) return;
 
@@ -374,13 +374,13 @@ export async function getSimilarToLiked(
   const results: { basedOn: string; recommendations: RecommendationResult[] }[] = [];
 
   for (const visit of topRated) {
-    const dest = (visit as VisitWithDestination).destinations;
+    const dest = (visit as VisitWithDestination).destinations?.[0];
     if (!dest) continue;
 
     // Find similar destinations
     let query = supabase
       .from('destinations')
-      .select('id, slug, name, city, category, rating, price_level, image, micro_description')
+      .select('id, slug, name, city, category, rating, price_level, image, micro_description, tags')
       .eq('category', dest.category)
       .neq('slug', dest.slug)
       .order('rating', { ascending: false })
@@ -390,7 +390,7 @@ export async function getSimilarToLiked(
     const { data: sameCityResults } = await query.eq('city', dest.city);
     const { data: otherCityResults } = await supabase
       .from('destinations')
-      .select('id, slug, name, city, category, rating, price_level, image, micro_description')
+      .select('id, slug, name, city, category, rating, price_level, image, micro_description, tags')
       .eq('category', dest.category)
       .neq('slug', dest.slug)
       .neq('city', dest.city)

@@ -7,11 +7,11 @@ import { useAuth } from '@/contexts/AuthContext';
 /** Saved place from database with joined destination */
 interface SavedPlaceRow {
   destination_slug: string;
-  destinations: {
+  destinations: Array<{
     name?: string;
     city?: string;
     category?: string;
-  } | null;
+  }>;
 }
 
 /** Visited place from database with joined destination */
@@ -19,11 +19,11 @@ interface VisitedPlaceRow {
   destination_slug: string;
   rating: number | null;
   visited_at: string;
-  destinations: {
+  destinations: Array<{
     name?: string;
     city?: string;
     category?: string;
-  } | null;
+  }>;
 }
 
 /** Trip from database */
@@ -174,17 +174,17 @@ export function useUserContext(): UseUserContextReturn {
       const profile = profileResult.data;
       const savedPlaces = (savedResult.data || []).map((item: SavedPlaceRow) => ({
         slug: item.destination_slug,
-        name: item.destinations?.name,
-        city: item.destinations?.city,
-        category: item.destinations?.category,
+        name: item.destinations?.[0]?.name,
+        city: item.destinations?.[0]?.city,
+        category: item.destinations?.[0]?.category,
       }));
 
       const visitedPlaces = (visitedResult.data || []).map((item: VisitedPlaceRow) => ({
         slug: item.destination_slug,
-        name: item.destinations?.name,
-        city: item.destinations?.city,
-        category: item.destinations?.category,
-        rating: item.rating,
+        name: item.destinations?.[0]?.name,
+        city: item.destinations?.[0]?.city,
+        category: item.destinations?.[0]?.category,
+        rating: item.rating ?? undefined,
         visitedAt: item.visited_at,
       }));
 
@@ -192,8 +192,8 @@ export function useUserContext(): UseUserContextReturn {
         id: trip.id,
         name: trip.name,
         destinations: trip.destinations || [],
-        startDate: trip.start_date,
-        endDate: trip.end_date,
+        startDate: trip.start_date ?? undefined,
+        endDate: trip.end_date ?? undefined,
       }));
 
       setContext({

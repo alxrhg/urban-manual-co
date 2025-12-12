@@ -261,22 +261,38 @@ interface UserInteractionRow {
   created_at: string;
 }
 
-/** Destination with fingerprint fields */
-interface DestinationWithFingerprint extends Destination {
+/** Destination with fingerprint fields for behavior analysis */
+interface DestinationForBehavior {
+  id?: number;
+  category?: string;
+  city?: string;
+  price_level?: number | null;
+  michelin_stars?: number | null;
   vibe_tags?: string[];
 }
 
-/** Saved place row from database */
-interface SavedPlaceRow {
-  destination_slug: string;
-  created_at: string;
+/** Destination with fingerprint fields for taste calculation */
+interface DestinationForFingerprint {
+  slug?: string;
+  category?: string;
+  city?: string;
+  price_level?: number | null;
+  michelin_stars?: number | null;
+  vibe_tags?: string[];
+  tags?: string[];
 }
 
-/** Visited place row from database */
+/** Saved place row from database - fields vary by query */
+interface SavedPlaceRow {
+  destination_slug: string;
+  created_at?: string;
+}
+
+/** Visited place row from database - fields vary by query */
 interface VisitedPlaceRow {
   destination_slug: string;
-  visited_at: string;
-  rating?: number;
+  rating?: number | null;
+  visited_at?: string;
 }
 
 /** Destination lookup result */
@@ -659,6 +675,8 @@ export class UnifiedIntelligenceCore {
     const destIds = signals.filter(s => s.destinationId).map(s => s.destinationId);
     if (destIds.length === 0) return preferences;
 
+    if (!this.supabase) return preferences;
+
     const { data: destinations } = await this.supabase
       .from('destinations')
       .select('id, category, city, price_level, michelin_stars, vibe_tags')
@@ -666,14 +684,14 @@ export class UnifiedIntelligenceCore {
 
     if (!destinations) return preferences;
 
-    const destMap = new Map(destinations.map((d: DestinationWithFingerprint) => [d.id, d]));
+    const destMap = new Map(destinations.map((d: DestinationForBehavior) => [d.id, d]));
 
     // Analyze patterns
-    const savedDests = signals.filter(s => s.type === 'save').map(s => destMap.get(s.destinationId)).filter(Boolean) as DestinationWithFingerprint[];
-    const _viewedDests = signals.filter(s => s.type === 'view').map(s => destMap.get(s.destinationId)).filter(Boolean) as DestinationWithFingerprint[];
+    const savedDests = signals.filter(s => s.type === 'save').map(s => destMap.get(s.destinationId)).filter(Boolean) as DestinationForBehavior[];
+    const _viewedDests = signals.filter(s => s.type === 'view').map(s => destMap.get(s.destinationId)).filter(Boolean) as DestinationForBehavior[];
 
     // Price preference (saves at higher price = higher price tolerance)
-    const savedPrices = savedDests.map((d: DestinationWithFingerprint) => d.price_level).filter((p): p is number => p != null);
+    const savedPrices = savedDests.map((d: DestinationForBehavior) => d.price_level).filter((p): p is number => p != null);
     if (savedPrices.length >= 2) {
       const avgPrice = savedPrices.reduce((a: number, b: number) => a + b, 0) / savedPrices.length;
       preferences.push({
@@ -706,7 +724,7 @@ export class UnifiedIntelligenceCore {
     }
 
     // Michelin preference
-    const michelinSaves = savedDests.filter((d: DestinationWithFingerprint) => (d.michelin_stars ?? 0) > 0).length;
+    const michelinSaves = savedDests.filter((d: DestinationForBehavior) => (d.michelin_stars ?? 0) > 0).length;
     if (michelinSaves >= 2) {
       preferences.push({
         dimension: 'michelin_affinity',
@@ -738,6 +756,8 @@ export class UnifiedIntelligenceCore {
         .select('destination_slug')
         .eq('user_id', userId);
 
+      if (!this.supabase) return this.buildDefaultFingerprint();
+
       const { data: visited } = await this.supabase
         .from('visited_places')
         .select('destination_slug, rating')
@@ -759,7 +779,7 @@ export class UnifiedIntelligenceCore {
       }
 
       // Calculate fingerprint dimensions
-      const fingerprint = this.calculateFingerprint(destinations, visited || []);
+      const fingerprint = this.calculateFingerprint(destinations as DestinationForFingerprint[], visited || []);
 
       return fingerprint;
     } catch (error) {
@@ -769,7 +789,7 @@ export class UnifiedIntelligenceCore {
   }
 
   private calculateFingerprint(
-    destinations: DestinationWithFingerprint[],
+    destinations: DestinationForFingerprint[],
     _visited: VisitedPlaceRow[]
   ): TasteFingerprint {
     const n = destinations.length;
@@ -935,7 +955,7 @@ export class UnifiedIntelligenceCore {
             name: dest.name,
             city: dest.city,
             category: dest.category,
-            savedAt: new Date(s.created_at),
+            savedAt: s.created_at ? new Date(s.created_at) : new Date(),
           };
         })
         .filter(Boolean) as SavedPlace[];
@@ -950,8 +970,8 @@ export class UnifiedIntelligenceCore {
             name: dest.name,
             city: dest.city,
             category: dest.category,
-            visitedAt: new Date(v.visited_at),
-            rating: v.rating,
+            visitedAt: v.visited_at ? new Date(v.visited_at) : new Date(),
+            rating: v.rating ?? undefined,
           };
         })
         .filter(Boolean) as VisitedPlace[];
@@ -1180,6 +1200,8 @@ export class UnifiedIntelligenceCore {
   private async executeSavePlace(action: AutonomousAction, userId: string): Promise<ActionResult> {
     const { destinationSlug } = action.params;
 
+    if (!this.supabase) throw new Error('Database not available');
+
     const { error } = await this.supabase
       .from('saved_places')
       .upsert({
@@ -1196,8 +1218,10 @@ export class UnifiedIntelligenceCore {
     };
   }
 
-  private async executeAddToTrip(action: AutonomousAction, userId: string): Promise<ActionResult> {
+  private async executeAddToTrip(action: AutonomousAction, _userId: string): Promise<ActionResult> {
     const { tripId, destinationSlug, day, time, title } = action.params;
+
+    if (!this.supabase) throw new Error('Database not available');
 
     // Get max order_index for this day
     const { data: existing } = await this.supabase
@@ -1233,6 +1257,8 @@ export class UnifiedIntelligenceCore {
   private async executeMarkVisited(action: AutonomousAction, userId: string): Promise<ActionResult> {
     const { destinationSlug, rating } = action.params;
 
+    if (!this.supabase) throw new Error('Database not available');
+
     const { error } = await this.supabase
       .from('visited_places')
       .upsert({
@@ -1253,6 +1279,8 @@ export class UnifiedIntelligenceCore {
 
   private async executeCreateItinerary(action: AutonomousAction, _userId: string): Promise<ActionResult> {
     const { tripId, destinations } = action.params;
+
+    if (!this.supabase) throw new Error('Database not available');
 
     if (!destinations || destinations.length === 0) {
       return {
