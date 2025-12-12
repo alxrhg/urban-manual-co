@@ -4,6 +4,33 @@ import { generateDestinationEmbedding } from '@/lib/embeddings/generate';
 import { findSimilarPlace, inferPriceFromBudgetPhrase, inferGroupSize } from '@/lib/ai/fuzzy-matching';
 import { analyzeIntent, type UserContext } from '@/lib/ai/intent-analysis';
 
+/** Saved place data from RPC call */
+interface SavedPlaceData {
+  name?: string;
+  city?: string;
+  category?: string;
+  tags?: string[];
+  destination?: {
+    name?: string;
+    city?: string;
+    category?: string;
+    tags?: string[];
+  };
+}
+
+/** Visited place data from RPC call */
+interface VisitedPlaceData {
+  slug: string;
+}
+
+/** Search result destination */
+interface SearchResultItem {
+  slug: string;
+  name?: string;
+  city?: string;
+  category?: string;
+}
+
 export const aiRouter = router({
   chat: protectedProcedure
     .input(z.object({
@@ -44,10 +71,10 @@ export const aiRouter = router({
       });
 
       // Get user's saved places for context
-      let savedPlaces: any = { data: null };
+      let savedPlaces: { data: SavedPlaceData[] | null } = { data: null };
       try {
         const result = await supabase.rpc('get_user_saved_destinations', { target_user_id: userId });
-        savedPlaces = result;
+        savedPlaces = result as { data: SavedPlaceData[] | null };
       } catch (error) {
         console.error('Error fetching saved places:', error);
       }
@@ -64,7 +91,7 @@ export const aiRouter = router({
         if (placeName) {
           comparisonBase = await findSimilarPlace(
             placeName,
-            (savedPlaces?.data || []) as any[],
+            (savedPlaces?.data || []) as SavedPlaceData[],
             supabase
           );
         }
@@ -72,7 +99,7 @@ export const aiRouter = router({
 
       // Analyze intent with advanced NLU
       const intent = await analyzeIntent(input.message, {
-        savedPlaces: (savedPlaces?.data || []).slice(0, 10).map((sp: any) => ({
+        savedPlaces: (savedPlaces?.data || []).slice(0, 10).map((sp: SavedPlaceData) => ({
           name: sp.name || sp.destination?.name || '',
           city: sp.city || sp.destination?.city || '',
           category: sp.category || sp.destination?.category || '',
@@ -102,7 +129,7 @@ export const aiRouter = router({
       
       // Hybrid search using the new function
       // Note: This requires migration 024_hybrid_search_function.sql to be run
-      let results: any[] = [];
+      let results: SearchResultItem[] = [];
       try {
         const { data, error: searchError } = await supabase
           .rpc('search_destinations_hybrid', {
@@ -144,16 +171,16 @@ export const aiRouter = router({
 
       // Filter out visited places if requested
       if (filters.exclude_visited) {
-        let visitedPlaces: any = { data: null };
+        let visitedPlaces: { data: VisitedPlaceData[] | null } = { data: null };
         try {
           const result = await supabase.rpc('get_user_visited_destinations', { target_user_id: userId });
-          visitedPlaces = result;
+          visitedPlaces = result as { data: VisitedPlaceData[] | null };
         } catch (error) {
           console.error('Error fetching visited places:', error);
         }
-        
-        const visitedSlugs = new Set((visitedPlaces?.data || []).map((vp: any) => vp.slug));
-        results = results.filter((r: any) => !visitedSlugs.has(r.slug));
+
+        const visitedSlugs = new Set((visitedPlaces?.data || []).map((vp: VisitedPlaceData) => vp.slug));
+        results = results.filter((r: SearchResultItem) => !visitedSlugs.has(r.slug));
       }
 
 
@@ -215,21 +242,21 @@ export const aiRouter = router({
       }
 
       // Get user's saved cities
-      let savedPlaces: any = { data: null };
+      let savedPlaces: { data: SavedPlaceData[] | null } = { data: null };
       try {
         const result = await supabase.rpc('get_user_saved_destinations', { target_user_id: userId });
-        savedPlaces = result;
+        savedPlaces = result as { data: SavedPlaceData[] | null };
       } catch (error) {
         console.error('Error fetching saved places:', error);
       }
 
       const cities = [
         ...new Set(
-          ((savedPlaces?.data || []) as any[])
-            .map((p: any) => p.city)
+          ((savedPlaces?.data || []) as SavedPlaceData[])
+            .map((p: SavedPlaceData) => p.city)
             .filter(Boolean)
         )
-      ];
+      ] as string[];
 
       const prompts: string[] = [];
 

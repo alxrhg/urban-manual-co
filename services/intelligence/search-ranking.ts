@@ -4,8 +4,51 @@
  */
 
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { richQueryContextService } from '@/services/intelligence/rich-query-context';
-import { tasteProfileEvolutionService } from '@/services/intelligence/taste-profile-evolution';
+import { richQueryContextService, RichQueryContext } from '@/services/intelligence/rich-query-context';
+import { tasteProfileEvolutionService, TasteProfile } from '@/services/intelligence/taste-profile-evolution';
+import type { Destination } from '@/types/destination';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+/** Search result extending Destination with search-specific fields */
+export interface SearchResultDestination extends Destination {
+  similarity?: number;
+  trending_score?: number;
+  recent_views_count?: number;
+  recent_saves_count?: number;
+  current_weather_json?: Record<string, unknown>;
+  nearby_events_json?: Record<string, unknown>;
+  route_from_city_center_json?: Record<string, unknown>;
+  realtime_status?: string;
+  updated_at?: string;
+  style_tags?: string[];
+  ambience_tags?: string[];
+  vibe_tags?: string[];
+}
+
+/** Search intent parameters */
+export interface SearchIntent {
+  city?: string;
+  category?: string;
+  modifiers?: string[];
+  timeframe?: string;
+}
+
+/** Category preference from taste profile */
+interface CategoryPreference {
+  category?: string;
+}
+
+/** City preference from taste profile */
+interface CityPreference {
+  city?: string;
+}
+
+/** Visited destination from user context */
+interface VisitedDestination {
+  id: number;
+  category?: string;
+  city?: string;
+}
 
 export interface RankingFactors {
   similarity: number; // Vector similarity (0-1)
@@ -30,14 +73,14 @@ export interface RankingWeights {
 }
 
 export interface RankedResult {
-  destination: any;
+  destination: SearchResultDestination;
   score: number;
   factors: RankingFactors;
   explanation: string;
 }
 
 export class SearchRankingAlgorithm {
-  private supabase;
+  private supabase: SupabaseClient | null;
   private defaultWeights: RankingWeights = {
     similarity: 0.30,
     quality: 0.20,
@@ -61,15 +104,10 @@ export class SearchRankingAlgorithm {
    * Rank search results with comprehensive scoring
    */
   async rankResults(
-    results: any[],
+    results: SearchResultDestination[],
     query: string,
     userId?: string,
-    intent?: {
-      city?: string;
-      category?: string;
-      modifiers?: string[];
-      timeframe?: string;
-    },
+    intent?: SearchIntent,
     customWeights?: Partial<RankingWeights>
   ): Promise<RankedResult[]> {
     if (!results || results.length === 0) {
@@ -79,8 +117,8 @@ export class SearchRankingAlgorithm {
     const weights = { ...this.defaultWeights, ...customWeights };
 
     // Get user context for personalization
-    let userContext: any = null;
-    let tasteProfile: any = null;
+    let userContext: RichQueryContext | null = null;
+    let tasteProfile: TasteProfile | null = null;
     if (userId) {
       try {
         userContext = await richQueryContextService.buildContext(userId);
@@ -121,11 +159,11 @@ export class SearchRankingAlgorithm {
    * Calculate all ranking factors for a destination
    */
   private async calculateFactors(
-    dest: any,
+    dest: SearchResultDestination,
     query: string,
-    intent?: any,
-    userContext?: any,
-    tasteProfile?: any
+    intent?: SearchIntent,
+    userContext?: RichQueryContext | null,
+    tasteProfile?: TasteProfile | null
   ): Promise<RankingFactors> {
     const factors: RankingFactors = {
       similarity: this.calculateSimilarity(dest, query),
@@ -141,7 +179,7 @@ export class SearchRankingAlgorithm {
     return factors;
   }
 
-  private calculateSimilarity(dest: any, query: string): number {
+  private calculateSimilarity(dest: SearchResultDestination, query: string): number {
     // Use vector similarity if available
     if (dest.similarity !== undefined) {
       return Math.max(0, Math.min(1, dest.similarity));
@@ -162,7 +200,7 @@ export class SearchRankingAlgorithm {
     return Math.min(1, score);
   }
 
-  private calculateQuality(dest: any): number {
+  private calculateQuality(dest: SearchResultDestination): number {
     let score = 0;
 
     // Rating (0-5 scale, normalized to 0-1)
@@ -188,7 +226,7 @@ export class SearchRankingAlgorithm {
     return Math.min(1, score);
   }
 
-  private calculatePopularity(dest: any): number {
+  private calculatePopularity(dest: SearchResultDestination): number {
     let score = 0;
 
     // Views (normalized, assuming max ~10000 views)
@@ -207,9 +245,9 @@ export class SearchRankingAlgorithm {
   }
 
   private calculatePersonalization(
-    dest: any,
-    userContext?: any,
-    tasteProfile?: any
+    dest: SearchResultDestination,
+    userContext?: RichQueryContext | null,
+    tasteProfile?: TasteProfile | null
   ): number {
     if (!userContext && !tasteProfile) {
       return 0;
@@ -220,7 +258,7 @@ export class SearchRankingAlgorithm {
     // Match favorite categories
     if (tasteProfile?.preferences?.categories) {
       const favoriteCategories = tasteProfile.preferences.categories.map(
-        (c: any) => c.category?.toLowerCase()
+        (c: CategoryPreference) => c.category?.toLowerCase()
       );
       const destCategory = dest.category?.toLowerCase();
       if (favoriteCategories.includes(destCategory)) {
@@ -231,7 +269,7 @@ export class SearchRankingAlgorithm {
     // Match favorite cities
     if (tasteProfile?.preferences?.cities) {
       const favoriteCities = tasteProfile.preferences.cities.map(
-        (c: any) => c.city?.toLowerCase()
+        (c: CityPreference) => c.city?.toLowerCase()
       );
       const destCity = dest.city?.toLowerCase();
       if (favoriteCities.includes(destCity)) {
@@ -249,12 +287,12 @@ export class SearchRankingAlgorithm {
 
     // Boost if user has visited similar places
     if (userContext?.user?.history?.visitedDestinations) {
-      const visitedIds = userContext.user.history.visitedDestinations.map(
-        (v: any) => v.id
+      const _visitedIds = userContext.user.history.visitedDestinations.map(
+        (v: VisitedDestination) => v.id
       );
       // Check if similar destinations were visited (same category/city)
       const similarVisited = userContext.user.history.visitedDestinations.filter(
-        (v: any) =>
+        (v: VisitedDestination) =>
           v.category === dest.category || v.city === dest.city
       );
       if (similarVisited.length > 0) {
@@ -265,7 +303,7 @@ export class SearchRankingAlgorithm {
     return Math.min(1, score);
   }
 
-  private calculateTrending(dest: any): number {
+  private calculateTrending(dest: SearchResultDestination): number {
     // Use trending_score if available
     if (dest.trending_score !== undefined && dest.trending_score !== null) {
       return Math.max(0, Math.min(1, dest.trending_score));
@@ -280,7 +318,7 @@ export class SearchRankingAlgorithm {
     return score;
   }
 
-  private calculateIntentMatch(dest: any, intent?: any): number {
+  private calculateIntentMatch(dest: SearchResultDestination, intent?: SearchIntent): number {
     if (!intent) return 0.5; // Neutral if no intent
 
     let score = 0;
@@ -312,7 +350,7 @@ export class SearchRankingAlgorithm {
         ...(dest.tags || []),
         ...(dest.style_tags || []),
         ...(dest.ambience_tags || []),
-      ].map((t: any) => String(t).toLowerCase());
+      ].map((t: string) => String(t).toLowerCase());
 
       const modifierMatches = intent.modifiers.filter((m: string) =>
         destTags.some((t: string) => t.includes(m.toLowerCase()))
@@ -328,7 +366,7 @@ export class SearchRankingAlgorithm {
     return total > 0 ? score / total : 0.5;
   }
 
-  private calculateEnrichment(dest: any): number {
+  private calculateEnrichment(dest: SearchResultDestination): number {
     let score = 0;
 
     // Weather data available
@@ -354,7 +392,7 @@ export class SearchRankingAlgorithm {
     return Math.min(1, score);
   }
 
-  private calculateRecency(dest: any): number {
+  private calculateRecency(dest: SearchResultDestination): number {
     // Boost recently updated or new destinations
     if (dest.updated_at) {
       const daysSinceUpdate =
@@ -391,8 +429,8 @@ export class SearchRankingAlgorithm {
    */
   private generateExplanation(
     factors: RankingFactors,
-    weights: RankingWeights,
-    dest: any
+    _weights: RankingWeights,
+    dest: SearchResultDestination
   ): string {
     const explanations: string[] = [];
 
