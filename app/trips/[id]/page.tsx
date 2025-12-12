@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2 } from 'lucide-react';
+import { ArrowLeft, MapPin, X, Search, Loader2, ChevronDown, ChevronRight, ChevronLeft, Check, ImagePlus, Route, Plus, Pencil, Car, Footprints, Train as TrainIcon, Globe, Phone, ExternalLink, Navigation, Clock, GripVertical, Square, CheckSquare, CloudRain, Sparkles, Plane, Hotel, Coffee, DoorOpen, LogOut, UtensilsCrossed, Sun, CloudSun, Cloud, Umbrella, AlertTriangle, Star, BedDouble, Waves, Dumbbell, Shirt, Package, Briefcase, Camera, ShoppingBag, MoreHorizontal, Trash2, Ticket } from 'lucide-react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTripEditor, type EnrichedItineraryItem } from '@/lib/hooks/useTripEditor';
@@ -1288,6 +1288,7 @@ function DaySection({
   const [isSearching, setIsSearching] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [showTransportForm, setShowTransportForm] = useState<'flight' | 'hotel' | 'train' | 'activity' | null>(null);
+  const [showBookingMenu, setShowBookingMenu] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<ActivityType | null>(null);
 
@@ -1630,6 +1631,7 @@ function DaySection({
     setShowAddMenu(false);
     setShowSearch(false);
     setShowTransportForm(null);
+    setShowBookingMenu(false);
     setSearchQuery('');
     setSearchResults([]);
     setGoogleResults([]);
@@ -1709,20 +1711,22 @@ function DaySection({
                 if (isDesktop && onOpenSidebarAdd) {
                   onOpenSidebarAdd();
                 } else {
-                  // Mobile: use inline menu
-                  setShowAddMenu(!showAddMenu);
-                  setShowSearch(false);
-                  setShowTransportForm(null);
+                  // Mobile: use inline menu - toggle or close all if something is open
+                  if (showAddMenu || showBookingMenu || showSearch || showTransportForm) {
+                    closeAllMenus();
+                  } else {
+                    setShowAddMenu(true);
+                  }
                 }
               }}
               className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
             >
-              <Plus className={`w-4 h-4 sm:w-3.5 sm:h-3.5 text-gray-500 transition-transform ${showAddMenu || showSearch || showTransportForm ? 'rotate-45' : ''}`} />
+              <Plus className={`w-4 h-4 sm:w-3.5 sm:h-3.5 text-gray-500 transition-transform ${showAddMenu || showSearch || showTransportForm || showBookingMenu ? 'rotate-45' : ''}`} />
             </button>
 
-            {/* Add menu dropdown (mobile only) */}
+            {/* Add menu dropdown (mobile only) - Simplified 3-option menu */}
             <AnimatePresence>
-              {showAddMenu && !showSearch && !showTransportForm && (
+              {showAddMenu && !showSearch && !showTransportForm && !showBookingMenu && (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95, y: -4 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1733,45 +1737,64 @@ function DaySection({
                     onClick={() => { setShowSearch(true); setSearchSource('curated'); }}
                     className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
                   >
-                    <Search className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    From curation
+                    <MapPin className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                    Add Place
                   </button>
                   <button
-                    onClick={() => { setShowSearch(true); setSearchSource('google'); }}
+                    onClick={() => setShowBookingMenu(true)}
                     className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
                   >
-                    <Globe className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    From Google
+                    <Ticket className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                    <span className="flex-1">Add Booking</span>
+                    <ChevronRight className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-gray-400" />
                   </button>
-                  <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
                   <button
-                    onClick={() => setShowTransportForm('flight')}
+                    onClick={() => setShowTransportForm('activity')}
+                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
+                  >
+                    <Clock className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                    Add Activity
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Booking sub-menu (mobile only) - Flight/Hotel/Train options */}
+            <AnimatePresence>
+              {showBookingMenu && !showTransportForm && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                  className="absolute right-0 top-full mt-1 w-44 sm:w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl sm:rounded-lg shadow-lg overflow-hidden z-20 lg:hidden"
+                >
+                  <button
+                    onClick={() => setShowBookingMenu(false)}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 sm:px-3 sm:py-2 text-[12px] sm:text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors text-left border-b border-gray-100 dark:border-gray-800"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    Back
+                  </button>
+                  <button
+                    onClick={() => { setShowTransportForm('flight'); setShowBookingMenu(false); }}
                     className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
                   >
                     <Plane className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     Flight
                   </button>
                   <button
-                    onClick={() => setShowTransportForm('hotel')}
+                    onClick={() => { setShowTransportForm('hotel'); setShowBookingMenu(false); }}
                     className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
                   >
                     <Hotel className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     Hotel
                   </button>
                   <button
-                    onClick={() => setShowTransportForm('train')}
+                    onClick={() => { setShowTransportForm('train'); setShowBookingMenu(false); }}
                     className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
                   >
                     <TrainIcon className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
                     Train
-                  </button>
-                  <div className="border-t border-gray-100 dark:border-gray-800 my-1" />
-                  <button
-                    onClick={() => setShowTransportForm('activity')}
-                    className="w-full flex items-center gap-2.5 px-4 py-3 sm:px-3 sm:py-2 text-[14px] sm:text-[13px] text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 active:bg-gray-100 dark:active:bg-gray-700 transition-colors text-left"
-                  >
-                    <Clock className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
-                    Activity
                   </button>
                 </motion.div>
               )}
