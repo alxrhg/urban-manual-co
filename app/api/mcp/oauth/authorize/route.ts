@@ -7,9 +7,26 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import { randomBytes, createHash } from "crypto";
+import { randomBytes, createHmac } from "crypto";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.urbanmanual.co";
+
+// HMAC secret for signing OAuth state - required in production
+const STATE_SIGNING_SECRET = process.env.MCP_JWT_SECRET || process.env.SUPABASE_JWT_SECRET;
+
+/**
+ * Create a signed OAuth state to prevent tampering
+ */
+function createSignedState(data: object): string {
+  if (!STATE_SIGNING_SECRET) {
+    throw new Error("Missing required secret for OAuth state signing");
+  }
+  const payload = Buffer.from(JSON.stringify(data)).toString("base64url");
+  const signature = createHmac("sha256", STATE_SIGNING_SECRET)
+    .update(payload)
+    .digest("base64url");
+  return `${payload}.${signature}`;
+}
 
 // Store pending authorization requests (in production, use Redis/database)
 // For now, we'll encode state in the redirect
@@ -50,11 +67,19 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  // Ensure signing secret is available
+  if (!STATE_SIGNING_SECRET) {
+    return NextResponse.json(
+      { error: "server_error", error_description: "OAuth not configured" },
+      { status: 500 }
+    );
+  }
+
   // Generate authorization session ID
   const sessionId = randomBytes(32).toString("hex");
 
-  // Store OAuth state in a signed cookie/parameter for the callback
-  const oauthState = Buffer.from(JSON.stringify({
+  // Store OAuth state with HMAC signature to prevent tampering
+  const oauthState = createSignedState({
     sessionId,
     clientId,
     redirectUri,
@@ -63,7 +88,7 @@ export async function GET(request: NextRequest) {
     codeChallenge,
     codeChallengeMethod,
     createdAt: Date.now(),
-  })).toString("base64url");
+  });
 
   // Redirect to our OAuth login page
   const loginUrl = new URL(`${SITE_URL}/api/mcp/oauth/login`);
