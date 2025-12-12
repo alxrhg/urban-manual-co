@@ -198,12 +198,19 @@ export async function executeToolCall(
             'id, slug, name, city, country, category, description, micro_description, image, rating, price_level, michelin_stars, latitude, longitude, address, neighborhood'
           )
           .is('parent_destination_id', null) // Only top-level destinations
-          .limit(limit);
+          .limit(Math.min(limit, 20)); // Cap at 20 for performance
 
-        // Apply filters
+        // Apply city filter with variations (handles "Miami Beach", "Miami, FL" etc)
         if (city) {
-          dbQuery = dbQuery.ilike('city', `%${city}%`);
+          const cityLower = city.toLowerCase().trim();
+          // Handle common variations
+          const cityConditions = [
+            `city.ilike.%${cityLower}%`,
+            `city.ilike.%${cityLower} beach%`,
+          ];
+          dbQuery = dbQuery.or(cityConditions.join(','));
         }
+
         if (category) {
           dbQuery = dbQuery.ilike('category', `%${category}%`);
         }
@@ -217,12 +224,17 @@ export async function executeToolCall(
           dbQuery = dbQuery.gte('michelin_stars', michelinStars);
         }
 
-        // Text search on name, description, search_text
+        // Text search - exclude city name to avoid redundant filtering
         if (query && query.trim()) {
+          const cityLower = (city || '').toLowerCase();
+          const stopWords = new Set(['in', 'the', 'a', 'an', 'for', 'at', 'to', 'best', 'good', 'nice', 'great', 'find', 'show', 'me']);
           const searchTerms = query
             .toLowerCase()
             .split(/\s+/)
-            .filter((w: string) => w.length > 2);
+            .filter((w: string) => w.length > 2)
+            .filter((w: string) => !stopWords.has(w))
+            .filter((w: string) => !cityLower.includes(w) && !w.includes(cityLower)); // Skip city name
+
           if (searchTerms.length > 0) {
             const conditions = searchTerms.flatMap((term: string) => [
               `name.ilike.%${term}%`,
@@ -242,6 +254,9 @@ export async function executeToolCall(
           console.error('[Responses] Search error:', error);
           return { result: [], error: error.message };
         }
+
+        // Log for debugging
+        console.log(`[Responses] search_curated_destinations: city=${city}, category=${category}, results=${data?.length || 0}`);
 
         // Format results for the AI
         const results = (data || []).map((d: any) => ({
