@@ -200,15 +200,9 @@ export async function executeToolCall(
           .is('parent_destination_id', null) // Only top-level destinations
           .limit(Math.min(limit, 20)); // Cap at 20 for performance
 
-        // Apply city filter with variations (handles "Miami Beach", "Miami, FL" etc)
+        // Apply city filter - simple ilike (matches working ai-chat implementation)
         if (city) {
-          const cityLower = city.toLowerCase().trim();
-          // Handle common variations
-          const cityConditions = [
-            `city.ilike.%${cityLower}%`,
-            `city.ilike.%${cityLower} beach%`,
-          ];
-          dbQuery = dbQuery.or(cityConditions.join(','));
+          dbQuery = dbQuery.ilike('city', `%${city}%`);
         }
 
         if (category) {
@@ -224,22 +218,21 @@ export async function executeToolCall(
           dbQuery = dbQuery.gte('michelin_stars', michelinStars);
         }
 
-        // Text search - exclude city name to avoid redundant filtering
-        if (query && query.trim()) {
-          const cityLower = (city || '').toLowerCase();
-          const stopWords = new Set(['in', 'the', 'a', 'an', 'for', 'at', 'to', 'best', 'good', 'nice', 'great', 'find', 'show', 'me']);
+        // Text search - only apply if NO city filter (to avoid conflicts)
+        // When city is provided, we just return all destinations in that city
+        if (!city && query && query.trim()) {
+          const stopWords = new Set(['in', 'the', 'a', 'an', 'for', 'at', 'to', 'best', 'good', 'nice', 'great', 'find', 'show', 'me', 'restaurants', 'hotel', 'hotels', 'bar', 'bars', 'cafe', 'cafes']);
           const searchTerms = query
             .toLowerCase()
             .split(/\s+/)
             .filter((w: string) => w.length > 2)
-            .filter((w: string) => !stopWords.has(w))
-            .filter((w: string) => !cityLower.includes(w) && !w.includes(cityLower)); // Skip city name
+            .filter((w: string) => !stopWords.has(w));
 
           if (searchTerms.length > 0) {
             const conditions = searchTerms.flatMap((term: string) => [
               `name.ilike.%${term}%`,
               `description.ilike.%${term}%`,
-              `search_text.ilike.%${term}%`,
+              `city.ilike.%${term}%`,
             ]);
             dbQuery = dbQuery.or(conditions.join(','));
           }
@@ -256,7 +249,7 @@ export async function executeToolCall(
         }
 
         // Log for debugging
-        console.log(`[Responses] search_curated_destinations: city=${city}, category=${category}, results=${data?.length || 0}`);
+        console.log(`[Responses] search_curated_destinations: city=${city}, category=${category}, query=${query}, results=${data?.length || 0}`);
 
         // Format results for the AI
         const results = (data || []).map((d: any) => ({
