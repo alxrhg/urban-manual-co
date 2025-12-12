@@ -185,11 +185,13 @@ const TripPanel = memo(function TripPanel({ className = '' }: TripPanelProps) {
         aria-hidden="true"
       />
 
-      {/* Panel */}
+      {/* Panel - Glassmorphism sidebar */}
       <aside
         className={`
           fixed right-0 top-0 h-full w-full max-w-[400px]
-          bg-white dark:bg-gray-900 shadow-2xl z-50
+          bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl
+          shadow-2xl z-50
+          border-l border-gray-200/50 dark:border-gray-700/50
           flex flex-col
           animate-in slide-in-from-right duration-300
           ${className}
@@ -311,10 +313,13 @@ function TripSelector({
         onClick={onClose}
         aria-hidden="true"
       />
+      {/* Glassmorphism sidebar */}
       <aside
         className={`
           fixed right-0 top-0 h-full w-full max-w-[400px]
-          bg-white dark:bg-gray-900 shadow-2xl z-50
+          bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl
+          shadow-2xl z-50
+          border-l border-gray-200/50 dark:border-gray-700/50
           flex flex-col
           animate-in slide-in-from-right duration-300
           ${className}
@@ -350,9 +355,14 @@ function TripSelector({
                 <button
                   key={trip.id}
                   onClick={() => onSelectTrip(trip.id)}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-3.5 rounded-xl
+                    bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm
+                    border border-gray-200/60 dark:border-gray-700/60
+                    shadow-sm hover:shadow-md
+                    hover:-translate-y-0.5 active:translate-y-0
+                    transition-all duration-300 ease-out text-left"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-gray-200 dark:bg-gray-700 flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     <MapPin className="w-5 h-5 text-gray-400" />
                   </div>
                   <div className="flex-1 min-w-0">

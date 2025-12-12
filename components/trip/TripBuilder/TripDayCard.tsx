@@ -72,7 +72,7 @@ const TripDayCard = memo(function TripDayCard({
 
   return (
     <section
-      className="border-b border-gray-100 dark:border-gray-800 last:border-0"
+      className="border-b border-gray-100/60 dark:border-gray-800/60 last:border-0"
       aria-labelledby={`day-${day.dayNumber}-heading`}
     >
       {/* Day header */}

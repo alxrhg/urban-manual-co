@@ -79,8 +79,9 @@ function SortableTripItemCard({
             absolute top-2 sm:top-3 left-2 sm:left-3 z-10
             cursor-grab active:cursor-grabbing
             p-2 sm:p-1 -m-1 sm:m-0
-            bg-white/90 dark:bg-gray-900/90 rounded-xl sm:rounded-lg backdrop-blur-sm
-            transition-opacity duration-200
+            bg-white/90 dark:bg-gray-900/90 rounded-xl sm:rounded-lg backdrop-blur-md
+            shadow-sm
+            transition-all duration-200
             ${showControls ? 'opacity-100' : 'opacity-0 sm:group-hover:opacity-100'}
           `}
           onClick={(e) => e.stopPropagation()}
@@ -99,7 +100,8 @@ function SortableTripItemCard({
               absolute top-2 sm:top-3 right-2 sm:right-3 z-10
               p-2.5 sm:p-1.5 -m-1 sm:m-0
               rounded-xl sm:rounded-lg
-              bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm
+              bg-white/90 dark:bg-gray-900/90 backdrop-blur-md
+              shadow-sm
               text-gray-400 hover:text-red-500 active:text-red-600
               hover:bg-red-50 active:bg-red-100 dark:hover:bg-red-900/20 dark:active:bg-red-900/30
               transition-all duration-200
@@ -113,15 +115,18 @@ function SortableTripItemCard({
           </button>
         )}
 
-        {/* Clickable wrapper for edit */}
+        {/* Clickable wrapper for edit - Glass card with hover lift */}
         <div
           onClick={() => onEdit?.(item)}
           className={`
-            ${onEdit ? 'cursor-pointer' : ''} rounded-2xl transition-all
-            ${onEdit ? 'active:scale-[0.98] sm:active:scale-100' : ''}
-            ${isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600' : ''}
-            ${onEdit ? 'hover:ring-1 hover:ring-gray-200 dark:hover:ring-gray-700' : ''}
-            ${onEdit ? 'active:ring-1 active:ring-gray-300 dark:active:ring-gray-600' : ''}
+            ${onEdit ? 'cursor-pointer' : ''}
+            bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm
+            rounded-xl overflow-hidden
+            shadow-sm hover:shadow-lg
+            transition-all duration-300 ease-out
+            ${onEdit ? 'hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]' : ''}
+            ${isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600 shadow-lg' : ''}
+            ${onEdit ? 'hover:ring-1 hover:ring-gray-200/80 dark:hover:ring-gray-600/80' : ''}
           `}
         >
           {children}
@@ -148,14 +153,18 @@ function ViewOnlyTripItemCard({
   return (
     <div className="group relative mb-2 sm:mb-2">
       <div className="relative">
+        {/* Glass card with hover lift */}
         <div
           onClick={() => onEdit?.(item)}
           className={`
-            ${onEdit ? 'cursor-pointer' : ''} rounded-2xl transition-all
-            ${onEdit ? 'active:scale-[0.98] sm:active:scale-100' : ''}
-            ${isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600' : ''}
-            ${onEdit ? 'hover:ring-1 hover:ring-gray-200 dark:hover:ring-gray-700' : ''}
-            ${onEdit ? 'active:ring-1 active:ring-gray-300 dark:active:ring-gray-600' : ''}
+            ${onEdit ? 'cursor-pointer' : ''}
+            bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm
+            rounded-xl overflow-hidden
+            shadow-sm hover:shadow-lg
+            transition-all duration-300 ease-out
+            ${onEdit ? 'hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99]' : ''}
+            ${isActive ? 'ring-2 ring-gray-300 dark:ring-gray-600 shadow-lg' : ''}
+            ${onEdit ? 'hover:ring-1 hover:ring-gray-200/80 dark:hover:ring-gray-600/80' : ''}
           `}
         >
           {children}

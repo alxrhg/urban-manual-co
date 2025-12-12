@@ -135,7 +135,7 @@ const TripItemRow = memo(function TripItemRow({
         </div>
       )}
 
-      {/* Main item card */}
+      {/* Main item card - Glass styling */}
       <article
         draggable
         onDragStart={onDragStart}
@@ -146,10 +146,12 @@ const TripItemRow = memo(function TripItemRow({
         onDragEnd={onDragEnd}
         className={`
           group relative flex items-start gap-2.5 p-3 rounded-xl
-          bg-gray-50 dark:bg-white/5
-          hover:bg-gray-100 dark:hover:bg-white/10
-          transition-all duration-200 ease-out
-          ${isDragging ? 'opacity-50 scale-[0.98] shadow-lg' : ''}
+          bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm
+          border border-gray-200/60 dark:border-gray-700/60
+          shadow-sm hover:shadow-lg
+          hover:-translate-y-0.5 active:translate-y-0
+          transition-all duration-300 ease-out
+          ${isDragging ? 'opacity-50 scale-[0.98] shadow-xl' : ''}
         `}
         role="listitem"
         aria-label={`${item.destination.name} at ${item.timeSlot || 'unscheduled'}`}
@@ -188,10 +190,10 @@ const TripItemRow = memo(function TripItemRow({
           </div>
         </div>
 
-        {/* Thumbnail */}
+        {/* Thumbnail - Rounded corners with shadow */}
         <button
           onClick={handleOpenDestination}
-          className="flex-shrink-0 w-12 h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-700 transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
+          className="flex-shrink-0 w-12 h-12 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700 shadow-sm transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-white"
           aria-label={`View ${item.destination.name}`}
         >
           {hasImage ? (

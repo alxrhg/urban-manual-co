@@ -209,9 +209,11 @@ export default function TripDaySection({
   return (
     <div
       className={`
-        border border-gray-200 dark:border-gray-800 rounded-xl sm:rounded-2xl overflow-hidden
-        transition-colors duration-200
-        ${isSelected ? 'ring-1 ring-gray-300 dark:ring-gray-700' : ''}
+        bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm
+        border border-gray-200/60 dark:border-gray-700/60 rounded-xl sm:rounded-2xl overflow-hidden
+        shadow-sm hover:shadow-lg
+        transition-all duration-300 ease-out
+        ${isSelected ? 'ring-1 ring-gray-300 dark:ring-gray-600 shadow-lg' : ''}
       `}
     >
       {/* Day Header - Larger touch target on mobile */}

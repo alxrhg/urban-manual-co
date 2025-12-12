@@ -53,10 +53,10 @@ const AddToTripContent = memo(function AddToTripContent() {
 
   return (
     <div className="pb-6">
-      {/* Destination Preview */}
-      <div className="px-5 pt-4 pb-5 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+      {/* Destination Preview - Glass card */}
+      <div className="px-5 pt-4 pb-5 border-b border-gray-100/60 dark:border-gray-800/60">
+        <div className="flex items-center gap-4 p-3 rounded-xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-gray-200/40 dark:border-gray-700/40">
+          <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex-shrink-0 shadow-sm">
             {imageUrl ? (
               <Image
                 src={imageUrl}
@@ -157,7 +157,7 @@ const AddToTripContent = memo(function AddToTripContent() {
         </div>
       )}
 
-      {/* All Days Selection */}
+      {/* All Days Selection - Glass cards */}
       {activeTrip && (
         <div className="px-5 py-4">
           <p className="text-[12px] font-medium text-gray-500 uppercase tracking-wide mb-3">
@@ -171,16 +171,21 @@ const AddToTripContent = memo(function AddToTripContent() {
                   key={day.dayNumber}
                   onClick={() => handleAddToDay(day.dayNumber)}
                   className={`
-                    relative p-3 rounded-xl text-center transition-all
+                    relative p-3 rounded-xl text-center
+                    bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm
+                    border border-gray-200/60 dark:border-gray-700/60
+                    shadow-sm hover:shadow-md
+                    hover:-translate-y-0.5 active:translate-y-0
+                    transition-all duration-300 ease-out
                     ${
                       isBest
-                        ? 'bg-gray-100 dark:bg-white/10 ring-2 ring-gray-900 dark:ring-white'
-                        : 'bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10'
+                        ? 'ring-2 ring-gray-900 dark:ring-white shadow-md'
+                        : 'hover:border-gray-300 dark:hover:border-gray-600'
                     }
                   `}
                 >
                   {isBest && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center shadow-sm">
                       <Check className="w-2.5 h-2.5 text-white" />
                     </div>
                   )}
